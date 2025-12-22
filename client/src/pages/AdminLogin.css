@@ -1,0 +1,93 @@
+.admin-login-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 92vh;
+  background: #f8f8f8;
+}
+
+.admin-login-card {
+  width: 380px;
+  padding: 32px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  animation: fadeIn 0.4s ease;
+  border-top: 4px solid #ff2e63;
+}
+
+.admin-logo {
+  width: 85px;
+  margin-bottom: 15px;
+}
+
+.admin-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.admin-sub {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.admin-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  margin-bottom: 14px;
+  font-size: 15px;
+  transition: 0.2s ease;
+}
+
+.admin-input:focus {
+  border-color: #ff2e63;
+  box-shadow: 0 0 4px rgba(255, 46, 99, 0.4);
+  outline: none;
+}
+
+.admin-pass-box {
+  position: relative;
+}
+
+.admin-toggle-pass {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+.admin-btn {
+  width: 100%;
+  padding: 12px;
+  background: #ff2e63;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 600;
+  margin-top: 6px;
+  transition: 0.3s ease;
+}
+
+.admin-btn:hover {
+  background: #d80040;
+}
+
+.admin-note {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #777;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
