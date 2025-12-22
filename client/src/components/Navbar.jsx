@@ -7,7 +7,7 @@ import { ThemeContext } from "../context/ThemeContext";
 import axios from "axios";
 import { useGoogleLogin } from "@react-oauth/google"; 
 
-const API_URL = "http://localhost:5001";
+const API_URL = "https://seabite-server.vercel.app";
 
 export default function Navbar({ openCart }) { 
   const { cartCount } = useContext(CartContext);

@@ -11,7 +11,7 @@ import { ThemeContext } from "../context/ThemeContext";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001"; 
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app"; 
 const ALLOWED_DELIVERY_STATES = ["Andhra Pradesh", "Telangana", "AP", "TS"];
 
 const DEFAULT_DELIVERY_ADDRESS = {

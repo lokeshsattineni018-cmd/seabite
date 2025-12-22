@@ -6,7 +6,7 @@ import { FiLock, FiUser, FiArrowRight, FiShield, FiLoader, FiEye, FiEyeOff, FiCp
 import PopupModal from "../components/PopupModal";
 
 // Constants
-const API_URL = "http://localhost:5001";
+const API_URL = "https://seabite-server.vercel.app";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");

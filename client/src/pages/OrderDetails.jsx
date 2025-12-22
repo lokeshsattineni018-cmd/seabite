@@ -7,7 +7,7 @@ import { ThemeContext } from '../context/ThemeContext';
 import PopupModal from "../components/PopupModal"; 
 import Invoice from "../components/Invoice"; 
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 const getStatusClasses = (status) => {
     switch (status) {

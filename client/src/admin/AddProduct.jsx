@@ -4,7 +4,7 @@ import { FiUploadCloud, FiX, FiCheck, FiDollarSign, FiType, FiLayers, FiTrending
 import { motion, AnimatePresence } from "framer-motion";
 import PopupModal from "../components/PopupModal"; 
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 export default function AddProduct() {
   const [form, setForm] = useState({

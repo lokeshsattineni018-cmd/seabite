@@ -28,7 +28,7 @@ export default function AdminDashboard() {
     const token = localStorage.getItem("token");
     
     axios
-      .get("http://localhost:5001/api/admin", { 
+      .get("https://seabite-server.vercel.app/api/admin", { 
         headers: { Authorization: `Bearer ${token}` },
         params: { range: timeFilter } 
       })
@@ -50,7 +50,7 @@ export default function AdminDashboard() {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return PLACEHOLDER_IMG; 
     const filename = imagePath.split(/[/\\]/).pop();
-    return `http://localhost:5001/uploads/${filename}`;
+    return `https://seabite-server.vercel.app/uploads/${filename}`;
   };
 
   if (loading) {

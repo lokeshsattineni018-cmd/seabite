@@ -26,7 +26,7 @@ export default function Prawn() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5001/api/products")
+      .get("https://seabite-server.vercel.app/api/products")
       .then((res) => {
         // Filter for Prawn category (Ensure your DB uses "Prawn" or "Prawns")
         const prawns = res.data.products.filter((p) => 

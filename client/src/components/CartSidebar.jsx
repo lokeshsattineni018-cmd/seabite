@@ -6,7 +6,7 @@ import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { removeFromCart, updateQty } from "../utils/cartStorage";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001"; 
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app"; 
 
 const getFullImageUrl = (imagePath) => {
     if (!imagePath) return null;

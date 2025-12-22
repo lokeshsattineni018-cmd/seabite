@@ -26,7 +26,7 @@ export default function Fish() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5001/api/products")
+      .get("https://seabite-server.vercel.app/api/products")
       .then((res) => {
         // Filter for Fish category
         const fish = res.data.products.filter((p) => p.category === "Fish");

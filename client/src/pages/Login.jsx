@@ -13,7 +13,7 @@ export default function Login() {
     try {
       // Show loading or visual feedback if desired
       
-      const res = await axios.post("http://localhost:5001/api/auth/google", {
+      const res = await axios.post("https://seabite-server.vercel.app/api/auth/google", {
         token: credentialResponse.credential,
       });
 

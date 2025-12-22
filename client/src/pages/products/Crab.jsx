@@ -26,7 +26,7 @@ export default function Crab() {
 
   useEffect(() => {
     axios
-      .get("http://localhost:5001/api/products")
+      .get("https://seabite-server.vercel.app/api/products")
       .then((res) => {
         // Filtering for Crab category
         const crabs = res.data.products.filter((p) => p.category === "Crab");

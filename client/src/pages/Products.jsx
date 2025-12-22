@@ -8,7 +8,7 @@ import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
 import { addToCart } from "../utils/cartStorage";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 const CATEGORY_DATA = {
     "All": { title: "Fresh Catch", desc: "Sustainable seafood, straight from the source.", gradient: "from-blue-500/20 via-cyan-400/10 to-transparent", accent: "text-blue-600" },

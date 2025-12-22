@@ -3,7 +3,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiSearch, FiUser, FiShield, FiUsers, FiCheck, FiX, FiRefreshCw, FiChevronRight } from "react-icons/fi";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 export default function AdminUsers() {
     const [users, setUsers] = useState([]);

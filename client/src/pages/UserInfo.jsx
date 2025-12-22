@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios'; 
 import { ThemeContext } from '../context/ThemeContext';
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001"; 
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app"; 
 
 // --- EDITABLE ROW COMPONENT ---
 const EditableInfoRow = ({ icon: Icon, label, initialValue, fieldKey, onSave }) => {

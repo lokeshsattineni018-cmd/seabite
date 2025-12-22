@@ -5,7 +5,7 @@ import axios from "axios"; // 🟢 Added axios for fetching data
 import { FiCheck, FiShoppingBag, FiArrowRight, FiPackage, FiTag } from "react-icons/fi";
 import { ThemeContext } from "../context/ThemeContext";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 // --- ANIMATION VARIANTS ---
 

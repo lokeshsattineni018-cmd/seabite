@@ -5,7 +5,7 @@ import { FiSearch, FiRefreshCw, FiUser, FiMapPin, FiCalendar, FiXCircle, FiChevr
 import PopupModal from "../components/PopupModal"; 
 import Invoice from "../components/Invoice"; 
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001"; 
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app"; 
 const STATUS_OPTIONS = ["All", "Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Cancelled by User"];
 
 export default function AdminOrders() {

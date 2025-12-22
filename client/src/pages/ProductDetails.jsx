@@ -7,7 +7,7 @@ import { addToCart } from "../utils/cartStorage";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiArrowLeft, FiMinus, FiPlus, FiShoppingBag, FiTruck, FiInfo, FiCheck, FiPackage } from "react-icons/fi";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001"; 
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app"; 
 
 export default function ProductDetails() {
   const { id } = useParams();

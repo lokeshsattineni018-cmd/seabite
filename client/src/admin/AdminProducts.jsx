@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiSearch, FiEdit2, FiTrash2, FiPlus, FiPackage, FiRefreshCw, FiChevronRight } from "react-icons/fi"; 
 import PopupModal from "../components/PopupModal";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5001";
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 const formatPrice = (price) => {
     return price ? `₹${Number(price).toFixed(2)}` : '₹0.00';
