@@ -63,6 +63,11 @@ mongoose
   .catch((err) => console.error("❌ MongoDB error:", err));
 
 /* --- 7. ROUTES --- */
+// 🟢 NEW: Home Route to check server status
+app.get('/', (req, res) => {
+    res.send("Server is Running! 🚀");
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
 app.use("/api/productsRoutes", productsRoutes); 
