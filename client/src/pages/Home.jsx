@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, useInView, useSpring, useMotionValue, useAnimationFrame, useVelocity, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { ArrowRight, Star, ShieldCheck, Truck, Clock, Quote, Fish, Sparkles, X, Copy, Check, Gift, Zap, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag } from "lucide-react";
+import { ArrowRight, Star, ShieldCheck, Truck, Clock, Quote, Fish, Sparkles, X, Copy, Check, Gift, Zap, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
@@ -184,15 +184,46 @@ const CategoryPanel = () => {
     )
 }
 
-// --- ✅ NEW PRODUCT SHOWCASE ROW ---
+// --- ✅ NEW: FLASH SALE BANNER (E-Commerce Style) ---
+const FlashSale = () => {
+    return (
+        <section className="py-10 px-4">
+            <div className="max-w-6xl mx-auto bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl shadow-2xl p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+                
+                {/* Background Pattern */}
+                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                
+                <div className="relative z-10 text-white text-center md:text-left">
+                    <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-white/30">
+                        <Flame size={14} className="text-yellow-300" /> Flash Deal
+                    </div>
+                    <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-2">TODAY'S CATCH</h2>
+                    <p className="text-red-100 text-lg font-medium">Order before 11 AM for <span className="font-bold text-white underline decoration-yellow-400 decoration-2 underline-offset-4">Express Lunch Delivery</span>.</p>
+                </div>
+
+                <div className="relative z-10 bg-white p-6 rounded-xl shadow-lg transform rotate-2 md:rotate-0">
+                    <div className="text-center">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ends In</p>
+                        <div className="flex gap-2 text-slate-900 font-mono font-black text-3xl">
+                            <span className="bg-slate-100 px-2 rounded">04</span>:
+                            <span className="bg-slate-100 px-2 rounded">32</span>:
+                            <span className="bg-slate-100 px-2 rounded text-red-600">18</span>
+                        </div>
+                    </div>
+                    <Link to="/products" className="block mt-4 w-full bg-slate-900 text-white text-center py-3 rounded-lg font-bold text-sm uppercase tracking-wide hover:bg-slate-800 transition-colors">Grab The Deal</Link>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+// --- PRODUCT SHOWCASE ROW (Standard E-com Grid) ---
 const CategoryRow = ({ title, filterType }) => {
     const [products, setProducts] = useState([]);
     
     useEffect(() => {
         axios.get(`${API_URL}/api/products`).then(res => {
             const all = res.data.products || [];
-            // Simple filter logic: if filterType is "Fish", filter by category "Fish"
-            // If filterType is "Shellfish", filter by "Prawn" or "Crab"
             let filtered = [];
             if(filterType === "Fish") {
                 filtered = all.filter(p => p.category === "Fish").slice(0, 4);
@@ -211,29 +242,35 @@ const CategoryRow = ({ title, filterType }) => {
     if (products.length === 0) return null;
 
     return (
-        <section className="py-16 px-6">
-            <div className="container mx-auto max-w-7xl">
-                <div className="flex justify-between items-end mb-8">
-                    <h2 className="text-3xl font-serif text-slate-900 dark:text-white">{title}</h2>
-                    <Link to="/products" className="text-blue-600 dark:text-blue-400 font-bold text-sm uppercase tracking-widest hover:underline flex items-center gap-2">View All <ArrowRight size={16} /></Link>
+        <section className="py-12 px-4 md:px-8">
+            <div className="max-w-7xl mx-auto">
+                <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        {filterType === "Fish" ? <Fish className="text-blue-500"/> : <Anchor className="text-orange-500"/>} 
+                        {title}
+                    </h2>
+                    <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">See All <ChevronRight size={14} /></Link>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                     {products.map((p) => (
                         <Link to={`/products/${p._id}`} key={p._id}>
-                            <div className="group bg-white dark:bg-[#0e1d30] border border-gray-100 dark:border-white/5 rounded-2xl p-4 hover:shadow-xl transition-all duration-300 cursor-pointer h-full flex flex-col">
-                                <div className="relative h-48 mb-4 bg-slate-50 dark:bg-[#0a1625] rounded-xl overflow-hidden flex items-center justify-center">
-                                    <img src={getImageUrl(p.image)} alt={p.name} className="w-full h-full object-contain p-4 group-hover:scale-110 transition-transform duration-500" />
-                                    {p.trending && <div className="absolute top-2 left-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Trending</div>}
+                            <div className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+                                <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4">
+                                    <img src={getImageUrl(p.image)} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                                    {p.trending && <span className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">BESTSELLER</span>}
                                 </div>
-                                <div className="mt-auto">
-                                    <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-1 truncate">{p.name}</h3>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase mb-3">{p.category}</p>
-                                    <div className="flex justify-between items-center">
-                                        <span className="font-mono text-lg text-blue-600 dark:text-blue-300 font-bold">₹{p.basePrice}</span>
-                                        <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-900 dark:text-white group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                                            <ShoppingBag size={14} />
+                                <div className="p-4 flex flex-col flex-grow">
+                                    <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">{p.name}</h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{p.netWeight}</p>
+                                    <div className="mt-auto flex justify-between items-center">
+                                        <div>
+                                            <span className="text-xs text-slate-400 line-through mr-2">₹{(p.basePrice * 1.2).toFixed(0)}</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">₹{p.basePrice}</span>
                                         </div>
+                                        <button className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors">
+                                            <ShoppingBag size={14} />
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -245,92 +282,37 @@ const CategoryRow = ({ title, filterType }) => {
     );
 };
 
-// --- FRESHNESS JOURNEY ---
-const FreshnessJourney = () => {
-  const steps = [
-    { time: "4:00 AM", title: "The Catch", icon: <Anchor />, desc: "Sourced directly from local fishermen boats." },
-    { time: "6:00 AM", title: "Quality Check", icon: <ShieldCheck />, desc: "Expert inspection for texture and smell." },
-    { time: "7:00 AM", title: "Ice Packed", icon: <Thermometer />, desc: "Chemical-free ice packing below 4°C." },
-    { time: "11:00 AM", title: "Delivered", icon: <Truck />, desc: "At your doorstep, fresh and ready to cook." }
-  ];
-
-  return (
-    <section className="py-20 bg-blue-50/50 dark:bg-slate-900/50 border-y border-blue-100 dark:border-white/5">
-      <div className="container mx-auto px-6">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white">Sea to Plate in 8 Hours</h2>
-          <p className="text-slate-500 mt-3 font-light">We don't do frozen. We do fresh.</p>
-        </div>
-        
-        <div className="relative flex flex-col md:flex-row justify-between items-center gap-8 md:gap-4 max-w-6xl mx-auto">
-          <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-blue-200 dark:bg-blue-900/50 -z-10" />
-          {steps.map((step, i) => (
-            <motion.div 
-              key={i}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.2 }}
-              viewport={{ once: true }}
-              className="relative bg-white dark:bg-[#0a1625] p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-white/5 w-full md:w-64 text-center group hover:-translate-y-2 transition-transform duration-300"
-            >
-              <div className="w-12 h-12 mx-auto bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full flex items-center justify-center mb-4 text-xl group-hover:scale-110 transition-transform">
-                {step.icon}
-              </div>
-              <span className="inline-block px-3 py-1 bg-slate-100 dark:bg-slate-800 text-xs font-bold rounded-full mb-3 text-slate-500">{step.time}</span>
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">{step.title}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{step.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// --- SHOP BY COOKING STYLE ---
-const CookingStyles = () => {
-    const styles = [
-        { name: "Curry Specials", desc: "Cleaned, cut & ready for the pot.", bg: "bg-orange-50 dark:bg-orange-900/10", border: "border-orange-100 dark:border-orange-500/20", text: "text-orange-600 dark:text-orange-400", query: "Fish" },
-        { name: "Fry & Crispy", desc: "Boneless fillets & small fish.", bg: "bg-yellow-50 dark:bg-yellow-900/10", border: "border-yellow-100 dark:border-yellow-500/20", text: "text-yellow-600 dark:text-yellow-400", query: "Prawn" },
-        { name: "Grill & BBQ", desc: "Whole fish & jumbo prawns.", bg: "bg-red-50 dark:bg-red-900/10", border: "border-red-100 dark:border-red-500/20", text: "text-red-600 dark:text-red-400", query: "Crab" },
+// --- ✅ NEW: "THE BUTCHER'S CUT" (Visual Guide) ---
+const ButchersCut = () => {
+    const cuts = [
+        { name: "Whole Cleaned", desc: "Gutted & Scaled", icon: <Fish size={24} />, bg: "bg-blue-100 text-blue-700" },
+        { name: "Curry Cut", desc: "Perfect Slices", icon: <Utensils size={24} />, bg: "bg-orange-100 text-orange-700" },
+        { name: "Fillet", desc: "Boneless Meat", icon: <Sparkles size={24} />, bg: "bg-purple-100 text-purple-700" },
+        { name: "Steaks", desc: "Thick & Juicy", icon: <Flame size={24} />, bg: "bg-red-100 text-red-700" },
     ];
 
     return (
-        <section className="py-20 px-6">
-            <div className="container mx-auto max-w-6xl">
-                 <div className="flex flex-col md:flex-row justify-between items-end mb-10 gap-4">
-                    <div>
-                        <h2 className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white">What's Cooking Today?</h2>
-                        <p className="text-slate-500 mt-2">Find the perfect cut for your recipe.</p>
-                    </div>
-                    <Link to="/products" className="text-blue-600 font-bold text-sm uppercase tracking-widest hover:underline flex items-center gap-2">View All Recipes <ArrowRight size={16} /></Link>
-                 </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {styles.map((style, i) => (
-                        <Link to={`/products?category=${style.query}`} key={i}>
-                            <motion.div 
-                                whileHover={{ y: -5 }}
-                                className={`p-8 rounded-[2rem] border ${style.bg} ${style.border} h-full flex flex-col justify-between transition-all cursor-pointer`}
-                            >
-                                <div>
-                                    <div className={`w-12 h-12 rounded-xl mb-6 flex items-center justify-center bg-white dark:bg-slate-900 ${style.text}`}>
-                                        <Utensils size={24} />
-                                    </div>
-                                    <h3 className={`text-2xl font-serif font-bold ${style.text} mb-2`}>{style.name}</h3>
-                                    <p className="text-slate-600 dark:text-slate-400 font-medium leading-relaxed">{style.desc}</p>
-                                </div>
-                                <div className="mt-8 flex items-center gap-2 text-sm font-bold uppercase tracking-widest opacity-60">
-                                    Shop Now <ArrowRight size={14} />
-                                </div>
-                            </motion.div>
-                        </Link>
+        <section className="py-16 px-4 bg-slate-50 dark:bg-[#0b1120]">
+            <div className="max-w-6xl mx-auto">
+                <div className="text-center mb-10">
+                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Shop by Cut</h2>
+                    <p className="text-slate-500 mt-2 text-sm">We clean and cut exactly how you like it.</p>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {cuts.map((cut, i) => (
+                        <div key={i} className="bg-white dark:bg-[#1e293b] p-6 rounded-2xl text-center border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow cursor-default">
+                            <div className={`w-14 h-14 mx-auto ${cut.bg} rounded-full flex items-center justify-center mb-4`}>
+                                {cut.icon}
+                            </div>
+                            <h3 className="font-bold text-slate-900 dark:text-white mb-1">{cut.name}</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{cut.desc}</p>
+                        </div>
                     ))}
-                 </div>
+                </div>
             </div>
         </section>
-    );
-};
+    )
+}
 
 // --- OFFER BANNER ---
 const OfferBanner = () => {
@@ -524,20 +506,13 @@ export default function Home() {
                 <div className="relative z-10">
                     <SectionReveal><CategoryPanel /></SectionReveal>
                     
-                    {/* ✅ NEW: FRESHNESS JOURNEY */}
-                    <SectionReveal><FreshnessJourney /></SectionReveal>
-
-                    {/* ✅ NEW: PRODUCT SHOWCASE 1 */}
+                    {/* ✅ NEW: REAL E-COMMERCE SECTIONS */}
+                    <SectionReveal><FlashSale /></SectionReveal>
                     <SectionReveal><CategoryRow title="Fresh From The Nets" filterType="Fish" /></SectionReveal>
-
-                    <SectionReveal><OfferBanner /></SectionReveal> 
-                    
-                    {/* ✅ NEW: PRODUCT SHOWCASE 2 */}
+                    <SectionReveal><ButchersCut /></SectionReveal>
                     <SectionReveal><CategoryRow title="Shellfish Specials" filterType="Shellfish" /></SectionReveal>
 
-                    {/* ✅ NEW: SHOP BY COOKING STYLE */}
-                    <SectionReveal><CookingStyles /></SectionReveal>
-
+                    <SectionReveal><OfferBanner /></SectionReveal> 
                     <SectionReveal><TrendingMarquee /></SectionReveal>
                     <SectionReveal><SeaBitePromise /></SectionReveal>
                 </div>
