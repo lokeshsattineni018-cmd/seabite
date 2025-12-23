@@ -2,10 +2,8 @@ import { useState, useContext, useEffect, useRef, forwardRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
-import { FiSearch, FiX, FiCheck, FiShoppingBag, FiPackage, FiArrowRight, FiChevronDown } from "react-icons/fi";
-import ProductQuickView from "../components/ProductQuickView";
+import { FiSearch, FiCheck, FiShoppingBag, FiPackage, FiChevronDown } from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
-import { ThemeContext } from "../context/ThemeContext";
 import { addToCart } from "../utils/cartStorage";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
@@ -155,7 +153,7 @@ export default function Products() {
 
             <div className="max-w-7xl mx-auto">
                 
-                {/* Header Section: Adjusted for Mobile Stacking */}
+                {/* Header Section */}
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-end mb-10 md:mb-16 gap-6 md:gap-8">
                     <div className="max-w-xl">
                         <motion.span 
@@ -206,7 +204,7 @@ export default function Products() {
                     </div>
                 </div>
 
-                {/* Filter Tabs: Scrollable on Mobile */}
+                {/* Filter Tabs */}
                 <div className="flex gap-2 mb-8 md:mb-12 overflow-x-auto pb-4 no-scrollbar">
                     {categories.map((cat) => (
                         <button
@@ -223,7 +221,7 @@ export default function Products() {
                     ))}
                 </div>
 
-                {/* Grid: Responsive Columns (1 on Mobile, 2 on Tablet, 3/4 on Laptop) */}
+                {/* Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
                     <AnimatePresence mode="popLayout">
                         {loading ? (
@@ -237,29 +235,39 @@ export default function Products() {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.05 }}
-                                        className="p-1 md:p-2 h-full flex flex-col"
+                                        className="h-full flex flex-col"
                                     >
-                                        <div className="relative h-60 md:h-64 lg:h-72 rounded-[1.5rem] md:rounded-[2rem] bg-slate-50 dark:bg-slate-900/40 m-1 md:m-2 flex items-center justify-center overflow-hidden">
+                                        {/* EDGE-TO-EDGE IMAGE CONTAINER */}
+                                        <div className="relative h-64 md:h-80 w-full bg-slate-50 dark:bg-slate-900/40 flex items-center justify-center overflow-hidden">
                                             {p.trending && (
-                                                <span className="absolute top-3 left-3 md:top-4 md:left-4 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-tighter shadow-md z-10 flex items-center gap-1">
-                                                    <span className="w-1 h-1 bg-blue-500 rounded-full animate-ping" /> Trending
+                                                <span className="absolute top-4 left-4 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg z-10 flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping" /> Hot
                                                 </span>
                                             )}
+                                            
+                                            {/* FULL IMAGE */}
                                             <motion.img 
-                                                whileHover={{ scale: 1.1, rotate: 2 }}
+                                                whileHover={{ scale: 1.1 }}
+                                                transition={{ duration: 0.5 }}
                                                 src={`${API_URL}${p.image}`} 
-                                                className="w-40 md:w-44 lg:w-48 object-contain drop-shadow-2xl"
+                                                className="w-full h-full object-cover" 
                                             />
+                                            
+                                            {/* BOTTOM GRADIENT FOR DEPTH */}
+                                            <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-slate-900/10 to-transparent pointer-events-none" />
                                         </div>
 
-                                        <div className="p-4 md:p-6 pt-2 flex-grow">
-                                            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">{p.category}</span>
-                                            <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white mt-1 group-hover:text-blue-600 transition-colors line-clamp-1">{p.name}</h3>
+                                        {/* TEXT CONTENT WITH PADDING */}
+                                        <div className="p-5 md:p-6 flex-grow flex flex-col justify-between">
+                                            <div>
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-blue-500/80 mb-1 block">{p.category}</span>
+                                                <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-tight group-hover:text-blue-600 transition-colors">{p.name}</h3>
+                                            </div>
                                             
-                                            <div className="mt-4 md:mt-6 flex items-center justify-between gap-2">
+                                            <div className="mt-5 flex items-end justify-between gap-2">
                                                 <div className="flex flex-col">
-                                                    <span className="text-xl md:text-2xl font-black text-slate-900 dark:text-white">₹{Number(p.basePrice)}</span>
-                                                    <span className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase">Per {p.unit || 'kg'}</span>
+                                                    <span className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight">₹{Number(p.basePrice)}</span>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Per {p.unit || 'kg'}</span>
                                                 </div>
                                                 <AddButton product={p} onAdd={(e) => {
                                                     addToCart({ ...p, qty: 1, price: Number(p.basePrice) });
