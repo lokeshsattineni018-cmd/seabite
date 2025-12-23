@@ -1,6 +1,10 @@
 import Order from '../models/Order.js'; 
 import Notification from "../models/notification.js";
-import { sendOrderShippedEmail, sendOrderDeliveredEmail, sendOrderPlacedEmail } from "../utils/emailService.js";
+import { 
+    sendOrderShippedEmail, 
+    sendOrderDeliveredEmail, 
+    sendOrderPlacedEmail 
+} from "../utils/emailService.js";
 
 // @desc    Create new order
 export const createOrder = async (req, res) => {
@@ -17,8 +21,7 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ message: 'No order items' });
         }
 
-        // 🟢 NEW DELIVERY LOGIC: Calculate shipping based on subtotal (itemsPrice)
-        // If subtotal is less than 1000, charge 99. Otherwise, it is 0.
+        // 🟢 DELIVERY LOGIC: Shipping based on subtotal (itemsPrice)
         const subtotal = itemsPrice || 0;
         const shippingPrice = subtotal < 1000 ? 99 : 0;
         
@@ -33,7 +36,7 @@ export const createOrder = async (req, res) => {
             items,
             itemsPrice: subtotal,
             taxPrice,
-            shippingPrice, // 🟢 Set to 99 or 0 based on the rule
+            shippingPrice, 
             totalAmount, 
             discount: discount || 0,
             shippingAddress: deliveryAddress || shippingAddress
@@ -41,9 +44,16 @@ export const createOrder = async (req, res) => {
 
         const createdOrder = await order.save();
 
-        // Email Notification
-        sendOrderPlacedEmail(req.user.email, req.user.name, createdOrder._id, createdOrder.totalAmount)
-            .catch(err => console.error("Email Error:", err.message));
+        // ✅ OFFICIAL NOTIFICATION: Using Brevo to send from info@seabite.co.in
+        // We use .then() to avoid blocking the user's response while the email sends
+        sendOrderPlacedEmail(
+            req.user.email, 
+            req.user.name, 
+            createdOrder._id, 
+            createdOrder.totalAmount
+        )
+        .then(() => console.log(`✅ Official Order Email sent to ${req.user.email}`))
+        .catch(err => console.error("❌ Brevo Email Error:", err.message));
 
         res.status(201).json(createdOrder);
     } catch (error) {
@@ -52,7 +62,7 @@ export const createOrder = async (req, res) => {
     }
 };
 
-// 🟢 CANCEL ORDER LOGIC (Maintains Reason & Status lock)
+// 🟢 CANCEL ORDER LOGIC
 export const cancelOrder = async (req, res) => {
     try {
         const { reason } = req.body; 
@@ -75,7 +85,7 @@ export const cancelOrder = async (req, res) => {
 
         await Notification.create({
             user: req.user._id,
-            message: `🔴 Order #${order.orderId} was cancelled. Reason: ${order.cancelReason}`,
+            message: `🔴 Order #${order._id} was cancelled. Reason: ${order.cancelReason}`,
             orderId: order._id,
             statusType: "Cancelled"
         });
@@ -86,6 +96,7 @@ export const cancelOrder = async (req, res) => {
     }
 };
 
+// 🟢 GET ALL ORDERS (ADMIN)
 export const getAllOrders = async (req, res) => {
     try {
         const orders = await Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
@@ -95,7 +106,7 @@ export const getAllOrders = async (req, res) => {
     }
 };
 
-// 🟢 UPDATED: This now correctly saves refundStatus to the DB
+// 🟢 UPDATE ORDER STATUS (ADMIN)
 export const updateOrderStatus = async (req, res) => {
     const { status, refundStatus } = req.body; 
     try {
@@ -104,11 +115,8 @@ export const updateOrderStatus = async (req, res) => {
 
         if (status) order.status = status;
         
-        // 🟢 SAVING THE REFUND STATUS
         if (refundStatus) {
             order.refundStatus = refundStatus;
-            
-            // If admin marks as Success, order is no longer "Paid" internally
             if (refundStatus === "Success") {
                 order.isPaid = false;
             }
@@ -116,8 +124,16 @@ export const updateOrderStatus = async (req, res) => {
 
         await order.save(); 
 
-        if (status === 'Shipped') sendOrderShippedEmail(order.user.email, order.user.name, order._id).catch(e => {});
-        if (status === 'Delivered') sendOrderDeliveredEmail(order.user.email, order.user.name, order._id).catch(e => {});
+        // ✅ Triggering Official Status Update Emails via Brevo
+        if (status === 'Shipped') {
+            sendOrderShippedEmail(order.user.email, order.user.name, order._id)
+                .catch(e => console.error("Shipped Email Failed:", e.message));
+        }
+        
+        if (status === 'Delivered') {
+            sendOrderDeliveredEmail(order.user.email, order.user.name, order._id)
+                .catch(e => console.error("Delivered Email Failed:", e.message));
+        }
 
         res.json(order);
     } catch (error) {
@@ -125,15 +141,19 @@ export const updateOrderStatus = async (req, res) => {
     }
 };
 
+// 🟢 GET MY ORDERS (USER)
 export const getMyOrders = async (req, res) => {
     try {
-        const orders = await Order.find({ user: req.user.id }).populate('items.productId', 'name image reviews').sort({ createdAt: -1 }); 
+        const orders = await Order.find({ user: req.user.id })
+            .populate('items.productId', 'name image reviews')
+            .sort({ createdAt: -1 }); 
         res.json(orders);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching history' });
     }
 };
 
+// 🟢 MIGRATION TOOL
 export const migrateOldOrderDiscounts = async (req, res) => {
     try {
         const orders = await Order.find();
