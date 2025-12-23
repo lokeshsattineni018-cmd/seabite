@@ -3,7 +3,7 @@ import { getCart, saveCart, clearCart } from "../utils/cartStorage";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield, FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiTarget, FiSearch, FiCreditCard, FiTruck, FiLoader } from "react-icons/fi"; 
+import { FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield, FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiTarget, FiSearch, FiCreditCard, FiTruck, FiLoader, FiHash } from "react-icons/fi"; 
 import PopupModal from "../components/PopupModal";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext"; 
@@ -61,7 +61,6 @@ export default function Checkout() {
     setCart(updated);
     saveCart(updated);
     refreshCartCount();
-    // Reset coupon if cart changes (to re-validate minimum amount)
     if(isCouponApplied) handleRemoveCoupon();
   };
   
@@ -76,7 +75,6 @@ export default function Checkout() {
   const itemTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0); 
   const deliveryCharge = itemTotal < 1000 ? 99 : 0;
   
-  // ✅ NEW COUPON VALIDATION LOGIC (Server-Side)
   const handleApplyCoupon = async () => {
       if (!couponCode) return;
       setVerifyingCoupon(true);
@@ -123,8 +121,9 @@ export default function Checkout() {
         setModal({ show: true, message: `Delivery restricted to AP & Telangana.`, type: "error" });
         return;
     }
-    if (!deliveryAddress.fullName || !deliveryAddress.phone || !deliveryAddress.street || !deliveryAddress.houseNo || !deliveryAddress.city) {
-         setModal({ show: true, message: "Please complete your delivery address (City/Village is required).", type: "error" });
+    // ✅ Added Zip Check
+    if (!deliveryAddress.fullName || !deliveryAddress.phone || !deliveryAddress.street || !deliveryAddress.houseNo || !deliveryAddress.city || !deliveryAddress.zip) {
+         setModal({ show: true, message: "Please complete your delivery address (Zip/Pincode is required).", type: "error" });
          return;
     }
 
@@ -573,6 +572,21 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
                          </div>
                     </div>
 
+                    {/* ✅ NEW PINCODE INPUT FIELD */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">Pincode / Zip Code</label>
+                        <div className="relative">
+                            <FiHash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                            <input 
+                                type="text" 
+                                placeholder="534281" 
+                                value={form.zip} 
+                                onChange={e => setForm({...form, zip: e.target.value})} 
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 pl-11 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
+                            />
+                        </div>
+                    </div>
+
                     <div className="p-3 md:p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-500/10 rounded-2xl">
                         <div className="flex justify-between items-center mb-1">
                             <p className="text-[10px] md:text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Selected Location</p>
@@ -591,7 +605,7 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
                         <p className="text-[10px] md:text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium line-clamp-2">{form.street || "Select a location on the map..."}</p>
                     </div>
 
-                    <button disabled={!isDeliverable || !form.fullName || !form.phone || !form.houseNo || isDetecting} onClick={() => onSave(form)} 
+                    <button disabled={!isDeliverable || !form.fullName || !form.phone || !form.houseNo || !form.zip || isDetecting} onClick={() => onSave(form)} 
                         className={`w-full py-3.5 md:py-4 rounded-xl font-bold uppercase tracking-wide text-[10px] md:text-xs transition-all shadow-lg ${isDeliverable && !isDetecting ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-600 dark:hover:bg-blue-100 shadow-slate-900/20' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
                     >
                         {isDetecting ? "Fetching Location..." : "Confirm Address"}

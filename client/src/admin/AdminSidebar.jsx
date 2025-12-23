@@ -8,7 +8,8 @@ import {
   FiUsers, 
   FiLogOut,
   FiGlobe,
-  FiMail // ✅ Added Mail Icon
+  FiMail,
+  FiTag // ✅ Added Tag Icon
 } from "react-icons/fi";
 
 const LINKS = [
@@ -16,7 +17,8 @@ const LINKS = [
   { name: "Products", path: "/admin/products", icon: <FiShoppingBag size={20} /> },
   { name: "Add Product", path: "/admin/add-product", icon: <FiPlusSquare size={20} /> },
   { name: "Orders", path: "/admin/orders", icon: <FiClipboard size={20} /> },
-  { name: "Inbox", path: "/admin/messages", icon: <FiMail size={20} /> }, // ✅ NEW LINK
+  { name: "Inbox", path: "/admin/messages", icon: <FiMail size={20} /> },
+  { name: "Coupons", path: "/admin/coupons", icon: <FiTag size={20} /> }, // ✅ LINK ADDED
   { name: "Users", path: "/admin/users", icon: <FiUsers size={20} /> },
 ];
 
