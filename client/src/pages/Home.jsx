@@ -184,8 +184,39 @@ const CategoryPanel = () => {
     )
 }
 
-// --- ✅ NEW: FLASH SALE BANNER (E-Commerce Style) ---
+// --- ✅ NEW: FLASH SALE BANNER WITH WORKING TIMER ---
 const FlashSale = () => {
+    // Timer state for Hours, Minutes, Seconds
+    const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 32, seconds: 18 });
+
+    useEffect(() => {
+        // Function to calculate time remaining until midnight tonight
+        const calculateTimeLeft = () => {
+            const now = new Date();
+            const midnight = new Date();
+            midnight.setHours(24, 0, 0, 0); // Set to next midnight
+            const diff = midnight - now; // Difference in milliseconds
+
+            if (diff > 0) {
+                const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+                const minutes = Math.floor((diff / 1000 / 60) % 60);
+                const seconds = Math.floor((diff / 1000) % 60);
+                setTimeLeft({ hours, minutes, seconds });
+            } else {
+                setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
+            }
+        };
+
+        // Update timer every second
+        const timer = setInterval(calculateTimeLeft, 1000);
+        calculateTimeLeft(); // Initial call to avoid delay
+
+        return () => clearInterval(timer);
+    }, []);
+
+    // Helper to format numbers with leading zero (e.g., "5" -> "05")
+    const formatTime = (value) => value.toString().padStart(2, "0");
+
     return (
         <section className="py-10 px-4">
             <div className="max-w-6xl mx-auto bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl shadow-2xl p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
@@ -198,16 +229,17 @@ const FlashSale = () => {
                         <Flame size={14} className="text-yellow-300" /> Flash Deal
                     </div>
                     <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-2">TODAY'S CATCH</h2>
-                    <p className="text-red-100 text-lg font-medium">Order before 11 AM for <span className="font-bold text-white underline decoration-yellow-400 decoration-2 underline-offset-4">Express Lunch Delivery</span>.</p>
+                    {/* UPDATED TEXT BELOW */}
+                    <p className="text-red-100 text-lg font-medium">Order above <span className="text-white font-bold underline decoration-yellow-400">₹1699</span> and use coupon <span className="bg-yellow-400 text-red-900 px-1 rounded font-bold">10%</span> to avail offer.</p>
                 </div>
 
                 <div className="relative z-10 bg-white p-6 rounded-xl shadow-lg transform rotate-2 md:rotate-0">
                     <div className="text-center">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ends In</p>
                         <div className="flex gap-2 text-slate-900 font-mono font-black text-3xl">
-                            <span className="bg-slate-100 px-2 rounded">04</span>:
-                            <span className="bg-slate-100 px-2 rounded">32</span>:
-                            <span className="bg-slate-100 px-2 rounded text-red-600">18</span>
+                            <span className="bg-slate-100 px-2 rounded">{formatTime(timeLeft.hours)}</span>:
+                            <span className="bg-slate-100 px-2 rounded">{formatTime(timeLeft.minutes)}</span>:
+                            <span className="bg-slate-100 px-2 rounded text-red-600">{formatTime(timeLeft.seconds)}</span>
                         </div>
                     </div>
                     <Link to="/products" className="block mt-4 w-full bg-slate-900 text-white text-center py-3 rounded-lg font-bold text-sm uppercase tracking-wide hover:bg-slate-800 transition-colors">Grab The Deal</Link>
