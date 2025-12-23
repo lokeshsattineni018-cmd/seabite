@@ -50,6 +50,11 @@ export default function AddProduct() {
       setModal({ show: true, message: "Please upload a valid image file.", type: "error" });
       return;
     }
+    // Added a size check to prevent Vercel 500 errors before they happen
+    if (file.size > 4.5 * 1024 * 1024) {
+      setModal({ show: true, message: "Image is too large. Please upload an image under 4.5MB.", type: "error" });
+      return;
+    }
     setImage(file);
     setPreview(URL.createObjectURL(file));
   };
@@ -87,19 +92,26 @@ export default function AddProduct() {
       data.append("stock", form.stock);
       data.append("image", image); 
 
-      await axios.post(`${API_URL}/api/admin/products`, data, {
+      const response = await axios.post(`${API_URL}/api/admin/products`, data, {
         headers: { 
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data" 
         },
       });
 
-      setModal({ show: true, message: "Product added successfully!", type: "success" });
-      setForm({ name: "", category: "", basePrice: "", unit: "kg", desc: "", trending: false, stock: "in" });
-      removeImage();
+      if(response.status === 201) {
+        setModal({ show: true, message: "Product added successfully!", type: "success" });
+        setForm({ name: "", category: "", basePrice: "", unit: "kg", desc: "", trending: false, stock: "in" });
+        removeImage();
+      }
 
     } catch (err) {
-      setModal({ show: true, message: err.response?.data?.message || "Failed to add product.", type: "error" });
+      // Catch specific 500 errors and give better feedback
+      const errorMsg = err.response?.status === 500 
+        ? "Server Error: Check if Cloudinary keys are set in Vercel." 
+        : err.response?.data?.message || "Failed to add product.";
+      
+      setModal({ show: true, message: errorMsg, type: "error" });
     } finally {
       setLoading(false);
     }
@@ -115,7 +127,6 @@ export default function AddProduct() {
         onClose={() => setModal({ ...modal, show: false })} 
       />
 
-      {/* HEADER - Mobile Responsive Text */}
       <motion.div initial={{opacity:0, y:-10}} animate={{opacity:1, y:0}} className="mb-6 md:mb-8 max-w-5xl mx-auto">
         <h1 className="text-2xl md:text-3xl font-serif font-bold text-slate-900 tracking-tight">Add New Product</h1>
         <p className="text-slate-500 text-xs md:text-sm mt-1">Create a new listing for your inventory.</p>
@@ -123,7 +134,6 @@ export default function AddProduct() {
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
         
-        {/* === LEFT COL: IMAGE & STATUS === */}
         <div className="lg:col-span-1 space-y-4 md:space-y-6">
           <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-200">
             <label className="block text-xs md:text-sm font-bold text-slate-700 mb-4 uppercase tracking-wider">Product Image</label>
@@ -165,7 +175,6 @@ export default function AddProduct() {
             </div>
           </div>
 
-          {/* Trending Toggle - Mobile Optimized */}
           <div className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between">
              <div className="flex items-center gap-3">
                <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center ${form.trending ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-400"}`}>
@@ -183,11 +192,9 @@ export default function AddProduct() {
           </div>
         </div>
 
-        {/* === RIGHT COL: PRODUCT DETAILS === */}
         <div className="lg:col-span-2">
           <div className="bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-slate-200 space-y-5 md:space-y-6">
             
-            {/* Product Name */}
             <div className="space-y-1.5">
               <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">Product Name</label>
               <div className="relative">
@@ -202,9 +209,7 @@ export default function AddProduct() {
               </div>
             </div>
 
-            {/* Grid for small devices: 1 col, md: 3 col */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-              {/* Category */}
               <div className="space-y-1.5">
                 <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">Category</label>
                 <div className="relative">
@@ -223,7 +228,6 @@ export default function AddProduct() {
                 </div>
               </div>
 
-              {/* Price */}
               <div className="space-y-1.5">
                 <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">Price (₹)</label>
                 <div className="relative">
@@ -239,7 +243,6 @@ export default function AddProduct() {
                 </div>
               </div>
 
-              {/* Unit */}
               <div className="space-y-1.5">
                 <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">Unit</label>
                 <div className="relative">
@@ -258,7 +261,6 @@ export default function AddProduct() {
               </div>
             </div>
 
-            {/* Description */}
             <div className="space-y-1.5">
               <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">Description</label>
               <textarea 
@@ -271,7 +273,6 @@ export default function AddProduct() {
               />
             </div>
 
-            {/* Stock Status - High Tap Target Area */}
             <div className="space-y-1.5">
               <label className="text-[10px] md:text-xs font-bold text-slate-500 uppercase tracking-wide ml-1">Availability</label>
               <div className="grid grid-cols-2 gap-3 md:gap-4">
@@ -293,7 +294,6 @@ export default function AddProduct() {
               </div>
             </div>
 
-            {/* Actions - Mobile Fixed/Bottom or Inline */}
             <div className="pt-6 flex flex-col md:flex-row justify-end gap-3 md:gap-4 border-t border-slate-100 mt-6">
                <button 
                   type="button" 
@@ -315,5 +315,5 @@ export default function AddProduct() {
         </div>
       </form>
     </div>
-  );
+  ); 
 }
