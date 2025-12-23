@@ -176,7 +176,6 @@ export default function Products() {
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full lg:w-auto">
-                        {/* Sort Dropdown */}
                         <div className="relative group w-full sm:min-w-[180px]">
                             <select 
                                 value={sortBy}
@@ -237,27 +236,24 @@ export default function Products() {
                                         transition={{ delay: idx * 0.05 }}
                                         className="h-full flex flex-col"
                                     >
-                                        {/* EDGE-TO-EDGE IMAGE CONTAINER */}
-                                        <div className="relative h-64 md:h-80 w-full bg-slate-50 dark:bg-slate-900/40 flex items-center justify-center overflow-hidden">
+                                        {/* ✅ FIXED: Smaller, Contained Image (No Cropping) */}
+                                        <div className="relative h-48 md:h-56 w-full bg-slate-50 dark:bg-slate-900/40 flex items-center justify-center overflow-hidden p-4 rounded-t-[2rem]">
                                             {p.trending && (
                                                 <span className="absolute top-4 left-4 bg-white dark:bg-slate-800 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg z-10 flex items-center gap-1.5">
                                                     <span className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-ping" /> Hot
                                                 </span>
                                             )}
                                             
-                                            {/* FULL IMAGE */}
+                                            {/* ✅ FIXED: object-contain keeps the whole fish visible */}
                                             <motion.img 
                                                 whileHover={{ scale: 1.1 }}
                                                 transition={{ duration: 0.5 }}
                                                 src={`${API_URL}${p.image}`} 
-                                                className="w-full h-full object-cover" 
+                                                className="w-full h-full object-contain drop-shadow-xl" 
                                             />
-                                            
-                                            {/* BOTTOM GRADIENT FOR DEPTH */}
-                                            <div className="absolute bottom-0 left-0 w-full h-20 bg-gradient-to-t from-slate-900/10 to-transparent pointer-events-none" />
                                         </div>
 
-                                        {/* TEXT CONTENT WITH PADDING */}
+                                        {/* Text Content */}
                                         <div className="p-5 md:p-6 flex-grow flex flex-col justify-between">
                                             <div>
                                                 <span className="text-[10px] font-black uppercase tracking-widest text-blue-500/80 mb-1 block">{p.category}</span>
