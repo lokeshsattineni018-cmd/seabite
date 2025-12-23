@@ -3,7 +3,7 @@ import { getCart, saveCart, clearCart } from "../utils/cartStorage";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield, FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiTarget, FiSearch, FiCreditCard, FiTruck, FiLoader, FiHash } from "react-icons/fi"; 
+import { FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield, FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiTarget, FiSearch, FiCreditCard, FiTruck, FiLoader, FiHash, FiAlertCircle } from "react-icons/fi"; 
 import PopupModal from "../components/PopupModal";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext"; 
@@ -23,7 +23,8 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   
-  const [paymentMethod, setPaymentMethod] = useState("Prepaid"); 
+  // ✅ CHANGED DEFAULT TO COD (Since Prepaid is disabled)
+  const [paymentMethod, setPaymentMethod] = useState("COD"); 
 
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
@@ -121,7 +122,7 @@ export default function Checkout() {
         setModal({ show: true, message: `Delivery restricted to AP & Telangana.`, type: "error" });
         return;
     }
-    // ✅ Added Zip Check
+    
     if (!deliveryAddress.fullName || !deliveryAddress.phone || !deliveryAddress.street || !deliveryAddress.houseNo || !deliveryAddress.city || !deliveryAddress.zip) {
          setModal({ show: true, message: "Please complete your delivery address (Zip/Pincode is required).", type: "error" });
          return;
@@ -153,6 +154,7 @@ export default function Checkout() {
             return;
         }
 
+        // Razorpay logic kept but technically unreachable now
         const options = {
             key: "rzp_test_RudgOJMh7819Qs", 
             amount: data.order.amount,
@@ -256,19 +258,27 @@ export default function Checkout() {
                 Payment Method
              </h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div 
-                    onClick={() => setPaymentMethod("Prepaid")}
-                    className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${paymentMethod === "Prepaid" ? "border-blue-500 bg-blue-50/30 dark:bg-blue-900/20" : "border-slate-100 dark:border-slate-700 hover:border-slate-200"}`}
-                >
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${paymentMethod === "Prepaid" ? "border-blue-500" : "border-slate-300"}`}>
-                        {paymentMethod === "Prepaid" && <div className="w-3 h-3 bg-blue-500 rounded-full" />}
+                
+                {/* ✅ PREPAID - DISABLED WITH HOVER TOOLTIP */}
+                <div className="group relative opacity-60 cursor-not-allowed p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-4">
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-3 py-2 rounded-lg shadow-xl whitespace-nowrap z-50 border border-slate-700">
+                        <div className="flex items-center gap-2">
+                             <FiAlertCircle className="text-yellow-400" /> Currently under maintenance
+                        </div>
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900"></div>
+                    </div>
+
+                    <div className="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center">
+                        {/* Empty circle */}
                     </div>
                     <div>
-                        <p className="font-bold text-slate-900 dark:text-white">Prepaid (Razorpay)</p>
-                        <p className="text-[10px] text-slate-500">Pay securely with Cards, UPI, Netbanking</p>
+                        <p className="font-bold text-slate-500 dark:text-slate-400">Prepaid (Razorpay)</p>
+                        <p className="text-[10px] text-slate-400">Pay securely with Cards, UPI, Netbanking</p>
                     </div>
                 </div>
 
+                {/* COD - ACTIVE */}
                 <div 
                     onClick={() => setPaymentMethod("COD")}
                     className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${paymentMethod === "COD" ? "border-blue-500 bg-blue-50/30 dark:bg-blue-900/20" : "border-slate-100 dark:border-slate-700 hover:border-slate-200"}`}

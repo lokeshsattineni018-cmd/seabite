@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { FiFacebook, FiInstagram, FiTwitter, FiMapPin, FiPhone, FiMail, FiSend, FiLoader, FiCheck } from "react-icons/fi";
+import { FiMapPin, FiPhone, FiMail, FiSend, FiLoader, FiCheck } from "react-icons/fi";
 import { ThemeContext } from "../context/ThemeContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
@@ -48,11 +48,6 @@ export default function Footer() {
             <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               Delivering the freshest catch from coast to kitchen. Premium quality seafood sourced responsibly and delivered with care to your kitchen.
             </p>
-            <div className="flex gap-3 pt-2">
-              <SocialIcon icon={<FiFacebook />} />
-              <SocialIcon icon={<FiInstagram />} />
-              <SocialIcon icon={<FiTwitter />} />
-            </div>
           </div>
 
           {/* INFORMATION COLUMN */}
@@ -75,7 +70,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* ✅ UPDATED CONTACT FORM COLUMN */}
+          {/* CONTACT FORM COLUMN */}
           <div className="space-y-6">
             <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-[0.2em] mb-6">Contact Us</h4>
             
@@ -120,11 +115,11 @@ export default function Footer() {
             <div className="space-y-2 pt-2">
                <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                   <FiPhone className="text-blue-600 dark:text-blue-400 shrink-0" size={14} />
-                  <span>+91 9441429745</span>
+                  <span>+91 9866635566</span>
                </div>
                <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                   <FiMail className="text-blue-600 dark:text-blue-400 shrink-0" size={14} />
-                  <span>support@seabite.com</span>
+                  <span>support@seabite.co.in</span>
                </div>
             </div>
 
@@ -143,13 +138,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  );
-}
-
-function SocialIcon({ icon }) {
-  return (
-    <a href="#" className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white hover:border-blue-600 dark:hover:bg-white dark:hover:text-slate-900 transition-all duration-300 shadow-sm">
-      {icon}
-    </a>
   );
 }
