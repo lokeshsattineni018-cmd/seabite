@@ -80,7 +80,7 @@ const WelcomePopup = () => {
             {/* Left Side: FULL HEIGHT IMAGE */}
             <div className="w-full md:w-1/2 h-64 md:h-full relative bg-gray-100">
                 <img 
-                    src="/20%.png" 
+                    src="/200ffer.png" 
                     alt="20% OFF" 
                     className="w-full h-full object-cover" 
                 />
@@ -316,7 +316,7 @@ const OfferBanner = () => {
                 </div>
 
                 <div className="w-full md:w-[60%] relative h-[300px] md:h-auto bg-gray-200">
-                    <img src="/20%.png" alt="20% Off" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    <img src="/20offer.png" alt="20% Off" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-black/10"></div>
                 </div>
 
