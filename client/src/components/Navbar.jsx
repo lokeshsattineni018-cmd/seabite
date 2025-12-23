@@ -7,7 +7,7 @@ import { ThemeContext } from "../context/ThemeContext";
 import axios from "axios";
 import { useGoogleLogin } from "@react-oauth/google"; 
 
-const API_URL = "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 export default function Navbar({ openCart }) { 
   const { cartCount } = useContext(CartContext);
@@ -19,23 +19,42 @@ export default function Navbar({ openCart }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const navigate = useNavigate();
 
+  // ✅ INSTANT LOGIN UPDATE FIX
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    axios.get(`${API_URL}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
-      .then((res) => { setUser(res.data); fetchNotifications(token); })
-      .catch(() => { localStorage.removeItem("token"); setUser(null); });
+    // 1. Initial Load
+    checkUser();
+
+    // 2. Listen for "storage" events (updates from other tabs)
+    window.addEventListener("storage", checkUser);
+
+    // 3. Listen for CUSTOM event "auth-update" (instant update from Login page)
+    window.addEventListener("auth-update", checkUser);
+
+    return () => {
+      window.removeEventListener("storage", checkUser);
+      window.removeEventListener("auth-update", checkUser);
+    };
   }, []);
+
+  const checkUser = () => {
+    const token = localStorage.getItem("token");
+    const storedUser = localStorage.getItem("user");
+
+    if (token && storedUser) {
+        setUser(JSON.parse(storedUser));
+        fetchNotifications(token);
+    } else {
+        setUser(null);
+    }
+  };
 
   const fetchNotifications = async (token) => {
     try {
       const res = await axios.get(`${API_URL}/api/notifications`, { headers: { Authorization: `Bearer ${token}` } });
-      setNotifications(res.data);
       setUnreadCount(res.data.filter(n => !n.read).length);
     } catch (err) { console.error("Notification fetch failed"); }
   };
@@ -51,7 +70,9 @@ export default function Navbar({ openCart }) {
     localStorage.removeItem("user");
     setUser(null);
     navigate("/");
-    window.location.reload();
+    
+    // ✅ Dispatch event so other components know logout happened
+    window.dispatchEvent(new Event("auth-update"));
   };
 
   const handleSearch = (e) => {
@@ -66,9 +87,17 @@ export default function Navbar({ openCart }) {
     onSuccess: async (tokenResponse) => {
       try {
         const res = await axios.post(`${API_URL}/api/auth/google`, { token: tokenResponse.access_token });
+        
+        // Save to Storage
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("user", JSON.stringify(res.data.user));
+        
+        // ✅ INSTANT UPDATE: Set state immediately
         setUser(res.data.user);
+        
+        // ✅ BROADCAST UPDATE: Tell the app "We are logged in!"
+        window.dispatchEvent(new Event("auth-update"));
+
         if (res.data.user.role === "admin") navigate("/admin/dashboard");
         fetchNotifications(res.data.token);
       } catch (err) { console.error("Google Login Failed", err); }
@@ -89,7 +118,7 @@ export default function Navbar({ openCart }) {
     >
       <div className="max-w-7xl mx-auto px-4 md:px-12 flex items-center justify-between">
         
-        {/* LOGO (Responsive size) */}
+        {/* LOGO */}
         <Link to="/">
           <motion.div whileHover={{ scale: 1.05 }} className="flex items-center gap-3">
              <img 
@@ -123,7 +152,7 @@ export default function Navbar({ openCart }) {
         {/* ACTIONS */}
         <div className="flex items-center gap-2 md:gap-6">
           
-          {/* SHOP DROPDOWN (Hidden on Mobile) */}
+          {/* SHOP DROPDOWN */}
           <div 
             className="hidden md:block relative"
             onMouseEnter={() => setShowShop(true)}
@@ -150,7 +179,7 @@ export default function Navbar({ openCart }) {
             </AnimatePresence>
           </div>
 
-          {/* THEME TOGGLE (Visible always) */}
+          {/* THEME TOGGLE */}
           <button 
             onClick={toggleTheme}
             className="p-2 md:p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-blue-300 hover:scale-110 transition-all shadow-sm"
@@ -158,7 +187,7 @@ export default function Navbar({ openCart }) {
             {isDarkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
           </button>
 
-          {/* CART (Visible always) */}
+          {/* CART */}
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="relative cursor-pointer text-slate-700 dark:text-blue-100 hover:text-blue-600 dark:hover:text-white transition-colors p-2" onClick={openCart}>
                 <FiShoppingBag size={22} md:size={24} strokeWidth={1.5} />
                 {cartCount > 0 && (

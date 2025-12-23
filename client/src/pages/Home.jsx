@@ -80,7 +80,7 @@ const WelcomePopup = () => {
             {/* Left Side: FULL HEIGHT IMAGE */}
             <div className="w-full md:w-1/2 h-64 md:h-full relative bg-gray-100">
                 <img 
-                    src="/200ffer.png" 
+                    src="/20offer.png" 
                     alt="20% OFF" 
                     className="w-full h-full object-cover" 
                 />
