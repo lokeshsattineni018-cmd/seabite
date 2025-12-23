@@ -107,12 +107,7 @@ const VideoHero = () => {
           <h1 className="text-[15vw] md:text-[12vw] leading-none font-serif text-white opacity-95 select-none drop-shadow-2xl">SEABITE</h1>
           <motion.div initial={{ width: 0 }} animate={{ width: "100px" }} transition={{ delay: 1, duration: 1 }} className="h-[1px] bg-white/50 mx-auto" />
           
-          {/* ✅ ADDED COUPON CODE HERE */}
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 px-6 py-2 rounded-full mt-4">
-            <p className="text-white text-sm md:text-base font-medium tracking-wide">
-              Use Code: <span className="font-bold text-yellow-400">SEABITE20</span> for 20% Off
-            </p>
-          </div>
+          
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link to="/products"><button className="mt-8 px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold tracking-widest text-xs hover:bg-white hover:text-black transition-all duration-500 shadow-xl">Shop Now</button></Link>
@@ -238,7 +233,7 @@ const FlashSale = () => {
                     </div>
                     <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-2">TODAY'S CATCH</h2>
                     {/* ✅ UPDATED TEXT */}
-                    <p className="text-red-100 text-lg font-medium">Order above <span className="text-white font-bold underline decoration-yellow-400">₹1699</span> and use coupon <span className="bg-yellow-400 text-red-900 px-1 rounded font-bold">10%</span> to avail offer.</p>
+                    <p className="text-red-100 text-lg font-medium">Order above <span className="text-white font-bold underline decoration-yellow-400">₹1699</span> and use coupon SEABITE10 <span className="bg-yellow-400 text-red-900 px-1 rounded font-bold"></span> to avail offer 10% OFF.</p>
                 </div>
 
                 <div className="relative z-10 bg-white p-6 rounded-xl shadow-lg transform rotate-2 md:rotate-0">
