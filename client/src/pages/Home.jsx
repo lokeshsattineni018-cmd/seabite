@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform, useInView, useSpring, useMotionValue, 
 import axios from "axios";
 import { ArrowRight, Star, Scissors, ShieldCheck, Truck, Clock, Quote, Fish, Sparkles, X, Copy, Check, Gift, Zap, User } from "lucide-react";
 
-const API_URL = "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 // --- ANIMATION WRAPPER ---
 const SectionReveal = ({ children }) => {
@@ -23,14 +23,27 @@ const SectionReveal = ({ children }) => {
   );
 };
 
-// --- NEW AESTHETIC WELCOME POPUP (FIXED IMAGE) ---
+// --- NEW AESTHETIC WELCOME POPUP (DYNAMIC) ---
 const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Default fallback if no coupon exists in DB
+  const [offer, setOffer] = useState({ code: "SEABITE20", value: 20, discountType: "percent" });
 
   useEffect(() => {
     const hasSeen = sessionStorage.getItem("hasSeenWelcomePopup");
     
+    // Fetch latest coupon
+    axios.get(`${API_URL}/api/coupons`)
+      .then(res => {
+        if (res.data && res.data.length > 0) {
+            // Get the most recent active coupon
+            const activeCoupon = res.data.find(c => c.isActive) || res.data[0];
+            setOffer(activeCoupon);
+        }
+      })
+      .catch(err => console.log("No coupons found, using default."));
+
     if (!hasSeen) {
       const timer = setTimeout(() => {
         setIsOpen(true);
@@ -45,7 +58,7 @@ const WelcomePopup = () => {
   };
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText("SEABITE20");
+    navigator.clipboard.writeText(offer.code);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -81,7 +94,7 @@ const WelcomePopup = () => {
             <div className="w-full md:w-1/2 h-64 md:h-full relative bg-gray-100">
                 <img 
                     src="/20offer.png" 
-                    alt="20% OFF" 
+                    alt="Special Offer" 
                     className="w-full h-full object-cover" 
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent md:hidden" />
@@ -102,7 +115,9 @@ const WelcomePopup = () => {
               >
                   <h2 className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white mb-4 leading-[1.1]">
                       Enjoy <br/>
-                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">20% OFF</span>
+                      <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-400 dark:to-indigo-400">
+                        {offer.discountType === 'flat' ? `₹${offer.value}` : `${offer.value}%`} OFF
+                      </span>
                   </h2>
                   
                   <p className="text-slate-500 dark:text-slate-400 mb-8 text-lg font-light leading-relaxed">
@@ -116,7 +131,7 @@ const WelcomePopup = () => {
                     <div className="relative flex items-center justify-between bg-white dark:bg-[#0f172a] rounded-xl p-4 z-10">
                         <div className="flex flex-col items-start">
                             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Coupon Code</span>
-                            <span className="text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-widest">SEABITE20</span>
+                            <span className="text-2xl font-mono font-bold text-slate-900 dark:text-white tracking-widest">{offer.code}</span>
                         </div>
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${copied ? "bg-emerald-500 text-white" : "bg-blue-50 dark:bg-white/10 text-blue-600 dark:text-white group-hover:bg-blue-600 group-hover:text-white"}`}>
                             {copied ? <Check size={24} /> : <Copy size={24} />}
@@ -293,12 +308,27 @@ const CategoryPanel = () => {
     )
 }
 
-// --- 4. OFFER BANNER (CLICK-TO-COPY) ---
+// --- 4. OFFER BANNER (DYNAMICALLY FETCHED) ---
 const OfferBanner = () => {
     const [copied, setCopied] = useState(false);
+    // Default fallback if no coupon exists in DB
+    const [offer, setOffer] = useState({ code: "SEABITE20", value: 20, discountType: "percent" });
+
+    useEffect(() => {
+        // Fetch latest coupon
+        axios.get(`${API_URL}/api/coupons`)
+          .then(res => {
+            if (res.data && res.data.length > 0) {
+                // Get the most recent active coupon
+                const activeCoupon = res.data.find(c => c.isActive) || res.data[0];
+                setOffer(activeCoupon);
+            }
+          })
+          .catch(err => console.log("No coupons found, using default."));
+    }, []);
 
     const handleCopy = () => {
-        navigator.clipboard.writeText("SEABITE20");
+        navigator.clipboard.writeText(offer.code);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
@@ -336,8 +366,15 @@ const OfferBanner = () => {
                     <div className="bg-blue-600 dark:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 flex items-center gap-2">
                         <Sparkles size={12} /> Official Coupon
                     </div>
-                    <h2 className="text-6xl font-serif mb-2">20%</h2>
-                    <h3 className="text-xl font-medium tracking-widest uppercase mb-6 opacity-80">Flat Discount</h3>
+                    
+                    {/* DYNAMIC DISCOUNT AMOUNT */}
+                    <h2 className="text-6xl font-serif mb-2">
+                        {offer.discountType === 'flat' ? `₹${offer.value}` : `${offer.value}%`}
+                    </h2>
+                    
+                    <h3 className="text-xl font-medium tracking-widest uppercase mb-6 opacity-80">
+                        {offer.discountType === 'flat' ? 'Cash Discount' : 'Flat Discount'}
+                    </h3>
                     
                     <div 
                         onClick={handleCopy}
@@ -345,8 +382,9 @@ const OfferBanner = () => {
                         title="Click to copy code"
                     >
                         <p className="text-xs uppercase opacity-50 mb-1">Promo Code</p>
+                        {/* DYNAMIC CODE */}
                         <p className="text-2xl font-mono font-bold tracking-wider text-emerald-400 dark:text-blue-600 flex items-center justify-center gap-2">
-                            SEABITE20
+                            {offer.code}
                             {copied && <Check size={20} className="text-emerald-500" />}
                         </p>
                         <div className="absolute -top-3 -right-3 text-blue-400 w-8 h-8 bg-[#0f172a] dark:bg-blue-50 p-1.5 rounded-full shadow-md flex items-center justify-center">
