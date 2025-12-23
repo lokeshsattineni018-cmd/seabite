@@ -3,7 +3,7 @@ import { getCart, saveCart, clearCart } from "../utils/cartStorage";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield, FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiTarget, FiSearch, FiCreditCard, FiTruck } from "react-icons/fi"; 
+import { FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield, FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiTarget, FiSearch, FiCreditCard, FiTruck, FiLoader } from "react-icons/fi"; 
 import PopupModal from "../components/PopupModal";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext"; 
@@ -28,7 +28,8 @@ export default function Checkout() {
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [isCouponApplied, setIsCouponApplied] = useState(false); 
-  const [couponMessage, setCouponMessage] = useState(null); 
+  const [couponMessage, setCouponMessage] = useState(null);
+  const [verifyingCoupon, setVerifyingCoupon] = useState(false);
 
   const navigate = useNavigate();
   const { refreshCartCount } = useContext(CartContext);
@@ -60,6 +61,8 @@ export default function Checkout() {
     setCart(updated);
     saveCart(updated);
     refreshCartCount();
+    // Reset coupon if cart changes (to re-validate minimum amount)
+    if(isCouponApplied) handleRemoveCoupon();
   };
   
   const handleRemoveItem = (id) => {
@@ -67,29 +70,35 @@ export default function Checkout() {
     setCart(updated);
     saveCart(updated);
     refreshCartCount();
+    if(isCouponApplied) handleRemoveCoupon();
   };
 
   const itemTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0); 
   const deliveryCharge = itemTotal < 1000 ? 99 : 0;
   
-  useEffect(() => {
-    if (isCouponApplied) {
-        const newDiscount = itemTotal * 0.20; 
-        setDiscount(newDiscount);
-    }
-  }, [cart, itemTotal, isCouponApplied]); 
-
-  const handleApplyCoupon = () => {
+  // ✅ NEW COUPON VALIDATION LOGIC (Server-Side)
+  const handleApplyCoupon = async () => {
       if (!couponCode) return;
-      if (couponCode.toUpperCase() === "SEABITE20") {
-          const discountValue = itemTotal * 0.20; 
-          setDiscount(discountValue);
-          setIsCouponApplied(true);
-          setCouponMessage({ type: 'success', text: 'Coupon Applied: 20% Off!' });
-      } else {
-          setDiscount(0);
-          setIsCouponApplied(false);
-          setCouponMessage({ type: 'error', text: 'Invalid Coupon Code' });
+      setVerifyingCoupon(true);
+      setCouponMessage(null);
+
+      try {
+        const res = await axios.post(`${API_URL}/api/coupons/validate`, {
+            code: couponCode,
+            cartTotal: itemTotal
+        });
+
+        if (res.data.success) {
+            setDiscount(res.data.discountAmount);
+            setIsCouponApplied(true);
+            setCouponMessage({ type: 'success', text: res.data.message });
+        }
+      } catch (err) {
+        setDiscount(0);
+        setIsCouponApplied(false);
+        setCouponMessage({ type: 'error', text: err.response?.data?.message || 'Invalid Coupon Code' });
+      } finally {
+        setVerifyingCoupon(false);
       }
   };
 
@@ -109,7 +118,6 @@ export default function Checkout() {
       setIsAddressModalOpen(false);
   };
 
-  // 🟢 UPDATED PLACE ORDER LOGIC (Fixes the #N/A issue)
   const placeOrder = async () => {
     if (!isDeliveryAllowed) {
         setModal({ show: true, message: `Delivery restricted to AP & Telangana.`, type: "error" });
@@ -136,37 +144,29 @@ export default function Checkout() {
     };
 
     try {
-        // 1. Initial call to create order in MongoDB and Razorpay
         const { data } = await axios.post(`${API_URL}/api/payment/checkout`, orderDetails, { headers: { Authorization: `Bearer ${token}` } });
-
-        // 🟢 Capture the Internal DB ID returned by our updated controller
         const internalDbId = data.dbOrderId;
 
         if (paymentMethod === "COD") {
             clearCart();
             refreshCartCount();
-            // 🟢 Redirect using the DB ID so Success page can look up the real Order #
             navigate(`/success?dbId=${internalDbId}&discount=${discount}&total=${grandTotal}`);
             return;
         }
 
-        // Prepaid Logic: Open Razorpay modal
         const options = {
-            key: "rzp_test_RudgOJMh7819Qs", // Ensure this matches backend .env key
+            key: "rzp_test_RudgOJMh7819Qs", 
             amount: data.order.amount,
             currency: "INR",
             name: "SeaBite",
             description: "Fresh Coastal Catch Payment",
-            order_id: data.order.id, // Razorpay Order ID
+            order_id: data.order.id, 
             handler: async function (response) {
                 try {
-                    // 2. Verify payment on backend
                     const verifyRes = await axios.post(`${API_URL}/api/payment/verify`, response, { headers: { Authorization: `Bearer ${token}` } });
-                    
                     if (verifyRes.data.success) {
                         clearCart();
                         refreshCartCount();
-                        // 🟢 Redirect using the same internalDbId captured earlier
                         navigate(`/success?dbId=${internalDbId}&discount=${discount}&total=${grandTotal}`);
                     }
                 } catch (err) {
@@ -177,7 +177,7 @@ export default function Checkout() {
             theme: { color: "#2563eb" },
             modal: {
                 ondismiss: function() {
-                    setLoading(false); // Stop loader if user closes modal
+                    setLoading(false); 
                 }
             }
         };
@@ -332,6 +332,7 @@ export default function Checkout() {
               <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
               <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white mb-5 md:mb-6 uppercase tracking-wide">Payment Details</h3>
               
+              {/* COUPON INPUT */}
               <div className="mb-6">
                   <label className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 mb-2 block">Have a Coupon?</label>
                   <div className="flex gap-2">
@@ -342,7 +343,7 @@ export default function Checkout() {
                             placeholder="Promo Code" 
                             value={couponCode}
                             onChange={(e) => setCouponCode(e.target.value)}
-                            disabled={isCouponApplied}
+                            disabled={isCouponApplied || verifyingCoupon}
                             className="w-full pl-9 pr-4 py-2.5 md:py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs md:text-sm font-semibold outline-none focus:border-blue-500 transition-all uppercase placeholder:normal-case disabled:opacity-50"
                           />
                           {isCouponApplied && (
@@ -353,10 +354,10 @@ export default function Checkout() {
                       </div>
                       <button 
                         onClick={handleApplyCoupon}
-                        disabled={isCouponApplied || !couponCode}
-                        className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 rounded-xl font-bold text-[10px] md:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                        disabled={isCouponApplied || !couponCode || verifyingCoupon}
+                        className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 rounded-xl font-bold text-[10px] md:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors flex items-center justify-center min-w-[70px]"
                       >
-                        Apply
+                        {verifyingCoupon ? <FiLoader className="animate-spin" /> : "Apply"}
                       </button>
                   </div>
                   {couponMessage && (
@@ -370,7 +371,7 @@ export default function Checkout() {
                 <div className="flex justify-between text-slate-500 dark:text-slate-400"><span>Subtotal</span><span className="text-slate-900 dark:text-white font-bold">₹{itemTotal.toFixed(2)}</span></div>
                 {isCouponApplied && (
                     <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                        <span>Discount (20%)</span>
+                        <span>Discount Applied</span>
                         <span className="font-bold">- ₹{discount.toFixed(2)}</span>
                     </div>
                 )}
@@ -433,7 +434,10 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
     const markerInstance = useRef(null);
     const [form, setForm] = useState(currentAddress);
     const [searchQuery, setSearchQuery] = useState("");
+    
+    // Default to true initially so user doesn't see "Red Alert" before detection
     const [isDeliverable, setIsDeliverable] = useState(true);
+    const [isDetecting, setIsDetecting] = useState(true); // New state to show "Detecting..."
 
     useEffect(() => {
         if (mapInstance.current) return;
@@ -465,6 +469,7 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
     }, [isDarkMode]);
 
     const fetchAddress = async (lat, lon) => {
+        setIsDetecting(true); // Show detecting state
         try {
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`);
             const data = await res.json();
@@ -482,12 +487,15 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
                     zip: addr.postcode || "" 
                 }));
                 
+                // Only now check if it's deliverable
                 setIsDeliverable(ALLOWED_DELIVERY_STATES.some(s => state.toLowerCase().includes(s.toLowerCase())));
             }
         } catch (err) { console.error(err); }
+        finally { setIsDetecting(false); }
     };
 
     const detectLocation = () => {
+        setIsDetecting(true);
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((pos) => {
                 const { latitude, longitude } = pos.coords;
@@ -500,6 +508,7 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
 
     const handleFormSearch = async (e) => {
         e.preventDefault();
+        setIsDetecting(true);
         try {
             const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${searchQuery}, India&addressdetails=1&limit=1`);
             const data = await res.json();
@@ -523,6 +532,7 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
                 setIsDeliverable(ALLOWED_DELIVERY_STATES.some(s => state.toLowerCase().includes(s.toLowerCase())));
             }
         } catch (err) { console.error(err); }
+        finally { setIsDetecting(false); }
     };
 
     return (
@@ -566,17 +576,25 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
                     <div className="p-3 md:p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-500/10 rounded-2xl">
                         <div className="flex justify-between items-center mb-1">
                             <p className="text-[10px] md:text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">Selected Location</p>
-                            <span className={`text-[8px] md:text-[10px] font-bold px-2 py-0.5 rounded border ${isDeliverable ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-900/30' : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900/30'}`}>
-                                {isDeliverable ? "Deliverable" : "Not Deliverable"}
-                            </span>
+                            
+                            {/* NEW: DETECTING STATE + SERVICEABLE BADGE */}
+                            {isDetecting ? (
+                                <span className="text-[8px] md:text-[10px] font-bold px-2 py-0.5 rounded border bg-blue-100 text-blue-700 border-blue-200 flex items-center gap-1">
+                                    <FiLoader className="animate-spin" /> Detecting...
+                                </span>
+                            ) : (
+                                <span className={`text-[8px] md:text-[10px] font-bold px-2 py-0.5 rounded border ${isDeliverable ? 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-900/30' : 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-900/30'}`}>
+                                    {isDeliverable ? "Serviceable" : "Not Serviceable"}
+                                </span>
+                            )}
                         </div>
                         <p className="text-[10px] md:text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium line-clamp-2">{form.street || "Select a location on the map..."}</p>
                     </div>
 
-                    <button disabled={!isDeliverable || !form.fullName || !form.phone || !form.houseNo} onClick={() => onSave(form)} 
-                        className={`w-full py-3.5 md:py-4 rounded-xl font-bold uppercase tracking-wide text-[10px] md:text-xs transition-all shadow-lg ${isDeliverable ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-600 dark:hover:bg-blue-100 shadow-slate-900/20' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+                    <button disabled={!isDeliverable || !form.fullName || !form.phone || !form.houseNo || isDetecting} onClick={() => onSave(form)} 
+                        className={`w-full py-3.5 md:py-4 rounded-xl font-bold uppercase tracking-wide text-[10px] md:text-xs transition-all shadow-lg ${isDeliverable && !isDetecting ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-600 dark:hover:bg-blue-100 shadow-slate-900/20' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
                     >
-                        Confirm Address
+                        {isDetecting ? "Fetching Location..." : "Confirm Address"}
                     </button>
                 </div>
             </motion.div>

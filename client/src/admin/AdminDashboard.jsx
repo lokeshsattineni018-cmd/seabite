@@ -4,7 +4,7 @@ import axios from "axios";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid
 } from "recharts";
-import { FiShoppingBag, FiUsers, FiTrendingUp, FiActivity, FiDollarSign, FiCalendar } from "react-icons/fi";
+import { FiShoppingBag, FiUsers, FiTrendingUp, FiActivity, FiDollarSign, FiCalendar, FiMail } from "react-icons/fi";
 import { motion } from "framer-motion";
 
 // 🟢 SAFE PLACEHOLDER: Gray Box (Works offline)
@@ -17,6 +17,10 @@ export default function AdminDashboard() {
   const [graph, setGraph] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
   const [popularProducts, setPopularProducts] = useState([]);
+  
+  // ✅ NEW: Messages State
+  const [recentMessages, setRecentMessages] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null); 
 
@@ -24,27 +28,33 @@ export default function AdminDashboard() {
     fetchDashboardData();
   }, [timeFilter]); 
 
-  const fetchDashboardData = () => {
+  const fetchDashboardData = async () => {
     const token = localStorage.getItem("token");
+    const config = { headers: { Authorization: `Bearer ${token}` } };
     
-    axios
-      .get("https://seabite-server.vercel.app/api/admin", { 
-        headers: { Authorization: `Bearer ${token}` },
-        params: { range: timeFilter } 
-      })
-      .then((res) => {
-        setStats(res.data.stats);
-        setGraph(res.data.graph);
-        setRecentOrders(res.data.recentOrders);
-        setPopularProducts(res.data.popularProducts);
+    try {
+        // ✅ Parallel Fetch: Get Dashboard Data AND Messages
+        const [dashboardRes, messagesRes] = await Promise.all([
+            axios.get("https://seabite-server.vercel.app/api/admin", { ...config, params: { range: timeFilter } }),
+            axios.get("https://seabite-server.vercel.app/api/contact")
+        ]);
+
+        // Set Dashboard Data
+        setStats(dashboardRes.data.stats);
+        setGraph(dashboardRes.data.graph);
+        setRecentOrders(dashboardRes.data.recentOrders);
+        setPopularProducts(dashboardRes.data.popularProducts);
+        
+        // ✅ Set Messages (Take top 4)
+        setRecentMessages(messagesRes.data.slice(0, 4));
+
         setLoading(false);
         setError(null);
-      })
-      .catch((err) => {
+    } catch (err) {
         console.error(err);
         setLoading(false);
         setError(err.response?.data?.message || "Failed to load dashboard data.");
-      });
+    }
   };
 
   const getImageUrl = (imagePath) => {
@@ -80,7 +90,7 @@ export default function AdminDashboard() {
   return (
     <div className="p-4 md:p-10 bg-slate-50 min-h-screen space-y-6 md:space-y-8 font-sans">
       
-      {/* HEADER - Stack on mobile */}
+      {/* HEADER */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <h2 className="text-2xl md:text-3xl font-serif font-bold text-slate-900 tracking-tight">Dashboard Overview</h2>
@@ -94,7 +104,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* STATS GRID - 1 col mobile, 3 col desktop */}
+      {/* STATS GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         <StatCard 
           title="Total Revenue" 
@@ -119,8 +129,9 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* MAIN CONTENT - Stack vertically on mobile */}
+      {/* MAIN CONTENT */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* REVENUE CHART */}
         <div className="lg:col-span-2 bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-slate-100">
             <div className="flex flex-row justify-between items-center mb-6 md:mb-8">
                 <h3 className="text-base md:text-lg font-bold text-slate-900">Revenue Analytics</h3>
@@ -178,41 +189,72 @@ export default function AdminDashboard() {
                     ))
                 )}
             </div>
-            <button className="w-full mt-6 py-2 text-[10px] md:text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                View All Products
-            </button>
         </div>
       </div>
 
-      {/* RECENT ORDERS TABLE - Scrollable on mobile */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="text-base md:text-lg font-bold text-slate-900">Recent Orders</h3>
-            <button onClick={() => navigate('/admin/orders')} className="text-xs md:text-sm font-medium text-blue-600">View All</button>
-          </div>
+      {/* ROW 3: RECENT ORDERS & MESSAGES */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[600px] md:min-w-0">
-              <thead className="bg-slate-50 text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                <tr>
-                  <th className="px-4 py-3 md:px-6 md:py-4">ID</th>
-                  <th className="px-4 py-3 md:px-6 md:py-4">Customer</th>
-                  <th className="px-4 py-3 md:px-6 md:py-4">Status</th>
-                  <th className="px-4 py-3 md:px-6 md:py-4 text-right">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs md:text-sm">
-                {recentOrders.map((o) => (
-                  <tr key={o._id} className="hover:bg-slate-50/50">
-                    <td className="px-4 py-3 md:px-6 md:py-4 font-mono font-medium text-slate-600 text-[10px] md:text-xs">#{o.orderId}</td>
-                    <td className="px-4 py-3 md:px-6 md:py-4 font-medium text-slate-900">{o.user?.name || "Guest"}</td>
-                    <td className="px-4 py-3 md:px-6 md:py-4"><StatusPill status={o.status} /></td>
-                    <td className="px-4 py-3 md:px-6 md:py-4 text-right font-bold text-slate-900">₹{o.totalAmount.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {/* RECENT ORDERS - Takes 2 Columns */}
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="p-4 md:p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 className="text-base md:text-lg font-bold text-slate-900">Recent Orders</h3>
+                <button onClick={() => navigate('/admin/orders')} className="text-xs md:text-sm font-medium text-blue-600">View All</button>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-left min-w-[600px] md:min-w-0">
+                <thead className="bg-slate-50 text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <tr>
+                    <th className="px-4 py-3 md:px-6 md:py-4">ID</th>
+                    <th className="px-4 py-3 md:px-6 md:py-4">Customer</th>
+                    <th className="px-4 py-3 md:px-6 md:py-4">Status</th>
+                    <th className="px-4 py-3 md:px-6 md:py-4 text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs md:text-sm">
+                    {recentOrders.map((o) => (
+                    <tr key={o._id} className="hover:bg-slate-50/50">
+                        <td className="px-4 py-3 md:px-6 md:py-4 font-mono font-medium text-slate-600 text-[10px] md:text-xs">#{o.orderId}</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 font-medium text-slate-900">{o.user?.name || "Guest"}</td>
+                        <td className="px-4 py-3 md:px-6 md:py-4"><StatusPill status={o.status} /></td>
+                        <td className="px-4 py-3 md:px-6 md:py-4 text-right font-bold text-slate-900">₹{o.totalAmount.toLocaleString()}</td>
+                    </tr>
+                    ))}
+                </tbody>
+                </table>
+            </div>
+        </div>
+
+        {/* ✅ NEW: RECENT MESSAGES - Takes 1 Column */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 md:p-6">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-base md:text-lg font-bold text-slate-900">Inquiries</h3>
+                <button onClick={() => navigate('/admin/messages')} className="text-xs md:text-sm font-medium text-blue-600">View All</button>
+            </div>
+            
+            <div className="space-y-4">
+                {recentMessages.length === 0 ? (
+                    <p className="text-sm text-slate-400 text-center py-6">No new messages.</p>
+                ) : (
+                    recentMessages.map((msg) => (
+                        <div key={msg._id} className="flex gap-3 items-start p-3 hover:bg-slate-50 rounded-xl transition-colors border border-transparent hover:border-slate-100 cursor-pointer" onClick={() => navigate('/admin/messages')}>
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 shrink-0 mt-1">
+                                <FiMail size={14} />
+                            </div>
+                            <div className="min-w-0">
+                                <div className="flex justify-between items-baseline mb-0.5">
+                                    <h4 className="text-sm font-bold text-slate-900 truncate pr-2">{msg.email.split('@')[0]}</h4>
+                                    <span className="text-[10px] text-slate-400 shrink-0">{new Date(msg.createdAt).toLocaleDateString()}</span>
+                                </div>
+                                <p className="text-xs text-slate-500 truncate">{msg.message}</p>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+
       </div>
     </div>
   );

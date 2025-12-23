@@ -35,7 +35,8 @@ import EditProduct from "./admin/EditProduct";
 import AdminOrders from "./admin/AdminOrders";
 import AdminUsers from "./admin/AdminUsers";
 import AdminLogin from "./admin/AdminLogin";
-import AdminMessages from "./admin/AdminMessages"; // ✅ IMPORT ADDED
+import AdminMessages from "./admin/AdminMessages";
+import AdminCoupons from "./admin/AdminCoupons"; // ✅ IMPORT ADDED
 import AdminRoute from "./components/AdminRoute";
 
 import { CartProvider } from "./context/CartContext";
@@ -85,7 +86,8 @@ function MainLayout() {
               <Route path="edit-product/:id" element={<EditProduct />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="users" element={<AdminUsers />} />
-              <Route path="messages" element={<AdminMessages />} /> {/* ✅ ROUTE ADDED */}
+              <Route path="messages" element={<AdminMessages />} />
+              <Route path="coupons" element={<AdminCoupons />} /> {/* ✅ ROUTE ADDED */}
             </Route>
           </Routes>
         </AnimatePresence>

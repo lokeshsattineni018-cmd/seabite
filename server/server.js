@@ -17,7 +17,8 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import products from "./routes/products.js";       
 import productsRoutes from "./routes/productsRoutes.js"; 
 import paymentRoutes from "./routes/paymentRoutes.js";
-import contactRoutes from "./routes/contactRoutes.js"; // ✅ NEW IMPORT
+import contactRoutes from "./routes/contactRoutes.js"; 
+import couponRoutes from "./routes/couponRoutes.js"; // ✅ NEW IMPORT
 
 /* --- EXTRA IMPORTS --- */
 import upload from "./config/multerConfig.js";
@@ -87,7 +88,8 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/admin/products", adminProductRoutes); 
 app.use("/api/payment", paymentRoutes);
-app.use("/api/contact", contactRoutes); // ✅ NEW ROUTE
+app.use("/api/contact", contactRoutes);
+app.use("/api/coupons", couponRoutes); // ✅ NEW ROUTE
 
 /* --- 8. SERVER SETUP --- */
 const PORT = process.env.PORT || 5001;
