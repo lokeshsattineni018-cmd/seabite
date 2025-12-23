@@ -55,12 +55,14 @@ router.get("/", adminAuth, async (req, res) => {
       .limit(5)
       .populate('user', 'name'); 
 
-    // --- TOP SELLING ---
+    // --- TOP SELLING LOGIC ---
     const allOrders = await Order.find({}, 'items');
     const salesMap = {};
+    
     allOrders.forEach(order => {
       if (order.items && Array.isArray(order.items)) {
         order.items.forEach(item => {
+          // Robust check for ID location
           const pId = item.product || item.productId || item._id;
           if (pId) {
             const idStr = pId.toString(); 
