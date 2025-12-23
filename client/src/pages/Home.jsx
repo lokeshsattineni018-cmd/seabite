@@ -2,11 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, useInView, useSpring, useMotionValue, useAnimationFrame, useVelocity, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { 
-  ArrowRight, Star, ShieldCheck, Truck, Clock, Fish, Sparkles, X, 
-  Copy, Check, Gift, ChevronRight, ShoppingBag, Flame, Percent, 
-  MapPin, Zap, Thermometer, User, Utensils, Anchor, ChevronDown 
-} from "lucide-react";
+import { ArrowRight, Star, ShieldCheck, Truck, Clock, Quote, Fish, Sparkles, X, Copy, Check, Gift, Zap, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
@@ -27,7 +23,7 @@ const SectionReveal = ({ children }) => {
   );
 };
 
-// --- WELCOME POPUP (Kept Same) ---
+// --- WELCOME POPUP ---
 const WelcomePopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -93,7 +89,7 @@ const WelcomePopup = () => {
   );
 };
 
-// --- HERO SECTION (Kept Same) ---
+// --- HERO SECTION ---
 const VideoHero = () => {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 1000], [0, 400]); 
@@ -119,61 +115,76 @@ const VideoHero = () => {
   );
 };
 
-// --- BANK OFFERS TICKER (New) ---
-const BankOffers = () => {
-    const offers = [
-        { icon: <Percent size={14} />, text: "Flat ₹100 OFF on Orders above ₹999 | Code: HUGE100" },
-        { icon: <Zap size={14} />, text: "Free Delivery on your first Order | Code: FREEDEL" },
-        { icon: <Gift size={14} />, text: "Get Free Marinade on 1kg Prawns" },
-    ];
-    
-    return (
-        <div className="bg-blue-50/50 dark:bg-blue-900/10 py-3 overflow-hidden border-b border-blue-100 dark:border-white/5">
-            <motion.div 
-                className="flex gap-8 whitespace-nowrap min-w-max"
-                animate={{ x: ["0%", "-50%"] }}
-                transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
-            >
-                {[...offers, ...offers, ...offers].map((offer, i) => (
-                    <div key={i} className="flex items-center gap-2 text-xs md:text-sm font-medium text-blue-700 dark:text-blue-300 bg-white dark:bg-[#0a1625] px-4 py-1.5 rounded-full border border-blue-100 dark:border-blue-900/30 shadow-sm">
-                        {offer.icon} {offer.text}
-                    </div>
-                ))}
-            </motion.div>
-        </div>
-    )
-}
+// --- ROLLING MARQUEE ---
+const RollingText = () => {
+  const baseX = useMotionValue(0);
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  const smoothVelocity = useSpring(scrollVelocity, { damping: 50, stiffness: 400 });
+  const velocityFactor = useTransform(smoothVelocity, [0, 1000], [0, 5], { clamp: false });
+  const x = useTransform(baseX, (v) => `${v}%`);
+  const directionFactor = useRef(1);
+  
+  useAnimationFrame((t, delta) => {
+    let moveBy = directionFactor.current * 2 * (delta / 1000); 
+    if (velocityFactor.get() < 0) directionFactor.current = -1;
+    else if (velocityFactor.get() > 0) directionFactor.current = 1;
+    moveBy += directionFactor.current * moveBy * velocityFactor.get();
+    baseX.set(baseX.get() + moveBy);
+  });
 
-// --- QUICK CATEGORIES (Story Style) (New) ---
-const QuickCategories = () => {
-    const items = [
-        { name: "Sea Fish", img: "https://cdn-icons-png.flaticon.com/512/3065/3065535.png" },
-        { name: "Prawns", img: "https://cdn-icons-png.flaticon.com/512/2829/2829822.png" },
-        { name: "Crabs", img: "https://cdn-icons-png.flaticon.com/512/3065/3065548.png" },
-        { name: "Boneless", img: "https://cdn-icons-png.flaticon.com/512/6065/6065488.png" },
-        { name: "Steaks", img: "https://cdn-icons-png.flaticon.com/512/3274/3274099.png" },
-        { name: "Today's Catch", img: "https://cdn-icons-png.flaticon.com/512/2553/2553691.png" },
-    ];
+  return (
+    <div className="bg-[#0a1625] border-y border-white/5 py-4 relative z-30 overflow-hidden text-white">
+      <motion.div className="flex whitespace-nowrap" style={{ x }}>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center">
+            <span className="text-sm font-bold uppercase tracking-[0.2em] mx-8 text-blue-200">Fresh Catch Daily</span>
+            <Star className="w-3 h-3 text-blue-500" fill="currentColor" />
+            <span className="text-sm font-bold uppercase tracking-[0.2em] mx-8 text-white">Sustainable</span>
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-6" />
+            <span className="text-sm font-bold uppercase tracking-[0.2em] mx-8 text-blue-200">Ocean to Table</span>
+            <Star className="w-3 h-3 text-blue-500" fill="currentColor" />
+          </div>
+        ))}
+      </motion.div>
+    </div>
+  );
+};
 
+// --- CATEGORIES ---
+const categories = [
+    { title: "Premium Fish", img: "/fish.png", bg: "from-blue-100/80 to-white dark:from-blue-900/40 dark:to-[#0a1625]" },
+    { title: "Jumbo Prawns", img: "/prawn.png", bg: "from-indigo-100/80 to-white dark:from-indigo-900/40 dark:to-[#0a1625]" },
+    { title: "Live Crabs", img: "/crab.png", bg: "from-cyan-100/80 to-white dark:from-cyan-900/40 dark:to-[#0a1625]" },
+];
+
+const CategoryPanel = () => {
+    const [hovered, setHovered] = useState(0);
     return (
-        <div className="bg-white dark:bg-[#0f172a] py-6 border-b border-gray-100 dark:border-white/5 shadow-sm sticky top-16 z-10">
-            <div className="max-w-7xl mx-auto px-4 overflow-x-auto no-scrollbar">
-                <div className="flex gap-6 md:justify-center min-w-max">
-                    {items.map((item, i) => (
-                        <Link to={`/products?cat=${item.name}`} key={i} className="flex flex-col items-center gap-2 group cursor-pointer">
-                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent group-hover:border-blue-500 p-3 transition-all shadow-sm group-hover:shadow-md">
-                                <img src={item.img} alt={item.name} className="w-full h-full object-contain" />
-                            </div>
-                            <span className="text-xs md:text-sm font-medium text-slate-700 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">{item.name}</span>
-                        </Link>
-                    ))}
-                </div>
+        <section className="py-20 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
+            <div className="max-w-7xl mx-auto mb-12 text-center relative z-10">
+                 <h2 className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white transition-colors duration-300">Shop By Category</h2>
+                 <p className="text-blue-600 dark:text-blue-200 mt-2 font-light tracking-wide transition-colors duration-300">Select your catch</p>
             </div>
-        </div>
+            <div className="flex flex-col md:flex-row h-[400px] gap-4 max-w-6xl mx-auto relative z-10">
+                {categories.map((cat, i) => (
+                    <Link to={`/products?category=${cat.title.split(" ")[1]}`} key={i} onMouseEnter={() => setHovered(i)} className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${hovered === i ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20" : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"}`}>
+                        <div className={`absolute inset-0 bg-gradient-to-b ${cat.bg} z-0`} />
+                        <div className="absolute inset-0 flex items-center justify-center z-10 p-6">
+                            <motion.img layout src={cat.img} alt={cat.title} className={`object-contain drop-shadow-2xl transition-all duration-700 ${hovered === i ? "w-[80%] h-[80%] opacity-100" : "w-24 h-24 opacity-50 grayscale"}`} />
+                        </div>
+                        <div className="absolute bottom-0 left-0 w-full p-8 z-20 bg-gradient-to-t from-white via-white/80 dark:from-black dark:via-[#0a1625]/80 to-transparent">
+                            <h3 className={`font-serif text-slate-900 dark:text-white transition-all duration-500 whitespace-nowrap ${hovered === i ? "text-3xl opacity-100" : "text-xl opacity-70"}`}>{cat.title}</h3>
+                            <div className={`flex items-center gap-2 text-blue-600 dark:text-blue-300 text-sm font-bold uppercase tracking-widest mt-2 overflow-hidden transition-all duration-500 ${hovered === i ? "max-h-10 opacity-100" : "max-h-0 opacity-0"}`}>Explore <ArrowRight /></div>
+                        </div>
+                    </Link>
+                ))}
+            </div>
+        </section>
     )
 }
 
-// --- FLASH SALE BANNER ---
+// --- ✅ NEW: FLASH SALE BANNER (E-Commerce Style) ---
 const FlashSale = () => {
     return (
         <section className="py-10 px-4">
@@ -206,84 +217,72 @@ const FlashSale = () => {
     );
 };
 
-// --- PRODUCT CARD (Professional Design) (New) ---
-const ProductCard = ({ product }) => {
-    const getImageUrl = (path) => path ? `${API_URL}${path.startsWith('/') ? path : `/${path}`}` : "";
-    const discount = 20; // Simulated discount percentage
-
-    return (
-        <div className="bg-white dark:bg-[#1e293b] rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-all duration-300 group relative flex flex-col h-full">
-            {/* Image Area */}
-            <div className="relative h-48 bg-slate-50 dark:bg-[#0f172a] p-4 flex items-center justify-center">
-                <Link to={`/products/${product._id}`} className="w-full h-full">
-                   <img src={getImageUrl(product.image)} alt={product.name} className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-500 group-hover:scale-105" />
-                </Link>
-                {/* Badges */}
-                <div className="absolute top-0 left-0 p-2 flex flex-col gap-1">
-                    {product.trending && <span className="bg-amber-400 text-[10px] font-bold px-2 py-0.5 rounded text-amber-950 uppercase tracking-wide">Bestseller</span>}
-                    <span className="bg-red-500 text-[10px] font-bold px-2 py-0.5 rounded text-white uppercase tracking-wide">{discount}% OFF</span>
-                </div>
-                <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm dark:bg-black/50 px-2 py-1 rounded text-[10px] font-bold flex items-center gap-1">
-                    <Clock size={10} /> 90 min delivery
-                </div>
-            </div>
-
-            {/* Content Area */}
-            <div className="p-4 flex flex-col flex-grow">
-                <Link to={`/products/${product._id}`}>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug mb-1 hover:text-blue-600 transition-colors line-clamp-2">{product.name}</h3>
-                </Link>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{product.netWeight || "500g"} Net Wt.</p>
-                
-                {/* Price & Action */}
-                <div className="mt-auto flex justify-between items-end">
-                    <div>
-                        <p className="text-xs text-slate-400 line-through mb-0.5">₹{(product.basePrice * 1.25).toFixed(0)}</p>
-                        <p className="text-lg font-bold text-slate-900 dark:text-white">₹{product.basePrice}</p>
-                    </div>
-                    
-                    <button className="bg-white dark:bg-transparent border border-red-500 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-4 py-1.5 rounded-lg text-sm font-bold uppercase tracking-wide transition-all shadow-sm active:scale-95">
-                        ADD <span className="text-xs ml-1">+</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// --- E-COMMERCE SECTION ROW (New) ---
-const ProductRow = ({ title, subtitle, filter }) => {
+// --- PRODUCT SHOWCASE ROW (Standard E-com Grid) ---
+const CategoryRow = ({ title, filterType }) => {
     const [products, setProducts] = useState([]);
     
     useEffect(() => {
         axios.get(`${API_URL}/api/products`).then(res => {
             const all = res.data.products || [];
-            // Simple filtering for demo
-            if (filter === 'trending') setProducts(all.filter(p => p.trending).slice(0, 4));
-            else if (filter === 'prawn') setProducts(all.filter(p => p.category === 'Prawn').slice(0, 4));
-            else setProducts(all.slice(0, 4));
+            let filtered = [];
+            if(filterType === "Fish") {
+                filtered = all.filter(p => p.category === "Fish").slice(0, 4);
+            } else if (filterType === "Shellfish") {
+                filtered = all.filter(p => p.category === "Prawn" || p.category === "Crab").slice(0, 4);
+            }
+            setProducts(filtered);
         });
-    }, [filter]);
+    }, [filterType]);
+
+    const getImageUrl = (path) => {
+        if(!path) return "";
+        return `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
+    };
 
     if (products.length === 0) return null;
 
     return (
-        <section className="py-10 px-4 max-w-7xl mx-auto">
-            <div className="flex justify-between items-end mb-6">
-                <div>
-                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">{title}</h2>
-                    <p className="text-slate-500 text-sm mt-1">{subtitle}</p>
+        <section className="py-12 px-4 md:px-8">
+            <div className="max-w-7xl mx-auto">
+                <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+                    <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        {filterType === "Fish" ? <Fish className="text-blue-500"/> : <Anchor className="text-orange-500"/>} 
+                        {title}
+                    </h2>
+                    <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">See All <ChevronRight size={14} /></Link>
                 </div>
-                <Link to="/products" className="text-sm font-bold text-red-600 hover:text-red-700 flex items-center gap-1">View All <ChevronRight size={16} /></Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {products.map(p => <ProductCard key={p._id} product={p} />)}
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                    {products.map((p) => (
+                        <Link to={`/products/${p._id}`} key={p._id}>
+                            <div className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+                                <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4">
+                                    <img src={getImageUrl(p.image)} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                                    {p.trending && <span className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">BESTSELLER</span>}
+                                </div>
+                                <div className="p-4 flex flex-col flex-grow">
+                                    <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">{p.name}</h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{p.netWeight}</p>
+                                    <div className="mt-auto flex justify-between items-center">
+                                        <div>
+                                            <span className="text-xs text-slate-400 line-through mr-2">₹{(p.basePrice * 1.2).toFixed(0)}</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">₹{p.basePrice}</span>
+                                        </div>
+                                        <button className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors">
+                                            <ShoppingBag size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
             </div>
         </section>
-    )
-}
+    );
+};
 
-// --- BUTCHERS CUT ---
+// --- ✅ NEW: "THE BUTCHER'S CUT" (Visual Guide) ---
 const ButchersCut = () => {
     const cuts = [
         { name: "Whole Cleaned", desc: "Gutted & Scaled", icon: <Fish size={24} />, bg: "bg-blue-100 text-blue-700" },
@@ -307,33 +306,6 @@ const ButchersCut = () => {
                             </div>
                             <h3 className="font-bold text-slate-900 dark:text-white mb-1">{cut.name}</h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400">{cut.desc}</p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
-    )
-}
-
-// --- TRUST GRID (Visual) (New) ---
-const TrustGrid = () => {
-    const features = [
-        { icon: <Truck className="text-blue-500" />, title: "90 Min Delivery", desc: "Ice packed freshness" },
-        { icon: <ShieldCheck className="text-green-500" />, title: "Chemical Free", desc: "Lab tested quality" },
-        { icon: <MapPin className="text-red-500" />, title: "Local Catch", desc: "Sourced daily" },
-        { icon: <Thermometer className="text-orange-500" />, title: "Temp Controlled", desc: "0-4°C Always" },
-    ];
-    return (
-        <section className="py-12 bg-slate-100 dark:bg-[#0d1b2e]">
-            <div className="max-w-7xl mx-auto px-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {features.map((f, i) => (
-                        <div key={i} className="bg-white dark:bg-[#1e293b] p-6 rounded-xl flex flex-col items-center text-center shadow-sm border border-gray-100 dark:border-white/5">
-                            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center mb-3">
-                                {f.icon}
-                            </div>
-                            <h3 className="font-bold text-slate-900 dark:text-white text-sm">{f.title}</h3>
-                            <p className="text-xs text-slate-500">{f.desc}</p>
                         </div>
                     ))}
                 </div>
@@ -384,6 +356,47 @@ const OfferBanner = () => {
         </section>
     )
 }
+
+// --- TRENDING PRODUCTS ---
+const TrendingMarquee = () => {
+    const [products, setProducts] = useState([]);
+    useEffect(() => {
+        axios.get(`${API_URL}/api/products`).then(res => {
+            const all = res.data.products || [];
+            const trending = all.filter(p => p.trending);
+            setProducts([...trending, ...trending, ...trending]);
+        });
+    }, []);
+    const getImageUrl = (path) => {
+        if(!path) return "";
+        return `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
+    }
+
+    return (
+        <section className="py-24 overflow-hidden border-t border-gray-200 dark:border-white/5 transition-colors duration-300 relative">
+            <div className="container mx-auto px-6 mb-12 flex justify-between items-end relative z-10">
+                <h2 className="text-4xl font-serif text-slate-900 dark:text-white transition-colors duration-300">Best Sellers</h2>
+            </div>
+            <div className="relative w-full z-10">
+                <motion.div className="flex gap-8 w-max" animate={{ x: ["0%", "-33.33%"] }} transition={{ repeat: Infinity, duration: 20, ease: "linear" }}>
+                    {products.map((p, i) => (
+                        <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[300px] group">
+                            <div className="bg-white dark:bg-[#0e1d30] border border-gray-200 dark:border-white/5 rounded-[2rem] p-6 hover:bg-white/80 dark:hover:bg-[#112238] transition-colors backdrop-blur-sm shadow-sm hover:shadow-xl">
+                                <div className="h-[220px] mb-6 flex items-center justify-center relative">
+                                    <img src={getImageUrl(p.image)} alt={p.name} className="w-48 h-48 object-contain drop-shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-1 truncate">{p.name}</h3>
+                                    <div className="flex justify-between items-center"><span className="text-slate-500 dark:text-slate-400 text-xs uppercase">{p.category}</span><span className="text-lg font-mono text-blue-600 dark:text-blue-300">₹{p.basePrice}</span></div>
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+                </motion.div>
+            </div>
+        </section>
+    );
+};
 
 // --- REVIEWS & FAQ ---
 const SeaBitePromise = () => {
@@ -483,39 +496,27 @@ export default function Home() {
         <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-colors duration-300">
             <WelcomePopup />
             <VideoHero />
-            
-            {/* Real E-Commerce Layout Below Video */}
-            <div className="relative w-full z-10">
-                <BankOffers />
-                <QuickCategories />
-
-                <div className="space-y-4 mt-8">
+            <RollingText />
+            <div className="relative w-full overflow-hidden">
+                <div className="absolute inset-0 pointer-events-none overflow-hidden h-full w-full z-0">
+                    {[...Array(15)].map((_, i) => (
+                        <motion.div key={i} initial={{ x: "-200px", opacity: 0 }} animate={{ x: "100vw", opacity: [0, 0.2, 0.2, 0], rotate: [0, 5, -5, 0] }} transition={{ x: { duration: Math.random() * 20 + 15, repeat: Infinity, delay: Math.random() * 10, ease: "linear" }, rotate: { duration: 2, repeat: Infinity, ease: "easeInOut" } }} style={{ position: "absolute", top: `${Math.random() * 100}%`, scale: Math.random() * 1.5 + 1.0 }} className="text-blue-500/30 dark:text-blue-400/20"><Fish size={64} strokeWidth={1} fill="currentColor" /></motion.div>
+                    ))}
+                </div>
+                <div className="relative z-10">
+                    <SectionReveal><CategoryPanel /></SectionReveal>
+                    
+                    {/* ✅ NEW: REAL E-COMMERCE SECTIONS */}
                     <SectionReveal><FlashSale /></SectionReveal>
-                    
-                    <SectionReveal>
-                        <ProductRow 
-                            title="Fresh From The Nets" 
-                            subtitle="Caught daily, cleaned perfectly." 
-                            filter="trending" 
-                        />
-                    </SectionReveal>
-
+                    <SectionReveal><CategoryRow title="Fresh From The Nets" filterType="Fish" /></SectionReveal>
                     <SectionReveal><ButchersCut /></SectionReveal>
-                    
-                    <SectionReveal>
-                        <ProductRow 
-                            title="Shellfish Specials" 
-                            subtitle="Jumbo Prawns, Crabs & more" 
-                            filter="prawn" 
-                        />
-                    </SectionReveal>
+                    <SectionReveal><CategoryRow title="Shellfish Specials" filterType="Shellfish" /></SectionReveal>
 
-                    <TrustGrid />
                     <SectionReveal><OfferBanner /></SectionReveal> 
+                    <SectionReveal><TrendingMarquee /></SectionReveal>
                     <SectionReveal><SeaBitePromise /></SectionReveal>
                 </div>
             </div>
-            
             <Footer />
         </div>
     );
