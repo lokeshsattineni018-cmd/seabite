@@ -1,7 +1,7 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-import { sendLoginNotification } from "../utils/emailService.js"; // 🟢 IMPORT EMAIL SERVICE
+import { sendLoginNotification } from "../utils/emailService.js"; 
 
 // --- Helper Function to verify token and get decoded user ---
 const getDecodedUser = (req) => {
@@ -59,8 +59,14 @@ export const googleLogin = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // 🟢 4. SEND LOGIN NOTIFICATION EMAIL (Async - don't await)
-    sendLoginNotification(user.email, user.name).catch(err => console.error("Email Error:", err.message));
+    // 🟢 4. SEND LOGIN NOTIFICATION EMAIL (FIXED: Added await for Vercel)
+    // We wrap this in a try/catch so the login still works even if the email fails
+    try {
+        await sendLoginNotification(user.email, user.name);
+        console.log(`✅ Login notification sent to ${user.email}`);
+    } catch (err) {
+        console.error("❌ Email Error (Login Notification):", err.message);
+    }
 
     res.status(200).json({
       token: authToken,

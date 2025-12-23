@@ -44,16 +44,20 @@ export const createOrder = async (req, res) => {
 
         const createdOrder = await order.save();
 
-        // ✅ OFFICIAL NOTIFICATION: Using Brevo to send from info@seabite.co.in
-        // We use .then() to avoid blocking the user's response while the email sends
-        sendOrderPlacedEmail(
-            req.user.email, 
-            req.user.name, 
-            createdOrder._id, 
-            createdOrder.totalAmount
-        )
-        .then(() => console.log(`✅ Official Order Email sent to ${req.user.email}`))
-        .catch(err => console.error("❌ Brevo Email Error:", err.message));
+        // ✅ CRITICAL FIX: Await the email so Vercel doesn't kill the process
+        // This ensures the email actually leaves your server before the response is sent
+        try {
+            await sendOrderPlacedEmail(
+                req.user.email, 
+                req.user.name, 
+                createdOrder._id, 
+                createdOrder.totalAmount
+            );
+            console.log(`✅ Official Order Email sent to ${req.user.email}`);
+        } catch (err) {
+            console.error("❌ Brevo Email Error:", err.message);
+            // We don't block the response even if email fails, but we log the error
+        }
 
         res.status(201).json(createdOrder);
     } catch (error) {
@@ -124,15 +128,16 @@ export const updateOrderStatus = async (req, res) => {
 
         await order.save(); 
 
-        // ✅ Triggering Official Status Update Emails via Brevo
-        if (status === 'Shipped') {
-            sendOrderShippedEmail(order.user.email, order.user.name, order._id)
-                .catch(e => console.error("Shipped Email Failed:", e.message));
-        }
-        
-        if (status === 'Delivered') {
-            sendOrderDeliveredEmail(order.user.email, order.user.name, order._id)
-                .catch(e => console.error("Delivered Email Failed:", e.message));
+        // ✅ CRITICAL FIX: Await status update emails
+        try {
+            if (status === 'Shipped') {
+                await sendOrderShippedEmail(order.user.email, order.user.name, order._id);
+            }
+            if (status === 'Delivered') {
+                await sendOrderDeliveredEmail(order.user.email, order.user.name, order._id);
+            }
+        } catch (e) {
+            console.error("❌ Status Update Email Failed:", e.message);
         }
 
         res.json(order);
