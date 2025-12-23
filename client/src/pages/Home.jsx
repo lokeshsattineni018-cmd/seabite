@@ -89,7 +89,7 @@ const WelcomePopup = () => {
   );
 };
 
-// --- HERO SECTION ---
+// --- HERO SECTION (Updated with Coupon Code) ---
 const VideoHero = () => {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 1000], [0, 400]); 
@@ -106,6 +106,14 @@ const VideoHero = () => {
           <p className="text-blue-200 font-mono text-xs md:text-sm tracking-[0.5em] uppercase drop-shadow-md">The Ocean's Finest</p>
           <h1 className="text-[15vw] md:text-[12vw] leading-none font-serif text-white opacity-95 select-none drop-shadow-2xl">SEABITE</h1>
           <motion.div initial={{ width: 0 }} animate={{ width: "100px" }} transition={{ delay: 1, duration: 1 }} className="h-[1px] bg-white/50 mx-auto" />
+          
+          {/* ✅ ADDED COUPON CODE HERE */}
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 px-6 py-2 rounded-full mt-4">
+            <p className="text-white text-sm md:text-base font-medium tracking-wide">
+              Use Code: <span className="font-bold text-yellow-400">SEABITE20</span> for 20% Off
+            </p>
+          </div>
+
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link to="/products"><button className="mt-8 px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold tracking-widest text-xs hover:bg-white hover:text-black transition-all duration-500 shadow-xl">Shop Now</button></Link>
           </motion.div>
@@ -229,7 +237,7 @@ const FlashSale = () => {
                         <Flame size={14} className="text-yellow-300" /> Flash Deal
                     </div>
                     <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-2">TODAY'S CATCH</h2>
-                    {/* UPDATED TEXT BELOW */}
+                    {/* ✅ UPDATED TEXT */}
                     <p className="text-red-100 text-lg font-medium">Order above <span className="text-white font-bold underline decoration-yellow-400">₹1699</span> and use coupon <span className="bg-yellow-400 text-red-900 px-1 rounded font-bold">10%</span> to avail offer.</p>
                 </div>
 
@@ -313,38 +321,6 @@ const CategoryRow = ({ title, filterType }) => {
         </section>
     );
 };
-
-// --- ✅ NEW: "THE BUTCHER'S CUT" (Visual Guide) ---
-const ButchersCut = () => {
-    const cuts = [
-        { name: "Whole Cleaned", desc: "Gutted & Scaled", icon: <Fish size={24} />, bg: "bg-blue-100 text-blue-700" },
-        { name: "Curry Cut", desc: "Perfect Slices", icon: <Utensils size={24} />, bg: "bg-orange-100 text-orange-700" },
-        { name: "Fillet", desc: "Boneless Meat", icon: <Sparkles size={24} />, bg: "bg-purple-100 text-purple-700" },
-        { name: "Steaks", desc: "Thick & Juicy", icon: <Flame size={24} />, bg: "bg-red-100 text-red-700" },
-    ];
-
-    return (
-        <section className="py-16 px-4 bg-slate-50 dark:bg-[#0b1120]">
-            <div className="max-w-6xl mx-auto">
-                <div className="text-center mb-10">
-                    <h2 className="text-3xl font-bold text-slate-900 dark:text-white">Shop by Cut</h2>
-                    <p className="text-slate-500 mt-2 text-sm">We clean and cut exactly how you like it.</p>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {cuts.map((cut, i) => (
-                        <div key={i} className="bg-white dark:bg-[#1e293b] p-6 rounded-2xl text-center border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow cursor-default">
-                            <div className={`w-14 h-14 mx-auto ${cut.bg} rounded-full flex items-center justify-center mb-4`}>
-                                {cut.icon}
-                            </div>
-                            <h3 className="font-bold text-slate-900 dark:text-white mb-1">{cut.name}</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{cut.desc}</p>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </section>
-    )
-}
 
 // --- OFFER BANNER ---
 const OfferBanner = () => {
@@ -430,11 +406,10 @@ const TrendingMarquee = () => {
     );
 };
 
-// --- REVIEWS & FAQ ---
+// --- REVIEWS & PROMISE (Removed FAQ) ---
 const SeaBitePromise = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [openFaq, setOpenFaq] = useState(null);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products/top-reviews`).then(res => {
@@ -443,42 +418,16 @@ const SeaBitePromise = () => {
     }).catch(() => setLoading(false));
   }, []);
 
-  const faqs = [
-    { q: "Is the seafood fresh or frozen?", a: "100% Fresh. We do not sell frozen fish. It is packed in ice immediately after catching." },
-    { q: "Do you clean and cut the fish?", a: "Yes! We clean, scale, and cut the fish exactly how you want it (slices, fillets, or whole)." },
-    { q: "How long does delivery take?", a: "We deliver within 24 hours of the catch to ensure maximum freshness." }
-  ];
-
   return (
     <section className="py-24 px-6 relative overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto relative z-10 pt-10">
         
-        {/* FAQ SECTION */}
-        <div className="mb-20 grid grid-cols-1 md:grid-cols-2 gap-10">
-            <div>
-                <h2 className="text-3xl font-serif text-slate-900 dark:text-white mb-4">Frequently Asked</h2>
-                <p className="text-slate-500 mb-6">Common questions about our process.</p>
-                <div className="space-y-4">
-                    {faqs.map((f, i) => (
-                        <div key={i} className="border border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-slate-900 overflow-hidden">
-                            <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex justify-between items-center p-5 text-left font-bold text-slate-900 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-                                {f.q} <ChevronDown className={`transition-transform ${openFaq === i ? "rotate-180" : ""}`} />
-                            </button>
-                            <AnimatePresence>
-                                {openFaq === i && (
-                                    <motion.div initial={{ height: 0 }} animate={{ height: "auto" }} exit={{ height: 0 }} className="overflow-hidden">
-                                        <p className="p-5 pt-0 text-slate-500 text-sm leading-relaxed">{f.a}</p>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <div className="bg-blue-600 rounded-[2.5rem] p-10 text-white flex flex-col justify-center items-center text-center">
-                <ShieldCheck size={48} className="mb-6 opacity-80" />
-                <h3 className="text-2xl font-serif font-bold mb-2">100% Chemical Free</h3>
-                <p className="opacity-80 text-sm leading-relaxed max-w-sm">We strictly test for formalin and ammonia. If you prove it's not fresh, we give your money back 2x.</p>
+        {/* PROMISE SECTION (Replaced FAQ with Full Width Promise) */}
+        <div className="mb-20 flex justify-center">
+            <div className="w-full md:w-2/3 bg-blue-600 rounded-[2.5rem] p-12 text-white flex flex-col justify-center items-center text-center shadow-xl">
+                <ShieldCheck size={64} className="mb-6 opacity-90" />
+                <h3 className="text-3xl font-serif font-bold mb-4">100% Chemical Free</h3>
+                <p className="opacity-90 text-lg leading-relaxed max-w-lg">We strictly test for formalin and ammonia. If you prove it's not fresh, we give your money back 2x.</p>
             </div>
         </div>
 
@@ -541,7 +490,7 @@ export default function Home() {
                     {/* ✅ NEW: REAL E-COMMERCE SECTIONS */}
                     <SectionReveal><FlashSale /></SectionReveal>
                     <SectionReveal><CategoryRow title="Fresh From The Nets" filterType="Fish" /></SectionReveal>
-                    <SectionReveal><ButchersCut /></SectionReveal>
+                    {/* ButchersCut REMOVED */}
                     <SectionReveal><CategoryRow title="Shellfish Specials" filterType="Shellfish" /></SectionReveal>
 
                     <SectionReveal><OfferBanner /></SectionReveal> 
