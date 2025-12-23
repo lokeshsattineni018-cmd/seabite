@@ -1,25 +1,27 @@
 import express from "express";
 import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 import Product from "../models/Product.js";
 import adminAuth from "../middleware/adminAuth.js";
 
 const router = express.Router();
 
-/* ========== MULTER SETUP ========== */
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    const cleanName = file.originalname.replace(/\s+/g, '-');
-    cb(null, Date.now() + "-" + cleanName);
-  },
+// 1. CONFIGURE CLOUDINARY (Uses the keys you added to Vercel)
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const upload = multer({ storage });
+/* ========== MULTER SETUP (MEMORY STORAGE) ========== */
+// ✅ FIXED: Changed from diskStorage to memoryStorage for Vercel
+const storage = multer.memoryStorage();
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB Limit
+});
 
 /* ========== GET PRODUCT BY ID (ADMIN) ========== */
-// 🔴 FIX 1: ADDED GET BY ID ROUTE FOR ADMIN PANEL
 router.get("/:id", adminAuth, async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
@@ -33,7 +35,6 @@ router.get("/:id", adminAuth, async (req, res) => {
     }
 });
 
-
 /* ========== ADD PRODUCT (POST /api/admin/products) ========== */
 router.post(
   "/",
@@ -41,23 +42,25 @@ router.post(
   upload.single("image"),
   async (req, res) => {
     
-    console.log("📥 Admin adding product...");
-
     const { name, category, desc, trending, stock, basePrice, unit } = req.body;
 
     try {
       if (!req.file) {
-        console.error("❌ No image file received");
         return res.status(400).json({ message: "Image is required" });
       }
 
       if (!basePrice || !unit) {
-          return res.status(400).json({ message: "Missing required price details (Base Price or Unit)." });
+          return res.status(400).json({ message: "Missing required price details." });
       }
 
-      const imageUrl = `/uploads/${req.file.filename}`;
-      
-      console.log("📸 Image saved at:", imageUrl);
+      // ✅ FIXED: Convert Buffer to Cloudinary Data URI
+      const b64 = Buffer.from(req.file.buffer).toString("base64");
+      let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+
+      // ✅ FIXED: Upload to Cloudinary instead of saving to 'uploads/'
+      const cloudinaryResponse = await cloudinary.uploader.upload(dataURI, {
+        folder: "seabite-products",
+      });
 
       const product = await Product.create({
         name: name,
@@ -66,13 +69,11 @@ router.post(
         trending: trending === "true", 
         stock: stock || "in",
         active: true,
-        image: imageUrl,
-        
+        image: cloudinaryResponse.secure_url, // Use Cloudinary URL
         basePrice: Number(basePrice),
         unit: unit,
       });
 
-      console.log("✅ Product Created:", product.name);
       res.status(201).json(product);
       
     } catch (err) {
@@ -84,9 +85,7 @@ router.post(
 
 /* ========== UPDATE PRODUCT (PUT /api/admin/products/:id) ========== */
 router.put("/:id", adminAuth, async (req, res) => {
-    
     const { name, category, desc, trending, stock, basePrice, unit, image } = req.body;
-    
     try {
         const updatedProduct = await Product.findByIdAndUpdate(
             req.params.id,
@@ -104,25 +103,17 @@ router.put("/:id", adminAuth, async (req, res) => {
             },
             { new: true, runValidators: true }
         );
-
-        if (!updatedProduct) {
-            return res.status(404).json({ message: "Product not found" });
-        }
-
+        if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
         res.json(updatedProduct);
-        
     } catch (err) {
-        console.error("❌ UPDATE PRODUCT ERROR:", err);
         res.status(400).json({ message: "Unable to update product: " + err.message });
     }
 });
-
 
 /* ========== GET ALL PRODUCTS (ADMIN) ========== */
 router.get("/", adminAuth, async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
-    // 🔴 NOTE: products are returned as res.json({ products }) which is correct for AdminProducts.jsx
     res.json({ products }); 
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch products" });
