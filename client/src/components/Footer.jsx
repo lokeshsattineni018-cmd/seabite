@@ -1,10 +1,31 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { Link } from "react-router-dom";
-import { FiFacebook, FiInstagram, FiTwitter, FiMapPin, FiPhone, FiMail, FiArrowRight } from "react-icons/fi";
+import axios from "axios";
+import { FiFacebook, FiInstagram, FiTwitter, FiMapPin, FiPhone, FiMail, FiSend, FiLoader, FiCheck } from "react-icons/fi";
 import { ThemeContext } from "../context/ThemeContext";
+
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 export default function Footer() {
   const { isDarkMode } = useContext(ThemeContext);
+  
+  // Form State
+  const [formData, setFormData] = useState({ email: "", message: "" });
+  const [status, setStatus] = useState("idle"); // idle, loading, success, error
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("loading");
+    try {
+      await axios.post(`${API_URL}/api/contact`, formData);
+      setStatus("success");
+      setFormData({ email: "", message: "" });
+      setTimeout(() => setStatus("idle"), 3000);
+    } catch (err) {
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+    }
+  };
 
   return (
     <footer className="bg-slate-50 dark:bg-[#0b1120] border-t border-slate-200 dark:border-white/5 pt-16 md:pt-20 pb-12 font-sans relative overflow-hidden transition-colors duration-500">
@@ -41,7 +62,6 @@ export default function Footer() {
               <li><Link to="/about" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">About Us</Link></li>
               <li><Link to="/faq" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">FAQ</Link></li>
               <li><Link to="/products" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Shop Seafood</Link></li>
-              
             </ul>
           </div>
 
@@ -55,23 +75,59 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* CONTACT INFO */}
+          {/* ✅ UPDATED CONTACT FORM COLUMN */}
           <div className="space-y-6">
             <h4 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-[0.2em] mb-6">Contact Us</h4>
-            <ul className="space-y-4 text-sm text-slate-500 dark:text-slate-400">
-              <li className="flex items-start gap-3">
-                <FiMapPin className="text-blue-600 dark:text-blue-400 shrink-0 mt-1" size={16} />
-                <span>Mogalthur, Narsapur<br/>Andhra Pradesh - 534281</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <FiPhone className="text-blue-600 dark:text-blue-400" size={16} />
-                <span>+91 9441429745</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <FiMail className="text-blue-600 dark:text-blue-400" size={16} />
-                <span className="truncate">support@seabite.com</span>
-              </li>
-            </ul>
+            
+            {/* The Form */}
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <input 
+                type="email" 
+                placeholder="Your Email" 
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({...formData, email: e.target.value})}
+                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors text-slate-900 dark:text-white placeholder:text-slate-400"
+              />
+              <textarea 
+                placeholder="Message..." 
+                required
+                rows="2"
+                value={formData.message}
+                onChange={(e) => setFormData({...formData, message: e.target.value})}
+                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-4 py-3 text-sm outline-none focus:border-blue-500 dark:focus:border-blue-400 transition-colors text-slate-900 dark:text-white resize-none placeholder:text-slate-400"
+              />
+              <button 
+                type="submit" 
+                disabled={status === "loading" || status === "success"}
+                className={`w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg
+                  ${status === "success" 
+                    ? "bg-emerald-500 text-white shadow-emerald-500/20" 
+                    : status === "error"
+                    ? "bg-red-500 text-white"
+                    : "bg-slate-900 dark:bg-blue-600 text-white hover:opacity-90 shadow-blue-500/20"
+                  }
+                `}
+              >
+                {status === "loading" ? <FiLoader className="animate-spin" /> : 
+                 status === "success" ? <>Sent <FiCheck /></> : 
+                 status === "error" ? "Retry" :
+                 <>Send <FiSend /></>}
+              </button>
+            </form>
+
+            {/* Small Contact Details below form */}
+            <div className="space-y-2 pt-2">
+               <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                  <FiPhone className="text-blue-600 dark:text-blue-400 shrink-0" size={14} />
+                  <span>+91 9441429745</span>
+               </div>
+               <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
+                  <FiMail className="text-blue-600 dark:text-blue-400 shrink-0" size={14} />
+                  <span>support@seabite.com</span>
+               </div>
+            </div>
+
           </div>
 
         </div>

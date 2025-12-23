@@ -7,26 +7,29 @@ import { GoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
+  // navigate is technically not needed if we force reload, but keeping it is fine
   const navigate = useNavigate();
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      // Show loading or visual feedback if desired
-      
       const res = await axios.post("https://seabite-server.vercel.app/api/auth/google", {
         token: credentialResponse.credential,
       });
 
+      // 1. Save Token & User immediately
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       setModal({ show: true, message: "Login Successful!", type: "success" });
       
-      setTimeout(() => {
-        if (res.data.user.role === "admin") navigate("/admin/dashboard");
-        else navigate("/");
-        window.location.reload();
-      }, 1000);
+      // 2. INSTANT RELOAD (Removes the delay)
+      // We check the role and immediately force the browser to go there.
+      // This forces the Navbar to re-read localStorage instantly.
+      if (res.data.user.role === "admin") {
+          window.location.href = "/admin/dashboard";
+      } else {
+          window.location.href = "/";
+      }
 
     } catch (err) {
       setModal({ 

@@ -17,9 +17,9 @@ import notificationRoutes from "./routes/notificationRoutes.js";
 import products from "./routes/products.js";       
 import productsRoutes from "./routes/productsRoutes.js"; 
 import paymentRoutes from "./routes/paymentRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js"; // ✅ NEW IMPORT
 
 /* --- EXTRA IMPORTS --- */
-// Note: We keep imports, but ensure files exist
 import upload from "./config/multerConfig.js";
 
 /* --- 2. EXPRESS APP SETUP --- */
@@ -44,7 +44,7 @@ app.use(cors({
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir)); 
 
-/* --- 5. ROBUST DATABASE CONNECTION (FIXES TIMEOUT) --- */
+/* --- 5. ROBUST DATABASE CONNECTION --- */
 let isConnected = false;
 
 const connectDB = async () => {
@@ -54,7 +54,7 @@ const connectDB = async () => {
   try {
     const db = await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      serverSelectionTimeoutMS: 5000, // Fail fast if connection is bad
+      serverSelectionTimeoutMS: 5000, 
     });
     isConnected = db.connections[0].readyState;
     console.log("✅ MongoDB Connected (Re-established)");
@@ -63,7 +63,6 @@ const connectDB = async () => {
   }
 };
 
-// Middleware: Ensure DB is connected before handling ANY request
 app.use(async (req, res, next) => {
   await connectDB();
   next();
@@ -88,6 +87,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes); 
 app.use("/api/admin/products", adminProductRoutes); 
 app.use("/api/payment", paymentRoutes);
+app.use("/api/contact", contactRoutes); // ✅ NEW ROUTE
 
 /* --- 8. SERVER SETUP --- */
 const PORT = process.env.PORT || 5001;
