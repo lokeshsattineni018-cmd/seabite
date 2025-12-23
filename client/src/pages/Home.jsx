@@ -5,7 +5,7 @@ import axios from "axios";
 import { 
   ArrowRight, Star, ShieldCheck, Truck, Clock, Fish, Sparkles, X, 
   Copy, Check, Gift, ChevronRight, ShoppingBag, Flame, Percent, 
-  ChevronLeft, Timer, MapPin 
+  ChevronLeft, Timer, MapPin, Zap, Thermometer 
 } from "lucide-react";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
