@@ -47,7 +47,7 @@ const orderSchema = new mongoose.Schema(
     razorpay_order_id: { type: String, index: true }, 
     paymentMethod: { type: String, required: true, default: "COD" }, 
     
-    paymentId: { type: String }, // Stores 'pay_...' ID for refunds
+    paymentId: { type: String },
     isPaid: { type: Boolean, default: false },
     paidAt: { type: Date },
 
@@ -55,11 +55,11 @@ const orderSchema = new mongoose.Schema(
         type: shippingAddressSchema,
         required: true,
     },
+    // ✅ CONFIRMED: Default is "Pending"
     status: {
       type: String,
       default: "Pending",
     },
-    // 🟢 FIXED: Default should be "None", not "Initiated"
     refundStatus: { 
       type: String, 
       default: "None" 
