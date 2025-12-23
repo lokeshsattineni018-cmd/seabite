@@ -107,7 +107,7 @@ const VideoHero = () => {
           <h1 className="text-[15vw] md:text-[12vw] leading-none font-serif text-white opacity-95 select-none drop-shadow-2xl">SEABITE</h1>
           <motion.div initial={{ width: 0 }} animate={{ width: "100px" }} transition={{ delay: 1, duration: 1 }} className="h-[1px] bg-white/50 mx-auto" />
           
-          
+      
 
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
             <Link to="/products"><button className="mt-8 px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold tracking-widest text-xs hover:bg-white hover:text-black transition-all duration-500 shadow-xl">Shop Now</button></Link>
@@ -231,9 +231,14 @@ const FlashSale = () => {
                     <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-white/30">
                         <Flame size={14} className="text-yellow-300" /> Flash Deal
                     </div>
-                    <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-2">TODAY'S CATCH</h2>
-                    {/* ✅ UPDATED TEXT */}
-                    <p className="text-red-100 text-lg font-medium">Order above <span className="text-white font-bold underline decoration-yellow-400">₹1699</span> and use coupon SEABITE10 <span className="bg-yellow-400 text-red-900 px-1 rounded font-bold"></span> to avail offer 10% OFF.</p>
+                    <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-4">TODAY'S CATCH</h2>
+                    
+                    {/* ✅ UPDATED FONT & STYLE FOR CATCHY LOOK */}
+                    <p className="text-red-50 text-xl md:text-2xl font-serif italic tracking-wide leading-relaxed">
+                        Order above <span className="text-yellow-300 font-bold decoration-wavy underline decoration-white/30">₹1699</span> and use coupon 
+                        <span className="mx-2 bg-white text-red-600 px-3 py-1 rounded-lg font-black font-mono not-italic text-lg border-2 border-dashed border-red-600 transform -rotate-2 inline-block shadow-lg">SEABITE10</span> 
+                        to avail <span className="font-black text-white not-italic text-2xl drop-shadow-md">10% OFF</span>
+                    </p>
                 </div>
 
                 <div className="relative z-10 bg-white p-6 rounded-xl shadow-lg transform rotate-2 md:rotate-0">
@@ -417,14 +422,6 @@ const SeaBitePromise = () => {
     <section className="py-24 px-6 relative overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto relative z-10 pt-10">
         
-        {/* PROMISE SECTION (Replaced FAQ with Full Width Promise) */}
-        <div className="mb-20 flex justify-center">
-            <div className="w-full md:w-2/3 bg-blue-600 rounded-[2.5rem] p-12 text-white flex flex-col justify-center items-center text-center shadow-xl">
-                <ShieldCheck size={64} className="mb-6 opacity-90" />
-                <h3 className="text-3xl font-serif font-bold mb-4">100% Chemical Free</h3>
-                <p className="opacity-90 text-lg leading-relaxed max-w-lg">We strictly test for formalin and ammonia. If you prove it's not fresh, we give your money back 2x.</p>
-            </div>
-        </div>
 
         {/* REVIEWS */}
         <div className="text-center mb-12">
