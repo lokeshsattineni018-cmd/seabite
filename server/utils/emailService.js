@@ -2,14 +2,13 @@ import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
   host: "smtp-relay.brevo.com",
-  port: 465,
-  secure:true,
+  port: 587,
+  secure: false, // Must be false for port 587
   auth: {
     user: process.env.BREVO_USER,
     pass: process.env.BREVO_SMTP_KEY,
   },
 });
-
 const SENDER_IDENTITY = `"SeaBite Official" <${process.env.OFFICIAL_EMAIL}>`;
 
 // 🟢 MAKE SURE 'export const' IS USED FOR EVERY FUNCTION
