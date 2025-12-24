@@ -45,9 +45,11 @@ router.get("/", adminAuth, async (req, res) => {
     }
 
     // --- COUNTS ---
-    const products = await Product.countDocuments();
-    const orders = await Order.countDocuments();
-    const users = await User.countDocuments();
+    const stats = {
+      products: await Product.countDocuments(),
+      orders: await Order.countDocuments(),
+      users: await User.countDocuments()
+    };
 
     // --- RECENT ORDERS ---
     const recentOrders = await Order.find()
@@ -55,76 +57,31 @@ router.get("/", adminAuth, async (req, res) => {
       .limit(5)
       .populate('user', 'name'); 
 
-    // --- TOP SELLING LOGIC ---
-    const allOrders = await Order.find({}, 'items');
-    const salesMap = {};
-    
-    allOrders.forEach(order => {
-      if (order.items && Array.isArray(order.items)) {
-        order.items.forEach(item => {
-          // Robust check for ID location
-          const pId = item.product || item.productId || item._id;
-          if (pId) {
-            const idStr = pId.toString(); 
-            const qty = item.quantity || 1; 
-            salesMap[idStr] = (salesMap[idStr] || 0) + qty;
-          }
-        });
-      }
-    });
-
-    const sortedIds = Object.keys(salesMap).sort((a, b) => salesMap[b] - salesMap[a]).slice(0, 5);
-    const productDetails = await Product.find({ _id: { $in: sortedIds } });
-
-    const popularProducts = sortedIds.map(id => {
-      const p = productDetails.find(prod => prod._id.toString() === id);
-      if (!p) return null;
-      
-      let finalImage = p.image;
-      if (!finalImage && p.images && p.images.length > 0) finalImage = p.images[0];
-
-      return {
-        _id: p._id,
-        name: p.name,
-        image: finalImage || "", 
-        totalSold: salesMap[id]
-      };
-    }).filter(item => item !== null);
-
     res.json({
-      stats: { products, orders, users },
+      stats,
       graph: finalGraph,
       recentOrders,
-      popularProducts,
     });
 
   } catch (err) {
     console.error("❌ ADMIN DASHBOARD CRASH:", err);
-    res.status(500).json({ message: "Dashboard error: Check server console." });
+    res.status(500).json({ message: "Dashboard error" });
   }
 });
 
 // ===============================================
-// 🟢 NEW: COMPREHENSIVE USER INTELLIGENCE (GET /api/admin/users/intelligence)
+// 2. USER INTELLIGENCE (GET /api/admin/users/intelligence)
 // ===============================================
 router.get("/users/intelligence", adminAuth, async (req, res) => {
   try {
-    // 1. Fetch all users sorted by most recent
     const users = await User.find({}).select("-password").sort({ createdAt: -1 });
 
-    // 2. Aggregate data for each user
     const enrichedUsers = await Promise.all(
       users.map(async (u) => {
-        // Find all orders placed by this user
-        const orders = await Order.find({ user: u._id }).sort({ createdAt: -1 });
-        
-        // Find total reviews written by this user across products
+        const orders = await Order.find({ user: u._id });
         const reviewsCount = await Product.countDocuments({ "reviews.user": u._id });
 
-        // Calculate Totals
         const totalSpent = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
-        const couponsUsed = orders.filter(o => o.discount > 0).length;
-        const lastOrder = orders[0]; // Get their latest order info
 
         return {
           _id: u._id,
@@ -136,9 +93,7 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
             totalSpent: Math.round(totalSpent),
             orderCount: orders.length,
             reviewCount: reviewsCount,
-            couponCount: couponsUsed,
-            lastLocation: lastOrder?.deliveryAddress?.state || "N/A",
-            isVIP: totalSpent > 10000 // Flag high-value users
+            isVIP: totalSpent > 10000 
           }
         };
       })
@@ -152,46 +107,45 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
 });
 
 // ===============================================
-// 2. FETCH ALL USERS (GET /api/admin/users)
+// 3. FETCH ALL USERS (GET /api/admin/users)
 // ===============================================
 router.get("/users", adminAuth, async (req, res) => {
     try {
         const users = await User.find().select('-password').sort({ createdAt: -1 });
         res.json(users);
     } catch (err) {
-        console.error("❌ Error fetching users:", err);
         res.status(500).json({ message: 'Failed to retrieve user list.' });
     }
 });
 
 // ===============================================
-// 3. UPDATE USER ROLE (PUT /api/admin/users/:id/role)
+// 4. DELETE PRODUCT REVIEW (DELETE /api/admin/products/:productId/reviews/:reviewId)
 // ===============================================
-router.put("/users/:id/role", adminAuth, async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { role } = req.body; 
+router.delete("/products/:productId/reviews/:reviewId", adminAuth, async (req, res) => {
+  try {
+    const { productId, reviewId } = req.params;
 
-        if (!['admin', 'customer'].includes(role)) {
-            return res.status(400).json({ message: 'Invalid role provided.' });
-        }
+    const product = await Product.findById(productId);
+    if (!product) return res.status(404).json({ message: "Product not found" });
 
-        const updatedUser = await User.findByIdAndUpdate(
-            id,
-            { role: role },
-            { new: true } 
-        ).select('-password');
+    // Remove the specific review from the array
+    product.reviews = product.reviews.filter(
+      (rev) => rev._id.toString() !== reviewId
+    );
 
-        if (!updatedUser) {
-            return res.status(404).json({ message: 'User not found.' });
-        }
-
-        res.json({ message: `Role updated to ${role}.`, user: updatedUser });
-
-    } catch (err) {
-        console.error("Error updating user role:", err);
-        res.status(500).json({ message: 'Failed to update user role on the server.' });
+    // Recalculate average rating and review count
+    if (product.reviews.length > 0) {
+      product.rating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
+    } else {
+      product.rating = 0;
     }
+    product.numReviews = product.reviews.length;
+
+    await product.save();
+    res.json({ message: "Review deleted successfully!" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error deleting review" });
+  }
 });
 
 export default router;

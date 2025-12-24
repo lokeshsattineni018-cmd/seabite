@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSearch, FiRefreshCw, FiUser, FiMapPin, FiCalendar, FiXCircle, FiChevronRight, FiTag, FiAlertCircle, FiPhone, FiPrinter, FiDollarSign, FiTruck, FiCheckCircle, FiCreditCard, FiRotateCcw } from "react-icons/fi";
+import { FiSearch, FiRefreshCw, FiUser, FiMapPin, FiCalendar, FiXCircle, FiChevronRight, FiTag, FiAlertCircle, FiPhone, FiPrinter, FiDollarSign, FiTruck, FiCheckCircle, FiCreditCard, FiRotateCcw, FiTrash2 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal"; 
 import Invoice from "../components/Invoice"; 
 
@@ -23,7 +23,6 @@ export default function AdminOrders() {
     axios.get(`${API_URL}/api/orders`, { headers: { Authorization: `Bearer ${token}` } })
       .then((res) => { 
           setOrders(res.data); 
-          // 🟢 Auto-update the selected order modal if it's open
           if (selectedOrder) {
               const updated = res.data.find(o => o._id === selectedOrder._id);
               if (updated) setSelectedOrder(updated);
@@ -51,24 +50,17 @@ export default function AdminOrders() {
     }
   };
 
-  // 🟢 NEW: Handle Automatic Razorpay Refund
   const handleRazorpayRefund = async (orderId) => {
       if(!window.confirm("⚠️ Are you sure? This will refund the full amount via Razorpay and Cancel the order.")) return;
-
       try {
-          const res = await axios.put(`${API_URL}/api/payment/refund`, 
+          await axios.put(`${API_URL}/api/payment/refund`, 
             { orderId, reason: "Admin Request" }, 
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          
           setModal({ show: true, message: "Refund Initiated. Status is now Processing.", type: "success" });
-          
-          // 🟢 Immediately update local state to show 'Processing' without closing modal
           fetchOrders(); 
           setSelectedOrder(prev => ({ ...prev, status: "Cancelled", refundStatus: "Processing", isPaid: false })); 
-
       } catch (err) {
-          console.error("Refund Error:", err);
           setModal({ show: true, message: err.response?.data?.message || "Refund Failed", type: "error" });
       }
   }
@@ -77,12 +69,24 @@ export default function AdminOrders() {
       try {
           await axios.put(`${API_URL}/api/orders/${id}/status`, { refundStatus }, { headers: { Authorization: `Bearer ${token}` } });
           setModal({ show: true, message: `Refund state committed as ${refundStatus}`, type: "success" });
-          
-          // 🟢 Immediately update local state so manual toggle reflects instantly
           if (selectedOrder) setSelectedOrder(prev => ({...prev, refundStatus}));
           fetchOrders();
       } catch (err) { setModal({ show: true, message: "Failed to update refund status", type: "error" }); }
   }
+
+  // 🟢 NEW: Admin Delete Review Handler
+  const deleteReview = async (productId, reviewId) => {
+    if (!window.confirm("Delete this review? This will also update the product's average rating.")) return;
+    try {
+      await axios.delete(`${API_URL}/api/admin/products/${productId}/reviews/${reviewId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setModal({ show: true, message: "Review deleted successfully", type: "success" });
+      fetchOrders(); // Refresh to update view
+    } catch (err) {
+      setModal({ show: true, message: "Failed to delete review", type: "error" });
+    }
+  };
   
   const filteredOrders = orders.filter(o => {
     const matchesStatus = filter === "All" || o.status === filter;
@@ -99,7 +103,8 @@ export default function AdminOrders() {
                 order={selectedOrder} 
                 onClose={() => setSelectedOrder(null)} 
                 updateRefundStatus={updateRefundStatus}
-                onProcessRefund={handleRazorpayRefund} 
+                onProcessRefund={handleRazorpayRefund}
+                onDeleteReview={deleteReview}
             />
         )}
       </AnimatePresence>
@@ -126,7 +131,6 @@ export default function AdminOrders() {
          ))}
       </div>
 
-      {/* DESKTOP TABLE */}
       <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <table className="w-full text-left">
           <thead className="bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wide">
@@ -163,7 +167,6 @@ export default function AdminOrders() {
         </table>
       </div>
 
-      {/* MOBILE LIST */}
       <div className="md:hidden space-y-3">
         {filteredOrders.map((o) => (
           <div key={o._id} onClick={() => setSelectedOrder(o)} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm active:scale-[0.98] transition-transform">
@@ -190,11 +193,10 @@ function StatusPill({ status }) {
     return <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${styles[status] || styles.Pending}`}><span className={`w-1 h-1 rounded-full mr-1.5 ${status.includes('Cancelled') ? 'bg-red-500' : 'bg-current opacity-50'}`}></span>{status}</span>;
 }
 
-function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund }) {
-    // 🟢 FIXED: Robust image URL handling with Visible Placeholder fallback
+function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund, onDeleteReview }) {
     const getFullImageUrl = (imagePath) => {
         if (!imagePath) return "https://placehold.co/400?text=No+Image";
-        const filename = imagePath.split(/[/\\]/).pop(); // Handles both / and \ paths
+        const filename = imagePath.split(/[/\\]/).pop();
         return `${API_URL}/uploads/${filename}`;
     };
 
@@ -225,7 +227,6 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
                              <p className="text-sm font-bold text-slate-900">User UPI: <span className="text-blue-600 font-mono">{order.paymentResult?.upi_id || "Not Provided"}</span></p>
                         </div>
 
-                        {/* 🟢 Razorpay Auto Refund Panel (2-Step Flow) */}
                         {canAutoRefund && (
                             <div className={`p-4 rounded-2xl border-2 ${order.refundStatus === 'Success' ? 'bg-emerald-50 border-emerald-100' : 'bg-blue-50 border-blue-100'}`}>
                                 <h4 className={`text-[10px] font-black uppercase tracking-widest mb-3 ${order.refundStatus === 'Success' ? 'text-emerald-800' : 'text-blue-800'}`}>Refund Management</h4>
@@ -235,7 +236,6 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
                                         <FiCheckCircle size={16}/> Refund Processed Successfully 
                                     </div>
                                 ) : order.refundStatus === "Processing" ? (
-                                    /* 🟢 Step 2: Processing State -> Confirm Success */
                                     <div className="space-y-3">
                                         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs">
                                             <FiRefreshCw className="animate-spin"/> Refund Initiated & Processing...
@@ -246,10 +246,8 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
                                         >
                                             CONFIRM REFUND SUCCESS
                                         </button>
-                                        <p className="text-[9px] text-slate-400 text-center">Click confirming once money leaves account.</p>
                                     </div>
                                 ) : (
-                                    /* 🟢 Step 1: Initial State -> Start Refund */
                                     <button 
                                         onClick={() => onProcessRefund(order._id)}
                                         disabled={order.status === "Cancelled" && !order.paymentId}
@@ -261,7 +259,6 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
                             </div>
                         )}
                         
-                        {/* 🟢 Fallback / Manual Refund (UNLOCKED buttons) */}
                         {(!canAutoRefund && order.status.includes("Cancelled")) && (
                              <div className="bg-orange-50 border-2 border-orange-100 p-4 rounded-2xl">
                                 <h4 className="text-[10px] font-black text-orange-800 uppercase tracking-widest mb-3">Manual Refund Status</h4>
@@ -279,7 +276,6 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
                                         SUCCESSFUL
                                     </button>
                                 </div>
-                                <p className="text-[9px] text-slate-400 mt-2 text-center">Update manually based on offline settlement.</p>
                             </div>
                         )}
                     </div>
@@ -300,18 +296,56 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
                     <div className="space-y-3">
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b pb-2">Line Items</h3>
                         {order.items.map((item, index) => (
-                            <div key={index} className="flex items-center bg-white p-3 rounded-xl border border-slate-100 gap-4">
-                                <img src={getFullImageUrl(item.image)} className="w-10 h-10 object-contain bg-slate-50 rounded-lg" />
-                                <div className="flex-1 min-w-0"><p className="text-xs font-bold truncate">{item.name}</p><p className="text-[10px] text-slate-500">₹{item.price} x {item.qty}</p></div>
-                                <p className="text-xs font-black text-blue-600">₹{(item.price * item.qty).toFixed(2)}</p>
+                            <div key={index} className="flex flex-col bg-white p-3 rounded-xl border border-slate-100 gap-4">
+                                <div className="flex items-center gap-4">
+                                    <img src={getFullImageUrl(item.image)} className="w-10 h-10 object-contain bg-slate-50 rounded-lg" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-bold truncate">{item.name}</p>
+                                        <p className="text-[10px] text-slate-500">₹{item.price} x {item.qty}</p>
+                                    </div>
+                                    <p className="text-xs font-black text-blue-600">₹{(item.price * item.qty).toFixed(2)}</p>
+                                </div>
+                                {/* 🟢 DELETE REVIEW ACTION (If item has review logic attached to productId) */}
+                                {item.productId && (
+                                     <button 
+                                        onClick={() => onDeleteReview(item.productId, item._id)} 
+                                        className="text-[10px] text-red-500 flex items-center gap-1 hover:underline w-max"
+                                    >
+                                        <FiTrash2 size={12}/> Moderate Review
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
                 </div>
                 
-                <div className="px-6 md:px-8 py-5 bg-slate-50 border-t flex flex-col md:flex-row justify-between items-center gap-4">
-                    <p className="text-lg md:text-2xl font-serif font-bold text-blue-600">Total: ₹{order.totalAmount}</p>
-                    <button onClick={onClose} className="w-full md:w-auto px-10 py-2.5 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase">Close Console</button>
+                {/* 🟢 UPDATED: FULL PRICE BREAKDOWN (Items, Tax, Shipping) */}
+                <div className="px-6 md:px-8 py-5 bg-slate-50 border-t">
+                    <div className="space-y-2 mb-4 max-w-xs ml-auto">
+                        <div className="flex justify-between text-xs text-slate-500">
+                            <span>Subtotal:</span>
+                            <span className="font-medium text-slate-900">₹{(order.itemsPrice || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-slate-500">
+                            <span>GST (5%):</span>
+                            <span className="font-medium text-slate-900">+₹{(order.taxPrice || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-slate-500">
+                            <span>Shipping:</span>
+                            <span className="font-medium text-slate-900">+₹{(order.shippingPrice || 0).toLocaleString()}</span>
+                        </div>
+                        {order.discount > 0 && (
+                            <div className="flex justify-between text-xs text-red-500">
+                                <span>Discount:</span>
+                                <span className="font-medium">-₹{order.discount.toLocaleString()}</span>
+                            </div>
+                        )}
+                        <div className="flex justify-between border-t border-slate-200 pt-2 font-bold text-lg text-blue-600">
+                            <span>Total Amount:</span>
+                            <span>₹{order.totalAmount.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-blue-900/10 active:scale-[0.98] transition-all">Close Order Console</button>
                 </div>
                 <div className="hidden"><Invoice order={order} type="invoice" /></div>
             </motion.div>
