@@ -17,6 +17,22 @@ router.get("/", adminAuth, async (req, res) => {
     const startDate = new Date();
     startDate.setMonth(today.getMonth() - limit);
 
+    // --- 🟢 CALCULATE TOP SELLING ITEMS ---
+    const popularProducts = await Order.aggregate([
+      { $unwind: "$items" }, // Break order arrays into individual item documents
+      {
+        $group: {
+          _id: "$items.productId",
+          name: { $first: "$items.name" },
+          image: { $first: "$items.image" },
+          totalSold: { $sum: "$items.qty" } // Sum up the quantity sold
+        }
+      },
+      { $sort: { totalSold: -1 } }, // Sort by highest sales
+      { $limit: 5 } // Only send the top 5 to the dashboard
+    ]);
+
+    // --- GRAPH DATA ---
     const rawGraphData = await Order.aggregate([
       { $match: { createdAt: { $gte: startDate } } },
       {
@@ -33,19 +49,38 @@ router.get("/", adminAuth, async (req, res) => {
       const month = d.getMonth() + 1;
       const year = d.getFullYear();
       const monthName = d.toLocaleString('default', { month: 'short' });
+
       const found = rawGraphData.find(g => g._id.year === year && g._id.month === month);
-      finalGraph.push({ month: monthName, orders: found ? found.orders : 0 });
+      finalGraph.push({
+        month: monthName,
+        orders: found ? found.orders : 0
+      });
     }
+
+    // --- UPDATED STATS WITH REAL REVENUE ---
+    const allOrders = await Order.find({});
+    const totalRevenue = allOrders.reduce((acc, item) => acc + (item.totalAmount || 0), 0);
 
     const stats = {
       products: await Product.countDocuments(),
       orders: await Order.countDocuments(),
-      users: await User.countDocuments()
+      users: await User.countDocuments(),
+      totalRevenue: Math.round(totalRevenue) 
     };
 
-    const recentOrders = await Order.find().sort({ createdAt: -1 }).limit(5).populate('user', 'name'); 
+    const recentOrders = await Order.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate('user', 'name'); 
 
-    res.json({ stats, graph: finalGraph, recentOrders });
+    // Send everything back to the frontend
+    res.json({
+      stats,
+      graph: finalGraph,
+      recentOrders,
+      popularProducts 
+    });
+
   } catch (err) {
     console.error("❌ ADMIN DASHBOARD CRASH:", err);
     res.status(500).json({ message: "Dashboard error" });
@@ -85,7 +120,7 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
 });
 
 // ===============================================
-// 3. FETCH ALL USERS
+// 3. FETCH ALL USERS (GET /api/admin/users)
 // ===============================================
 router.get("/users", adminAuth, async (req, res) => {
     try {
@@ -97,7 +132,7 @@ router.get("/users", adminAuth, async (req, res) => {
 });
 
 // ===============================================
-// 4. DELETE PRODUCT REVIEW
+// 4. DELETE PRODUCT REVIEW (DELETE)
 // ===============================================
 router.delete("/products/:productId/reviews/:reviewId", adminAuth, async (req, res) => {
   try {
@@ -122,7 +157,7 @@ router.delete("/products/:productId/reviews/:reviewId", adminAuth, async (req, r
 });
 
 // ===============================================
-// 🟢 5. FETCH ALL REVIEWS (Crucial for Dashboard)
+// 5. FETCH ALL REVIEWS (GET /api/admin/reviews/all)
 // ===============================================
 router.get("/reviews/all", adminAuth, async (req, res) => {
   try {
