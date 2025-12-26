@@ -2,7 +2,7 @@ import Order from '../models/Order.js';
 import Notification from "../models/notification.js";
 import { 
     sendOrderPlacedEmail, 
-    sendStatusUpdateEmail // 🟢 Updated to use the new multi-status function
+    sendStatusUpdateEmail 
 } from "../utils/emailService.js";
 
 // @desc    Create new order
@@ -39,14 +39,14 @@ export const createOrder = async (req, res) => {
 
         const createdOrder = await order.save();
 
-        // ✅ RESEND INTEGRATION: Trigger Order Confirmation
+        // ✅ FIXED: Await with Correct Parameters (Includes Items for Summary Table)
         try {
             await sendOrderPlacedEmail(
                 req.user.email, 
                 req.user.name, 
                 createdOrder.orderId || createdOrder._id, 
                 createdOrder.totalAmount,
-                createdOrder.items // 🟢 Added this to send the Item Summary Table
+                createdOrder.items // 🟢 Passed items for the new receipt table
             );
             console.log(`✅ SeaBite Official Email sent to ${req.user.email}`);
         } catch (err) {
@@ -78,9 +78,8 @@ export const updateOrderStatus = async (req, res) => {
 
         const updatedOrder = await order.save(); 
 
-        // ✅ RESEND INTEGRATION: Multi-Status Notifications
+        // ✅ FIXED: Using New Multi-Status Notification
         try {
-            // This now handles Processing, Shipped, Delivered, etc. automatically
             if (status) {
                 await sendStatusUpdateEmail(
                     order.user.email, 

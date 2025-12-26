@@ -3,8 +3,8 @@ import adminAuth from "../middleware/adminAuth.js";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import User from "../models/User.js";
-// 🟢 NEW: Import the updated email service
-import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "../utils/emailService.js";
+// 🟢 FIXED: Updated import to match the new emailService.js
+import { sendStatusUpdateEmail } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -88,7 +88,7 @@ router.get("/", adminAuth, async (req, res) => {
 });
 
 // ===============================================
-// 🟢 NEW: UPDATE ORDER STATUS WITH EMAIL TRIGGERS
+// 🟢 FIXED: UPDATE ORDER STATUS WITH NEW EMAIL TRIGGER
 // ===============================================
 router.put("/orders/:id/status", adminAuth, async (req, res) => {
   try {
@@ -100,14 +100,21 @@ router.put("/orders/:id/status", adminAuth, async (req, res) => {
     order.status = status;
     await order.save();
 
-    // 🟢 Trigger Emails based on status update
-    if (status === "Shipped") {
-      await sendOrderShippedEmail(order.user.email, order.user.name, order.orderId);
-    } else if (status === "Delivered") {
-      await sendOrderDeliveredEmail(order.user.email, order.user.name, order.orderId);
+    // 🟢 FIXED: Trigger emails using the single multi-status function
+    try {
+      if (status) {
+        await sendStatusUpdateEmail(
+          order.user.email, 
+          order.user.name, 
+          order.orderId || order._id, 
+          status
+        );
+      }
+    } catch (e) {
+      console.error("❌ Email notification failed:", e.message);
     }
 
-    res.json({ message: "Status updated and email notification sent." });
+    res.json({ message: "Status updated successfully." });
   } catch (err) {
     res.status(500).json({ message: "Failed to update status." });
   }
