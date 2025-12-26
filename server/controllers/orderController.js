@@ -1,9 +1,8 @@
 import Order from '../models/Order.js'; 
 import Notification from "../models/notification.js";
 import { 
-    sendOrderShippedEmail, 
-    sendOrderDeliveredEmail, 
-    sendOrderPlacedEmail 
+    sendOrderPlacedEmail, 
+    sendStatusUpdateEmail // 🟢 Updated to use the new multi-status function
 } from "../utils/emailService.js";
 
 // @desc    Create new order
@@ -41,13 +40,13 @@ export const createOrder = async (req, res) => {
         const createdOrder = await order.save();
 
         // ✅ RESEND INTEGRATION: Trigger Order Confirmation
-        // We await this so Vercel completes the task before sending the response
         try {
             await sendOrderPlacedEmail(
                 req.user.email, 
                 req.user.name, 
-                createdOrder.orderId || createdOrder._id, // Using orderId if available
-                createdOrder.totalAmount
+                createdOrder.orderId || createdOrder._id, 
+                createdOrder.totalAmount,
+                createdOrder.items // 🟢 Added this to send the Item Summary Table
             );
             console.log(`✅ SeaBite Official Email sent to ${req.user.email}`);
         } catch (err) {
@@ -79,13 +78,16 @@ export const updateOrderStatus = async (req, res) => {
 
         const updatedOrder = await order.save(); 
 
-        // ✅ RESEND INTEGRATION: Status Notifications
+        // ✅ RESEND INTEGRATION: Multi-Status Notifications
         try {
-            if (status === 'Shipped') {
-                await sendOrderShippedEmail(order.user.email, order.user.name, order.orderId || order._id);
-            }
-            if (status === 'Delivered') {
-                await sendOrderDeliveredEmail(order.user.email, order.user.name, order.orderId || order._id);
+            // This now handles Processing, Shipped, Delivered, etc. automatically
+            if (status) {
+                await sendStatusUpdateEmail(
+                    order.user.email, 
+                    order.user.name, 
+                    order.orderId || order._id, 
+                    status
+                );
             }
         } catch (e) {
             console.error("❌ Status Email Failed:", e.message);
