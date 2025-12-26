@@ -5,7 +5,11 @@ import {
     sendStatusUpdateEmail 
 } from "../utils/emailService.js";
 
-// @desc    Create new order
+/**
+ * @desc    Create new order
+ * @route   POST /api/orders
+ * @access  Private
+ */
 export const createOrder = async (req, res) => {
     try {
         const { 
@@ -39,19 +43,20 @@ export const createOrder = async (req, res) => {
 
         const createdOrder = await order.save();
 
-        // ✅ FIXED EMAIL TRIGGER: Use req.user directly for reliable delivery
+        // ✅ FIXED EMAIL TRIGGER: Use req.user directly for immediate reliable delivery
         if (req.user && req.user.email) {
             try {
+                // We pass req.user.email and req.user.name to ensure no population delay
                 await sendOrderPlacedEmail(
                     req.user.email, 
                     req.user.name, 
                     createdOrder.orderId || createdOrder._id, 
                     createdOrder.totalAmount,
-                    createdOrder.items // Passed for the receipt table summary
+                    createdOrder.items // Passed for the premium itemized table
                 );
                 console.log(`✅ SeaBite Confirmation Email sent to ${req.user.email}`);
             } catch (err) {
-                // Log the error but don't stop the request
+                // Log the error but allow the response to proceed so the user isn't blocked
                 console.error("❌ Resend Email Error (Order Placed):", err.message);
             }
         }
@@ -63,11 +68,15 @@ export const createOrder = async (req, res) => {
     }
 };
 
-// 🟢 UPDATE ORDER STATUS (ADMIN)
+/**
+ * @desc    Update order status (ADMIN ONLY)
+ * @route   PUT /api/orders/:id/status
+ * @access  Private/Admin
+ */
 export const updateOrderStatus = async (req, res) => {
     const { status, refundStatus } = req.body; 
     try {
-        // We populate user to get the email for the notification
+        // We populate user to get the email for the notification function
         const order = await Order.findById(req.params.id).populate('user', 'name email');
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
@@ -82,7 +91,7 @@ export const updateOrderStatus = async (req, res) => {
 
         const updatedOrder = await order.save(); 
 
-        // ✅ FIXED EMAIL TRIGGER: Multi-Status Notifications
+        // ✅ FIXED EMAIL TRIGGER: Multi-Status Amazon/Flipkart Style Notifications
         try {
             if (status && order.user && order.user.email) {
                 await sendStatusUpdateEmail(
@@ -103,7 +112,11 @@ export const updateOrderStatus = async (req, res) => {
     }
 };
 
-// 🟢 CANCEL ORDER LOGIC
+/**
+ * @desc    Cancel an order
+ * @route   PUT /api/orders/:id/cancel
+ * @access  Private
+ */
 export const cancelOrder = async (req, res) => {
     try {
         const { reason } = req.body; 
@@ -111,10 +124,12 @@ export const cancelOrder = async (req, res) => {
 
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
+        // Authorization check
         if (order.user.toString() !== req.user._id.toString()) {
             return res.status(401).json({ message: 'Not authorized' });
         }
 
+        // Business logic: prevent cancellation of shipped items
         if (order.status === 'Shipped' || order.status === 'Delivered') {
             return res.status(400).json({ message: 'Cannot cancel an order already in transit.' });
         }
@@ -124,7 +139,7 @@ export const cancelOrder = async (req, res) => {
         
         const updatedOrder = await order.save();
 
-        // Record in internal notification system
+        // Sync with internal dashboard notifications
         await Notification.create({
             user: req.user._id,
             message: `🔴 Order #${order.orderId || order._id} was cancelled. Reason: ${order.cancelReason}`,
@@ -138,7 +153,11 @@ export const cancelOrder = async (req, res) => {
     }
 };
 
-// 🟢 GET ALL ORDERS (ADMIN)
+/**
+ * @desc    Get all orders (ADMIN ONLY)
+ * @route   GET /api/orders
+ * @access  Private/Admin
+ */
 export const getAllOrders = async (req, res) => {
     try {
         const orders = await Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
@@ -148,7 +167,11 @@ export const getAllOrders = async (req, res) => {
     }
 };
 
-// 🟢 GET MY ORDERS (USER)
+/**
+ * @desc    Get logged-in user orders
+ * @route   GET /api/orders/myorders
+ * @access  Private
+ */
 export const getMyOrders = async (req, res) => {
     try {
         const orders = await Order.find({ user: req.user.id })
@@ -160,7 +183,10 @@ export const getMyOrders = async (req, res) => {
     }
 };
 
-// 🟢 MIGRATION TOOL
+/**
+ * @desc    Migration tool for pricing consistency
+ * @access  Private/Admin
+ */
 export const migrateOldOrderDiscounts = async (req, res) => {
     try {
         const orders = await Order.find();
