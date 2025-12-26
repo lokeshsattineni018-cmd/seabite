@@ -3,6 +3,8 @@ import adminAuth from "../middleware/adminAuth.js";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import User from "../models/User.js";
+// 🟢 NEW: Import the updated email service
+import { sendOrderShippedEmail, sendOrderDeliveredEmail } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -19,17 +21,17 @@ router.get("/", adminAuth, async (req, res) => {
 
     // --- 🟢 CALCULATE TOP SELLING ITEMS ---
     const popularProducts = await Order.aggregate([
-      { $unwind: "$items" }, // Break order arrays into individual item documents
+      { $unwind: "$items" },
       {
         $group: {
           _id: "$items.productId",
           name: { $first: "$items.name" },
           image: { $first: "$items.image" },
-          totalSold: { $sum: "$items.qty" } // Sum up the quantity sold
+          totalSold: { $sum: "$items.qty" }
         }
       },
-      { $sort: { totalSold: -1 } }, // Sort by highest sales
-      { $limit: 5 } // Only send the top 5 to the dashboard
+      { $sort: { totalSold: -1 } },
+      { $limit: 5 }
     ]);
 
     // --- GRAPH DATA ---
@@ -57,7 +59,6 @@ router.get("/", adminAuth, async (req, res) => {
       });
     }
 
-    // --- UPDATED STATS WITH REAL REVENUE ---
     const allOrders = await Order.find({});
     const totalRevenue = allOrders.reduce((acc, item) => acc + (item.totalAmount || 0), 0);
 
@@ -73,7 +74,6 @@ router.get("/", adminAuth, async (req, res) => {
       .limit(5)
       .populate('user', 'name'); 
 
-    // Send everything back to the frontend
     res.json({
       stats,
       graph: finalGraph,
@@ -84,6 +84,32 @@ router.get("/", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("❌ ADMIN DASHBOARD CRASH:", err);
     res.status(500).json({ message: "Dashboard error" });
+  }
+});
+
+// ===============================================
+// 🟢 NEW: UPDATE ORDER STATUS WITH EMAIL TRIGGERS
+// ===============================================
+router.put("/orders/:id/status", adminAuth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findById(req.params.id).populate('user', 'name email');
+
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    order.status = status;
+    await order.save();
+
+    // 🟢 Trigger Emails based on status update
+    if (status === "Shipped") {
+      await sendOrderShippedEmail(order.user.email, order.user.name, order.orderId);
+    } else if (status === "Delivered") {
+      await sendOrderDeliveredEmail(order.user.email, order.user.name, order.orderId);
+    }
+
+    res.json({ message: "Status updated and email notification sent." });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update status." });
   }
 });
 
@@ -178,7 +204,6 @@ router.get("/reviews/all", adminAuth, async (req, res) => {
       });
     });
 
-    // Sort by most recent review first
     allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     res.json(allReviews);
   } catch (err) {

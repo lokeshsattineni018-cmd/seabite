@@ -19,7 +19,7 @@ const Counter = mongoose.models.Counter || mongoose.model("Counter", counterSche
 
 const orderSchema = new mongoose.Schema(
   {
-    orderId: { type: Number, unique: true },
+    orderId: { type: Number, unique: true }, // Used in Resend Emails
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -32,17 +32,17 @@ const orderSchema = new mongoose.Schema(
             ref: "Product", 
             required: true 
         }, 
-        name: String,
+        name: { type: String, required: true },
         price: { type: Number, default: 0 },
-        qty: { type: Number, default: 1 },
-        image: String,
+        qty: { type: Number, default: 1 }, // Used for Top Selling aggregation
+        image: { type: String, required: true }, // Required for Dashboard thumbnails
       },
     ],
     itemsPrice: { type: Number, default: 0 },    
     taxPrice: { type: Number, default: 0 },      
     shippingPrice: { type: Number, default: 0 }, 
     discount: { type: Number, default: 0 },      
-    totalAmount: { type: Number, required: true }, 
+    totalAmount: { type: Number, required: true }, // Used for Dashboard Revenue stats
     
     razorpay_order_id: { type: String, index: true }, 
     paymentMethod: { type: String, required: true, default: "COD" }, 
@@ -51,14 +51,17 @@ const orderSchema = new mongoose.Schema(
     isPaid: { type: Boolean, default: false },
     paidAt: { type: Date },
 
+    // 🟢 ADDED: Tracking for better dashboard intelligence
+    isDelivered: { type: Boolean, default: false },
+    deliveredAt: { type: Date },
+
     shippingAddress: {
         type: shippingAddressSchema,
         required: true,
     },
-    // ✅ CONFIRMED: Default is "Pending"
     status: {
       type: String,
-      default: "Pending",
+      default: "Pending", // Options: Pending, Shipped, Delivered, Cancelled
     },
     refundStatus: { 
       type: String, 
@@ -72,6 +75,7 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Auto-increment logic for Order ID
 orderSchema.pre("save", async function () {
   if (this.isNew && !this.orderId) { 
     const counter = await Counter.findOneAndUpdate(

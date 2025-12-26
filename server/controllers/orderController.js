@@ -21,14 +21,10 @@ export const createOrder = async (req, res) => {
             return res.status(400).json({ message: 'No order items' });
         }
 
-        // 🟢 DELIVERY LOGIC: Shipping based on subtotal (itemsPrice)
+        // 🟢 CORE LOGIC: Pricing & Taxes
         const subtotal = itemsPrice || 0;
         const shippingPrice = subtotal < 1000 ? 99 : 0;
-        
-        // Calculate Tax (5% of subtotal after discount)
         const taxPrice = Math.round((subtotal - (discount || 0)) * 0.05);
-        
-        // Final Grand Total calculation
         const totalAmount = subtotal - (discount || 0) + shippingPrice + taxPrice;
 
         const order = new Order({
@@ -44,69 +40,24 @@ export const createOrder = async (req, res) => {
 
         const createdOrder = await order.save();
 
-        // ✅ CRITICAL FIX: Await the email so Vercel doesn't kill the process
-        // This ensures the email actually leaves your server before the response is sent
+        // ✅ RESEND INTEGRATION: Trigger Order Confirmation
+        // We await this so Vercel completes the task before sending the response
         try {
             await sendOrderPlacedEmail(
                 req.user.email, 
                 req.user.name, 
-                createdOrder._id, 
+                createdOrder.orderId || createdOrder._id, // Using orderId if available
                 createdOrder.totalAmount
             );
-            console.log(`✅ Official Order Email sent to ${req.user.email}`);
+            console.log(`✅ SeaBite Official Email sent to ${req.user.email}`);
         } catch (err) {
-            console.error("❌ Brevo Email Error:", err.message);
-            // We don't block the response even if email fails, but we log the error
+            console.error("❌ Resend Email Error:", err.message);
         }
 
         res.status(201).json(createdOrder);
     } catch (error) {
         console.error("Create Order Error:", error);
         res.status(500).json({ message: 'Server error' });
-    }
-};
-
-// 🟢 CANCEL ORDER LOGIC
-export const cancelOrder = async (req, res) => {
-    try {
-        const { reason } = req.body; 
-        const order = await Order.findById(req.params.id);
-
-        if (!order) return res.status(404).json({ message: 'Order not found' });
-
-        if (order.user.toString() !== req.user._id.toString()) {
-            return res.status(401).json({ message: 'Not authorized' });
-        }
-
-        if (order.status === 'Shipped' || order.status === 'Delivered') {
-            return res.status(400).json({ message: 'Cannot cancel an order that has already been shipped.' });
-        }
-
-        order.status = 'Cancelled by User';
-        order.cancelReason = reason || "No reason provided"; 
-        
-        const updatedOrder = await order.save();
-
-        await Notification.create({
-            user: req.user._id,
-            message: `🔴 Order #${order._id} was cancelled. Reason: ${order.cancelReason}`,
-            orderId: order._id,
-            statusType: "Cancelled"
-        });
-
-        res.json(updatedOrder);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-// 🟢 GET ALL ORDERS (ADMIN)
-export const getAllOrders = async (req, res) => {
-    try {
-        const orders = await Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
-        res.json(orders);
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching orders' });
     }
 };
 
@@ -126,23 +77,67 @@ export const updateOrderStatus = async (req, res) => {
             }
         }
 
-        await order.save(); 
+        const updatedOrder = await order.save(); 
 
-        // ✅ CRITICAL FIX: Await status update emails
+        // ✅ RESEND INTEGRATION: Status Notifications
         try {
             if (status === 'Shipped') {
-                await sendOrderShippedEmail(order.user.email, order.user.name, order._id);
+                await sendOrderShippedEmail(order.user.email, order.user.name, order.orderId || order._id);
             }
             if (status === 'Delivered') {
-                await sendOrderDeliveredEmail(order.user.email, order.user.name, order._id);
+                await sendOrderDeliveredEmail(order.user.email, order.user.name, order.orderId || order._id);
             }
         } catch (e) {
-            console.error("❌ Status Update Email Failed:", e.message);
+            console.error("❌ Status Email Failed:", e.message);
         }
 
-        res.json(order);
+        res.json(updatedOrder);
     } catch (error) {
         res.status(500).json({ message: 'Error updating status' });
+    }
+};
+
+// 🟢 CANCEL ORDER LOGIC
+export const cancelOrder = async (req, res) => {
+    try {
+        const { reason } = req.body; 
+        const order = await Order.findById(req.params.id);
+
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        if (order.user.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
+        if (order.status === 'Shipped' || order.status === 'Delivered') {
+            return res.status(400).json({ message: 'Cannot cancel an order already in transit.' });
+        }
+
+        order.status = 'Cancelled by User';
+        order.cancelReason = reason || "No reason provided"; 
+        
+        const updatedOrder = await order.save();
+
+        await Notification.create({
+            user: req.user._id,
+            message: `🔴 Order #${order.orderId || order._id} was cancelled. Reason: ${order.cancelReason}`,
+            orderId: order._id,
+            statusType: "Cancelled"
+        });
+
+        res.json(updatedOrder);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// 🟢 GET ALL ORDERS (ADMIN)
+export const getAllOrders = async (req, res) => {
+    try {
+        const orders = await Order.find({}).populate('user', 'id name email').sort({ createdAt: -1 });
+        res.json(orders);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching orders' });
     }
 };
 
