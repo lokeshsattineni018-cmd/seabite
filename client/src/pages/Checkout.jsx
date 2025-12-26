@@ -570,7 +570,18 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">Phone Number</label>
-                            <input type="tel" placeholder="+91 98765 43210" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all" />
+                            <input 
+                                type="tel" 
+                                placeholder="9876543210" 
+                                value={form.phone} 
+                                onChange={e => {
+                                    const value = e.target.value.replace(/\D/g, "");
+                                    if (value.length <= 10) {
+                                        setForm({...form, phone: value});
+                                    }
+                                }} 
+                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all" 
+                            />
                         </div>
                     </div>
                     
@@ -615,8 +626,8 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
                         <p className="text-[10px] md:text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium line-clamp-2">{form.street || "Select a location on the map..."}</p>
                     </div>
 
-                    <button disabled={!isDeliverable || !form.fullName || !form.phone || !form.houseNo || !form.zip || isDetecting} onClick={() => onSave(form)} 
-                        className={`w-full py-3.5 md:py-4 rounded-xl font-bold uppercase tracking-wide text-[10px] md:text-xs transition-all shadow-lg ${isDeliverable && !isDetecting ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-600 dark:hover:bg-blue-100 shadow-slate-900/20' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
+                    <button disabled={!isDeliverable || !form.fullName || !form.phone || form.phone.length !== 10 || !form.houseNo || !form.zip || isDetecting} onClick={() => onSave(form)} 
+                        className={`w-full py-3.5 md:py-4 rounded-xl font-bold uppercase tracking-wide text-[10px] md:text-xs transition-all shadow-lg ${isDeliverable && !isDetecting && form.phone.length === 10 ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-600 dark:hover:bg-blue-100 shadow-slate-900/20' : 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed'}`}
                     >
                         {isDetecting ? "Fetching Location..." : "Confirm Address"}
                     </button>

@@ -54,7 +54,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
   return await resend.emails.send({
     from: OFFICIAL_SENDER,
     to: email,
-    subject: isNewUser ? 'SeaBite | Access Granted' : 'SeaBite | Security Sync',
+    subject: isNewUser ? 'SeaBite | Access Granted' : 'SeaBite',
     html: aestheticWrapper(content, isNewUser ? "NEW MEMBER" : "SECURE ACCESS")
   });
 };
