@@ -1,14 +1,15 @@
 import { Resend } from 'resend';
 
+// Initialize Resend with your API Key
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// 🟢 Identity specifically for Official/Security matters
+// 🟢 Dual Sender Identities
 const OFFICIAL_SENDER = 'SeaBite Official <official@seabite.co.in>';
 const ORDERS_SENDER = 'SeaBite Orders <orders@seabite.co.in>';
 
 /**
  * 🟢 1. AUTH: AMZ-STYLE SECURITY NOTIFICATION
- * Design: High-contrast, clean, and professional for security trust.
+ * Design: High-contrast, professional, and features the IST Timezone Fix
  */
 export const sendLoginNotification = async (email, name) => {
   const istTime = new Date().toLocaleString("en-IN", {
@@ -59,8 +60,42 @@ export const sendLoginNotification = async (email, name) => {
 };
 
 /**
- * 🟢 2. ORDER CONFIRMED: FLIPKART-STYLE CELEBRATORY RECEIPT
- * Design: Bright blue headers, itemized table, and clear delivery commitment.
+ * 🟢 2. AUTH: PREMIUM WELCOME EMAIL
+ * Restores the missing export to fix the Vercel SyntaxError
+ */
+export const sendWelcomeEmail = async (email, name) => {
+  const html = `
+    <div style="background-color: #f3f4f6; padding: 40px 10px; font-family: 'Arial', sans-serif;">
+      <table align="center" width="100%" style="max-width: 550px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05);">
+        <tr>
+          <td style="background-color: #0f172a; padding: 40px 20px; text-align: center;">
+            <img src="https://seabite.co.in/logo.png" width="150" alt="SeaBite">
+            <h2 style="color: #38bdf8; font-size: 14px; text-transform: uppercase; letter-spacing: 3px; margin: 15px 0 0 0;">Account Verified</h2>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 40px; color: #334155; line-height: 1.6;">
+            <h1 style="font-size: 24px; color: #0f172a; margin-top: 0;">Welcome to the Family, ${name}! 🌊</h1>
+            <p>Your journey to the freshest catch in India starts today. Your account is officially verified and ready to use.</p>
+            <div style="margin: 30px 0; text-align: center;">
+              <a href="https://seabite.co.in" style="background-color: #2874f0; color: #ffffff; padding: 14px 30px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">Browse the Catch</a>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+  `;
+  return await resend.emails.send({
+    from: OFFICIAL_SENDER,
+    to: email,
+    subject: 'Welcome to SeaBite! 🌊',
+    html
+  });
+};
+
+/**
+ * 🟢 3. ORDER CONFIRMED: FLIPKART-STYLE CELEBRATORY RECEIPT
+ * Features: Bright blue headers and premium itemized table
  */
 export const sendOrderPlacedEmail = async (email, name, orderId, total, items) => {
   const itemRows = items.map(item => `
@@ -90,7 +125,6 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items) =
         <tr>
           <td style="padding: 30px;">
             <p style="font-size: 15px; color: #333;">Order <b>#${orderId}</b> has been received and is being prepared with the freshest catch.</p>
-            
             <table width="100%" style="border-collapse: collapse; margin-top: 20px;">
               <thead>
                 <tr style="text-align: left; font-size: 12px; color: #878787; text-transform: uppercase;">
@@ -98,15 +132,12 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items) =
                   <th style="padding-bottom: 10px; border-bottom: 1px solid #eee; text-align: right;">Price</th>
                 </tr>
               </thead>
-              <tbody>
-                ${itemRows}
-              </tbody>
+              <tbody>${itemRows}</tbody>
               <tr>
                 <td style="padding: 25px 0; font-size: 16px; font-weight: bold; color: #212121;">Total Paid</td>
                 <td style="padding: 25px 0; text-align: right; font-size: 20px; color: #2874f0; font-weight: bold;">₹${total.toLocaleString()}</td>
               </tr>
             </table>
-            
             <div style="margin-top: 25px; padding: 20px; background: #e3f2fd; border-radius: 8px; text-align: center; border: 1px solid #bbdefb;">
               <span style="color: #0d47a1; font-weight: bold; font-size: 16px;">🚚 Estimated Delivery: 2 - 3 Days</span>
             </div>
@@ -125,8 +156,8 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items) =
 };
 
 /**
- * 🟢 3. STATUS UPDATES: UNIQUE DYNAMIC DESIGNS
- * Design: Features a visual progress bar and intent-specific colors (Blue for Shipped, Green for Delivered).
+ * 🟢 4. STATUS UPDATES: UNIQUE DYNAMIC DESIGNS
+ * Features: Visual Progress Bar and intent-specific colors
  */
 export const sendStatusUpdateEmail = async (email, name, orderId, status) => {
   const isDelivered = status === 'Delivered';
@@ -148,7 +179,6 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status) => {
         <tr>
           <td style="padding: 40px;">
             <p style="font-size: 16px; color: #333;">Hi <b>${name}</b>, your order <b>#${orderId}</b> has a status update.</p>
-            
             ${!isCancelled ? `
             <table width="100%" style="margin: 35px 0;">
               <tr>
@@ -161,21 +191,13 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status) => {
                 <td style="padding-top: 10px; color: ${isShipped ? accentColor : '#9e9e9e'};">In Transit</td>
                 <td style="padding-top: 10px; color: ${isDelivered ? accentColor : '#9e9e9e'};">Delivered</td>
               </tr>
-            </table>
-            ` : ''}
-
+            </table>` : ''}
             <p style="background: #f9f9f9; padding: 20px; border-radius: 8px; border-left: 5px solid ${accentColor}; color: #555; font-size: 15px;">
               Current Status: <b>${status}</b>
             </p>
-            
             <div style="text-align: center; margin-top: 40px;">
               <a href="https://seabite.co.in/profile" style="background: ${accentColor}; color: white; padding: 16px 35px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Track Your Package</a>
             </div>
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 20px; background: #fafafa; text-align: center; border-top: 1px solid #eee;">
-            <span style="font-size: 12px; color: #999;">Need help? Contact support@seabite.co.in</span>
           </td>
         </tr>
       </table>
