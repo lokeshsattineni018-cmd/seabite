@@ -1,8 +1,8 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-// 🟢 Import both mailer functions
-import { sendLoginNotification, sendWelcomeEmail } from "../utils/emailService.js"; 
+// 🟢 FIXED: Updated import to match the new smart auth email function
+import { sendAuthEmail } from "../utils/emailService.js"; 
 
 const getDecodedUser = (req) => {
     const auth = req.headers.authorization;
@@ -15,6 +15,10 @@ const getDecodedUser = (req) => {
     }
 };
 
+/**
+ * 🟢 GOOGLE LOGIN (SMART AUTH)
+ * Detects new vs returning users and sends Amazon-level emails
+ */
 export const googleLogin = async (req, res) => {
   const { token } = req.body;
 
@@ -28,17 +32,18 @@ export const googleLogin = async (req, res) => {
     const { name, email, sub: googleId } = await googleRes.json();
 
     let user = await User.findOne({ email });
-    let isNewUser = false; // 🟢 Flag for demo purposes
+    let isNewUser = false; 
 
     if (user) {
       if (!user.googleId) {
         user.googleId = googleId;
         await user.save();
       }
+      isNewUser = false; // 🟢 Returning user
     } else {
       user = new User({ name, email, googleId });
       await user.save();
-      isNewUser = true; // 🟢 This is their first time!
+      isNewUser = true; // 🟢 New signup!
     }
 
     const authToken = jwt.sign(
@@ -47,15 +52,11 @@ export const googleLogin = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // 🟢 EMAIL LOGIC: Await for Vercel process completion
+    // 🟢 SMART EMAIL LOGIC: High-level Welcome vs Welcome Back
     try {
-        if (isNewUser) {
-            await sendWelcomeEmail(user.email, user.name);
-            console.log(`✅ Welcome email sent to ${user.email}`);
-        } else {
-            await sendLoginNotification(user.email, user.name);
-            console.log(`✅ Login notification sent to ${user.email}`);
-        }
+        // We await this so Vercel completes the task before sending the response
+        await sendAuthEmail(user.email, user.name, isNewUser);
+        console.log(`✅ ${isNewUser ? 'Welcome' : 'Login'} email sent to ${user.email}`);
     } catch (err) {
         console.error("❌ Email Trigger Failed:", err.message);
     }

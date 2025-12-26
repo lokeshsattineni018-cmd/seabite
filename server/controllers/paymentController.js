@@ -29,7 +29,12 @@ export const checkout = async (req, res) => {
 
     const newOrder = new Order({
       user: req.user._id, 
-      items, shippingAddress, itemsPrice, taxPrice, shippingPrice, discount,
+      items, 
+      shippingAddress, 
+      itemsPrice, 
+      taxPrice, 
+      shippingPrice, 
+      discount,
       totalAmount: amount,
       paymentMethod: paymentMethod || "COD",
       razorpay_order_id: razorpayOrder ? razorpayOrder.id : null, 
@@ -42,12 +47,14 @@ export const checkout = async (req, res) => {
     // ✅ TRIGGER EMAIL: ONLY for COD orders here
     if (paymentMethod === "COD") {
         try {
+            // 🟢 Pass paymentMethod so the email knows to show "Pay on Delivery"
             await sendOrderPlacedEmail(
                 req.user.email, 
                 req.user.name, 
                 savedOrder.orderId || savedOrder._id, 
                 savedOrder.totalAmount,
-                savedOrder.items
+                savedOrder.items,
+                savedOrder.paymentMethod 
             );
             console.log(`✅ COD Confirmation Email sent to ${req.user.email}`);
         } catch (mailErr) {
@@ -84,7 +91,6 @@ export const paymentVerification = async (req, res) => {
       .update(body.toString()).digest("hex");
 
     if (expectedSignature === razorpay_signature) {
-      // 🟢 We use populate('user') to get the email/name for the receipt
       const updatedOrder = await Order.findOneAndUpdate(
         { razorpay_order_id: razorpay_order_id }, 
         { status: "Processing", paymentId: razorpay_payment_id, paidAt: Date.now(), isPaid: true },
@@ -99,7 +105,8 @@ export const paymentVerification = async (req, res) => {
                   updatedOrder.user.name, 
                   updatedOrder.orderId || updatedOrder._id, 
                   updatedOrder.totalAmount,
-                  updatedOrder.items
+                  updatedOrder.items,
+                  updatedOrder.paymentMethod // 🟢 Passes "Prepaid" for "Total Paid" label
               );
               console.log(`✅ Prepaid Confirmation Email sent to ${updatedOrder.user.email}`);
           } catch (mailErr) {
