@@ -1,7 +1,9 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import Order from '../models/Order.js'; 
-import Notification from '../models/notification.js'; // ✅ IMPORT ADDED
+import Notification from '../models/notification.js';
+// 🟢 IMPORT EMAIL SERVICE
+import { sendOrderPlacedEmail } from "../utils/emailService.js";
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID, 
@@ -31,17 +33,27 @@ export const checkout = async (req, res) => {
       totalAmount: amount,
       paymentMethod: paymentMethod || "COD",
       razorpay_order_id: razorpayOrder ? razorpayOrder.id : null, 
-      
-      // ✅ FIXED: Force ALL new orders to start as "Pending" (even COD)
       status: "Pending", 
-      
       isPaid: false 
     });
 
     const savedOrder = await newOrder.save();
 
-    // ✅ NEW: Create Notification ONLY for COD orders here (Prepaid waits for verification)
+    // ✅ TRIGGER EMAIL: ONLY for COD orders here
     if (paymentMethod === "COD") {
+        try {
+            await sendOrderPlacedEmail(
+                req.user.email, 
+                req.user.name, 
+                savedOrder.orderId || savedOrder._id, 
+                savedOrder.totalAmount,
+                savedOrder.items
+            );
+            console.log(`✅ COD Confirmation Email sent to ${req.user.email}`);
+        } catch (mailErr) {
+            console.error("❌ COD Email Failed:", mailErr.message);
+        }
+
         await Notification.create({
             user: req.user._id,
             message: `Order #${savedOrder.orderId} placed successfully via COD!`,
@@ -72,16 +84,30 @@ export const paymentVerification = async (req, res) => {
       .update(body.toString()).digest("hex");
 
     if (expectedSignature === razorpay_signature) {
+      // 🟢 We use populate('user') to get the email/name for the receipt
       const updatedOrder = await Order.findOneAndUpdate(
         { razorpay_order_id: razorpay_order_id }, 
         { status: "Processing", paymentId: razorpay_payment_id, paidAt: Date.now(), isPaid: true },
         { new: true }
-      );
+      ).populate('user', 'name email');
 
-      // ✅ NEW: Create Notification for Successful Payment
       if (updatedOrder) {
+          // ✅ TRIGGER EMAIL: For Successful Prepaid Payment
+          try {
+              await sendOrderPlacedEmail(
+                  updatedOrder.user.email, 
+                  updatedOrder.user.name, 
+                  updatedOrder.orderId || updatedOrder._id, 
+                  updatedOrder.totalAmount,
+                  updatedOrder.items
+              );
+              console.log(`✅ Prepaid Confirmation Email sent to ${updatedOrder.user.email}`);
+          } catch (mailErr) {
+              console.error("❌ Prepaid Email Failed:", mailErr.message);
+          }
+
           await Notification.create({
-              user: req.user._id, // Assumes route is protected and has req.user
+              user: req.user._id, 
               message: `Payment Successful! Order #${updatedOrder.orderId} is now Processing.`,
               orderId: updatedOrder._id,
               statusType: "Processing"
@@ -117,7 +143,6 @@ export const refundPayment = async (req, res) => {
     order.isPaid = false; 
     await order.save();
 
-    // ✅ NEW: Notification for Refund
     await Notification.create({
         user: order.user,
         message: `Refund Initiated for Order #${order.orderId}`,
