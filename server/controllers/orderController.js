@@ -27,7 +27,7 @@ export const createOrder = async (req, res) => {
         const totalAmount = subtotal - (discount || 0) + shippingPrice + taxPrice;
 
         const order = new Order({
-            user: req.user._id,
+            user: req.user._id, // Set from protect middleware
             items,
             itemsPrice: subtotal,
             taxPrice,
@@ -39,24 +39,27 @@ export const createOrder = async (req, res) => {
 
         const createdOrder = await order.save();
 
-        // ✅ FIXED: Await with Correct Parameters (Includes Items for Summary Table)
-        try {
-            await sendOrderPlacedEmail(
-                req.user.email, 
-                req.user.name, 
-                createdOrder.orderId || createdOrder._id, 
-                createdOrder.totalAmount,
-                createdOrder.items // 🟢 Passed items for the new receipt table
-            );
-            console.log(`✅ SeaBite Official Email sent to ${req.user.email}`);
-        } catch (err) {
-            console.error("❌ Resend Email Error:", err.message);
+        // ✅ FIXED EMAIL TRIGGER: Use req.user directly for reliable delivery
+        if (req.user && req.user.email) {
+            try {
+                await sendOrderPlacedEmail(
+                    req.user.email, 
+                    req.user.name, 
+                    createdOrder.orderId || createdOrder._id, 
+                    createdOrder.totalAmount,
+                    createdOrder.items // Passed for the receipt table summary
+                );
+                console.log(`✅ SeaBite Confirmation Email sent to ${req.user.email}`);
+            } catch (err) {
+                // Log the error but don't stop the request
+                console.error("❌ Resend Email Error (Order Placed):", err.message);
+            }
         }
 
         res.status(201).json(createdOrder);
     } catch (error) {
         console.error("Create Order Error:", error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: 'Server error during order creation' });
     }
 };
 
@@ -64,6 +67,7 @@ export const createOrder = async (req, res) => {
 export const updateOrderStatus = async (req, res) => {
     const { status, refundStatus } = req.body; 
     try {
+        // We populate user to get the email for the notification
         const order = await Order.findById(req.params.id).populate('user', 'name email');
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
@@ -78,15 +82,16 @@ export const updateOrderStatus = async (req, res) => {
 
         const updatedOrder = await order.save(); 
 
-        // ✅ FIXED: Using New Multi-Status Notification
+        // ✅ FIXED EMAIL TRIGGER: Multi-Status Notifications
         try {
-            if (status) {
+            if (status && order.user && order.user.email) {
                 await sendStatusUpdateEmail(
                     order.user.email, 
                     order.user.name, 
                     order.orderId || order._id, 
                     status
                 );
+                console.log(`✅ Status update (${status}) sent to ${order.user.email}`);
             }
         } catch (e) {
             console.error("❌ Status Email Failed:", e.message);
@@ -119,6 +124,7 @@ export const cancelOrder = async (req, res) => {
         
         const updatedOrder = await order.save();
 
+        // Record in internal notification system
         await Notification.create({
             user: req.user._id,
             message: `🔴 Order #${order.orderId || order._id} was cancelled. Reason: ${order.cancelReason}`,
