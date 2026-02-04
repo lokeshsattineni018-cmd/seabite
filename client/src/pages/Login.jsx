@@ -12,7 +12,7 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const res = await axios.post("https://seabite-server.vercel.app/api/auth/login", {
+      const res = await axios.post("https://www.seabite.co.in/api/auth/google", {
         token: credentialResponse.credential,
       });
 
@@ -88,8 +88,7 @@ export default function Login() {
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => console.log('Login Failed')}
-              
-
+              useOneTap
               shape="pill"
               theme="filled_blue" 
               size="large"
