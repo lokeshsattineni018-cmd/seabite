@@ -1,8 +1,10 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
-// 🟢 FIXED: Updated import to match the new smart auth email function
 import { sendAuthEmail } from "../utils/emailService.js"; 
+import { OAuth2Client } from "google-auth-library";
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const getDecodedUser = (req) => {
     const auth = req.headers.authorization;
@@ -23,13 +25,12 @@ export const googleLogin = async (req, res) => {
   const { token } = req.body;
 
   try {
-    const googleRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${token}` },
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
     });
 
-    if (!googleRes.ok) throw new Error("Failed to fetch user from Google");
-
-    const { name, email, sub: googleId } = await googleRes.json();
+    const { name, email, sub: googleId } = ticket.getPayload();
 
     let user = await User.findOne({ email });
     let isNewUser = false; 
@@ -39,11 +40,11 @@ export const googleLogin = async (req, res) => {
         user.googleId = googleId;
         await user.save();
       }
-      isNewUser = false; // 🟢 Returning user
+      isNewUser = false;
     } else {
       user = new User({ name, email, googleId });
       await user.save();
-      isNewUser = true; // 🟢 New signup!
+      isNewUser = true;
     }
 
     const authToken = jwt.sign(
@@ -52,9 +53,7 @@ export const googleLogin = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // 🟢 SMART EMAIL LOGIC: High-level Welcome vs Welcome Back
     try {
-        // We await this so Vercel completes the task before sending the response
         await sendAuthEmail(user.email, user.name, isNewUser);
         console.log(`✅ ${isNewUser ? 'Welcome' : 'Login'} email sent to ${user.email}`);
     } catch (err) {
