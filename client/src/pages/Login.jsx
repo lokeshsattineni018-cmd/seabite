@@ -12,7 +12,7 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      const res = await axios.post("https://www.seabite.co.in/api/auth/google", {
+      const res = await axios.post("/api/auth/google", {
         token: credentialResponse.credential,
       });
 
