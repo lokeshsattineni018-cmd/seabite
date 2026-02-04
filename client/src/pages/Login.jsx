@@ -7,26 +7,24 @@ import { GoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
-  const navigate = useNavigate();
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      // 🚨 CRITICAL FIX 1: Explicitly grab the 3-segment JWT ID Token
+      // 🚨 FIX: response.credential is the 3-segment JWT ID Token required by your backend
       const idToken = credentialResponse.credential;
 
-      // 🚨 CRITICAL FIX 2: Use a RELATIVE path '/api/...' 
-      // This forces the 'vercel.json' rewrite to proxy the request correctly to your backend
+      // 🚨 PROXY FIX: Use a relative path '/api/...' to leverage your 'vercel.json' rewrite
       const res = await axios.post("/api/auth/google", {
         token: idToken,
       });
 
-      // 1. Save data immediately
+      // 1. Save Token & User data to localStorage
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       setModal({ show: true, message: "Login Successful!", type: "success" });
       
-      // 2. Hard Refresh to sync Navbar/Auth states
+      // 2. INSTANT RELOAD: Forces Navbar and state to update immediately
       setTimeout(() => {
           if (res.data.user.role === "admin") {
               window.location.href = "/admin/dashboard";
@@ -36,6 +34,7 @@ export default function Login() {
       }, 1000);
 
     } catch (err) {
+      // Catching the 401/500 errors from the server
       console.error("Login error:", err.response?.data?.message || err.message);
       setModal({ 
         show: true, 
@@ -48,7 +47,7 @@ export default function Login() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden font-sans">
       
-      {/* BACKGROUND ATMOSPHERE */}
+      {/* BACKGROUND DECORATION */}
       <div className="absolute inset-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-100/60 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-rose-100/50 rounded-full blur-[120px]" />
