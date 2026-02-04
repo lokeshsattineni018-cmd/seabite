@@ -1,6 +1,5 @@
 import User from "../models/User.js";
 import jwt from "jsonwebtoken";
-import mongoose from "mongoose";
 import { sendAuthEmail } from "../utils/emailService.js"; 
 import { OAuth2Client } from "google-auth-library";
 
@@ -19,10 +18,14 @@ const getDecodedUser = (req) => {
 
 /**
  * 🟢 GOOGLE LOGIN (SMART AUTH)
- * Detects new vs returning users and sends Amazon-level emails
+ * Error-free verification using Google ID Token
  */
 export const googleLogin = async (req, res) => {
   const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ message: "No token provided" });
+  }
 
   try {
     const ticket = await googleClient.verifyIdToken({
@@ -40,7 +43,6 @@ export const googleLogin = async (req, res) => {
         user.googleId = googleId;
         await user.save();
       }
-      isNewUser = false;
     } else {
       user = new User({ name, email, googleId });
       await user.save();
@@ -53,12 +55,10 @@ export const googleLogin = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    try {
-        await sendAuthEmail(user.email, user.name, isNewUser);
-        console.log(`✅ ${isNewUser ? 'Welcome' : 'Login'} email sent to ${user.email}`);
-    } catch (err) {
-        console.error("❌ Email Trigger Failed:", err.message);
-    }
+    // Email trigger in background
+    sendAuthEmail(user.email, user.name, isNewUser).catch(err => 
+        console.error("❌ Email Trigger Failed:", err.message)
+    );
 
     res.status(200).json({
       token: authToken,
@@ -66,8 +66,8 @@ export const googleLogin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Google Auth Error:", error);
-    res.status(500).json({ message: "Google Login failed" });
+    console.error("Google Auth Error:", error.message);
+    res.status(401).json({ message: "Google verification failed. Ensure you are sending an ID Token." });
   }
 };
 
