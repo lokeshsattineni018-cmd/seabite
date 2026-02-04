@@ -88,7 +88,6 @@ export default function Login() {
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => console.log('Login Failed')}
-              useOneTap
               shape="pill"
               theme="filled_blue" 
               size="large"
