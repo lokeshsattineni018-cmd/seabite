@@ -17,3 +17,11 @@
     }
   ]
 }
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/server/server.js"
+    }
+  ]
+}
