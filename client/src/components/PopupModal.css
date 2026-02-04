@@ -1,0 +1,40 @@
+/* Overlay WITHOUT BLUR */
+.popup-overlay-no-blur {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45); /* dark background but NO BLUR */
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 4000; /* ABOVE CART & OVERLAYS */
+}
+
+/* Popup Box */
+.popup-box {
+  background: white;
+  padding: 28px 40px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+
+  z-index: 4100;
+}
+
+/* Button */
+.popup-box button {
+  margin-top: 15px;
+  padding: 10px 26px;
+  border: none;
+  background: #ff2e63;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.popup-box button:hover {
+  background: #d80040;
+}

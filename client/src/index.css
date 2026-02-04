@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🧬 THEME ROOT CONFIGURATION */
+
+/* LIGHT MODE (Clinical White) */
+html body {
+  background-color: #f4f7fa;
+  color: #0f172a;
+  margin: 0;
+  overflow-x: hidden;
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* DARK MODE (Ocean Deep) */
+html.dark body {
+  background-color: #0a1625;
+  color: #f1f5f9;
+}
+
+/* 🖱️ CUSTOM PREMIUM SCROLLBAR */
+
+/* Track */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Background of the scrollbar path */
+::-webkit-scrollbar-track {
+  @apply bg-[#f4f7fa] dark:bg-[#0a1625];
+}
+
+/* The moving thumb */
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  @apply bg-slate-300 dark:bg-[#1e3a5f];
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Thumb on hover */
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-blue-500;
+}
+
+/* 🧬 GLOBAL TRANSITIONS */
+* {
+  @apply transition-colors duration-300;
+}
+
+/* Prevent text selection highlight from looking 'standard' */
+::selection {
+  @apply bg-blue-500/30 text-blue-900 dark:text-white;
+}
