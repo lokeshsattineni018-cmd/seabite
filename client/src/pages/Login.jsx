@@ -11,12 +11,16 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      // credentialResponse.credential IS the ID Token (JWT) required by your backend
-      const res = await axios.post("https://www.seabite.co.in/api/auth/google", {
-        token: credentialResponse.credential,
+      // 🚨 CRITICAL FIX 1: Explicitly grab the 3-segment JWT ID Token
+      const idToken = credentialResponse.credential;
+
+      // 🚨 CRITICAL FIX 2: Use a RELATIVE path '/api/...' 
+      // This forces the 'vercel.json' rewrite to proxy the request correctly to your backend
+      const res = await axios.post("/api/auth/google", {
+        token: idToken,
       });
 
-      // 1. Save data
+      // 1. Save data immediately
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
@@ -35,7 +39,7 @@ export default function Login() {
       console.error("Login error:", err.response?.data?.message || err.message);
       setModal({ 
         show: true, 
-        message: "Google Login Failed. Please try again.", 
+        message: err.response?.data?.message || "Google Login Failed. Please try again.", 
         type: "error" 
       });
     }
