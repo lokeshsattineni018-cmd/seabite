@@ -11,8 +11,8 @@ router.get("/", async (req, res) => {
     const { category, search } = req.query;
     let query = { active: true };
 
-    if (category && category !== "all") {
-        query.category = category;
+    if (category && category !== "all" && typeof category === "string") {
+        query.category = { $eq: category.trim() };
     }
 
     if (search) {
