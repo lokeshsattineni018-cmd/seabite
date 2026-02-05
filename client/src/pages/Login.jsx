@@ -16,7 +16,7 @@ export default function Login() {
 
       // PROXY FIX: Using a relative path triggers the vercel.json rewrite
       // This sends the request to seabite-server.vercel.app automatically.
-      const res = await axios.post("https://www.seabite.co.in/api/auth/google", {
+      const res = await axios.post("https://seabite.co.in/api/auth/google", {
         token: idToken,
       });
 
