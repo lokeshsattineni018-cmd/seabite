@@ -23,13 +23,28 @@ const getDecodedUser = (req) => {
 export const googleLogin = async (req, res) => {
   const { token } = req.body;
 
+  // 🚨 DEBUG LOGS: Remove these after the issue is fixed
+  console.log("--- GOOGLE AUTH DEBUG START ---");
+  if (token) {
+    const segments = token.split('.');
+    console.log("Token received starts with:", token.substring(0, 10)); // Checks for 'ya29' vs 'eyJ'
+    console.log("Number of segments detected:", segments.length); // Verifies if it's a 3-part JWT
+    
+    if (segments.length !== 3) {
+      console.error("⚠️ FORMAT ERROR: Expected 3 segments (JWT), but received", segments.length);
+    }
+  } else {
+    console.log("No token found in request body.");
+  }
+  console.log("--- GOOGLE AUTH DEBUG END ---");
+
   if (!token) {
     return res.status(400).json({ message: "No token provided" });
   }
 
   try {
     const ticket = await googleClient.verifyIdToken({
-      idToken: token,
+      idToken: token, // This library strictly requires the 3-segment JWT ID Token
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
@@ -67,7 +82,10 @@ export const googleLogin = async (req, res) => {
 
   } catch (error) {
     console.error("Google Auth Error:", error.message);
-    res.status(401).json({ message: "Google verification failed. Ensure you are sending an ID Token." });
+    res.status(401).json({ 
+      message: "Google verification failed. Ensure you are sending an ID Token (JWT).",
+      debug_error: error.message 
+    });
   }
 };
 
