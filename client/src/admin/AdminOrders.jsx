@@ -318,7 +318,7 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
                     </div>
                     <button onClick={onClose} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase transition-all active:scale-[0.98]">Exit Console</button>
                 </div>
-                <div className="hidden"><Invoice order={order} type="invoice" /></div>
+                <div><Invoice order={order} type="invoice" /></div>
             </motion.div>
         </div>
     );
