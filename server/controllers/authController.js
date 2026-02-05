@@ -16,40 +16,32 @@ const getDecodedUser = (req) => {
     }
 };
 
-/**
- * 🟢 GOOGLE LOGIN (SMART AUTH)
- * Error-free verification using Google ID Token
- */
 export const googleLogin = async (req, res) => {
   const { token } = req.body;
-
-  // 🚨 DEBUG LOGS: Remove these after the issue is fixed
-  console.log("--- GOOGLE AUTH DEBUG START ---");
-  if (token) {
-    const segments = token.split('.');
-    console.log("Token received starts with:", token.substring(0, 10)); // Checks for 'ya29' vs 'eyJ'
-    console.log("Number of segments detected:", segments.length); // Verifies if it's a 3-part JWT
-    
-    if (segments.length !== 3) {
-      console.error("⚠️ FORMAT ERROR: Expected 3 segments (JWT), but received", segments.length);
-    }
-  } else {
-    console.log("No token found in request body.");
-  }
-  console.log("--- GOOGLE AUTH DEBUG END ---");
 
   if (!token) {
     return res.status(400).json({ message: "No token provided" });
   }
 
+  // ✅ SAFETY GUARD: Pre-verify JWT segments to avoid server crashes
+  const segments = token.split('.');
+  console.log(`📡 Auth Log: Received token with ${segments.length} segments.`);
+
+  if (segments.length !== 3) {
+    console.error(`⚠️ BLOCKED: Backend received an Access Token (ya29) instead of ID Token (JWT).`);
+    return res.status(401).json({ 
+      message: "Format Error: Please perform a hard refresh (Cmd+Shift+R) to sync your browser session.",
+      received_segments: segments.length 
+    });
+  }
+
   try {
     const ticket = await googleClient.verifyIdToken({
-      idToken: token, // This library strictly requires the 3-segment JWT ID Token
+      idToken: token,
       audience: process.env.GOOGLE_CLIENT_ID,
     });
 
     const { name, email, sub: googleId } = ticket.getPayload();
-
     let user = await User.findOne({ email });
     let isNewUser = false; 
 
@@ -70,7 +62,6 @@ export const googleLogin = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    // Email trigger in background
     sendAuthEmail(user.email, user.name, isNewUser).catch(err => 
         console.error("❌ Email Trigger Failed:", err.message)
     );
@@ -82,10 +73,7 @@ export const googleLogin = async (req, res) => {
 
   } catch (error) {
     console.error("Google Auth Error:", error.message);
-    res.status(401).json({ 
-      message: "Google verification failed. Ensure you are sending an ID Token (JWT).",
-      debug_error: error.message 
-    });
+    res.status(401).json({ message: "Google verification failed." });
   }
 };
 

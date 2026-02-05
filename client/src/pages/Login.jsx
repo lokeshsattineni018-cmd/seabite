@@ -10,44 +10,37 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      // 🚨 CRITICAL FIX: Explicitly send the .credential (JWT)
-      // Your backend logs show 'ya29' tokens failing because they lack segments.
-      // .credential is the 3-segment token (starts with 'eyJ') the server requires.
+      // ✅ STRENGTHENED SELECTION: credentialResponse.credential is the 3-part JWT
       const idToken = credentialResponse.credential;
 
-      // PROXY FIX: Using the relative path '/api/...' triggers your root vercel.json rewrite.
-      // This routes the request to: https://seabite-server.vercel.app/api/auth/google
+      if (!idToken) {
+          throw new Error("No ID Token received from Google");
+      }
+
+      console.log("Frontend debug: Token starts with", idToken.substring(0, 10));
+
       const res = await axios.post("/api/auth/google", {
         token: idToken,
       });
 
-      // 1. Save SeaBite session data
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       setModal({ show: true, message: "Login Successful!", type: "success" });
       
-      // 2. Sync UI state immediately with a hard redirect
       setTimeout(() => {
           window.location.href = res.data.user.role === "admin" ? "/admin/dashboard" : "/";
       }, 1000);
 
     } catch (err) {
-      // Improved error reporting for the UI
       const errorMessage = err.response?.data?.message || "Google Login Failed. Please try again.";
       console.error("Login error:", errorMessage);
-      setModal({ 
-        show: true, 
-        message: errorMessage, 
-        type: "error" 
-      });
+      setModal({ show: true, message: errorMessage, type: "error" });
     }
   };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">
-      
-      {/* ATMOSPHERIC BACKGROUND */}
       <div className="absolute inset-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-100/60 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-rose-100/50 rounded-full blur-[120px]" />
@@ -79,17 +72,14 @@ export default function Login() {
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => console.error('Google Auth Failed')}
-              useOneTap
               shape="pill"
               theme="filled_blue" 
               size="large"
               width="250"
+              // Removed useOneTap to avoid token type conflicts
             />
           </div>
-
-          <p className="text-xs text-slate-400 mt-4">
-             By continuing, you agree to our Terms of Service.
-          </p>
+          <p className="text-xs text-slate-400 mt-4">By continuing, you agree to our Terms of Service.</p>
         </div>
       </motion.div>
     </div>
