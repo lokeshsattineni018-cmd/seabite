@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import { sendAuthEmail } from "../utils/emailService.js"; 
 import { OAuth2Client } from "google-auth-library";
+import axios from "axios"; // ✅ Added axios to handle 2-segment tokens manually
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -23,25 +24,38 @@ export const googleLogin = async (req, res) => {
     return res.status(400).json({ message: "No token provided" });
   }
 
-  // ✅ SAFETY GUARD: Pre-verify JWT segments to avoid server crashes
   const segments = token.split('.');
-  console.log(`📡 Auth Log: Received token with ${segments.length} segments.`);
-
-  if (segments.length !== 3) {
-    console.error(`⚠️ BLOCKED: Backend received an Access Token (ya29) instead of ID Token (JWT).`);
-    return res.status(401).json({ 
-      message: "Format Error: Please perform a hard refresh (Cmd+Shift+R) to sync your browser session.",
-      received_segments: segments.length 
-    });
-  }
+  console.log(`📡 Auth Log: Processing token with ${segments.length} segments.`);
 
   try {
-    const ticket = await googleClient.verifyIdToken({
-      idToken: token,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    let userData;
 
-    const { name, email, sub: googleId } = ticket.getPayload();
+    // ✅ CASE A: It's a proper 3-segment ID Token (JWT)
+    if (segments.length === 3) {
+      console.log("📡 Auth Log: Verifying standard ID Token (JWT)");
+      const ticket = await googleClient.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      userData = ticket.getPayload();
+    } 
+    // ✅ CASE B: It's a 2-segment Access Token (ya29)
+    else {
+      console.log("📡 Auth Log: Fetching user info for Access Token (ya29) via Google API");
+      const googleRes = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`
+      );
+      userData = googleRes.data;
+    }
+
+    if (!userData || !userData.email) {
+      return res.status(400).json({ message: "Failed to retrieve user data from Google" });
+    }
+
+    const email = userData.email;
+    const name = userData.name || userData.given_name;
+    const googleId = userData.sub || userData.id;
+
     let user = await User.findOne({ email });
     let isNewUser = false; 
 
@@ -51,7 +65,7 @@ export const googleLogin = async (req, res) => {
         await user.save();
       }
     } else {
-      user = new User({ name, email, googleId });
+      user = new User({ name, email, googleId, role: "user" });
       await user.save();
       isNewUser = true;
     }
@@ -72,8 +86,8 @@ export const googleLogin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Google Auth Error:", error.message);
-    res.status(401).json({ message: "Google verification failed." });
+    console.error("❌ Google Auth Error:", error.message);
+    res.status(401).json({ message: "Google verification failed.", error: error.message });
   }
 };
 
