@@ -1,6 +1,7 @@
 import { useState } from "react"; 
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion"; 
+import { GoogleOAuthProvider } from "@react-oauth/google"; // ✅ ADDED
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -20,7 +21,6 @@ import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails"; 
 import Notifications from "./pages/Notifications";
 
-// --- NEW LEGAL PAGES ---
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import Terms from "./pages/Terms";
@@ -36,7 +36,7 @@ import AdminOrders from "./admin/AdminOrders";
 import AdminUsers from "./admin/AdminUsers";
 import AdminLogin from "./admin/AdminLogin";
 import AdminMessages from "./admin/AdminMessages";
-import AdminCoupons from "./admin/AdminCoupons"; // ✅ IMPORT ADDED
+import AdminCoupons from "./admin/AdminCoupons"; 
 import AdminRoute from "./components/AdminRoute";
 
 import { CartProvider } from "./context/CartContext";
@@ -71,7 +71,6 @@ function MainLayout() {
             <Route path="/orders" element={<PageTransition><Orders /></PageTransition>} /> 
             <Route path="/orders/:orderId" element={<PageTransition><OrderDetails /></PageTransition>} /> 
 
-            {/* LEGAL ROUTES */}
             <Route path="/about" element={<PageTransition><About /></PageTransition>} />
             <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
             <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
@@ -87,7 +86,7 @@ function MainLayout() {
               <Route path="orders" element={<AdminOrders />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="messages" element={<AdminMessages />} />
-              <Route path="coupons" element={<AdminCoupons />} /> {/* ✅ ROUTE ADDED */}
+              <Route path="coupons" element={<AdminCoupons />} /> 
             </Route>
           </Routes>
         </AnimatePresence>
@@ -101,10 +100,13 @@ function MainLayout() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <CartProvider>
-        <MainLayout />
-      </CartProvider>
-    </ThemeProvider>
+    // ✅ WRAP EVERYTHING HERE: This provides the Google Context to your login page
+    <GoogleOAuthProvider clientId="781532512036-kaouiapk5q6akjofr45t7ff7d7t6jm9k.apps.googleusercontent.com">
+      <ThemeProvider>
+        <CartProvider>
+          <MainLayout />
+        </CartProvider>
+      </ThemeProvider>
+    </GoogleOAuthProvider>
   );
 }
