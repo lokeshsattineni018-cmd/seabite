@@ -10,20 +10,22 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      // 🚨 FIX: credentialResponse.credential is the required 3-segment JWT
+      // 🚨 CRITICAL FIX: credentialResponse.credential is the 3-segment JWT ID Token
+      // Do not use access_token; it causes the 'segments' error.
       const idToken = credentialResponse.credential;
 
-      // 🚨 PROXY FIX: Using relative path to trigger vercel.json rewrite
+      // PROXY FIX: Using relative path '/api/...' to trigger the vercel.json rewrite
       const res = await axios.post("/api/auth/google", {
         token: idToken,
       });
 
+      // 1. Save Token & User data immediately
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       setModal({ show: true, message: "Login Successful!", type: "success" });
       
-      // Force reload to sync auth state across the app
+      // 2. INSTANT RELOAD: Forces state to sync across Navbar and App
       setTimeout(() => {
           if (res.data.user.role === "admin") {
               window.location.href = "/admin/dashboard";
@@ -44,6 +46,8 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden font-sans">
+      
+      {/* BACKGROUND ATMOSPHERE */}
       <div className="absolute inset-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-100/60 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-rose-100/50 rounded-full blur-[120px]" />
@@ -63,7 +67,7 @@ export default function Login() {
         className="relative z-10 w-full max-w-sm px-6"
       >
         <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-white p-10 text-center">
-          <div className="mb-8">
+          <div className="mb-8 text-center">
             <Link to="/" className="inline-block mb-6 hover:scale-105 transition-transform">
               <img src="/logo.png" alt="SeaBite" className="h-14 mx-auto object-contain" />
             </Link>
@@ -82,7 +86,10 @@ export default function Login() {
               width="250"
             />
           </div>
-          <p className="text-xs text-slate-400 mt-4">By continuing, you agree to our Terms of Service.</p>
+
+          <p className="text-xs text-slate-400 mt-4">
+             By continuing, you agree to our Terms of Service.
+          </p>
         </div>
       </motion.div>
     </div>
