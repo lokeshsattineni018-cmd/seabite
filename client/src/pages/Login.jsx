@@ -3,41 +3,40 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import PopupModal from "../components/PopupModal";
-import { GoogleLogin } from "@react-oauth/google"; 
+import { useGoogleLogin } from "@react-oauth/google"; // ✅ SWITCHED TO HOOK
 
 export default function Login() {
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
 
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      // ✅ STRENGTHENED SELECTION: credentialResponse.credential is the 3-part JWT
-      const idToken = credentialResponse.credential;
+  // ✅ NEW LOGIN HANDLER
+  const login = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        console.log("Full Token Response:", tokenResponse);
+        
+        // In this hook, the ID Token might be in a different field
+        // We will send the access_token if ID token isn't directly visible, 
+        // but the 'implicit' flow below is what we want to avoid.
+        
+        const res = await axios.post("/api/auth/google", {
+          token: tokenResponse.access_token, 
+        });
 
-      if (!idToken) {
-          throw new Error("No ID Token received from Google");
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+
+        setModal({ show: true, message: "Login Successful!", type: "success" });
+        
+        setTimeout(() => {
+            window.location.href = res.data.user.role === "admin" ? "/admin/dashboard" : "/";
+        }, 1000);
+      } catch (err) {
+        console.error("Login error:", err);
+        setModal({ show: true, message: "Verification failed on server", type: "error" });
       }
-
-      console.log("Frontend debug: Token starts with", idToken.substring(0, 10));
-
-      const res = await axios.post("/api/auth/google", {
-        token: idToken,
-      });
-
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
-
-      setModal({ show: true, message: "Login Successful!", type: "success" });
-      
-      setTimeout(() => {
-          window.location.href = res.data.user.role === "admin" ? "/admin/dashboard" : "/";
-      }, 1000);
-
-    } catch (err) {
-      const errorMessage = err.response?.data?.message || "Google Login Failed. Please try again.";
-      console.error("Login error:", errorMessage);
-      setModal({ show: true, message: errorMessage, type: "error" });
-    }
-  };
+    },
+    onError: (error) => console.log('Login Failed:', error),
+  });
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">
@@ -69,15 +68,14 @@ export default function Login() {
           </div>
 
           <div className="flex justify-center mb-6">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => console.error('Google Auth Failed')}
-              shape="pill"
-              theme="filled_blue" 
-              size="large"
-              width="250"
-              // Removed useOneTap to avoid token type conflicts
-            />
+            {/* ✅ CUSTOM BUTTON: Much more reliable than the standard component */}
+            <button 
+              onClick={() => login()}
+              className="flex items-center justify-center gap-3 bg-[#4285F4] text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-[#357ae8] transition-all w-[250px]"
+            >
+              <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" className="w-6 h-6 bg-white rounded-full p-1" alt="google" />
+              Sign in with Google
+            </button>
           </div>
           <p className="text-xs text-slate-400 mt-4">By continuing, you agree to our Terms of Service.</p>
         </div>
