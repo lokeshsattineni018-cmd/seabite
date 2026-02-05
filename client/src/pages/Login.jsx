@@ -10,22 +10,23 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      // 🚨 CRITICAL FIX: credentialResponse.credential is the 3-segment JWT ID Token
-      // Do not use access_token; it causes the 'segments' error.
+      // 🚨 CRITICAL FIX: .credential is the 3-segment JWT required by your server
+      // Sending 'access_token' or 'ya29...' strings will always trigger the segment error.
       const idToken = credentialResponse.credential;
 
-      // PROXY FIX: Using relative path '/api/...' to trigger the vercel.json rewrite
+      // PROXY FIX: Using a relative path triggers the vercel.json rewrite
+      // This sends the request to seabite-server.vercel.app automatically.
       const res = await axios.post("/api/auth/google", {
         token: idToken,
       });
 
-      // 1. Save Token & User data immediately
+      // 1. Save Token & User data immediately for SeaBite session management
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       setModal({ show: true, message: "Login Successful!", type: "success" });
       
-      // 2. INSTANT RELOAD: Forces state to sync across Navbar and App
+      // 2. INSTANT RELOAD: Forces the Navbar to update and removes auth lag
       setTimeout(() => {
           if (res.data.user.role === "admin") {
               window.location.href = "/admin/dashboard";
@@ -47,7 +48,7 @@ export default function Login() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden font-sans">
       
-      {/* BACKGROUND ATMOSPHERE */}
+      {/* BACKGROUND DECORATION */}
       <div className="absolute inset-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-100/60 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-rose-100/50 rounded-full blur-[120px]" />
