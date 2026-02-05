@@ -1,6 +1,9 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// 🚨 SAFE INITIALIZATION: Prevents crash if RESEND_API_KEY is missing
+const resend = process.env.RESEND_API_KEY 
+  ? new Resend(process.env.RESEND_API_KEY) 
+  : null;
 
 const OFFICIAL_SENDER = 'SeaBite Official <official@seabite.co.in>';
 const ORDERS_SENDER = 'SeaBite Orders <orders@seabite.co.in>';
@@ -23,7 +26,7 @@ const aestheticWrapper = (content, subtitle) => `
       <tr>
         <td style="padding: 30px; background: rgba(30, 41, 59, 0.5); text-align: center;">
           <div style="font-size: 12px; color: #64748b; letter-spacing: 1px;">
-            &copy; 2025 SEABITE INDIA &bull; THE ART OF FRESHNESS
+            &copy; 2026 SEABITE INDIA &bull; THE ART OF FRESHNESS
           </div>
         </td>
       </tr>
@@ -35,6 +38,8 @@ const aestheticWrapper = (content, subtitle) => `
  * 🟢 1. AUTH: AESTHETIC SECURITY / WELCOME
  */
 export const sendAuthEmail = async (email, name, isNewUser = false) => {
+  if (!resend) return console.log("⚠️ Email skipped: Missing RESEND_API_KEY");
+
   const istTime = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", timeStyle: "short", dateStyle: "medium" });
   
   const content = `
@@ -47,14 +52,14 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
         : `A secure login was verified at <b>${istTime} IST</b>. We're keeping your account under the surface and safe.`}
     </p>
     <div style="text-align: center; margin-top: 35px;">
-      <a href="https://seabite.co.in" style="background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; display: inline-block; box-shadow: 0 10px 15px -3px rgba(56, 189, 248, 0.3);">ENTER STORE</a>
+      <a href="https://seabite.co.in" style="background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; display: inline-block;">ENTER STORE</a>
     </div>
   `;
 
   return await resend.emails.send({
     from: OFFICIAL_SENDER,
     to: email,
-    subject: isNewUser ? 'SeaBite | Access Granted' : 'SeaBite',
+    subject: isNewUser ? 'SeaBite | Access Granted' : 'SeaBite Secure Login',
     html: aestheticWrapper(content, isNewUser ? "NEW MEMBER" : "SECURE ACCESS")
   });
 };
@@ -63,6 +68,8 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
  * 🟢 2. ORDERS: MINIMALIST BLACK-CARD RECEIPT
  */
 export const sendOrderPlacedEmail = async (email, name, orderId, total, items, paymentMethod) => {
+  if (!resend) return;
+
   const isCOD = paymentMethod === "COD";
   const itemRows = items.map(item => `
     <tr>
@@ -103,19 +110,14 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
  * 🟢 3. STATUS: DYNAMIC GLASS-THEME PROGRESS
  */
 export const sendStatusUpdateEmail = async (email, name, orderId, status) => {
+  if (!resend) return;
+
   const isDelivered = status === 'Delivered';
   const accent = isDelivered ? '#10b981' : '#38bdf8';
 
   const content = `
     <div style="text-align: center; margin-bottom: 40px;">
-       <div style="display: inline-block; width: 80px; height: 80px; line-height: 80px; border-radius: 50%; background: rgba(56, 189, 248, 0.1); font-size: 30px; border: 1px solid ${accent};">
-         ${isDelivered ? '✨' : '🌊'}
-       </div>
        <h1 style="color: #f8fafc; font-size: 28px; font-weight: 300; margin-top: 20px;">Order is <span style="color: ${accent};">${status}</span></h1>
-    </div>
-
-    <div style="height: 2px; width: 100%; background: #1e293b; margin-bottom: 40px; position: relative;">
-       <div style="height: 2px; width: ${isDelivered ? '100%' : '60%'}; background: ${accent}; box-shadow: 0 0 10px ${accent};"></div>
     </div>
 
     <p style="text-align: center; margin-bottom: 30px;">Order #${orderId} is moving through our premium logistics chain.</p>
