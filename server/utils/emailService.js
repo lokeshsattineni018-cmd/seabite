@@ -49,19 +49,23 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
     <p style="margin-bottom: 25px;">
       ${isNewUser 
         ? "You've successfully gained access to the freshest seafood supply chain in India. Prepare your palate for something extraordinary." 
-        : `A secure login was verified at <b>${istTime} IST</b>. We're keeping your account under the surface and safe.`}
+        : `A secure login was verified at <b>${istTime} IST</b>. We're keeping your account safe.`}
     </p>
     <div style="text-align: center; margin-top: 35px;">
       <a href="https://seabite.co.in" style="background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; display: inline-block;">ENTER STORE</a>
     </div>
   `;
 
-  return await resend.emails.send({
-    from: OFFICIAL_SENDER,
-    to: email,
-    subject: isNewUser ? 'SeaBite | Access Granted' : 'SeaBite Secure Login',
-    html: aestheticWrapper(content, isNewUser ? "NEW MEMBER" : "SECURE ACCESS")
-  });
+  try {
+    return await resend.emails.send({
+      from: OFFICIAL_SENDER,
+      to: email,
+      subject: isNewUser ? 'SeaBite | Access Granted' : 'SeaBite Secure Login',
+      html: aestheticWrapper(content, isNewUser ? "NEW MEMBER" : "SECURE ACCESS")
+    });
+  } catch (error) {
+    console.error("📨 Email Send Error:", error.message);
+  }
 };
 
 /**
@@ -98,12 +102,16 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
     </div>
   `;
 
-  return await resend.emails.send({
-    from: ORDERS_SENDER,
-    to: email,
-    subject: `SeaBite Receipt | #${orderId}`,
-    html: aestheticWrapper(content, "ORDER CONFIRMATION")
-  });
+  try {
+    return await resend.emails.send({
+      from: ORDERS_SENDER,
+      to: email,
+      subject: `SeaBite Receipt | #${orderId}`,
+      html: aestheticWrapper(content, "ORDER CONFIRMATION")
+    });
+  } catch (error) {
+    console.error("📨 Order Email Error:", error.message);
+  }
 };
 
 /**
@@ -127,10 +135,14 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status) => {
     </div>
   `;
 
-  return await resend.emails.send({
-    from: ORDERS_SENDER,
-    to: email,
-    subject: `SeaBite | Movement Update #${orderId}`,
-    html: aestheticWrapper(content, "LOGISTICS SYNC")
-  });
+  try {
+    return await resend.emails.send({
+      from: ORDERS_SENDER,
+      to: email,
+      subject: `SeaBite | Movement Update #${orderId}`,
+      html: aestheticWrapper(content, "LOGISTICS SYNC")
+    });
+  } catch (error) {
+    console.error("📨 Status Email Error:", error.message);
+  }
 };
