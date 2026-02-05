@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import PopupModal from "../components/PopupModal";
 import { GoogleLogin } from "@react-oauth/google"; 
@@ -10,50 +10,36 @@ export default function Login() {
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
-      // 🚨 CRITICAL FIX: .credential is the 3-segment JWT required by your server
-      // Sending 'access_token' or 'ya29...' strings will always trigger the segment error.
+      // 🚨 THE FIX: Use .credential (the 3-segment JWT)
       const idToken = credentialResponse.credential;
 
-      // PROXY FIX: Using a relative path triggers the vercel.json rewrite
-      // This sends the request to seabite-server.vercel.app automatically.
-      const res = await axios.post("https://seabite.co.in/api/auth/google", {
+      // PROXY FIX: Relative path triggers the vercel.json rewrite
+      const res = await axios.post("/api/auth/google", {
         token: idToken,
       });
 
-      // 1. Save Token & User data immediately for SeaBite session management
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
 
       setModal({ show: true, message: "Login Successful!", type: "success" });
       
-      // 2. INSTANT RELOAD: Forces the Navbar to update and removes auth lag
+      // Forces the Navbar/App state to refresh instantly
       setTimeout(() => {
-          if (res.data.user.role === "admin") {
-              window.location.href = "/admin/dashboard";
-          } else {
-              window.location.href = "/";
-          }
+          window.location.href = res.data.user.role === "admin" ? "/admin/dashboard" : "/";
       }, 1000);
 
     } catch (err) {
       console.error("Login error:", err.response?.data?.message || err.message);
       setModal({ 
         show: true, 
-        message: err.response?.data?.message || "Google Login Failed. Please try again.", 
+        message: err.response?.data?.message || "Google Login Failed.", 
         type: "error" 
       });
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden font-sans">
-      
-      {/* BACKGROUND DECORATION */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-100/60 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-rose-100/50 rounded-full blur-[120px]" />
-      </div>
-
+    <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">
       <PopupModal 
         show={modal.show} 
         message={modal.message} 
@@ -62,35 +48,24 @@ export default function Login() {
       />
 
       <motion.div 
-        initial={{ opacity: 0, y: 30, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-sm px-6"
       >
-        <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-white p-10 text-center">
-          <div className="mb-8 text-center">
-            <Link to="/" className="inline-block mb-6 hover:scale-105 transition-transform">
-              <img src="/logo.png" alt="SeaBite" className="h-14 mx-auto object-contain" />
-            </Link>
-            <h2 className="text-2xl font-serif font-bold text-slate-900 mb-2">Welcome Back</h2>
-            <p className="text-slate-500 text-sm">Sign in with Google to continue.</p>
-          </div>
-
-          <div className="flex justify-center mb-6">
+        <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-10 text-center shadow-xl border border-white">
+          <Link to="/" className="inline-block mb-6">
+            <img src="/logo.png" className="h-14" alt="SeaBite" />
+          </Link>
+          <h2 className="text-2xl font-bold mb-8">Welcome Back</h2>
+          <div className="flex justify-center">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => console.log('Login Failed')}
               useOneTap
               shape="pill"
-              theme="filled_blue" 
               size="large"
-              width="250"
             />
           </div>
-
-          <p className="text-xs text-slate-400 mt-4">
-             By continuing, you agree to our Terms of Service.
-          </p>
         </div>
       </motion.div>
     </div>
