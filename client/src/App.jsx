@@ -1,14 +1,16 @@
 import { useState } from "react"; 
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion"; 
-import { GoogleOAuthProvider } from "@react-oauth/google"; // ✅ ADDED
+import { GoogleOAuthProvider } from "@react-oauth/google"; 
 
+// Components
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartSidebar from "./components/CartSidebar"; 
 import PageTransition from "./components/PageTransition"; 
 import ScrollToTop from "./components/ScrollToTop";
 
+// Pages
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
@@ -21,12 +23,14 @@ import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails"; 
 import Notifications from "./pages/Notifications";
 
+// Legal Pages
 import About from "./pages/About";
 import FAQ from "./pages/FAQ";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Cancellation from "./pages/Cancellation";
 
+// Admin
 import AdminLayout from "./admin/AdminLayout";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminProducts from "./admin/AdminProducts";
@@ -39,6 +43,7 @@ import AdminMessages from "./admin/AdminMessages";
 import AdminCoupons from "./admin/AdminCoupons"; 
 import AdminRoute from "./components/AdminRoute";
 
+// Context
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -100,7 +105,7 @@ function MainLayout() {
 
 export default function App() {
   return (
-    // ✅ WRAP EVERYTHING HERE: This provides the Google Context to your login page
+    // ✅ WRAPPER IS OUTSIDE ALL OTHER PROVIDERS TO ENSURE GLOBAL AUTH CONTEXT
     <GoogleOAuthProvider clientId="781532512036-kaouiapk5q6akjofr45t7ff7d7t6jm9k.apps.googleusercontent.com">
       <ThemeProvider>
         <CartProvider>
