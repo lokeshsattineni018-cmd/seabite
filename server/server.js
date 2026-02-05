@@ -20,7 +20,6 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js"; 
 import couponRoutes from "./routes/couponRoutes.js";
 
-
 /* --- EXTRA IMPORTS --- */
 import upload from "./config/multerConfig.js";
 
@@ -36,12 +35,19 @@ if (!fs.existsSync(uploadDir)) {
   console.log("📂 'uploads' folder created successfully.");
 }
 
-/* --- 4. MIDDLEWARE --- */
+/* --- 4. MIDDLEWARE & SECURITY HEADERS --- */
 app.use(cors({
   origin: "*", 
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// ✅ FIX: Add COOP/COEP headers to allow Google Auth popups
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  next();
+});
 
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir)); 
@@ -90,7 +96,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin/products", adminProductRoutes); 
 app.use("/api/payment", paymentRoutes);
 app.use("/api/contact", contactRoutes);
-app.use("/api/coupons", couponRoutes); // ✅ NEW ROUTE
+app.use("/api/coupons", couponRoutes);
 
 /* --- 8. SERVER SETUP --- */
 const PORT = process.env.PORT || 5001;
