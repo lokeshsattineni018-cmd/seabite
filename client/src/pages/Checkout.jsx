@@ -116,11 +116,11 @@ export default function Checkout() {
     if (!couponCode) return;
     setVerifyingCoupon(true);
     setCouponMessage(null);
-    const currentEmail = localStorage.getItem("userEmail");
+    const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
 
     try {
       const res = await axios.post(`${API_URL}/api/coupons/validate`, {
-        code: couponCode,
+        code: couponCode.trim().toUpperCase(),
         cartTotal: itemTotal,
         email: currentEmail, 
       });
@@ -146,11 +146,11 @@ export default function Checkout() {
     if (!code) return;
     setVerifyingCoupon(true);
     setCouponMessage(null);
-    const currentEmail = localStorage.getItem("userEmail");
+    const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
 
     try {
       const res = await axios.post(`${API_URL}/api/coupons/validate`, {
-        code,
+        code: code.trim().toUpperCase(),
         cartTotal: itemTotal,
         email: currentEmail,
       });
@@ -364,7 +364,7 @@ export default function Checkout() {
                     <input type="text" placeholder="Promo Code" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} disabled={isCouponApplied || verifyingCoupon} className="w-full pl-9 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 rounded-xl text-sm font-semibold uppercase outline-none focus:border-blue-500" />
                     {isCouponApplied && <button onClick={handleRemoveCoupon} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><FiX size={16} /></button>}
                   </div>
-                  <button onClick={handleApplyCoupon} disabled={isCouponApplied || !couponCode || verifyingCoupon} className="bg-slate-900 text-white px-4 rounded-xl font-bold text-xs hover:bg-blue-600 transition-colors">
+                  <button onClick={handleApplyCoupon} disabled={isCouponApplied || !couponCode || verifyingCoupon} className="bg-slate-900 text-white px-4 rounded-xl font-bold text-xs hover:bg-blue-600 transition-colors shadow-sm">
                     {verifyingCoupon ? <FiLoader className="animate-spin" /> : "Apply"}
                   </button>
                 </div>
