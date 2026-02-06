@@ -1,35 +1,29 @@
-import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
 const adminAuth = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.log("⛔ AdminAuth Failed: No Token Provided");
-      return res.status(401).json({ message: "No token, authorization denied" });
+    // ✅ SESSION CHECK: Identity is now in req.session, not headers
+    if (!req.session || !req.session.user) {
+      console.log("⛔ AdminAuth Failed: No Active Session in MongoDB");
+      return res.status(401).json({ message: "Session expired or not found. Please login." });
     }
 
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    const user = await User.findById(decoded.id);
-
-    if (!user) {
-      console.log("⛔ AdminAuth Failed: User not found in DB");
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    if (user.role !== "admin") {
-      console.log(`⛔ AdminAuth Failed: User ${user.email} is role '${user.role}', not 'admin'`);
+    // ✅ ROLE VERIFICATION: Pull the role directly from the session
+    if (req.session.user.role !== "admin") {
+      console.log(`⛔ AdminAuth Failed: User ${req.session.user.email} is not an admin`);
       return res.status(403).json({ message: "Access denied: Admins only" });
     }
 
-    req.user = user;
-    next();
+    // Optional: Double-check database if you want extra security
+    const user = await User.findById(req.session.user.id);
+    if (!user || user.role !== "admin") {
+       return res.status(403).json({ message: "Access denied: User not authorized" });
+    }
+
+    next(); // Identity and Role confirmed, proceed to Dashboard
   } catch (err) {
-    console.log("⛔ AdminAuth Error:", err.message);
-    res.status(401).json({ message: "Token is not valid" });
+    console.log("⛔ AdminAuth System Error:", err.message);
+    res.status(500).json({ message: "Internal server error during authorization" });
   }
 };
 

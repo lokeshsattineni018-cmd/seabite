@@ -3,14 +3,11 @@ import adminAuth from "../middleware/adminAuth.js";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import User from "../models/User.js";
-// 🟢 FIXED: Updated import to match the new emailService.js
 import { sendStatusUpdateEmail } from "../utils/emailService.js";
 
 const router = express.Router();
 
-// ===============================================
 // 1. ADMIN DASHBOARD SUMMARY (GET /api/admin)
-// ===============================================
 router.get("/", adminAuth, async (req, res) => {
   try {
     const { range } = req.query; 
@@ -19,7 +16,6 @@ router.get("/", adminAuth, async (req, res) => {
     const startDate = new Date();
     startDate.setMonth(today.getMonth() - limit);
 
-    // --- 🟢 CALCULATE TOP SELLING ITEMS ---
     const popularProducts = await Order.aggregate([
       { $unwind: "$items" },
       {
@@ -34,7 +30,6 @@ router.get("/", adminAuth, async (req, res) => {
       { $limit: 5 }
     ]);
 
-    // --- GRAPH DATA ---
     const rawGraphData = await Order.aggregate([
       { $match: { createdAt: { $gte: startDate } } },
       {
@@ -53,10 +48,7 @@ router.get("/", adminAuth, async (req, res) => {
       const monthName = d.toLocaleString('default', { month: 'short' });
 
       const found = rawGraphData.find(g => g._id.year === year && g._id.month === month);
-      finalGraph.push({
-        month: monthName,
-        orders: found ? found.orders : 0
-      });
+      finalGraph.push({ month: monthName, orders: found ? found.orders : 0 });
     }
 
     const allOrders = await Order.find({});
@@ -74,12 +66,7 @@ router.get("/", adminAuth, async (req, res) => {
       .limit(5)
       .populate('user', 'name'); 
 
-    res.json({
-      stats,
-      graph: finalGraph,
-      recentOrders,
-      popularProducts 
-    });
+    res.json({ stats, graph: finalGraph, recentOrders, popularProducts });
 
   } catch (err) {
     console.error("❌ ADMIN DASHBOARD CRASH:", err);
@@ -87,9 +74,7 @@ router.get("/", adminAuth, async (req, res) => {
   }
 });
 
-// ===============================================
-// 🟢 FIXED: UPDATE ORDER STATUS WITH NEW EMAIL TRIGGER
-// ===============================================
+// 2. UPDATE ORDER STATUS
 router.put("/orders/:id/status", adminAuth, async (req, res) => {
   try {
     const { status } = req.body;
@@ -100,7 +85,6 @@ router.put("/orders/:id/status", adminAuth, async (req, res) => {
     order.status = status;
     await order.save();
 
-    // 🟢 FIXED: Trigger emails using the single multi-status function
     try {
       if (status) {
         await sendStatusUpdateEmail(
@@ -110,9 +94,7 @@ router.put("/orders/:id/status", adminAuth, async (req, res) => {
           status
         );
       }
-    } catch (e) {
-      console.error("❌ Email notification failed:", e.message);
-    }
+    } catch (e) { console.error("❌ Email notification failed:", e.message); }
 
     res.json({ message: "Status updated successfully." });
   } catch (err) {
@@ -120,9 +102,7 @@ router.put("/orders/:id/status", adminAuth, async (req, res) => {
   }
 });
 
-// ===============================================
-// 2. USER INTELLIGENCE (GET /api/admin/users/intelligence)
-// ===============================================
+// 3. USER INTELLIGENCE (Enriched for Sessions)
 router.get("/users/intelligence", adminAuth, async (req, res) => {
   try {
     const users = await User.find({}).select("-password").sort({ createdAt: -1 });
@@ -134,7 +114,7 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
         return {
           _id: u._id,
           name: u.name,
-          email: u.email,
+          email: u.email.toLowerCase(), // ✅ Consistent mapping
           role: u.role,
           createdAt: u.createdAt,
           intelligence: {
@@ -147,26 +127,18 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
       })
     );
     res.json(enrichedUsers);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to gather user intelligence." });
-  }
+  } catch (err) { res.status(500).json({ message: "Failed intelligence fetch" }); }
 });
 
-// ===============================================
-// 3. FETCH ALL USERS (GET /api/admin/users)
-// ===============================================
+// 4. FETCH ALL USERS
 router.get("/users", adminAuth, async (req, res) => {
     try {
         const users = await User.find().select('-password').sort({ createdAt: -1 });
         res.json(users);
-    } catch (err) {
-        res.status(500).json({ message: 'Failed to retrieve user list.' });
-    }
+    } catch (err) { res.status(500).json({ message: 'User list failed' }); }
 });
 
-// ===============================================
-// 4. DELETE PRODUCT REVIEW (DELETE)
-// ===============================================
+// 5. DELETE PRODUCT REVIEW
 router.delete("/products/:productId/reviews/:reviewId", adminAuth, async (req, res) => {
   try {
     const { productId, reviewId } = req.params;
@@ -174,29 +146,21 @@ router.delete("/products/:productId/reviews/:reviewId", adminAuth, async (req, r
     if (!product) return res.status(404).json({ message: "Product not found" });
 
     product.reviews = product.reviews.filter((rev) => rev._id.toString() !== reviewId);
-
-    if (product.reviews.length > 0) {
-      product.rating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
-    } else {
-      product.rating = 0;
-    }
+    product.rating = product.reviews.length > 0 
+      ? product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length 
+      : 0;
     product.numReviews = product.reviews.length;
 
     await product.save();
     res.json({ message: "Review deleted successfully!" });
-  } catch (err) {
-    res.status(500).json({ message: "Server error deleting review" });
-  }
+  } catch (err) { res.status(500).json({ message: "Server error deleting review" }); }
 });
 
-// ===============================================
-// 5. FETCH ALL REVIEWS (GET /api/admin/reviews/all)
-// ===============================================
+// 6. FETCH ALL REVIEWS
 router.get("/reviews/all", adminAuth, async (req, res) => {
   try {
     const products = await Product.find({});
     let allReviews = [];
-
     products.forEach((product) => {
       product.reviews.forEach((review) => {
         allReviews.push({
@@ -210,12 +174,9 @@ router.get("/reviews/all", adminAuth, async (req, res) => {
         });
       });
     });
-
     allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     res.json(allReviews);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch all reviews" });
-  }
+  } catch (err) { res.status(500).json({ message: "Failed to fetch reviews" }); }
 });
 
 export default router;
