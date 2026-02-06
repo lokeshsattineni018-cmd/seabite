@@ -2,7 +2,6 @@
 import 'dotenv/config'; 
 import express from "express";
 import mongoose from "mongoose";
-import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
@@ -35,29 +34,30 @@ const allowedOrigins = [
   "http://localhost:5173"
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS Policy: Origin mismatch'), false);
-    }
-  },
-  credentials: true, // ✅ Allows MongoDB session cookies
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
-}));
-
-app.options('*', cors()); 
+// ✅ MANUAL CORS FIX: Directly sets headers to avoid Wildcard (*) errors
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
+  
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(express.json());
 
-// ✅ STATIC IMAGES: Available to the frontend
+// ✅ STATIC IMAGES
 const uploadDir = path.join(__dirname, "uploads"); 
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir)); 
 
-/* --- 3. DATABASE CONNECTION (MOVE UP) --- */
+/* --- 3. DATABASE CONNECTION --- */
 let isConnected = false;
 const connectDB = async () => {
   if (isConnected) return;
@@ -69,11 +69,9 @@ const connectDB = async () => {
     console.error("❌ MongoDB Error:", error);
   }
 };
-
-// Ensure DB is ready for the session store
 await connectDB();
 
-/* --- 4. MONGODB SESSION SETUP (MUST BE BEFORE ROUTES) --- */
+/* --- 4. MONGODB SESSION SETUP --- */
 app.use(session({
   secret: process.env.SESSION_SECRET || "seabite_default_secret",
   resave: false,
