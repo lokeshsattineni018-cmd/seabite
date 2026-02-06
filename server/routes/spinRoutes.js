@@ -1,4 +1,3 @@
-// routes/spinRoutes.js
 import express from "express";
 import Coupon from "../models/Coupon.js";
 
@@ -9,25 +8,31 @@ function generateCode(prefix) {
   return `${prefix}-${randomPart}`;
 }
 
-// 6‑outcome wheel with weighted chances
+// 6‑outcome wheel - NOW FULLY SYNCED WITH MONGODB SESSIONS
 router.post("/spin", async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: "Email required" });
+    // ✅ NO REQ.BODY NEEDED: Identity comes from Mongo session
+    const userEmail = req.session?.user?.email;
 
-    // probabilities in %
+    if (!userEmail) {
+      return res.status(401).json({ error: "Please login first to spin the wheel!" });
+    }
+
+    // Check if user already has a spin coupon to prevent multiple spins
+    const existing = await Coupon.findOne({ userEmail, isSpinCoupon: true });
+    if (existing) {
+      return res.status(403).json({ error: "One spin per account only!" });
+    }
+
     const rand = Math.random() * 100;
     let outcome;
 
-    if (rand < 20) outcome = { type: "NO_PRIZE" }; // Better luck 1
-    else if (rand < 40) outcome = { type: "NO_PRIZE" }; // Better luck 2
-    else if (rand < 60)
-      outcome = { type: "PERCENT", value: 5, prefix: "SB5" };
-    else if (rand < 80)
-      outcome = { type: "PERCENT", value: 10, prefix: "SB10" };
-    else if (rand < 95)
-      outcome = { type: "PERCENT", value: 20, prefix: "SB20" };
-    else outcome = { type: "PERCENT", value: 50, prefix: "SB50" }; // 5%
+    if (rand < 20) outcome = { type: "NO_PRIZE" };
+    else if (rand < 40) outcome = { type: "NO_PRIZE" };
+    else if (rand < 60) outcome = { type: "PERCENT", value: 5, prefix: "SB5" };
+    else if (rand < 80) outcome = { type: "PERCENT", value: 10, prefix: "SB10" };
+    else if (rand < 95) outcome = { type: "PERCENT", value: 20, prefix: "SB20" };
+    else outcome = { type: "PERCENT", value: 50, prefix: "SB50" };
 
     if (outcome.type === "NO_PRIZE") {
       return res.json({
@@ -39,7 +44,6 @@ router.post("/spin", async (req, res) => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 1);
 
-    // ensure code uniqueness
     let code;
     let exists = true;
     while (exists) {
@@ -49,12 +53,11 @@ router.post("/spin", async (req, res) => {
 
     const coupon = await Coupon.create({
       code,
-      // align with your Coupon schema fields
-      discountType: "percent",      // same as normal coupons
-      value: outcome.value,         // percentage value
+      discountType: "percent",
+      value: outcome.value,
       maxDiscountAmount: outcome.value === 50 ? 500 : undefined,
-      userEmail: email,             // bind to user
-      isSpinCoupon: true,           // flag so /validate knows it's from the wheel
+      userEmail: userEmail.toLowerCase(), // Store lowercase
+      isSpinCoupon: true,
       maxUses: 1,
       usedCount: 0,
       expiresAt,

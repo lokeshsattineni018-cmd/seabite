@@ -2,19 +2,13 @@ import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 import { sendAuthEmail } from "../utils/emailService.js"; 
 import { OAuth2Client } from "google-auth-library";
-import axios from "axios"; // ✅ Added axios to handle 2-segment tokens manually
+import axios from "axios";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const getDecodedUser = (req) => {
-    const auth = req.headers.authorization;
-    if (!auth || !auth.startsWith("Bearer ")) return null;
-    const token = auth.split(" ")[1];
-    try {
-        return jwt.verify(token, process.env.JWT_SECRET);
-    } catch (err) {
-        return null;
-    }
+// Replaces token decoding by checking the session instead
+const getSessionUser = (req) => {
+    return req.session?.user || null;
 };
 
 export const googleLogin = async (req, res) => {
@@ -30,18 +24,13 @@ export const googleLogin = async (req, res) => {
   try {
     let userData;
 
-    // ✅ CASE A: It's a proper 3-segment ID Token (JWT)
     if (segments.length === 3) {
-      console.log("📡 Auth Log: Verifying standard ID Token (JWT)");
       const ticket = await googleClient.verifyIdToken({
         idToken: token,
         audience: process.env.GOOGLE_CLIENT_ID,
       });
       userData = ticket.getPayload();
-    } 
-    // ✅ CASE B: It's a 2-segment Access Token (ya29)
-    else {
-      console.log("📡 Auth Log: Fetching user info for Access Token (ya29) via Google API");
+    } else {
       const googleRes = await axios.get(
         `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`
       );
@@ -52,7 +41,7 @@ export const googleLogin = async (req, res) => {
       return res.status(400).json({ message: "Failed to retrieve user data from Google" });
     }
 
-    const email = userData.email;
+    const email = userData.email.toLowerCase();
     const name = userData.name || userData.given_name;
     const googleId = userData.sub || userData.id;
 
@@ -70,32 +59,39 @@ export const googleLogin = async (req, res) => {
       isNewUser = true;
     }
 
-    const authToken = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+    // ✅ SESSION SYNC: Save to MongoDB Session instead of local storage
+    req.session.user = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    };
 
     sendAuthEmail(user.email, user.name, isNewUser).catch(err => 
         console.error("❌ Email Trigger Failed:", err.message)
     );
 
-    res.status(200).json({
-      token: authToken,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+    // Save session explicitly before responding
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ message: "Session save failed" });
+      res.status(200).json({
+        user: req.session.user,
+        message: "Logged in via MongoDB Session"
+      });
     });
 
   } catch (error) {
     console.error("❌ Google Auth Error:", error.message);
-    res.status(401).json({ message: "Google verification failed.", error: error.message });
+    res.status(401).json({ message: "Google verification failed." });
   }
 };
 
 export const getLoggedUser = async (req, res) => {
-    const decoded = getDecodedUser(req);
-    if (!decoded) return res.status(401).json({ message: "Invalid token" });
+    const sessionUser = getSessionUser(req);
+    if (!sessionUser) return res.status(401).json({ message: "Not authenticated" });
+    
     try {
-        const user = await User.findById(decoded.id).select("-password");
+        const user = await User.findById(sessionUser.id).select("-password");
         if (!user) return res.status(401).json({ message: "User not found" });
         res.json({
             id: user._id,
@@ -112,8 +108,8 @@ export const getLoggedUser = async (req, res) => {
 
 export const updateUserProfile = async (req, res) => {
     const { name, phone } = req.body;
-    const decoded = getDecodedUser(req);
-    if (!decoded) return res.status(401).json({ message: "Invalid token" });
+    const sessionUser = getSessionUser(req);
+    if (!sessionUser) return res.status(401).json({ message: "Not authenticated" });
 
     try {
         const fieldsToUpdate = {};
@@ -121,7 +117,7 @@ export const updateUserProfile = async (req, res) => {
         if (phone !== undefined) fieldsToUpdate.phone = phone;
 
         const updatedUser = await User.findByIdAndUpdate(
-            decoded.id, 
+            sessionUser.id, 
             { $set: fieldsToUpdate }, 
             { new: true, runValidators: true, select: '-password' } 
         );

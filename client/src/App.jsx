@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion"; 
 import { GoogleOAuthProvider } from "@react-oauth/google"; 
+import axios from "axios"; // ✅ Added Axios
 
 // Components
 import Navbar from "./components/Navbar";
@@ -48,6 +49,9 @@ import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
 import SupportWidget from "./components/SupportWidget";
+
+// ✅ CRITICAL SYNC: Ensure all requests send the MongoDB Session Cookie
+axios.defaults.withCredentials = true;
 
 function MainLayout() {
   const location = useLocation();
@@ -105,7 +109,6 @@ function MainLayout() {
 
 export default function App() {
   return (
-    // ✅ WRAPPER IS OUTSIDE ALL OTHER PROVIDERS TO ENSURE GLOBAL AUTH CONTEXT
     <GoogleOAuthProvider clientId="781532512036-kaouiapk5q6akjofr45t7ff7d7t6jm9k.apps.googleusercontent.com">
       <ThemeProvider>
         <CartProvider>

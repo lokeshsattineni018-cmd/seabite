@@ -6,29 +6,16 @@ import PopupModal from "../components/PopupModal";
 import { useGoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
-  const [modal, setModal] = useState({
-    show: false,
-    message: "",
-    type: "info",
-  });
+  const [modal, setModal] = useState({ show: false, message: "", type: "info" });
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
+        // Send token to backend. 
+        // ✅ MongoDB Identity: Backend now handles secure session storage/cookies
         const res = await axios.post("/api/auth/google", {
           token: tokenResponse.access_token,
-        });
-
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-
-        // ✅ FIX: Force lowercase email for consistent coupon matching
-        if (res.data.user?.email) {
-          localStorage.setItem("userEmail", res.data.user.email.toLowerCase());
-        }
-        if (res.data.user?.name) {
-          localStorage.setItem("userName", res.data.user.name);
-        }
+        }, { withCredentials: true }); // Required for receives cookies from Mongo backend
 
         setModal({
           show: true,
@@ -43,6 +30,7 @@ export default function Login() {
           if (redirectPath) {
             window.location.href = redirectPath;
           } else {
+            // Check role from Mongo response for initial routing
             window.location.href =
               res.data.user.role === "admin" ? "/admin/dashboard" : "/";
           }
@@ -75,6 +63,7 @@ export default function Login() {
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-sm px-6"
       >
         <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-10 text-center shadow-2xl border border-white">
@@ -85,6 +74,7 @@ export default function Login() {
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome Back</h2>
             <p className="text-slate-500 text-sm">Sign in with Google to continue.</p>
           </div>
+
           <div className="flex justify-center mb-6">
             <button
               onClick={() => login()}

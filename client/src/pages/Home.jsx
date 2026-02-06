@@ -46,8 +46,8 @@ const SectionReveal = ({ children }) => {
   );
 };
 
-/* --- AESTHETIC NAVY & WHITE SPIN WHEEL (MongoDB Sync) --- */
-const SpinWheelPopup = ({ userEmail }) => {
+/* --- AESTHETIC NAVY & WHITE SPIN WHEEL (MongoDB Only) --- */
+const SpinWheelPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
@@ -63,7 +63,8 @@ const SpinWheelPopup = ({ userEmail }) => {
   ];
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsOpen(true), 2000);
+    // Show wheel for testing on refresh (Add DB check here for production)
+    const timer = setTimeout(() => setIsOpen(true), 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -91,7 +92,7 @@ const SpinWheelPopup = ({ userEmail }) => {
       ctx.translate(150, 150);
       ctx.rotate(i * angle + angle / 2);
       ctx.fillStyle = prize.text;
-      ctx.font = "bold 12px DM Sans";
+      ctx.font = "bold 14px DM Sans";
       ctx.textAlign = "right";
       ctx.fillText(prize.label, 130, 5);
       ctx.restore();
@@ -108,21 +109,16 @@ const SpinWheelPopup = ({ userEmail }) => {
 
   const handleSpin = async () => {
     if (spinning || result) return;
-    const email = localStorage.getItem("userEmail")?.toLowerCase();
-
-    if (!email) {
-      alert("Please login first to claim rewards!");
-      return;
-    }
 
     setSpinning(true);
 
     try {
-      const res = await axios.post(`${API_URL}/api/spin/spin`, { email });
+      // ✅ IDENTITY SYNC: Backend identifies user via Mongo Session Cookie
+      const res = await axios.post(`${API_URL}/api/spin/spin`, {}, { withCredentials: true });
       const backendResult = res.data;
 
       const prizeIndex = prizes.findIndex(p => p.value === backendResult.discountValue);
-      const targetDeg = 360 - (prizeIndex * 60) - 30;
+      const targetDeg = 360 - (prizeIndex * 60) - 30; 
       const totalRotation = 1800 + targetDeg; 
 
       if (canvasRef.current) {
@@ -136,7 +132,9 @@ const SpinWheelPopup = ({ userEmail }) => {
       }, 4000);
     } catch (e) {
       setSpinning(false);
-      alert("Account limit: You have already used your spin.");
+      // Backend status 401 means no session found in MongoDB
+      alert("Please login first to claim rewards!");
+      window.location.href = "/login";
     }
   };
 
@@ -145,40 +143,40 @@ const SpinWheelPopup = ({ userEmail }) => {
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/90 backdrop-blur-sm px-4">
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsOpen(false)} className="absolute inset-0 bg-transparent" />
-          <motion.div initial={{ opacity: 0, scale: 0.9, y: 50 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 50 }} className="relative w-full max-w-md bg-white rounded-[3rem] shadow-2xl overflow-hidden p-10 border border-slate-100">
-            <button onClick={() => setIsOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-rose-500 transition-colors"><X size={24} /></button>
-            <div className="text-center mb-8">
+          <motion.div initial={{ opacity: 0, scale: 0.9, y: 50 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 50 }} className="relative w-full max-w-md bg-white rounded-[3.5rem] shadow-2xl overflow-hidden p-10 border border-slate-100">
+            <button onClick={() => setIsOpen(false)} className="absolute top-8 right-8 p-2 text-slate-400 hover:text-rose-500 transition-colors"><X size={24} /></button>
+            <div className="text-center mb-10">
               <h2 className="text-3xl font-serif text-slate-900 mb-2">SeaBite Rewards</h2>
               <p className="text-slate-500 text-sm">Spin to unlock the ocean's freshest discounts</p>
             </div>
             <div className="flex flex-col items-center">
-              <div className="relative mb-10">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 text-rose-500 drop-shadow-md">
-                  <Anchor size={36} fill="currentColor" />
+              <div className="relative mb-12 flex justify-center">
+                <div className="absolute -top-6 z-20 text-rose-500 drop-shadow-md">
+                  <Anchor size={42} fill="currentColor" />
                 </div>
                 <canvas ref={canvasRef} width="300" height="300" className="rounded-full border-[10px] border-slate-900 shadow-2xl transition-transform" />
               </div>
 
               {!result ? (
-                <button onClick={handleSpin} disabled={spinning} className="w-full py-5 bg-slate-900 text-white font-bold rounded-2xl shadow-xl hover:bg-slate-800 transition-all disabled:opacity-50 active:scale-95">
-                  {spinning ? "THE WHEEL IS TURNING..." : "SPIN THE WHEEL"}
+                <button onClick={handleSpin} disabled={spinning} className="w-full py-5 bg-slate-900 text-white font-bold rounded-[1.5rem] shadow-xl hover:bg-slate-800 transition-all disabled:opacity-50 active:scale-95">
+                  {spinning ? "THE WHEEL IS TURNING..." : "SPIN FOR LUCK"}
                 </button>
               ) : (
-                <div className="w-full space-y-4">
+                <div className="w-full space-y-6">
                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                     {result.result === "BETTER_LUCK" ? (
                       <p className="text-center text-rose-500 font-bold italic">Better luck next time!</p>
                     ) : (
-                      <div className="p-6 bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-2xl text-center">
-                        <p className="text-xs text-emerald-600 font-black uppercase tracking-widest mb-1">CONGRATULATIONS</p>
-                        <p className="text-3xl font-mono font-black text-slate-900">{result.discountValue}% OFF</p>
-                        <p className="text-[10px] text-blue-600 mt-2 italic">Discount applied directly at checkout</p>
+                      <div className="p-8 bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-[2rem] text-center">
+                        <p className="text-xs text-emerald-600 font-black uppercase tracking-[0.2em] mb-2">CONGRATULATIONS</p>
+                        <p className="text-4xl font-mono font-black text-slate-900">{result.discountValue}% OFF</p>
+                        <p className="text-[10px] text-blue-600 mt-3 font-bold uppercase tracking-widest">Saved to your Mongo Account</p>
                       </div>
                     )}
                   </motion.div>
                   <Link to="/products" className="block w-full">
-                    <button className="w-full py-5 bg-blue-600 text-white font-bold rounded-2xl shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
-                       Shop Now <ArrowRight size={18} />
+                    <button className="w-full py-5 bg-blue-600 text-white font-bold rounded-[1.5rem] shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2">
+                       Shop Now <ArrowRight size={20} />
                     </button>
                   </Link>
                 </div>
@@ -191,7 +189,6 @@ const SpinWheelPopup = ({ userEmail }) => {
   );
 };
 
-/* --- HERO SECTION --- */
 const VideoHero = () => {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 1000], [0, 400]);
@@ -217,7 +214,6 @@ const VideoHero = () => {
   );
 };
 
-/* --- ROLLING MARQUEE --- */
 const RollingText = () => {
   const baseX = useMotionValue(0);
   const { scrollY } = useScroll();
@@ -253,7 +249,6 @@ const RollingText = () => {
   );
 };
 
-/* --- CATEGORIES --- */
 const categories = [
   { title: "Premium Fish", img: "/fish.png", bg: "from-blue-100/80 to-white dark:from-blue-900/40 dark:to-[#0a1625]" },
   { title: "Jumbo Prawns", img: "/prawn.png", bg: "from-indigo-100/80 to-white dark:from-indigo-900/40 dark:to-[#0a1625]" },
@@ -270,12 +265,7 @@ const CategoryPanel = () => {
       </div>
       <div className="flex flex-col md:flex-row h-[400px] gap-4 max-w-6xl mx-auto relative z-10">
         {categories.map((cat, i) => (
-          <Link
-            to={`/products?category=${cat.title.split(" ")[1]}`}
-            key={i}
-            onMouseEnter={() => setHovered(i)}
-            className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${hovered === i ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20" : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"}`}
-          >
+          <Link to={`/products?category=${cat.title.split(" ")[1]}`} key={i} onMouseEnter={() => setHovered(i)} className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${hovered === i ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20" : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"}`}>
             <div className={`absolute inset-0 bg-gradient-to-b ${cat.bg} z-0`} />
             <div className="absolute inset-0 flex items-center justify-center z-10 p-6">
               <motion.img layout src={cat.img} alt={cat.title} className={`object-contain drop-shadow-2xl transition-all duration-700 ${hovered === i ? "w-[80%] h-[80%] opacity-100" : "w-24 h-24 opacity-50 grayscale"}`} />
@@ -291,17 +281,220 @@ const CategoryPanel = () => {
   );
 };
 
-/* --- MAIN EXPORT --- */
-export default function Home() {
-  const [userEmail, setUserEmail] = useState("");
+const FlashSale = () => {
+  const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 32, seconds: 18 });
   useEffect(() => {
-    const storedEmail = localStorage.getItem("userEmail") || JSON.parse(localStorage.getItem("user") || "{}")?.email || "";
-    if (storedEmail) setUserEmail(storedEmail.toLowerCase());
+    const calculateTimeLeft = () => {
+      const now = new Date();
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
+      const diff = midnight - now;
+      if (diff > 0) {
+        setTimeLeft({
+          hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((diff / 1000 / 60) % 60),
+          seconds: Math.floor((diff / 1000) % 60),
+        });
+      }
+    };
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
   }, []);
 
   return (
+    <section className="py-10 px-4">
+      <div className="max-w-6xl mx-auto bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl shadow-2xl p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="relative z-10 text-white text-center md:text-left">
+          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-white/30"><Flame size={14} className="text-yellow-300" /> Flash Deal</div>
+          <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-4">TODAY&apos;S CATCH</h2>
+          <p className="text-red-50 text-xl md:text-2xl font-serif italic tracking-wide leading-relaxed">Order above <span className="text-yellow-300 font-bold decoration-wavy underline decoration-white/30">₹1699</span> and use coupon <span className="mx-2 bg-white text-red-600 px-3 py-1 rounded-lg font-black font-mono not-italic text-lg border-2 border-dashed border-red-600 transform -rotate-2 inline-block shadow-lg">SEABITE10</span> to avail <span className="font-black text-white not-italic text-2xl drop-shadow-md">10% OFF</span></p>
+        </div>
+        <div className="relative z-10 bg-white p-6 rounded-xl shadow-lg transform rotate-2 md:rotate-0 text-center text-slate-900 font-mono font-black text-3xl">
+           <div className="flex gap-2">
+            <span className="bg-slate-100 px-2 rounded">{timeLeft.hours.toString().padStart(2, "0")}</span>:
+            <span className="bg-slate-100 px-2 rounded">{timeLeft.minutes.toString().padStart(2, "0")}</span>:
+            <span className="bg-slate-100 px-2 rounded text-red-600">{timeLeft.seconds.toString().padStart(2, "0")}</span>
+          </div>
+          <Link to="/products" className="block mt-4 w-full bg-slate-900 text-white text-center py-3 rounded-lg font-bold text-sm uppercase tracking-wide">Grab The Deal</Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const CategoryRow = ({ title, filterType }) => {
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    axios.get(`${API_URL}/api/products`).then((res) => {
+      const all = res.data.products || [];
+      if (filterType === "Fish") setProducts(all.filter((p) => p.category === "Fish").slice(0, 4));
+      else if (filterType === "Shellfish") setProducts(all.filter((p) => p.category === "Prawn" || p.category === "Crab").slice(0, 4));
+    });
+  }, [filterType]);
+
+  const getImageUrl = (path) => path ? `${API_URL}${path.startsWith("/") ? path : `/${path}`}` : "";
+  if (products.length === 0) return null;
+
+  return (
+    <section className="py-12 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">{filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />}{title}</h2>
+          <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">See All <ChevronRight size={14} /></Link>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {products.map((p) => (
+            <Link to={`/products/${p._id}`} key={p._id}>
+              <div className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+                <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4">
+                  <img src={getImageUrl(p.image)} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+                  {p.trending && <span className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">BESTSELLER</span>}
+                </div>
+                <div className="p-4 flex flex-col flex-grow">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">{p.name}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{p.netWeight}</p>
+                  <div className="mt-auto flex justify-between items-center">
+                    <div><span className="text-xs text-slate-400 line-through mr-2">₹{(p.basePrice * 1.2).toFixed(0)}</span><span className="font-bold text-slate-900 dark:text-white">₹{p.basePrice}</span></div>
+                    <button className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors"><ShoppingBag size={14} /></button>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const OfferBanner = () => {
+  const [copied, setCopied] = useState(false);
+  const [offer, setOffer] = useState({ code: "SEABITE20", value: 20, discountType: "percent" });
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/coupons`).then((res) => {
+      if (res.data && res.data.length > 0) setOffer(res.data.find((c) => c.isActive) || res.data[0]);
+    }).catch(() => {});
+  }, []);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(offer.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <section className="py-20 px-6 transition-colors duration-300 relative">
+      <div className="max-w-5xl mx-auto flex flex-col md:flex-row bg-[#0f172a] dark:bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 group">
+        <div className="w-full md:w-[60%] relative h-[300px] md:h-auto bg-gray-200">
+          <img src="/20offer.png" alt="20% Off" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+          <div className="absolute inset-0 bg-black/10" />
+        </div>
+        <div className="w-full md:w-[40%] bg-[#0f172a] dark:bg-blue-50 p-8 md:p-12 flex flex-col justify-center items-center text-center text-white dark:text-slate-900">
+          <div className="bg-blue-600 dark:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 flex items-center gap-2"><Sparkles size={12} /> Official Coupon</div>
+          <h2 className="text-6xl font-serif mb-2">{offer.discountType === "flat" ? `₹${offer.value}` : `${offer.value}%`}</h2>
+          <h3 className="text-xl font-medium tracking-widest uppercase mb-6 opacity-80">{offer.discountType === "flat" ? "Cash Discount" : "Flat Discount"}</h3>
+          <div onClick={handleCopy} className="w-full border-2 border-dashed border-white/20 dark:border-slate-900/20 p-4 rounded-xl mb-6 relative group cursor-pointer hover:bg-white/10 dark:hover:bg-blue-100 transition-all active:scale-95">
+            <p className="text-xs uppercase opacity-50 mb-1">Promo Code</p>
+            <p className="text-2xl font-mono font-bold tracking-wider text-emerald-400 dark:text-blue-600 flex items-center justify-center gap-2">{offer.code} {copied && <Check size={20} className="text-emerald-500" />}</p>
+          </div>
+          <Link to="/products"><button className="w-full py-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider text-sm shadow-lg">Shop Now</button></Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const TrendingMarquee = () => {
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    axios.get(`${API_URL}/api/products`).then((res) => {
+      const trending = (res.data.products || []).filter((p) => p.trending);
+      setProducts([...trending, ...trending, ...trending]);
+    });
+  }, []);
+  const getImageUrl = (path) => path ? `${API_URL}${path.startsWith("/") ? path : `/${path}`}` : "";
+
+  return (
+    <section className="py-24 overflow-hidden border-t border-gray-200 dark:border-white/5 relative">
+      <div className="container mx-auto px-6 mb-12 flex justify-between items-end relative z-10">
+        <h2 className="text-4xl font-serif text-slate-900 dark:text-white">Best Sellers</h2>
+      </div>
+      <div className="relative w-full z-10">
+        <motion.div className="flex gap-8 w-max" animate={{ x: ["0%", "-33.33%"] }} transition={{ repeat: Infinity, duration: 20, ease: "linear" }}>
+          {products.map((p, i) => (
+            <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[300px] group">
+              <div className="bg-white dark:bg-[#0e1d30] border border-gray-200 dark:border-white/5 rounded-[2rem] p-6 hover:shadow-xl transition-all backdrop-blur-sm">
+                <div className="h-[220px] mb-6 flex items-center justify-center relative">
+                  <img src={getImageUrl(p.image)} alt={p.name} className="w-48 h-48 object-contain drop-shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-1 truncate">{p.name}</h3>
+                  <span className="text-lg font-mono text-blue-600 dark:text-blue-300">₹{p.basePrice}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+const SeaBitePromise = () => {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    axios.get(`${API_URL}/api/products/top-reviews`).then((res) => {
+      setReviews(res.data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
+  return (
+    <section className="py-24 px-6 relative overflow-hidden transition-colors duration-300">
+      <div className="max-w-7xl mx-auto relative z-10 pt-10">
+        <div className="text-center mb-12"><h2 className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white mb-4">Loved by Seafood Lovers</h2></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {!loading && reviews.map((r, i) => (
+            <motion.div key={i} whileHover={{ y: -10 }} className="bg-white/80 dark:bg-[#0e1d30]/90 p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 relative shadow-sm hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+              <div className="flex items-center gap-1 mb-6">{[...Array(5)].map((_, starI) => <Star key={starI} className={`w-4 h-4 ${starI < r.rating ? "text-amber-400 fill-amber-400" : "text-slate-300"}`} />)}</div>
+              <p className="text-slate-700 dark:text-slate-300 mb-8 italic leading-relaxed">&quot;{r.comment}&quot;</p>
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm"><User size={16} /></div>
+                <div><h4 className="font-bold text-slate-900 dark:text-white text-sm">{r.userName}</h4><span className="text-xs text-blue-500 uppercase tracking-wide font-bold">{r.productName}</span></div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+const Footer = () => {
+  return (
+    <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white py-24 border-t border-gray-200 dark:border-white/5 text-center overflow-hidden transition-colors duration-300 z-10">
+      <div className="absolute inset-0 flex items-center whitespace-nowrap pointer-events-none overflow-hidden">
+        <motion.div initial={{ x: 0 }} animate={{ x: "-50%" }} transition={{ duration: 20, ease: "linear", repeat: Infinity }} className="flex gap-20">
+          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">SEABITE SEABITE SEABITE</h2>
+          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">SEABITE SEABITE SEABITE</h2>
+        </motion.div>
+      </div>
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[200px]">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="space-y-6">
+          <p className="text-slate-600 dark:text-slate-400 font-light text-lg tracking-tight">Experience the true taste of the ocean.</p>
+          <Link to="/products" className="inline-block"><motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-12 py-5 bg-[#0f172a] dark:bg-white text-white dark:text-slate-900 rounded-full font-bold text-lg shadow-xl">Start Your Order</motion.button></Link>
+        </motion.div>
+      </div>
+    </footer>
+  );
+};
+
+export default function Home() {
+  return (
     <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-colors duration-300">
-      <SpinWheelPopup userEmail={userEmail} />
+      <SpinWheelPopup />
       <VideoHero />
       <RollingText />
       <div className="relative w-full overflow-hidden">
@@ -312,9 +505,15 @@ export default function Home() {
         </div>
         <div className="relative z-10">
           <SectionReveal><CategoryPanel /></SectionReveal>
-          {/* FlashSale and Marquee components omitted for space, keep original ones */}
+          <SectionReveal><FlashSale /></SectionReveal>
+          <SectionReveal><CategoryRow title="Fresh From The Nets" filterType="Fish" /></SectionReveal>
+          <SectionReveal><CategoryRow title="Shellfish Specials" filterType="Shellfish" /></SectionReveal>
+          <SectionReveal><OfferBanner /></SectionReveal>
+          <SectionReveal><TrendingMarquee /></SectionReveal>
+          <SectionReveal><SeaBitePromise /></SectionReveal>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
