@@ -3,39 +3,56 @@ import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import PopupModal from "../components/PopupModal";
-import { useGoogleLogin } from "@react-oauth/google"; // ✅ SWITCHED TO HOOK
+import { useGoogleLogin } from "@react-oauth/google";
 
 export default function Login() {
-  const [modal, setModal] = useState({ show: false, message: "", type: "info" });
+  const [modal, setModal] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
 
-  // ✅ NEW LOGIN HANDLER
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
         console.log("Full Token Response:", tokenResponse);
-        
-        // In this hook, the ID Token might be in a different field
-        // We will send the access_token if ID token isn't directly visible, 
-        // but the 'implicit' flow below is what we want to avoid.
-        
+
         const res = await axios.post("/api/auth/google", {
-          token: tokenResponse.access_token, 
+          token: tokenResponse.access_token,
         });
 
+        // Existing tokens/user
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("user", JSON.stringify(res.data.user));
 
-        setModal({ show: true, message: "Login Successful!", type: "success" });
-        
+        // ✅ NEW: save email & name for checkout / spin coupons
+        if (res.data.user?.email) {
+          localStorage.setItem("userEmail", res.data.user.email);
+        }
+        if (res.data.user?.name) {
+          localStorage.setItem("userName", res.data.user.name);
+        }
+
+        setModal({
+          show: true,
+          message: "Login Successful!",
+          type: "success",
+        });
+
         setTimeout(() => {
-            window.location.href = res.data.user.role === "admin" ? "/admin/dashboard" : "/";
+          window.location.href =
+            res.data.user.role === "admin" ? "/admin/dashboard" : "/";
         }, 1000);
       } catch (err) {
         console.error("Login error:", err);
-        setModal({ show: true, message: "Verification failed on server", type: "error" });
+        setModal({
+          show: true,
+          message: "Verification failed on server",
+          type: "error",
+        });
       }
     },
-    onError: (error) => console.log('Login Failed:', error),
+    onError: (error) => console.log("Login Failed:", error),
   });
 
   return (
@@ -45,14 +62,14 @@ export default function Login() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-rose-100/50 rounded-full blur-[120px]" />
       </div>
 
-      <PopupModal 
-        show={modal.show} 
-        message={modal.message} 
-        type={modal.type} 
-        onClose={() => setModal({ ...modal, show: false })} 
+      <PopupModal
+        show={modal.show}
+        message={modal.message}
+        type={modal.type}
+        onClose={() => setModal({ ...modal, show: false })}
       />
 
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
@@ -60,24 +77,41 @@ export default function Login() {
       >
         <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-10 text-center shadow-2xl border border-white">
           <div className="mb-8">
-            <Link to="/" className="inline-block mb-6 hover:scale-105 transition-transform">
-              <img src="/logo.png" className="h-14 mx-auto object-contain" alt="SeaBite" />
+            <Link
+              to="/"
+              className="inline-block mb-6 hover:scale-105 transition-transform"
+            >
+              <img
+                src="/logo.png"
+                className="h-14 mx-auto object-contain"
+                alt="SeaBite"
+              />
             </Link>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome Back</h2>
-            <p className="text-slate-500 text-sm">Sign in with Google to continue.</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2">
+              Welcome Back
+            </h2>
+            <p className="text-slate-500 text-sm">
+              Sign in with Google to continue.
+            </p>
           </div>
 
           <div className="flex justify-center mb-6">
-            {/* ✅ CUSTOM BUTTON: Much more reliable than the standard component */}
-            <button 
+            <button
               onClick={() => login()}
               className="flex items-center justify-center gap-3 bg-[#4285F4] text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-[#357ae8] transition-all w-[250px]"
             >
-              <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" className="w-6 h-6 bg-white rounded-full p-1" alt="google" />
+              <img
+                src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
+                className="w-6 h-6 bg-white rounded-full p-1"
+                alt="google"
+              />
               Sign in with Google
             </button>
           </div>
-          <p className="text-xs text-slate-400 mt-4">By continuing, you agree to our Terms of Service.</p>
+
+          <p className="text-xs text-slate-400 mt-4">
+            By continuing, you agree to our Terms of Service.
+          </p>
         </div>
       </motion.div>
     </div>

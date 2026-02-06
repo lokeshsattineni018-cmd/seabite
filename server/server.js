@@ -23,6 +23,8 @@ import couponRoutes from "./routes/couponRoutes.js";
 /* --- EXTRA IMPORTS --- */
 import upload from "./config/multerConfig.js";
 
+
+import spinRoutes from "./routes/spinRoutes.js";
 /* --- 2. EXPRESS APP SETUP --- */
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -97,6 +99,8 @@ app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/coupons", couponRoutes);
+
+app.use("/api/spin", spinRoutes);
 
 /* --- 8. SERVER SETUP --- */
 const PORT = process.env.PORT || 5001;

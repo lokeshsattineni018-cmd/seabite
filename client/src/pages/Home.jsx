@@ -29,7 +29,7 @@ import {
 
 const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
-// --- ANIMATION WRAPPER ---
+/* --- ANIMATION WRAPPER --- */
 const SectionReveal = ({ children }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
@@ -46,8 +46,8 @@ const SectionReveal = ({ children }) => {
   );
 };
 
-// --- SPIN WHEEL POPUP (NEW) ---
-const SpinWheelPopup = () => {
+/* --- SPIN WHEEL POPUP (UPDATED) --- */
+const SpinWheelPopup = ({ userEmail }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
@@ -60,27 +60,51 @@ const SpinWheelPopup = () => {
     }
   }, []);
 
-  const prizes = [
-    { code: "SEABITE5", value: 5, discountType: "percent" },
-    { code: "SEABITE8", value: 8, discountType: "percent" },
-    { code: "SEABITE10", value: 10, discountType: "percent" },
-    { code: "SEABITE12", value: 12, discountType: "percent" },
-  ];
-
-  const handleSpin = () => {
+  const handleSpin = async () => {
     if (spinning || result) return;
+
+    // If you want to force login for unique coupons, keep this check.
+    // Otherwise remove this block.
+    if (!userEmail) {
+      alert("Please login so we can save your coupon to your email.");
+      return;
+    }
+
     setSpinning(true);
+    try {
+      const res = await fetch(`${API_URL}/api/spin/spin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: userEmail }),
+      });
+      const data = await res.json();
 
-    setTimeout(() => {
-      const prize = prizes[Math.floor(Math.random() * prizes.length)];
-      setResult(prize);
+      if (data.result === "BETTER_LUCK") {
+        setResult({
+          type: "none",
+          label: "Better luck next time",
+        });
+        localStorage.setItem("seabiteWheelUsed", "true");
+      } else if (data.result === "COUPON") {
+        const prize = {
+          type: "coupon",
+          value: data.discountValue,
+          code: data.code,
+        };
 
-      localStorage.setItem("seabiteWheelUsed", "true");
-      localStorage.setItem("seabiteWheelCoupon", prize.code);
-      localStorage.setItem("seabiteWheelPrize", JSON.stringify(prize));
-
+        setResult(prize);
+        localStorage.setItem("seabiteWheelUsed", "true");
+        localStorage.setItem("seabiteWheelCoupon", data.code);
+        localStorage.setItem("seabiteWheelPrize", JSON.stringify(prize));
+      } else if (data.error) {
+        alert(data.error);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Something went wrong. Please try again later.");
+    } finally {
       setSpinning(false);
-    }, 2500);
+    }
   };
 
   const handleClose = () => setIsOpen(false);
@@ -127,18 +151,28 @@ const SpinWheelPopup = () => {
 
               {result && (
                 <div className="mt-4 text-center">
-                  <p className="text-sm text-slate-500 dark:text-slate-300">
-                    You won:
-                  </p>
-                  <p className="text-xl font-mono font-bold text-emerald-500">
-                    {result.discountType === "flat"
-                      ? `₹${result.value} OFF`
-                      : `${result.value}% OFF`}{" "}
-                    ({result.code})
-                  </p>
-                  <p className="text-xs mt-2 text-slate-400">
-                    Coupon will be applied automatically at checkout.
-                  </p>
+                  {result.type === "none" ? (
+                    <>
+                      <p className="text-sm text-slate-500 dark:text-slate-300">
+                        You got:
+                      </p>
+                      <p className="text-xl font-bold text-red-500">
+                        Better luck next time!
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-slate-500 dark:text-slate-300">
+                        You won:
+                      </p>
+                      <p className="text-xl font-mono font-bold text-emerald-500">
+                        {result.value}% OFF ({result.code})
+                      </p>
+                      <p className="text-xs mt-2 text-slate-400">
+                        Coupon will be applied automatically at checkout.
+                      </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -149,7 +183,7 @@ const SpinWheelPopup = () => {
   );
 };
 
-// --- HERO SECTION ---
+/* --- HERO SECTION --- */
 const VideoHero = () => {
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 1000], [0, 400]);
@@ -200,7 +234,7 @@ const VideoHero = () => {
   );
 };
 
-// --- ROLLING MARQUEE ---
+/* --- ROLLING MARQUEE --- */
 const RollingText = () => {
   const baseX = useMotionValue(0);
   const { scrollY } = useScroll();
@@ -250,7 +284,7 @@ const RollingText = () => {
   );
 };
 
-// --- CATEGORIES ---
+/* --- CATEGORIES --- */
 const categories = [
   {
     title: "Premium Fish",
@@ -329,7 +363,7 @@ const CategoryPanel = () => {
   );
 };
 
-// --- FLASH SALE (unchanged from your version) ---
+/* --- FLASH SALE --- */
 const FlashSale = () => {
   const [timeLeft, setTimeLeft] = useState({
     hours: 4,
@@ -419,10 +453,7 @@ const FlashSale = () => {
   );
 };
 
-// --- PRODUCT ROW, OFFERBANNER, TRENDING, REVIEWS, FOOTER ---
-// Use exactly your existing implementations here (no logic change).
-// Only requirement: keep them below FlashSale and above Home export, same as before.
-
+/* --- CATEGORY ROW --- */
 const CategoryRow = ({ title, filterType }) => {
   const [products, setProducts] = useState([]);
   useEffect(() => {
@@ -512,6 +543,7 @@ const CategoryRow = ({ title, filterType }) => {
   );
 };
 
+/* --- OFFER BANNER --- */
 const OfferBanner = () => {
   const [copied, setCopied] = useState(false);
   const [offer, setOffer] = useState({
@@ -540,7 +572,7 @@ const OfferBanner = () => {
 
   return (
     <section className="py-20 px-6 transition-colors duration-300 relative">
-      <div className="max-w-5xl mx-auto flex flex-col md:flex-row bg-[#0f172a] dark:bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 group">
+      <div className="max-w-5xl mx-auto flex flex-col md:flex-row bg-[#0f172a] dark:bg:white rounded-3xl overflow-hidden shadow-2xl relative z-10 group">
         <div className="absolute inset-0 z-30 pointer-events-none mix-blend-overlay opacity-30">
           <motion.div
             animate={{ x: ["-100%", "200%"] }}
@@ -587,6 +619,7 @@ const OfferBanner = () => {
   );
 };
 
+/* --- TRENDING MARQUEE --- */
 const TrendingMarquee = () => {
   const [products, setProducts] = useState([]);
   useEffect(() => {
@@ -641,6 +674,7 @@ const TrendingMarquee = () => {
   );
 };
 
+/* --- REVIEWS --- */
 const SeaBitePromise = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -711,6 +745,7 @@ const SeaBitePromise = () => {
   );
 };
 
+/* --- FOOTER --- */
 const Footer = () => {
   return (
     <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white py-24 border-t border-gray-200 dark:border-white/5 text-center overflow-hidden transition-colors duration-300 z-10">
@@ -755,10 +790,14 @@ const Footer = () => {
   );
 };
 
+/* --- HOME PAGE EXPORT --- */
 export default function Home() {
+  // TODO: replace with real user email from your auth context / profile
+  const userEmail = "";
+
   return (
     <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-colors duration-300">
-      <SpinWheelPopup />
+      <SpinWheelPopup userEmail={userEmail} />
       <VideoHero />
       <RollingText />
       <div className="relative w-full overflow-hidden">

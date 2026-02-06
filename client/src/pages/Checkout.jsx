@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef, useContext } from "react";
 import { getCart, saveCart, clearCart } from "../utils/cartStorage";
 import { useNavigate } from "react-router-dom";
@@ -30,7 +31,8 @@ import { ThemeContext } from "../context/ThemeContext";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 const ALLOWED_DELIVERY_STATES = ["Andhra Pradesh", "Telangana", "AP", "TS"];
 
 const DEFAULT_DELIVERY_ADDRESS = {
@@ -46,7 +48,11 @@ const DEFAULT_DELIVERY_ADDRESS = {
 export default function Checkout() {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [modal, setModal] = useState({ show: false, message: "", type: "info" });
+  const [modal, setModal] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
 
   // default COD
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -61,8 +67,17 @@ export default function Checkout() {
   const { refreshCartCount } = useContext(CartContext);
   const { isDarkMode } = useContext(ThemeContext);
 
-  const [deliveryAddress, setDeliveryAddress] = useState(DEFAULT_DELIVERY_ADDRESS);
+  const [deliveryAddress, setDeliveryAddress] = useState(
+    DEFAULT_DELIVERY_ADDRESS
+  );
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+
+  // NEW: user email stored on login (you must set localStorage.setItem("userEmail", email) in auth)
+  const [userEmail, setUserEmail] = useState("");
+  useEffect(() => {
+    const storedEmail = localStorage.getItem("userEmail");
+    if (storedEmail) setUserEmail(storedEmail);
+  }, []);
 
   const isDeliveryAllowed = ALLOWED_DELIVERY_STATES.some((allowed) =>
     deliveryAddress.state?.toLowerCase().includes(allowed.toLowerCase())
@@ -77,7 +92,11 @@ export default function Checkout() {
   useEffect(() => {
     const c = getCart();
     if (c.length === 0) {
-      setModal({ show: true, message: "Your cart is empty!", type: "error" });
+      setModal({
+        show: true,
+        message: "Your cart is empty!",
+        type: "error",
+      });
       setTimeout(() => navigate("/products"), 2000);
     } else {
       setCart(c);
@@ -104,7 +123,10 @@ export default function Checkout() {
     if (isCouponApplied) handleRemoveCoupon();
   };
 
-  const itemTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const itemTotal = cart.reduce(
+    (sum, item) => sum + item.price * item.qty,
+    0
+  );
   const deliveryCharge = itemTotal < 1000 ? 99 : 0;
 
   const handleApplyCoupon = async () => {
@@ -116,6 +138,7 @@ export default function Checkout() {
       const res = await axios.post(`${API_URL}/api/coupons/validate`, {
         code: couponCode,
         cartTotal: itemTotal,
+        email: userEmail || undefined,
       });
 
       if (res.data.success) {
@@ -135,7 +158,7 @@ export default function Checkout() {
     }
   };
 
-  // --- NEW: apply coupon that comes from spin wheel (localStorage) ---
+  // apply coupon that comes from spin wheel (localStorage)
   const handleApplyCouponFromWheel = async (code) => {
     if (!code) return;
     setVerifyingCoupon(true);
@@ -145,13 +168,14 @@ export default function Checkout() {
       const res = await axios.post(`${API_URL}/api/coupons/validate`, {
         code,
         cartTotal: itemTotal,
+        email: userEmail || undefined,
       });
 
       if (res.data.success) {
         setDiscount(res.data.discountAmount);
         setIsCouponApplied(true);
         setCouponMessage({ type: "success", text: res.data.message });
-        // Optional: one-time use
+        // Optional: remove client-side
         // localStorage.removeItem("seabiteWheelCoupon");
       }
     } catch (err) {
@@ -182,7 +206,7 @@ export default function Checkout() {
     setIsAddressModalOpen(false);
   };
 
-  // --- NEW: on checkout open, auto-read wheel coupon & apply via backend ---
+  // on checkout open, auto-read wheel coupon & apply via backend
   useEffect(() => {
     const wheelCode = localStorage.getItem("seabiteWheelCoupon");
     if (wheelCode && !isCouponApplied) {
@@ -190,7 +214,7 @@ export default function Checkout() {
       handleApplyCouponFromWheel(wheelCode);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemTotal]);
+  }, [itemTotal, userEmail]);
 
   const placeOrder = async () => {
     if (!isDeliveryAllowed) {
@@ -212,7 +236,8 @@ export default function Checkout() {
     ) {
       setModal({
         show: true,
-        message: "Please complete your delivery address (Zip/Pincode is required).",
+        message:
+          "Please complete your delivery address (Zip/Pincode is required).",
         type: "error",
       });
       return;
@@ -305,7 +330,8 @@ export default function Checkout() {
     } catch (err) {
       setModal({
         show: true,
-        message: err.response?.data?.message || "Order initiation failed.",
+        message:
+          err.response?.data?.message || "Order initiation failed.",
         type: "error",
       });
     } finally {
@@ -338,7 +364,10 @@ export default function Checkout() {
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10 relative z-10">
         {/* LEFT: address, payment, items */}
         <div className="lg:col-span-2 space-y-6 md:space-y-8">
-          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
             <span className="text-[10px] md:text-xs font-bold text-blue-600 dark:text-blue-500 uppercase tracking-widest mb-1 md:mb-2 block">
               Secure Checkout
             </span>
@@ -434,8 +463,8 @@ export default function Checkout() {
               <div className="group relative opacity-60 cursor-not-allowed p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-4">
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-3 py-2 rounded-lg shadow-xl whitespace-nowrap z-50 border border-slate-700">
                   <div className="flex items-center gap-2">
-                    <FiAlertCircle className="text-yellow-400" /> Currently under
-                    maintenance
+                    <FiAlertCircle className="text-yellow-400" /> Currently
+                    under maintenance
                   </div>
                   <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-slate-900" />
                 </div>
@@ -462,7 +491,9 @@ export default function Checkout() {
               >
                 <div
                   className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                    paymentMethod === "COD" ? "border-blue-500" : "border-slate-300"
+                    paymentMethod === "COD"
+                      ? "border-blue-500"
+                      : "border-slate-300"
                   }`}
                 >
                   {paymentMethod === "COD" && (
@@ -601,7 +632,11 @@ export default function Checkout() {
                     disabled={isCouponApplied || !couponCode || verifyingCoupon}
                     className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 rounded-xl font-bold text-[10px] md:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors flex items-center justify-center min-w-[70px]"
                   >
-                    {verifyingCoupon ? <FiLoader className="animate-spin" /> : "Apply"}
+                    {verifyingCoupon ? (
+                      <FiLoader className="animate-spin" />
+                    ) : (
+                      "Apply"
+                    )}
                   </button>
                 </div>
                 {couponMessage && (
@@ -627,7 +662,9 @@ export default function Checkout() {
                 {isCouponApplied && (
                   <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
                     <span>Discount Applied</span>
-                    <span className="font-bold">- ₹{discount.toFixed(2)}</span>
+                    <span className="font-bold">
+                      - ₹{discount.toFixed(2)}
+                    </span>
                   </div>
                 )}
                 <div className="flex justify-between text-slate-500 dark:text-slate-400">
@@ -667,7 +704,9 @@ export default function Checkout() {
                 <div className="mb-6 p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/20">
                   <p className="text-[9px] md:text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest text-center mb-2">
                     Unlock{" "}
-                    <span className="text-emerald-500 italic">Free Delivery</span>
+                    <span className="text-emerald-500 italic">
+                      Free Delivery
+                    </span>
                   </p>
                   <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
                     <motion.div
@@ -677,7 +716,8 @@ export default function Checkout() {
                     />
                   </div>
                   <p className="text-[8px] md:text-[9px] font-bold text-slate-500 dark:text-slate-400 text-center mt-2">
-                    Add ₹{(1000 - itemTotal).toFixed(0)} more for Free shipping!
+                    Add ₹{(1000 - itemTotal).toFixed(0)} more for Free
+                    shipping!
                   </p>
                 </div>
               )}
@@ -717,7 +757,7 @@ export default function Checkout() {
   );
 }
 
-// ADDRESS MODAL (your original, unchanged)
+// ADDRESS MODAL
 function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
   const mapContainerRef = useRef(null);
   const mapInstance = useRef(null);
@@ -760,6 +800,7 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
     });
 
     detectLocation();
+
     return () => {
       if (mapInstance.current) mapInstance.current.remove();
     };
@@ -913,7 +954,9 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
                 type="text"
                 placeholder="John Doe"
                 value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, fullName: e.target.value })
+                }
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
@@ -949,7 +992,9 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
                 type="text"
                 placeholder="e.g. Flat 101, Sea View Apts"
                 value={form.houseNo}
-                onChange={(e) => setForm({ ...form, houseNo: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, houseNo: e.target.value })
+                }
                 className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 pl-11 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
             </div>
@@ -957,20 +1002,67 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
 
           <div className="space-y-1.5">
             <label className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">
-              Pincode / Zip Code
+              Street / Area
             </label>
-            <div className="relative">
-              <FiHash
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={16}
-              />
+            <input
+              type="text"
+              placeholder="Street name, area, landmark"
+              value={form.street}
+              onChange={(e) =>
+                setForm({ ...form, street: e.target.value })
+              }
+              className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
+            <div className="space-y-1.5">
+              <label className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">
+                City
+              </label>
               <input
                 type="text"
-                placeholder="534281"
-                value={form.zip}
-                onChange={(e) => setForm({ ...form, zip: e.target.value })}
-                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 pl-11 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                placeholder="City / Town"
+                value={form.city}
+                onChange={(e) =>
+                  setForm({ ...form, city: e.target.value })
+                }
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all"
               />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">
+                State
+              </label>
+              <input
+                type="text"
+                placeholder="Andhra Pradesh / Telangana"
+                value={form.state}
+                onChange={(e) =>
+                  setForm({ ...form, state: e.target.value })
+                }
+                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 ml-1">
+                Pincode / Zip Code
+              </label>
+              <div className="relative">
+                <FiHash
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  size={16}
+                />
+                <input
+                  type="text"
+                  placeholder="534281"
+                  value={form.zip}
+                  onChange={(e) =>
+                    setForm({ ...form, zip: e.target.value })
+                  }
+                  className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 pl-11 p-3 md:p-3.5 rounded-xl text-slate-900 dark:text-white text-xs md:text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                />
+              </div>
             </div>
           </div>
 
