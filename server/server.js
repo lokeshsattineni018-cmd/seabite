@@ -7,8 +7,6 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
-
-/* --- NEW: SESSION & STORE IMPORTS --- */
 import session from "express-session";
 import MongoStore from "connect-mongo";
 
@@ -29,15 +27,10 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
-app.set("trust proxy", 1); // ✅ Required for cookies to work on Vercel
+/* --- 2. SECURITY & PROXY --- */
+app.set("trust proxy", 1); 
 
-const uploadDir = path.join(__dirname, "uploads"); 
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
-}
-
-// ✅ FIX: Added both www and non-www domains to origin
+// ✅ FIX: Match both versions of your live domain
 const allowedOrigins = [
   "https://seabite.co.in", 
   "https://www.seabite.co.in", 
@@ -49,15 +42,15 @@ app.use(cors({
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error('CORS blocked for this origin'));
     }
   },
-  credentials: true, // ✅ Required for MongoDB Sessions
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// ✅ FIX: Pre-flight OPTIONS handler for Vercel
+// ✅ MANDATORY: Pre-flight handler for Vercel
 app.options('*', cors());
 
 app.use((req, res, next) => {
@@ -67,22 +60,21 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use("/uploads", express.static(uploadDir)); 
 
 /* --- 3. MONGODB SESSION SETUP --- */
 app.use(session({
-  secret: process.env.SESSION_SECRET || "seabite_secret_key",
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
     collectionName: 'sessions',
-    ttl: 14 * 24 * 60 * 60 // 14 days
+    ttl: 14 * 24 * 60 * 60 
   }),
   cookie: {
-    secure: true, // ✅ Required for Vercel/HTTPS
+    secure: true, 
     httpOnly: true,
-    sameSite: "none", // ✅ Required for cross-domain cookies
+    sameSite: "none", 
     maxAge: 7 * 24 * 60 * 60 * 1000 
   }
 }));
@@ -94,9 +86,9 @@ const connectDB = async () => {
   try {
     const db = await mongoose.connect(process.env.MONGO_URI, { dbName: "seabite" });
     isConnected = db.connections[0].readyState;
-    console.log("✅ MongoDB Connected & Session Store Active");
+    console.log("✅ MongoDB Connected");
   } catch (error) {
-    console.error("❌ MongoDB Connection Error:", error);
+    console.error("❌ MongoDB Error:", error);
   }
 };
 
