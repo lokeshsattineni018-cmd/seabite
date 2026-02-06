@@ -34,7 +34,7 @@ const allowedOrigins = [
   "http://localhost:5173"
 ];
 
-// ✅ MANUAL CORS FIX: Directly sets headers to avoid Wildcard (*) errors
+// ✅ BULLETPROOF CORS: Forces the browser to accept the session cookie
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -71,7 +71,7 @@ const connectDB = async () => {
 };
 await connectDB();
 
-/* --- 4. MONGODB SESSION SETUP --- */
+/* --- 4. MONGODB SESSION SETUP (MUST BE BEFORE ROUTES) --- */
 app.use(session({
   secret: process.env.SESSION_SECRET || "seabite_default_secret",
   resave: false,
@@ -84,7 +84,7 @@ app.use(session({
   cookie: {
     secure: true, 
     httpOnly: true,
-    sameSite: "none", // ✅ Required for cross-domain cookie trust
+    sameSite: "none", // ✅ Required for cross-domain sessions
     maxAge: 7 * 24 * 60 * 60 * 1000 
   }
 }));
