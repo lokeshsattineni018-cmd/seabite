@@ -1,6 +1,5 @@
 /* --- 1. LOAD ENV VARIABLES FIRST --- */
 import 'dotenv/config'; 
-
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -27,10 +26,10 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/* --- 2. SECURITY & PROXY --- */
+/* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
 app.set("trust proxy", 1); 
 
-// ✅ FIX: Match both versions of your live domain
+// ✅ FIX: Dynamic Origin to handle www vs non-www mismatches
 const allowedOrigins = [
   "https://seabite.co.in", 
   "https://www.seabite.co.in", 
@@ -39,25 +38,19 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS blocked for this origin'));
+    // allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      return callback(new Error('CORS Policy: Origin not allowed'), false);
     }
+    return callback(null, true);
   },
-  credentials: true,
+  credentials: true, 
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// ✅ MANDATORY: Pre-flight handler for Vercel
-app.options('*', cors());
-
-app.use((req, res, next) => {
-  res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-  next();
-});
+app.options('*', cors()); // Pre-flight for Vercel
 
 app.use(express.json());
 
@@ -72,9 +65,9 @@ app.use(session({
     ttl: 14 * 24 * 60 * 60 
   }),
   cookie: {
-    secure: true, 
+    secure: true, // Required for HTTPS
     httpOnly: true,
-    sameSite: "none", 
+    sameSite: "none", // Required for cross-domain cookies
     maxAge: 7 * 24 * 60 * 60 * 1000 
   }
 }));
@@ -111,10 +104,5 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
-
-const PORT = process.env.PORT || 5001;
-if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => console.log(`🚀 Port ${PORT}`));
-}
 
 export default app;
