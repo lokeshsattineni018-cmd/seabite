@@ -63,8 +63,7 @@ const SpinWheelPopup = ({ userEmail }) => {
   const handleSpin = async () => {
     if (spinning || result) return;
 
-    // If you want to force login for unique coupons, keep this check.
-    // Otherwise remove this block.
+    // Require login so spin coupon can be bound to an email
     if (!userEmail) {
       alert("Please login so we can save your coupon to your email.");
       return;
@@ -243,12 +242,9 @@ const RollingText = () => {
     damping: 50,
     stiffness: 400,
   });
-  const velocityFactor = useTransform(
-    smoothVelocity,
-    [0, 1000],
-    [0, 5],
-    { clamp: false }
-  );
+  const velocityFactor = useTransform(smoothVelocity, [0, 1000], [0, 5], {
+    clamp: false,
+  });
   const x = useTransform(baseX, (v) => `${v}%`);
   const directionFactor = useRef(1);
 
@@ -308,7 +304,7 @@ const CategoryPanel = () => {
   return (
     <section className="py-20 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto mb-12 text-center relative z-10">
-        <h2 className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white transition-colors duration-300">
+        <h2 className="text-4xl md:text-5xl font-serif text-slate-900 dark:text:white transition-colors duration-300">
           Shop By Category
         </h2>
         <p className="text-blue-600 dark:text-blue-200 mt-2 font-light tracking-wide transition-colors duration-300">
@@ -412,7 +408,7 @@ const FlashSale = () => {
               ₹1699
             </span>{" "}
             and use coupon{" "}
-            <span className="mx-2 bg-white text-red-600 px-3 py-1 rounded-lg font-black font-mono not-italic text-lg border-2 border-dashed border-red-600 transform -rotate-2 inline-block shadow-lg">
+            <span className="mx-2 bg:white text-red-600 px-3 py-1 rounded-lg font-black font-mono not-italic text-lg border-2 border-dashed border-red-600 transform -rotate-2 inline-block shadow-lg">
               SEABITE10
             </span>{" "}
             to avail{" "}
@@ -481,7 +477,7 @@ const CategoryRow = ({ title, filterType }) => {
   return (
     <section className="py-12 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+        <div className="flex justify-between items:end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             {filterType === "Fish" ? (
               <Fish className="text-blue-500" />
@@ -500,7 +496,7 @@ const CategoryRow = ({ title, filterType }) => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {products.map((p) => (
             <Link to={`/products/${p._id}`} key={p._id}>
-              <div className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
+              <div className="group bg:white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
                 <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4">
                   <img
                     src={getImageUrl(p.image)}
@@ -576,11 +572,16 @@ const OfferBanner = () => {
         <div className="absolute inset-0 z-30 pointer-events-none mix-blend-overlay opacity-30">
           <motion.div
             animate={{ x: ["-100%", "200%"] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 3 }}
+            transition={{
+              repeat: Infinity,
+              duration: 3,
+              ease: "easeInOut",
+              repeatDelay: 3,
+            }}
             className="w-full h-full bg-gradient-to-r from-transparent via-white to-transparent -skew-x-12"
           />
         </div>
-        <div className="w-full md:w-[60%] relative h-[300px] md:h-auto bg-gray-200">
+        <div className="w-full md:w-[60%] relative h:[300px] md:h-auto bg-gray-200">
           <img
             src="/20offer.png"
             alt="20% Off"
@@ -593,7 +594,9 @@ const OfferBanner = () => {
             <Sparkles size={12} /> Official Coupon
           </div>
           <h2 className="text-6xl font-serif mb-2">
-            {offer.discountType === "flat" ? `₹${offer.value}` : `${offer.value}%`}
+            {offer.discountType === "flat"
+              ? `₹${offer.value}`
+              : `${offer.value}%`}
           </h2>
           <h3 className="text-xl font-medium tracking-widest uppercase mb-6 opacity-80">
             {offer.discountType === "flat" ? "Cash Discount" : "Flat Discount"}
@@ -635,9 +638,9 @@ const TrendingMarquee = () => {
   };
 
   return (
-    <section className="py-24 overflow-hidden border-t border-gray-200 dark:border-white/5 transition-colors duration-300 relative">
+    <section className="py-24 overflow-hidden border-t border-gray-200 dark:border:white/5 transition-colors duration-300 relative">
       <div className="container mx-auto px-6 mb-12 flex justify-between items-end relative z-10">
-        <h2 className="text-4xl font-serif text-slate-900 dark:text-white transition-colors duration-300">
+        <h2 className="text-4xl font-serif text-slate-900 dark:text:white transition-colors duration-300">
           Best Sellers
         </h2>
       </div>
@@ -649,7 +652,7 @@ const TrendingMarquee = () => {
         >
           {products.map((p, i) => (
             <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[300px] group">
-              <div className="bg-white dark:bg-[#0e1d30] border border-gray-200 dark:border-white/5 rounded-[2rem] p-6 hover:bg-white/80 dark:hover:bg-[#112238] transition-colors backdrop-blur-sm shadow-sm hover:shadow-xl">
+              <div className="bg:white dark:bg-[#0e1d30] border border-gray-200 dark:border-white/5 rounded-[2rem] p-6 hover:bg-white/80 dark:hover:bg-[#112238] transition-colors backdrop-blur-sm shadow-sm hover:shadow-xl">
                 <div className="h-[220px] mb-6 flex items-center justify-center relative">
                   <img
                     src={getImageUrl(p.image)}
@@ -658,7 +661,7 @@ const TrendingMarquee = () => {
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-1 truncate">
+                  <h3 className="text-xl font-serif text-slate-900 dark:text:white mb-1 truncate">
                     {p.name}
                   </h3>
                   <span className="text-lg font-mono text-blue-600 dark:text-blue-300">
@@ -692,7 +695,7 @@ const SeaBitePromise = () => {
     <section className="py-24 px-6 relative overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto relative z-10 pt-10">
         <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white mb-4">
+          <h2 className="text-3xl md:text-4xl font-serif text-slate-900 dark:text:white mb-4">
             Loved by Seafood Lovers
           </h2>
         </div>
@@ -726,7 +729,7 @@ const SeaBitePromise = () => {
                     <User size={16} />
                   </div>
                   <div>
-                    <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                    <h4 className="font-bold text-slate-900 dark:text:white text-sm">
                       {r.userName}
                     </h4>
                     <span className="text-xs text-blue-500 uppercase tracking-wide font-bold">
@@ -748,18 +751,18 @@ const SeaBitePromise = () => {
 /* --- FOOTER --- */
 const Footer = () => {
   return (
-    <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white py-24 border-t border-gray-200 dark:border-white/5 text-center overflow-hidden transition-colors duration-300 z-10">
-      <div className="absolute inset-0 flex items-center whitespace-nowrap pointer-events-none overflow-hidden">
+    <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text:white py-24 border-t border-gray-200 dark:border:white/5 text-center overflow-hidden transition-colors duration-300 z-10">
+      <div className="absolute inset-0 flex items-center whitespace-nowrap pointer-events-none overflow:hidden">
         <motion.div
           initial={{ x: 0 }}
           animate={{ x: "-50%" }}
           transition={{ duration: 20, ease: "linear", repeat: Infinity }}
           className="flex gap-20"
         >
-          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">
+          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select:none uppercase tracking-tighter">
             SEABITE SEABITE SEABITE
           </h2>
-          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">
+          <h2 className="text-[18vw] leading:none font-black text-gray-200/60 dark:text-[#0f1b2d] select:none uppercase tracking-tighter">
             SEABITE SEABITE SEABITE
           </h2>
         </motion.div>
@@ -792,8 +795,15 @@ const Footer = () => {
 
 /* --- HOME PAGE EXPORT --- */
 export default function Home() {
-  // TODO: replace with real user email from your auth context / profile
-  const userEmail = "";
+  const [userEmail, setUserEmail] = useState("");
+
+  useEffect(() => {
+    const storedEmail =
+      localStorage.getItem("userEmail") ||
+      JSON.parse(localStorage.getItem("user") || "{}")?.email ||
+      "";
+    if (storedEmail) setUserEmail(storedEmail);
+  }, []);
 
   return (
     <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-colors duration-300">
@@ -801,7 +811,7 @@ export default function Home() {
       <VideoHero />
       <RollingText />
       <div className="relative w-full overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden h-full w-full z-0">
+        <div className="absolute inset-0 pointer-events:none overflow:hidden h-full w-full z-0">
           {[...Array(15)].map((_, i) => (
             <motion.div
               key={i}

@@ -21,11 +21,11 @@ export default function Login() {
           token: tokenResponse.access_token,
         });
 
-        // Existing tokens/user
+        // Save auth + user
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("user", JSON.stringify(res.data.user));
 
-        // ✅ NEW: save email & name for checkout / spin coupons
+        // Save email & name for checkout / spin coupons
         if (res.data.user?.email) {
           localStorage.setItem("userEmail", res.data.user.email);
         }
@@ -39,9 +39,21 @@ export default function Login() {
           type: "success",
         });
 
+        // Check if some page (like spin wheel) requested login
+        const redirectPath = localStorage.getItem("postLoginRedirect") || null;
+        if (redirectPath) {
+          localStorage.removeItem("postLoginRedirect");
+        }
+
         setTimeout(() => {
-          window.location.href =
-            res.data.user.role === "admin" ? "/admin/dashboard" : "/";
+          if (redirectPath) {
+            // go back to where user came from (e.g. "/")
+            window.location.href = redirectPath;
+          } else {
+            // normal behavior: admin vs customer
+            window.location.href =
+              res.data.user.role === "admin" ? "/admin/dashboard" : "/";
+          }
         }, 1000);
       } catch (err) {
         console.error("Login error:", err);
