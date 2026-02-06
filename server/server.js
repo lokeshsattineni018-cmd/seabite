@@ -25,9 +25,6 @@ import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import spinRoutes from "./routes/spinRoutes.js";
 
-/* --- EXTRA IMPORTS --- */
-import upload from "./config/multerConfig.js";
-
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -40,13 +37,28 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-// ✅ UPDATE CORS: allow credentials and specify production origin
+// ✅ FIX: Added both www and non-www domains to origin
+const allowedOrigins = [
+  "https://seabite.co.in", 
+  "https://www.seabite.co.in", 
+  "http://localhost:5173"
+];
+
 app.use(cors({
-  origin: ["https://seabite.co.in", "http://localhost:5173"], 
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true, // ✅ Required for MongoDB Sessions
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+// ✅ FIX: Pre-flight OPTIONS handler for Vercel
+app.options('*', cors());
 
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
@@ -57,7 +69,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir)); 
 
-/* --- 3. MONGODB SESSION SETUP (FIXES YOUR VERCEL LOG ERROR) --- */
+/* --- 3. MONGODB SESSION SETUP --- */
 app.use(session({
   secret: process.env.SESSION_SECRET || "seabite_secret_key",
   resave: false,
@@ -68,7 +80,7 @@ app.use(session({
     ttl: 14 * 24 * 60 * 60 // 14 days
   }),
   cookie: {
-    secure: true, // ✅ Must be true for Vercel/HTTPS
+    secure: true, // ✅ Required for Vercel/HTTPS
     httpOnly: true,
     sameSite: "none", // ✅ Required for cross-domain cookies
     maxAge: 7 * 24 * 60 * 60 * 1000 
