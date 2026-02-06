@@ -1,6 +1,5 @@
 import express from "express";
 import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { getLoggedUser, updateUserProfile, googleLogin } from '../controllers/authController.js'; 
 
@@ -19,16 +18,16 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "All fields required" });
     }
 
-    const exists = await User.findOne({ email });
+    const exists = await User.findOne({ email: email.toLowerCase() });
     if (exists) {
       return res.status(400).json({ message: "User already exists" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const user = await User.create({
+    await User.create({
       name,
-      email,
+      email: email.toLowerCase(),
       password: hashedPassword,
       role: "user",
     });
@@ -47,7 +46,7 @@ router.post("/login", async (req, res) => {
     if (!email || !password)
       return res.status(400).json({ message: "Email & password required" });
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user)
       return res.status(400).json({ message: "Invalid email or password" });
 
@@ -58,17 +57,21 @@ router.post("/login", async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ message: "Invalid email or password" });
 
-    // ✅ SESSION SYNC: Save user to MongoDB session instead of just returning a token
+    // ✅ MONGO SESSION SYNC: Store user directly in the database session store
     req.session.user = {
       id: user._id,
       name: user.name,
-      email: user.email.toLowerCase(),
+      email: user.email,
       role: user.role,
     };
 
-    res.json({
-      user: req.session.user,
-      message: "Login successful"
+    // Explicitly save session before responding to prevent race conditions
+    req.session.save((err) => {
+      if (err) return res.status(500).json({ message: "Session save failed" });
+      res.json({
+        user: req.session.user,
+        message: "Login successful"
+      });
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -78,12 +81,24 @@ router.post("/login", async (req, res) => {
 /* ================= GOOGLE LOGIN ================= */
 router.post("/google", googleLogin);
 
-/* ================= LOGOUT (New) ================= */
+/* ================= LOGOUT ================= */
 router.post("/logout", (req, res) => {
+  // ✅ DESTROY MONGO SESSION: Removes the document from the 'sessions' collection
   req.session.destroy((err) => {
-    if (err) return res.status(500).json({ message: "Logout failed" });
-    res.clearCookie('connect.sid'); // Clears the session cookie
-    res.json({ message: "Logged out from MongoDB session" });
+    if (err) {
+      console.error("❌ Logout Error:", err);
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    
+    // Clear the session cookie from the browser
+    res.clearCookie('connect.sid', {
+      path: '/',
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none'
+    });
+
+    res.json({ message: "Logged out successfully" });
   });
 });
 

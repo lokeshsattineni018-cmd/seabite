@@ -27,8 +27,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
-app.set("trust proxy", 1); // ✅ Required for sessions on Vercel
+app.set("trust proxy", 1); // ✅ Required for cookies on Vercel
 
+// ✅ FIX: Specific origin matching to stop CORS block
 const allowedOrigins = [
   "https://seabite.co.in", 
   "https://www.seabite.co.in", 
@@ -37,20 +38,22 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('CORS Policy block: Origin mismatch'), false);
+      callback(new Error('CORS Policy: Origin mismatch'), false);
     }
   },
-  credentials: true, // ✅ Required to save MongoDB Session Cookies
+  credentials: true, // ✅ Allows MongoDB session cookies
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 }));
 
-app.options('*', cors()); // Pre-flight for Vercel
+app.options('*', cors()); // ✅ Handle pre-flight for Vercel
 
 app.use(express.json());
+const uploadDir = path.join(__dirname, "uploads"); 
+app.use("/uploads", express.static(uploadDir)); 
 
 /* --- 3. MONGODB SESSION SETUP --- */
 app.use(session({
@@ -65,7 +68,7 @@ app.use(session({
   cookie: {
     secure: true, 
     httpOnly: true,
-    sameSite: "none", // ✅ Required for cross-domain cookies
+    sameSite: "none", // ✅ Required for cross-domain cookie trust
     maxAge: 7 * 24 * 60 * 60 * 1000 
   }
 }));
@@ -90,7 +93,6 @@ app.use(async (req, res, next) => {
 
 /* --- 5. ROUTES --- */
 app.get('/', (req, res) => res.send("SeaBite Server Running 🚀"));
-
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
 app.use("/api/productsRoutes", productsRoutes); 

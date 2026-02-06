@@ -17,44 +17,33 @@ export default function Navbar({ openCart }) {
   const [showShop, setShowShop] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
   const [searchTerm, setSearchTerm] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
 
   const navigate = useNavigate();
 
-  // ✅ INSTANT LOGIN UPDATE FIX
+  // ✅ MONGO SESSION SYNC: Fetch user data from the server session
   useEffect(() => {
-    // 1. Initial Load
-    checkUser();
-
-    // 2. Listen for "storage" events (updates from other tabs)
-    window.addEventListener("storage", checkUser);
-
-    // 3. Listen for CUSTOM event "auth-update" (instant update from Login page)
-    window.addEventListener("auth-update", checkUser);
-
-    return () => {
-      window.removeEventListener("storage", checkUser);
-      window.removeEventListener("auth-update", checkUser);
-    };
+    fetchSession();
+    // Re-check session on focus to handle cross-tab logout/login
+    window.addEventListener("focus", fetchSession);
+    return () => window.removeEventListener("focus", fetchSession);
   }, []);
 
-  const checkUser = () => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("user");
-
-    if (token && storedUser) {
-        setUser(JSON.parse(storedUser));
-        fetchNotifications(token);
-    } else {
-        setUser(null);
+  const fetchSession = async () => {
+    try {
+      // ✅ No tokens needed; server reads the connect.sid cookie
+      const res = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
+      setUser(res.data);
+      fetchNotifications();
+    } catch (err) {
+      setUser(null); // Not logged in or session expired
     }
   };
 
-  const fetchNotifications = async (token) => {
+  const fetchNotifications = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/notifications`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API_URL}/api/notifications`, { withCredentials: true });
       setUnreadCount(res.data.filter(n => !n.read).length);
     } catch (err) { console.error("Notification fetch failed"); }
   };
@@ -65,14 +54,15 @@ export default function Navbar({ openCart }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-    navigate("/");
-    
-    // ✅ Dispatch event so other components know logout happened
-    window.dispatchEvent(new Event("auth-update"));
+  const handleLogout = async () => {
+    try {
+      // ✅ DESTROY SESSION: Removes the session from MongoDB
+      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+      setUser(null);
+      navigate("/");
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
   };
 
   const handleSearch = (e) => {
@@ -86,20 +76,13 @@ export default function Navbar({ openCart }) {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await axios.post(`${API_URL}/api/auth/google`, { token: tokenResponse.access_token });
+        const res = await axios.post(`${API_URL}/api/auth/google`, { 
+          token: tokenResponse.access_token 
+        }, { withCredentials: true }); // ✅ Receive the cookie
         
-        // Save to Storage
-        localStorage.setItem("token", res.data.token);
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-        
-        // ✅ INSTANT UPDATE: Set state immediately
         setUser(res.data.user);
-        
-        // ✅ BROADCAST UPDATE: Tell the app "We are logged in!"
-        window.dispatchEvent(new Event("auth-update"));
-
         if (res.data.user.role === "admin") navigate("/admin/dashboard");
-        fetchNotifications(res.data.token);
+        fetchNotifications();
       } catch (err) { console.error("Google Login Failed", err); }
     },
   });
@@ -199,7 +182,7 @@ export default function Navbar({ openCart }) {
                 )}
           </motion.div>
 
-          {/* PROFILE (Laptop Only) */}
+          {/* PROFILE */}
           <div className="hidden md:flex items-center">
             {user ? (
                 <div className="relative" onMouseEnter={() => setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
@@ -245,7 +228,7 @@ export default function Navbar({ openCart }) {
             )}
           </div>
 
-          {/* HAMBURGER (Mobile Only) */}
+          {/* HAMBURGER */}
           <button className="md:hidden text-slate-900 dark:text-white text-2xl p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
              {mobileMenuOpen ? <FiX /> : <FiMenu />}
           </button>

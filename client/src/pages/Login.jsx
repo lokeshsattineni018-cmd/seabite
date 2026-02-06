@@ -11,11 +11,10 @@ export default function Login() {
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        // Send token to backend. 
-        // ✅ MongoDB Identity: Backend now handles secure session storage/cookies
+        // ✅ MONGO SESSION SYNC: Request backend to create a secure session cookie
         const res = await axios.post("/api/auth/google", {
           token: tokenResponse.access_token,
-        }, { withCredentials: true }); // Required for receives cookies from Mongo backend
+        }, { withCredentials: true }); // Required to receive the connect.sid cookie
 
         setModal({
           show: true,
@@ -23,31 +22,41 @@ export default function Login() {
           type: "success",
         });
 
-        const redirectPath = localStorage.getItem("postLoginRedirect") || null;
+        // Pull redirect path if it exists, otherwise use role-based default
+        const redirectPath = localStorage.getItem("postLoginRedirect");
         if (redirectPath) localStorage.removeItem("postLoginRedirect");
 
         setTimeout(() => {
+          // Identity is now server-side; we use the response role for the initial jump
           if (redirectPath) {
             window.location.href = redirectPath;
           } else {
-            // Check role from Mongo response for initial routing
             window.location.href =
               res.data.user.role === "admin" ? "/admin/dashboard" : "/";
           }
         }, 1000);
       } catch (err) {
+        console.error("Login verification failed:", err);
         setModal({
           show: true,
-          message: "Verification failed on server",
+          message: "Verification failed on server. Please try again.",
           type: "error",
         });
       }
     },
-    onError: (error) => console.log("Login Failed:", error),
+    onError: (error) => {
+      console.error("Google Login Failed:", error);
+      setModal({
+        show: true,
+        message: "Google login was unsuccessful.",
+        type: "error",
+      });
+    },
   });
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">
+      {/* Aesthetic Background Elements */}
       <div className="absolute inset-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-100/60 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-rose-100/50 rounded-full blur-[120px]" />
@@ -71,20 +80,26 @@ export default function Login() {
             <Link to="/" className="inline-block mb-6 hover:scale-105 transition-transform">
               <img src="/logo.png" className="h-14 mx-auto object-contain" alt="SeaBite" />
             </Link>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome Back</h2>
-            <p className="text-slate-500 text-sm">Sign in with Google to continue.</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Welcome Back</h2>
+            <p className="text-slate-500 text-sm">Sign in with Google to access your rewards.</p>
           </div>
 
           <div className="flex justify-center mb-6">
             <button
               onClick={() => login()}
-              className="flex items-center justify-center gap-3 bg-[#4285F4] text-white font-semibold py-3 px-6 rounded-full shadow-lg hover:bg-[#357ae8] transition-all w-[250px]"
+              className="flex items-center justify-center gap-3 bg-[#4285F4] text-white font-semibold py-3.5 px-6 rounded-full shadow-lg hover:bg-[#357ae8] transition-all w-full active:scale-95"
             >
-              <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" className="w-6 h-6 bg-white rounded-full p-1" alt="google" />
+              <img 
+                src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" 
+                className="w-6 h-6 bg-white rounded-full p-1" 
+                alt="google" 
+              />
               Sign in with Google
             </button>
           </div>
-          <p className="text-xs text-slate-400 mt-4">By continuing, you agree to our Terms of Service.</p>
+          <p className="text-[10px] text-slate-400 mt-4 leading-relaxed uppercase tracking-wider">
+            Your identity is secured by MongoDB sessions
+          </p>
         </div>
       </motion.div>
     </div>

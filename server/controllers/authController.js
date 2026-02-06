@@ -1,5 +1,4 @@
 import User from "../models/User.js";
-import jwt from "jsonwebtoken";
 import { sendAuthEmail } from "../utils/emailService.js"; 
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
@@ -43,12 +42,13 @@ export const googleLogin = async (req, res) => {
       isNewUser = true;
     }
 
-    // ✅ FIX: Verify session middleware exists before setting property
+    // ✅ SESSION VERIFICATION: Ensure middleware is active
     if (!req.session) {
-      console.error("❌ Session middleware not initialized correctly.");
-      return res.status(500).json({ message: "Internal Session Error" });
+      console.error("❌ Session middleware failed to initialize");
+      return res.status(500).json({ message: "Server Session Error" });
     }
 
+    // ✅ SAVE TO MONGO SESSION
     req.session.user = {
       id: user._id,
       name: user.name,
@@ -56,6 +56,7 @@ export const googleLogin = async (req, res) => {
       role: user.role
     };
 
+    // ✅ FORCE SAVE: Ensures the session is in MongoDB before the browser gets the response
     req.session.save((err) => {
       if (err) return res.status(500).json({ message: "Session save failed" });
       sendAuthEmail(user.email, user.name, isNewUser).catch(() => {});
@@ -69,6 +70,7 @@ export const googleLogin = async (req, res) => {
 };
 
 export const getLoggedUser = async (req, res) => {
+    // ✅ SYNC CHECK: Check req.session instead of headers
     if (!req.session?.user) return res.status(401).json({ message: "Not authenticated" });
     
     try {
@@ -86,13 +88,12 @@ export const getLoggedUser = async (req, res) => {
 };
 
 export const updateUserProfile = async (req, res) => {
-    const { name, phone } = req.body;
     if (!req.session?.user) return res.status(401).json({ message: "Not authenticated" });
 
     try {
         const updatedUser = await User.findByIdAndUpdate(
             req.session.user.id, 
-            { $set: { name, phone } }, 
+            { $set: req.body }, 
             { new: true, runValidators: true, select: '-password' } 
         );
         res.json({
