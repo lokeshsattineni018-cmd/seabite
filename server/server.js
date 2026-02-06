@@ -34,7 +34,7 @@ const allowedOrigins = [
   "http://localhost:5173"
 ];
 
-// ✅ BULLETPROOF CORS: Forces the browser to accept the session cookie
+// ✅ BULLETPROOF CORS: Explicitly allows credentials for your specific domains
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -71,7 +71,7 @@ const connectDB = async () => {
 };
 await connectDB();
 
-/* --- 4. MONGODB SESSION SETUP (MUST BE BEFORE ROUTES) --- */
+/* --- 4. MONGODB SESSION SETUP (CRITICAL FOR LOOPS) --- */
 app.use(session({
   secret: process.env.SESSION_SECRET || "seabite_default_secret",
   resave: false,
@@ -81,11 +81,13 @@ app.use(session({
     collectionName: 'sessions',
     ttl: 14 * 24 * 60 * 60 
   }),
+  proxy: true, // ✅ Required for Vercel's proxy layers
   cookie: {
     secure: true, 
     httpOnly: true,
-    sameSite: "none", // ✅ Required for cross-domain sessions
-    maxAge: 7 * 24 * 60 * 60 * 1000 
+    sameSite: "none", // ✅ Allows cookies to be sent across origins (Vercel to Domain)
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    // ✅ REMOVED strict domain to let the browser handle it more naturally across subdomains
   }
 }));
 
