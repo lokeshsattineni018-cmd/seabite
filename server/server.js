@@ -27,9 +27,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
-app.set("trust proxy", 1); // ✅ Required for cookies on Vercel
+app.set("trust proxy", 1); 
 
-// ✅ FIX: Specific origin matching to stop CORS block
 const allowedOrigins = [
   "https://seabite.co.in", 
   "https://www.seabite.co.in", 
@@ -44,14 +43,16 @@ app.use(cors({
       callback(new Error('CORS Policy: Origin mismatch'), false);
     }
   },
-  credentials: true, // ✅ Allows MongoDB session cookies
+  credentials: true, // ✅ Mandatory for MongoDB Sessions
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 }));
 
-app.options('*', cors()); // ✅ Handle pre-flight for Vercel
+app.options('*', cors()); 
 
 app.use(express.json());
+
+// ✅ STATIC IMAGES: Ensure this is accessible to the frontend
 const uploadDir = path.join(__dirname, "uploads"); 
 app.use("/uploads", express.static(uploadDir)); 
 
@@ -68,7 +69,7 @@ app.use(session({
   cookie: {
     secure: true, 
     httpOnly: true,
-    sameSite: "none", // ✅ Required for cross-domain cookie trust
+    sameSite: "none", // ✅ Critical for cross-domain sessions
     maxAge: 7 * 24 * 60 * 60 * 1000 
   }
 }));

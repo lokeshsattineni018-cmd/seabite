@@ -49,9 +49,9 @@ import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import SupportWidget from "./components/SupportWidget";
 
-// ✅ CRITICAL SYNC: Ensure all requests send the MongoDB Session Cookie
-axios.defaults.withCredentials = true;
-// ✅ BASE URL: Ensure frontend always talks to the live Vercel server
+// ✅ CRITICAL SYNC: Fixes the login loop and allows images to load
+axios.defaults.withCredentials = true; 
+// ✅ PRODUCTION URL: Points all requests (including images) to your Vercel server
 axios.defaults.baseURL = "https://seabite-server.vercel.app";
 
 function MainLayout() {
