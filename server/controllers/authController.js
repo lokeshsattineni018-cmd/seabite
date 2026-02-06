@@ -6,23 +6,14 @@ import axios from "axios";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-// Replaces token decoding by checking the session instead
-const getSessionUser = (req) => {
-    return req.session?.user || null;
-};
-
 export const googleLogin = async (req, res) => {
   const { token } = req.body;
 
-  if (!token) {
-    return res.status(400).json({ message: "No token provided" });
-  }
-
-  const segments = token.split('.');
-  console.log(`📡 Auth Log: Processing token with ${segments.length} segments.`);
+  if (!token) return res.status(400).json({ message: "No token provided" });
 
   try {
     let userData;
+    const segments = token.split('.');
 
     if (segments.length === 3) {
       const ticket = await googleClient.verifyIdToken({
@@ -31,15 +22,11 @@ export const googleLogin = async (req, res) => {
       });
       userData = ticket.getPayload();
     } else {
-      const googleRes = await axios.get(
-        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`
-      );
+      const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`);
       userData = googleRes.data;
     }
 
-    if (!userData || !userData.email) {
-      return res.status(400).json({ message: "Failed to retrieve user data from Google" });
-    }
+    if (!userData || !userData.email) return res.status(400).json({ message: "Failed to retrieve Google data" });
 
     const email = userData.email.toLowerCase();
     const name = userData.name || userData.given_name;
@@ -49,17 +36,19 @@ export const googleLogin = async (req, res) => {
     let isNewUser = false; 
 
     if (user) {
-      if (!user.googleId) {
-        user.googleId = googleId;
-        await user.save();
-      }
+      if (!user.googleId) { user.googleId = googleId; await user.save(); }
     } else {
       user = new User({ name, email, googleId, role: "user" });
       await user.save();
       isNewUser = true;
     }
 
-    // ✅ SESSION SYNC: Save to MongoDB Session instead of local storage
+    // ✅ FIX: Verify session middleware exists before setting property
+    if (!req.session) {
+      console.error("❌ Session middleware not initialized correctly.");
+      return res.status(500).json({ message: "Internal Session Error" });
+    }
+
     req.session.user = {
       id: user._id,
       name: user.name,
@@ -67,17 +56,10 @@ export const googleLogin = async (req, res) => {
       role: user.role
     };
 
-    sendAuthEmail(user.email, user.name, isNewUser).catch(err => 
-        console.error("❌ Email Trigger Failed:", err.message)
-    );
-
-    // Save session explicitly before responding
     req.session.save((err) => {
       if (err) return res.status(500).json({ message: "Session save failed" });
-      res.status(200).json({
-        user: req.session.user,
-        message: "Logged in via MongoDB Session"
-      });
+      sendAuthEmail(user.email, user.name, isNewUser).catch(() => {});
+      res.status(200).json({ user: req.session.user });
     });
 
   } catch (error) {
@@ -87,11 +69,10 @@ export const googleLogin = async (req, res) => {
 };
 
 export const getLoggedUser = async (req, res) => {
-    const sessionUser = getSessionUser(req);
-    if (!sessionUser) return res.status(401).json({ message: "Not authenticated" });
+    if (!req.session?.user) return res.status(401).json({ message: "Not authenticated" });
     
     try {
-        const user = await User.findById(sessionUser.id).select("-password");
+        const user = await User.findById(req.session.user.id).select("-password");
         if (!user) return res.status(401).json({ message: "User not found" });
         res.json({
             id: user._id,
@@ -101,34 +82,24 @@ export const getLoggedUser = async (req, res) => {
             phone: user.phone || '',
             addresses: user.addresses || [], 
         });
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+    } catch (err) { res.status(500).json({ message: "Server error" }); }
 };
 
 export const updateUserProfile = async (req, res) => {
     const { name, phone } = req.body;
-    const sessionUser = getSessionUser(req);
-    if (!sessionUser) return res.status(401).json({ message: "Not authenticated" });
+    if (!req.session?.user) return res.status(401).json({ message: "Not authenticated" });
 
     try {
-        const fieldsToUpdate = {};
-        if (name !== undefined) fieldsToUpdate.name = name;
-        if (phone !== undefined) fieldsToUpdate.phone = phone;
-
         const updatedUser = await User.findByIdAndUpdate(
-            sessionUser.id, 
-            { $set: fieldsToUpdate }, 
+            req.session.user.id, 
+            { $set: { name, phone } }, 
             { new: true, runValidators: true, select: '-password' } 
         );
-
         res.json({
             message: 'Profile updated successfully',
             name: updatedUser.name,
             phone: updatedUser.phone,
             email: updatedUser.email,
         });
-    } catch (error) {
-        res.status(500).json({ message: 'Profile update failed' });
-    }
+    } catch (error) { res.status(500).json({ message: 'Profile update failed' }); }
 };

@@ -8,21 +8,15 @@ function generateCode(prefix) {
   return `${prefix}-${randomPart}`;
 }
 
-// 6‑outcome wheel - NOW FULLY SYNCED WITH MONGODB SESSIONS
 router.post("/spin", async (req, res) => {
   try {
-    // ✅ NO REQ.BODY NEEDED: Identity comes from Mongo session
+    // ✅ NO REQ.BODY: Identity comes strictly from Mongo session
     const userEmail = req.session?.user?.email;
 
-    if (!userEmail) {
-      return res.status(401).json({ error: "Please login first to spin the wheel!" });
-    }
+    if (!userEmail) return res.status(401).json({ error: "Please login first to spin!" });
 
-    // Check if user already has a spin coupon to prevent multiple spins
     const existing = await Coupon.findOne({ userEmail, isSpinCoupon: true });
-    if (existing) {
-      return res.status(403).json({ error: "One spin per account only!" });
-    }
+    if (existing) return res.status(403).json({ error: "One spin per account only!" });
 
     const rand = Math.random() * 100;
     let outcome;
@@ -34,12 +28,7 @@ router.post("/spin", async (req, res) => {
     else if (rand < 95) outcome = { type: "PERCENT", value: 20, prefix: "SB20" };
     else outcome = { type: "PERCENT", value: 50, prefix: "SB50" };
 
-    if (outcome.type === "NO_PRIZE") {
-      return res.json({
-        result: "BETTER_LUCK",
-        message: "Better luck next time!",
-      });
-    }
+    if (outcome.type === "NO_PRIZE") return res.json({ result: "BETTER_LUCK", message: "Better luck next time!" });
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 1);
@@ -55,11 +44,9 @@ router.post("/spin", async (req, res) => {
       code,
       discountType: "percent",
       value: outcome.value,
-      maxDiscountAmount: outcome.value === 50 ? 500 : undefined,
-      userEmail: userEmail.toLowerCase(), // Store lowercase
+      userEmail: userEmail.toLowerCase(), 
       isSpinCoupon: true,
       maxUses: 1,
-      usedCount: 0,
       expiresAt,
       isActive: true,
     });
@@ -70,10 +57,7 @@ router.post("/spin", async (req, res) => {
       code: coupon.code,
       expiresAt: coupon.expiresAt,
     });
-  } catch (err) {
-    console.error("Spin error:", err);
-    res.status(500).json({ error: "Server error" });
-  }
+  } catch (err) { res.status(500).json({ error: "Server error" }); }
 });
 
 export default router;

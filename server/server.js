@@ -8,6 +8,10 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from 'url';
 
+/* --- NEW: SESSION & STORE IMPORTS --- */
+import session from "express-session";
+import MongoStore from "connect-mongo";
+
 /* --- ROUTE IMPORTS --- */
 import authRoutes from "./routes/authRoutes.js";
 import adminProductRoutes from "./routes/adminProducts.js"; 
@@ -19,32 +23,31 @@ import productsRoutes from "./routes/productsRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js"; 
 import couponRoutes from "./routes/couponRoutes.js";
+import spinRoutes from "./routes/spinRoutes.js";
 
 /* --- EXTRA IMPORTS --- */
 import upload from "./config/multerConfig.js";
 
-
-import spinRoutes from "./routes/spinRoutes.js";
-/* --- 2. EXPRESS APP SETUP --- */
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/* --- 3. AUTO-CREATE UPLOADS FOLDER --- */
+/* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
+app.set("trust proxy", 1); // ✅ Required for cookies to work on Vercel
+
 const uploadDir = path.join(__dirname, "uploads"); 
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
-  console.log("📂 'uploads' folder created successfully.");
 }
 
-/* --- 4. MIDDLEWARE & SECURITY HEADERS --- */
+// ✅ UPDATE CORS: allow credentials and specify production origin
 app.use(cors({
-  origin: "*", 
+  origin: ["https://seabite.co.in", "http://localhost:5173"], 
+  credentials: true, // ✅ Required for MongoDB Sessions
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// ✅ FIX: Add COOP/COEP headers to allow Google Auth popups
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
   res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
@@ -54,20 +57,32 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use("/uploads", express.static(uploadDir)); 
 
-/* --- 5. DATABASE CONNECTION --- */
-let isConnected = false;
-
-const connectDB = async () => {
-  if (isConnected) {
-    return;
+/* --- 3. MONGODB SESSION SETUP (FIXES YOUR VERCEL LOG ERROR) --- */
+app.use(session({
+  secret: process.env.SESSION_SECRET || "seabite_secret_key",
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: 'sessions',
+    ttl: 14 * 24 * 60 * 60 // 14 days
+  }),
+  cookie: {
+    secure: true, // ✅ Must be true for Vercel/HTTPS
+    httpOnly: true,
+    sameSite: "none", // ✅ Required for cross-domain cookies
+    maxAge: 7 * 24 * 60 * 60 * 1000 
   }
+}));
+
+/* --- 4. DATABASE CONNECTION --- */
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected) return;
   try {
-    const db = await mongoose.connect(process.env.MONGO_URI, {
-      dbName: "seabite",
-      serverSelectionTimeoutMS: 5000, 
-    });
+    const db = await mongoose.connect(process.env.MONGO_URI, { dbName: "seabite" });
     isConnected = db.connections[0].readyState;
-    console.log("✅ MongoDB Connected (Re-established)");
+    console.log("✅ MongoDB Connected & Session Store Active");
   } catch (error) {
     console.error("❌ MongoDB Connection Error:", error);
   }
@@ -78,16 +93,8 @@ app.use(async (req, res, next) => {
   next();
 });
 
-/* --- 6. REQUEST LOGGER --- */
-app.use((req, res, next) => {
-  console.log(`📡 INCOMING: ${req.method} ${req.url}`);
-  next();
-});
-
-/* --- 7. ROUTES --- */
-app.get('/', (req, res) => {
-    res.send("Server is Running! 🚀");
-});
+/* --- 5. ROUTES --- */
+app.get('/', (req, res) => res.send("SeaBite Server Running 🚀"));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
@@ -99,16 +106,11 @@ app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/coupons", couponRoutes);
-
 app.use("/api/spin", spinRoutes);
 
-/* --- 8. SERVER SETUP --- */
 const PORT = process.env.PORT || 5001;
-
 if (process.env.NODE_ENV !== 'production') {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running locally on port ${PORT}`);
-  });
+  app.listen(PORT, () => console.log(`🚀 Port ${PORT}`));
 }
 
 export default app;

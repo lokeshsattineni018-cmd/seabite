@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion"; 
 import { GoogleOAuthProvider } from "@react-oauth/google"; 
-import axios from "axios"; // ✅ Added Axios
+import axios from "axios"; 
 
 // Components
 import Navbar from "./components/Navbar";
@@ -47,10 +47,9 @@ import AdminRoute from "./components/AdminRoute";
 // Context
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
-
 import SupportWidget from "./components/SupportWidget";
 
-// ✅ CRITICAL SYNC: Ensure all requests send the MongoDB Session Cookie
+// ✅ CRITICAL SYNC: Send the MongoDB Session Cookie to the server
 axios.defaults.withCredentials = true;
 
 function MainLayout() {
