@@ -27,9 +27,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
-app.set("trust proxy", 1); 
+app.set("trust proxy", 1); // ✅ Required for sessions on Vercel
 
-// ✅ FIX: Dynamic Origin to handle www vs non-www mismatches
 const allowedOrigins = [
   "https://seabite.co.in", 
   "https://www.seabite.co.in", 
@@ -38,14 +37,13 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error('CORS Policy: Origin not allowed'), false);
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS Policy block: Origin mismatch'), false);
     }
-    return callback(null, true);
   },
-  credentials: true, 
+  credentials: true, // ✅ Required to save MongoDB Session Cookies
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
@@ -65,9 +63,9 @@ app.use(session({
     ttl: 14 * 24 * 60 * 60 
   }),
   cookie: {
-    secure: true, // Required for HTTPS
+    secure: true, 
     httpOnly: true,
-    sameSite: "none", // Required for cross-domain cookies
+    sameSite: "none", // ✅ Required for cross-domain cookies
     maxAge: 7 * 24 * 60 * 60 * 1000 
   }
 }));
