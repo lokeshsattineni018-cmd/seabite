@@ -53,9 +53,9 @@ export default function Checkout() {
   const itemTotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
   const deliveryCharge = itemTotal < 1000 ? 99 : 0;
 
-  // ✅ SYNC WITH MONGODB: Find active rewards bound to this account
+  // ✅ AUTO-SYNC WITH MONGODB (No LocalStorage)
   useEffect(() => {
-    const syncPrizeFromDB = async () => {
+    const fetchRewardFromDB = async () => {
       const email = localStorage.getItem("userEmail")?.toLowerCase();
       if (!email || itemTotal === 0) return;
 
@@ -63,20 +63,20 @@ export default function Checkout() {
         const res = await axios.post(`${API_URL}/api/coupons/validate`, {
           email,
           cartTotal: itemTotal,
-          isAutoCheck: true // Signal to backend to find MongoDB bound coupon
+          isAutoCheck: true // Backend signal to find the user's bound prize in MongoDB
         });
 
         if (res.data.success) {
           setCouponCode(res.data.code);
           setDiscount(res.data.discountAmount);
           setIsCouponApplied(true);
-          setCouponMessage({ type: "success", text: "Spin Reward applied from your account!" });
+          setCouponMessage({ type: "success", text: "Reward discount applied from your account!" });
         }
       } catch (err) {
-        console.log("No active MongoDB prize found for this user.");
+        console.log("No active MongoDB rewards for this user.");
       }
     };
-    syncPrizeFromDB();
+    fetchRewardFromDB();
   }, [itemTotal]);
 
   const handleApplyCoupon = async () => {
@@ -140,28 +140,22 @@ export default function Checkout() {
       taxPrice: gst, 
       shippingPrice: deliveryCharge, 
       discount, 
-      paymentMethod 
+      paymentMethod: "COD" 
     };
 
     try {
       const { data } = await axios.post(`${API_URL}/api/payment/checkout`, orderDetails, { headers: { Authorization: `Bearer ${token}` } });
-      if (paymentMethod === "COD") { 
-        clearCart(); 
-        refreshCartCount(); 
-        navigate(`/success?dbId=${data.dbOrderId}`); 
-      }
+      clearCart(); refreshCartCount(); navigate(`/success?dbId=${data.dbOrderId}`);
     } catch (err) { 
       setModal({ show: true, message: err.response?.data?.message || "Error", type: "error" }); 
-    } finally { 
-      setLoading(false); 
-    }
+    } finally { setLoading(false); }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] pt-32 pb-20 px-4 md:px-8 font-sans text-slate-900 dark:text-slate-200 transition-colors duration-500">
       <div className="fixed top-0 left-0 w-[800px] h-[800px] bg-blue-500/5 rounded-full blur-[120px] pointer-events-none -z-10" />
       <PopupModal show={modal.show} message={modal.message} type={modal.type} onClose={() => setModal({ ...modal, show: false })} />
-      <AnimatePresence>{isAddressModalOpen && <AddressModal onClose={() => setIsAddressModalOpen(false)} onSave={(addr) => setDeliveryAddress(addr)} currentAddress={deliveryAddress} isDarkMode={isDarkMode} />}</AnimatePresence>
+      <AnimatePresence>{isAddressModalOpen && <AddressModal onClose={() => setIsAddressModalOpen(false)} onSave={(addr) => { setDeliveryAddress(addr); setIsAddressModalOpen(false); }} currentAddress={deliveryAddress} isDarkMode={isDarkMode} />}</AnimatePresence>
 
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2 space-y-8">
@@ -170,7 +164,6 @@ export default function Checkout() {
             <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight">Order <span className="text-blue-600">Summary</span></h2>
           </motion.div>
 
-          {/* Delivery Section */}
           <section className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 dark:border-white/5 shadow-xl">
             <div className="flex items-center justify-between mb-8 gap-4">
               <h3 className="text-xl font-bold flex items-center gap-3"><div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><FiMapPin size={20} /></div> Delivery Address</h3>
@@ -184,12 +177,19 @@ export default function Checkout() {
               ) : <p className="text-slate-400 text-sm text-center">Add a delivery address to proceed.</p>}
           </section>
 
-          {/* Items Section */}
+          <section className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border shadow-xl">
+             <h3 className="text-xl font-bold mb-8 flex items-center gap-3"><div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><FiCreditCard size={20} /></div> Payment</h3>
+             <div onClick={() => setPaymentMethod("COD")} className="cursor-pointer p-5 rounded-2xl border-2 border-blue-500 bg-blue-50/30 flex items-center gap-4">
+                <div className="w-6 h-6 rounded-full border-2 border-blue-500 flex items-center justify-center"><div className="w-3 h-3 bg-blue-500 rounded-full" /></div>
+                <p className="font-bold">Cash on Delivery</p>
+             </div>
+          </section>
+
           <section className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] border border-slate-100 shadow-xl">
             <h3 className="text-xl font-bold mb-8 flex items-center gap-3"><div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><FiShoppingBag size={20} /></div> Your Items</h3>
             <div className="space-y-4">
               {cart.map((item) => (
-                <div key={item._id} className="flex items-center gap-6 p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all">
+                <div key={item._id} className="flex items-center gap-6 p-4 rounded-2xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all border border-transparent hover:border-slate-100">
                   <div className="w-20 h-20 bg-slate-100 dark:bg-slate-900 rounded-xl p-2 border overflow-hidden">
                     <img src={getFullImageUrl(item.image)} alt={item.name} className="w-full h-full object-contain" />
                   </div>
@@ -206,18 +206,16 @@ export default function Checkout() {
           </section>
         </div>
 
-        {/* Right Sidebar */}
         <div className="lg:col-span-1">
           <div className="sticky top-32 space-y-6">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-2xl border border-slate-100 relative overflow-hidden">
-              <h3 className="text-lg font-bold mb-6 uppercase tracking-wide">Payment Details</h3>
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white dark:bg-slate-800 p-8 rounded-[2rem] shadow-2xl border border-slate-100 relative overflow-hidden text-slate-900">
+              <h3 className="text-lg font-bold mb-6 uppercase tracking-wide dark:text-white">Payment Details</h3>
               
-              {/* Coupon UI */}
               <div className="mb-6">
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <FiTag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input type="text" placeholder="Promo Code" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} disabled={isCouponApplied || verifyingCoupon} className="w-full pl-9 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border rounded-xl text-sm font-semibold uppercase outline-none focus:border-blue-500" />
+                    <input type="text" placeholder="Promo Code" value={couponCode} onChange={(e) => setCouponCode(e.target.value)} disabled={isCouponApplied || verifyingCoupon} className="w-full pl-9 pr-4 py-3 bg-slate-50 border rounded-xl text-sm font-semibold uppercase outline-none focus:border-blue-500" />
                     {isCouponApplied && <button onClick={handleRemoveCoupon} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"><FiX size={16} /></button>}
                   </div>
                   <button onClick={handleApplyCoupon} disabled={isCouponApplied || !couponCode || verifyingCoupon} className="bg-slate-900 text-white px-4 rounded-xl font-bold text-xs">{verifyingCoupon ? <FiLoader className="animate-spin" /> : "Apply"}</button>
@@ -226,14 +224,21 @@ export default function Checkout() {
               </div>
 
               <div className="space-y-4 text-sm font-medium">
-                <div className="flex justify-between text-slate-500"><span>Subtotal</span><span className="font-bold">₹{itemTotal.toFixed(2)}</span></div>
+                <div className="flex justify-between text-slate-500 dark:text-slate-400"><span>Subtotal</span><span className="font-bold dark:text-white">₹{itemTotal.toFixed(2)}</span></div>
                 {isCouponApplied && <div className="flex justify-between text-emerald-600"><span>Discount</span><span className="font-bold">- ₹{discount.toFixed(2)}</span></div>}
-                <div className="flex justify-between text-slate-500"><span>Grand Total</span><span className="text-3xl font-extrabold text-blue-600">₹{grandTotal.toFixed(2)}</span></div>
+                <div className="flex justify-between text-slate-500 dark:text-slate-400"><span>Shipping</span><span className={`font-bold ${deliveryCharge === 0 ? "text-emerald-500 uppercase" : "dark:text-white"}`}>{deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge}`}</span></div>
               </div>
 
-              <button onClick={placeOrder} disabled={loading} className="w-full mt-8 py-4 bg-slate-900 text-white rounded-xl font-bold uppercase text-xs shadow-lg hover:bg-blue-600 transition-all flex items-center justify-center gap-3">
+              <div className="my-6 h-px bg-slate-100 dark:bg-slate-700" />
+              <div className="flex justify-between items-end mb-8">
+                <span className="text-sm font-bold text-slate-500 dark:text-slate-400">Grand Total</span>
+                <span className="text-3xl font-extrabold text-blue-600">₹{grandTotal.toFixed(2)}</span>
+              </div>
+
+              <button onClick={placeOrder} disabled={loading} className={`w-full py-4 rounded-xl font-bold uppercase tracking-wide text-xs shadow-lg transition-all active:scale-95 flex justify-center items-center gap-3 bg-slate-900 text-white hover:bg-blue-600`}>
                 {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><FiCheckCircle size={16} /> Confirm Order</>}
               </button>
+              <div className="mt-4 flex items-center justify-center gap-2 text-[10px] text-slate-400 uppercase tracking-widest font-bold"><FiShield className="text-emerald-500" /> Secure Encryption</div>
             </motion.div>
           </div>
         </div>
@@ -266,7 +271,6 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
     markerInstance.current = L.marker(initialPos, { draggable: true, icon: CustomIcon }).addTo(mapInstance.current);
     markerInstance.current.on("dragend", (e) => { const { lat, lng } = e.target.getLatLng(); fetchAddress(lat, lng); });
     
-    // Auto detect on open
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((pos) => {
         const { latitude, longitude } = pos.coords;
@@ -275,7 +279,6 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
         fetchAddress(latitude, longitude);
       });
     }
-
     return () => { if (mapInstance.current) mapInstance.current.remove(); };
   }, [isDarkMode]);
 
@@ -299,13 +302,13 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
           <button onClick={onClose} className="absolute top-6 right-6 bg-white p-2 rounded-full shadow-lg text-red-500 z-[1000]"><FiX size={20} /></button>
         </div>
         <div className="p-8 space-y-5 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-5">
-            <input type="text" placeholder="Full Name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="w-full bg-slate-50 dark:bg-slate-900 border p-3.5 rounded-xl text-sm" />
-            <input type="tel" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "") })} className="w-full bg-slate-50 dark:bg-slate-900 border p-3.5 rounded-xl text-sm" />
+          <div className="grid grid-cols-2 gap-5 text-slate-900">
+            <input type="text" placeholder="Full Name" value={form.fullName} onChange={(e) => setForm({ ...form, fullName: e.target.value })} className="w-full bg-slate-50 border p-3.5 rounded-xl text-sm" />
+            <input type="tel" placeholder="Phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value.replace(/\D/g, "") })} className="w-full bg-slate-50 border p-3.5 rounded-xl text-sm" />
           </div>
-          <input type="text" placeholder="House/Flat No." value={form.houseNo} onChange={(e) => setForm({ ...form, houseNo: e.target.value })} className="w-full bg-slate-50 border p-3.5 rounded-xl text-sm" />
-          <input type="text" placeholder="Street/Area" value={form.street} readOnly className="w-full bg-slate-100 border p-3.5 rounded-xl text-xs opacity-70" />
-          <div className="grid grid-cols-3 gap-5">
+          <input type="text" placeholder="House/Flat No." value={form.houseNo} onChange={(e) => setForm({ ...form, houseNo: e.target.value })} className="w-full bg-slate-50 border p-3.5 rounded-xl text-sm text-slate-900" />
+          <input type="text" placeholder="Street/Area" value={form.street} readOnly className="w-full bg-slate-100 border p-3.5 rounded-xl text-xs opacity-70 text-slate-900" />
+          <div className="grid grid-cols-3 gap-5 text-slate-900">
              <input type="text" placeholder="City" value={form.city} readOnly className="bg-slate-100 border p-3.5 rounded-xl text-sm" />
              <input type="text" placeholder="State" value={form.state} readOnly className="bg-slate-100 border p-3.5 rounded-xl text-sm" />
              <input type="text" placeholder="Zip" value={form.zip} onChange={(e) => setForm({ ...form, zip: e.target.value })} className="border p-3.5 rounded-xl text-sm" />

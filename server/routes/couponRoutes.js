@@ -3,14 +3,14 @@ import Coupon from "../models/Coupon.js";
 
 const router = express.Router();
 
-// 1. Validate Coupon (For User at Checkout)
+// 1. Validate Coupon (Auto-checks MongoDB for user-bound prizes)
 router.post("/validate", async (req, res) => {
   try {
     const { code, cartTotal, email, isAutoCheck } = req.body;
     let coupon;
 
-    // ✅ NEW: Direct MongoDB Sync based on user account
     if (isAutoCheck && email) {
+      // Find the most recent unused spin coupon for this email
       coupon = await Coupon.findOne({
         userEmail: email.toLowerCase(),
         isSpinCoupon: true,
@@ -28,7 +28,7 @@ router.post("/validate", async (req, res) => {
       return res.status(404).json({ success: false, message: "No active discount found." });
     }
 
-    // Strict account check to ensure the coupon belongs to this user
+    // Account binding check
     if (coupon.userEmail && email.toLowerCase() !== coupon.userEmail.toLowerCase()) {
       return res.status(400).json({
         success: false,
@@ -36,7 +36,7 @@ router.post("/validate", async (req, res) => {
       });
     }
 
-    // Check expiry
+    // Expiry check
     if (coupon.expiresAt && coupon.expiresAt < new Date()) {
       return res.status(400).json({ success: false, message: "Coupon has expired." });
     }
@@ -56,7 +56,7 @@ router.post("/validate", async (req, res) => {
       success: true,
       discountAmount: Math.floor(discountAmount),
       code: coupon.code,
-      message: "Reward applied successfully!",
+      message: "Reward found and applied!",
     });
   } catch (error) {
     console.error(error);
@@ -83,7 +83,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 3. Get All Coupons (Admin Dashboard)
+// 3. Get All Coupons
 router.get("/", async (req, res) => {
   try {
     const coupons = await Coupon.find().sort({ createdAt: -1 });
