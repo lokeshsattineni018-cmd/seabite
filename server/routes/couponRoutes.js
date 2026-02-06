@@ -3,16 +3,19 @@ import Coupon from "../models/Coupon.js";
 
 const router = express.Router();
 
-// 1. Validate Coupon (Auto-checks MongoDB for user-bound prizes)
+// 1. Validate Coupon (Checks MongoDB for user-bound prizes)
 router.post("/validate", async (req, res) => {
   try {
     const { code, cartTotal, email, isAutoCheck } = req.body;
     let coupon;
 
-    if (isAutoCheck && email) {
-      // Find the most recent unused spin coupon for this email
+    // FORCE lowercase for safe matching
+    const safeEmail = (email || "").toLowerCase();
+
+    if (isAutoCheck && safeEmail) {
+      // Find the most recent unused spin coupon for this email in MongoDB
       coupon = await Coupon.findOne({
-        userEmail: email.toLowerCase(),
+        userEmail: safeEmail,
         isSpinCoupon: true,
         isActive: true,
         usedCount: 0
@@ -25,18 +28,18 @@ router.post("/validate", async (req, res) => {
     }
 
     if (!coupon) {
-      return res.status(404).json({ success: false, message: "No active discount found." });
+      return res.status(404).json({ success: false, message: "No valid discount found for this account." });
     }
 
-    // Account binding check
-    if (coupon.userEmail && email.toLowerCase() !== coupon.userEmail.toLowerCase()) {
+    // Strict account binding check
+    if (coupon.userEmail && safeEmail !== coupon.userEmail.toLowerCase()) {
       return res.status(400).json({
         success: false,
-        message: "This reward is bound to another account.",
+        message: "This reward belongs to a different account.",
       });
     }
 
-    // Expiry check
+    // Check expiry
     if (coupon.expiresAt && coupon.expiresAt < new Date()) {
       return res.status(400).json({ success: false, message: "Coupon has expired." });
     }
@@ -64,7 +67,7 @@ router.post("/validate", async (req, res) => {
   }
 });
 
-// 2. Create Coupon (Admin)
+// Admin Routes (Creation, etc.)
 router.post("/", async (req, res) => {
   try {
     const { code, value, minOrderAmount, discountType, maxDiscount, isActive } = req.body;
@@ -83,7 +86,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 3. Get All Coupons
 router.get("/", async (req, res) => {
   try {
     const coupons = await Coupon.find().sort({ createdAt: -1 });
@@ -93,7 +95,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 4. Delete Coupon
 router.delete("/:id", async (req, res) => {
   try {
     await Coupon.findByIdAndDelete(req.params.id);
