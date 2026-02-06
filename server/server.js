@@ -43,7 +43,7 @@ app.use(cors({
       callback(new Error('CORS Policy: Origin mismatch'), false);
     }
   },
-  credentials: true, // ✅ Mandatory for MongoDB Sessions
+  credentials: true, // ✅ Allows MongoDB session cookies
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 }));
@@ -52,29 +52,12 @@ app.options('*', cors());
 
 app.use(express.json());
 
-// ✅ STATIC IMAGES: Ensure this is accessible to the frontend
+// ✅ STATIC IMAGES: Available to the frontend
 const uploadDir = path.join(__dirname, "uploads"); 
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir)); 
 
-/* --- 3. MONGODB SESSION SETUP --- */
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI,
-    collectionName: 'sessions',
-    ttl: 14 * 24 * 60 * 60 
-  }),
-  cookie: {
-    secure: true, 
-    httpOnly: true,
-    sameSite: "none", // ✅ Critical for cross-domain sessions
-    maxAge: 7 * 24 * 60 * 60 * 1000 
-  }
-}));
-
-/* --- 4. DATABASE CONNECTION --- */
+/* --- 3. DATABASE CONNECTION (MOVE UP) --- */
 let isConnected = false;
 const connectDB = async () => {
   if (isConnected) return;
@@ -87,10 +70,26 @@ const connectDB = async () => {
   }
 };
 
-app.use(async (req, res, next) => {
-  await connectDB();
-  next();
-});
+// Ensure DB is ready for the session store
+await connectDB();
+
+/* --- 4. MONGODB SESSION SETUP (MUST BE BEFORE ROUTES) --- */
+app.use(session({
+  secret: process.env.SESSION_SECRET || "seabite_default_secret",
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: 'sessions',
+    ttl: 14 * 24 * 60 * 60 
+  }),
+  cookie: {
+    secure: true, 
+    httpOnly: true,
+    sameSite: "none", // ✅ Required for cross-domain cookie trust
+    maxAge: 7 * 24 * 60 * 60 * 1000 
+  }
+}));
 
 /* --- 5. ROUTES --- */
 app.get('/', (req, res) => res.send("SeaBite Server Running 🚀"));
