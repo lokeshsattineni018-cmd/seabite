@@ -19,7 +19,6 @@ import {
   Sparkles,
   X,
   Check,
-  Gift,
   User,
   Anchor,
   ShoppingBag,
@@ -46,28 +45,27 @@ const SectionReveal = ({ children }) => {
   );
 };
 
-/* --- REAL CANVAS SPIN WHEEL POPUP --- */
+/* --- AESTHETIC NAVY & WHITE SPIN WHEEL POPUP --- */
 const SpinWheelPopup = ({ userEmail }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
   const canvasRef = useRef(null);
 
+  // Re-designed Aesthetic Palette: Navy and White
   const prizes = [
-    { label: "5% OFF", color: "#38bdf8", value: 5 },
-    { label: "10% OFF", color: "#0ea5e9", value: 10 },
-    { label: "BETTER LUCK", color: "#1e293b", value: 0 },
-    { label: "15% OFF", color: "#0369a1", value: 15 },
-    { label: "20% OFF", color: "#075985", value: 20 },
-    { label: "TRY AGAIN", color: "#0f172a", value: 0 },
+    { label: "5% OFF", color: "#0f172a", text: "#ffffff", value: 5 },
+    { label: "10% OFF", color: "#ffffff", text: "#0f172a", value: 10 },
+    { label: "NO LUCK", color: "#0f172a", text: "#ffffff", value: 0 },
+    { label: "15% OFF", color: "#ffffff", text: "#0f172a", value: 15 },
+    { label: "20% OFF", color: "#0f172a", text: "#ffffff", value: 20 },
+    { label: "50% OFF", color: "#ffffff", text: "#0f172a", value: 50 },
   ];
 
   useEffect(() => {
-    const hasSpun = localStorage.getItem("seabiteWheelUsed");
-    if (!hasSpun) {
-      const timer = setTimeout(() => setIsOpen(true), 1500);
-      return () => clearTimeout(timer);
-    }
+    // 🛠️ FOR TESTING: Restriction is currently disabled so you can test multiple spins
+    const timer = setTimeout(() => setIsOpen(true), 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -76,8 +74,9 @@ const SpinWheelPopup = ({ userEmail }) => {
 
   const drawWheel = () => {
     const ctx = canvasRef.current.getContext("2d");
-    const radius = 150;
+    const radius = 145;
     ctx.clearRect(0, 0, 300, 300);
+    
     prizes.forEach((prize, i) => {
       const angle = (2 * Math.PI) / prizes.length;
       ctx.beginPath();
@@ -85,26 +84,41 @@ const SpinWheelPopup = ({ userEmail }) => {
       ctx.moveTo(150, 150);
       ctx.arc(150, 150, radius, i * angle, (i + 1) * angle);
       ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#0f172a";
+      ctx.stroke();
+
       ctx.save();
       ctx.translate(150, 150);
       ctx.rotate(i * angle + angle / 2);
-      ctx.fillStyle = "white";
-      ctx.font = "bold 12px DM Sans";
-      ctx.fillText(prize.label, 60, 5);
+      ctx.fillStyle = prize.text;
+      ctx.font = "bold 14px DM Sans";
+      ctx.textAlign = "right";
+      ctx.fillText(prize.label, 130, 5);
       ctx.restore();
     });
+
+    // Central aesthetic "SeaBite" Hub
+    ctx.beginPath();
+    ctx.arc(150, 150, 25, 0, 2 * Math.PI);
+    ctx.fillStyle = "#38bdf8"; 
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 4;
+    ctx.stroke();
   };
 
   const handleSpin = async () => {
     if (spinning || result) return;
-    if (!userEmail) return alert("Please login so we can save your coupon to your email.");
+    if (!userEmail) return alert("Please login so we can save your coupon.");
 
     setSpinning(true);
-    // Visual Spin: Randomly spin at least 5 full rotations + random offset
-    const randomDeg = Math.floor(Math.random() * 360);
-    const totalDeg = 1800 + randomDeg; 
-    canvasRef.current.style.transition = "transform 4s cubic-bezier(0.15, 0, 0.15, 1)";
-    canvasRef.current.style.transform = `rotate(${totalDeg}deg)`;
+    const rotation = 1800 + Math.floor(Math.random() * 360); 
+    
+    if (canvasRef.current) {
+      canvasRef.current.style.transition = "transform 4s cubic-bezier(0.15, 0, 0.15, 1)";
+      canvasRef.current.style.transform = `rotate(${rotation}deg)`;
+    }
 
     try {
       const res = await axios.post(`${API_URL}/api/spin/spin`, { email: userEmail });
@@ -117,13 +131,13 @@ const SpinWheelPopup = ({ userEmail }) => {
           setResult({ type: "coupon", value: data.discountValue, code: data.code });
           localStorage.setItem("seabiteWheelCoupon", data.code);
         }
-        localStorage.setItem("seabiteWheelUsed", "true");
+        // 🛠️ FOR TESTING: Re-enable this line for production once testing is finished
+        // localStorage.setItem("seabiteWheelUsed", "true");
         setSpinning(false);
       }, 4000);
     } catch (e) {
-      console.error(e);
-      alert("Something went wrong. Please try again later.");
       setSpinning(false);
+      alert("Spin error. Try again.");
     }
   };
 
@@ -131,37 +145,32 @@ const SpinWheelPopup = ({ userEmail }) => {
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4">
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsOpen(false)} className="absolute inset-0 bg-black/60 backdrop-blur-md" />
-          <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="relative w-full max-w-md bg-[#0a1625] rounded-[2.5rem] shadow-2xl overflow-hidden p-8 border border-white/10">
-            <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 z-30 p-2 text-white/50 hover:text-white"><X size={20} /></button>
-            <h2 className="text-3xl font-serif text-center text-white mb-2">Ocean Luck Spin</h2>
-            <p className="text-center text-slate-400 text-sm mb-6 px-4">Spin to win a special coupon! It applies automatically at checkout.</p>
-            
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsOpen(false)} className="absolute inset-0 bg-slate-900/80 backdrop-blur-md" />
+          <motion.div initial={{ opacity: 0, scale: 0.9, y: 50 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 50 }} className="relative w-full max-w-md bg-white rounded-[3rem] shadow-2xl overflow-hidden p-10 border border-slate-100">
+            <button onClick={() => setIsOpen(false)} className="absolute top-6 right-6 p-2 text-slate-400 hover:text-rose-500 transition-colors"><X size={24} /></button>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-serif text-slate-900 mb-2">SeaBite Rewards</h2>
+              <p className="text-slate-500 text-sm">Spin to unlock the ocean's freshest discounts</p>
+            </div>
             <div className="flex flex-col items-center">
-              <div className="relative mb-8">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 -mt-4 z-10 text-yellow-400">
-                  <Anchor size={30} fill="currentColor" />
+              <div className="relative mb-10">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20 text-rose-500 drop-shadow-md">
+                  <Anchor size={36} fill="currentColor" />
                 </div>
-                <canvas ref={canvasRef} width="300" height="300" className="rounded-full border-8 border-white/5 shadow-2xl transition-transform" />
+                <canvas ref={canvasRef} width="300" height="300" className="rounded-full border-[10px] border-slate-900 shadow-2xl transition-transform" />
               </div>
-
-              <button 
-                onClick={handleSpin} 
-                disabled={spinning || result} 
-                className="px-12 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-full shadow-lg hover:scale-105 transition-transform disabled:opacity-50"
-              >
-                {spinning ? "SPINNING..." : result ? "VIEW RESULT" : "SPIN NOW"}
+              <button onClick={handleSpin} disabled={spinning || result} className="w-full py-5 bg-slate-900 text-white font-bold rounded-2xl shadow-xl hover:bg-slate-800 transition-all disabled:opacity-50">
+                {spinning ? "THE WHEEL IS TURNING..." : result ? "WINNER!" : "SPIN THE WHEEL"}
               </button>
-
               {result && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-6 text-center">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-8 w-full">
                   {result.type === "none" ? (
-                    <p className="text-xl font-bold text-red-400 italic">Better luck next time!</p>
+                    <p className="text-center text-rose-500 font-bold italic">Better luck next time!</p>
                   ) : (
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl">
-                      <p className="text-sm text-emerald-400 font-bold uppercase tracking-widest mb-1">CONGRATULATIONS!</p>
-                      <p className="text-2xl font-mono font-black text-white">{result.value}% OFF</p>
-                      <p className="text-xs text-emerald-400 mt-1">Code: {result.code}</p>
+                    <div className="p-6 bg-emerald-50 border-2 border-dashed border-emerald-200 rounded-2xl text-center">
+                      <p className="text-xs text-emerald-600 font-black uppercase tracking-widest mb-1">CONGRATULATIONS</p>
+                      <p className="text-3xl font-mono font-black text-slate-900">{result.value}% OFF</p>
+                      <div className="mt-3 inline-block px-4 py-1 bg-white border border-emerald-100 rounded-lg text-xs font-bold text-slate-500">CODE: {result.code}</div>
                     </div>
                   )}
                 </motion.div>
@@ -192,9 +201,7 @@ const VideoHero = () => {
           <h1 className="text-[15vw] md:text-[12vw] leading-none font-serif text-white opacity-95 select-none drop-shadow-2xl">SEABITE</h1>
           <motion.div initial={{ width: 0 }} animate={{ width: "100px" }} transition={{ delay: 1, duration: 1 }} className="h-[1px] bg-white/50 mx-auto" />
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Link to="/products">
-              <button className="mt-8 px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold tracking-widest text-xs hover:bg-white hover:text-black transition-all duration-500 shadow-xl">Shop Now</button>
-            </Link>
+            <Link to="/products"><button className="mt-8 px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold tracking-widest text-xs hover:bg-white hover:text-black transition-all shadow-xl">Shop Now</button></Link>
           </motion.div>
         </motion.div>
       </div>
@@ -248,7 +255,7 @@ const categories = [
 const CategoryPanel = () => {
   const [hovered, setHovered] = useState(0);
   return (
-    <section className="py-20 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
+    <section className="py-20 px-4 md:px-12 relative overflow-hidden">
       <div className="max-w-7xl mx-auto mb-12 text-center relative z-10">
         <h2 className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white">Shop By Category</h2>
         <p className="text-blue-600 dark:text-blue-200 mt-2 font-light tracking-wide">Select your catch</p>
@@ -259,15 +266,15 @@ const CategoryPanel = () => {
             to={`/products?category=${cat.title.split(" ")[1]}`}
             key={i}
             onMouseEnter={() => setHovered(i)}
-            className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${hovered === i ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20" : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"}`}
+            className={`relative rounded-[2rem] overflow-hidden transition-all duration-700 ${hovered === i ? "flex-[3] shadow-2xl shadow-blue-900/10" : "flex-[1] opacity-80"}`}
           >
             <div className={`absolute inset-0 bg-gradient-to-b ${cat.bg} z-0`} />
             <div className="absolute inset-0 flex items-center justify-center z-10 p-6">
-              <motion.img layout src={cat.img} alt={cat.title} className={`object-contain drop-shadow-2xl transition-all duration-700 ${hovered === i ? "w-[80%] h-[80%] opacity-100" : "w-24 h-24 opacity-50 grayscale"}`} />
+              <motion.img layout src={cat.img} alt={cat.title} className={`object-contain transition-all duration-700 ${hovered === i ? "w-[80%] h-[80%] opacity-100" : "w-24 h-24 opacity-50 grayscale"}`} />
             </div>
             <div className="absolute bottom-0 left-0 w-full p-8 z-20 bg-gradient-to-t from-white via-white/80 dark:from-black dark:via-[#0a1625]/80 to-transparent">
-              <h3 className={`font-serif text-slate-900 dark:text-white transition-all duration-500 whitespace-nowrap ${hovered === i ? "text-3xl opacity-100" : "text-xl opacity-70"}`}>{cat.title}</h3>
-              <div className={`flex items-center gap-2 text-blue-600 dark:text-blue-300 text-sm font-bold uppercase tracking-widest mt-2 overflow-hidden transition-all duration-500 ${hovered === i ? "max-h-10 opacity-100" : "max-h-0 opacity-0"}`}>Explore <ArrowRight /></div>
+              <h3 className={`font-serif text-slate-900 dark:text-white transition-all whitespace-nowrap ${hovered === i ? "text-3xl" : "text-xl"}`}>{cat.title}</h3>
+              <div className={`flex items-center gap-2 text-blue-600 text-sm font-bold uppercase mt-2 transition-all ${hovered === i ? "opacity-100" : "opacity-0"}`}>Explore <ArrowRight /></div>
             </div>
           </Link>
         ))}
@@ -280,7 +287,7 @@ const CategoryPanel = () => {
 const FlashSale = () => {
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 32, seconds: 18 });
   useEffect(() => {
-    const calculateTimeLeft = () => {
+    const timer = setInterval(() => {
       const now = new Date();
       const midnight = new Date();
       midnight.setHours(24, 0, 0, 0);
@@ -292,8 +299,7 @@ const FlashSale = () => {
           seconds: Math.floor((diff / 1000) % 60),
         });
       }
-    };
-    const timer = setInterval(calculateTimeLeft, 1000);
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -301,16 +307,16 @@ const FlashSale = () => {
     <section className="py-10 px-4">
       <div className="max-w-6xl mx-auto bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl shadow-2xl p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
         <div className="relative z-10 text-white text-center md:text-left">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-white/30"><Flame size={14} className="text-yellow-300" /> Flash Deal</div>
+          <div className="inline-flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full text-xs font-bold uppercase mb-4"><Flame size={14} className="text-yellow-300" /> Flash Deal</div>
           <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-4">TODAY&apos;S CATCH</h2>
-          <p className="text-red-50 text-xl md:text-2xl font-serif italic tracking-wide leading-relaxed">Order above <span className="text-yellow-300 font-bold decoration-wavy underline decoration-white/30">₹1699</span> and use coupon <span className="mx-2 bg-white text-red-600 px-3 py-1 rounded-lg font-black font-mono not-italic text-lg border-2 border-dashed border-red-600 transform -rotate-2 inline-block shadow-lg">SEABITE10</span> to avail <span className="font-black text-white not-italic text-2xl drop-shadow-md">10% OFF</span></p>
+          <p className="text-red-50 text-xl font-serif leading-relaxed">Order above <span className="text-yellow-300 font-bold underline">₹1699</span> and use <span className="mx-2 bg-white text-red-600 px-3 py-1 rounded-lg font-black not-italic text-lg border-2 border-dashed border-red-600 inline-block transform -rotate-2">SEABITE10</span> for <span className="font-black text-white not-italic text-2xl">10% OFF</span></p>
         </div>
-        <div className="relative z-10 bg-white p-6 rounded-xl shadow-lg transform rotate-2 md:rotate-0 text-center">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ends In</p>
+        <div className="relative z-10 bg-white p-6 rounded-xl shadow-lg transform rotate-2 text-center">
+            <p className="text-xs font-bold text-slate-400 uppercase mb-1">Ends In</p>
             <div className="flex gap-2 text-slate-900 font-mono font-black text-3xl">
               <span className="bg-slate-100 px-2 rounded">{timeLeft.hours.toString().padStart(2, "0")}</span>:<span className="bg-slate-100 px-2 rounded">{timeLeft.minutes.toString().padStart(2, "0")}</span>:<span className="bg-slate-100 px-2 rounded text-red-600">{timeLeft.seconds.toString().padStart(2, "0")}</span>
             </div>
-          <Link to="/products" className="block mt-4 w-full bg-slate-900 text-white text-center py-3 rounded-lg font-bold text-sm uppercase tracking-wide">Grab The Deal</Link>
+          <Link to="/products" className="block mt-4 w-full bg-slate-900 text-white py-3 rounded-lg font-bold text-sm uppercase">Grab The Deal</Link>
         </div>
       </div>
     </section>
@@ -334,24 +340,24 @@ const CategoryRow = ({ title, filterType }) => {
   return (
     <section className="py-12 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+        <div className="flex justify-between items-end mb-8 border-b border-gray-200 pb-4">
           <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">{filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />}{title}</h2>
-          <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">See All <ChevronRight size={14} /></Link>
+          <Link to="/products" className="text-sm font-bold text-blue-600 hover:underline flex items-center gap-1">See All <ChevronRight size={14} /></Link>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {products.map((p) => (
             <Link to={`/products/${p._id}`} key={p._id}>
-              <div className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300 h-full flex flex-col">
-                <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4">
-                  <img src={getImageUrl(p.image)} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300" />
+              <div className="group bg-white dark:bg-[#1e293b] border border-gray-100 rounded-xl overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col h-full">
+                <div className="relative h-40 md:h-48 bg-slate-50 flex items-center justify-center p-4">
+                  <img src={getImageUrl(p.image)} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-all" />
                   {p.trending && <span className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm">BESTSELLER</span>}
                 </div>
                 <div className="p-4 flex flex-col flex-grow">
                   <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">{p.name}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{p.netWeight}</p>
+                  <p className="text-xs text-slate-500 mb-3">{p.netWeight}</p>
                   <div className="mt-auto flex justify-between items-center">
                     <div><span className="text-xs text-slate-400 line-through mr-2">₹{(p.basePrice * 1.2).toFixed(0)}</span><span className="font-bold text-slate-900 dark:text-white">₹{p.basePrice}</span></div>
-                    <button className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors"><ShoppingBag size={14} /></button>
+                    <button className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all"><ShoppingBag size={14} /></button>
                   </div>
                 </div>
               </div>
@@ -381,21 +387,21 @@ const OfferBanner = () => {
   };
 
   return (
-    <section className="py-20 px-6 transition-colors duration-300 relative">
-      <div className="max-w-5xl mx-auto flex flex-col md:flex-row bg-[#0f172a] dark:bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 group">
-        <div className="w-full md:w-[60%] relative h-[300px] md:h-auto bg-gray-200">
-          <img src="/20offer.png" alt="20% Off" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+    <section className="py-20 px-6 relative">
+      <div className="max-w-5xl mx-auto flex flex-col md:flex-row bg-[#0f172a] rounded-3xl overflow-hidden shadow-2xl relative z-10 group">
+        <div className="w-full md:w-[60%] relative h-[300px] md:h-auto bg-gray-200 overflow-hidden">
+          <img src="/20offer.png" alt="20% Off" className="w-full h-full object-cover transition-all group-hover:scale-105" />
           <div className="absolute inset-0 bg-black/10" />
         </div>
-        <div className="w-full md:w-[40%] bg-[#0f172a] dark:bg-blue-50 p-8 md:p-12 flex flex-col justify-center items-center text-center text-white dark:text-slate-900">
-          <div className="bg-blue-600 dark:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 flex items-center gap-2"><Sparkles size={12} /> Official Coupon</div>
+        <div className="w-full md:w-[40%] bg-[#0f172a] p-8 md:p-12 flex flex-col justify-center items-center text-center text-white">
+          <div className="bg-blue-600 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase mb-4 flex items-center gap-2"><Sparkles size={12} /> Official Coupon</div>
           <h2 className="text-6xl font-serif mb-2">{offer.discountType === "flat" ? `₹${offer.value}` : `${offer.value}%`}</h2>
-          <h3 className="text-xl font-medium tracking-widest uppercase mb-6 opacity-80">{offer.discountType === "flat" ? "Cash Discount" : "Flat Discount"}</h3>
-          <div onClick={handleCopy} className="w-full border-2 border-dashed border-white/20 dark:border-slate-900/20 p-4 rounded-xl mb-6 relative group cursor-pointer hover:bg-white/10 dark:hover:bg-blue-100 transition-all active:scale-95">
+          <h3 className="text-xl uppercase opacity-80 mb-6">{offer.discountType === "flat" ? "Cash Discount" : "Flat Discount"}</h3>
+          <div onClick={handleCopy} className="w-full border-2 border-dashed border-white/20 p-4 rounded-xl mb-6 cursor-pointer hover:bg-white/10 transition-all">
             <p className="text-xs uppercase opacity-50 mb-1">Promo Code</p>
-            <p className="text-2xl font-mono font-bold tracking-wider text-emerald-400 dark:text-blue-600 flex items-center justify-center gap-2">{offer.code} {copied && <Check size={20} className="text-emerald-500" />}</p>
+            <p className="text-2xl font-mono font-bold tracking-wider text-emerald-400 flex items-center justify-center gap-2">{offer.code} {copied && <Check size={20} className="text-emerald-500" />}</p>
           </div>
-          <Link to="/products"><button className="w-full py-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider text-sm shadow-lg">Shop Now</button></Link>
+          <Link to="/products" className="w-full"><button className="w-full py-4 bg-white text-slate-900 rounded-xl font-bold uppercase shadow-lg">Shop Now</button></Link>
         </div>
       </div>
     </section>
@@ -414,7 +420,7 @@ const TrendingMarquee = () => {
   const getImageUrl = (path) => path ? `${API_URL}${path.startsWith("/") ? path : `/${path}`}` : "";
 
   return (
-    <section className="py-24 overflow-hidden border-t border-gray-200 dark:border-white/5 relative">
+    <section className="py-24 overflow-hidden border-t border-gray-200 relative">
       <div className="container mx-auto px-6 mb-12 flex justify-between items-end relative z-10">
         <h2 className="text-4xl font-serif text-slate-900 dark:text-white">Best Sellers</h2>
       </div>
@@ -422,13 +428,13 @@ const TrendingMarquee = () => {
         <motion.div className="flex gap-8 w-max" animate={{ x: ["0%", "-33.33%"] }} transition={{ repeat: Infinity, duration: 20, ease: "linear" }}>
           {products.map((p, i) => (
             <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[300px] group">
-              <div className="bg-white dark:bg-[#0e1d30] border border-gray-200 dark:border-white/5 rounded-[2rem] p-6 hover:shadow-xl transition-all backdrop-blur-sm">
+              <div className="bg-white dark:bg-[#0e1d30] border border-gray-200 rounded-[2rem] p-6 hover:shadow-xl transition-all">
                 <div className="h-[220px] mb-6 flex items-center justify-center relative">
-                  <img src={getImageUrl(p.image)} alt={p.name} className="w-48 h-48 object-contain drop-shadow-2xl group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500" />
+                  <img src={getImageUrl(p.image)} alt={p.name} className="w-48 h-48 object-contain transition-all group-hover:scale-110 group-hover:rotate-3" />
                 </div>
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-1 truncate">{p.name}</h3>
-                  <span className="text-lg font-mono text-blue-600 dark:text-blue-300">₹{p.basePrice}</span>
+                  <span className="text-lg font-mono text-blue-600">₹{p.basePrice}</span>
                 </div>
               </div>
             </Link>
@@ -451,12 +457,12 @@ const SeaBitePromise = () => {
   }, []);
 
   return (
-    <section className="py-24 px-6 relative overflow-hidden transition-colors duration-300">
+    <section className="py-24 px-6 relative transition-all">
       <div className="max-w-7xl mx-auto relative z-10 pt-10">
         <div className="text-center mb-12"><h2 className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white mb-4">Loved by Seafood Lovers</h2></div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {!loading && reviews.map((r, i) => (
-            <motion.div key={i} whileHover={{ y: -10 }} className="bg-white/80 dark:bg-[#0e1d30]/90 p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 relative shadow-sm hover:shadow-xl transition-all duration-300 backdrop-blur-sm">
+            <motion.div key={i} whileHover={{ y: -10 }} className="bg-white/80 dark:bg-[#0e1d30]/90 p-8 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-xl transition-all">
               <div className="flex items-center gap-1 mb-6">{[...Array(5)].map((_, starI) => <Star key={starI} className={`w-4 h-4 ${starI < r.rating ? "text-amber-400 fill-amber-400" : "text-slate-300"}`} />)}</div>
               <p className="text-slate-700 dark:text-slate-300 mb-8 italic leading-relaxed">&quot;{r.comment}&quot;</p>
               <div className="flex items-center gap-4">
@@ -474,17 +480,17 @@ const SeaBitePromise = () => {
 /* --- FOOTER --- */
 const Footer = () => {
   return (
-    <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white py-24 border-t border-gray-200 dark:border-white/5 text-center overflow-hidden transition-colors duration-300 z-10">
+    <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white py-24 border-t border-gray-200 text-center overflow-hidden z-10">
       <div className="absolute inset-0 flex items-center whitespace-nowrap pointer-events-none overflow-hidden">
         <motion.div initial={{ x: 0 }} animate={{ x: "-50%" }} transition={{ duration: 20, ease: "linear", repeat: Infinity }} className="flex gap-20">
-          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">SEABITE SEABITE SEABITE</h2>
-          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">SEABITE SEABITE SEABITE</h2>
+          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase">SEABITE SEABITE SEABITE</h2>
+          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase">SEABITE SEABITE SEABITE</h2>
         </motion.div>
       </div>
       <div className="relative z-10 flex flex-col items-center justify-center min-h-[200px]">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} viewport={{ once: true }} className="space-y-6">
-          <p className="text-slate-600 dark:text-slate-400 font-light text-lg tracking-tight">Experience the true taste of the ocean.</p>
-          <Link to="/products" className="inline-block"><motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-12 py-5 bg-[#0f172a] dark:bg-white text-white dark:text-slate-900 rounded-full font-bold text-lg shadow-xl">Start Your Order</motion.button></Link>
+          <p className="text-slate-600 dark:text-slate-400 font-light text-lg">Experience the true taste of the ocean.</p>
+          <Link to="/products"><motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="px-12 py-5 bg-[#0f172a] dark:bg-white text-white dark:text-slate-900 rounded-full font-bold text-lg shadow-xl">Start Your Order</motion.button></Link>
         </motion.div>
       </div>
     </footer>
@@ -500,7 +506,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-colors duration-300">
+    <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-all">
       <SpinWheelPopup userEmail={userEmail} />
       <VideoHero />
       <RollingText />
