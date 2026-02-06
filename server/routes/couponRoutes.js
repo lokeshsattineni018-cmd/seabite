@@ -6,44 +6,42 @@ const router = express.Router();
 // 1. Validate Coupon (For User at Checkout)
 router.post("/validate", async (req, res) => {
   try {
-    const { code, cartTotal, email } = req.body; 
-    const coupon = await Coupon.findOne({
-      code: code.toUpperCase(),
-      isActive: true,
-    });
+    const { code, cartTotal, email, isAutoCheck } = req.body;
+    let coupon;
+
+    // ✅ NEW: Direct MongoDB Sync based on user account
+    if (isAutoCheck && email) {
+      coupon = await Coupon.findOne({
+        userEmail: email.toLowerCase(),
+        isSpinCoupon: true,
+        isActive: true,
+        usedCount: 0
+      });
+    } else if (code) {
+      coupon = await Coupon.findOne({
+        code: code.toUpperCase(),
+        isActive: true,
+      });
+    }
 
     if (!coupon) {
-      return res.status(404).json({ success: false, message: "Invalid Coupon Code" });
+      return res.status(404).json({ success: false, message: "No active discount found." });
     }
 
-    // ✅ FIX: Case-insensitive email binding check
-    if (coupon.isSpinCoupon && coupon.userEmail) {
-      const incomingEmail = (email || "").toLowerCase();
-      const storedEmail = (coupon.userEmail || "").toLowerCase();
-
-      if (incomingEmail !== storedEmail) {
-        return res.status(400).json({
-          success: false,
-          message: "This coupon is not valid for this account.",
-        });
-      }
+    // Strict account check to ensure the coupon belongs to this user
+    if (coupon.userEmail && email.toLowerCase() !== coupon.userEmail.toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        message: "This reward is bound to another account.",
+      });
     }
 
+    // Check expiry
     if (coupon.expiresAt && coupon.expiresAt < new Date()) {
       return res.status(400).json({ success: false, message: "Coupon has expired." });
     }
 
-    if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) {
-      return res.status(400).json({ success: false, message: "Coupon usage limit reached." });
-    }
-
-    if (cartTotal < coupon.minOrderAmount) {
-      return res.status(400).json({
-        success: false,
-        message: `Add items worth ₹${coupon.minOrderAmount - cartTotal} more to use this coupon.`,
-      });
-    }
-
+    // Calculate Discount
     let discountAmount = 0;
     if (coupon.discountType === "percent") {
       discountAmount = (cartTotal * coupon.value) / 100;
@@ -54,20 +52,15 @@ router.post("/validate", async (req, res) => {
       discountAmount = coupon.value;
     }
 
-    // Increment count after validation
-    if (coupon.isSpinCoupon && coupon.maxUses > 0) {
-      coupon.usedCount += 1;
-      await coupon.save();
-    }
-
     res.json({
       success: true,
       discountAmount: Math.floor(discountAmount),
       code: coupon.code,
-      message: "Coupon Applied!",
+      message: "Reward applied successfully!",
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: "Server Error" });
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
@@ -76,7 +69,9 @@ router.post("/", async (req, res) => {
   try {
     const { code, value, minOrderAmount, discountType, maxDiscount, isActive } = req.body;
     const newCoupon = await Coupon.create({
-      code, value, minOrderAmount, 
+      code: code.toUpperCase(),
+      value,
+      minOrderAmount: minOrderAmount || 0,
       discountType: discountType || "percent",
       maxDiscount: maxDiscount || 0,
       isActive: typeof isActive === "boolean" ? isActive : true,
@@ -88,7 +83,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 3. Get All Coupons
+// 3. Get All Coupons (Admin Dashboard)
 router.get("/", async (req, res) => {
   try {
     const coupons = await Coupon.find().sort({ createdAt: -1 });
