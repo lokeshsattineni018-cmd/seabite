@@ -128,7 +128,7 @@ export default function Checkout() {
   );
   const deliveryCharge = itemTotal < 1000 ? 99 : 0;
 
-  // ✅ UPDATED: Added direct email sync from storage before validation
+  // ✅ uses withCredentials
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
     setVerifyingCoupon(true);
@@ -138,11 +138,15 @@ export default function Checkout() {
     const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
 
     try {
-      const res = await axios.post(`${API_URL}/api/coupons/validate`, {
-        code: couponCode.trim().toUpperCase(),
-        cartTotal: itemTotal,
-        email: currentEmail || undefined,
-      });
+      const res = await axios.post(
+        `${API_URL}/api/coupons/validate`,
+        {
+          code: couponCode.trim().toUpperCase(),
+          cartTotal: itemTotal,
+          email: currentEmail || undefined,
+        },
+        { withCredentials: true }
+      );
 
       if (res.data.success) {
         setDiscount(res.data.discountAmount);
@@ -161,7 +165,7 @@ export default function Checkout() {
     }
   };
 
-  // apply coupon that comes from spin wheel (localStorage)
+  // apply coupon that comes from spin wheel (localStorage) ✅ withCredentials
   const handleApplyCouponFromWheel = async (code) => {
     if (!code) return;
     setVerifyingCoupon(true);
@@ -170,11 +174,15 @@ export default function Checkout() {
     const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
 
     try {
-      const res = await axios.post(`${API_URL}/api/coupons/validate`, {
-        code: code.trim().toUpperCase(),
-        cartTotal: itemTotal,
-        email: currentEmail || undefined,
-      });
+      const res = await axios.post(
+        `${API_URL}/api/coupons/validate`,
+        {
+          code: code.trim().toUpperCase(),
+          cartTotal: itemTotal,
+          email: currentEmail || undefined,
+        },
+        { withCredentials: true }
+      );
 
       if (res.data.success) {
         setDiscount(res.data.discountAmount);
@@ -274,7 +282,10 @@ export default function Checkout() {
       const { data } = await axios.post(
         `${API_URL}/api/payment/checkout`,
         orderDetails,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          withCredentials: true,
+        }
       );
       const internalDbId = data.dbOrderId;
 
@@ -299,7 +310,10 @@ export default function Checkout() {
             const verifyRes = await axios.post(
               `${API_URL}/api/payment/verify`,
               response,
-              { headers: { Authorization: `Bearer ${token}` } }
+              {
+                headers: { Authorization: `Bearer ${token}` },
+                withCredentials: true,
+              }
             );
             if (verifyRes.data.success) {
               clearCart();
@@ -761,7 +775,6 @@ export default function Checkout() {
 }
 
 // ADDRESS MODAL (UNCHANGED ORIGINAL CODE)
-// ... keeping full logic below ...
 function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
   const mapContainerRef = useRef(null);
   const mapInstance = useRef(null);
@@ -1114,7 +1127,7 @@ function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
               form.fullName &&
               form.houseNo &&
               form.zip
-                ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-600 dark:hover:bg-blue-100 shadow-slate-900/20"
+                ? "bg-slate-900 dark:bg:white text-white dark:text-slate-900 hover:bg-blue-600 dark:hover:bg-blue-100 shadow-slate-900/20"
                 : "bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
             }`}
           >

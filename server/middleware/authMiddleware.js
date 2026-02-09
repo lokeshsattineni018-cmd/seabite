@@ -1,30 +1,36 @@
-import jwt from "jsonwebtoken";
-import User from "../models/User.js"; 
+// authMiddleware.js
+import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "No token, authorization denied" });
+    // If full user object is stored in session
+    if (req.session && req.session.user && req.session.user._id) {
+      req.user = req.session.user;
+      return next();
     }
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password'); 
 
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
+    // If only userId is stored in session
+    if (req.session && req.session.userId) {
+      const user = await User.findById(req.session.userId).select("-password");
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      req.user = user;
+      return next();
     }
-    req.user = user;
-    next();
+
+    // No user in session
+    return res.status(401).json({ message: "Not authenticated" });
   } catch (err) {
-    res.status(401).json({ message: "Token is not valid" });
+    console.error("Auth error:", err);
+    return res.status(401).json({ message: "Authentication failed" });
   }
 };
 
 export const admin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
-        next(); 
-    } else {
-        res.status(403).json({ message: 'Not authorized as an administrator' });
-    }
+  if (req.user && req.user.role === "admin") {
+    return next();
+  } else {
+    return res.status(403).json({ message: "Not authorized as an administrator" });
+  }
 };

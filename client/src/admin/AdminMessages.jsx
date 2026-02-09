@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { FiMail, FiCalendar, FiUser, FiTrash2 } from "react-icons/fi";
+import { FiMail, FiCalendar, FiUser } from "react-icons/fi";
 import { motion } from "framer-motion";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
@@ -15,7 +15,9 @@ export default function AdminMessages() {
 
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/contact`);
+      const res = await axios.get(`${API_URL}/api/contact`, {
+        withCredentials: true,
+      });
       setMessages(res.data);
     } catch (err) {
       console.error(err);
@@ -29,10 +31,14 @@ export default function AdminMessages() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Inbox</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Customer inquiries & messages</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Customer inquiries & messages
+          </p>
         </div>
         <div className="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-sm">
-            <span className="text-sm font-bold text-blue-600">{messages.length} Messages</span>
+          <span className="text-sm font-bold text-blue-600">
+            {messages.length} Messages
+          </span>
         </div>
       </div>
 
@@ -40,13 +46,13 @@ export default function AdminMessages() {
         <div className="text-center py-20">Loading...</div>
       ) : messages.length === 0 ? (
         <div className="text-center py-20 bg-white dark:bg-slate-800 rounded-2xl shadow-sm">
-            <FiMail className="mx-auto text-slate-300 text-4xl mb-4" />
-            <p className="text-slate-500">No messages yet.</p>
+          <FiMail className="mx-auto text-slate-300 text-4xl mb-4" />
+          <p className="text-slate-500">No messages yet.</p>
         </div>
       ) : (
         <div className="grid gap-4">
           {messages.map((msg, index) => (
-            <motion.div 
+            <motion.div
               key={msg._id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -59,10 +65,13 @@ export default function AdminMessages() {
                     <FiUser />
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm">{msg.email}</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm">
+                      {msg.email}
+                    </h3>
                     <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
                       <FiCalendar size={10} />
-                      {new Date(msg.createdAt).toLocaleDateString()} at {new Date(msg.createdAt).toLocaleTimeString()}
+                      {new Date(msg.createdAt).toLocaleDateString()} at{" "}
+                      {new Date(msg.createdAt).toLocaleTimeString()}
                     </div>
                   </div>
                 </div>

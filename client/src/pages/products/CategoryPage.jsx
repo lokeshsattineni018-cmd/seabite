@@ -15,7 +15,9 @@ export default function CategoryPage({ title, category }) {
 
   useEffect(() => {
     axios
-      .get(`${API_URL}/api/products`)
+      .get(`${API_URL}/api/products`, {
+        withCredentials: true, // ✅ send session cookie
+      })
       .then((res) => {
         // ✅ backend sends { products: [...] }
         const filtered = res.data.products.filter(

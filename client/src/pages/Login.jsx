@@ -5,16 +5,27 @@ import { motion } from "framer-motion";
 import PopupModal from "../components/PopupModal";
 import { useGoogleLogin } from "@react-oauth/google";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+
 export default function Login() {
-  const [modal, setModal] = useState({ show: false, message: "", type: "info" });
+  const [modal, setModal] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
         // ✅ MONGO SESSION SYNC: Request backend to create a secure session cookie
-        const res = await axios.post("/api/auth/google", {
-          token: tokenResponse.access_token,
-        }, { withCredentials: true }); // Required to receive the connect.sid cookie
+        const res = await axios.post(
+          `${API_URL}/api/auth/google`,
+          {
+            token: tokenResponse.access_token,
+          },
+          { withCredentials: true } // Required to receive the connect.sid cookie
+        );
 
         setModal({
           show: true,
@@ -77,11 +88,22 @@ export default function Login() {
       >
         <div className="bg-white/70 backdrop-blur-xl rounded-[2.5rem] p-10 text-center shadow-2xl border border-white">
           <div className="mb-8">
-            <Link to="/" className="inline-block mb-6 hover:scale-105 transition-transform">
-              <img src="/logo.png" className="h-14 mx-auto object-contain" alt="SeaBite" />
+            <Link
+              to="/"
+              className="inline-block mb-6 hover:scale-105 transition-transform"
+            >
+              <img
+                src="/logo.png"
+                className="h-14 mx-auto object-contain"
+                alt="SeaBite"
+              />
             </Link>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Welcome Back</h2>
-            <p className="text-slate-500 text-sm">Sign in with Google to access your rewards.</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">
+              Welcome Back
+            </h2>
+            <p className="text-slate-500 text-sm">
+              Sign in with Google to access your rewards.
+            </p>
           </div>
 
           <div className="flex justify-center mb-6">
@@ -89,10 +111,10 @@ export default function Login() {
               onClick={() => login()}
               className="flex items-center justify-center gap-3 bg-[#4285F4] text-white font-semibold py-3.5 px-6 rounded-full shadow-lg hover:bg-[#357ae8] transition-all w-full active:scale-95"
             >
-              <img 
-                src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" 
-                className="w-6 h-6 bg-white rounded-full p-1" 
-                alt="google" 
+              <img
+                src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
+                className="w-6 h-6 bg-white rounded-full p-1"
+                alt="google"
               />
               Sign in with Google
             </button>

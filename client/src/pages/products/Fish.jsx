@@ -5,18 +5,20 @@ import { Link } from "react-router-dom";
 import { FiArrowLeft, FiShoppingBag, FiFilter } from "react-icons/fi"; // Feather Icons
 import ProductQuickView from "../../components/ProductQuickView";
 
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+
 // Animation Variants
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
+    transition: { staggerChildren: 0.1 },
+  },
 };
 
 const cardVariants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } }
+  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 50 } },
 };
 
 export default function Fish() {
@@ -26,7 +28,9 @@ export default function Fish() {
 
   useEffect(() => {
     axios
-      .get("https://seabite-server.vercel.app/api/products")
+      .get(`${API_URL}/api/products`, {
+        withCredentials: true, // ✅ send session cookie
+      })
       .then((res) => {
         // Filter for Fish category
         const fish = res.data.products.filter((p) => p.category === "Fish");
@@ -41,36 +45,37 @@ export default function Fish() {
 
   return (
     <div className="min-h-screen bg-slate-50 relative overflow-hidden font-sans">
-      
       {/* Background Blob (Blue for Fish) */}
       <div className="fixed top-0 right-0 w-[600px] h-[600px] bg-blue-100/40 rounded-full blur-[100px] pointer-events-none" />
       <div className="fixed bottom-0 left-0 w-[400px] h-[400px] bg-cyan-50/50 rounded-full blur-[80px] pointer-events-none" />
 
       {/* ================= HEADER SECTION ================= */}
       <div className="relative pt-28 pb-12 px-6 max-w-7xl mx-auto">
-        
         {/* Breadcrumb */}
-        <Link to="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-colors mb-6 text-sm font-medium tracking-wide">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-900 transition-colors mb-6 text-sm font-medium tracking-wide"
+        >
           <FiArrowLeft /> Back to Home
         </Link>
 
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <motion.h2 
+            <motion.h2
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="text-4xl md:text-6xl font-serif text-slate-900 mb-2"
             >
               Premium Fish
             </motion.h2>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
               className="text-slate-500 max-w-md"
             >
-              From freshwater delicacies to deep sea treasures. 
-              Cleaned, cut, and delivered fresh.
+              From freshwater delicacies to deep sea treasures. Cleaned, cut, and
+              delivered fresh.
             </motion.p>
           </div>
 
@@ -83,16 +88,18 @@ export default function Fish() {
 
       {/* ================= PRODUCTS GRID ================= */}
       <div className="max-w-7xl mx-auto px-6 pb-24">
-        
         {loading ? (
           // Loading Skeleton
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3].map((n) => (
-              <div key={n} className="h-96 bg-white rounded-[2.5rem] animate-pulse" />
+              <div
+                key={n}
+                className="h-96 bg-white rounded-[2.5rem] animate-pulse"
+              />
             ))}
           </div>
         ) : (
-          <motion.div 
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="visible"
@@ -106,7 +113,6 @@ export default function Fish() {
                 className="group cursor-pointer"
               >
                 <div className="bg-white p-4 rounded-[2.5rem] shadow-sm border border-transparent hover:border-blue-100 hover:shadow-xl hover:shadow-blue-900/5 transition-all duration-500 relative overflow-hidden">
-                  
                   {/* Badge */}
                   {item.trending && (
                     <div className="absolute top-6 left-6 z-10 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-blue-600 shadow-sm">
@@ -121,14 +127,14 @@ export default function Fish() {
                       transition={{ duration: 0.6 }}
                       src={item.image}
                       alt={item.name}
-                      className="w-full h-full object-cover mix-blend-multiply" 
+                      className="w-full h-full object-cover mix-blend-multiply"
                     />
-                    
+
                     {/* Overlay Action Button */}
                     <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                       <div className="bg-white text-slate-900 px-6 py-2 rounded-full font-medium shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                         Quick View
-                       </div>
+                      <div className="bg-white text-slate-900 px-6 py-2 rounded-full font-medium shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                        Quick View
+                      </div>
                     </div>
                   </div>
 
@@ -138,9 +144,13 @@ export default function Fish() {
                       {item.name}
                     </h3>
                     <div className="flex items-center justify-center gap-2 mb-3">
-                      <span className="text-lg font-bold text-slate-800">₹{item.price}</span>
+                      <span className="text-lg font-bold text-slate-800">
+                        ₹{item.price}
+                      </span>
                       {/* Optional: Mock discount logic or remove if data doesn't exist */}
-                       <span className="text-xs text-slate-400 line-through">₹{Math.round(item.price * 1.2)}</span>
+                      <span className="text-xs text-slate-400 line-through">
+                        ₹{Math.round(item.price * 1.2)}
+                      </span>
                     </div>
 
                     {/* Add Button Visual */}
@@ -156,7 +166,9 @@ export default function Fish() {
 
         {!loading && items.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-slate-400 text-lg">No fresh fish in stock right now.</p>
+            <p className="text-slate-400 text-lg">
+              No fresh fish in stock right now.
+            </p>
           </div>
         )}
       </div>
