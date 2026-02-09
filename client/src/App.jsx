@@ -37,7 +37,7 @@ import AdminLayout from "./admin/AdminLayout";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminProducts from "./admin/AdminProducts";
 import AddProduct from "./admin/AddProduct";
-import EditProduct from "./admin/EditProduct";
+import EditProduct from "./admin/AddProduct";
 import AdminOrders from "./admin/AdminOrders";
 import AdminUsers from "./admin/AdminUsers";
 import AdminLogin from "./admin/AdminLogin";
@@ -48,6 +48,7 @@ import AdminRoute from "./components/AdminRoute";
 // Context
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { AuthProvider } from "./context/AuthContext";
 import SupportWidget from "./components/SupportWidget";
 
 // ✅ CRITICAL SYNC: Fixes the login loop and allows images to load
@@ -261,7 +262,9 @@ export default function App() {
     <GoogleOAuthProvider clientId="781532512036-kaouiapk5q6akjofr45t7ff7d7t6jm9k.apps.googleusercontent.com">
       <ThemeProvider>
         <CartProvider>
-          <MainLayout />
+          <AuthProvider>
+            <MainLayout />
+          </AuthProvider>
         </CartProvider>
       </ThemeProvider>
     </GoogleOAuthProvider>

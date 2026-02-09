@@ -1,3 +1,4 @@
+// src/components/Navbar.jsx
 import { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -19,13 +20,15 @@ import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
 import axios from "axios";
 import { useGoogleLogin } from "@react-oauth/google";
+import { useAuth } from "../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 export default function Navbar({ openCart }) {
   const { cartCount } = useContext(CartContext);
   const { isDarkMode, toggleTheme } = useContext(ThemeContext);
-  const [user, setUser] = useState(null);
+  const { user, setUser, refreshMe } = useAuth();
+
   const [showProfile, setShowProfile] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -35,23 +38,14 @@ export default function Navbar({ openCart }) {
 
   const navigate = useNavigate();
 
+  // Fetch notifications whenever user changes
   useEffect(() => {
-    fetchSession();
-    window.addEventListener("focus", fetchSession);
-    return () => window.removeEventListener("focus", fetchSession);
-  }, []);
-
-  const fetchSession = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/auth/me`, {
-        withCredentials: true,
-      });
-      setUser(res.data);
+    if (user) {
       fetchNotifications();
-    } catch (err) {
-      setUser(null);
+    } else {
+      setUnreadCount(0);
     }
-  };
+  }, [user]);
 
   const fetchNotifications = async () => {
     try {
@@ -64,6 +58,7 @@ export default function Navbar({ openCart }) {
     }
   };
 
+  // Handle navbar scroll style
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
@@ -105,6 +100,7 @@ export default function Navbar({ openCart }) {
 
         setUser(res.data.user);
         if (res.data.user.role === "admin") navigate("/admin/dashboard");
+        refreshMe();
         fetchNotifications();
       } catch (err) {
         console.error("Google Login Failed", err);
@@ -205,7 +201,7 @@ export default function Navbar({ openCart }) {
 
             <button
               onClick={toggleTheme}
-              className="p-2 md:p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-blue-300 hover:scale-110 transition-all shadow-sm"
+              className="p-2 md:p-2.5 rounded-xl bg-slate-100 dark:bg:white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-blue-300 hover:scale-110 transition-all shadow-sm"
             >
               {isDarkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
             </button>
@@ -366,21 +362,21 @@ export default function Navbar({ openCart }) {
                   <Link
                     to="/products?category=Fish"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-lg text-slate-600 dark:text_WHITE/70 block px-4 py-3 bg-slate-50 dark:bg_WHITE/5 rounded-xl"
+                    className="text-lg text-slate-600 dark:text-white/70 block px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-xl"
                   >
                     Fish
                   </Link>
                   <Link
                     to="/products?category=Prawn"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-lg text-slate-600 dark:text_WHITE/70 block px-4 py-3 bg-slate-50 dark:bg_WHITE/5 rounded-xl"
+                    className="text-lg text-slate-600 dark:text-white/70 block px-4 py-3 bg-slate-50 dark:bg:white/5 rounded-xl"
                   >
                     Prawns
                   </Link>
                   <Link
                     to="/products?category=Crab"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-lg text-slate-600 dark:text_WHITE/70 block px-4 py-3 bg-slate-50 dark:bg_WHITE/5 rounded-xl"
+                    className="text-lg text-slate-600 dark:text-white/70 block px-4 py-3 bg-slate-50 dark:bg:white/5 rounded-xl"
                   >
                     Crabs
                   </Link>
@@ -398,7 +394,7 @@ export default function Navbar({ openCart }) {
                   Login / Signup
                 </button>
               ) : (
-                <div className="mt-8 pt-8 border-t border-slate-100 dark:border_WHITE/10 space-y-2">
+                <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/10 space-y-2">
                   <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4">
                     Account Settings
                   </p>
@@ -407,7 +403,7 @@ export default function Navbar({ openCart }) {
                       navigate("/profile");
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-4 text-slate-700 dark:text_WHITE/70 py-3 text-lg"
+                    className="w-full flex items-center gap-4 text-slate-700 dark:text-white/70 py-3 text-lg"
                   >
                     <FiUser /> My Profile
                   </button>
@@ -416,7 +412,7 @@ export default function Navbar({ openCart }) {
                       navigate("/orders");
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-4 text-slate-700 dark:text_WHITE/70 py-3 text-lg"
+                    className="w-full flex items-center gap-4 text-slate-700 dark:text-white/70 py-3 text-lg"
                   >
                     <FiPackage /> My Orders
                   </button>
@@ -425,7 +421,7 @@ export default function Navbar({ openCart }) {
                       navigate("/notifications");
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center gap-4 text-slate-700 dark:text_WHITE/70 py-3 text-lg justify-between"
+                    className="w-full flex items-center gap-4 text-slate-700 dark:text-white/70 py-3 text-lg justify-between"
                   >
                     <div className="flex items-center gap-4">
                       <FiBell /> Notifications

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import PopupModal from "../components/PopupModal";
 import { useGoogleLogin } from "@react-oauth/google";
+import { useAuth } from "../context/AuthContext";
 
 const API_URL =
   import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
@@ -15,17 +16,23 @@ export default function Login() {
     type: "info",
   });
 
+  const { setUser, refreshMe } = useAuth();
+
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        // ✅ MONGO SESSION SYNC: Request backend to create a secure session cookie
+        // Ask backend to create secure session cookie
         const res = await axios.post(
           `${API_URL}/api/auth/google`,
           {
             token: tokenResponse.access_token,
           },
-          { withCredentials: true } // Required to receive the connect.sid cookie
+          { withCredentials: true }
         );
+
+        // Update global auth state immediately
+        setUser(res.data.user);
+        refreshMe?.();
 
         setModal({
           show: true,
@@ -33,12 +40,10 @@ export default function Login() {
           type: "success",
         });
 
-        // Pull redirect path if it exists, otherwise use role-based default
         const redirectPath = localStorage.getItem("postLoginRedirect");
         if (redirectPath) localStorage.removeItem("postLoginRedirect");
 
         setTimeout(() => {
-          // Identity is now server-side; we use the response role for the initial jump
           if (redirectPath) {
             window.location.href = redirectPath;
           } else {
@@ -67,7 +72,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">
-      {/* Aesthetic Background Elements */}
       <div className="absolute inset-0 w-full h-full pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-100/60 rounded-full blur-[100px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-rose-100/50 rounded-full blur-[120px]" />
