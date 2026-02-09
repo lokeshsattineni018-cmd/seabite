@@ -12,11 +12,14 @@ router.post("/spin", async (req, res) => {
   try {
     // ✅ Identify user strictly via session
     const userEmail = req.session?.user?.email;
+    if (!userEmail)
+      return res
+        .status(401)
+        .json({ error: "Please login first to spin!" });
 
-    if (!userEmail) return res.status(401).json({ error: "Please login first to spin!" });
-
-    const existing = await Coupon.findOne({ userEmail: userEmail.toLowerCase(), isSpinCoupon: true });
-    if (existing) return res.status(403).json({ error: "One spin per account only!" });
+    // ❌ REMOVE this block for unlimited spins:
+    // const existing = await Coupon.findOne({ userEmail: userEmail.toLowerCase(), isSpinCoupon: true });
+    // if (existing) return res.status(403).json({ error: "One spin per account only!" });
 
     const rand = Math.random() * 100;
     let outcome;
@@ -28,7 +31,11 @@ router.post("/spin", async (req, res) => {
     else if (rand < 95) outcome = { type: "PERCENT", value: 20, prefix: "SB20" };
     else outcome = { type: "PERCENT", value: 50, prefix: "SB50" };
 
-    if (outcome.type === "NO_PRIZE") return res.json({ result: "BETTER_LUCK", message: "Better luck next time!" });
+    if (outcome.type === "NO_PRIZE")
+      return res.json({
+        result: "BETTER_LUCK",
+        message: "Better luck next time!",
+      });
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 1);
@@ -44,7 +51,7 @@ router.post("/spin", async (req, res) => {
       code,
       discountType: "percent",
       value: outcome.value,
-      userEmail: userEmail.toLowerCase(), 
+      userEmail: userEmail.toLowerCase(),
       isSpinCoupon: true,
       maxUses: 1,
       expiresAt,
@@ -57,9 +64,9 @@ router.post("/spin", async (req, res) => {
       code: coupon.code,
       expiresAt: coupon.expiresAt,
     });
-  } catch (err) { 
+  } catch (err) {
     console.error("❌ Spin Error:", err);
-    res.status(500).json({ error: "Server error" }); 
+    res.status(500).json({ error: "Server error" });
   }
 });
 
