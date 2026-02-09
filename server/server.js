@@ -1,23 +1,23 @@
 /* --- 1. LOAD ENV VARIABLES FIRST --- */
-import 'dotenv/config'; 
+import "dotenv/config";
 import express from "express";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from 'url';
+import { fileURLToPath } from "url";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 
 /* --- ROUTE IMPORTS --- */
 import authRoutes from "./routes/authRoutes.js";
-import adminProductRoutes from "./routes/adminProducts.js"; 
-import orderRoutes from "./routes/orderRoutes.js"; 
-import adminRoutes from "./routes/adminRoutes.js"; 
-import notificationRoutes from "./routes/notificationRoutes.js"; 
-import products from "./routes/products.js";       
-import productsRoutes from "./routes/productsRoutes.js"; 
+import adminProductRoutes from "./routes/adminProducts.js";
+import orderRoutes from "./routes/orderRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import products from "./routes/products.js";
+import productsRoutes from "./routes/productsRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
-import contactRoutes from "./routes/contactRoutes.js"; 
+import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import spinRoutes from "./routes/spinRoutes.js";
 
@@ -26,24 +26,35 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
-app.set("trust proxy", 1); 
+app.set("trust proxy", 1);
 
 const allowedOrigins = [
-  "https://seabite.co.in", 
-  "https://www.seabite.co.in", 
-  "http://localhost:5173"
+  "https://seabite.co.in",
+  "https://www.seabite.co.in",
+  "http://localhost:5173",
 ];
 
-// ✅ BULLETPROOF CORS: Explicitly allows credentials for your specific domains
+// ✅ CORS for credentials: never use "*"
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
+  } else {
+    // Fallback instead of "*"
+    res.setHeader("Access-Control-Allow-Origin", "https://www.seabite.co.in");
   }
+
   res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
-  
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, Cookie"
+  );
+
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
@@ -52,17 +63,19 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// ✅ STATIC IMAGES
-const uploadDir = path.join(__dirname, "uploads"); 
+/* ✅ STATIC IMAGES */
+const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-app.use("/uploads", express.static(uploadDir)); 
+app.use("/uploads", express.static(uploadDir));
 
 /* --- 3. DATABASE CONNECTION --- */
 let isConnected = false;
 const connectDB = async () => {
   if (isConnected) return;
   try {
-    const db = await mongoose.connect(process.env.MONGO_URI, { dbName: "seabite" });
+    const db = await mongoose.connect(process.env.MONGO_URI, {
+      dbName: "seabite",
+    });
     isConnected = db.connections[0].readyState;
     console.log("✅ MongoDB Connected");
   } catch (error) {
@@ -72,34 +85,35 @@ const connectDB = async () => {
 await connectDB();
 
 /* --- 4. MONGODB SESSION SETUP (CRITICAL FOR LOOPS) --- */
-app.use(session({
-  secret: process.env.SESSION_SECRET || "seabite_default_secret",
-  resave: false,
-  saveUninitialized: false,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI,
-    collectionName: 'sessions',
-    ttl: 14 * 24 * 60 * 60 
-  }),
-  proxy: true, // ✅ Required for Vercel's proxy layers
-  cookie: {
-    secure: true, 
-    httpOnly: true,
-    sameSite: "none", // ✅ Allows cookies to be sent across origins (Vercel to Domain)
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    // ✅ REMOVED strict domain to let the browser handle it more naturally across subdomains
-  }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "seabite_default_secret",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: "sessions",
+      ttl: 14 * 24 * 60 * 60,
+    }),
+    proxy: true, // ✅ Required for Vercel's proxy layers
+    cookie: {
+      secure: true,
+      httpOnly: true,
+      sameSite: "none", // ✅ Allows cookies to be sent across origins (Vercel to Domain)
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    },
+  })
+);
 
 /* --- 5. ROUTES --- */
-app.get('/', (req, res) => res.send("SeaBite Server Running 🚀"));
+app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
-app.use("/api/productsRoutes", productsRoutes); 
-app.use("/api/orders", orderRoutes); 
-app.use("/api/admin", adminRoutes); 
-app.use("/api/notifications", notificationRoutes); 
-app.use("/api/admin/products", adminProductRoutes); 
+app.use("/api/productsRoutes", productsRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/coupons", couponRoutes);
