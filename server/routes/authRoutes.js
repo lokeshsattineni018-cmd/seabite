@@ -1,7 +1,13 @@
+// routes/authRoutes.js
 import express from "express";
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
-import { getLoggedUser, updateUserProfile, googleLogin } from '../controllers/authController.js'; 
+import {
+  getLoggedUser,
+  updateUserProfile,
+  googleLogin,
+} from "../controllers/authController.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -9,7 +15,7 @@ const router = express.Router();
 // 🎯 PUBLIC ROUTES
 // ----------------------------------------------------
 
-/* ================= REGISTER ================= */
+// ================= REGISTER =================
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -38,24 +44,32 @@ router.post("/register", async (req, res) => {
   }
 });
 
-/* ================= LOGIN ================= */
+// ================= LOGIN =================
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password)
-      return res.status(400).json({ message: "Email & password required" });
+      return res
+        .status(400)
+        .json({ message: "Email & password required" });
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user)
-      return res.status(400).json({ message: "Invalid email or password" });
+      return res
+        .status(400)
+        .json({ message: "Invalid email or password" });
 
-    if (!user.password) 
-      return res.status(400).json({ message: "Please log in with Google" });
+    if (!user.password)
+      return res
+        .status(400)
+        .json({ message: "Please log in with Google" });
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
-      return res.status(400).json({ message: "Invalid email or password" });
+      return res
+        .status(400)
+        .json({ message: "Invalid email or password" });
 
     // ✅ MONGO SESSION SYNC: Store user directly in the database session store
     req.session.user = {
@@ -67,10 +81,14 @@ router.post("/login", async (req, res) => {
 
     // Explicitly save session before responding to prevent race conditions
     req.session.save((err) => {
-      if (err) return res.status(500).json({ message: "Session save failed" });
+      if (err)
+        return res
+          .status(500)
+          .json({ message: "Session save failed" });
+
       res.json({
         user: req.session.user,
-        message: "Login successful"
+        message: "Login successful",
       });
     });
   } catch (err) {
@@ -78,10 +96,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
-/* ================= GOOGLE LOGIN ================= */
+// ================= GOOGLE LOGIN =================
 router.post("/google", googleLogin);
 
-/* ================= LOGOUT ================= */
+// ================= LOGOUT =================
 router.post("/logout", (req, res) => {
   // ✅ DESTROY MONGO SESSION: Removes the document from the 'sessions' collection
   req.session.destroy((err) => {
@@ -89,26 +107,26 @@ router.post("/logout", (req, res) => {
       console.error("❌ Logout Error:", err);
       return res.status(500).json({ message: "Logout failed" });
     }
-    
+
     // Clear the session cookie from the browser
-    res.clearCookie('connect.sid', {
-      path: '/',
+    res.clearCookie("connect.sid", {
+      path: "/",
       httpOnly: true,
       secure: true,
-      sameSite: 'none'
+      sameSite: "none",
     });
 
     res.json({ message: "Logged out successfully" });
   });
 });
 
-
 // ----------------------------------------------------
-// 🎯 PROTECTED ROUTES 
+// 🎯 PROTECTED ROUTES
 // ----------------------------------------------------
 
-router.route("/me")
-  .get(getLoggedUser)
-  .put(updateUserProfile);
+router
+  .route("/me")
+  .get(protect, getLoggedUser)
+  .put(protect, updateUserProfile);
 
 export default router;
