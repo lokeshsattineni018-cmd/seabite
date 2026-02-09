@@ -72,8 +72,8 @@ const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      serverSelectionTimeoutMS: 5000, 
-      connectTimeoutMS: 10000,        
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 10000,
     });
     console.log("✅ MongoDB Connected");
   } catch (error) {
@@ -94,11 +94,12 @@ app.use(
       collectionName: "sessions",
       ttl: 14 * 24 * 60 * 60,
     }),
-    proxy: true, 
+    proxy: true,
     cookie: {
-      secure: true, 
+      secure: true,           // HTTPS only
       httpOnly: true,
-      sameSite: "none", // ✅ Critical for Vercel/External Domain login
+      sameSite: "none",       // Critical for cross-site cookies
+      domain: ".seabite.co.in", // ⬅️ important: works for seabite.co.in and www.seabite.co.in
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
