@@ -99,7 +99,7 @@ app.use(
       secure: true,           // HTTPS only
       httpOnly: true,
       sameSite: "none",       // Critical for cross-site cookies
-      domain: "seabite-server.vercel.app", // ⬅️ important: works for seabite.co.in and www.seabite.co.in
+      //domain: "seabite-server.vercel.app", // ⬅️ important: works for seabite.co.in and www.seabite.co.in
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
