@@ -14,6 +14,7 @@ export const googleLogin = async (req, res) => {
     let userData;
     const segments = token.split('.');
 
+    // Verify Google Token (ID Token vs Access Token)
     if (segments.length === 3) {
       const ticket = await googleClient.verifyIdToken({
         idToken: token,
@@ -35,20 +36,23 @@ export const googleLogin = async (req, res) => {
     let isNewUser = false; 
 
     if (user) {
-      if (!user.googleId) { user.googleId = googleId; await user.save(); }
+      if (!user.googleId) { 
+        user.googleId = googleId; 
+        await user.save(); 
+      }
     } else {
       user = new User({ name, email, googleId, role: "user" });
       await user.save();
       isNewUser = true;
     }
 
-    // ✅ SESSION VERIFICATION: Ensure middleware is active
+    // ✅ SESSION VERIFICATION
     if (!req.session) {
-      console.error("❌ Session middleware failed to initialize");
+      console.error("❌ Session middleware failed to initialize. Check MongoDB connection.");
       return res.status(500).json({ message: "Server Session Error" });
     }
 
-    // ✅ SAVE TO MONGO SESSION
+    // ✅ POPULATE MONGO SESSION
     req.session.user = {
       id: user._id,
       name: user.name,
@@ -56,9 +60,12 @@ export const googleLogin = async (req, res) => {
       role: user.role
     };
 
-    // ✅ FORCE SAVE: Ensures the session is in MongoDB before the browser gets the response
+    // ✅ FORCE SAVE: Sync with MongoDB before responding
     req.session.save((err) => {
-      if (err) return res.status(500).json({ message: "Session save failed" });
+      if (err) {
+        console.error("❌ Session save error:", err);
+        return res.status(500).json({ message: "Session save failed" });
+      }
       sendAuthEmail(user.email, user.name, isNewUser).catch(() => {});
       res.status(200).json({ user: req.session.user });
     });
@@ -70,7 +77,7 @@ export const googleLogin = async (req, res) => {
 };
 
 export const getLoggedUser = async (req, res) => {
-    // ✅ SYNC CHECK: Check req.session instead of headers
+    // ✅ SYNC CHECK: Always check session identity
     if (!req.session?.user) return res.status(401).json({ message: "Not authenticated" });
     
     try {

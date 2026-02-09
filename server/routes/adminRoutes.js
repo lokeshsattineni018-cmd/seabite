@@ -1,5 +1,5 @@
 import express from "express";
-import adminAuth from "../middleware/adminAuth.js";
+import adminAuth from "../middleware/adminAuth.js"; // ✅ Uses session logic to stop loops
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import User from "../models/User.js";
@@ -16,6 +16,7 @@ router.get("/", adminAuth, async (req, res) => {
     const startDate = new Date();
     startDate.setMonth(today.getMonth() - limit);
 
+    // Aggregate calls only run after adminAuth verifies session
     const popularProducts = await Order.aggregate([
       { $unwind: "$items" },
       {
@@ -114,7 +115,7 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
         return {
           _id: u._id,
           name: u.name,
-          email: u.email.toLowerCase(), // ✅ Consistent mapping
+          email: u.email.toLowerCase(), // ✅ Case-insensitive mapping for sessions
           role: u.role,
           createdAt: u.createdAt,
           intelligence: {

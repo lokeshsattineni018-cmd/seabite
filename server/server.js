@@ -34,17 +34,12 @@ const allowedOrigins = [
   "http://localhost:5173",
 ];
 
-// ✅ CORS for credentials: never use "*"
+// ✅ MANUAL CORS: Explicitly trust your specific domains to allow session cookies
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
-  } else {
-    // Fallback instead of "*"
-    res.setHeader("Access-Control-Allow-Origin", "https://www.seabite.co.in");
   }
-
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
     "Access-Control-Allow-Methods",
@@ -63,43 +58,51 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-/* ✅ STATIC IMAGES */
+// ✅ STATIC IMAGES
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-/* --- 3. DATABASE CONNECTION --- */
-let isConnected = false;
+/* --- 3. DATABASE CONNECTION (FIXED TIMEOUT LOGIC) --- */
 const connectDB = async () => {
-  if (isConnected) return;
+  if (mongoose.connection.readyState >= 1) {
+    console.log("➡️ Using existing MongoDB connection");
+    return;
+  }
   try {
-    const db = await mongoose.connect(process.env.MONGO_URI, {
+    await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
+      serverSelectionTimeoutMS: 5000, // how long to wait for a server
+      connectTimeoutMS: 10000,        // how long to wait for initial socket
     });
-    isConnected = db.connections[0].readyState;
     console.log("✅ MongoDB Connected");
   } catch (error) {
-    console.error("❌ MongoDB Error:", error);
+    console.error("❌ MongoDB Connection Error:", error);
+    // Fail fast on cold start so Vercel shows a clear error
+    throw error;
   }
 };
+
+// Immediate connection check (on cold start)
 await connectDB();
 
-/* --- 4. MONGODB SESSION SETUP (CRITICAL FOR LOOPS) --- */
+/* --- 4. MONGODB SESSION SETUP (REUSE EXISTING CLIENT) --- */
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "seabite_default_secret",
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI,
+      // Reuse the Mongoose client instead of creating a second connection
+      client: mongoose.connection.getClient(),
       collectionName: "sessions",
       ttl: 14 * 24 * 60 * 60,
     }),
     proxy: true, // ✅ Required for Vercel's proxy layers
     cookie: {
-      secure: true,
+      secure: true, // ✅ HTTPS only (needed for sameSite: "none")
       httpOnly: true,
-      sameSite: "none", // ✅ Allows cookies to be sent across origins (Vercel to Domain)
+      sameSite: "none", // ✅ Required for cross-domain cookie trust
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
@@ -118,5 +121,11 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
+
+/* Optional: simple health check route */
+app.get("/health", (req, res) => {
+  const state = mongoose.connection.readyState; // 0=disconnected,1=connected
+  res.json({ status: state === 1 ? "ok" : "down", mongoState: state });
+});
 
 export default app;
