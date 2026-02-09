@@ -1,12 +1,13 @@
 import { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiHome, FiArrowLeft, FiUserCheck } from "react-icons/fi";
+import { FiLogOut, FiHome, FiArrowLeft } from "react-icons/fi";
 import { motion } from "framer-motion";
 import UserInfo from "./UserInfo";
 import { ThemeContext } from "../context/ThemeContext";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -15,32 +16,34 @@ export default function Profile() {
   const navigate = useNavigate();
 
   const fetchUser = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-
     try {
+      // ✅ Session-based: backend reads connect.sid cookie
       const res = await axios.get(`${API_URL}/api/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
       setUser(res.data);
     } catch (err) {
       console.error("User fetch failed:", err);
-      localStorage.removeItem("token");
+      // Only redirect if truly not authenticated
       navigate("/login");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
-    window.location.reload();
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        `${API_URL}/api/auth/logout`,
+        {},
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Logout failed", err);
+    } finally {
+      navigate("/login");
+      window.location.reload();
+    }
   };
 
   useEffect(() => {
@@ -77,7 +80,7 @@ export default function Profile() {
         {/* Back to Home Button */}
         <div className="absolute top-0 left-0 w-full pt-24 md:pt-28 px-6 md:px-10 z-20">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 dark:bg-black/30 backdrop-blur-xl border border-white/20 rounded-full text-white hover:bg-white hover:text-blue-900 transition-all duration-300 shadow-xl group"
           >
             <FiArrowLeft
@@ -104,7 +107,7 @@ export default function Profile() {
           className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4 mt-6 md:mt-8"
         >
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate("/")}
             className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-3.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-white font-bold text-sm rounded-full shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 border border-slate-200 dark:border-slate-700"
           >
             <FiHome size={18} />

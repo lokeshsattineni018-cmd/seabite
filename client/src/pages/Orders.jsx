@@ -71,21 +71,18 @@ export default function Order() {
   const navigate = useNavigate();
   const FETCH_URL = `${API_URL}/api/orders/myorders`;
 
+  // UPDATED: use session cookie instead of localStorage token
   const fetchOrders = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      setTimeout(() => navigate("/login"), 1000);
-      return;
-    }
     try {
       const response = await axios.get(FETCH_URL, {
-        headers: { Authorization: `Bearer ${token}` },
         withCredentials: true,
       });
       setOrders(response.data);
     } catch (err) {
       console.error(err);
+      if (err.response && err.response.status === 401) {
+        setTimeout(() => navigate("/login"), 1000);
+      }
     } finally {
       setLoading(false);
     }
@@ -152,12 +149,13 @@ export default function Order() {
         onClose={() => setModalConfig({ ...modalConfig, show: false })}
       />
 
+      {/* UPDATED: no token from localStorage, session will be used server-side */}
       <ReviewModal
         isOpen={isReviewOpen}
         onClose={() => setIsReviewOpen(false)}
         product={selectedProduct}
         existingReview={selectedReview}
-        token={localStorage.getItem("token")}
+        token={null}
         API_URL={API_URL}
         onSuccess={handleReviewSuccess}
       />

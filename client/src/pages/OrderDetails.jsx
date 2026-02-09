@@ -91,13 +91,12 @@ export default function OrderDetails() {
   const isRefundSuccessful =
     isCancelled && isPrepaid && order?.refundStatus === "Success";
 
+  // CHANGED: remove token header, rely on session cookie
   const fetchOrder = async () => {
-    const token = localStorage.getItem("token");
     try {
       const response = await axios.get(
         `${API_URL}/api/orders/${orderId}`,
         {
-          headers: { Authorization: `Bearer ${token}` },
           withCredentials: true,
         }
       );
@@ -129,20 +128,20 @@ export default function OrderDetails() {
     window.print();
   };
 
+  // CHANGED: remove token header, rely on session cookie
   const handleCancelOrder = async () => {
     const finalReason = cancelReason === "Other" ? customReason : cancelReason;
     if (!finalReason) return;
 
     setShowCancelConfirm(false);
     setCancelling(true);
-    const token = localStorage.getItem("token");
 
     try {
       if (isPrepaid && order.isPaid) {
         await axios.put(
           `${API_URL}/api/payment/refund`,
           { orderId: order._id },
-          { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
+          { withCredentials: true }
         );
         setModalConfig({
           show: true,
@@ -153,7 +152,7 @@ export default function OrderDetails() {
         await axios.put(
           `${API_URL}/api/orders/${order._id}/cancel`,
           { reason: finalReason },
-          { headers: { Authorization: `Bearer ${token}` }, withCredentials: true }
+          { withCredentials: true }
         );
         setModalConfig({
           show: true,

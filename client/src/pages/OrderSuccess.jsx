@@ -66,10 +66,8 @@ export default function OrderSuccess() {
         return;
       }
       try {
-        const token = localStorage.getItem("token");
         const { data } = await axios.get(`${API_URL}/api/orders/${dbId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-          withCredentials: true,
+          withCredentials: true, // use MongoDB session cookie, no token
         });
         setOrderDetails(data);
       } catch (err) {
