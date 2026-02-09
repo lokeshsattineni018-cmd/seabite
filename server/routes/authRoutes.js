@@ -1,4 +1,3 @@
-// routes/authRoutes.js
 import express from "express";
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
@@ -17,48 +16,40 @@ router.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Email & password required" });
+      return res.status(400).json({ message: "Email & password required" });
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) {
-      return res
-        .status(401)
-        .json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
     // Ensure they didn't sign up with Google only
     if (!user.password) {
-      return res
-        .status(400)
-        .json({ message: "Please log in with Google" });
+      return res.status(400).json({ message: "Please log in with Google" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res
-        .status(401)
-        .json({ message: "Invalid email or password" });
+      return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // ✅ SESSION DATA: Must match what adminAuth.js expects
+    // ✅ SESSION DATA: Populates req.session.user for middleware checks
     req.session.user = {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role, // Critical for adminAuth.js
+      role: user.role, // Critical for adminAuth.js and protect middlewares
     };
 
-    // ✅ FORCE SYNC: Ensure MongoDB record is created BEFORE sending response
+    // ✅ FORCE SYNC: Prevents the race condition causing the login loop
     req.session.save((err) => {
       if (err) {
         console.error("❌ Session Save Error:", err);
         return res.status(500).json({ message: "Session save failed" });
       }
 
-      // Only now send response to frontend
+      // Response is only sent once the session is confirmed in MongoDB
       res.status(200).json({
         user: req.session.user,
         message: "Login successful",
@@ -72,7 +63,7 @@ router.post("/login", async (req, res) => {
 
 // ================= LOGOUT =================
 router.post("/logout", (req, res) => {
-  // Clear cookie first to prevent immediate auto-relogin
+  // ✅ Clear the cookie first to stop the browser from sending old session IDs
   res.clearCookie("connect.sid", {
     path: "/",
     httpOnly: true,
@@ -89,16 +80,13 @@ router.post("/logout", (req, res) => {
   });
 });
 
-// ================= REGISTER (FILL IN YOUR LOGIC) =================
+// ================= REGISTER =================
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
-    // Basic validation – adjust as needed
     if (!name || !email || !password) {
-      return res
-        .status(400)
-        .json({ message: "Name, email and password are required" });
+      return res.status(400).json({ message: "Name, email and password are required" });
     }
 
     const existing = await User.findOne({ email: email.toLowerCase() });
@@ -112,10 +100,10 @@ router.post("/register", async (req, res) => {
       name,
       email: email.toLowerCase(),
       password: hashed,
-      role: "user", // or whatever default role you use
+      role: "user",
     });
 
-    // Optionally auto-login after register
+    // Auto-login logic after registration
     req.session.user = {
       id: user._id,
       name: user.name,

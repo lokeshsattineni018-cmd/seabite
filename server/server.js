@@ -34,7 +34,7 @@ const allowedOrigins = [
   "http://localhost:5173",
 ];
 
-// ✅ MANUAL CORS: Explicitly trust your specific domains to allow session cookies
+// ✅ MANUAL CORS FIX: Directly naming origins to stop the browser from blocking credentials
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -63,7 +63,7 @@ const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-/* --- 3. DATABASE CONNECTION (FIXED TIMEOUT LOGIC) --- */
+/* --- 3. DATABASE CONNECTION --- */
 const connectDB = async () => {
   if (mongoose.connection.readyState >= 1) {
     console.log("➡️ Using existing MongoDB connection");
@@ -72,37 +72,33 @@ const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      serverSelectionTimeoutMS: 5000, // how long to wait for a server
-      connectTimeoutMS: 10000,        // how long to wait for initial socket
+      serverSelectionTimeoutMS: 5000, 
+      connectTimeoutMS: 10000,        
     });
     console.log("✅ MongoDB Connected");
   } catch (error) {
     console.error("❌ MongoDB Connection Error:", error);
-    // Fail fast on cold start so Vercel shows a clear error
     throw error;
   }
 };
-
-// Immediate connection check (on cold start)
 await connectDB();
 
-/* --- 4. MONGODB SESSION SETUP (REUSE EXISTING CLIENT) --- */
+/* --- 4. MONGODB SESSION SETUP --- */
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "seabite_default_secret",
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      // Reuse the Mongoose client instead of creating a second connection
       client: mongoose.connection.getClient(),
       collectionName: "sessions",
       ttl: 14 * 24 * 60 * 60,
     }),
-    proxy: true, // ✅ Required for Vercel's proxy layers
+    proxy: true, 
     cookie: {
-      secure: true, // ✅ HTTPS only (needed for sameSite: "none")
+      secure: true, 
       httpOnly: true,
-      sameSite: "none", // ✅ Required for cross-domain cookie trust
+      sameSite: "none", // ✅ Critical for Vercel/External Domain login
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
@@ -122,9 +118,8 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 
-/* Optional: simple health check route */
 app.get("/health", (req, res) => {
-  const state = mongoose.connection.readyState; // 0=disconnected,1=connected
+  const state = mongoose.connection.readyState;
   res.json({ status: state === 1 ? "ok" : "down", mongoState: state });
 });
 

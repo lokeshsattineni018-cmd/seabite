@@ -10,12 +10,12 @@ function generateCode(prefix) {
 
 router.post("/spin", async (req, res) => {
   try {
-    // ✅ NO REQ.BODY: Identity comes strictly from Mongo session
+    // ✅ Identify user strictly via session
     const userEmail = req.session?.user?.email;
 
     if (!userEmail) return res.status(401).json({ error: "Please login first to spin!" });
 
-    const existing = await Coupon.findOne({ userEmail, isSpinCoupon: true });
+    const existing = await Coupon.findOne({ userEmail: userEmail.toLowerCase(), isSpinCoupon: true });
     if (existing) return res.status(403).json({ error: "One spin per account only!" });
 
     const rand = Math.random() * 100;
@@ -57,7 +57,10 @@ router.post("/spin", async (req, res) => {
       code: coupon.code,
       expiresAt: coupon.expiresAt,
     });
-  } catch (err) { res.status(500).json({ error: "Server error" }); }
+  } catch (err) { 
+    console.error("❌ Spin Error:", err);
+    res.status(500).json({ error: "Server error" }); 
+  }
 });
 
 export default router;
