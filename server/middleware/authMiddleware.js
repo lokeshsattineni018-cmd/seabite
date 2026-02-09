@@ -3,19 +3,33 @@ import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
   try {
-    // If full user object is stored in session
-    if (req.session && req.session.user && req.session.user._id) {
-      req.user = req.session.user;
+    // Case 1: session.login stored a compact user object
+    if (req.session && req.session.user && req.session.user.id) {
+      const sessUser = req.session.user;
+
+      req.user = {
+        _id: sessUser.id,
+        id: sessUser.id,          // ensure id is always present
+        name: sessUser.name,
+        email: sessUser.email,
+        role: sessUser.role,
+      };
+
       return next();
     }
 
-    // If only userId is stored in session
+    // Case 2: only userId stored in session
     if (req.session && req.session.userId) {
       const user = await User.findById(req.session.userId).select("-password");
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
-      req.user = user;
+
+      req.user = {
+        ...user.toObject(),
+        id: user._id.toString(),  // normalize to id
+      };
+
       return next();
     }
 
@@ -31,6 +45,8 @@ export const admin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     return next();
   } else {
-    return res.status(403).json({ message: "Not authorized as an administrator" });
+    return res
+      .status(403)
+      .json({ message: "Not authorized as an administrator" });
   }
 };
