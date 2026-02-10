@@ -1,4 +1,4 @@
-import { useState, useRef, memo, useEffect } from "react";
+import { useState, useRef, useEffect, memo } from "react";
 import axios from "axios";
 import {
   FiUploadCloud,
@@ -57,6 +57,8 @@ export default function AddProduct() {
   });
 
   const fileInputRef = useRef(null);
+  // ✅ FIX: Use absolute backend URL
+  const backendBase = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
   // ✅ Stop the "white flash" by simulating a brief mount delay
   useEffect(() => {
@@ -108,7 +110,8 @@ export default function AddProduct() {
       Object.keys(form).forEach(key => data.append(key, form[key]));
       data.append("image", image);
 
-      const response = await axios.post("/api/admin/products", data, {
+      // ✅ FIX: Use full backend URL + withCredentials
+      const response = await axios.post(`${backendBase}/api/admin/products`, data, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
       });

@@ -12,7 +12,7 @@ import {
 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal";
 
-// ✅ NEW: Skeleton Row for Desktop to stop the "white flash" and lag
+// ✅ Skeleton Row for Desktop to stop the "white flash" and lag
 const SkeletonRow = () => (
   <tr className="animate-pulse">
     <td className="py-4 px-6"><div className="flex items-center gap-4"><div className="w-10 h-10 rounded-lg bg-slate-100 shrink-0" /><div className="h-4 w-32 bg-slate-100 rounded" /></div></td>
@@ -23,7 +23,7 @@ const SkeletonRow = () => (
   </tr>
 );
 
-// ✅ NEW: Skeleton Card for Mobile
+// ✅ Skeleton Card for Mobile
 const SkeletonCard = () => (
   <div className="p-4 flex items-center gap-4 animate-pulse">
     <div className="w-16 h-16 rounded-xl bg-slate-100 shrink-0" />
@@ -39,6 +39,7 @@ export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const backendBase = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
   const [modal, setModal] = useState({
     show: false,
     message: "",
@@ -48,7 +49,8 @@ export default function AdminProducts() {
   const fetchProducts = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
-      const res = await axios.get("/api/admin/products", {
+      // ✅ FIX: Use absolute URL + withCredentials
+      const res = await axios.get(`${backendBase}/api/admin/products`, {
         params: search ? { search } : {},
         withCredentials: true,
       });
@@ -78,7 +80,8 @@ export default function AdminProducts() {
   const deleteProduct = async (id) => {
     if (!window.confirm("Are you sure you want to delete this product?")) return;
     try {
-      await axios.delete(`/api/admin/products/${id}`, { withCredentials: true });
+      // ✅ FIX: Use absolute URL + withCredentials
+      await axios.delete(`${backendBase}/api/admin/products/${id}`, { withCredentials: true });
       setModal({ show: true, message: "Product deleted successfully.", type: "success" });
       fetchProducts(true); // Silent refresh after delete
     } catch (err) {
@@ -87,10 +90,11 @@ export default function AdminProducts() {
   };
 
   const getImageSrc = (img) => {
-    if (!img) return "";
+    if (!img) return "https://placehold.co/400?text=No+Image";
     if (img.startsWith("http")) return img;
     const file = img.split(/[/\\]/).pop();
-    return `/uploads/${file}`;
+    // ✅ FIX: Point to backend uploads folder
+    return `${backendBase}/uploads/${file}`;
   };
 
   return (
