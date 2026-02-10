@@ -44,12 +44,12 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Cancellation = lazy(() => import("./pages/Cancellation"));
 
-// Admin (NOT lazy – load once, no Suspense flash)
+// Admin Imports
 import AdminLayout from "./admin/AdminLayout";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminProducts from "./admin/AdminProducts";
 import AddProduct from "./admin/AddProduct";
-import EditProduct from "./admin/AddProduct";
+import EditProduct from "./admin/EditProduct"; // ✅ FIXED: Was importing AddProduct before!
 import AdminOrders from "./admin/AdminOrders";
 import AdminUsers from "./admin/AdminUsers";
 import AdminLogin from "./admin/AdminLogin";
@@ -86,10 +86,8 @@ function MainLayout() {
 
       <div className="flex-grow">
         {isAdminRoute ? (
-          /* ✅ ADMIN ROUTES: Removed AnimatePresence and location keys. 
-             This prevents the sidebar from unmounting and causing white flashes */
+          /* ✅ ADMIN ROUTES: AnimatePresence removed to stop layout flashing */
           <Routes>
-            {/* Admin login - Still uses PageTransition as it's a standalone page */}
             <Route
               path="/admin/login"
               element={
@@ -99,7 +97,7 @@ function MainLayout() {
               }
             />
 
-            {/* Admin protected area: Using nested routes so AdminLayout stays mounted */}
+            {/* Admin protected area: Nested routes keep layout mounted */}
             <Route
               path="/admin"
               element={
@@ -108,7 +106,6 @@ function MainLayout() {
                 </AdminRoute>
               }
             >
-              {/* index route makes /admin automatically show dashboard */}
               <Route index element={<AdminDashboard />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
@@ -121,7 +118,7 @@ function MainLayout() {
             </Route>
           </Routes>
         ) : (
-          // 🔹 STORE + INFO ROUTES: Keep lazy + Suspense for customer performance
+          // 🔹 STORE ROUTES: Keep AnimatePresence for smooth customer experience
           <Suspense fallback={<SeaBiteLoader />}>
             <AnimatePresence mode="wait">
               <Routes location={location} key={location.pathname}>
@@ -131,7 +128,6 @@ function MainLayout() {
                 <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
                 <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
                 
-                {/* PROTECTED USER ROUTES */}
                 <Route path="/notifications" element={<PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition>} />
                 <Route path="/checkout" element={<PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition>} />
                 <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
@@ -139,7 +135,6 @@ function MainLayout() {
                 <Route path="/orders" element={<PageTransition><PrivateRoute><Orders /></PrivateRoute></PageTransition>} />
                 <Route path="/orders/:orderId" element={<PageTransition><PrivateRoute><OrderDetails /></PrivateRoute></PageTransition>} />
 
-                {/* PUBLIC AUTH + INFO */}
                 <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
                 <Route path="/about" element={<PageTransition><About /></PageTransition>} />
                 <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
