@@ -1,36 +1,35 @@
+// src/admin/AdminMessages.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { FiMail, FiCalendar, FiUser } from "react-icons/fi";
 import { motion } from "framer-motion";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
-
 export default function AdminMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchMessages();
-  }, []);
-
   const fetchMessages = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/contact`, {
-        withCredentials: true,
-      });
-      setMessages(res.data);
+      const res = await axios.get("/api/contact");
+      setMessages(res.data || []);
     } catch (err) {
-      console.error(err);
+      console.error("AdminMessages fetch error:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    fetchMessages();
+  }, []);
+
   return (
     <div className="p-6 md:p-10 bg-[#f4f7fa] dark:bg-[#0a1625] min-h-screen">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">Inbox</h1>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white">
+            Inbox
+          </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             Customer inquiries & messages
           </p>

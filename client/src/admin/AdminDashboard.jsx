@@ -38,8 +38,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const API_URL = "https://seabite-server.vercel.app";
-
   useEffect(() => {
     fetchDashboardData();
   }, [timeFilter]);
@@ -47,16 +45,11 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       const [dashboardRes, messagesRes, reviewsRes] = await Promise.all([
-        axios.get(`${API_URL}/api/admin`, {
+        axios.get("/api/admin", {
           params: { range: timeFilter },
-          withCredentials: true,
         }),
-        axios.get(`${API_URL}/api/contact`, {
-          withCredentials: true,
-        }),
-        axios.get(`${API_URL}/api/admin/reviews/all`, {
-          withCredentials: true,
-        }),
+        axios.get("/api/contact"),
+        axios.get("/api/admin/reviews/all"),
       ]);
 
       setStats(dashboardRes.data.stats);
@@ -81,12 +74,7 @@ export default function AdminDashboard() {
   const deleteReviewHandler = async (productId, reviewId) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
     try {
-      await axios.delete(
-        `${API_URL}/api/admin/products/${productId}/reviews/${reviewId}`,
-        {
-          withCredentials: true,
-        }
-      );
+      await axios.delete(`/api/admin/products/${productId}/reviews/${reviewId}`);
       fetchDashboardData();
     } catch (err) {
       alert("Failed to delete review.");
@@ -96,7 +84,7 @@ export default function AdminDashboard() {
   const getImageUrl = (imagePath) => {
     if (!imagePath) return PLACEHOLDER_IMG;
     const filename = imagePath.split(/[/\\]/).pop();
-    return `${API_URL}/uploads/${filename}`;
+    return `/uploads/${filename}`;
   };
 
   if (loading) {

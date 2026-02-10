@@ -1,3 +1,4 @@
+// src/admin/EditProduct.jsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -14,9 +15,6 @@ import {
   FiBox,
 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 export default function EditProduct() {
   const { id } = useParams();
@@ -45,25 +43,24 @@ export default function EditProduct() {
     if (!imagePath) return null;
     if (imagePath.startsWith("http")) return imagePath;
     const filename = imagePath.split(/[/\\]/).pop();
-    return `${API_URL}/uploads/${filename}`;
+    return `/uploads/${filename}`;
   };
 
   useEffect(() => {
     axios
-      .get(`${API_URL}/api/admin/products/${id}`, {
-        withCredentials: true,
-      })
+      .get(`/api/admin/products/${id}`)
       .then((res) => {
+        const data = res.data || {};
         setForm({
-          ...res.data,
-          basePrice: res.data.basePrice || "",
-          unit: res.data.unit || "kg",
-          stock: res.data.stock || "in",
+          ...data,
+          basePrice: data.basePrice || "",
+          unit: data.unit || "kg",
+          stock: data.stock || "in",
         });
         setLoading(false);
       })
       .catch((err) => {
-        console.error(err);
+        console.error("Edit product load error:", err);
         setModal({
           show: true,
           message: "Failed to load product data.",
@@ -83,20 +80,16 @@ export default function EditProduct() {
     setSubmitting(true);
 
     try {
-      await axios.put(
-        `${API_URL}/api/admin/products/${id}`,
-        {
-          name: form.name,
-          category: form.category,
-          basePrice: Number(form.basePrice),
-          unit: form.unit,
-          desc: form.desc,
-          image: form.image,
-          trending: form.trending,
-          stock: form.stock,
-        },
-        { withCredentials: true }
-      );
+      await axios.put(`/api/admin/products/${id}`, {
+        name: form.name,
+        category: form.category,
+        basePrice: Number(form.basePrice),
+        unit: form.unit,
+        desc: form.desc,
+        image: form.image,
+        trending: form.trending,
+        stock: form.stock,
+      });
 
       setModal({
         show: true,
@@ -105,6 +98,7 @@ export default function EditProduct() {
       });
       setTimeout(() => navigate("/admin/products"), 1500);
     } catch (err) {
+      console.error("Edit product update error:", err);
       setModal({
         show: true,
         message: "Update failed.",

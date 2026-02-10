@@ -1,3 +1,4 @@
+// src/admin/AdminProducts.jsx
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -11,9 +12,6 @@ import {
   FiRefreshCw,
 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 const formatPrice = (price) => {
   return price ? `₹${Number(price).toFixed(2)}` : "₹0.00";
@@ -33,14 +31,13 @@ export default function AdminProducts() {
     setLoading(true);
     try {
       const res = await axios.get(
-        `${API_URL}/api/admin/products?search=${encodeURIComponent(search)}`,
-        { withCredentials: true }
+        `/api/admin/products?search=${encodeURIComponent(search)}`
       );
       setProducts(
         Array.isArray(res.data.products) ? res.data.products : []
       );
     } catch (err) {
-      console.error(err);
+      console.error("Admin products fetch error:", err);
       setProducts([]);
     } finally {
       setLoading(false);
@@ -62,9 +59,7 @@ export default function AdminProducts() {
     )
       return;
     try {
-      await axios.delete(`${API_URL}/api/admin/products/${id}`, {
-        withCredentials: true,
-      });
+      await axios.delete(`/api/admin/products/${id}`);
       setModal({
         show: true,
         message: "Product deleted successfully.",
@@ -82,9 +77,9 @@ export default function AdminProducts() {
 
   const getImageSrc = (img) => {
     if (!img) return "";
-    return img.startsWith("http")
-      ? img
-      : `${API_URL}/uploads/${img.split(/[/\\]/).pop()}`;
+    if (img.startsWith("http")) return img;
+    const file = img.split(/[/\\]/).pop();
+    return `/uploads/${file}`;
   };
 
   return (

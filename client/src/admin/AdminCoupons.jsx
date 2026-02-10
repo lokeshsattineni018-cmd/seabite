@@ -1,12 +1,15 @@
+// src/admin/AdminCoupons.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { FiTrash2, FiTag, FiPlus } from "react-icons/fi";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
-
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState([]);
-  const [formData, setFormData] = useState({ code: "", value: "", minOrderAmount: "" });
+  const [formData, setFormData] = useState({
+    code: "",
+    value: "",
+    minOrderAmount: "",
+  });
 
   useEffect(() => {
     fetchCoupons();
@@ -14,19 +17,19 @@ export default function AdminCoupons() {
 
   const fetchCoupons = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/coupons`, {
+      const res = await axios.get("/api/coupons", {
         withCredentials: true,
       });
-      setCoupons(res.data);
+      setCoupons(res.data || []);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch coupons error:", err);
     }
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_URL}/api/coupons`, formData, {
+      await axios.post("/api/coupons", formData, {
         withCredentials: true,
       });
       setFormData({ code: "", value: "", minOrderAmount: "" });
@@ -38,27 +41,40 @@ export default function AdminCoupons() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this coupon?")) return;
-    await axios.delete(`${API_URL}/api/coupons/${id}`, {
-      withCredentials: true,
-    });
-    fetchCoupons();
+    try {
+      await axios.delete(`/api/coupons/${id}`, {
+        withCredentials: true,
+      });
+      fetchCoupons();
+    } catch (err) {
+      console.error("Delete coupon error:", err);
+    }
   };
 
   return (
     <div className="p-6 md:p-10 bg-slate-50 min-h-screen">
-      <h1 className="text-2xl font-bold text-slate-800 mb-6">Manage Coupons</h1>
+      <h1 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+        <FiTag />
+        Manage Coupons
+      </h1>
 
       {/* CREATE FORM */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 mb-8">
         <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
           <FiPlus /> Create New Coupon
         </h3>
-        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <form
+          onSubmit={handleCreate}
+          className="grid grid-cols-1 md:grid-cols-4 gap-4"
+        >
           <input
             placeholder="Coupon Code (e.g. FRESH20)"
             value={formData.code}
             onChange={(e) =>
-              setFormData({ ...formData, code: e.target.value.toUpperCase() })
+              setFormData({
+                ...formData,
+                code: e.target.value.toUpperCase(),
+              })
             }
             className="border p-2 rounded-lg uppercase font-bold"
             required
@@ -78,7 +94,10 @@ export default function AdminCoupons() {
             placeholder="Min Order ₹ (Optional)"
             value={formData.minOrderAmount}
             onChange={(e) =>
-              setFormData({ ...formData, minOrderAmount: e.target.value })
+              setFormData({
+                ...formData,
+                minOrderAmount: e.target.value,
+              })
             }
             className="border p-2 rounded-lg"
           />
@@ -103,7 +122,7 @@ export default function AdminCoupons() {
                 {coupon.code}
               </h3>
               <p className="text-sm text-slate-500">
-                {coupon.value}% Off • Min Order: ₹{coupon.minOrderAmount}
+                {coupon.value}% Off • Min Order: ₹{coupon.minOrderAmount || 0}
               </p>
             </div>
             <button
@@ -114,6 +133,9 @@ export default function AdminCoupons() {
             </button>
           </div>
         ))}
+        {coupons.length === 0 && (
+          <p className="text-sm text-slate-500">No coupons created yet.</p>
+        )}
       </div>
     </div>
   );

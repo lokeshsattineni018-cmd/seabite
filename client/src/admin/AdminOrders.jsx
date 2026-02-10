@@ -1,30 +1,22 @@
+// src/admin/AdminOrders.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch,
   FiRefreshCw,
-  FiUser,
-  FiMapPin,
-  FiCalendar,
+  FiUsers,
+  FiTruck,
+  FiTrash2,
+  FiPrinter,
   FiXCircle,
-  FiChevronRight,
   FiTag,
   FiAlertCircle,
-  FiPhone,
-  FiPrinter,
   FiDollarSign,
-  FiTruck,
-  FiCheckCircle,
-  FiCreditCard,
-  FiRotateCcw,
-  FiTrash2,
 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal";
 import Invoice from "../components/Invoice";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 const STATUS_OPTIONS = [
   "All",
   "Pending",
@@ -52,11 +44,12 @@ export default function AdminOrders() {
   const fetchOrders = () => {
     setLoading(true);
     axios
-      .get(`${API_URL}/api/orders`, { withCredentials: true })
+      .get("/api/orders")
       .then((res) => {
-        setOrders(res.data);
+        const list = res.data || [];
+        setOrders(list);
         if (selectedOrder) {
-          const updated = res.data.find((o) => o._id === selectedOrder._id);
+          const updated = list.find((o) => o._id === selectedOrder._id);
           if (updated) setSelectedOrder(updated);
         }
         setLoading(false);
@@ -70,10 +63,8 @@ export default function AdminOrders() {
   const fetchAllReviews = async () => {
     setReviewsLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/admin/reviews/all`, {
-        withCredentials: true,
-      });
-      setAllReviews(res.data);
+      const res = await axios.get("/api/admin/reviews/all");
+      setAllReviews(res.data || []);
     } catch (err) {
       console.error("Reviews Fetch Error:", err);
     } finally {
@@ -97,11 +88,7 @@ export default function AdminOrders() {
       return;
     }
     try {
-      await axios.put(
-        `${API_URL}/api/orders/${id}/status`,
-        { status },
-        { withCredentials: true }
-      );
+      await axios.put(`/api/orders/${id}/status`, { status });
       setModal({
         show: true,
         message: `Order status updated to ${status}`,
@@ -120,16 +107,15 @@ export default function AdminOrders() {
   const handleRazorpayRefund = async (orderId) => {
     if (
       !window.confirm(
-        "⚠️ Refund full amount via Razorpay and Cancel the order?"
+        "⚠️ Refund full amount via Razorpay and cancel the order?"
       )
     )
       return;
     try {
-      await axios.put(
-        `${API_URL}/api/payment/refund`,
-        { orderId, reason: "Admin Request" },
-        { withCredentials: true }
-      );
+      await axios.put("/api/payment/refund", {
+        orderId,
+        reason: "Admin Request",
+      });
       setModal({
         show: true,
         message: "Refund Initiated.",
@@ -157,11 +143,7 @@ export default function AdminOrders() {
 
   const updateRefundStatus = async (id, refundStatus) => {
     try {
-      await axios.put(
-        `${API_URL}/api/orders/${id}/status`,
-        { refundStatus },
-        { withCredentials: true }
-      );
+      await axios.put(`/api/orders/${id}/status`, { refundStatus });
       setModal({
         show: true,
         message: `Refund state: ${refundStatus}`,
@@ -183,8 +165,7 @@ export default function AdminOrders() {
     if (!window.confirm("Delete this review permanently?")) return;
     try {
       await axios.delete(
-        `${API_URL}/api/admin/products/${productId}/reviews/${reviewId}`,
-        { withCredentials: true }
+        `/api/admin/products/${productId}/reviews/${reviewId}`
       );
       setModal({
         show: true,
@@ -229,7 +210,6 @@ export default function AdminOrders() {
             onClose={() => setSelectedOrder(null)}
             updateRefundStatus={updateRefundStatus}
             onProcessRefund={handleRazorpayRefund}
-            onDeleteReview={deleteReview}
           />
         )}
       </AnimatePresence>
@@ -457,9 +437,11 @@ function OrderDetailsModal({
   onProcessRefund,
 }) {
   const getFullImageUrl = (imagePath) => {
-    if (!imagePath) return "https://placehold.co/400?text=No+Image";
+    if (!imagePath)
+      return "https://placehold.co/400?text=No+Image";
+    if (imagePath.startsWith("http")) return imagePath;
     const filename = imagePath.split(/[/\\]/).pop();
-    return `${API_URL}/uploads/${filename}`;
+    return `/uploads/${filename}`;
   };
 
   const canAutoRefund =
@@ -558,6 +540,7 @@ function OrderDetailsModal({
                 <div className="flex items-center gap-4">
                   <img
                     src={getFullImageUrl(item.image)}
+                    alt={item.name}
                     className="w-10 h-10 object-contain bg-slate-50 rounded-lg"
                   />
                   <div className="flex-1 min-w-0">
@@ -609,6 +592,7 @@ function OrderDetailsModal({
             Exit Console
           </button>
         </div>
+
         <div>
           <Invoice order={order} type="invoice" />
         </div>

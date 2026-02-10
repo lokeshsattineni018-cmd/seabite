@@ -1,3 +1,4 @@
+// src/admin/AdminSidebar.jsx
 import { NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -9,12 +10,9 @@ import {
   FiLogOut,
   FiGlobe,
   FiMail,
-  FiTag
+  FiTag,
 } from "react-icons/fi";
 import axios from "axios";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 const LINKS = [
   { name: "Dashboard", path: "/admin/dashboard", icon: <FiGrid size={20} /> },
@@ -32,16 +30,10 @@ export default function AdminSidebar() {
 
   const handleLogout = async () => {
     try {
-      // optional: tell backend to clear auth cookie / session
-      await axios.post(
-        `${API_URL}/api/admin/logout`,
-        {},
-        { withCredentials: true }
-      );
+      await axios.post("/api/admin/logout");
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
-      // clear any leftover client state and redirect
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       navigate("/admin/login");

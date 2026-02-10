@@ -1,14 +1,8 @@
+// src/admin/AdminUsers.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  FiSearch,
-  FiUsers,
-  FiRefreshCw,
-} from "react-icons/fi";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+import { FiSearch, FiUsers, FiRefreshCw } from "react-icons/fi";
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -24,11 +18,9 @@ export default function AdminUsers() {
     setStatusMessage({ type: "", message: "" });
 
     axios
-      .get(`${API_URL}/api/admin/users/intelligence`, {
-        withCredentials: true,
-      })
+      .get("/api/admin/users/intelligence")
       .then((res) => {
-        setUsers(res.data);
+        setUsers(res.data || []);
         setLoading(false);
       })
       .catch((err) => {
@@ -47,12 +39,8 @@ export default function AdminUsers() {
 
   const filteredUsers = users.filter(
     (u) =>
-      (u.name?.toLowerCase() || "").includes(
-        search.toLowerCase()
-      ) ||
-      (u.email?.toLowerCase() || "").includes(
-        search.toLowerCase()
-      )
+      (u.name?.toLowerCase() || "").includes(search.toLowerCase()) ||
+      (u.email?.toLowerCase() || "").includes(search.toLowerCase())
   );
 
   return (
@@ -180,17 +168,20 @@ export default function AdminUsers() {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-slate-500">
-                      {new Date(
-                        u.createdAt
-                      ).toLocaleDateString()}
+                      {u.createdAt
+                        ? new Date(
+                            u.createdAt
+                          ).toLocaleDateString()
+                        : "-"}
                     </td>
                     <td className="py-4 px-6 text-right">
                       <p className="font-black text-slate-900">
                         ₹
-                        {u.intelligence?.totalSpent?.toLocaleString()}
+                        {u.intelligence?.totalSpent
+                          ?.toLocaleString() || 0}
                       </p>
                       <p className="text-[10px] font-bold text-slate-400 uppercase">
-                        {u.intelligence?.orderCount} Orders
+                        {u.intelligence?.orderCount || 0} Orders
                       </p>
                     </td>
                   </tr>
@@ -241,17 +232,20 @@ export default function AdminUsers() {
                   <div className="flex items-center justify-between mt-2">
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
                       Joined:{" "}
-                      {new Date(
-                        u.createdAt
-                      ).toLocaleDateString()}
+                      {u.createdAt
+                        ? new Date(
+                            u.createdAt
+                          ).toLocaleDateString()
+                        : "-"}
                     </p>
                     <div className="text-right">
                       <p className="text-xs font-black text-slate-900 leading-none">
                         ₹
-                        {u.intelligence?.totalSpent?.toLocaleString()}
+                        {u.intelligence?.totalSpent
+                          ?.toLocaleString() || 0}
                       </p>
                       <p className="text-[9px] font-bold text-blue-500 uppercase">
-                        {u.intelligence?.orderCount} Orders
+                        {u.intelligence?.orderCount || 0} Orders
                       </p>
                     </div>
                   </div>

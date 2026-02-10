@@ -1,12 +1,24 @@
+// src/pages/Products.jsx
 import { useState, useContext, useEffect, useRef, forwardRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
-import { FiSearch, FiCheck, FiShoppingBag, FiPackage, FiChevronDown } from "react-icons/fi";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+} from "framer-motion";
+import {
+  FiSearch,
+  FiCheck,
+  FiShoppingBag,
+  FiPackage,
+  FiChevronDown,
+} from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
 import { addToCart } from "../utils/cartStorage";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+// We rely on axios.defaults.baseURL from App.jsx; no separate API_URL needed here
 
 const CATEGORY_DATA = {
   All: {
@@ -40,7 +52,7 @@ const TiltCard = forwardRef(({ children, onClick }, ref) => {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const internalRef = useRef(null);
-  const rotateX = useTransform(y, [-100, 100], [3, -3]); // Reduced tilt for minimal look
+  const rotateX = useTransform(y, [-100, 100], [3, -3]);
   const rotateY = useTransform(x, [-100, 100], [-3, 3]);
 
   const handleMouseMove = (e) => {
@@ -81,6 +93,7 @@ const TiltCard = forwardRef(({ children, onClick }, ref) => {
 // --- 2. ADD BUTTON (Responsive) ---
 const AddButton = ({ product, onAdd }) => {
   const [status, setStatus] = useState("idle");
+
   const handleClick = async (e) => {
     e.stopPropagation();
     setStatus("loading");
@@ -97,12 +110,11 @@ const AddButton = ({ product, onAdd }) => {
       onClick={handleClick}
       disabled={status !== "idle"}
       className={`relative h-8 md:h-10 flex items-center justify-center rounded-full transition-all duration-300 font-bold uppercase tracking-wider text-[9px] md:text-[10px]
-                ${
-                  status === "success"
-                    ? "w-8 md:w-10 bg-emerald-500 text-white"
-                    : "px-3 md:px-5 bg-slate-900 dark:bg-blue-600 text-white hover:opacity-90"
-                }
-            `}
+        ${
+          status === "success"
+            ? "w-8 md:w-10 bg-emerald-500 text-white"
+            : "px-3 md:px-5 bg-slate-900 dark:bg-blue-600 text-white hover:opacity-90"
+        }`}
     >
       <AnimatePresence mode="wait">
         {status === "idle" && (
@@ -155,12 +167,11 @@ export default function Products() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/products`, {
-          withCredentials: true, // ✅ send session cookie
-        });
+        const res = await axios.get("/api/products");
+        // backend returns { products: [...] } or plain array
         setProducts(res.data.products || res.data || []);
       } catch (err) {
-        console.error(err);
+        console.error("Products fetch error:", err);
       } finally {
         setLoading(false);
       }
@@ -184,7 +195,7 @@ export default function Products() {
         activeCat === "All" ||
         p.category?.toLowerCase() === activeCat.toLowerCase();
       const matchesSearch = p.name
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(searchTerm.toLowerCase());
       return matchesCat && matchesSearch;
     });
@@ -206,9 +217,17 @@ export default function Products() {
     setDisplayed(result);
   }, [activeCat, searchTerm, products, sortBy]);
 
+  // Helper to build full image URL from relative path saved in DB
+  const getProductImage = (imagePath) => {
+    if (!imagePath) return "";
+    // if backend sends "/uploads/..." keep as is; axios baseURL is only for API calls
+    if (imagePath.startsWith("http")) return imagePath;
+    if (imagePath.startsWith("/")) return imagePath;
+    return `/uploads/${imagePath}`;
+  };
+
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#0b1221] pt-24 md:pt-32 pb-12 md:pb-20 px-3 md:px-12 transition-colors duration-500 overflow-x-hidden font-sans">
-      {/* Minimal Background Gradient */}
       <div
         className={`fixed top-0 left-0 w-full h-[50vh] bg-gradient-to-b ${currentTheme.gradient} opacity-30 pointer-events-none -z-10`}
       />
@@ -246,7 +265,6 @@ export default function Products() {
                 className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all"
               />
             </div>
-            {/* Simple Sort (Icon only on mobile could be an option, but keeping select for now) */}
             <div className="relative shrink-0">
               <select
                 value={sortBy}
@@ -256,13 +274,14 @@ export default function Products() {
                 <option value="Newest">Newest</option>
                 <option value="Price: Low to High">Price: Low</option>
                 <option value="Price: High to Low">Price: High</option>
+                <option value="Popularity">Popularity</option>
               </select>
               <FiChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" />
             </div>
           </div>
         </div>
 
-        {/* Filter Tabs (Minimal Pills) */}
+        {/* Filter Tabs */}
         <div className="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar">
           {categories.map((cat) => (
             <button
@@ -285,7 +304,7 @@ export default function Products() {
           ))}
         </div>
 
-        {/* Grid - 2 COLUMNS ON MOBILE (grid-cols-2) */}
+        {/* Product Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
           <AnimatePresence mode="popLayout">
             {loading ? (
@@ -307,8 +326,7 @@ export default function Products() {
                     transition={{ delay: idx * 0.05 }}
                     className="h-full flex flex-col"
                   >
-                    {/* IMAGE AREA - Adjusted height for mobile */}
-                    <div className="relative h-36 md:h-56 w-full bg-slate-50 dark:bg-slate-900/40 flex items_center justify-center p-3 md:p-6">
+                    <div className="relative h-36 md:h-56 w-full bg-slate-50 dark:bg-slate-900/40 flex items-center justify-center p-3 md:p-6">
                       {p.trending && (
                         <span className="absolute top-3 left-3 bg-white dark:bg-slate-800 px-2 py-1 rounded-full text-[8px] md:text-[9px] font-bold uppercase tracking-wider shadow-sm z-10">
                           Hot
@@ -318,12 +336,12 @@ export default function Products() {
                       <motion.img
                         whileHover={{ scale: 1.05 }}
                         transition={{ duration: 0.4 }}
-                        src={`${API_URL}${p.image}`}
+                        src={getProductImage(p.image)}
+                        alt={p.name}
                         className="w-full h-full object-contain drop-shadow-md"
                       />
                     </div>
 
-                    {/* TEXT CONTENT - Minimal & Clean */}
                     <div className="p-3 md:p-5 flex-grow flex flex-col justify-between bg-white dark:bg-slate-800/50">
                       <div>
                         <span className="text-[9px] md:text-[10px] font-semibold uppercase tracking-wider text-slate-400 block mb-1">
@@ -345,7 +363,7 @@ export default function Products() {
                         </div>
                         <AddButton
                           product={p}
-                          onAdd={(e) => {
+                          onAdd={() => {
                             addToCart({
                               ...p,
                               qty: 1,
@@ -366,10 +384,7 @@ export default function Products() {
         {/* Empty State */}
         {!loading && displayed.length === 0 && (
           <div className="text-center py-20">
-            <FiPackage
-              size={32}
-              className="mx-auto text-slate-300 mb-3"
-            />
+            <FiPackage size={32} className="mx-auto text-slate-300 mb-3" />
             <h2 className="text-lg font-medium dark:text-white">
               No catches found
             </h2>

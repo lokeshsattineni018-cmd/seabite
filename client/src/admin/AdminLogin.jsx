@@ -1,3 +1,4 @@
+// src/admin/AdminLogin.jsx
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -13,14 +14,16 @@ import {
 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal";
 
-const API_URL = "https://seabite-server.vercel.app";
-
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [modal, setModal] = useState({ show: false, message: "", type: "info" });
+  const [modal, setModal] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
 
   const [failCount, setFailCount] = useState(0);
   const [lockedUntil, setLockedUntil] = useState(null);
@@ -35,7 +38,8 @@ export default function AdminLogin() {
     if (isLocked) {
       setModal({
         show: true,
-        message: "Too many failed attempts. Please wait a moment and try again.",
+        message:
+          "Too many failed attempts. Please wait a moment and try again.",
         type: "error",
       });
       return;
@@ -83,11 +87,9 @@ export default function AdminLogin() {
       await new Promise((resolve) => setTimeout(resolve, 1200));
 
       const res = await axios.post(
-        `${API_URL}/api/auth/login`,
+        "/api/auth/login",
         { email, password },
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
 
       if (res.data.user.role !== "admin") {
@@ -161,7 +163,11 @@ export default function AdminLogin() {
             <div className="relative inline-block mb-6">
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                transition={{
+                  duration: 20,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
                 className="absolute inset-0 border-2 border-dashed border-blue-500/20 rounded-full scale-150"
               />
               <div className="w-20 h-20 bg-[#f8fafc] rounded-3xl flex items-center justify-center border border-slate-100 shadow-inner relative z-10">
@@ -234,7 +240,9 @@ export default function AdminLogin() {
                 </>
               ) : (
                 <>
-                  <span>{isLocked ? "Terminal Locked" : "Initialize Deck"}</span>
+                  <span>
+                    {isLocked ? "Terminal Locked" : "Initialize Deck"}
+                  </span>
                   {!isLocked && <FiArrowRight />}
                 </>
               )}
@@ -249,7 +257,8 @@ export default function AdminLogin() {
               </span>
             </div>
             <p className="text-[9px] text-slate-300 font-mono tracking-tighter">
-              Terminal ID: 0x9AF2 • Last Sync: {new Date().toLocaleTimeString()}
+              Terminal ID: 0x9AF2 • Last Sync:{" "}
+              {new Date().toLocaleTimeString()}
             </p>
           </div>
         </div>

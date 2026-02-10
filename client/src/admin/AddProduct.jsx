@@ -1,3 +1,4 @@
+// src/admin/AddProduct.jsx
 import { useState, useRef } from "react";
 import axios from "axios";
 import {
@@ -16,8 +17,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import PopupModal from "../components/PopupModal";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
-
 export default function AddProduct() {
   const [form, setForm] = useState({
     name: "",
@@ -33,7 +32,11 @@ export default function AddProduct() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [modal, setModal] = useState({ show: false, message: "", type: "info" });
+  const [modal, setModal] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
 
   const fileInputRef = useRef(null);
 
@@ -71,7 +74,8 @@ export default function AddProduct() {
     if (file.size > 4.5 * 1024 * 1024) {
       setModal({
         show: true,
-        message: "Image is too large. Please upload an image under 4.5MB.",
+        message:
+          "Image is too large. Please upload an image under 4.5MB.",
         type: "error",
       });
       return;
@@ -121,11 +125,9 @@ export default function AddProduct() {
       data.append("stock", form.stock);
       data.append("image", image);
 
-      const response = await axios.post(`${API_URL}/api/admin/products`, data, {
+      const response = await axios.post("/api/admin/products", data, {
         withCredentials: true,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
       });
 
       if (response.status === 201) {

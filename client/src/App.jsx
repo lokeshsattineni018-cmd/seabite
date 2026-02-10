@@ -12,6 +12,8 @@ import CartSidebar from "./components/CartSidebar";
 import PageTransition from "./components/PageTransition";
 import ScrollToTop from "./components/ScrollToTop";
 import PrivateRoute from "./components/PrivateRoute";
+import AdminRoute from "./components/AdminRoute";
+import SupportWidget from "./components/SupportWidget";
 
 // Pages
 import Home from "./pages/Home";
@@ -25,6 +27,7 @@ import OrderSuccess from "./pages/OrderSuccess";
 import Orders from "./pages/Orders";
 import OrderDetails from "./pages/OrderDetails";
 import Notifications from "./pages/Notifications";
+import Spin from "./pages/Spin"; // ⬅️ new spin page
 
 // Legal Pages
 import About from "./pages/About";
@@ -44,28 +47,30 @@ import AdminUsers from "./admin/AdminUsers";
 import AdminLogin from "./admin/AdminLogin";
 import AdminMessages from "./admin/AdminMessages";
 import AdminCoupons from "./admin/AdminCoupons";
-import AdminRoute from "./components/AdminRoute";
 
 // Context
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
-import SupportWidget from "./components/SupportWidget";
 
-// ✅ Global axios config
+// ✅ Global axios config (session-based)
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = "https://seabite-server.vercel.app";
+axios.defaults.baseURL =
+  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 function MainLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const [isCartOpen, setIsCartOpen] = useState(false);
+
   const openCart = () => setIsCartOpen(true);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
+
       {!isAdminRoute && <Navbar openCart={openCart} />}
+
       {!isAdminRoute && (
         <CartSidebar
           isOpen={isCartOpen}
@@ -76,6 +81,7 @@ function MainLayout() {
       <div className="flex-grow">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
+            {/* PUBLIC STORE ROUTES */}
             <Route
               path="/"
               element={
@@ -105,6 +111,16 @@ function MainLayout() {
               element={
                 <PageTransition>
                   <Cart />
+                </PageTransition>
+              }
+            />
+
+            {/* SPIN REWARDS PAGE */}
+            <Route
+              path="/spin"
+              element={
+                <PageTransition>
+                  <Spin />
                 </PageTransition>
               }
             />
@@ -221,7 +237,7 @@ function MainLayout() {
               }
             />
 
-            {/* ADMIN */}
+            {/* ADMIN AUTH */}
             <Route
               path="/admin/login"
               element={
@@ -230,6 +246,8 @@ function MainLayout() {
                 </PageTransition>
               }
             />
+
+            {/* ADMIN PROTECTED ROUTES */}
             <Route
               path="/admin"
               element={
