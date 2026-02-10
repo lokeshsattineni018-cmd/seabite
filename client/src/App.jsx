@@ -45,7 +45,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Cancellation = lazy(() => import("./pages/Cancellation"));
 
-// Admin (NOT lazy – to avoid Suspense white screen between admin pages)
+// Admin (NOT lazy – load once, no Suspense flash)
 import AdminLayout from "./admin/AdminLayout";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminProducts from "./admin/AdminProducts";
@@ -86,164 +86,10 @@ function MainLayout() {
       )}
 
       <div className="flex-grow">
-        {/* Suspense only affects lazy store/info pages, not admin */}
-        <Suspense fallback={<SeaBiteLoader />}>
+        {isAdminRoute ? (
+          // 🔹 ADMIN ROUTES: no Suspense, no loader flash, instant switches
           <Routes location={location} key={location.pathname}>
-            {/* STORE ROUTES (with PageTransition animations) */}
-            <Route
-              path="/"
-              element={
-                <PageTransition>
-                  <Home />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/products"
-              element={
-                <PageTransition>
-                  <Products openCart={openCart} />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/products/:id"
-              element={
-                <PageTransition>
-                  <ProductDetails />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/cart"
-              element={
-                <PageTransition>
-                  <Cart />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/spin"
-              element={
-                <PageTransition>
-                  <Spin />
-                </PageTransition>
-              }
-            />
-
-            {/* PROTECTED USER ROUTES */}
-            <Route
-              path="/notifications"
-              element={
-                <PageTransition>
-                  <PrivateRoute>
-                    <Notifications />
-                  </PrivateRoute>
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/checkout"
-              element={
-                <PageTransition>
-                  <PrivateRoute>
-                    <Checkout />
-                  </PrivateRoute>
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <PageTransition>
-                  <PrivateRoute>
-                    <Profile />
-                  </PrivateRoute>
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/success"
-              element={
-                <PageTransition>
-                  <PrivateRoute>
-                    <OrderSuccess />
-                  </PrivateRoute>
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/orders"
-              element={
-                <PageTransition>
-                  <PrivateRoute>
-                    <Orders />
-                  </PrivateRoute>
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/orders/:orderId"
-              element={
-                <PageTransition>
-                  <PrivateRoute>
-                    <OrderDetails />
-                  </PrivateRoute>
-                </PageTransition>
-              }
-            />
-
-            {/* PUBLIC AUTH + INFO */}
-            <Route
-              path="/login"
-              element={
-                <PageTransition>
-                  <Login />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/about"
-              element={
-                <PageTransition>
-                  <About />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/faq"
-              element={
-                <PageTransition>
-                  <FAQ />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/terms"
-              element={
-                <PageTransition>
-                  <Terms />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/privacy"
-              element={
-                <PageTransition>
-                  <Privacy />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/cancellation"
-              element={
-                <PageTransition>
-                  <Cancellation />
-                </PageTransition>
-              }
-            />
-
-            {/* ADMIN AUTH (can stay animated) */}
+            {/* Admin login (with animation if you want) */}
             <Route
               path="/admin/login"
               element={
@@ -253,7 +99,7 @@ function MainLayout() {
               }
             />
 
-            {/* ADMIN PROTECTED (no PageTransition, no Suspense delays) */}
+            {/* Admin protected area */}
             <Route
               path="/admin"
               element={
@@ -272,7 +118,166 @@ function MainLayout() {
               <Route path="coupons" element={<AdminCoupons />} />
             </Route>
           </Routes>
-        </Suspense>
+        ) : (
+          // 🔹 STORE + INFO ROUTES: lazy + Suspense + PageTransition
+          <Suspense fallback={<SeaBiteLoader />}>
+            <Routes location={location} key={location.pathname}>
+              {/* STORE ROUTES */}
+              <Route
+                path="/"
+                element={
+                  <PageTransition>
+                    <Home />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/products"
+                element={
+                  <PageTransition>
+                    <Products openCart={openCart} />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/products/:id"
+                element={
+                  <PageTransition>
+                    <ProductDetails />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/cart"
+                element={
+                  <PageTransition>
+                    <Cart />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/spin"
+                element={
+                  <PageTransition>
+                    <Spin />
+                  </PageTransition>
+                }
+              />
+
+              {/* PROTECTED USER ROUTES */}
+              <Route
+                path="/notifications"
+                element={
+                  <PageTransition>
+                    <PrivateRoute>
+                      <Notifications />
+                    </PrivateRoute>
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/checkout"
+                element={
+                  <PageTransition>
+                    <PrivateRoute>
+                      <Checkout />
+                    </PrivateRoute>
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <PageTransition>
+                    <PrivateRoute>
+                      <Profile />
+                    </PrivateRoute>
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/success"
+                element={
+                  <PageTransition>
+                    <PrivateRoute>
+                      <OrderSuccess />
+                    </PrivateRoute>
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/orders"
+                element={
+                  <PageTransition>
+                    <PrivateRoute>
+                      <Orders />
+                    </PrivateRoute>
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/orders/:orderId"
+                element={
+                  <PageTransition>
+                    <PrivateRoute>
+                      <OrderDetails />
+                    </PrivateRoute>
+                  </PageTransition>
+                }
+              />
+
+              {/* PUBLIC AUTH + INFO */}
+              <Route
+                path="/login"
+                element={
+                  <PageTransition>
+                    <Login />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/about"
+                element={
+                  <PageTransition>
+                    <About />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/faq"
+                element={
+                  <PageTransition>
+                    <FAQ />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/terms"
+                element={
+                  <PageTransition>
+                    <Terms />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/privacy"
+                element={
+                  <PageTransition>
+                    <Privacy />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="/cancellation"
+                element={
+                  <PageTransition>
+                    <Cancellation />
+                  </PageTransition>
+                }
+              />
+            </Routes>
+          </Suspense>
+        )}
       </div>
 
       {!isAdminRoute && <Footer />}
