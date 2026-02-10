@@ -1,5 +1,6 @@
+// controllers/authController.js
 import User from "../models/User.js";
-import { sendAuthEmail } from "../utils/emailService.js"; 
+import { sendAuthEmail } from "../utils/emailService.js";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
 
@@ -12,7 +13,7 @@ export const googleLogin = async (req, res) => {
 
   try {
     let userData;
-    const segments = token.split('.');
+    const segments = token.split(".");
 
     // Verify Google Token (ID Token vs Access Token)
     if (segments.length === 3) {
@@ -22,23 +23,29 @@ export const googleLogin = async (req, res) => {
       });
       userData = ticket.getPayload();
     } else {
-      const googleRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`);
+      const googleRes = await axios.get(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${token}`
+      );
       userData = googleRes.data;
     }
 
-    if (!userData || !userData.email) return res.status(400).json({ message: "Failed to retrieve Google data" });
+    if (!userData || !userData.email) {
+      return res
+        .status(400)
+        .json({ message: "Failed to retrieve Google data" });
+    }
 
     const email = userData.email.toLowerCase();
     const name = userData.name || userData.given_name;
     const googleId = userData.sub || userData.id;
 
     let user = await User.findOne({ email });
-    let isNewUser = false; 
+    let isNewUser = false;
 
     if (user) {
-      if (!user.googleId) { 
-        user.googleId = googleId; 
-        await user.save(); 
+      if (!user.googleId) {
+        user.googleId = googleId;
+        await user.save();
       }
     } else {
       user = new User({ name, email, googleId, role: "user" });
@@ -48,16 +55,18 @@ export const googleLogin = async (req, res) => {
 
     // ✅ SESSION VERIFICATION
     if (!req.session) {
-      console.error("❌ Session middleware failed to initialize. Check MongoDB connection.");
+      console.error(
+        "❌ Session middleware failed to initialize. Check MongoDB connection."
+      );
       return res.status(500).json({ message: "Server Session Error" });
     }
 
-    // ✅ POPULATE MONGO SESSION
+    // ✅ POPULATE MONGO SESSION (consistent shape)
     req.session.user = {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
     };
 
     // ✅ FORCE SAVE: Sync with MongoDB before responding
@@ -69,45 +78,45 @@ export const googleLogin = async (req, res) => {
       sendAuthEmail(user.email, user.name, isNewUser).catch(() => {});
       res.status(200).json({ user: req.session.user });
     });
-
   } catch (error) {
     console.error("❌ Google Auth Error:", error.message);
     res.status(401).json({ message: "Google verification failed." });
   }
 };
 
+// ✅ Use req.user from protect, do not re-query Mongo unless needed
 export const getLoggedUser = async (req, res) => {
-    // ✅ SYNC CHECK: Always check session identity
-    if (!req.session?.user) return res.status(401).json({ message: "Not authenticated" });
-    
-    try {
-        const user = await User.findById(req.session.user.id).select("-password");
-        if (!user) return res.status(401).json({ message: "User not found" });
-        res.json({
-            id: user._id,
-            name: user.name,
-            email: user.email,
-            role: user.role,
-            phone: user.phone || '',
-            addresses: user.addresses || [], 
-        });
-    } catch (err) { res.status(500).json({ message: "Server error" }); }
+  if (!req.user) {
+    return res.status(401).json({ message: "Not authenticated" });
+  }
+
+  res.json({
+    id: req.user.id || req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    role: req.user.role,
+    phone: req.user.phone || "",
+    addresses: req.user.addresses || [],
+  });
 };
 
 export const updateUserProfile = async (req, res) => {
-    if (!req.session?.user) return res.status(401).json({ message: "Not authenticated" });
+  if (!req.session?.user)
+    return res.status(401).json({ message: "Not authenticated" });
 
-    try {
-        const updatedUser = await User.findByIdAndUpdate(
-            req.session.user.id, 
-            { $set: req.body }, 
-            { new: true, runValidators: true, select: '-password' } 
-        );
-        res.json({
-            message: 'Profile updated successfully',
-            name: updatedUser.name,
-            phone: updatedUser.phone,
-            email: updatedUser.email,
-        });
-    } catch (error) { res.status(500).json({ message: 'Profile update failed' }); }
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.session.user.id,
+      { $set: req.body },
+      { new: true, runValidators: true, select: "-password" }
+    );
+    res.json({
+      message: "Profile updated successfully",
+      name: updatedUser.name,
+      phone: updatedUser.phone,
+      email: updatedUser.email,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Profile update failed" });
+  }
 };

@@ -1,3 +1,4 @@
+// middleware/authMiddleware.js
 import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
