@@ -1,29 +1,26 @@
 import { motion } from "framer-motion";
 
 const pageVariants = {
-  initial: { 
-    opacity: 0, 
-    y: 10, // Reduced distance for faster feel
-    scale: 0.99 
+  initial: {
+    opacity: 0,
+    y: 8,
   },
-  in: { 
-    opacity: 1, 
-    y: 0, 
-    scale: 1,
-    transition: { 
-      duration: 0.4, // Faster entrance
-      ease: "easeOut" 
-    } 
+  in: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.25,
+      ease: "easeOut",
+    },
   },
-  out: { 
-    opacity: 0, 
-    y: -10, // Slight movement up
-    scale: 0.99,
-    transition: { 
-      duration: 0.2, // Very fast exit to prevent lag
-      ease: "easeIn" 
-    } 
-  }
+  out: {
+    opacity: 0,
+    y: -8,
+    transition: {
+      duration: 0.2,
+      ease: "easeIn",
+    },
+  },
 };
 
 export default function PageTransition({ children }) {

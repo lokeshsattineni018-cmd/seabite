@@ -1,5 +1,5 @@
 // src/App.jsx
-import { useState } from "react";
+import { useState, lazy } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { GoogleOAuthProvider } from "@react-oauth/google";
@@ -15,45 +15,45 @@ import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import SupportWidget from "./components/SupportWidget";
 
-// Pages
-import Home from "./pages/Home";
-import Products from "./pages/Products";
-import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import Login from "./pages/Login";
-import Profile from "./pages/Profile";
-import OrderSuccess from "./pages/OrderSuccess";
-import Orders from "./pages/Orders";
-import OrderDetails from "./pages/OrderDetails";
-import Notifications from "./pages/Notifications";
-import Spin from "./pages/Spin"; // ⬅️ new spin page
+// Lazy pages (store)
+const Home = lazy(() => import("./pages/Home"));
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetails = lazy(() => import("./pages/ProductDetails"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Login = lazy(() => import("./pages/Login"));
+const Profile = lazy(() => import("./pages/Profile"));
+const OrderSuccess = lazy(() => import("./pages/OrderSuccess"));
+const Orders = lazy(() => import("./pages/Orders"));
+const OrderDetails = lazy(() => import("./pages/OrderDetails"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const Spin = lazy(() => import("./pages/Spin"));
 
-// Legal Pages
-import About from "./pages/About";
-import FAQ from "./pages/FAQ";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import Cancellation from "./pages/Cancellation";
+// Lazy pages (info)
+const About = lazy(() => import("./pages/About"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Cancellation = lazy(() => import("./pages/Cancellation"));
 
-// Admin
+// Admin: keep layout normal, lazy children
 import AdminLayout from "./admin/AdminLayout";
-import AdminDashboard from "./admin/AdminDashboard";
-import AdminProducts from "./admin/AdminProducts";
-import AddProduct from "./admin/AddProduct";
-import EditProduct from "./admin/AddProduct";
-import AdminOrders from "./admin/AdminOrders";
-import AdminUsers from "./admin/AdminUsers";
-import AdminLogin from "./admin/AdminLogin";
-import AdminMessages from "./admin/AdminMessages";
-import AdminCoupons from "./admin/AdminCoupons";
+const AdminDashboard = lazy(() => import("./admin/AdminDashboard"));
+const AdminProducts = lazy(() => import("./admin/AdminProducts"));
+const AddProduct = lazy(() => import("./admin/AddProduct"));
+const EditProduct = lazy(() => import("./admin/AddProduct"));
+const AdminOrders = lazy(() => import("./admin/AdminOrders"));
+const AdminUsers = lazy(() => import("./admin/AdminUsers"));
+const AdminLogin = lazy(() => import("./admin/AdminLogin"));
+const AdminMessages = lazy(() => import("./admin/AdminMessages"));
+const AdminCoupons = lazy(() => import("./admin/AdminCoupons"));
 
 // Context
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 
-// ✅ Global axios config (session-based)
+// Axios global config
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL =
   import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
@@ -81,7 +81,7 @@ function MainLayout() {
       <div className="flex-grow">
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            {/* PUBLIC STORE ROUTES */}
+            {/* STORE ROUTES */}
             <Route
               path="/"
               element={
@@ -115,7 +115,7 @@ function MainLayout() {
               }
             />
 
-            {/* SPIN REWARDS PAGE */}
+            {/* SPIN */}
             <Route
               path="/spin"
               element={
@@ -187,7 +187,7 @@ function MainLayout() {
               }
             />
 
-            {/* PUBLIC AUTH + INFO PAGES */}
+            {/* PUBLIC AUTH + INFO */}
             <Route
               path="/login"
               element={
@@ -247,7 +247,7 @@ function MainLayout() {
               }
             />
 
-            {/* ADMIN PROTECTED ROUTES */}
+            {/* ADMIN PROTECTED */}
             <Route
               path="/admin"
               element={
@@ -256,14 +256,70 @@ function MainLayout() {
                 </AdminRoute>
               }
             >
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="add-product" element={<AddProduct />} />
-              <Route path="edit-product/:id" element={<EditProduct />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="messages" element={<AdminMessages />} />
-              <Route path="coupons" element={<AdminCoupons />} />
+              <Route
+                path="dashboard"
+                element={
+                  <PageTransition>
+                    <AdminDashboard />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="products"
+                element={
+                  <PageTransition>
+                    <AdminProducts />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="add-product"
+                element={
+                  <PageTransition>
+                    <AddProduct />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="edit-product/:id"
+                element={
+                  <PageTransition>
+                    <EditProduct />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="orders"
+                element={
+                  <PageTransition>
+                    <AdminOrders />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="users"
+                element={
+                  <PageTransition>
+                    <AdminUsers />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="messages"
+                element={
+                  <PageTransition>
+                    <AdminMessages />
+                  </PageTransition>
+                }
+              />
+              <Route
+                path="coupons"
+                element={
+                  <PageTransition>
+                    <AdminCoupons />
+                  </PageTransition>
+                }
+              />
             </Route>
           </Routes>
         </AnimatePresence>
