@@ -432,6 +432,19 @@ export default function Navbar({ openCart }) {
                       </span>
                     )}
                   </button>
+
+                  {user.role === "admin" && (
+                    <button
+                      onClick={() => {
+                        navigate("/admin/dashboard");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center gap-4 text-slate-700 dark:text-white/70 py-3 text-lg"
+                    >
+                      <FiGrid /> Admin Dashboard
+                    </button>
+                  )}
+
                   <button
                     onClick={() => {
                       handleLogout();
