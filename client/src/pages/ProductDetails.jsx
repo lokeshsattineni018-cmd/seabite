@@ -30,19 +30,34 @@ export default function ProductDetails() {
   const [activeTab, setActiveTab] = useState("desc");
   const [isAdded, setIsAdded] = useState(false);
 
+  // Derived state (safe to calc even if product is null initially)
   const basePrice = product ? parseFloat(product.basePrice) : 0;
   const totalPrice = (basePrice * qty).toFixed(2);
 
+  // ✅ FIX: Enhanced Image Loader logic
   const getFullImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    return `${API_URL}${imagePath.startsWith("/") ? imagePath : `/${imagePath}`}`;
+    if (!imagePath) return "https://placehold.co/400?text=No+Image";
+    
+    // If it's already a full URL (like Cloudinary), return it as is
+    if (imagePath.startsWith("http")) return imagePath;
+    
+    // Normalize path to ensure it starts with /uploads or /
+    const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+    
+    // If path doesn't start with /uploads, assume it needs it (optional, depends on your DB)
+    if (!cleanPath.startsWith("/uploads")) {
+        return `${API_URL}/uploads${cleanPath}`;
+    }
+    
+    return `${API_URL}${cleanPath}`;
   };
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    setLoading(true); // Ensure loader shows on id change
     axios
       .get(`${API_URL}/api/products/${id}`, {
-        withCredentials: true, // ✅ send session cookie
+        withCredentials: true,
       })
       .then((res) => {
         setProduct(res.data);

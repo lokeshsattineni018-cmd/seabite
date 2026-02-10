@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -13,43 +13,34 @@ import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import SupportWidget from "./components/SupportWidget";
 
-// Simple loader (for store lazy pages only)
-const SeaBiteLoader = () => (
-  <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-    <p className="text-blue-500 font-medium animate-pulse">
-      Fresh Catch Loading...
-    </p>
-  </div>
-);
+// 🚀 PERFORMANCE FIX 1: Direct Imports for Critical Pages
+// This removes the "Fresh Catch" spinner for the main pages users visit first.
+import Home from "./pages/Home";
+import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
+import Cart from "./pages/Cart";
+import Profile from "./pages/Profile";
 
-// Lazy pages (store)
-const Home = lazy(() => import("./pages/Home"));
-const Products = lazy(() => import("./pages/Products"));
-const ProductDetails = lazy(() => import("./pages/ProductDetails"));
-const Cart = lazy(() => import("./pages/Cart"));
+// 💤 Lazy Load Secondary Pages (To keep the initial bundle size small)
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Login = lazy(() => import("./pages/Login"));
-const Profile = lazy(() => import("./pages/Profile"));
 const OrderSuccess = lazy(() => import("./pages/OrderSuccess"));
 const Orders = lazy(() => import("./pages/Orders"));
 const OrderDetails = lazy(() => import("./pages/OrderDetails"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 const Spin = lazy(() => import("./pages/Spin"));
-
-// Lazy pages (info)
 const About = lazy(() => import("./pages/About"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Cancellation = lazy(() => import("./pages/Cancellation"));
 
-// Admin Imports
+// Admin Imports (Direct load to prevent white flashes in admin panel)
 import AdminLayout from "./admin/AdminLayout";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminProducts from "./admin/AdminProducts";
 import AddProduct from "./admin/AddProduct";
-import EditProduct from "./admin/EditProduct"; // ✅ FIXED: Was importing AddProduct before!
+import EditProduct from "./admin/EditProduct";
 import AdminOrders from "./admin/AdminOrders";
 import AdminUsers from "./admin/AdminUsers";
 import AdminLogin from "./admin/AdminLogin";
@@ -63,8 +54,15 @@ import { AuthProvider } from "./context/AuthContext";
 
 // Axios global config
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+
+// Loader for secondary pages only
+const SeaBiteLoader = () => (
+  <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
+    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+    <p className="text-blue-500 font-medium animate-pulse">Fresh Catch Loading...</p>
+  </div>
+);
 
 function MainLayout() {
   const location = useLocation();
@@ -73,39 +71,32 @@ function MainLayout() {
 
   const openCart = () => setIsCartOpen(true);
 
+  // 🚀 PERFORMANCE FIX 2: Warm up the backend immediately
+  useEffect(() => {
+    const warmUpBackend = async () => {
+      try {
+        // Pings the products API silently to wake up the Vercel server
+        await axios.get("/api/products?limit=1");
+        console.log("Server Warmed Up");
+      } catch (err) {
+        // Silent fail is fine, it just means server might be busy or offline
+      }
+    };
+    warmUpBackend();
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
       {!isAdminRoute && <Navbar openCart={openCart} />}
-      {!isAdminRoute && (
-        <CartSidebar
-          isOpen={isCartOpen}
-          onClose={() => setIsCartOpen(false)}
-        />
-      )}
+      {!isAdminRoute && <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
 
       <div className="flex-grow">
         {isAdminRoute ? (
-          /* ✅ ADMIN ROUTES: AnimatePresence removed to stop layout flashing */
+          /* ✅ ADMIN ROUTES: Optimized for stability (No AnimatePresence) */
           <Routes>
-            <Route
-              path="/admin/login"
-              element={
-                <PageTransition>
-                  <AdminLogin />
-                </PageTransition>
-              }
-            />
-
-            {/* Admin protected area: Nested routes keep layout mounted */}
-            <Route
-              path="/admin"
-              element={
-                <AdminRoute>
-                  <AdminLayout />
-                </AdminRoute>
-              }
-            >
+            <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
+            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
@@ -118,23 +109,24 @@ function MainLayout() {
             </Route>
           </Routes>
         ) : (
-          // 🔹 STORE ROUTES: Keep AnimatePresence for smooth customer experience
+          /* ⚡ STORE ROUTES: Hybrid Loading Strategy */
           <Suspense fallback={<SeaBiteLoader />}>
             <AnimatePresence mode="wait">
               <Routes location={location} key={location.pathname}>
+                {/* 🚀 Instant Load Pages (No Spinner) */}
                 <Route path="/" element={<PageTransition><Home /></PageTransition>} />
                 <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
                 <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
                 <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
+                <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
+
+                {/* 💤 Secondary Pages (Lazy Load with Spinner) */}
                 <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
-                
                 <Route path="/notifications" element={<PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition>} />
                 <Route path="/checkout" element={<PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition>} />
-                <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
                 <Route path="/success" element={<PageTransition><PrivateRoute><OrderSuccess /></PrivateRoute></PageTransition>} />
                 <Route path="/orders" element={<PageTransition><PrivateRoute><Orders /></PrivateRoute></PageTransition>} />
                 <Route path="/orders/:orderId" element={<PageTransition><PrivateRoute><OrderDetails /></PrivateRoute></PageTransition>} />
-
                 <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
                 <Route path="/about" element={<PageTransition><About /></PageTransition>} />
                 <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
