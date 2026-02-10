@@ -1,3 +1,4 @@
+// src/components/PageTransition.jsx
 import { motion } from "framer-motion";
 
 const pageVariants = {
@@ -9,9 +10,8 @@ const pageVariants = {
     opacity: 1,
     y: 0,
     transition: {
-      duration: 0.25, // Optimized for speed
+      duration: 0.25,
       ease: "easeOut",
-      when: "beforeChildren", // Animates container before content for smoothness
     },
   },
   out: {
@@ -31,8 +31,7 @@ export default function PageTransition({ children }) {
       animate="in"
       exit="out"
       variants={pageVariants}
-      className="w-full min-h-screen origin-top" // origin-top makes the slide-down feel more natural
-      layout // Prevents layout shifts during theme/content changes
+      className="w-full min-h-screen"
     >
       {children}
     </motion.div>

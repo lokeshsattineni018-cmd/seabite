@@ -1,7 +1,7 @@
 // src/App.jsx
 import { useState, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+import { AnimatePresence } from "framer-motion";
 import axios from "axios";
 
 // Components
@@ -88,194 +88,198 @@ function MainLayout() {
       <div className="flex-grow">
         {isAdminRoute ? (
           // 🔹 ADMIN ROUTES: no Suspense, no loader flash, instant switches
-          <Routes location={location} key={location.pathname}>
-            {/* Admin login (with animation if you want) */}
-            <Route
-              path="/admin/login"
-              element={
-                <PageTransition>
-                  <AdminLogin />
-                </PageTransition>
-              }
-            />
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              {/* Admin login */}
+              <Route
+                path="/admin/login"
+                element={
+                  <PageTransition>
+                    <AdminLogin />
+                  </PageTransition>
+                }
+              />
 
-            {/* Admin protected area */}
-            <Route
-              path="/admin"
-              element={
-                <AdminRoute>
-                  <AdminLayout />
-                </AdminRoute>
-              }
-            >
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="add-product" element={<AddProduct />} />
-              <Route path="edit-product/:id" element={<EditProduct />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="messages" element={<AdminMessages />} />
-              <Route path="coupons" element={<AdminCoupons />} />
-            </Route>
-          </Routes>
+              {/* Admin protected area */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminRoute>
+                    <AdminLayout />
+                  </AdminRoute>
+                }
+              >
+                <Route path="dashboard" element={<AdminDashboard />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="add-product" element={<AddProduct />} />
+                <Route path="edit-product/:id" element={<EditProduct />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="users" element={<AdminUsers />} />
+                <Route path="messages" element={<AdminMessages />} />
+                <Route path="coupons" element={<AdminCoupons />} />
+              </Route>
+            </Routes>
+          </AnimatePresence>
         ) : (
           // 🔹 STORE + INFO ROUTES: lazy + Suspense + PageTransition
           <Suspense fallback={<SeaBiteLoader />}>
-            <Routes location={location} key={location.pathname}>
-              {/* STORE ROUTES */}
-              <Route
-                path="/"
-                element={
-                  <PageTransition>
-                    <Home />
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/products"
-                element={
-                  <PageTransition>
-                    <Products openCart={openCart} />
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/products/:id"
-                element={
-                  <PageTransition>
-                    <ProductDetails />
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/cart"
-                element={
-                  <PageTransition>
-                    <Cart />
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/spin"
-                element={
-                  <PageTransition>
-                    <Spin />
-                  </PageTransition>
-                }
-              />
+            <AnimatePresence mode="wait">
+              <Routes location={location} key={location.pathname}>
+                {/* STORE ROUTES */}
+                <Route
+                  path="/"
+                  element={
+                    <PageTransition>
+                      <Home />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/products"
+                  element={
+                    <PageTransition>
+                      <Products openCart={openCart} />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/products/:id"
+                  element={
+                    <PageTransition>
+                      <ProductDetails />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/cart"
+                  element={
+                    <PageTransition>
+                      <Cart />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/spin"
+                  element={
+                    <PageTransition>
+                      <Spin />
+                    </PageTransition>
+                  }
+                />
 
-              {/* PROTECTED USER ROUTES */}
-              <Route
-                path="/notifications"
-                element={
-                  <PageTransition>
-                    <PrivateRoute>
-                      <Notifications />
-                    </PrivateRoute>
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/checkout"
-                element={
-                  <PageTransition>
-                    <PrivateRoute>
-                      <Checkout />
-                    </PrivateRoute>
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <PageTransition>
-                    <PrivateRoute>
-                      <Profile />
-                    </PrivateRoute>
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/success"
-                element={
-                  <PageTransition>
-                    <PrivateRoute>
-                      <OrderSuccess />
-                    </PrivateRoute>
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/orders"
-                element={
-                  <PageTransition>
-                    <PrivateRoute>
-                      <Orders />
-                    </PrivateRoute>
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/orders/:orderId"
-                element={
-                  <PageTransition>
-                    <PrivateRoute>
-                      <OrderDetails />
-                    </PrivateRoute>
-                  </PageTransition>
-                }
-              />
+                {/* PROTECTED USER ROUTES */}
+                <Route
+                  path="/notifications"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <Notifications />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/checkout"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <Checkout />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <Profile />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/success"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <OrderSuccess />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/orders"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <Orders />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/orders/:orderId"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <OrderDetails />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
 
-              {/* PUBLIC AUTH + INFO */}
-              <Route
-                path="/login"
-                element={
-                  <PageTransition>
-                    <Login />
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/about"
-                element={
-                  <PageTransition>
-                    <About />
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/faq"
-                element={
-                  <PageTransition>
-                    <FAQ />
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/terms"
-                element={
-                  <PageTransition>
-                    <Terms />
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/privacy"
-                element={
-                  <PageTransition>
-                    <Privacy />
-                  </PageTransition>
-                }
-              />
-              <Route
-                path="/cancellation"
-                element={
-                  <PageTransition>
-                    <Cancellation />
-                  </PageTransition>
-                }
-              />
-            </Routes>
+                {/* PUBLIC AUTH + INFO */}
+                <Route
+                  path="/login"
+                  element={
+                    <PageTransition>
+                      <Login />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/about"
+                  element={
+                    <PageTransition>
+                      <About />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/faq"
+                  element={
+                    <PageTransition>
+                      <FAQ />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/terms"
+                  element={
+                    <PageTransition>
+                      <Terms />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/privacy"
+                  element={
+                    <PageTransition>
+                      <Privacy />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/cancellation"
+                  element={
+                    <PageTransition>
+                      <Cancellation />
+                    </PageTransition>
+                  }
+                />
+              </Routes>
+            </AnimatePresence>
           </Suspense>
         )}
       </div>
@@ -288,14 +292,12 @@ function MainLayout() {
 
 export default function App() {
   return (
-    <GoogleOAuthProvider clientId="781532512036-kaouiapk5q6akjofr45t7ff7d7t6jm9k.apps.googleusercontent.com">
-      <ThemeProvider>
-        <CartProvider>
-          <AuthProvider>
-            <MainLayout />
-          </AuthProvider>
-        </CartProvider>
-      </ThemeProvider>
-    </GoogleOAuthProvider>
+    <ThemeProvider>
+      <CartProvider>
+        <AuthProvider>
+          <MainLayout />
+        </AuthProvider>
+      </CartProvider>
+    </ThemeProvider>
   );
 }
