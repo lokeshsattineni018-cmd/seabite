@@ -9,8 +9,7 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [status, setStatus] = useState("loading"); // "loading" | "authenticated" | "unauthenticated"
-  const [hasTriedOnce, setHasTriedOnce] = useState(false);
+  const [status, setStatus] = useState("loading");
 
   const fetchMe = async () => {
     console.log("fetchMe called");
@@ -21,7 +20,6 @@ export function AuthProvider({ children }) {
       console.log("fetchMe success", res.data);
       setUser(res.data);
       setStatus("authenticated");
-      setHasTriedOnce(true);
     } catch (err) {
       console.log(
         "fetchMe error",
@@ -29,13 +27,7 @@ export function AuthProvider({ children }) {
         err?.response?.data
       );
       setUser(null);
-      // If this is the very first try (likely before login), stay in "loading"
-      if (!hasTriedOnce) {
-        setStatus("loading");
-      } else {
-        setStatus("unauthenticated");
-      }
-      setHasTriedOnce(true);
+      setStatus("unauthenticated");
     }
   };
 
