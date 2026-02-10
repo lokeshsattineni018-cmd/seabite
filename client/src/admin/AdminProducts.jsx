@@ -30,15 +30,21 @@ export default function AdminProducts() {
   const fetchProducts = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `/api/admin/products?search=${encodeURIComponent(search)}`
-      );
-      setProducts(
-        Array.isArray(res.data.products) ? res.data.products : []
-      );
+      const res = await axios.get("/api/admin/products", {
+        params: search ? { search } : {},
+        withCredentials: true,
+      });
+
+      const data = res.data;
+      setProducts(Array.isArray(data.products) ? data.products : []);
     } catch (err) {
       console.error("Admin products fetch error:", err);
       setProducts([]);
+      setModal({
+        show: true,
+        message: err.response?.data?.message || "Failed to load products.",
+        type: "error",
+      });
     } finally {
       setLoading(false);
     }
@@ -53,13 +59,13 @@ export default function AdminProducts() {
 
   const deleteProduct = async (id) => {
     if (
-      !window.confirm(
-        "Are you sure you want to delete this product?"
-      )
+      !window.confirm("Are you sure you want to delete this product?")
     )
       return;
     try {
-      await axios.delete(`/api/admin/products/${id}`);
+      await axios.delete(`/api/admin/products/${id}`, {
+        withCredentials: true,
+      });
       setModal({
         show: true,
         message: "Product deleted successfully.",
