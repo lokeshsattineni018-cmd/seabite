@@ -1,4 +1,3 @@
-// src/pages/Products.jsx
 import { useState, useContext, useEffect, useRef, forwardRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -18,7 +17,8 @@ import {
 import { CartContext } from "../context/CartContext";
 import { addToCart } from "../utils/cartStorage";
 
-// We rely on axios.defaults.baseURL from App.jsx; no separate API_URL needed here
+// ✅ FIX: Define Backend URL for images
+const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 const CATEGORY_DATA = {
   All: {
@@ -168,7 +168,6 @@ export default function Products() {
     const fetchData = async () => {
       try {
         const res = await axios.get("/api/products");
-        // backend returns { products: [...] } or plain array
         setProducts(res.data.products || res.data || []);
       } catch (err) {
         console.error("Products fetch error:", err);
@@ -217,13 +216,20 @@ export default function Products() {
     setDisplayed(result);
   }, [activeCat, searchTerm, products, sortBy]);
 
-  // Helper to build full image URL from relative path saved in DB
+  // ✅ FIX: Enhanced Image Loader logic
   const getProductImage = (imagePath) => {
-    if (!imagePath) return "";
-    // if backend sends "/uploads/..." keep as is; axios baseURL is only for API calls
+    if (!imagePath) return "https://placehold.co/400?text=No+Image";
+    
+    // If it's already a full URL (like Cloudinary or external), return it
     if (imagePath.startsWith("http")) return imagePath;
-    if (imagePath.startsWith("/")) return imagePath;
-    return `/uploads/${imagePath}`;
+    
+    // If path starts with /uploads, prepend the backend URL
+    if (imagePath.startsWith("/uploads")) {
+      return `${API_URL}${imagePath}`;
+    }
+    
+    // Fallback: Just a filename
+    return `${API_URL}/uploads/${imagePath}`;
   };
 
   return (
