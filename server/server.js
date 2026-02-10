@@ -37,9 +37,12 @@ const allowedOrigins = [
 // ✅ MANUAL CORS (CREDENTIALS + EXACT ORIGINS)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
+
+  if (origin && allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
+
+  res.setHeader("Vary", "Origin"); // important when using dynamic origin CORS [web:41]
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
     "Access-Control-Allow-Methods",
@@ -53,6 +56,7 @@ app.use((req, res, next) => {
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
+
   next();
 });
 
@@ -96,10 +100,10 @@ app.use(
     }),
     proxy: true,
     cookie: {
-      secure: true,       // HTTPS only (required with SameSite=None) [web:48][web:54]
+      secure: true,       // HTTPS only
       httpOnly: true,
-      sameSite: "none",   // cross-site from seabite.co.in → seabite-server.vercel.app [web:49][web:52]
-      // ❗ keep domain unset so it stays host-only for seabite-server.vercel.app [web:52][web:55]
+      sameSite: "none",   // cross-site from seabite.co.in → seabite-server.vercel.app
+      // domain left unset => host-only for seabite-server.vercel.app
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })
@@ -107,6 +111,7 @@ app.use(
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
 app.use("/api/productsRoutes", productsRoutes);
