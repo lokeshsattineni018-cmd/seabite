@@ -34,7 +34,7 @@ const allowedOrigins = [
   "http://localhost:5173",
 ];
 
-// ✅ MANUAL CORS FIX: Directly naming origins to stop the browser from blocking credentials
+// ✅ MANUAL CORS (CREDENTIALS + EXACT ORIGINS)
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
@@ -96,10 +96,10 @@ app.use(
     }),
     proxy: true,
     cookie: {
-      secure: true,           // HTTPS only
+      secure: true,       // HTTPS only (required with SameSite=None) [web:48][web:54]
       httpOnly: true,
-      sameSite: "none",       // Critical for cross-site cookies
-      //domain: "seabite-server.vercel.app", // ⬅️ important: works for seabite.co.in and www.seabite.co.in
+      sameSite: "none",   // cross-site from seabite.co.in → seabite-server.vercel.app [web:49][web:52]
+      // ❗ keep domain unset so it stays host-only for seabite-server.vercel.app [web:52][web:55]
       maxAge: 7 * 24 * 60 * 60 * 1000,
     },
   })

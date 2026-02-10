@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
@@ -51,9 +52,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import SupportWidget from "./components/SupportWidget";
 
-// ✅ CRITICAL SYNC: Fixes the login loop and allows images to load
+// ✅ Global axios config
 axios.defaults.withCredentials = true;
-// ✅ PRODUCTION URL: Points all requests (including images) to your Vercel server
 axios.defaults.baseURL = "https://seabite-server.vercel.app";
 
 function MainLayout() {
