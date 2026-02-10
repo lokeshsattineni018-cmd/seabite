@@ -1,9 +1,24 @@
-// src/admin/AdminLayout.jsx
-import { useState } from "react";
+import { useState, Suspense } from "react"; // ✅ Added Suspense
 import { Outlet } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import { FiMenu, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+
+// ✅ NEW: Skeleton Loader to prevent the white flash
+const AdminPageLoader = () => (
+  <div className="w-full animate-pulse space-y-8">
+    <div className="flex justify-between items-center">
+      <div className="h-8 w-48 bg-slate-200 rounded-lg" />
+      <div className="h-10 w-32 bg-slate-200 rounded-lg" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="h-32 bg-slate-100 rounded-2xl" />
+      <div className="h-32 bg-slate-100 rounded-2xl" />
+      <div className="h-32 bg-slate-100 rounded-2xl" />
+    </div>
+    <div className="h-64 bg-slate-50 rounded-3xl border border-slate-100" />
+  </div>
+);
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -71,7 +86,10 @@ export default function AdminLayout() {
       {/* Main content */}
       <main className="flex-1 relative z-10 overflow-y-auto scroll-smooth">
         <div className="max-w-7xl mx-auto p-4 md:p-10 pt-24 md:pt-10 min-h-full">
-          <Outlet />
+          {/* ✅ SUSPENSE: This ensures the Sidebar stays while content loads */}
+          <Suspense fallback={<AdminPageLoader />}>
+            <Outlet />
+          </Suspense>
         </div>
       </main>
     </div>

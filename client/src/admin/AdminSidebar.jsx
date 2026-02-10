@@ -1,4 +1,3 @@
-// src/admin/AdminSidebar.jsx
 import { NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -28,12 +27,15 @@ export default function AdminSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // ✅ UPDATED: Logout logic to handle session cleanup properly
   const handleLogout = async () => {
     try {
-      await axios.post("/api/admin/logout");
+      // Ensuring credentials are sent for session destruction
+      await axios.post("/api/admin/logout", {}, { withCredentials: true });
     } catch (err) {
       console.error("Logout error:", err);
     } finally {
+      // Clear local state and redirect
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       navigate("/admin/login");
@@ -64,7 +66,11 @@ export default function AdminSidebar() {
             const isActive = location.pathname === link.path;
 
             return (
-              <NavLink to={link.path} key={link.path} className="relative block">
+              <NavLink 
+                to={link.path} 
+                key={link.path} 
+                className="relative block"
+              >
                 {isActive && (
                   <motion.div
                     layoutId="active-nav"
