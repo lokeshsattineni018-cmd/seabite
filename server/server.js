@@ -84,8 +84,13 @@ const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      serverSelectionTimeoutMS: 5000,
-      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 30000,    // ✅ Increased from 5000
+      connectTimeoutMS: 30000,             // ✅ Increased from 10000
+      socketTimeoutMS: 45000,              // ✅ Added socket timeout
+      maxPoolSize: 10,                     // ✅ Connection pool
+      minPoolSize: 2,                      // ✅ Minimum connections
+      retryWrites: true,                   // ✅ Retry writes on failure
+      retryReads: true,                    // ✅ Retry reads on failure
     });
     console.log("✅ MongoDB Connected");
   } catch (error) {
@@ -93,6 +98,20 @@ const connectDB = async () => {
     throw error;
   }
 };
+
+// ✅ Add reconnection logic
+mongoose.connection.on('disconnected', () => {
+  console.log('⚠️ MongoDB disconnected. Attempting to reconnect...');
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB reconnected');
+});
+
+mongoose.connection.on('error', (err) => {
+  console.error('❌ MongoDB connection error:', err);
+});
+
 await connectDB();
 
 /* --- 4. MONGODB SESSION SETUP --- */
@@ -104,19 +123,36 @@ const sessionMiddleware = session({
     client: mongoose.connection.getClient(),
     collectionName: "sessions",
     ttl: 14 * 24 * 60 * 60,
+    touchAfter: 24 * 3600, // ✅ Lazy session update (once per 24h)
+    stringify: false,       // ✅ Better performance
+    autoRemove: 'native',   // ✅ Let MongoDB handle expired sessions
   }),
-  name: "seabite.sid", // Custom cookie name
-  proxy: true, // Trust proxy (Vercel)
+  name: "seabite.sid",
+  proxy: true,
   cookie: {
-    secure: true,       // ✅ HTTPS only
-    httpOnly: true,     // ✅ Prevent JS access
-    sameSite: "lax",    // ✅ CHANGED: 'lax' instead of 'none' (same-origin via proxy)
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    secure: true,
+    httpOnly: true,
+    sameSite: "lax",    // ✅ Changed from "none"
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   },
 });
 
 app.use(sessionMiddleware);
+
+// ✅ Session save error handler
+app.use((req, res, next) => {
+  const originalSave = req.session.save.bind(req.session);
+  req.session.save = function(callback) {
+    originalSave(function(err) {
+      if (err) {
+        console.error('❌ Session save error:', err);
+      }
+      if (callback) callback(err);
+    });
+  };
+  next();
+});
 
 // ✅ Session debug middleware (remove in production)
 app.use((req, res, next) => {
@@ -139,6 +175,7 @@ app.get("/api/debug/cookie-test", (req, res) => {
     sessionData: req.session,
     origin: req.headers.origin,
     userAgent: req.headers["user-agent"],
+    mongoStatus: mongoose.connection.readyState, // ✅ Added MongoDB status
   });
 });
 
@@ -156,7 +193,11 @@ app.use("/api/spin", spinRoutes);
 
 app.get("/health", (req, res) => {
   const state = mongoose.connection.readyState;
-  res.json({ status: state === 1 ? "ok" : "down", mongoState: state });
+  res.json({ 
+    status: state === 1 ? "ok" : "down", 
+    mongoState: state,
+    stateDescription: ['disconnected', 'connected', 'connecting', 'disconnecting'][state]
+  });
 });
 
 // ✅ 404 handler
