@@ -26,7 +26,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
-app.set("trust proxy", 1); // ✅ Keeps Vercel proxy trust
+app.set("trust proxy", 1); // ✅ Required for Vercel/HTTPS
 
 const allowedOrigins = [
   "https://seabite.co.in",
@@ -60,11 +60,17 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Debug logging middleware (remove in production)
+// ✅ Debug logging middleware
 app.use((req, res, next) => {
+  // Capture the original 'res.send' to log headers right before sending
+  const originalSend = res.send;
+  res.send = function (body) {
+    if (req.path.includes('/auth') && res.getHeaders()['set-cookie']) {
+       console.log(`🍪 OUTGOING COOKIE: ${res.getHeaders()['set-cookie']}`);
+    }
+    return originalSend.call(this, body);
+  };
   console.log(`📍 ${req.method} ${req.path}`);
-  console.log(`🍪 Cookies: ${req.headers.cookie || 'none'}`);
-  console.log(`🌐 Origin: ${req.headers.origin || 'none'}`);
   next();
 });
 
@@ -99,30 +105,15 @@ const connectDB = async () => {
   }
 };
 
-// ✅ Add reconnection logic
-mongoose.connection.on('disconnected', () => {
-  console.log('⚠️ MongoDB disconnected. Attempting to reconnect...');
-});
-
-mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB reconnected');
-});
-
-mongoose.connection.on('error', (err) => {
-  console.error('❌ MongoDB connection error:', err);
-});
-
 await connectDB();
 
-/* --- 4. MONGODB SESSION SETUP --- */
+/* --- 4. MONGODB SESSION SETUP (FIXED FOR MOBILE/IOS) --- */
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "seabite_default_secret",
   resave: false,
-  saveUninitialized: false,
+  saveUninitialized: false, // ✅ Don't create empty sessions
   store: MongoStore.create({
-    // ✅ FIX 1: Use 'mongoUrl' directly instead of 'client'. 
-    // This is more stable for serverless functions (Vercel) where the connection object might not be ready.
-    mongoUrl: process.env.MONGO_URI, 
+    mongoUrl: process.env.MONGO_URI,
     dbName: "seabite",
     collectionName: "sessions",
     ttl: 14 * 24 * 60 * 60,
@@ -131,57 +122,29 @@ const sessionMiddleware = session({
     autoRemove: 'native',
   }),
   name: "seabite.sid",
-  proxy: true,
+  proxy: true, // ✅ Required for Vercel
   cookie: {
-    secure: true,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
-    // ✅ FIX 2: Changed from 'lax' to 'none' for Cross-Site (Mobile) login support
-    sameSite: "none", 
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    secure: true,    // ✅ Required for SameSite=None
+    sameSite: "none", // ✅ Required for Cross-Domain (Laptop)
+    partitioned: true, // ✅ FIX: Required for Cross-Domain on iOS/Chrome (CHIPS)
     path: "/",
   },
 });
 
 app.use(sessionMiddleware);
 
-// ✅ Session save error handler
+// ✅ Session debug
 app.use((req, res, next) => {
-  const originalSave = req.session.save.bind(req.session);
-  req.session.save = function(callback) {
-    originalSave(function(err) {
-      if (err) {
-        console.error('❌ Session save error:', err);
-      }
-      if (callback) callback(err);
-    });
-  };
-  next();
-});
-
-// ✅ Session debug middleware (remove in production)
-app.use((req, res, next) => {
-  if (req.session) {
-    console.log(`🔑 Session ID: ${req.sessionID || 'none'}`);
-    console.log(`👤 Session User: ${req.session.user?.email || 'not logged in'}`);
+  if (req.session && req.session.user) {
+    console.log(`✅ Active Session: ${req.session.user.email}`);
   }
   next();
 });
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
-
-// ✅ Debug endpoint - check if cookies are working
-app.get("/api/debug/cookie-test", (req, res) => {
-  res.json({
-    hasCookie: !!req.headers.cookie,
-    cookies: req.headers.cookie,
-    sessionID: req.sessionID,
-    sessionData: req.session,
-    origin: req.headers.origin,
-    userAgent: req.headers["user-agent"],
-    mongoStatus: mongoose.connection.readyState,
-  });
-});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
@@ -196,23 +159,16 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 
 app.get("/health", (req, res) => {
-  const state = mongoose.connection.readyState;
   res.json({ 
-    status: state === 1 ? "ok" : "down", 
-    mongoState: state,
-    stateDescription: ['disconnected', 'connected', 'connecting', 'disconnecting'][state]
+    status: mongoose.connection.readyState === 1 ? "ok" : "down" 
   });
 });
 
-// ✅ 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
-});
+app.use((req, res) => res.status(404).json({ error: "Route not found" }));
 
-// ✅ Error handler
 app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err);
-  res.status(500).json({ error: "Internal server error", message: err.message });
+  res.status(500).json({ error: "Internal server error" });
 });
 
 export default app;
