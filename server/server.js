@@ -37,39 +37,15 @@ const allowedOrigins = [
 // ✅ MANUAL CORS
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
-
   res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PUT, DELETE, OPTIONS"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, Cookie"
-  );
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
 
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
-
-// ✅ Debug logging middleware
-app.use((req, res, next) => {
-  const originalSend = res.send;
-  res.send = function (body) {
-    if (req.path.includes('/auth') && res.getHeaders()['set-cookie']) {
-       console.log(`🍪 OUTGOING COOKIE: ${res.getHeaders()['set-cookie']}`);
-    }
-    return originalSend.call(this, body);
-  };
-  console.log(`📍 ${req.method} ${req.path}`);
+  if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
 
@@ -80,13 +56,12 @@ const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-/* --- 3. DATABASE CONNECTION (OPTIMIZED FOR VERCEL) --- */
+/* --- 3. DATABASE CONNECTION --- */
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) {
     console.log("➡️ Using existing MongoDB connection");
     return;
   }
-
   try {
     await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
@@ -98,34 +73,33 @@ const connectDB = async () => {
       retryReads: true,
     });
     console.log("✅ MongoDB Connected");
-    
   } catch (error) {
     console.error("❌ MongoDB Connection Error:", error);
   }
 };
 
 mongoose.connection.on('error', err => console.error('⚠️ DB Error:', err.message));
-mongoose.connection.on('disconnected', () => console.log('⚠️ DB Disconnected'));
-
 await connectDB();
 
-/* --- 🚨 ONE-TIME CLEANUP: Fix "expires" error --- */
-// This deletes the old incompatible session data causing the crash.
+/* --- 🚨 CRITICAL FIX: FORCE DELETE CORRUPTED SESSIONS --- */
+// This block runs ONCE on startup to remove the bad data causing your crash.
 try {
-  // Check if sessions collection exists
-  const collections = await mongoose.connection.db.listCollections().toArray();
-  const sessionCollection = collections.find(c => c.name === 'sessions');
+  const connection = mongoose.connection;
+  // Check if the 'sessions' collection exists
+  const collections = await connection.db.listCollections({ name: 'sessions' }).toArray();
   
-  if (sessionCollection) {
-    console.log('🧹 Dropping old sessions collection to fix cookie format...');
-    await mongoose.connection.db.dropCollection('sessions');
-    console.log('✅ Sessions cleaned up. New sessions will be created automatically.');
+  if (collections.length > 0) {
+    console.log("🔥 FOUND CORRUPTED SESSIONS. DELETING NOW...");
+    await connection.db.dropCollection('sessions');
+    console.log("✅ SESSIONS DELETED. The 'expires' error is now fixed.");
+  } else {
+    console.log("✅ No old sessions found. System is clean.");
   }
-} catch (err) {
-  console.log('⚠️ Cleanup skipped (Collection might be empty):', err.message);
+} catch (e) {
+  console.log("⚠️ Session cleanup skipped:", e.message);
 }
 
-/* --- 4. MONGODB SESSION SETUP --- */
+/* --- 4. SESSION SETUP --- */
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "seabite_default_secret",
   resave: false,
@@ -139,27 +113,20 @@ const sessionMiddleware = session({
     stringify: false,
     autoRemove: 'native',
   }),
-  name: "seabite.sid",
+  // ✅ RENAMED to force browsers to get a fresh cookie (Fixes login loop)
+  name: "seabite_session_v3", 
   proxy: true, 
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000, 
     httpOnly: true,
     secure: true,    
-    sameSite: "none", 
-    partitioned: true, 
+    sameSite: "none", // Required for Laptop
+    partitioned: true, // Required for Mobile/iPhone
     path: "/",
   },
 });
 
 app.use(sessionMiddleware);
-
-// ✅ Session debug
-app.use((req, res, next) => {
-  if (req.session && req.session.user) {
-    console.log(`✅ Active Session: ${req.session.user.email}`);
-  }
-  next();
-});
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
@@ -177,10 +144,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 
 app.get("/health", (req, res) => {
-  res.json({ 
-    status: mongoose.connection.readyState === 1 ? "ok" : "down",
-    dbState: mongoose.connection.readyState
-  });
+  res.json({ status: mongoose.connection.readyState === 1 ? "ok" : "down" });
 });
 
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
