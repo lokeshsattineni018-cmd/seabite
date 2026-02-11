@@ -68,6 +68,8 @@ export default function Login() {
         type: "error",
       });
     },
+    // FIX: Use redirect flow on mobile devices to avoid popup blocking
+    flow: window.innerWidth < 768 ? 'redirect' : 'implicit',
   });
 
   return (
@@ -106,7 +108,7 @@ export default function Login() {
               Welcome Back
             </h2>
             <p className="text-slate-500 text-sm">
-              Sign in with Google to access your rewards.
+              Sign in with Google to continue to SeaBite
             </p>
           </div>
 
@@ -124,7 +126,7 @@ export default function Login() {
             </button>
           </div>
           <p className="text-[10px] text-slate-400 mt-4 leading-relaxed uppercase tracking-wider">
-            Your identity is secured by MongoDB sessions
+            Your identity is securely verified by Google. We do not store your password or share your information with third parties. By signing in, you agree to our{" "}
           </p>
         </div>
       </motion.div>
