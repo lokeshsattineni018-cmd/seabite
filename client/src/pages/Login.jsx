@@ -21,55 +21,59 @@ export default function Login() {
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        // Ask backend to create secure session cookie
+        console.log("🔐 Sending token to backend...");
+        
         const res = await axios.post(
           `${API_URL}/api/auth/google`,
           {
             token: tokenResponse.access_token,
           },
-          { withCredentials: true }
+          { 
+            withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
         );
 
-        // Update global auth state immediately
+        console.log("✅ Login successful", res.data);
         setUser(res.data.user);
-        refreshMe?.();
 
         setModal({
           show: true,
-          message: "Login Successful!",
+          message: "Login Successful! Redirecting...",
           type: "success",
         });
 
-        const redirectPath = localStorage.getItem("postLoginRedirect");
-        if (redirectPath) localStorage.removeItem("postLoginRedirect");
+        setTimeout(async () => {
+          await refreshMe?.();
+          
+          const redirectPath = localStorage.getItem("postLoginRedirect");
+          if (redirectPath) localStorage.removeItem("postLoginRedirect");
 
-        setTimeout(() => {
-          if (redirectPath) {
-            window.location.href = redirectPath;
-          } else {
-            window.location.href =
-              res.data.user.role === "admin" ? "/admin/dashboard" : "/";
-          }
-        }, 1000);
+          const targetPath = redirectPath || 
+            (res.data.user.role === "admin" ? "/admin/dashboard" : "/");
+          
+          window.location.href = targetPath;
+        }, 1500);
       } catch (err) {
-        console.error("Login verification failed:", err);
+        console.error("❌ Login failed:", err);
         setModal({
           show: true,
-          message: "Verification failed on server. Please try again.",
+          message: "Verification failed. Please try again.",
           type: "error",
         });
       }
     },
     onError: (error) => {
-      console.error("Google Login Failed:", error);
+      console.error("❌ Google Login Failed:", error);
       setModal({
         show: true,
         message: "Google login was unsuccessful.",
         type: "error",
       });
     },
-    // FIX: Use redirect flow on mobile devices to avoid popup blocking
-    flow: window.innerWidth < 768 ? 'redirect' : 'implicit',
+    flow: window.innerWidth < 768 ? 'redirect' : 'implicit', // ADD THIS LINE
   });
 
   return (
@@ -108,7 +112,7 @@ export default function Login() {
               Welcome Back
             </h2>
             <p className="text-slate-500 text-sm">
-              Sign in with Google to continue to SeaBite
+              Sign in with Google to access your rewards.
             </p>
           </div>
 
@@ -126,7 +130,7 @@ export default function Login() {
             </button>
           </div>
           <p className="text-[10px] text-slate-400 mt-4 leading-relaxed uppercase tracking-wider">
-            Your identity is securely verified by Google. We do not store your password or share your information with third parties. By signing in, you agree to our{" "}
+            Your identity is secured by MongoDB sessions
           </p>
         </div>
       </motion.div>

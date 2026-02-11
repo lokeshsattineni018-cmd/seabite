@@ -49,6 +49,8 @@ router.post("/login", async (req, res) => {
         return res.status(500).json({ message: "Session save failed" });
       }
 
+      console.log("✅ Login successful - Session saved for:", user.email);
+      
       // Response is only sent once the session is confirmed in MongoDB
       res.status(200).json({
         user: req.session.user,
@@ -63,8 +65,11 @@ router.post("/login", async (req, res) => {
 
 // ================= LOGOUT =================
 router.post("/logout", (req, res) => {
-  // ✅ Clear the cookie first to stop the browser from sending old session IDs
-  res.clearCookie("connect.sid", {
+  console.log("🚪 Logout requested for session:", req.sessionID);
+  
+  // ✅ Clear the cookie - use "seabite.sid" if you updated the session config
+  // OR keep "connect.sid" if you didn't change the session name
+  res.clearCookie("seabite.sid", {  // Change to "connect.sid" if you didn't update session config
     path: "/",
     httpOnly: true,
     secure: true,
@@ -76,6 +81,7 @@ router.post("/logout", (req, res) => {
       console.error("❌ Logout Session Destroy Error:", err);
       return res.status(500).json({ message: "Logout failed" });
     }
+    console.log("✅ Logout successful");
     res.status(200).json({ message: "Logged out successfully" });
   });
 });
@@ -116,6 +122,9 @@ router.post("/register", async (req, res) => {
         console.error("❌ Session Save Error (register):", err);
         return res.status(500).json({ message: "Session save failed" });
       }
+      
+      console.log("✅ Registration successful - Session saved for:", user.email);
+      
       res.status(201).json({
         user: req.session.user,
         message: "Registration successful",

@@ -12,39 +12,71 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState("loading");
 
   const fetchMe = async () => {
-    console.log("fetchMe called");
+    console.log("🔍 fetchMe: Checking authentication...");
     try {
       const res = await axios.get(`${API_URL}/api/auth/me`, {
         withCredentials: true,
+        timeout: 10000, // 10 second timeout
       });
-      console.log("fetchMe success", res.data);
+      
+      console.log("✅ fetchMe: User authenticated", res.data);
       setUser(res.data);
       setStatus("authenticated");
+      return res.data; // Return user data for chaining
     } catch (err) {
-      console.log(
-        "fetchMe error",
-        err?.response?.status,
-        err?.response?.data
-      );
+      console.log("❌ fetchMe: Authentication failed");
+      console.log("Status:", err?.response?.status);
+      console.log("Error:", err?.response?.data?.message || err.message);
+      console.log("Cookies:", document.cookie || "No cookies found");
+      
       setUser(null);
       setStatus("unauthenticated");
+      return null;
     }
   };
 
   useEffect(() => {
-    console.log("AuthProvider useEffect mount");
+    console.log("🚀 AuthProvider: Mounted - checking initial auth");
     fetchMe();
-    window.addEventListener("focus", fetchMe);
-    return () => window.removeEventListener("focus", fetchMe);
+    
+    // Refresh auth when user returns to tab/window
+    const handleFocus = () => {
+      console.log("👀 AuthProvider: Window focused - refreshing auth");
+      fetchMe();
+    };
+    
+    // Refresh auth when user comes back online
+    const handleOnline = () => {
+      console.log("🌐 AuthProvider: Back online - refreshing auth");
+      fetchMe();
+    };
+    
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("online", handleOnline);
+    
+    return () => {
+      console.log("🔌 AuthProvider: Unmounting");
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("online", handleOnline);
+    };
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, status, setUser, refreshMe: fetchMe }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      status, 
+      setUser, 
+      refreshMe: fetchMe 
+    }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 }

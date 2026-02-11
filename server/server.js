@@ -42,7 +42,7 @@ app.use((req, res, next) => {
     res.setHeader("Access-Control-Allow-Origin", origin);
   }
 
-  res.setHeader("Vary", "Origin"); // important when using dynamic origin CORS [web:41]
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader(
     "Access-Control-Allow-Methods",
@@ -57,6 +57,14 @@ app.use((req, res, next) => {
     return res.sendStatus(200);
   }
 
+  next();
+});
+
+// ✅ Debug logging middleware (remove in production)
+app.use((req, res, next) => {
+  console.log(`📍 ${req.method} ${req.path}`);
+  console.log(`🍪 Cookies: ${req.headers.cookie || 'none'}`);
+  console.log(`🌐 Origin: ${req.headers.origin || 'none'}`);
   next();
 });
 
@@ -88,29 +96,51 @@ const connectDB = async () => {
 await connectDB();
 
 /* --- 4. MONGODB SESSION SETUP --- */
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "seabite_default_secret",
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      client: mongoose.connection.getClient(),
-      collectionName: "sessions",
-      ttl: 14 * 24 * 60 * 60,
-    }),
-    proxy: true,
-    cookie: {
-      secure: true,       // HTTPS only
-      httpOnly: true,
-      sameSite: "none",   // cross-site from seabite.co.in → seabite-server.vercel.app
-      // domain left unset => host-only for seabite-server.vercel.app
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    },
-  })
-);
+const sessionMiddleware = session({
+  secret: process.env.SESSION_SECRET || "seabite_default_secret",
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    client: mongoose.connection.getClient(),
+    collectionName: "sessions",
+    ttl: 14 * 24 * 60 * 60,
+  }),
+  name: "seabite.sid", // Custom cookie name
+  proxy: true, // Trust proxy (Vercel)
+  cookie: {
+    secure: true,       // ✅ HTTPS only (critical for mobile)
+    httpOnly: true,     // ✅ Prevent JS access
+    sameSite: "none",   // ✅ Allow cross-origin (critical for mobile)
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: "/",          // Available on all routes
+  },
+});
+
+app.use(sessionMiddleware);
+
+// ✅ Session debug middleware (remove in production)
+app.use((req, res, next) => {
+  if (req.session) {
+    console.log(`🔑 Session ID: ${req.sessionID || 'none'}`);
+    console.log(`👤 Session User: ${req.session.userId || 'not logged in'}`);
+  }
+  next();
+});
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
+
+// ✅ Debug endpoint - check if cookies are working
+app.get("/api/debug/cookie-test", (req, res) => {
+  res.json({
+    hasCookie: !!req.headers.cookie,
+    cookies: req.headers.cookie,
+    sessionID: req.sessionID,
+    sessionData: req.session,
+    origin: req.headers.origin,
+    userAgent: req.headers["user-agent"],
+  });
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
@@ -127,6 +157,17 @@ app.use("/api/spin", spinRoutes);
 app.get("/health", (req, res) => {
   const state = mongoose.connection.readyState;
   res.json({ status: state === 1 ? "ok" : "down", mongoState: state });
+});
+
+// ✅ 404 handler
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+// ✅ Error handler
+app.use((err, req, res, next) => {
+  console.error("❌ Server Error:", err);
+  res.status(500).json({ error: "Internal server error", message: err.message });
 });
 
 export default app;
