@@ -26,7 +26,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
-app.set("trust proxy", 1);
+app.set("trust proxy", 1); // ✅ Keeps Vercel proxy trust
 
 const allowedOrigins = [
   "https://seabite.co.in",
@@ -84,13 +84,13 @@ const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      serverSelectionTimeoutMS: 30000,    // ✅ Increased from 5000
-      connectTimeoutMS: 30000,             // ✅ Increased from 10000
-      socketTimeoutMS: 45000,              // ✅ Added socket timeout
-      maxPoolSize: 10,                     // ✅ Connection pool
-      minPoolSize: 2,                      // ✅ Minimum connections
-      retryWrites: true,                   // ✅ Retry writes on failure
-      retryReads: true,                    // ✅ Retry reads on failure
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 10,
+      minPoolSize: 2,
+      retryWrites: true,
+      retryReads: true,
     });
     console.log("✅ MongoDB Connected");
   } catch (error) {
@@ -120,19 +120,23 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    client: mongoose.connection.getClient(),
+    // ✅ FIX 1: Use 'mongoUrl' directly instead of 'client'. 
+    // This is more stable for serverless functions (Vercel) where the connection object might not be ready.
+    mongoUrl: process.env.MONGO_URI, 
+    dbName: "seabite",
     collectionName: "sessions",
     ttl: 14 * 24 * 60 * 60,
-    touchAfter: 24 * 3600, // ✅ Lazy session update (once per 24h)
-    stringify: false,       // ✅ Better performance
-    autoRemove: 'native',   // ✅ Let MongoDB handle expired sessions
+    touchAfter: 24 * 3600,
+    stringify: false,
+    autoRemove: 'native',
   }),
   name: "seabite.sid",
   proxy: true,
   cookie: {
     secure: true,
     httpOnly: true,
-    sameSite: "lax",    // ✅ Changed from "none"
+    // ✅ FIX 2: Changed from 'lax' to 'none' for Cross-Site (Mobile) login support
+    sameSite: "none", 
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   },
@@ -175,7 +179,7 @@ app.get("/api/debug/cookie-test", (req, res) => {
     sessionData: req.session,
     origin: req.headers.origin,
     userAgent: req.headers["user-agent"],
-    mongoStatus: mongoose.connection.readyState, // ✅ Added MongoDB status
+    mongoStatus: mongoose.connection.readyState,
   });
 });
 
