@@ -7,8 +7,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import session from "express-session";
 import MongoStore from "connect-mongo";
+import passport from "passport";
+import "./config/passport.js"; 
 
-/* --- ROUTE IMPORTS --- */
+// Route Imports
 import authRoutes from "./routes/authRoutes.js";
 import adminProductRoutes from "./routes/adminProducts.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -25,7 +27,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
+/* --- 2. SECURITY & PROXY --- */
 app.set("trust proxy", 1); 
 
 const allowedOrigins = [
@@ -34,7 +36,6 @@ const allowedOrigins = [
   "http://localhost:5173",
 ];
 
-// ✅ MANUAL CORS
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
@@ -44,55 +45,46 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
-
   if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
 
 app.use(express.json());
 
-// ✅ STATIC IMAGES
+// Static Images
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-/* --- 3. ROBUST DATABASE CONNECTION (Prevents Vercel Timeouts) --- */
+/* --- 3. ROBUST DATABASE CONNECTION (VERCEL CACHING PATTERN) --- */
+let isConnected = false; // Track connection status
+
 const connectDB = async () => {
-  if (mongoose.connection.readyState === 1) {
-    console.log("➡️ Using existing MongoDB connection");
-    return;
-  }
+  if (isConnected) return; // Use existing connection if active
 
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
+    const db = await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      serverSelectionTimeoutMS: 15000, // Fail fast (15s) so Vercel doesn't hang
-      socketTimeoutMS: 45000,          // Keep connection alive
-      maxPoolSize: 5,                  // Limit connections for Serverless
+      serverSelectionTimeoutMS: 15000, 
+      socketTimeoutMS: 45000,          
+      maxPoolSize: 5,                 
       minPoolSize: 0,
       retryWrites: true,
     });
+    isConnected = !!db.connections[0].readyState;
     console.log("✅ MongoDB Connected");
   } catch (error) {
     console.error("❌ MongoDB Connection Error:", error);
   }
 };
 
-mongoose.connection.on('error', err => console.error('⚠️ DB Error:', err.message));
-await connectDB();
-
-/* --- 🚨 CRITICAL FIX: FORCE DELETE CORRUPTED SESSIONS --- */
-// Deletes old data causing the "expires" error crash.
-try {
-  const collections = await mongoose.connection.db.listCollections({ name: 'sessions' }).toArray();
-  if (collections.length > 0) {
-    console.log("🔥 Startup Cleanup: Deleting old sessions to fix cookie format...");
-    await mongoose.connection.db.dropCollection('sessions');
-    console.log("✅ Sessions cleared. System ready.");
-  }
-} catch (e) {
-  console.log("⚠️ Session cleanup skipped:", e.message);
-}
+/* --- 🚨 CRITICAL FIX: WAIT FOR DB BEFORE SESSION --- */
+// This middleware pauses every request until the DB is ready.
+// Prevents "Auth Failed" caused by the session loading before the DB connects.
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 /* --- 4. SESSION SETUP --- */
 const sessionMiddleware = session({
@@ -100,27 +92,30 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false, 
   store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI, // Use URL directly for reliability
+    mongoUrl: process.env.MONGO_URI, 
     dbName: "seabite",
     collectionName: "sessions",
     ttl: 14 * 24 * 60 * 60,
     touchAfter: 24 * 3600,
     autoRemove: 'native',
   }),
-  // ✅ V4 NAME: Forces all devices to get a brand new cookie
-  name: "seabite_session_v4", 
+  name: "seabite_session_v5", // Bumped version to v5 to clear cache
   proxy: true, 
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000, 
     httpOnly: true,
     secure: true,    
-    sameSite: "none", // Required for Laptop/Cross-Site
-    partitioned: true, // Required for Mobile/iOS
+    sameSite: "none", 
+    partitioned: true, 
+    // ✅ DOMAIN FIX: Ensures cookie works on both 'www' and root domain
+    domain: process.env.NODE_ENV === 'production' ? '.seabite.co.in' : undefined,
     path: "/",
   },
 });
 
 app.use(sessionMiddleware);
+app.use(passport.initialize());
+app.use(passport.session());
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
@@ -138,7 +133,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 
 app.get("/health", (req, res) => {
-  res.json({ status: mongoose.connection.readyState === 1 ? "ok" : "down" });
+  res.json({ status: isConnected ? "ok" : "down" });
 });
 
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
