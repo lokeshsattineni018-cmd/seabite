@@ -8,7 +8,7 @@ import { fileURLToPath } from "url";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 import passport from "passport";
-import "./config/passport.js"; // ✅ Keeping Passport
+import "./config/passport.js"; 
 
 /* --- ROUTE IMPORTS --- */
 import authRoutes from "./routes/authRoutes.js";
@@ -17,7 +17,6 @@ import orderRoutes from "./routes/orderRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import products from "./routes/products.js";
-import productsRoutes from "./routes/productsRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
@@ -36,6 +35,7 @@ const allowedOrigins = [
   "http://localhost:5173",
 ];
 
+// ✅ Manual CORS for cross-origin requests
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && allowedOrigins.includes(origin)) {
@@ -45,12 +45,14 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
+
   if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
 });
 
 app.use(express.json());
 
+// ✅ Handle static uploads
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
@@ -58,7 +60,7 @@ app.use("/uploads", express.static(uploadDir));
 /* --- 3. ROBUST DATABASE CONNECTION --- */
 let isConnected = false;
 const connectDB = async () => {
-  if (isConnected) return;
+  if (isConnected && mongoose.connection.readyState === 1) return;
   try {
     const db = await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
@@ -75,7 +77,7 @@ const connectDB = async () => {
   }
 };
 
-/* --- 🚨 FIX: WAIT FOR DB BEFORE SESSION --- */
+/* --- 🚨 CRITICAL: WAIT FOR DB BEFORE SESSION --- */
 app.use(async (req, res, next) => {
   await connectDB();
   next();
@@ -94,16 +96,16 @@ const sessionMiddleware = session({
     touchAfter: 24 * 3600,
     autoRemove: 'native',
   }),
-  // ✅ V7 COOKIE: Clean slate
-  name: "seabite_session_v7", 
+  // ✅ V10: Clear old conflicting cookies from your logs
+  name: "seabite_session_v10", 
   proxy: true, 
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000, 
     httpOnly: true,
     secure: true,    
-    sameSite: "none", 
+    // ✅ 'lax' is best for vercel.json rewrites; 'none' is for cross-domain
+    sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax", 
     partitioned: true, 
-    domain: process.env.NODE_ENV === 'production' ? '.seabite.co.in' : undefined,
     path: "/",
   },
 });
@@ -114,9 +116,9 @@ app.use(passport.session());
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
+
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
-app.use("/api/productsRoutes", productsRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
@@ -127,10 +129,15 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 
 app.get("/health", (req, res) => {
-  res.json({ status: isConnected ? "ok" : "down" });
+  res.json({ 
+    status: isConnected ? "ok" : "down",
+    dbState: mongoose.connection.readyState 
+  });
 });
 
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
+
+// Error handling middleware
 app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err);
   res.status(500).json({ error: "Internal server error" });
