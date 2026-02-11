@@ -22,6 +22,8 @@
     "mongoose": "^9.0.1",
     "multer": "^2.0.2",
     "nodemailer": "^7.0.11",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
     "razorpay": "^2.9.6",
     "resend": "^6.6.0"
   },
