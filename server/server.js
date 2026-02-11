@@ -81,29 +81,45 @@ const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-/* --- 3. DATABASE CONNECTION --- */
+/* --- 3. DATABASE CONNECTION (OPTIMIZED FOR VERCEL) --- */
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
+  // 1. If already connected, use that connection
+  if (mongoose.connection.readyState === 1) {
     console.log("➡️ Using existing MongoDB connection");
     return;
   }
+
   try {
+    // 2. Connect with timeouts configured for serverless latency
     await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
+      
+      // ✅ FIX: Fail faster so Vercel doesn't hang (20s)
+      serverSelectionTimeoutMS: 20000, 
+      
+      // ✅ FIX: Keep sockets alive longer for slow connections
       socketTimeoutMS: 45000,
-      maxPoolSize: 10,
-      minPoolSize: 2,
+      
+      // ✅ FIX: Small pool size for Serverless environment
+      maxPoolSize: 5, 
+      minPoolSize: 0, 
+      
+      // Auto-retry behaviors
       retryWrites: true,
       retryReads: true,
     });
     console.log("✅ MongoDB Connected");
+    
   } catch (error) {
     console.error("❌ MongoDB Connection Error:", error);
-    throw error;
+    // We do NOT throw error here to allow the server to start, 
+    // retry logic will handle subsequent requests
   }
 };
+
+// Handle connection events silently to avoid log spam/crashes
+mongoose.connection.on('error', err => console.error('⚠️ DB Error:', err.message));
+mongoose.connection.on('disconnected', () => console.log('⚠️ DB Disconnected'));
 
 await connectDB();
 
@@ -160,7 +176,8 @@ app.use("/api/spin", spinRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ 
-    status: mongoose.connection.readyState === 1 ? "ok" : "down" 
+    status: mongoose.connection.readyState === 1 ? "ok" : "down",
+    dbState: mongoose.connection.readyState
   });
 });
 
