@@ -56,21 +56,21 @@ const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-/* --- 3. DATABASE CONNECTION --- */
+/* --- 3. ROBUST DATABASE CONNECTION (Prevents Vercel Timeouts) --- */
 const connectDB = async () => {
   if (mongoose.connection.readyState === 1) {
     console.log("➡️ Using existing MongoDB connection");
     return;
   }
+
   try {
     await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      serverSelectionTimeoutMS: 20000, 
-      socketTimeoutMS: 45000,
-      maxPoolSize: 5, 
-      minPoolSize: 0, 
+      serverSelectionTimeoutMS: 15000, // Fail fast (15s) so Vercel doesn't hang
+      socketTimeoutMS: 45000,          // Keep connection alive
+      maxPoolSize: 5,                  // Limit connections for Serverless
+      minPoolSize: 0,
       retryWrites: true,
-      retryReads: true,
     });
     console.log("✅ MongoDB Connected");
   } catch (error) {
@@ -82,18 +82,13 @@ mongoose.connection.on('error', err => console.error('⚠️ DB Error:', err.mes
 await connectDB();
 
 /* --- 🚨 CRITICAL FIX: FORCE DELETE CORRUPTED SESSIONS --- */
-// This block runs ONCE on startup to remove the bad data causing your crash.
+// Deletes old data causing the "expires" error crash.
 try {
-  const connection = mongoose.connection;
-  // Check if the 'sessions' collection exists
-  const collections = await connection.db.listCollections({ name: 'sessions' }).toArray();
-  
+  const collections = await mongoose.connection.db.listCollections({ name: 'sessions' }).toArray();
   if (collections.length > 0) {
-    console.log("🔥 FOUND CORRUPTED SESSIONS. DELETING NOW...");
-    await connection.db.dropCollection('sessions');
-    console.log("✅ SESSIONS DELETED. The 'expires' error is now fixed.");
-  } else {
-    console.log("✅ No old sessions found. System is clean.");
+    console.log("🔥 Startup Cleanup: Deleting old sessions to fix cookie format...");
+    await mongoose.connection.db.dropCollection('sessions');
+    console.log("✅ Sessions cleared. System ready.");
   }
 } catch (e) {
   console.log("⚠️ Session cleanup skipped:", e.message);
@@ -105,23 +100,22 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false, 
   store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI,
+    mongoUrl: process.env.MONGO_URI, // Use URL directly for reliability
     dbName: "seabite",
     collectionName: "sessions",
     ttl: 14 * 24 * 60 * 60,
     touchAfter: 24 * 3600,
-    stringify: false,
     autoRemove: 'native',
   }),
-  // ✅ RENAMED to force browsers to get a fresh cookie (Fixes login loop)
-  name: "seabite_session_v3", 
+  // ✅ V4 NAME: Forces all devices to get a brand new cookie
+  name: "seabite_session_v4", 
   proxy: true, 
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000, 
     httpOnly: true,
     secure: true,    
-    sameSite: "none", // Required for Laptop
-    partitioned: true, // Required for Mobile/iPhone
+    sameSite: "none", // Required for Laptop/Cross-Site
+    partitioned: true, // Required for Mobile/iOS
     path: "/",
   },
 });

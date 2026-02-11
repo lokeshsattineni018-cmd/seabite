@@ -10,7 +10,7 @@ import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// ================= LOGIN =================
+// ================= LOGIN (Manual Save Fix) =================
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -24,7 +24,6 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // Ensure they didn't sign up with Google only
     if (!user.password) {
       return res.status(400).json({ message: "Please log in with Google" });
     }
@@ -34,7 +33,7 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password" });
     }
 
-    // ✅ SESSION DATA: Populates req.session.user for middleware checks
+    // Populate Session
     req.session.user = {
       id: user._id,
       name: user.name,
@@ -42,15 +41,13 @@ router.post("/login", async (req, res) => {
       role: user.role,
     };
 
-    // ✅ FORCE SYNC: Prevents the race condition causing the login loop
+    // ✅ FORCE SAVE: Wait for DB write before sending response
     req.session.save((err) => {
       if (err) {
         console.error("❌ Session Save Error:", err);
         return res.status(500).json({ message: "Session save failed" });
       }
-
       console.log("✅ Login successful - Session saved for:", user.email);
-      
       res.status(200).json({
         user: req.session.user,
         message: "Login successful",
@@ -64,14 +61,15 @@ router.post("/login", async (req, res) => {
 
 // ================= LOGOUT =================
 router.post("/logout", (req, res) => {
-  console.log("🚪 Logout requested for session:", req.sessionID);
+  console.log("🚪 Logout requested");
   
-  // ✅ Clear the cookie with correct settings
-  res.clearCookie("seabite.sid", {
+  // ✅ Clear the cookie with EXACT matching settings
+  res.clearCookie("seabite_session_v4", {
     path: "/",
     httpOnly: true,
     secure: true,
-    sameSite: "lax",  // ✅ CHANGED: 'lax' instead of 'none'
+    sameSite: "none",
+    partitioned: true,
   });
 
   req.session.destroy((err) => {
@@ -90,7 +88,7 @@ router.post("/register", async (req, res) => {
     const { name, email, password } = req.body;
 
     if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, email and password are required" });
+      return res.status(400).json({ message: "All fields required" });
     }
 
     const existing = await User.findOne({ email: email.toLowerCase() });
@@ -99,7 +97,6 @@ router.post("/register", async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(password, 10);
-
     const user = await User.create({
       name,
       email: email.toLowerCase(),
@@ -107,7 +104,6 @@ router.post("/register", async (req, res) => {
       role: "user",
     });
 
-    // Auto-login logic after registration
     req.session.user = {
       id: user._id,
       name: user.name,
@@ -115,14 +111,12 @@ router.post("/register", async (req, res) => {
       role: user.role,
     };
 
+    // ✅ FORCE SAVE
     req.session.save((err) => {
       if (err) {
         console.error("❌ Session Save Error (register):", err);
         return res.status(500).json({ message: "Session save failed" });
       }
-      
-      console.log("✅ Registration successful - Session saved for:", user.email);
-      
       res.status(201).json({
         user: req.session.user,
         message: "Registration successful",
