@@ -8,7 +8,7 @@ import { fileURLToPath } from "url";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 import passport from "passport";
-import "./config/passport.js"; 
+import "./config/passport.js";
 
 /* --- ROUTE IMPORTS --- */
 import authRoutes from "./routes/authRoutes.js";
@@ -27,7 +27,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* --- 2. SECURITY & PROXY --- */
-app.set("trust proxy", 1); 
+app.set("trust proxy", 1);
 
 const allowedOrigins = [
   "https://seabite.co.in",
@@ -64,9 +64,9 @@ const connectDB = async () => {
   try {
     const db = await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      serverSelectionTimeoutMS: 15000, 
-      socketTimeoutMS: 45000,          
-      maxPoolSize: 5,                 
+      serverSelectionTimeoutMS: 15000,
+      socketTimeoutMS: 45000,
+      maxPoolSize: 5,
       minPoolSize: 0,
       retryWrites: true,
     });
@@ -87,25 +87,23 @@ app.use(async (req, res, next) => {
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "seabite_default_secret",
   resave: false,
-  saveUninitialized: false, 
+  saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: process.env.MONGO_URI, 
+    mongoUrl: process.env.MONGO_URI,
     dbName: "seabite",
     collectionName: "sessions",
     ttl: 14 * 24 * 60 * 60,
     touchAfter: 24 * 3600,
-    autoRemove: 'native',
+    autoRemove: "native",
   }),
-  // ✅ V10: Clear old conflicting cookies from your logs
-  name: "seabite_session_v10", 
-  proxy: true, 
+  name: "seabite_session_v10",
+  proxy: true,
   cookie: {
-    maxAge: 7 * 24 * 60 * 60 * 1000, 
+    maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: true,    
-    // ✅ 'lax' is best for vercel.json rewrites; 'none' is for cross-domain
-    sameSite: process.env.NODE_ENV === "production" ? "lax" : "lax", 
-    partitioned: true, 
+    secure: "auto",          // 🔹 was true
+    sameSite: "none",        // 🔹 for cross-site (frontend on seabite.co.in)
+    partitioned: true,
     path: "/",
   },
 });
@@ -129,9 +127,9 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 
 app.get("/health", (req, res) => {
-  res.json({ 
+  res.json({
     status: isConnected ? "ok" : "down",
-    dbState: mongoose.connection.readyState 
+    dbState: mongoose.connection.readyState,
   });
 });
 
