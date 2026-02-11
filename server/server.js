@@ -26,7 +26,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 /* --- 2. SECURITY & PROXY (CRITICAL FOR VERCEL) --- */
-app.set("trust proxy", 1); // ✅ Required for Vercel/HTTPS
+app.set("trust proxy", 1); 
 
 const allowedOrigins = [
   "https://seabite.co.in",
@@ -34,7 +34,7 @@ const allowedOrigins = [
   "http://localhost:5173",
 ];
 
-// ✅ MANUAL CORS (CREDENTIALS + EXACT ORIGINS)
+// ✅ MANUAL CORS
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
@@ -62,7 +62,6 @@ app.use((req, res, next) => {
 
 // ✅ Debug logging middleware
 app.use((req, res, next) => {
-  // Capture the original 'res.send' to log headers right before sending
   const originalSend = res.send;
   res.send = function (body) {
     if (req.path.includes('/auth') && res.getHeaders()['set-cookie']) {
@@ -83,28 +82,18 @@ app.use("/uploads", express.static(uploadDir));
 
 /* --- 3. DATABASE CONNECTION (OPTIMIZED FOR VERCEL) --- */
 const connectDB = async () => {
-  // 1. If already connected, use that connection
   if (mongoose.connection.readyState === 1) {
     console.log("➡️ Using existing MongoDB connection");
     return;
   }
 
   try {
-    // 2. Connect with timeouts configured for serverless latency
     await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
-      
-      // ✅ FIX: Fail faster so Vercel doesn't hang (20s)
       serverSelectionTimeoutMS: 20000, 
-      
-      // ✅ FIX: Keep sockets alive longer for slow connections
       socketTimeoutMS: 45000,
-      
-      // ✅ FIX: Small pool size for Serverless environment
       maxPoolSize: 5, 
       minPoolSize: 0, 
-      
-      // Auto-retry behaviors
       retryWrites: true,
       retryReads: true,
     });
@@ -112,22 +101,35 @@ const connectDB = async () => {
     
   } catch (error) {
     console.error("❌ MongoDB Connection Error:", error);
-    // We do NOT throw error here to allow the server to start, 
-    // retry logic will handle subsequent requests
   }
 };
 
-// Handle connection events silently to avoid log spam/crashes
 mongoose.connection.on('error', err => console.error('⚠️ DB Error:', err.message));
 mongoose.connection.on('disconnected', () => console.log('⚠️ DB Disconnected'));
 
 await connectDB();
 
-/* --- 4. MONGODB SESSION SETUP (FIXED FOR MOBILE/IOS) --- */
+/* --- 🚨 ONE-TIME CLEANUP: Fix "expires" error --- */
+// This deletes the old incompatible session data causing the crash.
+try {
+  // Check if sessions collection exists
+  const collections = await mongoose.connection.db.listCollections().toArray();
+  const sessionCollection = collections.find(c => c.name === 'sessions');
+  
+  if (sessionCollection) {
+    console.log('🧹 Dropping old sessions collection to fix cookie format...');
+    await mongoose.connection.db.dropCollection('sessions');
+    console.log('✅ Sessions cleaned up. New sessions will be created automatically.');
+  }
+} catch (err) {
+  console.log('⚠️ Cleanup skipped (Collection might be empty):', err.message);
+}
+
+/* --- 4. MONGODB SESSION SETUP --- */
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "seabite_default_secret",
   resave: false,
-  saveUninitialized: false, // ✅ Don't create empty sessions
+  saveUninitialized: false, 
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
     dbName: "seabite",
@@ -138,13 +140,13 @@ const sessionMiddleware = session({
     autoRemove: 'native',
   }),
   name: "seabite.sid",
-  proxy: true, // ✅ Required for Vercel
+  proxy: true, 
   cookie: {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    maxAge: 7 * 24 * 60 * 60 * 1000, 
     httpOnly: true,
-    secure: true,    // ✅ Required for SameSite=None
-    sameSite: "none", // ✅ Required for Cross-Domain (Laptop)
-    partitioned: true, // ✅ FIX: Required for Cross-Domain on iOS/Chrome (CHIPS)
+    secure: true,    
+    sameSite: "none", 
+    partitioned: true, 
     path: "/",
   },
 });
