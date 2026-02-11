@@ -108,11 +108,11 @@ const sessionMiddleware = session({
   name: "seabite.sid", // Custom cookie name
   proxy: true, // Trust proxy (Vercel)
   cookie: {
-    secure: true,       // ✅ HTTPS only (critical for mobile)
+    secure: true,       // ✅ HTTPS only
     httpOnly: true,     // ✅ Prevent JS access
-    sameSite: "none",   // ✅ Allow cross-origin (critical for mobile)
+    sameSite: "lax",    // ✅ CHANGED: 'lax' instead of 'none' (same-origin via proxy)
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    path: "/",          // Available on all routes
+    path: "/",
   },
 });
 
@@ -122,7 +122,7 @@ app.use(sessionMiddleware);
 app.use((req, res, next) => {
   if (req.session) {
     console.log(`🔑 Session ID: ${req.sessionID || 'none'}`);
-    console.log(`👤 Session User: ${req.session.userId || 'not logged in'}`);
+    console.log(`👤 Session User: ${req.session.user?.email || 'not logged in'}`);
   }
   next();
 });

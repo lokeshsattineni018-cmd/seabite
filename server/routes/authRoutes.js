@@ -39,7 +39,7 @@ router.post("/login", async (req, res) => {
       id: user._id,
       name: user.name,
       email: user.email,
-      role: user.role, // Critical for adminAuth.js and protect middlewares
+      role: user.role,
     };
 
     // ✅ FORCE SYNC: Prevents the race condition causing the login loop
@@ -51,7 +51,6 @@ router.post("/login", async (req, res) => {
 
       console.log("✅ Login successful - Session saved for:", user.email);
       
-      // Response is only sent once the session is confirmed in MongoDB
       res.status(200).json({
         user: req.session.user,
         message: "Login successful",
@@ -67,13 +66,12 @@ router.post("/login", async (req, res) => {
 router.post("/logout", (req, res) => {
   console.log("🚪 Logout requested for session:", req.sessionID);
   
-  // ✅ Clear the cookie - use "seabite.sid" if you updated the session config
-  // OR keep "connect.sid" if you didn't change the session name
-  res.clearCookie("seabite.sid", {  // Change to "connect.sid" if you didn't update session config
+  // ✅ Clear the cookie with correct settings
+  res.clearCookie("seabite.sid", {
     path: "/",
     httpOnly: true,
     secure: true,
-    sameSite: "none",
+    sameSite: "lax",  // ✅ CHANGED: 'lax' instead of 'none'
   });
 
   req.session.destroy((err) => {

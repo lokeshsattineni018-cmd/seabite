@@ -2,8 +2,8 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "https://seabite-server.vercel.app/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://seabite-server.vercel.app/api/:path*"
     },
     {
       "source": "/(.*)",
