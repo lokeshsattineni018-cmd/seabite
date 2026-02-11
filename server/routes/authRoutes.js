@@ -1,13 +1,50 @@
 import express from "express";
+import passport from "passport";
 import bcrypt from "bcryptjs";
-import axios from "axios";
 import User from "../models/User.js";
 import { getLoggedUser, updateUserProfile } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// ================= 1. MANUAL LOGIN =================
+// ================= GOOGLE LOGIN (Manual Save Injection) =================
+
+// 1. Trigger Google Login
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+// 2. Custom Callback (Fixes Vercel Race Condition)
+router.get("/google/callback", (req, res, next) => {
+  // We manually call passport to intercept the redirect
+  passport.authenticate("google", (err, user, info) => {
+    if (err) {
+      console.error("❌ Passport Error:", err);
+      return res.redirect("https://seabite.co.in/login?error=auth_failed");
+    }
+    if (!user) {
+      return res.redirect("https://seabite.co.in/login?error=no_user");
+    }
+
+    // Log the user in manually
+    req.logIn(user, (err) => {
+      if (err) {
+        console.error("❌ Login Error:", err);
+        return res.redirect("https://seabite.co.in/login?error=login_error");
+      }
+
+      // ✅ CRITICAL FIX: Manually SAVE session before redirecting
+      req.session.save((err) => {
+        if (err) {
+          console.error("❌ Session Save Error:", err);
+          return res.redirect("https://seabite.co.in/login?error=save_failed");
+        }
+        console.log("✅ Session saved manually. Redirecting...");
+        res.redirect("https://seabite.co.in/admin/dashboard");
+      });
+    });
+  })(req, res, next);
+});
+
+// ================= NORMAL LOGIN (Manual Save) =================
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -20,9 +57,10 @@ router.post("/login", async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: "Invalid email or password" });
 
+    // Manually set session
     req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
 
-    // ✅ FIX: Wait for Save
+    // ✅ FORCE SAVE
     req.session.save((err) => {
       if (err) return res.status(500).json({ message: "Session save failed" });
       res.status(200).json({ user: req.session.user, message: "Login successful" });
@@ -33,52 +71,10 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ================= 2. GOOGLE LOGIN (FIXED) =================
-router.post("/google", async (req, res) => {
-  try {
-    const { token } = req.body; // Token from frontend
-    if (!token) return res.status(400).json({ message: "No token provided" });
-
-    // 1. Verify Token directly with Google (No extra libraries needed)
-    const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
-    const { email, name, sub: googleId, picture } = googleRes.data;
-
-    // 2. Find or Create User
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = await User.create({
-        name,
-        email,
-        googleId,
-        avatar: picture,
-        role: "user",
-      });
-    }
-
-    // 3. Set Session
-    req.session.user = { id: user._id, name: user.name, email: user.email, role: user.role };
-
-    // 4. ✅ CRITICAL FIX: Force Save before responding
-    // This stops the "Login Loop" by ensuring the session exists before the frontend redirects.
-    req.session.save((err) => {
-      if (err) {
-        console.error("❌ Google Session Save Error:", err);
-        return res.status(500).json({ message: "Session save failed" });
-      }
-      console.log("✅ Google Login Saved:", email);
-      res.status(200).json({ user: req.session.user, message: "Google Login successful" });
-    });
-
-  } catch (err) {
-    console.error("❌ Google Login Error:", err.message);
-    res.status(401).json({ message: "Google authentication failed" });
-  }
-});
-
 // ================= LOGOUT =================
 router.post("/logout", (req, res) => {
-  // Clear the exact cookie name from index.js
-  res.clearCookie("seabite_session_v5", {
+  // Clear the v7 cookie
+  res.clearCookie("seabite_session_v7", {
     path: "/",
     httpOnly: true,
     secure: true,

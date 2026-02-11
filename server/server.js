@@ -7,7 +7,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import session from "express-session";
 import MongoStore from "connect-mongo";
-// ❌ REMOVED PASSPORT (Fixes the crash)
+import passport from "passport";
+import "./config/passport.js"; // ✅ Keeping Passport
 
 /* --- ROUTE IMPORTS --- */
 import authRoutes from "./routes/authRoutes.js";
@@ -54,7 +55,7 @@ const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-/* --- 3. DATABASE CONNECTION --- */
+/* --- 3. ROBUST DATABASE CONNECTION --- */
 let isConnected = false;
 const connectDB = async () => {
   if (isConnected) return;
@@ -93,8 +94,8 @@ const sessionMiddleware = session({
     touchAfter: 24 * 3600,
     autoRemove: 'native',
   }),
-  // ✅ V5 COOKIE: Resets everything to a clean slate
-  name: "seabite_session_v5", 
+  // ✅ V7 COOKIE: Clean slate
+  name: "seabite_session_v7", 
   proxy: true, 
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000, 
@@ -108,6 +109,8 @@ const sessionMiddleware = session({
 });
 
 app.use(sessionMiddleware);
+app.use(passport.initialize());
+app.use(passport.session());
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
