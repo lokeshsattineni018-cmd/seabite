@@ -7,10 +7,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import session from "express-session";
 import MongoStore from "connect-mongo";
-import passport from "passport";
-import "./config/passport.js"; 
+// ❌ REMOVED PASSPORT (Fixes the crash)
 
-// Route Imports
+/* --- ROUTE IMPORTS --- */
 import authRoutes from "./routes/authRoutes.js";
 import adminProductRoutes from "./routes/adminProducts.js";
 import orderRoutes from "./routes/orderRoutes.js";
@@ -51,17 +50,14 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// Static Images
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-/* --- 3. ROBUST DATABASE CONNECTION (VERCEL CACHING PATTERN) --- */
-let isConnected = false; // Track connection status
-
+/* --- 3. DATABASE CONNECTION --- */
+let isConnected = false;
 const connectDB = async () => {
-  if (isConnected) return; // Use existing connection if active
-
+  if (isConnected) return;
   try {
     const db = await mongoose.connect(process.env.MONGO_URI, {
       dbName: "seabite",
@@ -78,9 +74,7 @@ const connectDB = async () => {
   }
 };
 
-/* --- 🚨 CRITICAL FIX: WAIT FOR DB BEFORE SESSION --- */
-// This middleware pauses every request until the DB is ready.
-// Prevents "Auth Failed" caused by the session loading before the DB connects.
+/* --- 🚨 FIX: WAIT FOR DB BEFORE SESSION --- */
 app.use(async (req, res, next) => {
   await connectDB();
   next();
@@ -99,7 +93,8 @@ const sessionMiddleware = session({
     touchAfter: 24 * 3600,
     autoRemove: 'native',
   }),
-  name: "seabite_session_v5", // Bumped version to v5 to clear cache
+  // ✅ V5 COOKIE: Resets everything to a clean slate
+  name: "seabite_session_v5", 
   proxy: true, 
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000, 
@@ -107,19 +102,15 @@ const sessionMiddleware = session({
     secure: true,    
     sameSite: "none", 
     partitioned: true, 
-    // ✅ DOMAIN FIX: Ensures cookie works on both 'www' and root domain
     domain: process.env.NODE_ENV === 'production' ? '.seabite.co.in' : undefined,
     path: "/",
   },
 });
 
 app.use(sessionMiddleware);
-app.use(passport.initialize());
-app.use(passport.session());
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
-
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
 app.use("/api/productsRoutes", productsRoutes);
@@ -137,7 +128,6 @@ app.get("/health", (req, res) => {
 });
 
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
-
 app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err);
   res.status(500).json({ error: "Internal server error" });
