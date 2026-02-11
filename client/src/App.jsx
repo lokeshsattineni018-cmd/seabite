@@ -14,14 +14,13 @@ import AdminRoute from "./components/AdminRoute";
 import SupportWidget from "./components/SupportWidget";
 
 // 🚀 PERFORMANCE FIX 1: Direct Imports for Critical Pages
-// This removes the "Fresh Catch" spinner for the main pages users visit first.
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
 
-// 💤 Lazy Load Secondary Pages (To keep the initial bundle size small)
+// 💤 Lazy Load Secondary Pages
 const Checkout = lazy(() => import("./pages/Checkout"));
 const Login = lazy(() => import("./pages/Login"));
 const OrderSuccess = lazy(() => import("./pages/OrderSuccess"));
@@ -35,7 +34,7 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const Cancellation = lazy(() => import("./pages/Cancellation"));
 
-// Admin Imports (Direct load to prevent white flashes in admin panel)
+// Admin Imports
 import AdminLayout from "./admin/AdminLayout";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminProducts from "./admin/AdminProducts";
@@ -52,9 +51,10 @@ import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 
-// Axios global config
+// ✅ Axios global config - FIXED FOR PROXY
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+// Keep baseURL empty so requests are relative and go through vercel.json proxy
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
 
 // Loader for secondary pages only
 const SeaBiteLoader = () => (
@@ -77,9 +77,9 @@ function MainLayout() {
       try {
         // Pings the products API silently to wake up the Vercel server
         await axios.get("/api/products?limit=1");
-        console.log("Server Warmed Up");
+        console.log("✅ Server Warmed Up");
       } catch (err) {
-        // Silent fail is fine, it just means server might be busy or offline
+        console.log("⚠️ Server warmup failed (non-critical):", err.message);
       }
     };
     warmUpBackend();
