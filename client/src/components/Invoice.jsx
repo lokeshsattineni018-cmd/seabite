@@ -10,7 +10,7 @@ export default function Invoice({ order, type = "invoice" }) {
   return (
     <div id="printable-area">
       <div className="invoice-container">
-        {/* 🟢 DYNAMIC CANCELLED WATERMARK */}
+        {/* DYNAMIC CANCELLED WATERMARK */}
         {isCancelled && (
           <div className="watermark">CANCELLED</div>
         )}
@@ -34,7 +34,7 @@ export default function Invoice({ order, type = "invoice" }) {
           </div>
         </div>
 
-        {/* LOGISTICS BAR - TURNS RED IF CANCELLED */}
+        {/* LOGISTICS BAR */}
         <div className={`blue-bar ${isCancelled ? 'bg-red' : ''}`}></div>
 
         {/* INFO GRID */}
@@ -48,7 +48,7 @@ export default function Invoice({ order, type = "invoice" }) {
               {order.shippingAddress?.city}, {order.shippingAddress?.state}<br />
               <span className="pin-code">PIN: {order.shippingAddress?.zip}</span>
             </p>
-            <p className="phone-line">📞 +91 {order.shippingAddress?.phone}</p>
+            <p className="phone-line">+91 {order.shippingAddress?.phone}</p>
           </div>
 
           <div className="info-section right-align">
@@ -57,14 +57,12 @@ export default function Invoice({ order, type = "invoice" }) {
               <p>{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })} / {order.paymentMethod || 'COD'}</p>
             </div>
             
-            {/* DYNAMIC PAYMENT MODE & REFUND SECTION */}
             <div className="meta-row mt-4">
               <label>PAYMENT MODE</label>
               <p className={order.isPaid ? "blue-text" : "orange-text"}>
                 {order.paymentMethod === 'Prepaid' ? 'PREPAID (ONLINE)' : 'CASH ON DELIVERY'}
               </p>
               
-              {/* 🟢 REFUND STATUS INDICATOR */}
               {isCancelled && isPrepaid && (
                 <div className={`refund-badge ${isRefunded ? 'refund-success' : 'refund-init'}`}>
                     {isRefunded ? "REFUND SUCCESSFUL" : "REFUND INITIATED (6-7 DAYS)"}
@@ -75,7 +73,7 @@ export default function Invoice({ order, type = "invoice" }) {
                 <p className="transaction-id">TXN ID: {order.paymentId}</p>
               )}
               {!order.isPaid && !isCancelled && (
-                <p className="cod-instruction text-red-600 font-bold">COLLECT: ₹{order.totalAmount?.toLocaleString()}</p>
+                <p className="cod-instruction text-red-600 font-bold">COLLECT: {"\u20B9"}{order.totalAmount?.toLocaleString()}</p>
               )}
             </div>
           </div>
@@ -97,42 +95,41 @@ export default function Invoice({ order, type = "invoice" }) {
                  <tr key={i}>
                     <td className="left font-bold">{item.name}</td>
                     <td className="center">{item.qty}</td>
-                    <td className="right">₹{item.price?.toFixed(2)}</td>
-                    <td className="right">₹{(item.price * item.qty).toFixed(2)}</td>
+                    <td className="right">{"\u20B9"}{item.price?.toFixed(2)}</td>
+                    <td className="right">{"\u20B9"}{(item.price * item.qty).toFixed(2)}</td>
                  </tr>
               ))}
 
               <tr className="summary-row">
                 <td className="left border-none" colSpan="2"></td>
                 <td className="right font-semibold">Subtotal:</td>
-                <td className="right">₹{order.itemsPrice?.toFixed(2)}</td>
+                <td className="right">{"\u20B9"}{order.itemsPrice?.toFixed(2)}</td>
               </tr>
 
               {order.discount > 0 && (
                 <tr className="discount-row">
                   <td className="left border-none" colSpan="2"></td>
                   <td className="right font-bold green-text">Discount:</td>
-                  <td className="right font-bold green-text">- ₹{order.discount?.toFixed(2)}</td>
+                  <td className="right font-bold green-text">- {"\u20B9"}{order.discount?.toFixed(2)}</td>
                 </tr>
               )}
               
               <tr>
                 <td className="left border-none" colSpan="2"></td>
                 <td className="right font-semibold">Shipping:</td>
-                <td className="right">{order.shippingPrice === 0 ? "FREE" : `₹${order.shippingPrice}`}</td>
+                <td className="right">{order.shippingPrice === 0 ? "FREE" : `\u20B9${order.shippingPrice}`}</td>
               </tr>
               <tr>
                 <td className="left border-none" colSpan="2"></td>
                 <td className="right font-semibold">Tax (GST 5%):</td>
-                <td className="right">₹{order.taxPrice?.toFixed(2)}</td>
+                <td className="right">{"\u20B9"}{order.taxPrice?.toFixed(2)}</td>
               </tr>
 
-              {/* 🟢 UPDATED GRAND TOTAL LABEL BASED ON CANCELLATION */}
               <tr className={`grand-total-row ${isCancelled ? 'border-red' : ''}`}>
                 <td className="left font-black" colSpan="2">{isCancelled ? 'VOID / CANCELLED' : 'GRAND TOTAL'}</td>
                 <td className="right font-black">{isCancelled ? 'REFUNDABLE' : 'PAYABLE'}</td>
                 <td className={`right font-black ${isCancelled ? 'text-red' : 'blue-text'}`}>
-                  ₹{order.totalAmount?.toLocaleString()}
+                  {"\u20B9"}{order.totalAmount?.toLocaleString()}
                 </td>
               </tr>
             </tbody>
