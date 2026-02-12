@@ -3,21 +3,21 @@ import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
   console.log("🛡️ Protect Middleware: Checking authentication");
+  console.log("🍪 Cookie header:", req.headers.cookie || "NONE");
+  console.log("🔑 Session ID:", req.sessionID || "NONE");
+  console.log("👤 Session user:", req.session?.user);
   
   try {
-    // 1. Check Passport's built-in authentication method
-    // This is the most reliable check for Passport-based sessions
-    if (req.isAuthenticated && req.isAuthenticated()) {
-      console.log("✅ Passport: User is authenticated", req.user?.email);
-      return next();
+    if (!req.session) {
+      console.log("❌ No session object");
+      return res.status(401).json({ message: "Session not available" });
     }
 
-    // 2. Fallback: Manual session check (for manual login/register)
+    // Check manual session
     if (req.session?.user?.id) {
-      console.log("✅ Manual Session found:", req.session.user.email);
+      console.log("✅ Session user found:", req.session.user.email);
       
       const sessUser = req.session.user;
-      // Re-populate req.user so controllers can use it
       req.user = {
         _id: sessUser.id,
         id: sessUser.id,
@@ -25,23 +25,30 @@ export const protect = async (req, res, next) => {
         email: sessUser.email,
         role: sessUser.role,
       };
+
+      console.log("✅ Protect: Authentication successful");
       return next();
     }
 
-    // 3. Last Resort: Database check if only a ID is lingering
-    const userId = req.session?.passport?.user || req.session?.userId;
-    if (userId) {
-      console.log("🔍 Fetching user from DB for ID:", userId);
-      const user = await User.findById(userId).select("-password");
+    // Fallback: userId only
+    if (req.session?.userId) {
+      console.log("🔍 Found userId, fetching from DB:", req.session.userId);
       
-      if (user) {
-        req.user = user;
-        console.log("✅ Auth successful after DB fetch");
-        return next();
+      const user = await User.findById(req.session.userId).select("-password");
+      
+      if (!user) {
+        console.log("❌ User not found in DB");
+        return res.status(401).json({ message: "User not found" });
       }
+
+      req.user = {
+        ...user.toObject(),
+        id: user._id.toString(),
+      };
+
+      return next();
     }
 
-    // No session found
     console.log("❌ Protect: No active session found");
     return res.status(401).json({ message: "Not authenticated" });
   } catch (err) {
