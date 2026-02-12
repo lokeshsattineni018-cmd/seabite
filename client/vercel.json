@@ -6,6 +6,10 @@
       "destination": "https://seabite-server.vercel.app/api/$1"
     },
     {
+      "source": "/uploads/(.*)",
+      "destination": "https://seabite-server.vercel.app/uploads/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/"
     }
