@@ -20,7 +20,7 @@ import ReviewModal from "../components/ReviewModal";
 import PopupModal from "../components/PopupModal";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+  import.meta.env.VITE_API_URL || "";
 
 const getStatusClasses = (status) => {
   switch (status) {

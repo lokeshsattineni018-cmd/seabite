@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform, useInView, useSpring, useMotionValue, 
 import axios from "axios";
 import { ArrowRight, Star, ShieldCheck, Truck, Clock, Quote, Fish, Sparkles, X, Copy, Check, Gift, Zap, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 // --- ANIMATION WRAPPER ---
 const SectionReveal = ({ children }) => {

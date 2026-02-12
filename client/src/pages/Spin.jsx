@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { Anchor, X } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 // ✅ GLOBAL CONFIG: Ensures every request in this file carries the MongoDB session cookie
 axios.defaults.withCredentials = true;

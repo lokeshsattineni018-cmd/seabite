@@ -6,7 +6,7 @@ import { FiX, FiMinus, FiPlus, FiTrash2, FiShoppingBag, FiArrowRight, FiLock, Fi
 import PopupModal from "../components/PopupModal";
 import { ThemeContext } from "../context/ThemeContext";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Cart({ open, onClose }) {
   const [cart, setCart] = useState([]);

@@ -22,7 +22,7 @@ import axios from "axios";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Navbar({ openCart }) {
   const { cartCount } = useContext(CartContext);

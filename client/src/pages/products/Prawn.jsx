@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import { FiArrowLeft, FiShoppingBag, FiFilter } from "react-icons/fi"; // Feather Icons
 import ProductQuickView from "../../components/ProductQuickView";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 // Animation Variants
 const containerVariants = {

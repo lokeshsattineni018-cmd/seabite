@@ -17,7 +17,7 @@ import {
 } from "react-icons/fi";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+  import.meta.env.VITE_API_URL || "";
 
 export default function ProductDetails() {
   const { id } = useParams();

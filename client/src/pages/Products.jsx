@@ -18,7 +18,7 @@ import { CartContext } from "../context/CartContext";
 import { addToCart } from "../utils/cartStorage";
 
 // ✅ FIX: Define Backend URL for images
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const CATEGORY_DATA = {
   All: {

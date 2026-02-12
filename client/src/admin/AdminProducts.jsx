@@ -39,7 +39,7 @@ export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const backendBase = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+  const backendBase = import.meta.env.VITE_API_URL || "";
   const [modal, setModal] = useState({
     show: false,
     message: "",

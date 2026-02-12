@@ -58,7 +58,7 @@ export default function AddProduct() {
 
   const fileInputRef = useRef(null);
   // ✅ FIX: Use absolute backend URL
-  const backendBase = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+  const backendBase = import.meta.env.VITE_API_URL || "";
 
   // ✅ Stop the "white flash" by simulating a brief mount delay
   useEffect(() => {

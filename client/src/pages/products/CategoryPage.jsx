@@ -4,7 +4,7 @@ import ProductQuickView from "../../components/ProductQuickView";
 import { CartContext } from "../../context/CartContext";
 import { addToCart } from "../../utils/cartStorage";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function CategoryPage({ title, category }) {
   const { refreshCartCount } = useContext(CartContext);

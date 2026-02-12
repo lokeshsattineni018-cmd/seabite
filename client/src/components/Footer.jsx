@@ -4,7 +4,7 @@ import axios from "axios";
 import { FiMapPin, FiPhone, FiMail, FiSend, FiLoader, FiCheck } from "react-icons/fi";
 import { ThemeContext } from "../context/ThemeContext";
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Footer() {
   const { isDarkMode } = useContext(ThemeContext);

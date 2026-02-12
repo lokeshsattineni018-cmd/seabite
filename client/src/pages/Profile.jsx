@@ -7,7 +7,7 @@ import UserInfo from "./UserInfo";
 import { ThemeContext } from "../context/ThemeContext";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+  import.meta.env.VITE_API_URL || "";
 
 export default function Profile() {
   const [user, setUser] = useState(null);

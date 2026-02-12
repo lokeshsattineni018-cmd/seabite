@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiShoppingBag, FiCalendar, FiCreditCard, FiChevronRight, FiAlertCircle, FiPackage, FiTruck, FiClock } from 'react-icons/fi';
 import { ThemeContext } from '../context/ThemeContext';
 
-const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const formatCurrency = (amount) => {
     if (amount === undefined || amount === null) return '₹0.00';

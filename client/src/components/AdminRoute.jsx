@@ -4,7 +4,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
 const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+  import.meta.env.VITE_API_URL || "";
 
 export default function AdminRoute({ children }) {
   const [status, setStatus] = useState("loading"); // "loading" | "admin" | "unauthorized"

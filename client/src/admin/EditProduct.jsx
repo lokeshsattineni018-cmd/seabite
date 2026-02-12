@@ -18,7 +18,7 @@ import PopupModal from "../components/PopupModal";
 export default function EditProduct() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const backendBase = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+  const backendBase = import.meta.env.VITE_API_URL || "";
 
   const [form, setForm] = useState({
     name: "",
