@@ -15,12 +15,14 @@ import {
   FiSun,
   FiMoon,
   FiChevronDown,
+  FiGift,
 } from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
 import axios from "axios";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
+import Spin from "../pages/Spin";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -35,6 +37,7 @@ export default function Navbar({ openCart }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showSpinWheel, setShowSpinWheel] = useState(false);
 
   const navigate = useNavigate();
 
@@ -64,6 +67,18 @@ export default function Navbar({ openCart }) {
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // Auto-show spin wheel on login (testing mode - shows on every reload)
+  useEffect(() => {
+    if (user) {
+      // For TESTING: Remove the hasSpun check to allow unlimited spins
+      // const hasSpun = localStorage.getItem("seabiteHasSpun");
+      // if (!hasSpun) {
+        const timer = setTimeout(() => setShowSpinWheel(true), 2000);
+        return () => clearTimeout(timer);
+      // }
+    }
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -107,6 +122,12 @@ export default function Navbar({ openCart }) {
       }
     },
   });
+
+  const handleSpinClose = () => {
+    setShowSpinWheel(false);
+    // For TESTING: Comment out this line to allow unlimited spins
+    // localStorage.setItem("seabiteHasSpun", "true");
+  };
 
   return (
     <>
@@ -199,9 +220,22 @@ export default function Navbar({ openCart }) {
               </AnimatePresence>
             </div>
 
+            {/* Spin Wheel Button - Only show if logged in */}
+            {user && (
+              <motion.button
+                onClick={() => setShowSpinWheel(true)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="p-2 md:p-2.5 rounded-xl bg-gradient-to-r from-yellow-400 to-orange-500 text-white hover:from-yellow-500 hover:to-orange-600 transition-all shadow-lg hover:shadow-xl"
+                title="Spin & Win!"
+              >
+                <FiGift size={18} />
+              </motion.button>
+            )}
+
             <button
               onClick={toggleTheme}
-              className="p-2 md:p-2.5 rounded-xl bg-slate-100 dark:bg:white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-blue-300 hover:scale-110 transition-all shadow-sm"
+              className="p-2 md:p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-blue-300 hover:scale-110 transition-all shadow-sm"
             >
               {isDarkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
             </button>
@@ -280,6 +314,11 @@ export default function Navbar({ openCart }) {
                             text="Notifications"
                             onClick={() => navigate("/notifications")}
                             badge={unreadCount || 0}
+                          />
+                          <DropdownItem
+                            icon={<FiGift />}
+                            text="Spin & Win"
+                            onClick={() => setShowSpinWheel(true)}
                           />
                           {user.role === "admin" && (
                             <DropdownItem
@@ -369,14 +408,14 @@ export default function Navbar({ openCart }) {
                   <Link
                     to="/products?category=Prawn"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-lg text-slate-600 dark:text-white/70 block px-4 py-3 bg-slate-50 dark:bg:white/5 rounded-xl"
+                    className="text-lg text-slate-600 dark:text-white/70 block px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-xl"
                   >
                     Prawns
                   </Link>
                   <Link
                     to="/products?category=Crab"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="text-lg text-slate-600 dark:text-white/70 block px-4 py-3 bg-slate-50 dark:bg:white/5 rounded-xl"
+                    className="text-lg text-slate-600 dark:text-white/70 block px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-xl"
                   >
                     Crabs
                   </Link>
@@ -433,6 +472,16 @@ export default function Navbar({ openCart }) {
                     )}
                   </button>
 
+                  <button
+                    onClick={() => {
+                      setShowSpinWheel(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-4 text-slate-700 dark:text-white/70 py-3 text-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl px-4"
+                  >
+                    <FiGift /> Spin & Win
+                  </button>
+
                   {user.role === "admin" && (
                     <button
                       onClick={() => {
@@ -460,6 +509,9 @@ export default function Navbar({ openCart }) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Spin Wheel Modal */}
+      <Spin isOpen={showSpinWheel} onClose={handleSpinClose} />
     </>
   );
 }
