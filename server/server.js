@@ -22,8 +22,6 @@ import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import spinRoutes from "./routes/spinRoutes.js";
 
-
-import { SpeedInsights } from "@vercel/speed-insights/next"
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
