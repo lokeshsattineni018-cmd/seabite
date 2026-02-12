@@ -53,10 +53,9 @@ import { AuthProvider } from "./context/AuthContext";
 
 // ✅ Axios global config - FIXED FOR PROXY
 axios.defaults.withCredentials = true;
-// Keep baseURL relative so requests go through vercel.json proxy
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
 
-// 🔍 TEMP: Log every axios request to find the bad auth/google call
+// 🔍 TEMP: Log every axios request
 axios.interceptors.request.use((config) => {
   console.log("AXIOS REQUEST →", config.method?.toUpperCase(), config.url);
   return config;
@@ -81,7 +80,6 @@ function MainLayout() {
   useEffect(() => {
     const warmUpBackend = async () => {
       try {
-        // Pings the products API silently to wake up the Vercel server
         await axios.get("/api/products?limit=1");
         console.log("✅ Server Warmed Up");
       } catch (err) {
@@ -104,7 +102,6 @@ function MainLayout() {
 
       <div className="flex-grow">
         {isAdminRoute ? (
-          /* ✅ ADMIN ROUTES: Optimized for stability (No AnimatePresence) */
           <Routes>
             <Route
               path="/admin/login"
@@ -134,164 +131,31 @@ function MainLayout() {
             </Route>
           </Routes>
         ) : (
-          /* ⚡ STORE ROUTES: Hybrid Loading Strategy */
-          <Suspense fallback={<SeaBiteLoader />}>
-            <AnimatePresence mode="wait">
-              <Routes location={location} key={location.pathname}>
-                {/* 🚀 Instant Load Pages (No Spinner) */}
-                <Route
-                  path="/"
-                  element={
-                    <PageTransition>
-                      <Home />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/products"
-                  element={
-                    <PageTransition>
-                      <Products openCart={openCart} />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/products/:id"
-                  element={
-                    <PageTransition>
-                      <ProductDetails />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/cart"
-                  element={
-                    <PageTransition>
-                      <Cart />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <PageTransition>
-                      <PrivateRoute>
-                        <Profile />
-                      </PrivateRoute>
-                    </PageTransition>
-                  }
-                />
+          /* ⚡ UPDATED: AnimatePresence wraps the Routes, Suspense wraps the individual Lazy components */
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              {/* 🚀 Instant Load Pages */}
+              <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+              <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
+              <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
+              <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
+              <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
 
-                {/* 💤 Secondary Pages (Lazy Load with Spinner) */}
-                <Route
-                  path="/spin"
-                  element={
-                    <PageTransition>
-                      <Spin />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/notifications"
-                  element={
-                    <PageTransition>
-                      <PrivateRoute>
-                        <Notifications />
-                      </PrivateRoute>
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/checkout"
-                  element={
-                    <PageTransition>
-                      <PrivateRoute>
-                        <Checkout />
-                      </PrivateRoute>
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/success"
-                  element={
-                    <PageTransition>
-                      <PrivateRoute>
-                        <OrderSuccess />
-                      </PrivateRoute>
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/orders"
-                  element={
-                    <PageTransition>
-                      <PrivateRoute>
-                        <Orders />
-                      </PrivateRoute>
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/orders/:orderId"
-                  element={
-                    <PageTransition>
-                      <PrivateRoute>
-                        <OrderDetails />
-                      </PrivateRoute>
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/login"
-                  element={
-                    <PageTransition>
-                      <Login />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/about"
-                  element={
-                    <PageTransition>
-                      <About />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/faq"
-                  element={
-                    <PageTransition>
-                      <FAQ />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/terms"
-                  element={
-                    <PageTransition>
-                      <Terms />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/privacy"
-                  element={
-                    <PageTransition>
-                      <Privacy />
-                    </PageTransition>
-                  }
-                />
-                <Route
-                  path="/cancellation"
-                  element={
-                    <PageTransition>
-                      <Cancellation />
-                    </PageTransition>
-                  }
-                />
-              </Routes>
-            </AnimatePresence>
-          </Suspense>
+              {/* 💤 Secondary Pages: Suspense moved inside element to prevent white screen hang */}
+              <Route path="/spin" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><Spin /></PageTransition></Suspense>} />
+              <Route path="/notifications" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition></Suspense>} />
+              <Route path="/checkout" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition></Suspense>} />
+              <Route path="/success" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><PrivateRoute><OrderSuccess /></PrivateRoute></PageTransition></Suspense>} />
+              <Route path="/orders" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><PrivateRoute><Orders /></PrivateRoute></PageTransition></Suspense>} />
+              <Route path="/orders/:orderId" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><PrivateRoute><OrderDetails /></PrivateRoute></PageTransition></Suspense>} />
+              <Route path="/login" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><Login /></PageTransition></Suspense>} />
+              <Route path="/about" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><About /></PageTransition></Suspense>} />
+              <Route path="/faq" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><FAQ /></PageTransition></Suspense>} />
+              <Route path="/terms" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><Terms /></PageTransition></Suspense>} />
+              <Route path="/privacy" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><Privacy /></PageTransition></Suspense>} />
+              <Route path="/cancellation" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><Cancellation /></PageTransition></Suspense>} />
+            </Routes>
+          </AnimatePresence>
         )}
       </div>
 

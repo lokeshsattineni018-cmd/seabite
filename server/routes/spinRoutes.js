@@ -17,7 +17,7 @@ router.post("/spin", async (req, res) => {
 
     // ✅ FOR PRODUCTION: Enable this to restrict to one spin per user
     // Comment out for testing
-    /*
+    
     const existing = await Coupon.findOne({ 
       userEmail: userEmail.toLowerCase(), 
       isSpinCoupon: true 
@@ -26,7 +26,7 @@ router.post("/spin", async (req, res) => {
     if (existing) {
       return res.status(403).json({ error: "You've already used your spin!" });
     }
-    */
+    
 
     // Spin probabilities matching the wheel
     const rand = Math.random() * 100;
