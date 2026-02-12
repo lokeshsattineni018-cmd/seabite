@@ -51,7 +51,7 @@ import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 
-// ✅ Axios global config - FIXED FOR PROXY
+// ✅ Axios global config
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
 
@@ -103,22 +103,8 @@ function MainLayout() {
       <div className="flex-grow">
         {isAdminRoute ? (
           <Routes>
-            <Route
-              path="/admin/login"
-              element={
-                <PageTransition>
-                  <AdminLogin />
-                </PageTransition>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <AdminRoute>
-                  <AdminLayout />
-                </AdminRoute>
-              }
-            >
+            <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
+            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
               <Route index element={<AdminDashboard />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
@@ -131,17 +117,17 @@ function MainLayout() {
             </Route>
           </Routes>
         ) : (
-          /* ⚡ UPDATED: AnimatePresence wraps the Routes, Suspense wraps the individual Lazy components */
-          <AnimatePresence mode="wait">
+          /* ⚡ AnimatePresence mode="wait" ensures exit finishes before enter */
+          <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
             <Routes location={location} key={location.pathname}>
-              {/* 🚀 Instant Load Pages */}
+              {/* Instant Load Pages */}
               <Route path="/" element={<PageTransition><Home /></PageTransition>} />
               <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
               <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
               <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
               <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
 
-              {/* 💤 Secondary Pages: Suspense moved inside element to prevent white screen hang */}
+              {/* Lazy Load Pages: Individual Suspense wrappers prevent navigation hangs */}
               <Route path="/spin" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><Spin /></PageTransition></Suspense>} />
               <Route path="/notifications" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition></Suspense>} />
               <Route path="/checkout" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition></Suspense>} />
