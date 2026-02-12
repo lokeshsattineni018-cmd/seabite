@@ -134,7 +134,7 @@ export default function Login() {
           </div>
 
           <p className="text-[10px] text-slate-400 mt-4 leading-relaxed uppercase tracking-wider">
-            Your identity is secured by MongoDB sessions
+            Your identity is secured by Google OAuth 2.0. We do not store your password.
           </p>
         </div>
       </motion.div>
