@@ -1,5 +1,5 @@
 // src/pages/Checkout.jsx
-import { useEffect, useState, useRef, useContext } from "react";
+import { useEffect, useState, useRef, useContext, useMemo } from "react";
 import { getCart, saveCart, clearCart } from "../utils/cartStorage";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -23,6 +23,7 @@ import {
   FiLoader,
   FiHash,
   FiAlertCircle,
+  FiGift,
 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal";
 import { CartContext } from "../context/CartContext";
@@ -55,23 +56,50 @@ export default function Checkout() {
   });
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [couponCode, setCouponCode] = useState("");
-  const [discount, setDiscount] = useState(0);
+  const [couponDiscount, setCouponDiscount] = useState(0);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [couponMessage, setCouponMessage] = useState(null);
   const [verifyingCoupon, setVerifyingCoupon] = useState(false);
+  
+  // ✅ NEW: Spin wheel discount state (separate from coupon)
+  const [spinDiscount, setSpinDiscount] = useState(null);
+  
   const navigate = useNavigate();
   const { refreshCartCount } = useContext(CartContext);
   const { isDarkMode } = useContext(ThemeContext);
   const [deliveryAddress, setDeliveryAddress] = useState(DEFAULT_DELIVERY_ADDRESS);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
-  // NEW: user email stored on login
   const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
     const storedEmail = localStorage.getItem("userEmail");
     if (storedEmail) {
-      setUserEmail(storedEmail.toLowerCase()); // Force lowercase for sync
+      setUserEmail(storedEmail.toLowerCase());
+    }
+  }, []);
+
+  // ✅ Load spin discount from localStorage
+  useEffect(() => {
+    const savedDiscount = localStorage.getItem("seabiteSpinDiscount");
+    if (savedDiscount) {
+      try {
+        const discount = JSON.parse(savedDiscount);
+        const expiresAt = new Date(discount.expiresAt);
+        const now = new Date();
+        
+        // Check if discount is still valid (24 hours)
+        if (now < expiresAt) {
+          console.log("Valid spin discount found:", discount);
+          setSpinDiscount(discount);
+        } else {
+          // Expired - remove it
+          console.log("Spin discount expired, removing");
+          localStorage.removeItem("seabiteSpinDiscount");
+        }
+      } catch (e) {
+        console.error("Error parsing spin discount:", e);
+      }
     }
   }, []);
 
@@ -135,7 +163,6 @@ export default function Checkout() {
     setVerifyingCoupon(true);
     setCouponMessage(null);
 
-    // Pull directly from storage to ensure we have the logged-in email
     const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
 
     try {
@@ -152,51 +179,12 @@ export default function Checkout() {
       );
 
       if (res.data.success) {
-        setDiscount(res.data.discountAmount);
+        setCouponDiscount(res.data.discountAmount);
         setIsCouponApplied(true);
         setCouponMessage({ type: "success", text: res.data.message });
       }
     } catch (err) {
-      setDiscount(0);
-      setIsCouponApplied(false);
-      setCouponMessage({
-        type: "error",
-        text: err.response?.data?.message || "Invalid Coupon Code",
-      });
-    } finally {
-      setVerifyingCoupon(false);
-    }
-  };
-
-  // apply coupon that comes from spin wheel localStorage
-  const handleApplyCouponFromWheel = async (code) => {
-    if (!code) return;
-
-    setVerifyingCoupon(true);
-    setCouponMessage(null);
-
-    const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
-
-    try {
-      const res = await axios.post(
-        `${API_URL}/api/coupons/validate`,
-        {
-          code: code.trim().toUpperCase(),
-          cartTotal: itemTotal,
-          email: currentEmail || undefined,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-
-      if (res.data.success) {
-        setDiscount(res.data.discountAmount);
-        setIsCouponApplied(true);
-        setCouponMessage({ type: "success", text: res.data.message });
-      }
-    } catch (err) {
-      setDiscount(0);
+      setCouponDiscount(0);
       setIsCouponApplied(false);
       setCouponMessage({
         type: "error",
@@ -209,12 +197,29 @@ export default function Checkout() {
 
   const handleRemoveCoupon = () => {
     setCouponCode("");
-    setDiscount(0);
+    setCouponDiscount(0);
     setIsCouponApplied(false);
     setCouponMessage(null);
   };
 
-  const taxableAmount = Math.max(0, itemTotal - discount);
+  // ✅ Calculate total discount (spin takes priority)
+  const discountAmount = useMemo(() => {
+    let discount = 0;
+    
+    // First priority: Spin wheel discount
+    if (spinDiscount) {
+      discount = (itemTotal * spinDiscount.percentage) / 100;
+      console.log("Applying spin discount:", spinDiscount.percentage + "%", "Amount:", discount);
+    } 
+    // Second priority: Coupon code discount (only if no spin discount)
+    else if (isCouponApplied) {
+      discount = couponDiscount;
+    }
+    
+    return Math.min(discount, itemTotal); // Don't exceed subtotal
+  }, [itemTotal, spinDiscount, isCouponApplied, couponDiscount]);
+
+  const taxableAmount = Math.max(0, itemTotal - discountAmount);
   const gst = Math.round(taxableAmount * 0.05);
   const grandTotal = taxableAmount + deliveryCharge + gst;
 
@@ -223,17 +228,6 @@ export default function Checkout() {
     setIsAddressModalOpen(false);
   };
 
-  // on checkout open, auto-read wheel coupon apply via backend
-  useEffect(() => {
-    const wheelCode = localStorage.getItem("seabiteWheelCoupon");
-    if (wheelCode && !isCouponApplied) {
-      setCouponCode(wheelCode);
-      handleApplyCouponFromWheel(wheelCode);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemTotal, userEmail]);
-
-  // UPDATED: session-based placeOrder (no localStorage token)
   const placeOrder = async () => {
     if (!isDeliveryAllowed) {
       setModal({
@@ -276,7 +270,7 @@ export default function Checkout() {
       itemsPrice: itemTotal,
       taxPrice: gst,
       shippingPrice: deliveryCharge,
-      discount: discount,
+      discount: discountAmount,
       paymentMethod: paymentMethod,
     };
 
@@ -291,11 +285,17 @@ export default function Checkout() {
 
       const internalDbId = data.dbOrderId;
 
+      // ✅ Remove spin discount after successful order creation
+      if (spinDiscount) {
+        localStorage.removeItem("seabiteSpinDiscount");
+        console.log("Spin discount used and removed");
+      }
+
       if (paymentMethod === "COD") {
         clearCart();
         refreshCartCount();
         navigate(
-          `/success?dbId=${internalDbId}&discount=${discount}&total=${grandTotal}`
+          `/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`
         );
         return;
       }
@@ -320,7 +320,7 @@ export default function Checkout() {
               clearCart();
               refreshCartCount();
               navigate(
-                `/success?dbId=${internalDbId}&discount=${discount}&total=${grandTotal}`
+                `/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`
               );
             }
           } catch (err) {
@@ -481,7 +481,6 @@ export default function Checkout() {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Prepaid (disabled) */}
               <div className="group relative opacity-60 cursor-not-allowed">
                 <div className="p-5 rounded-2xl border-2 border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-4">
                   <div className="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center">
@@ -502,10 +501,8 @@ export default function Checkout() {
                     <span>Currently under maintenance</span>
                   </div>
                 </div>
-                <div className="absolute top-full left-12 -translate-x-12 border-4 border-transparent border-t-slate-900" />
               </div>
 
-              {/* COD */}
               <div
                 onClick={() => setPaymentMethod("COD")}
                 className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center gap-4 ${
@@ -628,59 +625,94 @@ export default function Checkout() {
                 Payment Details
               </h3>
 
-              {/* COUPON INPUT */}
-              <div className="mb-6">
-                <label className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 mb-2 block">
-                  Have a Coupon?
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <FiTag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      placeholder="Promo Code"
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      disabled={isCouponApplied || verifyingCoupon}
-                      className="w-full pl-9 pr-4 py-2.5 md:py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs md:text-sm font-semibold outline-none focus:border-blue-500 transition-all uppercase placeholder:normal-case disabled:opacity-50"
-                    />
-                    {isCouponApplied && (
-                      <button
-                        onClick={handleRemoveCoupon}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"
-                      >
-                        <FiX size={16} />
-                      </button>
-                    )}
+              {/* ✅ SPIN WHEEL DISCOUNT DISPLAY */}
+              {spinDiscount && (
+                <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border-2 border-green-500/30 mb-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <FiGift className="text-green-600 dark:text-green-400 mt-0.5" size={18} />
+                      <div>
+                        <p className="text-sm font-bold text-green-700 dark:text-green-300">
+                          🎉 Spin Wheel Discount Active
+                        </p>
+                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                          {spinDiscount.percentage}% OFF • Valid until{" "}
+                          {new Date(spinDiscount.expiresAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSpinDiscount(null);
+                        localStorage.removeItem("seabiteSpinDiscount");
+                      }}
+                      className="text-green-700 dark:text-green-300 hover:text-red-500 transition-colors"
+                    >
+                      <FiX size={18} />
+                    </button>
                   </div>
-                  <button
-                    onClick={handleApplyCoupon}
-                    disabled={
-                      isCouponApplied || !couponCode || verifyingCoupon
-                    }
-                    className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 rounded-xl font-bold text-[10px] md:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors flex items-center justify-center min-w-[70px]"
-                  >
-                    {verifyingCoupon ? (
-                      <FiLoader className="animate-spin" size={14} />
-                    ) : isCouponApplied ? (
-                      "APPLIED"
-                    ) : (
-                      "APPLY"
-                    )}
-                  </button>
                 </div>
-                {couponMessage && (
-                  <p
-                    className={`text-[10px] font-bold mt-2 ml-1 ${
-                      couponMessage.type === "success"
-                        ? "text-emerald-500"
-                        : "text-red-500"
-                    }`}
-                  >
-                    {couponMessage.text}
-                  </p>
-                )}
-              </div>
+              )}
+
+              {/* ✅ COUPON INPUT - Disabled if spin discount active */}
+              {!spinDiscount ? (
+                <div className="mb-6">
+                  <label className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 ml-1 mb-2 block">
+                    Have a Coupon?
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <FiTag className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Promo Code"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value)}
+                        disabled={isCouponApplied || verifyingCoupon}
+                        className="w-full pl-9 pr-4 py-2.5 md:py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs md:text-sm font-semibold outline-none focus:border-blue-500 transition-all uppercase placeholder:normal-case disabled:opacity-50"
+                      />
+                      {isCouponApplied && (
+                        <button
+                          onClick={handleRemoveCoupon}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500"
+                        >
+                          <FiX size={16} />
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleApplyCoupon}
+                      disabled={
+                        isCouponApplied || !couponCode || verifyingCoupon
+                      }
+                      className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 rounded-xl font-bold text-[10px] md:text-xs disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors flex items-center justify-center min-w-[70px]"
+                    >
+                      {verifyingCoupon ? (
+                        <FiLoader className="animate-spin" size={14} />
+                      ) : isCouponApplied ? (
+                        "APPLIED"
+                      ) : (
+                        "APPLY"
+                      )}
+                    </button>
+                  </div>
+                  {couponMessage && (
+                    <p
+                      className={`text-[10px] font-bold mt-2 ml-1 ${
+                        couponMessage.type === "success"
+                          ? "text-emerald-500"
+                          : "text-red-500"
+                      }`}
+                    >
+                      {couponMessage.text}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-600 dark:text-slate-400 italic mb-6 text-center py-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                  Coupon codes cannot be combined with spin wheel discounts
+                </p>
+              )}
 
               <div className="space-y-3 md:space-y-4 text-xs md:text-sm font-medium">
                 <div className="flex justify-between text-slate-500 dark:text-slate-400">
@@ -690,10 +722,16 @@ export default function Checkout() {
                   </span>
                 </div>
 
-                {isCouponApplied && (
-                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400">
-                    <span>Discount Applied</span>
-                    <span className="font-bold">-₹{discount.toFixed(2)}</span>
+                {/* ✅ Show discount with proper label */}
+                {(spinDiscount || isCouponApplied) && (
+                  <div className="flex justify-between text-green-600 dark:text-green-400">
+                    <span>
+                      {spinDiscount 
+                        ? `Spin Discount (${spinDiscount.percentage}%)` 
+                        : 'Coupon Discount'
+                      }
+                    </span>
+                    <span className="font-bold">-₹{discountAmount.toFixed(2)}</span>
                   </div>
                 )}
 
@@ -788,7 +826,7 @@ export default function Checkout() {
   );
 }
 
-/* AddressModal component (unchanged, pasted from your file) */
+/* AddressModal - keeping unchanged */
 function AddressModal({ onClose, onSave, currentAddress, isDarkMode }) {
   const mapContainerRef = useRef(null);
   const mapInstance = useRef(null);

@@ -15,35 +15,66 @@ router.post("/spin", async (req, res) => {
       return res.status(401).json({ error: "Please login first to spin!" });
     }
 
-    // ❌ TESTING MODE: Commented out one-spin restriction
-    // const existing = await Coupon.findOne({ 
-    //   userEmail: userEmail.toLowerCase(), 
-    //   isSpinCoupon: true 
-    // });
+    // ✅ FOR PRODUCTION: Enable this to restrict to one spin per user
+    // Comment out for testing
+    /*
+    const existing = await Coupon.findOne({ 
+      userEmail: userEmail.toLowerCase(), 
+      isSpinCoupon: true 
+    });
     
-    // if (existing) {
-    //   return res.status(403).json({ error: "You've already used your spin!" });
-    // }
+    if (existing) {
+      return res.status(403).json({ error: "You've already used your spin!" });
+    }
+    */
 
+    // Spin probabilities matching the wheel
     const rand = Math.random() * 100;
     let outcome;
 
-    if (rand < 20) outcome = { type: "NO_PRIZE" };
-    else if (rand < 40) outcome = { type: "NO_PRIZE" };
-    else if (rand < 60) outcome = { type: "PERCENT", value: 5, prefix: "SB5" };
-    else if (rand < 80) outcome = { type: "PERCENT", value: 10, prefix: "SB10" };
-    else if (rand < 95) outcome = { type: "PERCENT", value: 20, prefix: "SB20" };
-    else outcome = { type: "PERCENT", value: 50, prefix: "SB50" };
+    // Match the 6 segments on the wheel exactly
+    // Segments: Better Luck (0-16.66%), 5% OFF (16.66-33.33%), Better Luck (33.33-50%), 
+    //           10% OFF (50-66.66%), 20% OFF (66.66-83.33%), 50% OFF (83.33-100%)
+    
+    if (rand < 16.66) {
+      outcome = { type: "NO_PRIZE" };
+    } else if (rand < 33.33) {
+      outcome = { type: "PERCENT", value: 5, prefix: "SB5" };
+    } else if (rand < 50) {
+      outcome = { type: "NO_PRIZE" };
+    } else if (rand < 66.66) {
+      outcome = { type: "PERCENT", value: 10, prefix: "SB10" };
+    } else if (rand < 83.33) {
+      outcome = { type: "PERCENT", value: 20, prefix: "SB20" };
+    } else {
+      outcome = { type: "PERCENT", value: 50, prefix: "SB50" };
+    }
+
+    console.log("Spin outcome:", outcome);
 
     if (outcome.type === "NO_PRIZE") {
+      // ✅ Still create a record so they can't spin again (for production)
+      // Comment out for unlimited testing
+      /*
+      await Coupon.create({
+        code: "NO_PRIZE",
+        discountType: "none",
+        value: 0,
+        userEmail: userEmail.toLowerCase(),
+        isSpinCoupon: true,
+        isActive: false,
+      });
+      */
+      
       return res.json({
         result: "BETTER_LUCK",
         message: "Better luck next time!",
       });
     }
 
+    // Calculate expiry: 24 hours from now
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 1); // 24 hours
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
     let code;
     let exists = true;
@@ -52,6 +83,7 @@ router.post("/spin", async (req, res) => {
       exists = await Coupon.findOne({ code });
     }
 
+    // Create the coupon (for tracking purposes, though we use percentage directly)
     const coupon = await Coupon.create({
       code,
       discountType: "percent",
@@ -62,6 +94,8 @@ router.post("/spin", async (req, res) => {
       expiresAt,
       isActive: true,
     });
+
+    console.log("Created spin coupon:", coupon);
 
     return res.json({
       result: "COUPON",
