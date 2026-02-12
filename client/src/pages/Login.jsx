@@ -1,13 +1,8 @@
 import { useState } from "react";
-import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import PopupModal from "../components/PopupModal";
-import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
 export default function Login() {
   const [modal, setModal] = useState({
@@ -18,63 +13,10 @@ export default function Login() {
 
   const { setUser, refreshMe } = useAuth();
 
-  const login = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        console.log("🔐 Sending token to backend...");
-        
-        const res = await axios.post(
-          `${API_URL}/api/auth/google`,
-          {
-            token: tokenResponse.access_token,
-          },
-          { 
-            withCredentials: true,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-
-        console.log("✅ Login successful", res.data);
-        setUser(res.data.user);
-
-        setModal({
-          show: true,
-          message: "Login Successful! Redirecting...",
-          type: "success",
-        });
-
-        setTimeout(async () => {
-          await refreshMe?.();
-          
-          const redirectPath = localStorage.getItem("postLoginRedirect");
-          if (redirectPath) localStorage.removeItem("postLoginRedirect");
-
-          const targetPath = redirectPath || 
-            (res.data.user.role === "admin" ? "/admin/dashboard" : "/");
-          
-          window.location.href = targetPath;
-        }, 1500);
-      } catch (err) {
-        console.error("❌ Login failed:", err);
-        setModal({
-          show: true,
-          message: "Verification failed. Please try again.",
-          type: "error",
-        });
-      }
-    },
-    onError: (error) => {
-      console.error("❌ Google Login Failed:", error);
-      setModal({
-        show: true,
-        message: "Google login was unsuccessful.",
-        type: "error",
-      });
-    },
-    flow: window.innerWidth < 768 ? 'redirect' : 'implicit', // ADD THIS LINE
-  });
+  const handleGoogleLogin = () => {
+    // Let backend + Passport handle the Google OAuth flow
+    window.location.href = "/api/auth/google";
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 relative overflow-hidden">
@@ -112,13 +54,13 @@ export default function Login() {
               Welcome Back
             </h2>
             <p className="text-slate-500 text-sm">
-              Sign in with Google to access your rewards.
+              Sign in with Google to access your account and continue enjoying our fresh seafood delights!
             </p>
           </div>
 
           <div className="flex justify-center mb-6">
             <button
-              onClick={() => login()}
+              onClick={handleGoogleLogin}
               className="flex items-center justify-center gap-3 bg-[#4285F4] text-white font-semibold py-3.5 px-6 rounded-full shadow-lg hover:bg-[#357ae8] transition-all w-full active:scale-95"
             >
               <img
@@ -129,8 +71,9 @@ export default function Login() {
               Sign in with Google
             </button>
           </div>
+
           <p className="text-[10px] text-slate-400 mt-4 leading-relaxed uppercase tracking-wider">
-            Your identity is secured by MongoDB sessions
+            Your identity is secure with us. We only use your Google account to verify your identity and never store or share your personal information.
           </p>
         </div>
       </motion.div>
