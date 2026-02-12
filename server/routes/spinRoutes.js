@@ -10,16 +10,20 @@ function generateCode(prefix) {
 
 router.post("/spin", async (req, res) => {
   try {
-    // ✅ Identify user strictly via session
     const userEmail = req.session?.user?.email;
-    if (!userEmail)
-      return res
-        .status(401)
-        .json({ error: "Please login first to spin!" });
+    if (!userEmail) {
+      return res.status(401).json({ error: "Please login first to spin!" });
+    }
 
-    // ❌ REMOVE this block for unlimited spins:
-    // const existing = await Coupon.findOne({ userEmail: userEmail.toLowerCase(), isSpinCoupon: true });
-    // if (existing) return res.status(403).json({ error: "One spin per account only!" });
+    // ❌ TESTING MODE: Commented out one-spin restriction
+    // const existing = await Coupon.findOne({ 
+    //   userEmail: userEmail.toLowerCase(), 
+    //   isSpinCoupon: true 
+    // });
+    
+    // if (existing) {
+    //   return res.status(403).json({ error: "You've already used your spin!" });
+    // }
 
     const rand = Math.random() * 100;
     let outcome;
@@ -31,14 +35,15 @@ router.post("/spin", async (req, res) => {
     else if (rand < 95) outcome = { type: "PERCENT", value: 20, prefix: "SB20" };
     else outcome = { type: "PERCENT", value: 50, prefix: "SB50" };
 
-    if (outcome.type === "NO_PRIZE")
+    if (outcome.type === "NO_PRIZE") {
       return res.json({
         result: "BETTER_LUCK",
         message: "Better luck next time!",
       });
+    }
 
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 1);
+    expiresAt.setDate(expiresAt.getDate() + 1); // 24 hours
 
     let code;
     let exists = true;
