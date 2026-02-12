@@ -14,13 +14,14 @@ const Spin = ({ isOpen, onClose }) => {
   const canvasRef = useRef(null);
   const [rotation, setRotation] = useState(0);
 
+  // Minimalist Palette: Alternating shades of Slate/Grey
   const prizes = [
-    { label: "5% OFF", color: "#3b82f6", text: "#ffffff", value: 5 },
-    { label: "10% OFF", color: "#8b5cf6", text: "#ffffff", value: 10 },
-    { label: "NO LUCK", color: "#64748b", text: "#ffffff", value: 0 },
-    { label: "15% OFF", color: "#ec4899", text: "#ffffff", value: 15 },
-    { label: "20% OFF", color: "#f59e0b", text: "#ffffff", value: 20 },
-    { label: "50% OFF", color: "#10b981", text: "#ffffff", value: 50 },
+    { label: "5% OFF", color: "#f8fafc", text: "#0f172a", value: 5 },
+    { label: "10% OFF", color: "#f1f5f9", text: "#0f172a", value: 10 },
+    { label: "NO LUCK", color: "#e2e8f0", text: "#0f172a", value: 0 },
+    { label: "15% OFF", color: "#f8fafc", text: "#0f172a", value: 15 },
+    { label: "20% OFF", color: "#f1f5f9", text: "#0f172a", value: 20 },
+    { label: "50% OFF", color: "#e2e8f0", text: "#0f172a", value: 50 },
   ];
 
   useEffect(() => {
@@ -41,7 +42,6 @@ const Spin = ({ isOpen, onClose }) => {
       const startAngle = i * angle - Math.PI / 2;
       const endAngle = (i + 1) * angle - Math.PI / 2;
 
-      // Draw segment
       ctx.beginPath();
       ctx.fillStyle = prize.color;
       ctx.moveTo(centerX, centerY);
@@ -49,32 +49,28 @@ const Spin = ({ isOpen, onClose }) => {
       ctx.lineTo(centerX, centerY);
       ctx.fill();
 
-      // Draw border
-      ctx.strokeStyle = "rgba(255,255,255,0.2)";
-      ctx.lineWidth = 2;
+      // Clean, thin borders
+      ctx.strokeStyle = "#cbd5e1";
+      ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Draw text
       ctx.save();
       ctx.translate(centerX, centerY);
       ctx.rotate(startAngle + angle / 2);
       ctx.textAlign = "right";
       ctx.fillStyle = prize.text;
-      ctx.font = "bold 16px Inter, sans-serif";
-      ctx.fillText(prize.label, radius - 20, 6);
+      ctx.font = "500 14px Inter, sans-serif";
+      ctx.fillText(prize.label, radius - 30, 5);
       ctx.restore();
     });
 
-    // Center circle
-    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, 25);
-    gradient.addColorStop(0, "#ffffff");
-    gradient.addColorStop(1, "#e2e8f0");
+    // Minimal center cap
     ctx.beginPath();
-    ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
-    ctx.fillStyle = gradient;
+    ctx.arc(centerX, centerY, 15, 0, 2 * Math.PI);
+    ctx.fillStyle = "#ffffff";
     ctx.fill();
-    ctx.strokeStyle = "#cbd5e1";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 2;
     ctx.stroke();
   };
 
@@ -89,30 +85,20 @@ const Spin = ({ isOpen, onClose }) => {
       const prizeIndex = prizes.findIndex((p) => p.value === backendResult.discountValue);
       const segmentAngle = 360 / prizes.length;
       const targetAngle = 360 - (prizeIndex * segmentAngle) - (segmentAngle / 2);
-      const totalRotation = 1800 + targetAngle; // 5 full spins + target
+      const totalRotation = 1800 + targetAngle; 
 
       setRotation(totalRotation);
 
       setTimeout(() => {
         setResult(backendResult);
         setSpinning(false);
-        
-        // Save coupon to localStorage for auto-apply in checkout
         if (backendResult.result === "COUPON") {
           localStorage.setItem("seabiteWheelCoupon", backendResult.code);
         }
       }, 4000);
     } catch (e) {
       setSpinning(false);
-      if (e.response?.status === 403) {
-        alert("You've already used your spin!");
-        onClose();
-      } else if (e.response?.status === 401) {
-        alert("Please login to spin the wheel!");
-        navigate("/login");
-      } else {
-        alert("Something went wrong. Try again!");
-      }
+      onClose();
     }
   };
 
@@ -124,172 +110,77 @@ const Spin = ({ isOpen, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-gradient-to-br from-slate-900/95 via-blue-900/90 to-purple-900/95 backdrop-blur-md px-4"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4"
       >
-        {/* Animated background particles */}
-        <div className="absolute inset-0 overflow-hidden">
-          {[...Array(20)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-2 h-2 bg-white/20 rounded-full"
-              animate={{
-                y: [0, -1000],
-                x: [Math.random() * window.innerWidth, Math.random() * window.innerWidth],
-                opacity: [0, 1, 0],
-              }}
-              transition={{
-                duration: Math.random() * 10 + 10,
-                repeat: Infinity,
-                delay: Math.random() * 5,
-              }}
-              style={{
-                left: Math.random() * 100 + "%",
-                top: "100%",
-              }}
-            />
-          ))}
-        </div>
-
         <motion.div
           onClick={(e) => e.stopPropagation()}
-          initial={{ opacity: 0, scale: 0.8, y: 50 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.8, y: 50 }}
-          transition={{ type: "spring", damping: 20 }}
-          className="relative w-full max-w-lg bg-white/10 backdrop-blur-2xl rounded-[3rem] p-8 md:p-12 shadow-2xl border border-white/20"
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="relative w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-slate-100"
         >
-          {/* Close button */}
-          <button
-            onClick={onClose}
-            className="absolute top-6 right-6 text-white/60 hover:text-white hover:rotate-90 transition-all duration-300 z-10"
-          >
-            <X size={28} strokeWidth={2.5} />
+          {/* Minimal Close */}
+          <button onClick={onClose} className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors">
+            <X size={20} />
           </button>
 
           {/* Header */}
-          <div className="text-center mb-8">
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="inline-block mb-4"
-            >
-              <Gift size={48} className="text-yellow-400 drop-shadow-glow" />
-            </motion.div>
-            <h2 className="text-4xl md:text-5xl font-black text-white mb-2 tracking-tight">
-              Spin & Win!
+          <div className="text-center mb-10">
+            <h2 className="text-2xl font-semibold text-slate-800 mb-1 tracking-tight">
+              Exclusive Offer
             </h2>
-            <p className="text-white/70 text-sm md:text-base font-medium">
-              Get instant discounts on your next order
+            <p className="text-slate-500 text-sm">
+              Spin to unlock your personal discount.
             </p>
           </div>
 
-          {/* Wheel Container */}
-          <div className="relative mb-8 flex justify-center">
-            {/* Pointer/Arrow */}
-            <div className="absolute -top-8 left-1/2 -translate-x-1/2 z-20">
-              <motion.div
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 0.8, repeat: Infinity }}
-                className="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[40px] border-t-yellow-400 drop-shadow-xl filter"
-              />
+          {/* Wheel Section */}
+          <div className="relative mb-10 flex justify-center">
+            {/* Minimal Needle */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-20">
+              <div className="w-1 h-8 bg-slate-800 rounded-full" />
             </div>
 
-            {/* Wheel */}
-            <div className="relative">
-              <motion.div
-                animate={{ rotate: rotation }}
-                transition={{ duration: 4, ease: [0.25, 0.1, 0.25, 1] }}
-                className="relative"
-              >
-                <canvas
-                  ref={canvasRef}
-                  width="350"
-                  height="350"
-                  className="drop-shadow-2xl rounded-full"
-                />
-              </motion.div>
-              
-              {/* Glow effect */}
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-3xl -z-10" />
-            </div>
+            <motion.div
+              animate={{ rotate: rotation }}
+              transition={{ duration: 4, ease: [0.2, 0, 0, 1] }}
+              className="relative"
+            >
+              <canvas ref={canvasRef} width="350" height="350" className="w-72 h-72 rounded-full border border-slate-200 shadow-sm" />
+            </motion.div>
           </div>
 
-          {/* Spin Button or Result */}
+          {/* Result / Action */}
           {!result ? (
-            <motion.button
+            <button
               onClick={handleSpin}
               disabled={spinning}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className={`w-full py-5 rounded-2xl font-black text-lg uppercase tracking-wider shadow-2xl transition-all relative overflow-hidden ${
-                spinning
-                  ? "bg-gradient-to-r from-blue-600 to-purple-600 cursor-not-allowed"
-                  : "bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 hover:shadow-yellow-500/50"
-              }`}
+              className="w-full py-4 bg-slate-900 text-white rounded-xl font-medium text-sm transition-all hover:bg-slate-800 disabled:bg-slate-300"
             >
-              <span className="relative z-10 text-white drop-shadow-lg flex items-center justify-center gap-3">
-                {spinning ? (
-                  <>
-                    <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />
-                    Spinning...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={20} />
-                    Spin the Wheel
-                  </>
-                )}
-              </span>
-              {!spinning && (
-                <motion.div
-                  className="absolute inset-0 bg-white/20"
-                  animate={{ x: ["-100%", "100%"] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              )}
-            </motion.button>
+              {spinning ? "Spinning..." : "Reveal my discount"}
+            </button>
           ) : (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-4"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
               {result.result === "BETTER_LUCK" ? (
-                <div className="p-6 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 text-center">
-                  <p className="text-2xl font-bold text-white/90">Better luck next time!</p>
-                  <p className="text-white/60 text-sm mt-2">Keep exploring our fresh catches</p>
-                </div>
+                <p className="text-slate-600 font-medium">Maybe next time!</p>
               ) : (
-                <div className="p-8 bg-gradient-to-br from-emerald-500/20 to-teal-500/20 backdrop-blur-xl rounded-3xl border-2 border-emerald-400/50 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-400/10 to-transparent animate-pulse" />
-                  <div className="relative z-10 text-center">
-                    <Sparkles className="mx-auto mb-4 text-emerald-400" size={32} />
-                    <p className="text-5xl md:text-6xl font-black text-white tracking-tighter mb-2">
-                      {result.discountValue}% OFF
-                    </p>
-                    <p className="text-emerald-200 text-sm font-bold uppercase tracking-widest">
-                      Auto-applied to checkout!
-                    </p>
-                    <p className="text-white/60 text-xs mt-3 font-mono">
-                      Code: {result.code}
-                    </p>
-                  </div>
+                <div className="mb-6">
+                  <p className="text-sm text-slate-500 uppercase tracking-widest mb-1">You won</p>
+                  <p className="text-5xl font-bold text-slate-900">{result.discountValue}% OFF</p>
                 </div>
               )}
-              
               <Link
                 to="/products"
                 onClick={onClose}
-                className="block w-full py-4 bg-white text-slate-900 rounded-2xl font-bold text-center uppercase tracking-wide shadow-xl hover:shadow-2xl transition-all"
+                className="block w-full py-4 bg-slate-900 text-white rounded-xl font-medium text-sm text-center"
               >
-                Shop Now
+                Continue Shopping
               </Link>
             </motion.div>
           )}
 
-          {/* Info text */}
-          <p className="text-white/40 text-xs text-center mt-6 font-medium">
-            🎁 One spin per account • Valid for 24 hours
+          <p className="text-slate-400 text-[10px] text-center mt-6 uppercase tracking-widest">
+            Limit: One per customer
           </p>
         </motion.div>
       </motion.div>

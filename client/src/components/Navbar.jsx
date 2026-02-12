@@ -472,7 +472,7 @@ export default function Navbar({ openCart }) {
                     )}
                   </button>
 
-                  <button
+                  {/* <button
                     onClick={() => {
                       setShowSpinWheel(true);
                       setMobileMenuOpen(false);
@@ -480,7 +480,7 @@ export default function Navbar({ openCart }) {
                     className="w-full flex items-center gap-4 text-slate-700 dark:text-white/70 py-3 text-lg bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl px-4"
                   >
                     <FiGift /> Spin & Win
-                  </button>
+                  </button> */}
 
                   {user.role === "admin" && (
                     <button
