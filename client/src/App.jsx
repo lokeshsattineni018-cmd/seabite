@@ -53,8 +53,14 @@ import { AuthProvider } from "./context/AuthContext";
 
 // ✅ Axios global config - FIXED FOR PROXY
 axios.defaults.withCredentials = true;
-// Keep baseURL empty so requests are relative and go through vercel.json proxy
+// Keep baseURL relative so requests go through vercel.json proxy
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
+
+// 🔍 TEMP: Log every axios request to find the bad auth/google call
+axios.interceptors.request.use((config) => {
+  console.log("AXIOS REQUEST →", config.method?.toUpperCase(), config.url);
+  return config;
+});
 
 // Loader for secondary pages only
 const SeaBiteLoader = () => (
@@ -89,14 +95,33 @@ function MainLayout() {
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
       {!isAdminRoute && <Navbar openCart={openCart} />}
-      {!isAdminRoute && <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />}
+      {!isAdminRoute && (
+        <CartSidebar
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+        />
+      )}
 
       <div className="flex-grow">
         {isAdminRoute ? (
           /* ✅ ADMIN ROUTES: Optimized for stability (No AnimatePresence) */
           <Routes>
-            <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
-            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+            <Route
+              path="/admin/login"
+              element={
+                <PageTransition>
+                  <AdminLogin />
+                </PageTransition>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminLayout />
+                </AdminRoute>
+              }
+            >
               <Route index element={<AdminDashboard />} />
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
@@ -114,25 +139,156 @@ function MainLayout() {
             <AnimatePresence mode="wait">
               <Routes location={location} key={location.pathname}>
                 {/* 🚀 Instant Load Pages (No Spinner) */}
-                <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-                <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
-                <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
-                <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
-                <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
+                <Route
+                  path="/"
+                  element={
+                    <PageTransition>
+                      <Home />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/products"
+                  element={
+                    <PageTransition>
+                      <Products openCart={openCart} />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/products/:id"
+                  element={
+                    <PageTransition>
+                      <ProductDetails />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/cart"
+                  element={
+                    <PageTransition>
+                      <Cart />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <Profile />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
 
                 {/* 💤 Secondary Pages (Lazy Load with Spinner) */}
-                <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
-                <Route path="/notifications" element={<PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition>} />
-                <Route path="/checkout" element={<PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition>} />
-                <Route path="/success" element={<PageTransition><PrivateRoute><OrderSuccess /></PrivateRoute></PageTransition>} />
-                <Route path="/orders" element={<PageTransition><PrivateRoute><Orders /></PrivateRoute></PageTransition>} />
-                <Route path="/orders/:orderId" element={<PageTransition><PrivateRoute><OrderDetails /></PrivateRoute></PageTransition>} />
-                <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-                <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-                <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
-                <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
-                <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
-                <Route path="/cancellation" element={<PageTransition><Cancellation /></PageTransition>} />
+                <Route
+                  path="/spin"
+                  element={
+                    <PageTransition>
+                      <Spin />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/notifications"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <Notifications />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/checkout"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <Checkout />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/success"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <OrderSuccess />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/orders"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <Orders />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/orders/:orderId"
+                  element={
+                    <PageTransition>
+                      <PrivateRoute>
+                        <OrderDetails />
+                      </PrivateRoute>
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/login"
+                  element={
+                    <PageTransition>
+                      <Login />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/about"
+                  element={
+                    <PageTransition>
+                      <About />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/faq"
+                  element={
+                    <PageTransition>
+                      <FAQ />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/terms"
+                  element={
+                    <PageTransition>
+                      <Terms />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/privacy"
+                  element={
+                    <PageTransition>
+                      <Privacy />
+                    </PageTransition>
+                  }
+                />
+                <Route
+                  path="/cancellation"
+                  element={
+                    <PageTransition>
+                      <Cancellation />
+                    </PageTransition>
+                  }
+                />
               </Routes>
             </AnimatePresence>
           </Suspense>
