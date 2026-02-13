@@ -17,7 +17,7 @@ export const getCart = () => {
     const cart = localStorage.getItem(CART_KEY);
     return cart ? JSON.parse(cart) : [];
   } catch (err) {
-    console.error("Cart corruption detected, clearing...");
+   console.error("Cart corruption detected, clearing...");
     localStorage.removeItem(CART_KEY);
     return [];
   }

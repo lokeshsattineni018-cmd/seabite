@@ -52,7 +52,7 @@ export default function ProductDetails() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Failed to fetch product:", err);
+       // console.error("Failed to fetch product:", err);
         setLoading(false);
       });
   }, [id]);

@@ -32,7 +32,7 @@ passport.use(
           return done(null, user);
         }
       } catch (err) {
-        console.error("❌ Passport Strategy Error:", err);
+       console.error("❌ Passport Strategy Error:", err);
         return done(err, null);
       }
     }

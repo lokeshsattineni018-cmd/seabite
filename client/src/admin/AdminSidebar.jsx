@@ -28,7 +28,7 @@ export default function AdminSidebar() {
     try {
       await axios.post("/api/admin/logout", {}, { withCredentials: true });
     } catch (err) {
-      console.error("Logout error:", err);
+     // console.error("Logout error:", err);
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("user");

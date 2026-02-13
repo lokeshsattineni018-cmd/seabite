@@ -46,7 +46,7 @@ export default function EditProduct() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Edit product load error:", err);
+        //console.error("Edit product load error:", err);
         setModal({ show: true, message: "Failed to load product data.", type: "error" });
         setLoading(false);
       });
@@ -68,7 +68,7 @@ export default function EditProduct() {
       setModal({ show: true, message: "Product updated successfully!", type: "success" });
       setTimeout(() => navigate("/admin/products"), 1500);
     } catch (err) {
-      console.error("Edit product update error:", err);
+     // console.error("Edit product update error:", err);
       setModal({ show: true, message: "Update failed.", type: "error" });
       setSubmitting(false);
     }

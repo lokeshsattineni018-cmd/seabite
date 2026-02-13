@@ -55,7 +55,7 @@ export default function AdminProducts() {
       const data = res.data;
       setProducts(Array.isArray(data.products) ? data.products : []);
     } catch (err) {
-      console.error("Admin products fetch error:", err);
+     // console.error("Admin products fetch error:", err);
       setProducts([]);
       setModal({ show: true, message: err.response?.data?.message || "Failed to load products.", type: "error" });
     } finally {

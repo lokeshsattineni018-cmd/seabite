@@ -75,7 +75,7 @@ export default function Order() {
       const response = await axios.get(FETCH_URL, { withCredentials: true });
       setOrders(response.data);
     } catch (err) {
-      console.error(err);
+     // console.error(err);
       if (err.response && err.response.status === 401) {
         setTimeout(() => navigate("/login"), 1000);
       }

@@ -11,17 +11,13 @@ export function AuthProvider({ children }) {
 
   const fetchMe = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/me`, { // ✅ Fixed: Added /api
+      const res = await axios.get(`${API_URL}/api/auth/me`, {
         withCredentials: true,
       });
 
-      console.log("✅ Auth check success:", res.data);
       setUser(res.data);
       setStatus("authenticated");
     } catch (err) {
-      if (err.response && err.response.status !== 401) {
-        console.log("⚠️ Auth Check Error:", err.message);
-      }
       setUser(null);
       setStatus("unauthenticated");
     }

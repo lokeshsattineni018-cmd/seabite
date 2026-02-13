@@ -114,7 +114,7 @@ export default function Checkout() {
           localStorage.removeItem("seabiteSpinDiscount");
         }
       } catch (e) {
-        console.error("Error parsing spin discount:", e);
+       // console.error("Error parsing spin discount:", e);
       }
     }
   }, []);

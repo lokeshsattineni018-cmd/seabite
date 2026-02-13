@@ -37,7 +37,7 @@ const ReviewModal = ({ isOpen, onClose, product, existingReview, token, API_URL,
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      console.error(err.response?.data?.message || "Failed to submit review");
+     // console.error(err.response?.data?.message || "Failed to submit review");
     } finally {
       setLoading(false);
     }

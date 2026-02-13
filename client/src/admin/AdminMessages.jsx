@@ -42,7 +42,7 @@ export default function AdminMessages() {
       const res = await axios.get("/api/contact");
       setMessages(res.data || []);
     } catch (err) {
-      console.error("AdminMessages fetch error:", err);
+     // console.error("AdminMessages fetch error:", err);
     } finally {
       setLoading(false);
     }

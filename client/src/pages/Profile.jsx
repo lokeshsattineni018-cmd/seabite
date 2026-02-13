@@ -41,7 +41,7 @@ export default function Profile() {
       });
       setUser(res.data);
     } catch (err) {
-      console.error("User fetch failed:", err);
+     // console.error("User fetch failed:", err);
       navigate("/login");
     } finally {
       setLoading(false);
@@ -56,7 +56,7 @@ export default function Profile() {
         { withCredentials: true }
       );
     } catch (err) {
-      console.error("Logout failed", err);
+      //console.error("Logout failed", err);
     } finally {
       navigate("/login");
       window.location.reload();

@@ -152,7 +152,7 @@ app.get("/health", (req, res) => {
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
 
 app.use((err, req, res, next) => {
-  console.error("❌ Server Error:", err);
+ console.error("❌ Server Error:", err);
   res.status(500).json({ error: "Internal server error" });
 });
 

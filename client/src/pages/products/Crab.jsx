@@ -42,7 +42,7 @@ export default function Crab() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Crab error:", err);
+      //  console.error("Crab error:", err);
         setLoading(false);
       });
   }, []);

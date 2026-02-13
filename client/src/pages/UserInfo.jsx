@@ -36,7 +36,7 @@ const EditableInfoRow = ({ icon: Icon, label, initialValue, fieldKey, onSave }) 
       onSave(fieldKey, res.data.user ? res.data.user[fieldKey] : value);
       setIsEditing(false);
     } catch (error) {
-      console.error(`Failed to update ${fieldKey}:`, error);
+     // console.error(`Failed to update ${fieldKey}:`, error);
       setValue(initialValue);
     } finally {
       setLoading(false);

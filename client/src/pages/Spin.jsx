@@ -110,7 +110,7 @@ const Spin = ({ isOpen, onClose }) => {
       }, 4000);
     } catch (e) {
       setSpinning(false);
-      console.error("Spin error:", e);
+      //console.error("Spin error:", e);
       if (e.response?.status === 403) {
         alert(e.response?.data?.error || "You've already used your spin!");
         onClose();

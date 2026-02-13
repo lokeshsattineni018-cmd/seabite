@@ -182,7 +182,7 @@ export default function Products() {
         const res = await axios.get("/api/products");
         setProducts(res.data.products || res.data || []);
       } catch (err) {
-        console.error("Products fetch error:", err);
+       // console.error("Products fetch error:", err);
       } finally {
         setLoading(false);
       }

@@ -98,7 +98,7 @@ export default function AdminDashboard() {
       setError(null);
       setLastUpdated(new Date());
     } catch (err) {
-      console.error("Dashboard Fetch Error:", err);
+     // console.error("Dashboard Fetch Error:", err);
       setLoading(false);
       if (err.response?.status === 401) navigate("/login");
       setError(err.response?.data?.message || "Failed to load dashboard data.");

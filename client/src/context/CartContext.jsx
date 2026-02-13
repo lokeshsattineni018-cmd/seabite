@@ -55,7 +55,7 @@ export const CartProvider = ({ children }) => {
             // Set the full state object
             setCartState(totals); 
         } catch (e) {
-            console.error("Failed to parse cart data from localStorage:", e);
+           // console.error("Failed to parse cart data from localStorage:", e);
         }
     }, []);
 

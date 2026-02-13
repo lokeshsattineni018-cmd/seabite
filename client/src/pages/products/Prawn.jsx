@@ -40,7 +40,7 @@ export default function Prawn() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Prawn error:", err);
+       // console.error("Prawn error:", err);
         setLoading(false);
       });
   }, []);

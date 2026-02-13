@@ -13,14 +13,14 @@ import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import SupportWidget from "./components/SupportWidget";
 
-// 🚀 PERFORMANCE FIX 1: Direct Imports for Critical Pages
+// Direct Imports for Critical Pages
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
 
-// 💤 Lazy Load Secondary Pages
+// Lazy Load Secondary Pages
 import Checkout from "./pages/Checkout";
 const Login = lazy(() => import("./pages/Login"));
 const OrderSuccess = lazy(() => import("./pages/OrderSuccess"));
@@ -55,13 +55,9 @@ import { AuthProvider } from "./context/AuthContext";
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
 
-// 🔍 TEMP: Log every axios request
-axios.interceptors.request.use((config) => {
-  console.log("AXIOS REQUEST →", config.method?.toUpperCase(), config.url);
-  return config;
-});
+// ❌ REMOVED: Axios interceptor that was logging all requests
 
-// Loader for secondary pages only
+// Loader for secondary pages
 const SeaBiteLoader = () => (
   <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
     <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -76,14 +72,13 @@ function MainLayout() {
 
   const openCart = () => setIsCartOpen(true);
 
-  // 🚀 PERFORMANCE FIX 2: Warm up the backend immediately
+  // Warm up backend silently (no logs)
   useEffect(() => {
     const warmUpBackend = async () => {
       try {
         await axios.get("/api/products?limit=1");
-        console.log("✅ Server Warmed Up");
       } catch (err) {
-        console.log("⚠️ Server warmup failed (non-critical):", err.message);
+        // Silent fail - non-critical
       }
     };
     warmUpBackend();
@@ -117,7 +112,6 @@ function MainLayout() {
             </Route>
           </Routes>
         ) : (
-          /* ⚡ AnimatePresence mode="wait" ensures exit finishes before enter */
           <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
             <Routes location={location} key={location.pathname}>
               {/* Instant Load Pages */}
@@ -127,7 +121,7 @@ function MainLayout() {
               <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
               <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
 
-              {/* Lazy Load Pages: Individual Suspense wrappers prevent navigation hangs */}
+              {/* Lazy Load Pages */}
               <Route path="/spin" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><Spin /></PageTransition></Suspense>} />
               <Route path="/notifications" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition></Suspense>} />
               <Route path="/checkout" element={<Suspense fallback={<SeaBiteLoader />}><PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition></Suspense>} />

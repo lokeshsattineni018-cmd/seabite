@@ -39,7 +39,7 @@ export default function AdminCoupons() {
       const res = await axios.get(`${API_URL}/api/coupons`, { withCredentials: true });
       setCoupons(res.data || []);
     } catch (err) {
-      console.error("Fetch coupons error:", err);
+     // console.error("Fetch coupons error:", err);
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function AdminCoupons() {
       setFormData({ code: "", value: "", minOrderAmount: "", discountType: "percent" });
       fetchCoupons(true);
     } catch (err) {
-      console.error("Create coupon error:", err);
+     // console.error("Create coupon error:", err);
       alert(err.response?.data?.message || "Error creating coupon");
     }
   };
@@ -78,7 +78,7 @@ export default function AdminCoupons() {
       await axios.delete(`${API_URL}/api/coupons/${id}`, { withCredentials: true });
       fetchCoupons(true);
     } catch (err) {
-      console.error("Delete coupon error:", err);
+     // console.error("Delete coupon error:", err);
     }
   };
 

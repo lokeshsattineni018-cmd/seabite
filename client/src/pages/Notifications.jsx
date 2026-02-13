@@ -37,7 +37,7 @@ export default function Notifications() {
         { withCredentials: true }
       );
     } catch (err) {
-      console.error("Fetch failed", err);
+     // console.error("Fetch failed", err);
     } finally {
       setLoading(false);
     }
@@ -54,7 +54,7 @@ export default function Notifications() {
       });
       setNotifications((prev) => prev.filter((n) => n._id !== id));
     } catch (err) {
-      console.error("Delete failed", err);
+     // console.error("Delete failed", err);
     }
   };
 
@@ -65,7 +65,7 @@ export default function Notifications() {
       });
       setNotifications([]);
     } catch (err) {
-      console.error("Clear failed", err);
+     // console.error("Clear failed", err);
     }
   };
 

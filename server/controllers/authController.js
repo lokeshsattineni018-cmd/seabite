@@ -72,9 +72,9 @@ export const googleLogin = async (req, res) => {
 
     // ✅ SESSION VERIFICATION
     if (!req.session) {
-      console.error(
-        "❌ Session middleware failed to initialize. Check MongoDB connection."
-      );
+      //console.error(
+      //  "❌ Session middleware failed to initialize. Check MongoDB connection."
+     // );
       return res.status(500).json({ message: "Server Session Error" });
     }
 

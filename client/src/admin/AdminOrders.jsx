@@ -58,7 +58,7 @@ export default function AdminOrders() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Fetch Error:", err);
+        //console.error("Fetch Error:", err);
         setLoading(false);
       });
   };
@@ -69,7 +69,7 @@ export default function AdminOrders() {
       const res = await axios.get("/api/admin/reviews/all");
       setAllReviews(res.data || []);
     } catch (err) {
-      console.error("Reviews Fetch Error:", err);
+    //  console.error("Reviews Fetch Error:", err);
     } finally {
       setReviewsLoading(false);
     }

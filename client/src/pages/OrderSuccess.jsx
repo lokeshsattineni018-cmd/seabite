@@ -103,7 +103,7 @@ export default function OrderSuccess() {
         });
         setOrderDetails(data);
       } catch (err) {
-        console.error("Error fetching order info:", err);
+        //console.error("Error fetching order info:", err);
       } finally {
         setLoading(false);
       }

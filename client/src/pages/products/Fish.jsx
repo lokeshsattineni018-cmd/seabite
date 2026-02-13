@@ -38,7 +38,7 @@ export default function Fish() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Fish error:", err);
+       //console.error("Fish error:", err);
         setLoading(false);
       });
   }, []);
