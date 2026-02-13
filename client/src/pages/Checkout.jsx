@@ -173,43 +173,45 @@ export default function Checkout() {
 
   const deliveryCharge = itemTotal >= 1000 ? 0 : 99;
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode) return;
+ // Around line 112 - This line looks fine, but let's verify the error handling:
 
-    setVerifyingCoupon(true);
-    setCouponMessage(null);
+const handleApplyCoupon = async () => {
+  if (!couponCode) return;
 
-    const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
+  setVerifyingCoupon(true);
+  setCouponMessage(null);
 
-    try {
-      const res = await axios.post(
-        `${API_URL}/api/coupons/validate`,
-        {
-          code: couponCode.trim().toUpperCase(),
-          cartTotal: itemTotal,
-          email: currentEmail || undefined,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+  const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
 
-      if (res.data.success) {
-        setCouponDiscount(res.data.discountAmount);
-        setIsCouponApplied(true);
-        setCouponMessage({ type: "success", text: res.data.message });
+  try {
+    const res = await axios.post(
+      `${API_URL}/api/coupons/validate`,
+      {
+        code: couponCode.trim().toUpperCase(),
+        cartTotal: itemTotal,
+        email: currentEmail || undefined,
+      },
+      {
+        withCredentials: true,
       }
-    } catch (err) {
-      setCouponDiscount(0);
-      setIsCouponApplied(false);
-      setCouponMessage({
-        type: "error",
-        text: err.response?.data?.message || "Invalid Coupon Code",
-      });
-    } finally {
-      setVerifyingCoupon(false);
+    );
+
+    if (res.data.success) {
+      setCouponDiscount(res.data.discountAmount);
+      setIsCouponApplied(true);
+      setCouponMessage({ type: "success", text: res.data.message });
     }
-  };
+  } catch (err) {
+    setCouponDiscount(0);
+    setIsCouponApplied(false);
+    setCouponMessage({
+      type: "error",
+      text: err.response?.data?.message || "Invalid Coupon Code",
+    });
+  } finally {
+    setVerifyingCoupon(false);
+  }
+};
 
   const handleRemoveCoupon = () => {
     setCouponCode("");

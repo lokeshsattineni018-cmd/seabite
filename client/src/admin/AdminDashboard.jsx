@@ -258,7 +258,7 @@ export default function AdminDashboard() {
             </div>
           </div>
           <div className="h-[260px] md:h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minHeight={260}>
               <AreaChart data={graph} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -289,7 +289,7 @@ export default function AdminDashboard() {
           {orderStatusData.length > 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="w-full h-[160px]">
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height="100%" minHeight={160}>
                   <PieChart>
                     <Pie
                       data={orderStatusData}

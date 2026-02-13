@@ -3,11 +3,10 @@ import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import axios from "axios";
 
-const API_URL =
-  import.meta.env.VITE_API_URL || "";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function AdminRoute({ children }) {
-  const [status, setStatus] = useState("loading"); // "loading" | "admin" | "unauthorized"
+  const [status, setStatus] = useState("loading");
   const location = useLocation();
 
   useEffect(() => {
@@ -18,7 +17,7 @@ export default function AdminRoute({ children }) {
         const res = await axios.get(`${API_URL}/api/auth/me`, {
           withCredentials: true,
         });
-        console.log("AdminRoute /me", res.data);
+        
         if (!cancelled) {
           if (res.data.role === "admin") {
             setStatus("admin");
@@ -27,11 +26,6 @@ export default function AdminRoute({ children }) {
           }
         }
       } catch (err) {
-        console.log(
-          "AdminRoute error",
-          err?.response?.status,
-          err?.response?.data
-        );
         if (!cancelled) setStatus("unauthorized");
       }
     };
@@ -43,13 +37,18 @@ export default function AdminRoute({ children }) {
     };
   }, [location.pathname]);
 
-  if (status === "loading") return null;
+  // Show loader instead of white screen
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
 
   if (status === "unauthorized") {
-    // If not admin, send to home or login
     return <Navigate to="/login" replace />;
   }
 
-  // status === "admin"
   return children;
 }
