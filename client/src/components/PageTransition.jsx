@@ -1,51 +1,50 @@
 import { motion } from "framer-motion";
 
-const glitchVariants = {
-  initial: { opacity: 1 },
+const curtainVariants = {
+  initial: { scaleY: 0, transformOrigin: "top" },
   animate: {
-    opacity: [1, 0.8, 1, 0.6, 1, 0],
-    x: [0, -10, 5, -5, 10, 0],
+    scaleY: [0, 1, 1, 0],
+    transformOrigin: ["top", "top", "bottom", "bottom"],
     transition: {
-      duration: 0.6,
-      times: [0, 0.2, 0.4, 0.6, 0.8, 1],
+      duration: 1,
+      times: [0, 0.3, 0.7, 1],
+      ease: [0.76, 0, 0.24, 1]
     }
   }
 };
 
-const scanlineVariants = {
-  initial: { y: "-100%" },
-  animate: {
-    y: "100%",
+const dotVariants = {
+  initial: { scale: 0, opacity: 0 },
+  animate: (i) => ({
+    scale: [0, 1, 0],
+    opacity: [0, 1, 0],
     transition: {
       duration: 0.8,
-      ease: "linear",
-      repeat: 1
+      delay: i * 0.08,
+      ease: "easeOut"
     }
-  }
+  })
 };
 
 const contentVariants = {
   initial: {
     opacity: 0,
-    filter: "blur(20px) contrast(1.3)",
-    x: -50,
+    y: 20,
   },
   in: {
     opacity: 1,
-    filter: "blur(0px) contrast(1)",
-    x: 0,
+    y: 0,
     transition: {
-      duration: 0.7,
-      delay: 0.3,
+      duration: 0.6,
+      delay: 0.5,
       ease: [0.22, 1, 0.36, 1],
     },
   },
   out: {
     opacity: 0,
-    filter: "blur(20px) contrast(0.8)",
-    x: 50,
+    y: -20,
     transition: {
-      duration: 0.4,
+      duration: 0.3,
     },
   },
 };
@@ -53,55 +52,30 @@ const contentVariants = {
 export default function PageTransition({ children }) {
   return (
     <div className="relative w-full overflow-hidden">
-      {/* RGB Split glitch overlay */}
+      {/* Minimal curtain wipe */}
       <motion.div
-        variants={glitchVariants}
+        variants={curtainVariants}
         initial="initial"
         animate="animate"
-        className="fixed inset-0 z-[9999] pointer-events-none"
-        style={{
-          background: "black",
-          mixBlendMode: "multiply",
-        }}
+        className="fixed left-0 top-0 w-full h-full z-[9999] pointer-events-none bg-gradient-to-b from-slate-900 via-blue-900 to-slate-900"
       />
 
-      {/* Red channel shift */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{
-          opacity: [0, 0.3, 0.3, 0],
-          x: [-5, 5, -5, 0],
-          transition: { duration: 0.5 }
-        }}
-        className="fixed inset-0 z-[9998] pointer-events-none bg-red-500"
-        style={{ mixBlendMode: "screen" }}
-      />
-
-      {/* Scanline effect */}
-      <motion.div
-        variants={scanlineVariants}
-        initial="initial"
-        animate="animate"
-        className="fixed left-0 w-full h-1 z-[9998] pointer-events-none"
-        style={{
-          background: "linear-gradient(to bottom, transparent, rgba(0,255,255,0.4), transparent)",
-          boxShadow: "0 0 20px rgba(0,255,255,0.8)",
-        }}
-      />
-
-      {/* Digital noise */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{
-          opacity: [0, 0.15, 0.15, 0],
-          transition: { duration: 0.5 }
-        }}
-        className="fixed inset-0 z-[9997] pointer-events-none"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          opacity: 0.15
-        }}
-      />
+      {/* Elegant dot grid */}
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 grid grid-cols-5 gap-4 z-[9998] pointer-events-none">
+        {[...Array(15)].map((_, i) => (
+          <motion.div
+            key={i}
+            custom={i}
+            variants={dotVariants}
+            initial="initial"
+            animate="animate"
+            className="w-3 h-3 rounded-full bg-blue-400"
+            style={{
+              boxShadow: "0 0 20px rgba(59,130,246,0.8)"
+            }}
+          />
+        ))}
+      </div>
 
       <motion.div
         initial="initial"
