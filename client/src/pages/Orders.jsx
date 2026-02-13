@@ -164,8 +164,16 @@ export default function Order() {
       const q = searchQuery.toLowerCase();
       result = result.filter(
         (o) =>
-          (o.orderId || o._id || "").toLowerCase().includes(q) ||
-          (o.items || []).some((i) => (i.name || "").toLowerCase().includes(q))
+          String(o.orderId || o._id || "")
+  .toLowerCase()
+  .includes(q)
+ ||
+         (o.items || []).some((i) =>
+  String(i.name || "")
+    .toLowerCase()
+    .includes(q)
+)
+
       );
     }
 
