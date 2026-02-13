@@ -1,8 +1,10 @@
 // AdminCoupons.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { FiTrash2, FiTag, FiPlus, FiRefreshCw, FiPercent, FiDollarSign, FiCopy } from "react-icons/fi";
+import { FiTrash2, FiTag, FiPlus, FiRefreshCw, FiPercent, FiDollarSign, FiCopy, FiCheck } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const ease = [0.22, 1, 0.36, 1];
 const fadeUp = {
@@ -24,12 +26,17 @@ export default function AdminCoupons() {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
-  const [formData, setFormData] = useState({ code: "", value: "", minOrderAmount: "" });
+  const [formData, setFormData] = useState({ 
+    code: "", 
+    value: "", 
+    minOrderAmount: "",
+    discountType: "percent" // ✅ Added this
+  });
 
   const fetchCoupons = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
-      const res = await axios.get("/api/coupons", { withCredentials: true });
+      const res = await axios.get(`${API_URL}/api/coupons`, { withCredentials: true });
       setCoupons(res.data || []);
     } catch (err) {
       console.error("Fetch coupons error:", err);
@@ -45,18 +52,30 @@ export default function AdminCoupons() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("/api/coupons", formData, { withCredentials: true });
-      setFormData({ code: "", value: "", minOrderAmount: "" });
+      // ✅ Send complete data with defaults
+      const couponData = {
+        code: formData.code.toUpperCase(),
+        value: Number(formData.value),
+        minOrderAmount: formData.minOrderAmount ? Number(formData.minOrderAmount) : 0,
+        discountType: "percent",
+        maxDiscount: 0,
+        isActive: true,
+        isSpinCoupon: false, // ✅ Important: Mark as admin coupon
+      };
+
+      await axios.post(`${API_URL}/api/coupons`, couponData, { withCredentials: true });
+      setFormData({ code: "", value: "", minOrderAmount: "", discountType: "percent" });
       fetchCoupons(true);
-    } catch {
-      alert("Error creating coupon");
+    } catch (err) {
+      console.error("Create coupon error:", err);
+      alert(err.response?.data?.message || "Error creating coupon");
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this coupon?")) return;
     try {
-      await axios.delete(`/api/coupons/${id}`, { withCredentials: true });
+      await axios.delete(`${API_URL}/api/coupons/${id}`, { withCredentials: true });
       fetchCoupons(true);
     } catch (err) {
       console.error("Delete coupon error:", err);
@@ -110,16 +129,19 @@ export default function AdminCoupons() {
               onChange={(e) => setFormData({ ...formData, value: e.target.value })}
               className="w-full bg-slate-50 border border-slate-200 p-3 pl-10 rounded-xl text-sm font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-300 transition-all"
               required
+              min="1"
+              max="100"
             />
           </div>
           <div className="relative">
             <FiDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
             <input
               type="number"
-              placeholder="Min Order"
+              placeholder="Min Order (optional)"
               value={formData.minOrderAmount}
               onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
               className="w-full bg-slate-50 border border-slate-200 p-3 pl-10 rounded-xl text-sm font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-300 transition-all"
+              min="0"
             />
           </div>
           <motion.button whileTap={{ scale: 0.97 }} type="submit" className="bg-slate-900 text-white font-bold rounded-xl py-3 hover:bg-blue-600 transition-all shadow-lg text-sm flex items-center justify-center gap-2">
