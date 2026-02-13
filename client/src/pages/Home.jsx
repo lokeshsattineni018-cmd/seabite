@@ -2,13 +2,13 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, useInView, useSpring, useMotionValue, useAnimationFrame, useVelocity, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { ArrowRight, Star, ShieldCheck, Truck, Clock, Quote, Fish, Sparkles, X, Copy, Check, Gift, Zap, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight, Heart, Share2, Eye, Plus, Minus } from "lucide-react";
+import { ArrowRight, Star, ShieldCheck, Truck, Fish, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight, Plus, Minus } from "lucide-react";
 import toast from "react-hot-toast";
 import { CartContext } from "../context/CartContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// --- ADVANCED ANIMATION WRAPPER with multiple reveal styles ---
+// --- ADVANCED ANIMATION WRAPPER ---
 const SectionReveal = ({ children, direction = "up", delay = 0 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-12% 0px" });
@@ -95,7 +95,7 @@ const AnimatedCounter = ({ value, prefix = "", suffix = "" }) => {
   );
 };
 
-// --- TEXT REVEAL (character-by-character) ---
+// --- TEXT REVEAL ---
 const TextReveal = ({ text, className = "", delay = 0 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
@@ -170,160 +170,10 @@ const ScrollToTopButton = () => {
   );
 };
 
-// --- QUICK VIEW MODAL ---
-const QuickViewModal = ({ product, isOpen, onClose }) => {
+// --- ENHANCED PRODUCT CARD (Simplified - No wishlist, share, quick view) ---
+const EnhancedProductCard = ({ product }) => {
   const { addToCart } = useContext(CartContext);
   const [quantity, setQuantity] = useState(1);
-
-  if (!product) return null;
-
-  const getImageUrl = (path) => {
-    if (!path) return "";
-    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  };
-
-  const handleAddToCart = () => {
-    addToCart({ ...product, quantity });
-    toast.success(`${quantity}x ${product.name} added to cart!`, {
-      icon: '🛒',
-    });
-    onClose();
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
-          />
-
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-[101] flex items-center justify-center p-4"
-          >
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-auto relative">
-              {/* Close Button */}
-              <motion.button
-                whileHover={{ scale: 1.1, rotate: 90 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={onClose}
-                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center z-10"
-              >
-                <X size={20} />
-              </motion.button>
-
-              <div className="grid md:grid-cols-2 gap-8 p-8">
-                {/* Image */}
-                <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-8 flex items-center justify-center">
-                  <img
-                    src={getImageUrl(product.image)}
-                    alt={product.name}
-                    className="w-full h-64 object-contain"
-                  />
-                </div>
-
-                {/* Details */}
-                <div className="flex flex-col">
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
-                    {product.name}
-                  </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                    {product.netWeight}
-                  </p>
-
-                  <div className="flex items-baseline gap-3 mb-6">
-                    <span className="text-3xl font-bold text-slate-900 dark:text-white">
-                      ₹{product.basePrice}
-                    </span>
-                    <span className="text-lg text-slate-400 line-through">
-                      ₹{(product.basePrice * 1.2).toFixed(0)}
-                    </span>
-                    <span className="text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">
-                      20% OFF
-                    </span>
-                  </div>
-
-                  {/* Stock Status */}
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className={`w-2 h-2 rounded-full ${product.stock > 0 ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
-                    <span className="text-sm font-bold text-slate-600 dark:text-slate-400">
-                      {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
-                    </span>
-                  </div>
-
-                  {/* Quantity Selector */}
-                  <div className="mb-6">
-                    <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block">
-                      Quantity
-                    </label>
-                    <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800 rounded-xl p-2 w-fit">
-                      <motion.button
-                        whileTap={{ scale: 0.8 }}
-                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                        className="w-8 h-8 flex items-center justify-center"
-                      >
-                        <Minus size={16} />
-                      </motion.button>
-                      <span className="font-bold text-lg w-8 text-center">{quantity}</span>
-                      <motion.button
-                        whileTap={{ scale: 0.8 }}
-                        onClick={() => setQuantity(Math.min(product.stock || 99, quantity + 1))}
-                        className="w-8 h-8 flex items-center justify-center"
-                      >
-                        <Plus size={16} />
-                      </motion.button>
-                    </div>
-                  </div>
-
-                  {/* Add to Cart Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleAddToCart}
-                    disabled={product.stock === 0}
-                    className={`w-full py-4 rounded-xl font-bold text-lg mb-4 ${
-                      product.stock === 0
-                        ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700'
-                    } transition-colors`}
-                  >
-                    {product.stock === 0 ? 'Out of Stock' : `Add to Cart - ₹${product.basePrice * quantity}`}
-                  </motion.button>
-
-                  <Link to={`/products/${product._id}`} onClick={onClose}>
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full py-3 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold"
-                    >
-                      View Full Details
-                    </motion.button>
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-};
-
-// --- ENHANCED PRODUCT CARD ---
-const EnhancedProductCard = ({ product, onQuickView }) => {
-  const { addToCart } = useContext(CartContext);
-  const [quantity, setQuantity] = useState(1);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [showQuantity, setShowQuantity] = useState(false);
 
   const getImageUrl = (path) => {
@@ -343,35 +193,6 @@ const EnhancedProductCard = ({ product, onQuickView }) => {
     setQuantity(1);
   };
 
-  const handleWishlist = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
-    toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist!', {
-      icon: isWishlisted ? '💔' : '❤️',
-    });
-  };
-
-  const handleShare = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: product.name,
-          text: `Check out ${product.name} at SeaBite!`,
-          url: `${window.location.origin}/products/${product._id}`,
-        });
-      } catch (err) {
-        // User cancelled share
-      }
-    } else {
-      navigator.clipboard.writeText(`${window.location.origin}/products/${product._id}`);
-      toast.success('Link copied to clipboard!');
-    }
-  };
-
   const getStockStatus = () => {
     if (!product.stock || product.stock === 0) return { label: 'OUT OF STOCK', color: 'bg-red-500' };
     if (product.stock < 10) return { label: 'LOW STOCK', color: 'bg-orange-500' };
@@ -389,44 +210,6 @@ const EnhancedProductCard = ({ product, onQuickView }) => {
         transition={{ type: "spring", stiffness: 300, damping: 20 }}
         className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden h-full flex flex-col relative"
       >
-        {/* Action Buttons Overlay */}
-        <div className="absolute top-2 right-2 z-20 flex flex-col gap-2">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={handleWishlist}
-            className={`w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${
-              isWishlisted 
-                ? 'bg-red-500 text-white' 
-                : 'bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300'
-            }`}
-          >
-            <Heart size={14} fill={isWishlisted ? 'currentColor' : 'none'} />
-          </motion.button>
-          
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={handleShare}
-            className="w-8 h-8 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300"
-          >
-            <Share2 size={14} />
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onQuickView(product);
-            }}
-            className="w-8 h-8 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300"
-          >
-            <Eye size={14} />
-          </motion.button>
-        </div>
-
         {/* Image Section */}
         <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4 overflow-hidden">
           <motion.img
@@ -958,7 +741,6 @@ const FlashSale = () => {
 // --- PRODUCT SHOWCASE ROW ---
 const CategoryRow = ({ title, filterType }) => {
   const [products, setProducts] = useState([]);
-  const [quickViewProduct, setQuickViewProduct] = useState(null);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`).then((res) => {
@@ -976,166 +758,39 @@ const CategoryRow = ({ title, filterType }) => {
   if (products.length === 0) return null;
 
   return (
-    <>
-      <section className="py-12 px-4 md:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              {filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />}
-              {title}
-            </h2>
-            <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-              See All <ChevronRight size={14} />
-            </Link>
-          </div>
-          <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {products.map((p) => (
-              <StaggerItem key={p._id}>
-                <EnhancedProductCard 
-                  product={p} 
-                  onQuickView={setQuickViewProduct}
-                />
-              </StaggerItem>
-            ))}
-          </StaggerContainer>
-        </div>
-      </section>
-
-      <QuickViewModal 
-        product={quickViewProduct}
-        isOpen={!!quickViewProduct}
-        onClose={() => setQuickViewProduct(null)}
-      />
-    </>
-  );
-};
-
-// --- OFFER BANNER ---
-const OfferBanner = () => {
-  const [copied, setCopied] = useState(false);
-  const [offer, setOffer] = useState({ code: "SEABITE20", value: 20, discountType: "percent" });
-
-  useEffect(() => {
-    axios
-      .get(`${API_URL}/api/coupons/public`)
-      .then((res) => {
-        if (res.data && res.data.length > 0) {
-          const activeCoupon = res.data.find((c) => c.isActive) || res.data[0];
-          setOffer(activeCoupon);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(offer.code);
-    setCopied(true);
-    toast.success('Coupon code copied!', { icon: '📋' });
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <section className="py-20 px-6 transition-colors duration-300 relative">
-      <motion.div
-        whileHover={{ scale: 1.01 }}
-        transition={{ duration: 0.5 }}
-        className="max-w-5xl mx-auto flex flex-col md:flex-row bg-[#0f172a] dark:bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 group"
-      >
-        <div className="absolute inset-0 z-30 pointer-events-none mix-blend-overlay opacity-30">
-          <motion.div
-            animate={{ x: ["-100%", "200%"] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 3 }}
-            className="w-full h-full bg-gradient-to-r from-transparent via-white to-transparent -skew-x-12"
-          />
-        </div>
-        <div className="w-full md:w-[60%] relative h-[300px] md:h-auto bg-gray-200 overflow-hidden">
-          <motion.img
-            src="/20offer.png"
-            alt="20% Off"
-            className="w-full h-full object-cover"
-            whileHover={{ scale: 1.08 }}
-            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          />
-          <div className="absolute inset-0 bg-black/10" />
-        </div>
-        <div className="w-full md:w-[40%] bg-[#0f172a] dark:bg-blue-50 p-8 md:p-12 flex flex-col justify-center items-center text-center text-white dark:text-slate-900 relative">
-          <motion.div
-            initial={{ opacity: 0, scale: 0 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.2 }}
-            className="bg-blue-600 dark:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 flex items-center gap-2"
-          >
-            <Sparkles size={12} /> Official Coupon
-          </motion.div>
-          <motion.h2
-            className="text-6xl font-serif mb-2"
-            initial={{ opacity: 0, scale: 0.5 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.3 }}
-          >
-            {offer.discountType === "flat" ? `₹${offer.value}` : `${offer.value}%`}
-          </motion.h2>
-          <h3 className="text-xl font-medium tracking-widest uppercase mb-6 opacity-80">
-            {offer.discountType === "flat" ? "Cash Discount" : "Flat Discount"}
-          </h3>
-          <motion.div
-            onClick={handleCopy}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full border-2 border-dashed border-white/20 dark:border-slate-900/20 p-4 rounded-xl mb-6 relative group cursor-pointer hover:bg-white/10 dark:hover:bg-blue-100 transition-all"
-            title="Click to copy code"
-          >
-            <p className="text-xs uppercase opacity-50 mb-1">Promo Code</p>
-            <p className="text-2xl font-mono font-bold tracking-wider text-emerald-400 dark:text-blue-600 flex items-center justify-center gap-2">
-              {offer.code}
-              <AnimatePresence mode="wait">
-                {copied ? (
-                  <motion.span
-                    key="check"
-                    initial={{ scale: 0, rotate: -90 }}
-                    animate={{ scale: 1, rotate: 0 }}
-                    exit={{ scale: 0, rotate: 90 }}
-                  >
-                    <Check size={20} className="text-emerald-500" />
-                  </motion.span>
-                ) : (
-                  <motion.span
-                    key="copy"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="opacity-40 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Copy size={16} />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </p>
-          </motion.div>
-          <Link to="/products">
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full py-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-transform shadow-lg"
-            >
-              Shop Now
-            </motion.button>
+    <section className="py-12 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            {filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />}
+            {title}
+          </h2>
+          <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+            See All <ChevronRight size={14} />
           </Link>
         </div>
-      </motion.div>
+        <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {products.map((p) => (
+            <StaggerItem key={p._id}>
+              <EnhancedProductCard product={p} />
+            </StaggerItem>
+          ))}
+        </StaggerContainer>
+      </div>
     </section>
   );
 };
 
-// --- TRENDING PRODUCTS ---
+// --- ENHANCED TRENDING MARQUEE (Best Sellers) ---
 const TrendingMarquee = () => {
   const [products, setProducts] = useState([]);
+  const [isPaused, setIsPaused] = useState(false);
+
   useEffect(() => {
     axios.get(`${API_URL}/api/products`).then((res) => {
       const all = res.data.products || [];
-      const trending = all.filter((p) => p.trending);
+      const trending = all.filter((p) => p.trending).slice(0, 8); // Get top 8 trending
+      // Triple them for smooth infinite scroll
       setProducts([...trending, ...trending, ...trending]);
     });
   }, []);
@@ -1146,46 +801,117 @@ const TrendingMarquee = () => {
   };
 
   return (
-    <section className="py-24 overflow-hidden border-t border-gray-200 dark:border-white/5 transition-colors duration-300 relative">
-      <div className="container mx-auto px-6 mb-12 flex justify-between items-end relative z-10">
+    <section className="py-32 overflow-hidden border-y border-gray-200 dark:border-white/5 transition-colors duration-300 relative bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-[#0a1625] dark:via-[#0d1a2d] dark:to-[#0a1625]">
+      {/* Decorative Background */}
+      <div className="absolute inset-0 pointer-events-none opacity-5">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl" />
+      </div>
+
+      <div className="container mx-auto px-6 mb-16 flex flex-col items-center text-center relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="inline-flex items-center gap-2 bg-yellow-400/10 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-widest mb-6 border border-yellow-400/20"
+        >
+          <Flame size={14} /> Customer Favorites
+        </motion.div>
         <TextReveal
           text="Best Sellers"
-          className="text-4xl font-serif text-slate-900 dark:text-white transition-colors duration-300"
+          className="text-5xl md:text-6xl font-serif text-slate-900 dark:text-white transition-colors duration-300 mb-4"
         />
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="text-slate-600 dark:text-slate-400 max-w-2xl"
+        >
+          Handpicked from our ocean-fresh collection. These crowd favorites fly off the shelves!
+        </motion.p>
       </div>
-      <div className="relative w-full z-10">
+
+      <div 
+        className="relative w-full z-10"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+      >
         <motion.div
           className="flex gap-8 w-max"
-          animate={{ x: ["0%", "-33.33%"] }}
-          transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+          animate={{ x: isPaused ? undefined : ["0%", "-33.33%"] }}
+          transition={{ 
+            repeat: Infinity, 
+            duration: 30, 
+            ease: "linear",
+            ...(isPaused && { duration: 0 })
+          }}
         >
           {products.map((p, i) => (
-            <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[300px] group">
+            <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[320px] group">
               <motion.div
-                whileHover={{ y: -12, rotate: -1 }}
+                whileHover={{ y: -16, rotate: -2, scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="bg-white dark:bg-[#0e1d30] border border-gray-200 dark:border-white/5 rounded-[2rem] p-6 hover:bg-white/80 dark:hover:bg-[#112238] transition-colors backdrop-blur-sm shadow-sm hover:shadow-xl"
+                className="bg-white dark:bg-[#0e1d30] border-2 border-gray-200 dark:border-white/10 rounded-3xl p-8 hover:border-blue-500 dark:hover:border-blue-400 transition-all backdrop-blur-sm shadow-lg hover:shadow-2xl relative overflow-hidden"
               >
-                <div className="h-[220px] mb-6 flex items-center justify-center relative overflow-hidden">
+                {/* Gradient overlay on hover */}
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                />
+
+                {/* Best Seller Badge */}
+                <div className="absolute top-4 right-4 z-10">
+                  <motion.div
+                    initial={{ rotate: -12 }}
+                    whileHover={{ rotate: 0, scale: 1.1 }}
+                    className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1"
+                  >
+                    <Star size={10} fill="currentColor" /> Top Pick
+                  </motion.div>
+                </div>
+
+                <div className="h-[240px] mb-8 flex items-center justify-center relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 rounded-2xl">
                   <motion.img
                     src={getImageUrl(p.image)}
                     alt={p.name}
-                    className="w-48 h-48 object-contain drop-shadow-2xl"
-                    whileHover={{ scale: 1.15, rotate: 5 }}
+                    className="w-56 h-56 object-contain drop-shadow-2xl relative z-10"
+                    whileHover={{ scale: 1.2, rotate: 8 }}
                     transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                   />
+                  {/* Glow effect */}
+                  <div className="absolute inset-0 bg-gradient-radial from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-1 truncate">
+
+                <div className="relative z-10">
+                  <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-2 font-bold">
                     {p.name}
                   </h3>
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-400 text-xs uppercase">
+                  <div className="flex justify-between items-center mb-4">
+                    <span className="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wide">
                       {p.category}
                     </span>
-                    <span className="text-lg font-mono text-blue-600 dark:text-blue-300">
-                      ₹{p.basePrice}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <Star size={14} className="text-yellow-400 fill-yellow-400" />
+                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">4.8</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
+                    <div>
+                      <span className="text-sm text-slate-400 line-through mr-2">
+                        ₹{(p.basePrice * 1.2).toFixed(0)}
+                      </span>
+                      <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        ₹{p.basePrice}
+                      </span>
+                    </div>
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 15 }}
+                      whileTap={{ scale: 0.9 }}
+                      className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg cursor-pointer"
+                    >
+                      <ShoppingBag size={18} />
+                    </motion.div>
                   </div>
                 </div>
               </motion.div>
@@ -1193,11 +919,27 @@ const TrendingMarquee = () => {
           ))}
         </motion.div>
       </div>
+
+      {/* Pause indicator */}
+      <AnimatePresence>
+        {isPaused && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="text-center mt-8 relative z-10"
+          >
+            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
+              Hovering to explore • Scroll paused
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
 
-// --- REVIEWS & PROMISE ---
+// --- REVIEWS ---
 const SeaBitePromise = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1379,78 +1121,6 @@ const WhySeaBite = () => {
   );
 };
 
-// --- NEWSLETTER ---
-const Newsletter = () => {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (email) {
-      setSubmitted(true);
-      toast.success('Thank you for subscribing!', { icon: '🎉' });
-      setTimeout(() => setSubmitted(false), 3000);
-      setEmail("");
-    }
-  };
-
-  return (
-    <section className="py-16 px-6">
-      <SectionReveal direction="up">
-        <div className="max-w-3xl mx-auto bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 rounded-3xl p-8 md:p-14 text-center relative overflow-hidden shadow-2xl shadow-blue-600/20">
-          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-blue-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
-
-          <div className="relative z-10">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full text-[10px] font-bold text-white/90 uppercase tracking-widest mb-6 border border-white/10"
-            >
-              <Gift size={12} /> Stay Fresh
-            </motion.div>
-            <h2 className="text-3xl md:text-4xl font-serif text-white mb-3">
-              Get Exclusive Deals
-            </h2>
-            <p className="text-blue-100 text-sm mb-8 max-w-md mx-auto">
-              Subscribe for early access to flash sales, new arrivals, and members-only discounts.
-            </p>
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="flex-1 px-5 py-3.5 rounded-xl bg-white/10 backdrop-blur border border-white/20 text-white placeholder:text-white/40 text-sm font-medium outline-none focus:ring-2 focus:ring-white/30 transition-all"
-                required
-              />
-              <motion.button
-                type="submit"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                className="px-8 py-3.5 bg-white text-blue-700 rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-blue-50 transition-colors shadow-lg"
-              >
-                <AnimatePresence mode="wait">
-                  {submitted ? (
-                    <motion.span key="done" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                      <Check size={14} /> Subscribed
-                    </motion.span>
-                  ) : (
-                    <motion.span key="sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      Subscribe
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-              </motion.button>
-            </form>
-          </div>
-        </div>
-      </SectionReveal>
-    </section>
-  );
-};
-
 // --- FOOTER ---
 const Footer = () => {
   return (
@@ -1570,9 +1240,6 @@ export default function Home() {
           <SectionReveal direction="right">
             <CategoryRow title="Shellfish Specials" filterType="Shellfish" />
           </SectionReveal>
-          <SectionReveal direction="scale" delay={0.1}>
-            <OfferBanner />
-          </SectionReveal>
           <SectionReveal direction="up">
             <TrendingMarquee />
           </SectionReveal>
@@ -1581,9 +1248,6 @@ export default function Home() {
           </SectionReveal>
           <SectionReveal direction="scale" delay={0.1}>
             <WhySeaBite />
-          </SectionReveal>
-          <SectionReveal direction="up">
-            <Newsletter />
           </SectionReveal>
         </div>
       </div>
