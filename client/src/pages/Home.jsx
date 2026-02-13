@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useContext } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, useInView, useSpring, useMotionValue, useAnimationFrame, useVelocity, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { ArrowRight, Star, ShieldCheck, Truck, Fish, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight, Plus, Minus } from "lucide-react";
+import { ArrowRight, Star, ShieldCheck, Truck, Fish, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight, Plus, Minus, ChevronLeft } from "lucide-react";
 import toast from "react-hot-toast";
 import { CartContext } from "../context/CartContext";
 
@@ -161,7 +161,7 @@ const ScrollToTopButton = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 transition-colors"
+          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full shadow-2xl flex items-center justify-center hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
         >
           <ChevronDown size={24} className="rotate-180" />
         </motion.button>
@@ -170,7 +170,7 @@ const ScrollToTopButton = () => {
   );
 };
 
-// --- ENHANCED PRODUCT CARD ---
+// --- MINIMAL AESTHETIC PRODUCT CARD ---
 const EnhancedProductCard = ({ product }) => {
   const { addToCart } = useContext(CartContext);
   const [quantity, setQuantity] = useState(1);
@@ -194,9 +194,9 @@ const EnhancedProductCard = ({ product }) => {
   };
 
   const getStockStatus = () => {
-    if (!product.stock || product.stock === 0) return { label: 'OUT OF STOCK', color: 'bg-red-500' };
-    if (product.stock < 10) return { label: 'LOW STOCK', color: 'bg-orange-500' };
-    return { label: 'IN STOCK', color: 'bg-green-500' };
+    if (!product.stock || product.stock === 0) return { label: 'OUT', color: 'text-red-500' };
+    if (product.stock < 10) return { label: 'LOW', color: 'text-orange-500' };
+    return { label: 'IN', color: 'text-green-500' };
   };
 
   const stockStatus = getStockStatus();
@@ -205,135 +205,97 @@ const EnhancedProductCard = ({ product }) => {
   return (
     <Link to={`/products/${product._id}`}>
       <motion.div
-        whileHover={{ y: -8, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
-        whileTap={{ scale: 0.97 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden h-full flex flex-col relative"
+        whileHover={{ y: -4 }}
+        transition={{ type: "spring", stiffness: 400, damping: 25 }}
+        className="group relative bg-white dark:bg-slate-900 overflow-hidden h-full flex flex-col"
       >
         {/* Image Section */}
-        <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4 overflow-hidden">
+        <div className="relative aspect-square bg-slate-50 dark:bg-slate-800/50 overflow-hidden">
           <motion.img
             src={getImageUrl(product.image)}
             alt={product.name}
-            className="w-full h-full object-contain"
-            whileHover={{ scale: 1.12, rotate: 2 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full h-full object-cover p-6"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.4 }}
           />
           
-          {/* Badges */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
+          {/* Floating Badges */}
+          <div className="absolute top-3 left-3 flex flex-col gap-1.5">
             {product.trending && (
-              <motion.span
-                initial={{ x: -60, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm flex items-center gap-1"
-              >
-                <Flame size={10} /> HOT
-              </motion.span>
+              <span className="bg-black dark:bg-white text-white dark:text-black text-[9px] font-bold px-2 py-1 uppercase tracking-wider">
+                Hot
+              </span>
             )}
             {isNew && (
-              <motion.span
-                initial={{ x: -60, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
-              >
-                NEW
-              </motion.span>
-            )}
-            {product.stock < 10 && product.stock > 0 && (
-              <motion.span
-                initial={{ x: -60, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
-              >
-                ONLY {product.stock} LEFT
-              </motion.span>
+              <span className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-[9px] font-bold px-2 py-1 uppercase tracking-wider">
+                New
+              </span>
             )}
           </div>
-        </div>
 
-        {/* Content Section */}
-        <div className="p-4 flex flex-col flex-grow">
-          <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">
-            {product.name}
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{product.netWeight}</p>
-          
-          {/* Stock Status */}
-          <div className="flex items-center gap-2 mb-3">
-            <div className={`w-2 h-2 rounded-full ${stockStatus.color} animate-pulse`} />
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+          {/* Stock Badge */}
+          <div className="absolute top-3 right-3">
+            <span className={`text-[9px] font-mono font-bold ${stockStatus.color}`}>
               {stockStatus.label}
             </span>
           </div>
 
-          {/* Price & Add to Cart */}
-          <div className="mt-auto">
-            <div className="flex justify-between items-center mb-2">
-              <div>
-                <span className="text-xs text-slate-400 line-through mr-2">
-                  ₹{(product.basePrice * 1.2).toFixed(0)}
-                </span>
-                <span className="font-bold text-slate-900 dark:text-white">
-                  ₹{product.basePrice}
-                </span>
-              </div>
-            </div>
-
-            {/* Quick Add to Cart */}
+          {/* Quick Add Overlay */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileHover={{ opacity: 1 }}
+            className="absolute inset-0 bg-black/5 dark:bg-white/5 backdrop-blur-[2px] flex items-center justify-center"
+          >
             <AnimatePresence mode="wait">
               {showQuantity ? (
                 <motion.div
                   key="quantity"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex gap-2"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3 py-2 shadow-lg"
+                  onClick={(e) => e.preventDefault()}
                 >
-                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-2 flex-1">
-                    <motion.button
-                      whileTap={{ scale: 0.8 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setQuantity(Math.max(1, quantity - 1));
-                      }}
-                      className="p-1"
-                    >
-                      <Minus size={12} />
-                    </motion.button>
-                    <span className="font-bold text-sm">{quantity}</span>
-                    <motion.button
-                      whileTap={{ scale: 0.8 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setQuantity(Math.min(product.stock || 99, quantity + 1));
-                      }}
-                      className="p-1"
-                    >
-                      <Plus size={12} />
-                    </motion.button>
-                  </div>
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setQuantity(Math.max(1, quantity - 1));
+                    }}
+                    className="w-7 h-7 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <Minus size={14} />
+                  </motion.button>
+                  <span className="font-mono text-sm font-bold w-6 text-center">{quantity}</span>
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setQuantity(Math.min(product.stock || 99, quantity + 1));
+                    }}
+                    className="w-7 h-7 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800"
+                  >
+                    <Plus size={14} />
+                  </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleAddToCart}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs"
+                    className="ml-2 px-4 py-1.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-bold uppercase tracking-wider"
                   >
                     Add
                   </motion.button>
                 </motion.div>
               ) : (
                 <motion.button
-                  key="add-button"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  key="add-btn"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -344,17 +306,41 @@ const EnhancedProductCard = ({ product }) => {
                     setShowQuantity(true);
                   }}
                   disabled={!product.stock || product.stock === 0}
-                  className={`w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 ${
-                    !product.stock || product.stock === 0
-                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                      : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white'
-                  } transition-colors`}
+                  className="px-6 py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-sm uppercase tracking-wider disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  <ShoppingBag size={14} />
-                  {!product.stock || product.stock === 0 ? 'Out of Stock' : 'Quick Add'}
+                  <ShoppingBag size={16} />
+                  {!product.stock || product.stock === 0 ? 'Sold Out' : 'Quick Add'}
                 </motion.button>
               )}
             </AnimatePresence>
+          </motion.div>
+        </div>
+
+        {/* Content Section */}
+        <div className="p-4 flex flex-col flex-grow space-y-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1 font-mono">
+              {product.category}
+            </p>
+            <h3 className="font-medium text-slate-900 dark:text-white text-sm leading-tight line-clamp-2">
+              {product.name}
+            </h3>
+          </div>
+          
+          <div className="mt-auto pt-2 border-t border-slate-100 dark:border-slate-800">
+            <div className="flex items-baseline justify-between">
+              <div className="flex items-baseline gap-2">
+                <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">
+                  ₹{product.basePrice}
+                </span>
+                <span className="text-xs text-slate-400 line-through font-mono">
+                  ₹{(product.basePrice * 1.2).toFixed(0)}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono">
+                {product.netWeight}
+              </span>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -537,7 +523,7 @@ const CategoryPanel = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.4, duration: 0.5 }}
-          className="text-blue-600 dark:text-blue-200 mt-2 font-light tracking-wide transition-colors duration-300"
+          className="text-slate-600 dark:text-slate-400 mt-2 font-light tracking-wide transition-colors duration-300"
         >
           Select your catch
         </motion.p>
@@ -550,7 +536,7 @@ const CategoryPanel = () => {
             onMouseEnter={() => setHovered(i)}
             className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${
               hovered === i
-                ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20"
+                ? "flex-[3] shadow-2xl shadow-slate-900/10 dark:shadow-slate-900/20"
                 : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"
             }`}
           >
@@ -587,7 +573,7 @@ const CategoryPanel = () => {
                   opacity: hovered === i ? 1 : 0,
                 }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="flex items-center gap-2 text-blue-600 dark:text-blue-300 text-sm font-bold uppercase tracking-widest mt-2 overflow-hidden"
+                className="flex items-center gap-2 text-slate-900 dark:text-slate-300 text-sm font-bold uppercase tracking-widest mt-2 overflow-hidden"
               >
                 Explore
                 <motion.span animate={{ x: hovered === i ? [0, 6, 0] : 0 }} transition={{ repeat: Infinity, duration: 1 }}>
@@ -738,7 +724,7 @@ const FlashSale = () => {
   );
 };
 
-// --- PRODUCT SHOWCASE ROW ---
+// --- PRODUCT SHOWCASE ROW WITH ICON BRACKETS ---
 const CategoryRow = ({ title, filterType }) => {
   const [products, setProducts] = useState([]);
 
@@ -757,19 +743,52 @@ const CategoryRow = ({ title, filterType }) => {
 
   if (products.length === 0) return null;
 
+  const Icon = filterType === "Fish" ? Fish : Anchor;
+
   return (
     <section className="py-8 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
-          <h2 className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white flex items-center gap-3">
-            {filterType === "Fish" ? <Fish className="text-blue-500" size={32} /> : <Anchor className="text-orange-500" size={32} />}
-            {title}
-          </h2>
-          <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-            See All <ChevronRight size={14} />
+        <div className="flex justify-between items-center mb-8 pb-6 border-b-2 border-slate-900 dark:border-white">
+          <div className="flex items-center gap-4">
+            <motion.div
+              animate={{ rotate: [0, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+            >
+              <ChevronLeft size={32} className="text-slate-900 dark:text-white" strokeWidth={3} />
+            </motion.div>
+            
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="w-12 h-12 bg-slate-900 dark:bg-white rounded-full flex items-center justify-center"
+            >
+              <Icon size={24} className="text-white dark:text-slate-900" />
+            </motion.div>
+
+            <h2 className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white font-bold">
+              {title}
+            </h2>
+
+            <motion.div
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              className="w-12 h-12 bg-slate-900 dark:bg-white rounded-full flex items-center justify-center"
+            >
+              <Icon size={24} className="text-white dark:text-slate-900" />
+            </motion.div>
+
+            <motion.div
+              animate={{ rotate: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+            >
+              <ChevronRight size={32} className="text-slate-900 dark:text-white" strokeWidth={3} />
+            </motion.div>
+          </div>
+
+          <Link to="/products" className="text-sm font-mono font-bold text-slate-900 dark:text-white hover:underline uppercase tracking-widest">
+            View All
           </Link>
         </div>
-        <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+
+        <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {products.map((p) => (
             <StaggerItem key={p._id}>
               <EnhancedProductCard product={p} />
@@ -781,11 +800,11 @@ const CategoryRow = ({ title, filterType }) => {
   );
 };
 
-// --- ENHANCED TRENDING MARQUEE (Best Sellers) - FIXED ---
+// --- ENHANCED TRENDING MARQUEE - FIXED ADD TO CART & FASTER SCROLL ---
 const TrendingMarquee = () => {
   const { addToCart } = useContext(CartContext);
   const [products, setProducts] = useState([]);
-  const [isPaused, setIsPaused] = useState(false);
+  const baseX = useMotionValue(0);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`).then((res) => {
@@ -803,28 +822,39 @@ const TrendingMarquee = () => {
   const handleQuickAdd = (e, product) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    if (!product.stock || product.stock === 0) {
+      toast.error('Out of stock!');
+      return;
+    }
+    
     addToCart({ ...product, quantity: 1 });
     toast.success(`${product.name} added to cart!`, {
       icon: '🛒',
     });
   };
 
-  return (
-    <section className="py-16 overflow-hidden border-y border-gray-200 dark:border-white/5 transition-colors duration-300 relative bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-[#0a1625] dark:via-[#0d1a2d] dark:to-[#0a1625]">
-      <div className="absolute inset-0 pointer-events-none opacity-5">
-        <div className="absolute top-10 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl" />
-      </div>
+  // Continuous scrolling
+  useAnimationFrame((t, delta) => {
+    const moveBy = -0.5 * (delta / 1000) * 100; // Faster speed
+    baseX.set(baseX.get() + moveBy);
+  });
 
-      <div className="container mx-auto px-6 mb-12 flex flex-col items-center text-center relative z-10">
+  const x = useTransform(baseX, (v) => `${v % 33.33}%`);
+
+  return (
+    <section className="py-16 overflow-hidden border-y border-slate-200 dark:border-slate-800 transition-colors duration-300 relative bg-slate-50 dark:bg-slate-900">
+      <div className="container mx-auto px-6 mb-12 text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 bg-yellow-400/10 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-widest mb-6 border border-yellow-400/20"
+          className="inline-block mb-3"
         >
-          <Flame size={14} /> Customer Favorites
+          <span className="text-[10px] uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400 font-mono font-bold border-2 border-slate-900 dark:border-white px-4 py-1">
+            Customer Favorites
+          </span>
         </motion.div>
         <TextReveal
           text="Best Sellers"
@@ -835,90 +865,76 @@ const TrendingMarquee = () => {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
-          className="text-slate-600 dark:text-slate-400 max-w-2xl"
+          className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto"
         >
-          Handpicked from our ocean-fresh collection. These crowd favorites fly off the shelves!
+          Handpicked from our ocean-fresh collection
         </motion.p>
       </div>
 
-      <div 
-        className="relative w-full z-10"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
+      <div className="relative w-full z-10">
         <motion.div
           className="flex gap-6 w-max"
-          animate={{ x: isPaused ? undefined : ["0%", "-33.33%"] }}
-          transition={{ 
-            repeat: Infinity, 
-            duration: 30, 
-            ease: "linear",
-            ...(isPaused && { duration: 0 })
-          }}
+          style={{ x }}
         >
           {products.map((p, i) => (
-            <div key={`${p._id}-${i}`} className="w-[280px] group">
+            <div key={`${p._id}-${i}`} className="w-[260px] flex-shrink-0">
               <Link to={`/products/${p._id}`}>
                 <motion.div
-                  whileHover={{ y: -12, rotate: -1, scale: 1.02 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="bg-white dark:bg-[#0e1d30] border-2 border-gray-200 dark:border-white/10 rounded-2xl p-6 hover:border-blue-500 dark:hover:border-blue-400 transition-all backdrop-blur-sm shadow-lg hover:shadow-2xl relative overflow-hidden h-full flex flex-col"
+                  whileHover={{ y: -8 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="bg-white dark:bg-slate-800 overflow-hidden h-full flex flex-col group"
                 >
-                  <motion.div 
-                    className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                  />
-
-                  <div className="absolute top-3 right-3 z-10">
-                    <motion.div
-                      initial={{ rotate: -12 }}
-                      whileHover={{ rotate: 0, scale: 1.1 }}
-                      className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1"
-                    >
-                      <Star size={10} fill="currentColor" /> Top
-                    </motion.div>
-                  </div>
-
-                  <div className="h-[180px] mb-6 flex items-center justify-center relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                  <div className="relative aspect-square bg-slate-100 dark:bg-slate-700/50 overflow-hidden">
                     <motion.img
                       src={getImageUrl(p.image)}
                       alt={p.name}
-                      className="w-40 h-40 object-contain drop-shadow-2xl relative z-10"
-                      whileHover={{ scale: 1.15, rotate: 5 }}
-                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                      className="w-full h-full object-cover p-6"
+                      whileHover={{ scale: 1.1 }}
+                      transition={{ duration: 0.4 }}
                     />
-                    <div className="absolute inset-0 bg-gradient-radial from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                    <div className="absolute top-2 left-2">
+                      <span className="bg-black text-white text-[8px] font-bold px-2 py-1 uppercase tracking-wider font-mono">
+                        Hot
+                      </span>
+                    </div>
+
+                    {/* Quick Add Button */}
+                    <motion.button
+                      initial={{ opacity: 0, y: 20 }}
+                      whileHover={{ opacity: 1, y: 0 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={(e) => handleQuickAdd(e, p)}
+                      className="absolute bottom-3 left-3 right-3 bg-slate-900 text-white py-2.5 font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300"
+                    >
+                      <ShoppingBag size={14} />
+                      Quick Add
+                    </motion.button>
                   </div>
 
-                  <div className="relative z-10 flex-grow flex flex-col">
-                    <h3 className="text-base font-serif text-slate-900 dark:text-white mb-2 font-bold line-clamp-2">
-                      {p.name}
-                    </h3>
-                    <div className="flex justify-between items-center mb-3">
-                      <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">
+                  <div className="p-4 space-y-3">
+                    <div>
+                      <p className="text-[9px] uppercase tracking-widest text-slate-400 mb-1 font-mono">
                         {p.category}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
-                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">4.8</span>
-                      </div>
+                      </p>
+                      <h3 className="font-medium text-slate-900 dark:text-white text-sm leading-tight line-clamp-2">
+                        {p.name}
+                      </h3>
                     </div>
-                    <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/10 mt-auto">
-                      <div>
-                        <span className="text-xs text-slate-400 line-through mr-2">
-                          ₹{(p.basePrice * 1.2).toFixed(0)}
-                        </span>
-                        <span className="text-xl font-black text-slate-900 dark:text-white">
+                    
+                    <div className="pt-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-lg font-bold text-slate-900 dark:text-white font-mono">
                           ₹{p.basePrice}
                         </span>
+                        <span className="text-xs text-slate-400 line-through font-mono">
+                          ₹{(p.basePrice * 1.2).toFixed(0)}
+                        </span>
                       </div>
-                      <motion.button
-                        whileHover={{ scale: 1.15, rotate: 15 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={(e) => handleQuickAdd(e, p)}
-                        className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg cursor-pointer hover:bg-blue-700 transition-colors"
-                      >
-                        <ShoppingBag size={16} />
-                      </motion.button>
+                      <div className="flex items-center gap-1">
+                        <Star size={12} className="text-yellow-500 fill-yellow-500" />
+                        <span className="text-xs font-mono font-bold text-slate-700 dark:text-slate-300">4.8</span>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -927,21 +943,6 @@ const TrendingMarquee = () => {
           ))}
         </motion.div>
       </div>
-
-      <AnimatePresence>
-        {isPaused && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="text-center mt-6 relative z-10"
-          >
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-              Hovering to explore • Scroll paused
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 };
@@ -1002,14 +1003,14 @@ const SeaBitePromise = () => {
                     &quot;{r.comment}&quot;
                   </p>
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 flex items-center justify-center text-white dark:text-slate-900 font-bold text-sm">
                       <User size={16} />
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-900 dark:text-white text-sm">
                         {r.userName}
                       </h4>
-                      <span className="text-xs text-blue-500 uppercase tracking-wide font-bold">
+                      <span className="text-xs text-slate-500 uppercase tracking-wide font-mono">
                         {r.productName}
                       </span>
                     </div>
@@ -1040,8 +1041,8 @@ const WhySeaBite = () => {
       icon: <Thermometer size={24} />,
       title: "Cold Chain Delivery",
       desc: "Temperature-controlled packaging from ocean to your doorstep.",
-      color: "text-blue-600 dark:text-blue-400",
-      bg: "bg-blue-50 dark:bg-blue-900/20",
+      color: "text-slate-900 dark:text-slate-100",
+      bg: "bg-slate-100 dark:bg-slate-800",
     },
     {
       icon: <Truck size={24} />,
@@ -1167,7 +1168,7 @@ const Footer = () => {
             >
               <span className="relative z-10">Start Your Order</span>
               <motion.div
-                className="absolute inset-0 bg-blue-600"
+                className="absolute inset-0 bg-slate-700 dark:bg-slate-200"
                 initial={{ y: "100%" }}
                 whileHover={{ y: "0%" }}
                 transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
@@ -1184,9 +1185,9 @@ const Footer = () => {
             <span className="text-xs text-slate-400 dark:text-slate-500">Fresh Coastal Catch</span>
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-xs font-medium text-slate-500 dark:text-slate-400">
-            <Link to="/products" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Products</Link>
-            <Link to="/orders" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">My Orders</Link>
-            <Link to="/notifications" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Notifications</Link>
+            <Link to="/products" className="hover:text-slate-900 dark:hover:text-white transition-colors">Products</Link>
+            <Link to="/orders" className="hover:text-slate-900 dark:hover:text-white transition-colors">My Orders</Link>
+            <Link to="/notifications" className="hover:text-slate-900 dark:hover:text-white transition-colors">Notifications</Link>
           </div>
           <p className="text-[10px] text-slate-400 dark:text-slate-600 font-medium">
             &copy; {new Date().getFullYear()} SeaBite. All rights reserved.
@@ -1200,7 +1201,7 @@ const Footer = () => {
 // --- MAIN EXPORT ---
 export default function Home() {
   return (
-    <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-colors duration-300">
+    <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-slate-900 selection:text-white dark:selection:bg-white dark:selection:text-slate-900 font-sans transition-colors duration-300">
       <VideoHero />
       <RollingText />
       <div className="relative w-full overflow-hidden">
@@ -1228,7 +1229,7 @@ export default function Home() {
                 top: `${Math.random() * 100}%`,
                 scale: Math.random() * 1.5 + 1.0,
               }}
-              className="text-blue-500/30 dark:text-blue-400/20"
+              className="text-slate-500/20 dark:text-slate-400/10"
             >
               <Fish size={64} strokeWidth={1} fill="currentColor" />
             </motion.div>
