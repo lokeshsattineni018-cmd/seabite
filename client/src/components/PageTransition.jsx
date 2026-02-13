@@ -1,89 +1,92 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
+import { motion } from "framer-motion";
 
 // --- ANIMATION VARIANTS ---
 
 const finVariants = {
-  initial: { x: "-150%", skewX: -25, opacity: 0 },
+  initial: { 
+    x: "-120%", 
+    skewX: -15, 
+    opacity: 0 
+  },
   animate: {
     x: "150%",
     skewX: 0,
-    opacity: [0, 0.6, 0],
+    opacity: [0, 0.7, 0], // The "Shimmer" peak
     transition: {
-      duration: 1.6,
-      ease: [0.23, 1, 0.32, 1],
+      duration: 1.5,
+      ease: [0.22, 1, 0.36, 1], // "Glide" easing
     },
   },
 };
 
 const contentVariants = {
-  initial: { opacity: 0, scale: 0.99, filter: "blur(15px) brightness(1.5)" },
-  in: {
-    opacity: 1,
-    scale: 1,
-    filter: "blur(0px) brightness(1)",
-    transition: { duration: 1.2, delay: 0.4, ease: "easeOut" },
+  initial: { 
+    opacity: 0, 
+    y: 10, 
+    filter: "blur(12px) brightness(1.3)" 
   },
-  out: { opacity: 0, filter: "blur(5px)", transition: { duration: 0.4 } },
+  in: { 
+    opacity: 1, 
+    y: 0, 
+    filter: "blur(0px) brightness(1)",
+    transition: { 
+      duration: 1, 
+      delay: 0.35, 
+      ease: "easeOut" 
+    } 
+  },
+  out: { 
+    opacity: 0, 
+    y: -10, 
+    filter: "blur(4px)",
+    transition: { duration: 0.4 } 
+  },
 };
 
-export default function SeafoodLuxuryTransition({ children }) {
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+const backgroundRipple = {
+  initial: { scale: 0.95, opacity: 0 },
+  animate: {
+    scale: 1,
+    opacity: 1,
+    transition: { duration: 1.2, ease: "easeOut" }
+  }
+};
 
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
-
+export default function SeafoodTransition({ children }) {
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-[#fcfcfc] cursor-none">
+    <div className="relative w-full min-h-screen overflow-hidden bg-[#fafafa]">
       
-      {/* 1. CUSTOM WATER-DROP CURSOR */}
-      <motion.div
-        className="fixed top-0 left-0 w-8 h-8 rounded-full border border-sky-400/30 z-[10000] pointer-events-none"
-        animate={{ x: mousePos.x - 16, y: mousePos.y - 16 }}
-        transition={{ type: "spring", damping: 25, stiffness: 250, mass: 0.5 }}
-        style={{ background: "radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 80%)" }}
-      />
-      <motion.div
-        className="fixed top-0 left-0 w-2 h-2 bg-sky-500 rounded-full z-[10001] pointer-events-none"
-        animate={{ x: mousePos.x - 4, y: mousePos.y - 4 }}
-        transition={{ type: "spring", damping: 35, stiffness: 400, mass: 0.2 }}
-      />
-
-      {/* 2. THE PROMINENT SILVER FIN SWEEP */}
+      {/* 1. THE SILKY FIN SWEEP */}
+      {/* This mimics the silver-side flash of a fish swimming past */}
       <motion.div
         variants={finVariants}
         initial="initial"
         animate="animate"
-        className="fixed top-0 left-0 w-[80%] h-full z-[9999] pointer-events-none"
+        className="fixed top-0 left-0 w-[70%] h-full z-[9999] pointer-events-none"
         style={{
           background: `linear-gradient(110deg, 
             transparent 0%, 
-            rgba(200, 220, 255, 0.1) 20%, 
-            rgba(255, 255, 255, 0.8) 50%, 
-            rgba(186, 230, 253, 0.2) 80%, 
+            rgba(186, 230, 253, 0.1) 25%, 
+            rgba(255, 255, 255, 0.9) 50%, 
+            rgba(200, 220, 255, 0.2) 75%, 
             transparent 100%)`,
-          backdropFilter: "blur(4px)",
+          backdropFilter: "blur(6px)", // Adds a refractive water-like distortion
         }}
       />
 
-      {/* 3. REFRACTIVE OVERLAY (The "Water" look) */}
+      {/* 2. SUBTLE "OYSTER" TEXTURE OVERLAY */}
       <motion.div
         initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.05, 0] }}
-        transition={{ duration: 2, repeat: Infinity, repeatType: "mirror" }}
-        className="fixed inset-0 z-[9997] pointer-events-none"
+        animate={{ opacity: 0.04 }}
+        className="fixed inset-0 z-[1] pointer-events-none"
         style={{
-          backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")`, // Subtle scale-like texture
-          opacity: 0.03
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 60c16.569 0 30-13.431 30-30S46.569 0 30 0 0 13.431 0 30s13.431 30 30 30zm0-2C14.536 58 2 45.464 2 30S14.536 2 30 2s28 12.536 28 28-12.536 28-28 28z' fill='%230ea5e9' fill-opacity='0.2' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+          backgroundSize: '80px',
         }}
       />
 
-      {/* 4. MAIN CONTENT */}
+      {/* 3. MAIN CONTENT REVEAL */}
       <motion.div
         variants={contentVariants}
         initial="initial"
@@ -94,15 +97,13 @@ export default function SeafoodLuxuryTransition({ children }) {
         {children}
       </motion.div>
 
-      {/* CSS for custom cursor hide on other elements if needed */}
-      <style jsx global>{`
-        html, body {
-          cursor: none !important;
-        }
-        a, button {
-          cursor: none !important;
-        }
-      `}</style>
+      {/* 4. SOFT VIGNETTE (Adds Depth) */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-[5]" 
+        style={{
+          background: "radial-gradient(circle at center, transparent 40%, rgba(200, 230, 255, 0.05) 100%)"
+        }}
+      />
     </div>
   );
 }

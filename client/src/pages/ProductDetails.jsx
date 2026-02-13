@@ -79,7 +79,7 @@ export default function ProductDetails() {
           transition={{ delay: 0.2 }}
           className="text-slate-500 font-medium tracking-widest text-sm uppercase"
         >
-          Loading Fresh Catch...
+         // Loading Fresh Catch...
         </motion.p>
       </div>
     );
