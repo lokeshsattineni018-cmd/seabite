@@ -1,89 +1,108 @@
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 // --- ANIMATION VARIANTS ---
 
-const fishPathVariants = {
-  initial: { pathLength: 0, pathOffset: 1, opacity: 0 },
+const finVariants = {
+  initial: { x: "-150%", skewX: -25, opacity: 0 },
   animate: {
-    pathLength: [0, 1, 0],
-    pathOffset: [1, 0.5, 0],
-    opacity: [0, 1, 0],
+    x: "150%",
+    skewX: 0,
+    opacity: [0, 0.6, 0],
     transition: {
-      duration: 1.2,
-      ease: "easeInOut",
-      times: [0, 0.5, 1],
+      duration: 1.6,
+      ease: [0.23, 1, 0.32, 1],
     },
   },
 };
 
-const rippleVariants = {
-  initial: { scale: 0.8, opacity: 0 },
-  animate: {
-    scale: 1.2,
-    opacity: [0, 0.15, 0],
-    transition: { duration: 0.8, ease: "easeOut" },
-  },
-};
-
 const contentVariants = {
-  initial: { opacity: 0, y: 15, filter: "blur(8px)" },
-  in: { 
-    opacity: 1, 
-    y: 0, 
-    filter: "blur(0px)",
-    transition: { duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] } 
+  initial: { opacity: 0, scale: 0.99, filter: "blur(15px) brightness(1.5)" },
+  in: {
+    opacity: 1,
+    scale: 1,
+    filter: "blur(0px) brightness(1)",
+    transition: { duration: 1.2, delay: 0.4, ease: "easeOut" },
   },
-  out: { 
-    opacity: 0, 
-    y: -10, 
-    transition: { duration: 0.4 } 
-  },
+  out: { opacity: 0, filter: "blur(5px)", transition: { duration: 0.4 } },
 };
 
-export default function FishTransition({ children }) {
-  return (
-    <div className="relative w-full overflow-hidden bg-white">
-      {/* Floating "Fish" Stroke */}
-      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-[9999]">
-        <svg width="200" height="100" viewBox="0 0 200 100" fill="none">
-          <motion.path
-            d="M20 50C40 30 80 30 100 50C120 70 160 70 180 50"
-            stroke="url(#fish-gradient)"
-            strokeWidth="3"
-            strokeLinecap="round"
-            variants={fishPathVariants}
-            initial="initial"
-            animate="animate"
-          />
-          <defs>
-            <linearGradient id="fish-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#94a3b8" stopOpacity="0" />
-              <stop offset="50%" stopColor="#334155" />
-              <stop offset="100%" stopColor="#94a3b8" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
+export default function SeafoodLuxuryTransition({ children }) {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
-      {/* Soft Scale/Ripple Background */}
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  return (
+    <div className="relative w-full min-h-screen overflow-hidden bg-[#fcfcfc] cursor-none">
+      
+      {/* 1. CUSTOM WATER-DROP CURSOR */}
       <motion.div
-        variants={rippleVariants}
+        className="fixed top-0 left-0 w-8 h-8 rounded-full border border-sky-400/30 z-[10000] pointer-events-none"
+        animate={{ x: mousePos.x - 16, y: mousePos.y - 16 }}
+        transition={{ type: "spring", damping: 25, stiffness: 250, mass: 0.5 }}
+        style={{ background: "radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 80%)" }}
+      />
+      <motion.div
+        className="fixed top-0 left-0 w-2 h-2 bg-sky-500 rounded-full z-[10001] pointer-events-none"
+        animate={{ x: mousePos.x - 4, y: mousePos.y - 4 }}
+        transition={{ type: "spring", damping: 35, stiffness: 400, mass: 0.2 }}
+      />
+
+      {/* 2. THE PROMINENT SILVER FIN SWEEP */}
+      <motion.div
+        variants={finVariants}
         initial="initial"
         animate="animate"
-        className="fixed inset-0 z-[9998] pointer-events-none flex items-center justify-center"
-      >
-        <div className="w-[400px] h-[400px] rounded-full border border-slate-200 opacity-20" />
-      </motion.div>
+        className="fixed top-0 left-0 w-[80%] h-full z-[9999] pointer-events-none"
+        style={{
+          background: `linear-gradient(110deg, 
+            transparent 0%, 
+            rgba(200, 220, 255, 0.1) 20%, 
+            rgba(255, 255, 255, 0.8) 50%, 
+            rgba(186, 230, 253, 0.2) 80%, 
+            transparent 100%)`,
+          backdropFilter: "blur(4px)",
+        }}
+      />
 
-      {/* Main Content */}
+      {/* 3. REFRACTIVE OVERLAY (The "Water" look) */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.05, 0] }}
+        transition={{ duration: 2, repeat: Infinity, repeatType: "mirror" }}
+        className="fixed inset-0 z-[9997] pointer-events-none"
+        style={{
+          backgroundImage: `url("https://www.transparenttextures.com/patterns/cubes.png")`, // Subtle scale-like texture
+          opacity: 0.03
+        }}
+      />
+
+      {/* 4. MAIN CONTENT */}
       <motion.div
         variants={contentVariants}
         initial="initial"
         animate="in"
         exit="out"
+        className="relative z-10"
       >
         {children}
       </motion.div>
+
+      {/* CSS for custom cursor hide on other elements if needed */}
+      <style jsx global>{`
+        html, body {
+          cursor: none !important;
+        }
+        a, button {
+          cursor: none !important;
+        }
+      `}</style>
     </div>
   );
 }
