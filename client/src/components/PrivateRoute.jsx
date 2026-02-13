@@ -1,48 +1,27 @@
 // src/components/PrivateRoute.jsx
-import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import axios from "axios";
-
-const API_URL =
-  import.meta.env.VITE_API_URL || "";
+import { useAuth } from "../context/AuthContext";
 
 export default function PrivateRoute({ children }) {
-  const [status, setStatus] = useState("loading"); // "loading" | "authenticated" | "unauthenticated"
+  const { user, status } = useAuth(); // ✅ Use AuthContext instead of duplicate API calls
   const location = useLocation();
 
-  useEffect(() => {
-    let cancelled = false;
+  // ✅ Show loader instead of white screen
+  if (status === "loading") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-blue-500 font-medium animate-pulse mt-4">Checking authentication...</p>
+      </div>
+    );
+  }
 
-    const check = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/api/auth/me`, {
-          withCredentials: true,
-        });
-        console.log("PrivateRoute /me success", res.data);
-        if (!cancelled) setStatus("authenticated");
-      } catch (err) {
-        console.log(
-          "PrivateRoute /me error",
-          err?.response?.status,
-          err?.response?.data
-        );
-        if (!cancelled) setStatus("unauthenticated");
-      }
-    };
-
-    check();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [location.pathname]);
-
-  if (status === "loading") return null;
-
-  if (status === "unauthenticated") {
+  // ✅ Redirect to login if not authenticated
+  if (status === "unauthenticated" || !user) {
     localStorage.setItem("postLoginRedirect", location.pathname);
     return <Navigate to="/login" replace />;
   }
 
+  // ✅ User is authenticated, show the protected page
   return children;
 }

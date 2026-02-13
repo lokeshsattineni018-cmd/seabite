@@ -21,7 +21,7 @@ import Cart from "./pages/Cart";
 import Profile from "./pages/Profile";
 
 // 💤 Lazy Load Secondary Pages
-const Checkout = lazy(() => import("./pages/Checkout"));
+import Checkout from "./pages/Checkout";
 const Login = lazy(() => import("./pages/Login"));
 const OrderSuccess = lazy(() => import("./pages/OrderSuccess"));
 const Orders = lazy(() => import("./pages/Orders"));

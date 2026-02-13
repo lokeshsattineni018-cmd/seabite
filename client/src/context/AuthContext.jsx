@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL || "/api";
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const AuthContext = createContext(null);
 
@@ -11,15 +11,16 @@ export function AuthProvider({ children }) {
 
   const fetchMe = async () => {
     try {
-      const res = await axios.get(`${API_URL}/auth/me`, {
+      const res = await axios.get(`${API_URL}/api/auth/me`, { // ✅ Fixed: Added /api
         withCredentials: true,
       });
 
+      console.log("✅ Auth check success:", res.data);
       setUser(res.data);
       setStatus("authenticated");
     } catch (err) {
       if (err.response && err.response.status !== 401) {
-        console.log("Auth Check Error:", err.message);
+        console.log("⚠️ Auth Check Error:", err.message);
       }
       setUser(null);
       setStatus("unauthenticated");
