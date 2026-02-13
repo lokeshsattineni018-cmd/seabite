@@ -866,10 +866,186 @@ const SeaBitePromise = () => {
   );
 };
 
+// --- WHY SEABITE TRUST SECTION ---
+const WhySeaBite = () => {
+  const features = [
+    {
+      icon: <ShieldCheck size={24} />,
+      title: "Quality Guaranteed",
+      desc: "Every batch is lab-tested and certified for freshness and safety.",
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-50 dark:bg-emerald-900/20",
+    },
+    {
+      icon: <Thermometer size={24} />,
+      title: "Cold Chain Delivery",
+      desc: "Temperature-controlled packaging from ocean to your doorstep.",
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-50 dark:bg-blue-900/20",
+    },
+    {
+      icon: <Truck size={24} />,
+      title: "Same Day Dispatch",
+      desc: "Orders before 2 PM ship the same day for express freshness.",
+      color: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-50 dark:bg-amber-900/20",
+    },
+    {
+      icon: <Utensils size={24} />,
+      title: "Chef Approved",
+      desc: "Trusted by 500+ restaurants and home cooks across the coast.",
+      color: "text-rose-600 dark:text-rose-400",
+      bg: "bg-rose-50 dark:bg-rose-900/20",
+    },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 px-6 relative overflow-hidden transition-colors duration-300">
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="text-center mb-16">
+          <TextReveal
+            text="Why SeaBite?"
+            className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white mb-4"
+          />
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            className="text-slate-500 dark:text-slate-400 max-w-md mx-auto"
+          >
+            We set the bar higher so you can taste the difference.
+          </motion.p>
+        </div>
+
+        {/* Stats Bar */}
+        <SectionReveal direction="scale">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+            {[
+              { value: 10000, suffix: "+", label: "Happy Customers" },
+              { value: 50, suffix: "+", label: "Varieties" },
+              { value: 98, suffix: "%", label: "Freshness Score" },
+              { value: 4, suffix: ".8", label: "Average Rating" },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -4 }}
+                className="bg-white dark:bg-[#0e1d30] border border-slate-100 dark:border-white/5 rounded-2xl p-6 text-center shadow-sm hover:shadow-lg transition-all"
+              >
+                <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1">
+                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+                  {stat.label}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </SectionReveal>
+
+        {/* Features Grid */}
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {features.map((feature, i) => (
+            <StaggerItem key={i}>
+              <motion.div
+                whileHover={{ y: -8, boxShadow: "0 20px 40px rgba(0,0,0,0.08)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="bg-white dark:bg-[#0e1d30] border border-slate-100 dark:border-white/5 rounded-2xl p-6 md:p-8 h-full shadow-sm"
+              >
+                <div className={`w-12 h-12 rounded-xl ${feature.bg} ${feature.color} flex items-center justify-center mb-5`}>
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {feature.desc}
+                </p>
+              </motion.div>
+            </StaggerItem>
+          ))}
+        </StaggerContainer>
+      </div>
+    </section>
+  );
+};
+
+// --- NEWSLETTER SECTION ---
+const Newsletter = () => {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (email) {
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 3000);
+      setEmail("");
+    }
+  };
+
+  return (
+    <section className="py-16 px-6">
+      <SectionReveal direction="up">
+        <div className="max-w-3xl mx-auto bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 rounded-3xl p-8 md:p-14 text-center relative overflow-hidden shadow-2xl shadow-blue-600/20">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-blue-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+          <div className="relative z-10">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full text-[10px] font-bold text-white/90 uppercase tracking-widest mb-6 border border-white/10"
+            >
+              <Gift size={12} /> Stay Fresh
+            </motion.div>
+            <h2 className="text-3xl md:text-4xl font-serif text-white mb-3">
+              Get Exclusive Deals
+            </h2>
+            <p className="text-blue-100 text-sm mb-8 max-w-md mx-auto">
+              Subscribe for early access to flash sales, new arrivals, and members-only discounts.
+            </p>
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="flex-1 px-5 py-3.5 rounded-xl bg-white/10 backdrop-blur border border-white/20 text-white placeholder:text-white/40 text-sm font-medium outline-none focus:ring-2 focus:ring-white/30 transition-all"
+              />
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="px-8 py-3.5 bg-white text-blue-700 rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-blue-50 transition-colors shadow-lg"
+              >
+                <AnimatePresence mode="wait">
+                  {submitted ? (
+                    <motion.span key="done" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+                      <Check size={14} /> Subscribed
+                    </motion.span>
+                  ) : (
+                    <motion.span key="sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      Subscribe
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </form>
+          </div>
+        </div>
+      </SectionReveal>
+    </section>
+  );
+};
+
 // --- FOOTER ---
 const Footer = () => {
   return (
-    <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white py-24 border-t border-gray-200 dark:border-white/5 text-center overflow-hidden transition-colors duration-300 z-10">
+    <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white border-t border-gray-200 dark:border-white/5 overflow-hidden transition-colors duration-300 z-10">
+      {/* Marquee Background */}
       <div className="absolute inset-0 flex items-center whitespace-nowrap pointer-events-none overflow-hidden">
         <motion.div
           initial={{ x: 0 }}
@@ -885,7 +1061,9 @@ const Footer = () => {
           </h2>
         </motion.div>
       </div>
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-[200px]">
+
+      {/* CTA Section */}
+      <div className="relative z-10 flex flex-col items-center justify-center py-24 text-center">
         <motion.div
           initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -912,6 +1090,24 @@ const Footer = () => {
             </motion.button>
           </Link>
         </motion.div>
+      </div>
+
+      {/* Footer Links */}
+      <div className="relative z-10 border-t border-slate-200/50 dark:border-white/5 px-6 py-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-3">
+            <span className="text-xl font-serif font-bold text-slate-900 dark:text-white">SeaBite</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">Fresh Coastal Catch</span>
+          </div>
+          <div className="flex flex-wrap justify-center gap-6 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <Link to="/products" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Products</Link>
+            <Link to="/orders" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">My Orders</Link>
+            <Link to="/notifications" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Notifications</Link>
+          </div>
+          <p className="text-[10px] text-slate-400 dark:text-slate-600 font-medium">
+            &copy; {new Date().getFullYear()} SeaBite. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   );
@@ -974,6 +1170,12 @@ export default function Home() {
           </SectionReveal>
           <SectionReveal direction="up">
             <SeaBitePromise />
+          </SectionReveal>
+          <SectionReveal direction="scale" delay={0.1}>
+            <WhySeaBite />
+          </SectionReveal>
+          <SectionReveal direction="up">
+            <Newsletter />
           </SectionReveal>
         </div>
       </div>

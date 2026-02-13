@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, useRef, forwardRef } from "react";
+import { useState, useContext, useEffect, useRef, forwardRef, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
@@ -17,6 +17,54 @@ import {
 } from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
 import { addToCart } from "../utils/cartStorage";
+
+// --- FLYING CART ANIMATION ---
+const FlyToCartAnimation = ({ flyItems, onComplete }) => {
+  return (
+    <>
+      {flyItems.map((item) => (
+        <motion.div
+          key={item.id}
+          initial={{
+            position: "fixed",
+            left: item.startX,
+            top: item.startY,
+            width: 60,
+            height: 60,
+            zIndex: 9999,
+            opacity: 1,
+            scale: 1,
+            borderRadius: "50%",
+            pointerEvents: "none",
+          }}
+          animate={{
+            left: item.endX,
+            top: item.endY,
+            width: 20,
+            height: 20,
+            opacity: [1, 1, 0.8, 0],
+            scale: [1, 1.2, 0.5, 0.2],
+            rotate: [0, 15, -10, 0],
+          }}
+          transition={{
+            duration: 0.75,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+          onAnimationComplete={() => onComplete(item.id)}
+          className="overflow-hidden shadow-xl shadow-blue-500/30 border-2 border-white dark:border-slate-700"
+          style={{ borderRadius: "50%" }}
+        >
+          <img
+            src={item.image}
+            alt=""
+            className="w-full h-full object-contain bg-white dark:bg-slate-800 p-1"
+            style={{ borderRadius: "50%" }}
+          />
+        </motion.div>
+      ))}
+    </>
+  );
+};
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -175,6 +223,31 @@ export default function Products() {
 
   const categories = ["All", "Fish", "Crab", "Prawn"];
   const currentTheme = CATEGORY_DATA[activeCat] || CATEGORY_DATA["All"];
+
+  // Flying cart animation state
+  const [flyItems, setFlyItems] = useState([]);
+  const flyIdRef = useRef(0);
+
+  const triggerFlyAnimation = useCallback((e, product, imageSrc) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    // Target the cart icon in the navbar (top-right area)
+    const cartIcon = document.querySelector('[data-cart-icon]') || { getBoundingClientRect: () => ({ left: window.innerWidth - 60, top: 20 }) };
+    const cartRect = cartIcon.getBoundingClientRect();
+
+    const newFly = {
+      id: ++flyIdRef.current,
+      startX: rect.left + rect.width / 2 - 30,
+      startY: rect.top + rect.height / 2 - 30,
+      endX: cartRect.left,
+      endY: cartRect.top,
+      image: imageSrc,
+    };
+    setFlyItems((prev) => [...prev, newFly]);
+  }, []);
+
+  const handleFlyComplete = useCallback((id) => {
+    setFlyItems((prev) => prev.filter((item) => item.id !== id));
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -400,7 +473,9 @@ export default function Products() {
                           </div>
                           <AddButton
                             product={p}
-                            onAdd={() => {
+                            onAdd={(e) => {
+                              const imgSrc = getProductImage(p.image);
+                              triggerFlyAnimation(e, p, imgSrc);
                               addToCart({
                                 ...p,
                                 qty: 1,
@@ -416,6 +491,9 @@ export default function Products() {
                 ))}
           </AnimatePresence>
         </div>
+
+        {/* Flying Cart Animation */}
+        <FlyToCartAnimation flyItems={flyItems} onComplete={handleFlyComplete} />
 
         {/* Empty State */}
         {!loading && displayed.length === 0 && (

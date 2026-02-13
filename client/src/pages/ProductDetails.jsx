@@ -1,5 +1,5 @@
 import { useParams, Link } from "react-router-dom";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -28,6 +28,9 @@ export default function ProductDetails() {
   const [qty, setQty] = useState(1);
   const [activeTab, setActiveTab] = useState("desc");
   const [isAdded, setIsAdded] = useState(false);
+  const [flyItems, setFlyItems] = useState([]);
+  const flyIdRef = useRef(0);
+  const addBtnRef = useRef(null);
 
   const basePrice = product ? parseFloat(product.basePrice) : 0;
   const totalPrice = (basePrice * qty).toFixed(2);
@@ -59,11 +62,32 @@ export default function ProductDetails() {
 
   const handleAddToCart = () => {
     if (!product) return;
+
+    // Trigger flying animation
+    if (addBtnRef.current) {
+      const rect = addBtnRef.current.getBoundingClientRect();
+      const cartIcon = document.querySelector('[data-cart-icon]') || { getBoundingClientRect: () => ({ left: window.innerWidth - 60, top: 20 }) };
+      const cartRect = cartIcon.getBoundingClientRect();
+      const newFly = {
+        id: ++flyIdRef.current,
+        startX: rect.left + rect.width / 2 - 30,
+        startY: rect.top - 30,
+        endX: cartRect.left,
+        endY: cartRect.top,
+        image: getFullImageUrl(product.image),
+      };
+      setFlyItems((prev) => [...prev, newFly]);
+    }
+
     addToCart({ ...product, qty: qty, price: parseFloat(totalPrice) });
     refreshCartCount();
     setIsAdded(true);
     setTimeout(() => setIsAdded(false), 2000);
   };
+
+  const handleFlyComplete = useCallback((id) => {
+    setFlyItems((prev) => prev.filter((item) => item.id !== id));
+  }, []);
 
   if (loading) {
     return (
@@ -108,6 +132,48 @@ export default function ProductDetails() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] relative font-sans pt-24 md:pt-28 pb-12 md:pb-20 px-4 md:px-6 transition-colors duration-500 overflow-x-hidden">
       <div className="fixed top-0 left-0 w-full h-[500px] bg-gradient-to-b from-blue-100/40 to-transparent dark:from-blue-900/10 pointer-events-none -z-10" />
+
+      {/* Flying Cart Animation */}
+      {flyItems.map((item) => (
+        <motion.div
+          key={item.id}
+          initial={{
+            position: "fixed",
+            left: item.startX,
+            top: item.startY,
+            width: 60,
+            height: 60,
+            zIndex: 9999,
+            opacity: 1,
+            scale: 1,
+            borderRadius: "50%",
+            pointerEvents: "none",
+          }}
+          animate={{
+            left: item.endX,
+            top: item.endY,
+            width: 20,
+            height: 20,
+            opacity: [1, 1, 0.8, 0],
+            scale: [1, 1.2, 0.5, 0.2],
+            rotate: [0, 15, -10, 0],
+          }}
+          transition={{
+            duration: 0.75,
+            ease: [0.22, 1, 0.36, 1],
+          }}
+          onAnimationComplete={() => handleFlyComplete(item.id)}
+          className="overflow-hidden shadow-xl shadow-blue-500/30 border-2 border-white dark:border-slate-700"
+          style={{ position: "fixed", borderRadius: "50%" }}
+        >
+          <img
+            src={item.image}
+            alt=""
+            className="w-full h-full object-contain bg-white dark:bg-slate-800 p-1"
+            style={{ borderRadius: "50%" }}
+          />
+        </motion.div>
+      ))}
 
       <div className="max-w-6xl mx-auto relative z-10">
         <motion.div
@@ -342,6 +408,7 @@ export default function ProductDetails() {
               </div>
 
               <motion.button
+                ref={addBtnRef}
                 whileHover={
                   !isAdded && product.stock !== "out"
                     ? { scale: 1.03, boxShadow: "0 15px 40px rgba(0,0,0,0.12)" }

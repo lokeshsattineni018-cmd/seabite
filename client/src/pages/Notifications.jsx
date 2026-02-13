@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import axios from "axios";
 import {
   FiBell,
@@ -11,6 +11,7 @@ import {
   FiTrash2,
   FiX,
   FiClock,
+  FiFilter,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -21,8 +22,38 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 export default function Notifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState("all");
   const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
+
+  const FILTERS = [
+    { id: "all", label: "All", icon: <FiBell size={12} /> },
+    { id: "Shipped", label: "Shipping", icon: <FiTruck size={12} /> },
+    { id: "Delivered", label: "Delivered", icon: <FiCheckCircle size={12} /> },
+    { id: "Processing", label: "Processing", icon: <FiPackage size={12} /> },
+  ];
+
+  const filteredNotifications = useMemo(() => {
+    if (activeFilter === "all") return notifications;
+    return notifications.filter((n) => n.statusType === activeFilter);
+  }, [notifications, activeFilter]);
+
+  // Group by today / earlier
+  const groupedNotifications = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayItems = [];
+    const earlierItems = [];
+    filteredNotifications.forEach((n) => {
+      const created = new Date(n.createdAt);
+      if (created >= today) {
+        todayItems.push(n);
+      } else {
+        earlierItems.push(n);
+      }
+    });
+    return { todayItems, earlierItems };
+  }, [filteredNotifications]);
 
   const fetchNotifications = async () => {
     try {
@@ -168,10 +199,46 @@ export default function Notifications() {
           </AnimatePresence>
         </motion.div>
 
+        {/* Filter Tabs */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide"
+        >
+          {FILTERS.map((filter) => {
+            const isActive = activeFilter === filter.id;
+            const count = filter.id === "all" ? notifications.length : notifications.filter(n => n.statusType === filter.id).length;
+            return (
+              <motion.button
+                key={filter.id}
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setActiveFilter(filter.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] md:text-xs font-bold transition-all whitespace-nowrap ${
+                  isActive
+                    ? "bg-slate-900 dark:bg-blue-600 text-white shadow-lg shadow-slate-900/15 dark:shadow-blue-600/20"
+                    : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200/60 dark:border-slate-700/40"
+                }`}
+              >
+                {filter.icon}
+                {filter.label}
+                {count > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-[8px] font-black ${
+                    isActive ? "bg-white/20" : "bg-slate-100 dark:bg-slate-700"
+                  }`}>
+                    {count}
+                  </span>
+                )}
+              </motion.button>
+            );
+          })}
+        </motion.div>
+
         {/* Notifications List */}
         <div className="space-y-3 md:space-y-4">
           <AnimatePresence mode="popLayout">
-            {notifications.length === 0 ? (
+            {filteredNotifications.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, filter: "blur(8px)" }}
                 animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
@@ -189,7 +256,31 @@ export default function Notifications() {
                 </p>
               </motion.div>
             ) : (
-              notifications.map((n, index) => {
+              <>
+                {groupedNotifications.todayItems.length > 0 && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-2 flex items-center gap-2"
+                  >
+                    <span className="w-1.5 h-1.5 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse" />
+                    Today
+                  </motion.p>
+                )}
+                {[...groupedNotifications.todayItems, ...(groupedNotifications.earlierItems.length > 0 ? [{ _groupDivider: true }] : []), ...groupedNotifications.earlierItems].map((n, index) => {
+                if (n._groupDivider) {
+                  return (
+                    <motion.p
+                      key="divider"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] mt-4 mb-2 flex items-center gap-2"
+                    >
+                      <span className="w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full" />
+                      Earlier
+                    </motion.p>
+                  );
+                }
                 const config = getStatusConfig(n.statusType);
                 return (
                   <motion.div
@@ -263,8 +354,9 @@ export default function Notifications() {
                     </div>
                   </motion.div>
                 );
-              })
-            )}
+  })}
+  </>
+  )}
           </AnimatePresence>
         </div>
       </div>

@@ -65,6 +65,54 @@ const staggerContainer = {
   visible: { transition: { staggerChildren: 0.07 } },
 };
 
+// --- CHECKOUT STEPS INDICATOR ---
+const CHECKOUT_STEPS = [
+  { id: 1, label: "Address", icon: <FiMapPin size={14} /> },
+  { id: 2, label: "Payment", icon: <FiCreditCard size={14} /> },
+  { id: 3, label: "Review", icon: <FiShoppingBag size={14} /> },
+];
+
+const CheckoutSteps = ({ currentStep }) => (
+  <motion.div
+    initial={{ opacity: 0, y: -10 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: 0.1, duration: 0.5, ease }}
+    className="flex items-center justify-center gap-2 md:gap-4 mb-8 md:mb-10"
+  >
+    {CHECKOUT_STEPS.map((step, idx) => {
+      const isActive = step.id <= currentStep;
+      const isCurrent = step.id === currentStep;
+      return (
+        <div key={step.id} className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-2">
+            <motion.div
+              animate={isCurrent ? { scale: [1, 1.1, 1] } : {}}
+              transition={isCurrent ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}}
+              className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center transition-all duration-500 ${
+                isActive
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                  : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600"
+              } ${isCurrent ? "ring-2 ring-blue-600/30 ring-offset-2 ring-offset-white dark:ring-offset-slate-900" : ""}`}
+            >
+              {step.id < currentStep ? <FiCheckCircle size={14} /> : step.icon}
+            </motion.div>
+            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wider hidden sm:block ${
+              isActive ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"
+            }`}>
+              {step.label}
+            </span>
+          </div>
+          {idx < CHECKOUT_STEPS.length - 1 && (
+            <div className={`w-8 md:w-16 h-0.5 rounded-full transition-colors duration-500 ${
+              step.id < currentStep ? "bg-blue-600" : "bg-slate-200 dark:bg-slate-700"
+            }`} />
+          )}
+        </div>
+      );
+    })}
+  </motion.div>
+);
+
 export default function Checkout() {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -373,6 +421,9 @@ const handleApplyCoupon = async () => {
 
   const freeDeliveryProgress = Math.min((itemTotal / 1000) * 100, 100);
 
+  // Calculate current step
+  const currentStep = deliveryAddress.street && deliveryAddress.fullName ? (paymentMethod ? 3 : 2) : 1;
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0b1120] pt-24 md:pt-32 pb-12 md:pb-20 px-4 md:px-8 font-sans text-slate-900 dark:text-slate-200 relative overflow-hidden transition-colors duration-500">
       {/* Background gradients */}
@@ -407,6 +458,9 @@ const handleApplyCoupon = async () => {
       >
         {/* LEFT COLUMN */}
         <div className="lg:col-span-2 space-y-5 md:space-y-7">
+          {/* Checkout Steps */}
+          <CheckoutSteps currentStep={currentStep} />
+
           {/* Page Header */}
           <motion.div variants={fadeUp} custom={0}>
             <span className="text-[10px] md:text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-1 block">
@@ -964,6 +1018,37 @@ const handleApplyCoupon = async () => {
                   </>
                 )}
               </motion.button>
+
+              {/* Estimated Delivery */}
+              {isDeliveryAllowed && deliveryAddress.street && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  className="mt-4 p-3 bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 rounded-xl"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
+                      <FiTruck size={13} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                        Estimated Delivery
+                      </p>
+                      <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">
+                        {new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString("en-GB", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                        })} - {new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString("en-GB", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
               {/* SSL Badge */}
               <div className="mt-4 flex items-center justify-center gap-2 text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
