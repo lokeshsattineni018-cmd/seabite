@@ -1,105 +1,104 @@
 import { motion } from "framer-motion";
 
-const blobVariants = {
+const irisVariants = {
   initial: { 
-    scale: 0, 
-    rotate: 0,
-    borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70%"
+    clipPath: "circle(0% at 50% 50%)",
   },
   animate: {
-    scale: [0, 15, 0],
-    rotate: [0, 90, 180],
-    borderRadius: [
-      "30% 70% 70% 30% / 30% 30% 70% 70%",
-      "70% 30% 30% 70% / 70% 70% 30% 30%",
-      "50% 50% 50% 50% / 50% 50% 50% 50%"
-    ],
+    clipPath: "circle(150% at 50% 50%)",
     transition: {
-      duration: 1.2,
+      duration: 0.8,
       ease: [0.76, 0, 0.24, 1],
-      times: [0, 0.5, 1]
     }
   },
   exit: {
-    scale: 0,
-    opacity: 0,
-    transition: { duration: 0.4 }
+    clipPath: "circle(0% at 50% 50%)",
+    transition: {
+      duration: 0.6,
+      ease: [0.76, 0, 0.24, 1],
+    }
+  }
+};
+
+const glowVariants = {
+  initial: { opacity: 0, scale: 0 },
+  animate: {
+    opacity: [0, 0.6, 0],
+    scale: [0.8, 1.2, 1],
+    transition: {
+      duration: 1,
+      ease: "easeOut"
+    }
   }
 };
 
 const contentVariants = {
   initial: {
     opacity: 0,
-    scale: 0.9,
-    filter: "blur(20px)",
-    rotateX: 10,
+    filter: "blur(30px) brightness(1.3)",
   },
   in: {
     opacity: 1,
-    scale: 1,
-    filter: "blur(0px)",
-    rotateX: 0,
+    filter: "blur(0px) brightness(1)",
     transition: {
-      duration: 0.8,
-      delay: 0.4,
+      duration: 0.6,
+      delay: 0.3,
       ease: [0.22, 1, 0.36, 1],
     },
   },
   out: {
     opacity: 0,
-    scale: 1.1,
-    filter: "blur(20px)",
+    filter: "blur(30px) brightness(0.7)",
     transition: {
       duration: 0.4,
-      ease: [0.76, 0, 0.24, 1],
     },
   },
 };
 
 export default function PageTransition({ children }) {
   return (
-    <div className="relative w-full overflow-hidden" style={{ perspective: "1200px" }}>
-      {/* Liquid blob morph */}
+    <div className="relative w-full overflow-hidden">
+      {/* Iris reveal overlay */}
       <motion.div
-        variants={blobVariants}
+        variants={irisVariants}
         initial="initial"
         animate="animate"
         exit="exit"
-        className="fixed top-1/2 left-1/2 w-32 h-32 -translate-x-1/2 -translate-y-1/2 z-[9999] pointer-events-none"
+        className="fixed inset-0 z-[9999] pointer-events-none"
         style={{
-          background: "linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
-          filter: "blur(40px)",
+          background: "linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #581c87 100%)",
         }}
       />
 
-      {/* Particle burst */}
-      {[...Array(8)].map((_, i) => (
-        <motion.div
-          key={i}
-          initial={{ 
-            opacity: 0, 
-            x: 0, 
-            y: 0,
-            scale: 0 
-          }}
-          animate={{
-            opacity: [0, 1, 0],
-            x: [0, Math.cos(i * 45 * Math.PI / 180) * 200],
-            y: [0, Math.sin(i * 45 * Math.PI / 180) * 200],
-            scale: [0, 1, 0],
-            transition: {
-              duration: 0.8,
-              delay: 0.2 + i * 0.05,
-              ease: "easeOut"
-            }
-          }}
-          className="fixed top-1/2 left-1/2 w-2 h-2 rounded-full z-[9998] pointer-events-none"
-          style={{
-            background: `hsl(${i * 45}, 70%, 60%)`,
-            boxShadow: `0 0 20px hsl(${i * 45}, 70%, 60%)`
-          }}
-        />
-      ))}
+      {/* Center glow pulse */}
+      <motion.div
+        variants={glowVariants}
+        initial="initial"
+        animate="animate"
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full z-[9998] pointer-events-none"
+        style={{
+          background: "radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%)",
+          filter: "blur(60px)",
+        }}
+      />
+
+      {/* Spinning ring */}
+      <motion.div
+        initial={{ opacity: 0, rotate: 0, scale: 0 }}
+        animate={{
+          opacity: [0, 1, 0],
+          rotate: 360,
+          scale: [0.5, 1, 1.2],
+          transition: {
+            duration: 1,
+            ease: "easeOut"
+          }
+        }}
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full z-[9998] pointer-events-none border-4 border-blue-400"
+        style={{
+          boxShadow: "0 0 40px rgba(59,130,246,0.6)",
+        }}
+      />
 
       <motion.div
         initial="initial"
