@@ -13,6 +13,9 @@ import {
   FiFileText,
   FiXCircle,
   FiDollarSign,
+  FiCopy,
+  FiPhone,
+  FiCreditCard,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeContext } from "../context/ThemeContext";
@@ -21,36 +24,45 @@ import Invoice from "../components/Invoice";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+// --- HELPERS ---
 const getStatusClasses = (status) => {
   switch (status) {
     case "Delivered":
       return {
-        bg: "bg-emerald-100 dark:bg-emerald-900/30",
-        text: "text-emerald-700 dark:text-emerald-400",
-        icon: <FiCheck size={16} className="mr-2" />,
+        bg: "bg-emerald-500/10",
+        text: "text-emerald-600 dark:text-emerald-400",
+        border: "border-emerald-500/20",
+        icon: <FiCheck size={14} />,
         label: "Delivered",
+        gradient: "from-emerald-500 to-emerald-600",
       };
     case "Cancelled":
     case "Cancelled by User":
       return {
-        bg: "bg-red-100 dark:bg-red-900/30",
-        text: "text-red-700 dark:text-red-400",
-        icon: <FiXCircle size={16} className="mr-2" />,
+        bg: "bg-red-500/10",
+        text: "text-red-600 dark:text-red-400",
+        border: "border-red-500/20",
+        icon: <FiXCircle size={14} />,
         label: "Cancelled",
+        gradient: "from-red-500 to-red-600",
       };
     case "Shipped":
       return {
-        bg: "bg-blue-100 dark:bg-blue-900/30",
-        text: "text-blue-700 dark:text-blue-400",
-        icon: <FiTruck size={16} className="mr-2" />,
+        bg: "bg-blue-500/10",
+        text: "text-blue-600 dark:text-blue-400",
+        border: "border-blue-500/20",
+        icon: <FiTruck size={14} />,
         label: "Shipped",
+        gradient: "from-blue-500 to-blue-600",
       };
     default:
       return {
-        bg: "bg-amber-100 dark:bg-amber-900/30",
-        text: "text-amber-700 dark:text-amber-400",
-        icon: <FiClock size={16} className="mr-2" />,
+        bg: "bg-amber-500/10",
+        text: "text-amber-600 dark:text-amber-400",
+        border: "border-amber-500/20",
+        icon: <FiClock size={14} />,
         label: status || "Pending",
+        gradient: "from-amber-500 to-amber-600",
       };
   }
 };
@@ -63,6 +75,56 @@ const formatCurrency = (amount) => {
   }).format(amount || 0);
 };
 
+// --- TIMELINE STEP COMPONENT ---
+function TimelineStep({ step, index, totalSteps, isActive, isCompleted, isCancelledFlow }) {
+  const icons = {
+    Pending: <FiClock size={16} />,
+    Processing: <FiPackage size={16} />,
+    Shipped: <FiTruck size={16} />,
+    Delivered: <FiCheck size={16} />,
+    Cancelled: <FiXCircle size={16} />,
+    Refund: <FiDollarSign size={16} />,
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 + index * 0.1 }}
+      className="flex flex-col items-center relative z-10"
+    >
+      <motion.div
+        animate={
+          isActive && !isCompleted
+            ? { scale: [1, 1.1, 1], boxShadow: ["0 0 0 0 rgba(59,130,246,0)", "0 0 0 8px rgba(59,130,246,0.15)", "0 0 0 0 rgba(59,130,246,0)"] }
+            : {}
+        }
+        transition={isActive && !isCompleted ? { duration: 2, repeat: Infinity } : {}}
+        className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${
+          isCompleted
+            ? isCancelledFlow
+              ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20"
+              : "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+            : isActive
+            ? "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
+            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400"
+        }`}
+      >
+        {isCompleted ? <FiCheck size={16} /> : icons[step] || <FiClock size={16} />}
+      </motion.div>
+      <span
+        className={`mt-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${
+          isCompleted || isActive
+            ? "text-slate-900 dark:text-white"
+            : "text-slate-400"
+        }`}
+      >
+        {step}
+      </span>
+    </motion.div>
+  );
+}
+
 export default function OrderDetails() {
   const { orderId } = useParams();
   const navigate = useNavigate();
@@ -74,6 +136,7 @@ export default function OrderDetails() {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [customReason, setCustomReason] = useState("");
+  const [copiedOrderId, setCopiedOrderId] = useState(false);
   const [modalConfig, setModalConfig] = useState({
     show: false,
     message: "",
@@ -82,9 +145,8 @@ export default function OrderDetails() {
 
   const statusSteps = ["Pending", "Processing", "Shipped", "Delivered"];
   const currentStepIndex = statusSteps.indexOf(order?.status || "Pending");
-  const isCancelled = order?.status.includes("Cancelled");
+  const isCancelled = order?.status?.includes("Cancelled");
   const isPrepaid = order?.paymentMethod === "Prepaid";
-
   const isRefundSuccessful =
     isCancelled && isPrepaid && order?.refundStatus === "Success";
 
@@ -108,14 +170,16 @@ export default function OrderDetails() {
       return;
     }
     fetchOrder();
-    const interval = setInterval(() => {
-      fetchOrder();
-    }, 5000);
+    const interval = setInterval(fetchOrder, 5000);
     return () => clearInterval(interval);
   }, [orderId]);
 
-  const handlePrintInvoice = () => {
-    window.print();
+  const handlePrintInvoice = () => window.print();
+
+  const copyOrderId = () => {
+    navigator.clipboard.writeText(order?.orderId || orderId);
+    setCopiedOrderId(true);
+    setTimeout(() => setCopiedOrderId(false), 2000);
   };
 
   const handleCancelOrder = async () => {
@@ -165,19 +229,33 @@ export default function OrderDetails() {
 
   if (loading)
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] flex flex-col items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full"
-        />
+      <div className="min-h-screen bg-slate-50 dark:bg-[#060e1a] flex flex-col items-center justify-center">
+        <div className="relative">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+            className="w-14 h-14 border-[3px] border-slate-200 dark:border-slate-700 border-t-blue-600 rounded-full"
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <FiPackage className="text-blue-600" size={18} />
+          </div>
+        </div>
       </div>
     );
 
   if (error)
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-500 font-medium">
-        {error}
+      <div className="min-h-screen bg-slate-50 dark:bg-[#060e1a] flex flex-col items-center justify-center gap-4">
+        <FiXCircle className="text-red-400" size={40} />
+        <p className="text-slate-500 font-medium text-sm">{error}</p>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => navigate(-1)}
+          className="px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-xl font-bold text-xs"
+        >
+          Go Back
+        </motion.button>
       </div>
     );
 
@@ -187,7 +265,7 @@ export default function OrderDetails() {
     (order.status === "Pending" || order.status === "Processing");
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-200 pt-24 pb-12 px-4 md:px-8 font-sans transition-colors duration-500 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#060e1a] text-slate-900 dark:text-slate-200 font-sans transition-colors duration-500 overflow-x-hidden">
       <PopupModal
         show={modalConfig.show}
         message={modalConfig.message}
@@ -205,19 +283,25 @@ export default function OrderDetails() {
             className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20, filter: "blur(8px)" }}
-              animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, scale: 0.9, y: 20, filter: "blur(8px)" }}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", damping: 25, stiffness: 250 }}
-              className="bg-white dark:bg-slate-800 p-6 rounded-[1.5rem] max-w-sm w-full shadow-2xl text-slate-900 border border-slate-100 dark:border-white/5"
+              className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-3xl max-w-sm w-full shadow-2xl border border-slate-100 dark:border-white/5"
             >
-              <h3 className="text-lg font-bold mb-4 text-center text-slate-900 dark:text-white">
-                Reason for Cancellation
+              <div className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <FiXCircle className="text-red-500" size={20} />
+              </div>
+              <h3 className="text-lg font-bold mb-1 text-center text-slate-900 dark:text-white">
+                Cancel Order
               </h3>
+              <p className="text-xs text-slate-500 text-center mb-5">
+                Please tell us why you want to cancel
+              </p>
               <select
                 value={cancelReason}
                 onChange={(e) => setCancelReason(e.target.value)}
-                className="w-full p-3 mb-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-semibold outline-none transition-all text-slate-900 dark:text-white focus:border-blue-500"
+                className="w-full p-3 mb-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none transition-all text-slate-900 dark:text-white focus:border-blue-500"
               >
                 <option value="" disabled>
                   Select a reason...
@@ -242,19 +326,19 @@ export default function OrderDetails() {
                     placeholder="Please describe the reason..."
                     value={customReason}
                     onChange={(e) => setCustomReason(e.target.value)}
-                    className="w-full p-3 mb-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:ring-2 focus:ring-red-500 transition-all resize-none text-slate-900 dark:text-white"
+                    className="w-full p-3 mb-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-blue-500 transition-all resize-none text-slate-900 dark:text-white"
                   />
                 )}
               </AnimatePresence>
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 mt-2">
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={() => {
                     setShowCancelConfirm(false);
                     setCancelReason("");
                   }}
-                  className="flex-1 py-3 rounded-xl font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-600"
+                  className="flex-1 py-3 rounded-xl font-bold text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-600"
                 >
                   Go Back
                 </motion.button>
@@ -266,9 +350,9 @@ export default function OrderDetails() {
                     cancelling
                   }
                   onClick={handleCancelOrder}
-                  className="flex-1 py-3 rounded-xl font-bold bg-red-600 text-white disabled:opacity-50 transition-all hover:bg-red-700"
+                  className="flex-1 py-3 rounded-xl font-bold text-sm bg-red-600 text-white disabled:opacity-50 transition-all hover:bg-red-700"
                 >
-                  Confirm
+                  {cancelling ? "Cancelling..." : "Confirm Cancel"}
                 </motion.button>
               </div>
             </motion.div>
@@ -276,128 +360,152 @@ export default function OrderDetails() {
         )}
       </AnimatePresence>
 
-      <div className="max-w-4xl mx-auto">
+      {/* Ambient background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-50/80 via-transparent to-transparent dark:from-blue-950/20 dark:via-transparent" />
+        <div className="absolute top-40 right-0 w-[500px] h-[500px] bg-blue-100/20 dark:bg-blue-900/5 rounded-full blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-8 pt-24 pb-12">
         {/* Back Button */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative z-[150] mb-6"
+          transition={{ duration: 0.4 }}
+          className="mb-6"
         >
           <button
             onClick={() => navigate(-1)}
-            className="group flex items-center text-slate-500 font-bold text-xs hover:text-blue-600 transition-all cursor-pointer bg-transparent border-none p-0"
+            className="group flex items-center gap-2 text-slate-500 font-bold text-xs hover:text-blue-600 transition-all"
           >
-            <FiArrowLeft
-              size={18}
-              className="mr-2 group-hover:-translate-x-1 transition-transform"
-            />
-            BACK TO ORDERS
+            <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-blue-600 transition-all">
+              <FiArrowLeft size={14} />
+            </div>
+            <span className="uppercase tracking-wider">Back to Orders</span>
           </button>
         </motion.div>
 
-        {/* Main Card */}
+        {/* ============ ORDER HEADER CARD ============ */}
         <motion.div
           initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-white dark:bg-slate-800 rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 dark:border-white/5"
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          className="bg-white dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/40 dark:shadow-none overflow-hidden border border-slate-200/60 dark:border-white/5 mb-6"
         >
-          {/* Header */}
-          <div className="p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-              #{order.orderId || order._id.slice(-6).toUpperCase()}
-            </h1>
+          {/* Header bar */}
+          <div className="p-5 md:p-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 dark:border-white/5">
+            <div>
+              <div className="flex items-center gap-3 mb-1">
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">
+                  #{order.orderId || order._id.slice(-6).toUpperCase()}
+                </h1>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={copyOrderId}
+                  className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors"
+                >
+                  {copiedOrderId ? (
+                    <FiCheck size={12} />
+                  ) : (
+                    <FiCopy size={12} />
+                  )}
+                </motion.button>
+              </div>
+              <p className="text-xs text-slate-500 flex items-center gap-2">
+                <FiClock size={11} />
+                Placed on{" "}
+                {new Date(order.createdAt).toLocaleDateString("en-GB", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </p>
+            </div>
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-              className={`px-4 py-1.5 rounded-full border flex items-center ${statusClasses.bg} ${statusClasses.text}`}
+              className={`px-4 py-2 rounded-xl border flex items-center gap-2 ${statusClasses.bg} ${statusClasses.text} ${statusClasses.border}`}
             >
               {statusClasses.icon}
-              <span className="font-bold text-[10px] uppercase">
+              <span className="font-bold text-xs uppercase tracking-wider">
                 {statusClasses.label}
               </span>
             </motion.div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="p-8 bg-slate-50/30 dark:bg-slate-900/20 border-b border-slate-100 dark:border-slate-700/50">
-            <div className="relative w-full max-w-2xl mx-auto text-slate-900">
+          {/* ============ PROGRESS TIMELINE ============ */}
+          <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-900/20 border-b border-slate-100 dark:border-slate-700/30">
+            <div className="relative w-full max-w-2xl mx-auto">
+              {/* Track line */}
               <div
-                className={`absolute top-[14px] left-0 w-full h-[3px] rounded-full z-0 ${
+                className={`absolute top-5 md:top-6 left-[24px] md:left-[28px] right-[24px] md:right-[28px] h-[3px] rounded-full z-0 ${
                   isCancelled
-                    ? "bg-red-100 dark:bg-red-900/30"
+                    ? "bg-red-100 dark:bg-red-900/20"
                     : "bg-slate-200 dark:bg-slate-700"
                 }`}
               />
-              <div className="absolute top-[14px] left-0 h-[3px] z-0 flex w-full">
-                <motion.div
-                  className={`h-full rounded-full ${
-                    isCancelled ? "bg-red-500" : "bg-emerald-500"
-                  }`}
-                  initial={{ width: 0 }}
-                  animate={{
-                    width: isCancelled
-                      ? "100%"
-                      : `${
-                          (currentStepIndex / (statusSteps.length - 1)) * 100
-                        }%`,
-                  }}
-                  transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                />
-              </div>
+              {/* Active line */}
+              <motion.div
+                className={`absolute top-5 md:top-6 left-[24px] md:left-[28px] h-[3px] rounded-full z-0 ${
+                  isCancelled ? "bg-red-500" : "bg-emerald-500"
+                }`}
+                initial={{ width: 0 }}
+                animate={{
+                  width: isCancelled
+                    ? `calc(100% - 48px)`
+                    : `calc(${
+                        (currentStepIndex / (statusSteps.length - 1)) * 100
+                      }% - ${currentStepIndex === 0 ? 0 : 48}px)`,
+                }}
+                transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+              />
 
-              <div className="relative z-10 flex justify-between text-center">
+              <div className="relative z-10 flex justify-between">
                 {isCancelled ? (
                   <>
-                    <div className="flex flex-col items-center">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center border-4 border-white dark:border-slate-800 bg-slate-400 shadow-sm">
-                        <FiCheck className="text-white text-xs" />
-                      </div>
-                      <span className="mt-2 text-[9px] font-bold text-slate-400 uppercase">
-                        Ordered
-                      </span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                      <motion.div
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{
-                          duration: 2,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                        className="w-8 h-8 rounded-full flex items-center justify-center border-4 border-white dark:border-slate-800 bg-red-600 shadow-md"
-                      >
-                        <FiXCircle className="text-white text-xs" />
-                      </motion.div>
-                      <span className="mt-2 text-[9px] font-black text-red-600 tracking-tighter uppercase">
-                        Cancelled
-                      </span>
-                    </div>
+                    <TimelineStep
+                      step="Pending"
+                      index={0}
+                      totalSteps={3}
+                      isActive={false}
+                      isCompleted={true}
+                      isCancelledFlow={false}
+                    />
+                    <TimelineStep
+                      step="Cancelled"
+                      index={1}
+                      totalSteps={3}
+                      isActive={true}
+                      isCompleted={true}
+                      isCancelledFlow={true}
+                    />
                     {isPrepaid && (
-                      <div className="flex flex-col items-center">
-                        <div
-                          className={`w-8 h-8 rounded-full flex items-center justify-center border-4 border-white dark:border-slate-800 shadow-md ${
-                            isRefundSuccessful ? "bg-emerald-500" : "bg-blue-500"
+                      <div className="flex flex-col items-center relative z-10">
+                        <motion.div
+                          initial={{ opacity: 0, y: 15 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.5 }}
+                          className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${
+                            isRefundSuccessful
+                              ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                              : "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
                           }`}
                         >
                           <FiDollarSign
-                            className={`text-white text-xs ${
-                              !isRefundSuccessful && "animate-bounce"
-                            }`}
+                            size={16}
+                            className={!isRefundSuccessful ? "animate-bounce" : ""}
                           />
-                        </div>
+                        </motion.div>
                         <span
-                          className={`mt-2 text-[9px] font-black uppercase tracking-tighter ${
+                          className={`mt-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${
                             isRefundSuccessful
                               ? "text-emerald-500"
                               : "text-blue-500"
                           }`}
                         >
-                          {isRefundSuccessful
-                            ? "Refund Successful"
-                            : "Refund Initiated"}
+                          {isRefundSuccessful ? "Refunded" : "Refund Pending"}
                         </span>
                         <p className="text-[8px] text-slate-400 mt-0.5 font-bold uppercase tracking-widest">
                           {isRefundSuccessful ? "to your account" : "(6-7 Days)"}
@@ -407,87 +515,81 @@ export default function OrderDetails() {
                   </>
                 ) : (
                   statusSteps.map((step, index) => (
-                    <motion.div
+                    <TimelineStep
                       key={step}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 + index * 0.1 }}
-                      className="flex flex-col items-center w-12"
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center border-4 border-white dark:border-slate-800 transition-colors duration-500 ${
-                          index <= currentStepIndex
-                            ? "bg-emerald-500 shadow-emerald-500/20 shadow-md"
-                            : "bg-slate-200 dark:bg-slate-700"
-                        }`}
-                      >
-                        {index < currentStepIndex && (
-                          <FiCheck className="text-white text-xs" />
-                        )}
-                      </div>
-                      <span
-                        className={`mt-2 text-[9px] font-bold uppercase ${
-                          index <= currentStepIndex
-                            ? "text-slate-900 dark:text-white"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {step}
-                      </span>
-                    </motion.div>
+                      step={step}
+                      index={index}
+                      totalSteps={statusSteps.length}
+                      isActive={index === currentStepIndex}
+                      isCompleted={index < currentStepIndex}
+                      isCancelledFlow={false}
+                    />
                   ))
                 )}
               </div>
             </div>
           </div>
 
-          {/* Address + Payment */}
-          <div className="grid grid-cols-1 md:grid-cols-2">
+          {/* ============ ADDRESS & PAYMENT GRID ============ */}
+          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-700/30">
+            {/* Address */}
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4, duration: 0.5 }}
-              className="p-6 md:border-r border-slate-100 dark:border-white/5"
+              className="p-5 md:p-7"
             >
-              <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                <FiMapPin /> Delivery Address
+              <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
+                <FiMapPin size={12} /> Delivery Address
               </h2>
-              <p className="font-bold text-base text-slate-900 dark:text-white">
-                {order.shippingAddress?.fullName}
-              </p>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {order.shippingAddress?.street},{" "}
-                {order.shippingAddress?.city} -- {order.shippingAddress?.zip}
-              </p>
-              <div className="mt-4 p-2.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold text-xs rounded-xl inline-block">
-                +91 {order.shippingAddress?.phone}
+              <div className="bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-700/30">
+                <p className="font-bold text-sm text-slate-900 dark:text-white mb-1">
+                  {order.shippingAddress?.fullName}
+                </p>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  {order.shippingAddress?.street},{" "}
+                  {order.shippingAddress?.city} -- {order.shippingAddress?.zip}
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg">
+                    <FiPhone size={10} />
+                    +91 {order.shippingAddress?.phone}
+                  </div>
+                </div>
               </div>
             </motion.div>
 
+            {/* Payment */}
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5, duration: 0.5 }}
-              className="p-6 bg-slate-50/20 dark:bg-slate-900/10 text-slate-900"
+              className="p-5 md:p-7"
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                  <FiFileText /> Payment Breakdown
+                <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] flex items-center gap-2">
+                  <FiCreditCard size={12} /> Payment Summary
                 </h2>
-                <span className="text-[9px] font-black text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-2.5 py-1 rounded uppercase tracking-widest">
+                <span
+                  className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${
+                    isPrepaid
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                  }`}
+                >
                   {order.paymentMethod}
                 </span>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Subtotal</span>
-                  <span className="font-bold text-slate-900 dark:text-white">
+                  <span className="font-bold text-slate-900 dark:text-white tabular-nums">
                     {formatCurrency(order.itemsPrice)}
                   </span>
                 </div>
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Shipping</span>
-                  <span className="font-bold text-slate-900 dark:text-white">
+                  <span className="font-bold text-slate-900 dark:text-white tabular-nums">
                     {order.shippingPrice === 0
                       ? "Free"
                       : formatCurrency(order.shippingPrice)}
@@ -495,16 +597,16 @@ export default function OrderDetails() {
                 </div>
                 <div className="flex justify-between text-xs text-slate-500">
                   <span>Tax (GST 5%)</span>
-                  <span className="font-bold text-slate-900 dark:text-white">
+                  <span className="font-bold text-slate-900 dark:text-white tabular-nums">
                     {formatCurrency(order.taxPrice)}
                   </span>
                 </div>
-                <div className="h-px bg-slate-100 dark:bg-slate-700 w-full my-4" />
-                <div className="flex justify-between items-center">
-                  <span className="font-black text-[10px] uppercase text-slate-900 dark:text-white">
+                <div className="h-px bg-slate-100 dark:bg-slate-700 w-full" />
+                <div className="flex justify-between items-center pt-1">
+                  <span className="font-black text-xs uppercase text-slate-900 dark:text-white">
                     {order.isPaid ? "Total Paid" : "Total Payable"}
                   </span>
-                  <span className="text-2xl font-serif font-bold text-blue-600 dark:text-blue-400">
+                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
                     {formatCurrency(order.totalAmount)}
                   </span>
                 </div>
@@ -513,12 +615,12 @@ export default function OrderDetails() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 }}
-                    className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 rounded-xl"
+                    className="mt-3 p-3 bg-red-500/5 border border-red-500/10 rounded-xl"
                   >
-                    <p className="text-[10px] text-red-600 dark:text-red-400 font-bold uppercase italic tracking-tight">
-                      Cancellation Reason:
+                    <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider">
+                      Cancellation Reason
                     </p>
-                    <p className="text-xs text-red-500 font-medium mt-1 leading-relaxed italic">
+                    <p className="text-xs text-red-400 font-medium mt-1 leading-relaxed italic">
                       "{order.cancelReason || "Not specified"}"
                     </p>
                   </motion.div>
@@ -527,38 +629,39 @@ export default function OrderDetails() {
             </motion.div>
           </div>
 
-          {/* Items */}
-          <div className="p-6 border-t border-slate-100 dark:border-white/5">
-            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-              <FiShoppingBag /> Items ({order.items.length})
+          {/* ============ ITEMS ============ */}
+          <div className="p-5 md:p-7 border-t border-slate-100 dark:border-white/5">
+            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
+              <FiShoppingBag size={12} /> Items ({order.items.length})
             </h2>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {order.items.map((item, idx) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
                   animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
                   transition={{
-                    delay: 0.5 + idx * 0.08,
+                    delay: 0.5 + idx * 0.06,
                     duration: 0.5,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="flex items-center gap-4 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-white/5 hover:border-blue-500/20 transition-colors"
+                  className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700/30 hover:border-blue-200 dark:hover:border-blue-900/40 transition-colors"
                 >
                   <img
                     src={`${API_URL}/uploads/${item.image.split("/").pop()}`}
                     alt={item.name}
-                    className="w-14 h-14 object-cover rounded-xl bg-slate-50 dark:bg-slate-800 p-1"
+                    className="w-14 h-14 object-cover rounded-xl bg-white dark:bg-slate-800 p-1 border border-slate-100 dark:border-slate-700"
                   />
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-xs truncate text-slate-900 dark:text-white">
                       {item.name}
                     </h3>
-                    <p className="text-[10px] text-slate-400 font-black mt-0.5 tracking-tighter">
-                      {"\u20B9"}{item.price.toFixed(2)} x {item.qty}
+                    <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                      {"\u20B9"}
+                      {item.price.toFixed(2)} x {item.qty}
                     </p>
                   </div>
-                  <div className="text-right font-black text-sm text-slate-900 dark:text-white">
+                  <div className="text-right font-bold text-sm text-slate-900 dark:text-white tabular-nums">
                     {formatCurrency(item.price * item.qty)}
                   </div>
                 </motion.div>
@@ -567,50 +670,47 @@ export default function OrderDetails() {
           </div>
         </motion.div>
 
-        {/* Action Buttons */}
+        {/* ============ ACTION BUTTONS ============ */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.5 }}
-          className="mt-8 flex flex-wrap gap-4 justify-center"
+          className="flex flex-wrap gap-3 justify-center"
         >
           <motion.button
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/")}
-            className="px-8 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-slate-900 dark:text-white"
+            className="px-6 py-3 bg-white dark:bg-slate-800/60 backdrop-blur-xl border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-slate-900 dark:text-white"
           >
-            <FiHome /> Home
+            <FiHome size={14} /> Home
           </motion.button>
           <motion.button
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.97 }}
             onClick={handlePrintInvoice}
-            className="px-8 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-slate-900 dark:text-white"
+            className="px-6 py-3 bg-white dark:bg-slate-800/60 backdrop-blur-xl border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-slate-900 dark:text-white"
           >
-            <FiFileText /> Invoice
+            <FiFileText size={14} /> Invoice
           </motion.button>
           {canCancel && (
             <motion.button
-              whileHover={{ y: -2, boxShadow: "0 8px 20px rgba(239,68,68,0.15)" }}
+              whileHover={{ y: -2 }}
               whileTap={{ scale: 0.97 }}
               disabled={cancelling}
               onClick={() => setShowCancelConfirm(true)}
-              className="px-8 py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900/20 rounded-2xl font-black text-xs hover:bg-red-100 transition-all"
+              className="px-6 py-3 bg-red-500/5 text-red-600 dark:text-red-400 border border-red-500/15 rounded-2xl font-black text-xs hover:bg-red-500/10 transition-all"
             >
               Cancel Order
             </motion.button>
           )}
           <motion.button
-            whileHover={{
-              y: -2,
-              boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
-            }}
+            whileHover={{ y: -2, boxShadow: "0 10px 30px rgba(0,0,0,0.12)" }}
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/products")}
-            className="px-10 py-3 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg"
+            className="px-8 py-3 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20 dark:shadow-blue-600/20"
           >
-            <FiShoppingBag /> Shop More
+            <FiShoppingBag size={14} /> Shop More
           </motion.button>
         </motion.div>
       </div>
