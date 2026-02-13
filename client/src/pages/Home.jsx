@@ -6,13 +6,13 @@ import { ArrowRight, Star, ShieldCheck, Truck, Clock, Quote, Fish, Sparkles, X, 
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// --- ADVANCED ANIMATION WRAPPER ---
+// --- ADVANCED ANIMATION WRAPPER with multiple reveal styles ---
 const SectionReveal = ({ children, direction = "up", delay = 0 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-15% 0px" }); // Tightened margin for faster trigger
+  const isInView = useInView(ref, { once: true, margin: "-12% 0px" });
 
   const directions = {
-    up: { y: 40, x: 0, rotateX: 8 },
+    up: { y: 60, x: 0, rotateX: 8 },
     left: { y: 0, x: -80, rotateX: 0 },
     right: { y: 0, x: 80, rotateX: 0 },
     scale: { y: 0, x: 0, scale: 0.9 },
@@ -125,63 +125,6 @@ const TextReveal = ({ text, className = "", delay = 0 }) => {
   );
 };
 
-// --- DISCOUNT POPUP COMPONENT ---
-const DiscountPopup = ({ isOpen, onClose, offer }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(offer.code);
-    setCopied(true);
-    setTimeout(() => {
-      setCopied(false);
-      onClose();
-    }, 2000);
-  };
-
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-          />
-          <motion.div 
-            initial={{ scale: 0.9, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative bg-white dark:bg-[#0f172a] rounded-[2.5rem] overflow-hidden max-w-lg w-full shadow-2xl border border-white/10"
-          >
-            <button onClick={onClose} className="absolute top-6 right-6 z-50 p-2 bg-black/20 text-white rounded-full"><X size={20}/></button>
-            <div className="relative h-48 bg-blue-600">
-              <img src="/20offer.png" className="w-full h-full object-cover opacity-60" alt="Offer"/>
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] to-transparent" />
-              <div className="absolute bottom-6 left-8">
-                <h2 className="text-5xl font-black text-white italic tracking-tighter">SAVE {offer.value}%</h2>
-                <p className="text-blue-200 font-bold uppercase tracking-widest text-xs">Special Welcome Catch</p>
-              </div>
-            </div>
-            <div className="p-8 text-center">
-              <p className="text-slate-500 dark:text-slate-400 mb-6 font-medium">Use code at checkout for your discount!</p>
-              <motion.div 
-                onClick={handleCopy}
-                whileTap={{ scale: 0.98 }}
-                className="group border-2 border-dashed border-blue-200 dark:border-blue-900/50 p-5 rounded-2xl cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all"
-              >
-                <div className="text-3xl font-mono font-black text-blue-600 dark:text-blue-400 flex items-center justify-center gap-3">
-                  {offer.code}
-                  {copied ? <Check size={24} className="text-emerald-500" /> : <Copy size={20} className="opacity-20 group-hover:opacity-100" />}
-                </div>
-              </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
-  );
-};
-
 // --- HERO SECTION ---
 const VideoHero = () => {
   const { scrollY } = useScroll();
@@ -197,6 +140,7 @@ const VideoHero = () => {
         <video autoPlay loop muted playsInline src="1.mp4" className="w-full h-full object-cover" />
       </motion.div>
 
+      {/* Animated grid overlay */}
       <div className="absolute inset-0 z-10 pointer-events-none opacity-[0.03]"
         style={{
           backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
@@ -280,6 +224,7 @@ const VideoHero = () => {
           </motion.div>
         </motion.div>
 
+        {/* Scroll indicator */}
         <motion.div
           className="absolute bottom-8 flex flex-col items-center gap-2"
           initial={{ opacity: 0 }}
@@ -299,7 +244,7 @@ const VideoHero = () => {
   );
 };
 
-// --- ROLLING MARQUEE ---
+// --- ROLLING MARQUEE (scroll-velocity reactive) ---
 const RollingText = () => {
   const baseX = useMotionValue(0);
   const { scrollY } = useScroll();
@@ -336,7 +281,7 @@ const RollingText = () => {
   );
 };
 
-// --- CATEGORIES ---
+// --- CATEGORIES with enhanced expand + parallax images ---
 const categories = [
   { title: "Premium Fish", img: "/fish.png", bg: "from-blue-100/80 to-white dark:from-blue-900/40 dark:to-[#0a1625]" },
   { title: "Jumbo Prawns", img: "/prawn.png", bg: "from-indigo-100/80 to-white dark:from-indigo-900/40 dark:to-[#0a1625]" },
@@ -346,12 +291,21 @@ const categories = [
 const CategoryPanel = () => {
   const [hovered, setHovered] = useState(0);
   return (
-    <section className="py-12 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
-      <div className="max-w-7xl mx-auto mb-10 text-center relative z-10">
+    <section className="py-20 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
+      <div className="max-w-7xl mx-auto mb-12 text-center relative z-10">
         <TextReveal
           text="Shop By Category"
-          className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white"
+          className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white transition-colors duration-300"
         />
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="text-blue-600 dark:text-blue-200 mt-2 font-light tracking-wide transition-colors duration-300"
+        >
+          Select your catch
+        </motion.p>
       </div>
       <div className="flex flex-col md:flex-row h-[400px] gap-4 max-w-6xl mx-auto relative z-10">
         {categories.map((cat, i) => (
@@ -360,7 +314,9 @@ const CategoryPanel = () => {
             key={i}
             onMouseEnter={() => setHovered(i)}
             className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${
-              hovered === i ? "flex-[3] shadow-2xl" : "flex-[1] opacity-80"
+              hovered === i
+                ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20"
+                : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"
             }`}
           >
             <div className={`absolute inset-0 bg-gradient-to-b ${cat.bg} z-0`} />
@@ -369,20 +325,39 @@ const CategoryPanel = () => {
                 layout
                 src={cat.img}
                 alt={cat.title}
-                animate={{ scale: hovered === i ? 1.05 : 0.8, rotate: hovered === i ? 0 : -5 }}
-                transition={{ duration: 0.7 }}
-                className={`object-contain drop-shadow-2xl ${hovered === i ? "w-[80%] h-[80%]" : "w-24 h-24"}`}
+                animate={{
+                  scale: hovered === i ? 1.05 : 0.8,
+                  rotate: hovered === i ? 0 : -5,
+                  filter: hovered === i ? "grayscale(0)" : "grayscale(1)",
+                }}
+                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                className={`object-contain drop-shadow-2xl ${
+                  hovered === i
+                    ? "w-[80%] h-[80%] opacity-100"
+                    : "w-24 h-24 opacity-50"
+                } transition-all duration-700`}
               />
             </div>
             <div className="absolute bottom-0 left-0 w-full p-8 z-20 bg-gradient-to-t from-white via-white/80 dark:from-black dark:via-[#0a1625]/80 to-transparent">
-              <h3 className={`font-serif text-slate-900 dark:text-white transition-all duration-500 ${hovered === i ? "text-3xl" : "text-xl opacity-70"}`}>
+              <h3
+                className={`font-serif text-slate-900 dark:text-white transition-all duration-500 whitespace-nowrap ${
+                  hovered === i ? "text-3xl opacity-100" : "text-xl opacity-70"
+                }`}
+              >
                 {cat.title}
               </h3>
               <motion.div
-                animate={{ maxHeight: hovered === i ? 40 : 0, opacity: hovered === i ? 1 : 0 }}
+                animate={{
+                  maxHeight: hovered === i ? 40 : 0,
+                  opacity: hovered === i ? 1 : 0,
+                }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                 className="flex items-center gap-2 text-blue-600 dark:text-blue-300 text-sm font-bold uppercase tracking-widest mt-2 overflow-hidden"
               >
-                Explore <ArrowRight size={14} />
+                Explore
+                <motion.span animate={{ x: hovered === i ? [0, 6, 0] : 0 }} transition={{ repeat: Infinity, duration: 1 }}>
+                  <ArrowRight />
+                </motion.span>
               </motion.div>
             </div>
           </Link>
@@ -392,14 +367,15 @@ const CategoryPanel = () => {
   );
 };
 
-// --- FLASH SALE ---
+// --- FLASH SALE BANNER ---
 const FlashSale = () => {
   const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 32, seconds: 18 });
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const calculateTimeLeft = () => {
       const now = new Date();
-      const midnight = new Date().setHours(24, 0, 0, 0);
+      const midnight = new Date();
+      midnight.setHours(24, 0, 0, 0);
       const diff = midnight - now;
       if (diff > 0) {
         setTimeLeft({
@@ -407,80 +383,211 @@ const FlashSale = () => {
           minutes: Math.floor((diff / 1000 / 60) % 60),
           seconds: Math.floor((diff / 1000) % 60),
         });
+      } else {
+        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
       }
-    }, 1000);
+    };
+    const timer = setInterval(calculateTimeLeft, 1000);
+    calculateTimeLeft();
     return () => clearInterval(timer);
   }, []);
 
+  const formatTime = (value) => value.toString().padStart(2, "0");
+
   return (
-    <section className="py-6 px-4">
+    <section className="py-10 px-4">
       <motion.div
-        whileHover={{ scale: 1.005 }}
+        whileHover={{ scale: 1.01 }}
+        transition={{ duration: 0.4 }}
         className="max-w-6xl mx-auto bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl shadow-2xl p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8"
       >
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+
+        {/* Animated shine sweep */}
+        <motion.div
+          className="absolute inset-0 z-30 pointer-events-none"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+        >
+          <motion.div
+            animate={{ x: ["-100%", "200%"] }}
+            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 3 }}
+            className="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+          />
+        </motion.div>
+
         <div className="relative z-10 text-white text-center md:text-left">
-          <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-white/30">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-white/30"
+          >
             <Flame size={14} className="text-yellow-300" /> Flash Deal
-          </div>
-          <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-4">TODAY'S CATCH</h2>
+          </motion.div>
+          <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-4">
+            {"TODAY'S CATCH".split("").map((ch, i) => (
+              <motion.span
+                key={i}
+                className="inline-block"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.03, duration: 0.4 }}
+              >
+                {ch === " " ? "\u00A0" : ch}
+              </motion.span>
+            ))}
+          </h2>
           <p className="text-red-50 text-xl md:text-2xl font-serif italic tracking-wide leading-relaxed">
-            Order above ₹1699 & use code <span className="mx-2 bg-white text-red-600 px-3 py-1 rounded-lg font-black font-mono not-italic text-lg shadow-lg transform -rotate-2 inline-block">SEABITE10</span>
+            Order above{" "}
+            <span className="text-yellow-300 font-bold decoration-wavy underline decoration-white/30">
+              ₹1699
+            </span>{" "}
+            and use coupon{" "}
+            <span className="mx-2 bg-white text-red-600 px-3 py-1 rounded-lg font-black font-mono not-italic text-lg border-2 border-dashed border-red-600 transform -rotate-2 inline-block shadow-lg">
+              SEABITE10
+            </span>{" "}
+            to avail{" "}
+            <span className="font-black text-white not-italic text-2xl drop-shadow-md">
+              10% OFF
+            </span>
           </p>
         </div>
-        <div className="relative z-10 bg-white p-6 rounded-xl shadow-lg">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ends In</p>
-          <div className="flex gap-2 text-slate-900 font-mono font-black text-3xl">
-            {Object.values(timeLeft).map((v, i) => (
-              <span key={i} className="bg-slate-100 px-2 rounded">{v.toString().padStart(2, '0')}</span>
-            ))}
+        <motion.div
+          initial={{ opacity: 0, rotate: 6, scale: 0.9 }}
+          whileInView={{ opacity: 1, rotate: 2, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ type: "spring", stiffness: 200, damping: 20 }}
+          className="relative z-10 bg-white p-6 rounded-xl shadow-lg"
+        >
+          <div className="text-center">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ends In</p>
+            <div className="flex gap-2 text-slate-900 font-mono font-black text-3xl">
+              {[
+                { val: timeLeft.hours, color: "" },
+                { val: timeLeft.minutes, color: "" },
+                { val: timeLeft.seconds, color: "text-red-600" },
+              ].map((t, i) => (
+                <span key={i} className="contents">
+                  {i > 0 && <span>:</span>}
+                  <AnimatePresence mode="popLayout">
+                    <motion.span
+                      key={t.val}
+                      initial={{ y: -20, opacity: 0, scale: 0.8 }}
+                      animate={{ y: 0, opacity: 1, scale: 1 }}
+                      exit={{ y: 20, opacity: 0, scale: 0.8 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      className={`bg-slate-100 px-2 rounded inline-block ${t.color}`}
+                    >
+                      {formatTime(t.val)}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+              ))}
+            </div>
           </div>
           <Link to="/products">
-            <button className="block mt-4 w-full bg-slate-900 text-white text-center py-3 rounded-lg font-bold text-sm uppercase">Grab Deal</button>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="block mt-4 w-full bg-slate-900 text-white text-center py-3 rounded-lg font-bold text-sm uppercase tracking-wide hover:bg-slate-800 transition-colors"
+            >
+              Grab The Deal
+            </motion.button>
           </Link>
-        </div>
+        </motion.div>
       </motion.div>
     </section>
   );
 };
 
-// --- PRODUCT ROW ---
+// --- PRODUCT SHOWCASE ROW with stagger ---
 const CategoryRow = ({ title, filterType }) => {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`).then((res) => {
       const all = res.data.products || [];
-      setProducts(filterType === "Fish" ? all.filter(p => p.category === "Fish").slice(0, 4) : all.filter(p => p.category === "Prawn" || p.category === "Crab").slice(0, 4));
+      let filtered = [];
+      if (filterType === "Fish") {
+        filtered = all.filter((p) => p.category === "Fish").slice(0, 4);
+      } else if (filterType === "Shellfish") {
+        filtered = all.filter((p) => p.category === "Prawn" || p.category === "Crab").slice(0, 4);
+      }
+      setProducts(filtered);
     });
   }, [filterType]);
+
+  const getImageUrl = (path) => {
+    if (!path) return "";
+    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  };
 
   if (products.length === 0) return null;
 
   return (
-    <section className="py-8 px-4 md:px-8">
+    <section className="py-12 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-6 border-b border-gray-200 dark:border-gray-800 pb-4">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            {filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />} {title}
+        <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            {filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />}
+            {title}
           </h2>
-          <Link to="/products" className="text-sm font-bold text-blue-600 flex items-center gap-1">See All <ChevronRight size={14}/></Link>
+          <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+            See All <ChevronRight size={14} />
+          </Link>
         </div>
         <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {products.map((p) => (
             <StaggerItem key={p._id}>
               <Link to={`/products/${p._id}`}>
-                <motion.div whileHover={{ y: -8 }} className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden h-full flex flex-col shadow-sm">
-                  <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4">
-                    <img src={`${API_URL}${p.image.startsWith('/') ? p.image : `/${p.image}`}`} alt={p.name} className="w-full h-full object-contain" />
-                    {p.trending && <span className="absolute top-2 left-2 bg-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded">BESTSELLER</span>}
+                <motion.div
+                  whileHover={{ y: -8, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden h-full flex flex-col"
+                >
+                  <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4 overflow-hidden">
+                    <motion.img
+                      src={getImageUrl(p.image)}
+                      alt={p.name}
+                      className="w-full h-full object-contain"
+                      whileHover={{ scale: 1.12, rotate: 2 }}
+                      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                    {p.trending && (
+                      <motion.span
+                        initial={{ x: -60, opacity: 0 }}
+                        whileInView={{ x: 0, opacity: 1 }}
+                        viewport={{ once: true }}
+                        className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
+                      >
+                        BESTSELLER
+                      </motion.span>
+                    )}
                   </div>
                   <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm line-clamp-2 mb-1">{p.name}</h3>
-                    <p className="text-xs text-slate-500 mb-3">{p.netWeight}</p>
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">
+                      {p.name}
+                    </h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{p.netWeight}</p>
                     <div className="mt-auto flex justify-between items-center">
-                      <span className="font-bold text-slate-900 dark:text-white">₹{p.basePrice}</span>
-                      <button className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center"><ShoppingBag size={14} /></button>
+                      <div>
+                        <span className="text-xs text-slate-400 line-through mr-2">
+                          ₹{(p.basePrice * 1.2).toFixed(0)}
+                        </span>
+                        <span className="font-bold text-slate-900 dark:text-white">₹{p.basePrice}</span>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.2, rotate: 15 }}
+                        whileTap={{ scale: 0.8 }}
+                        className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors"
+                      >
+                        <ShoppingBag size={14} />
+                      </motion.button>
                     </div>
                   </div>
                 </motion.div>
@@ -493,64 +600,368 @@ const CategoryRow = ({ title, filterType }) => {
   );
 };
 
-// --- TRENDING MARQUEE ---
-const TrendingMarquee = () => {
-  const [products, setProducts] = useState([]);
+// --- OFFER BANNER ---
+const OfferBanner = () => {
+  const [copied, setCopied] = useState(false);
+  const [offer, setOffer] = useState({ code: "SEABITE20", value: 20, discountType: "percent" });
+
   useEffect(() => {
-    axios.get(`${API_URL}/api/products`).then((res) => {
-      const trending = (res.data.products || []).filter(p => p.trending);
-      setProducts([...trending, ...trending]);
-    });
+    axios
+      .get(`${API_URL}/api/coupons/public`)  // ✅ Changed from /api/coupons to /api/coupons/public
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          const activeCoupon = res.data.find((c) => c.isActive) || res.data[0];
+          setOffer(activeCoupon);
+        }
+      })
+      .catch(() => {});
   }, []);
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(offer.code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <section className="py-12 overflow-hidden border-t border-gray-100 dark:border-white/5 relative">
-      <div className="container mx-auto px-6 mb-8">
-        <TextReveal text="Best Sellers" className="text-4xl font-serif text-slate-900 dark:text-white" />
-      </div>
-      <motion.div className="flex gap-8 w-max" animate={{ x: ["0%", "-50%"] }} transition={{ repeat: Infinity, duration: 25, ease: "linear" }}>
-        {products.map((p, i) => (
-          <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[300px]">
-            <div className="bg-white dark:bg-[#0e1d30] border border-gray-100 rounded-[2rem] p-6 shadow-sm">
-              <div className="h-[200px] mb-4 flex items-center justify-center">
-                <img src={`${API_URL}${p.image.startsWith('/') ? p.image : `/${p.image}`}`} alt={p.name} className="w-44 h-44 object-contain" />
-              </div>
-              <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-1 truncate">{p.name}</h3>
-              <span className="text-lg font-mono text-blue-600">₹{p.basePrice}</span>
-            </div>
+    <section className="py-20 px-6 transition-colors duration-300 relative">
+      <motion.div
+        whileHover={{ scale: 1.01 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-5xl mx-auto flex flex-col md:flex-row bg-[#0f172a] dark:bg-white rounded-3xl overflow-hidden shadow-2xl relative z-10 group"
+      >
+        <div className="absolute inset-0 z-30 pointer-events-none mix-blend-overlay opacity-30">
+          <motion.div
+            animate={{ x: ["-100%", "200%"] }}
+            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 3 }}
+            className="w-full h-full bg-gradient-to-r from-transparent via-white to-transparent -skew-x-12"
+          />
+        </div>
+        <div className="w-full md:w-[60%] relative h-[300px] md:h-auto bg-gray-200 overflow-hidden">
+          <motion.img
+            src="/20offer.png"
+            alt="20% Off"
+            className="w-full h-full object-cover"
+            whileHover={{ scale: 1.08 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          />
+          <div className="absolute inset-0 bg-black/10" />
+        </div>
+        <div className="w-full md:w-[40%] bg-[#0f172a] dark:bg-blue-50 p-8 md:p-12 flex flex-col justify-center items-center text-center text-white dark:text-slate-900 relative">
+          <motion.div
+            initial={{ opacity: 0, scale: 0 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.2 }}
+            className="bg-blue-600 dark:bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4 flex items-center gap-2"
+          >
+            <Sparkles size={12} /> Official Coupon
+          </motion.div>
+          <motion.h2
+            className="text-6xl font-serif mb-2"
+            initial={{ opacity: 0, scale: 0.5 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.3 }}
+          >
+            {offer.discountType === "flat" ? `₹${offer.value}` : `${offer.value}%`}
+          </motion.h2>
+          <h3 className="text-xl font-medium tracking-widest uppercase mb-6 opacity-80">
+            {offer.discountType === "flat" ? "Cash Discount" : "Flat Discount"}
+          </h3>
+          <motion.div
+            onClick={handleCopy}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.95 }}
+            className="w-full border-2 border-dashed border-white/20 dark:border-slate-900/20 p-4 rounded-xl mb-6 relative group cursor-pointer hover:bg-white/10 dark:hover:bg-blue-100 transition-all"
+            title="Click to copy code"
+          >
+            <p className="text-xs uppercase opacity-50 mb-1">Promo Code</p>
+            <p className="text-2xl font-mono font-bold tracking-wider text-emerald-400 dark:text-blue-600 flex items-center justify-center gap-2">
+              {offer.code}
+              <AnimatePresence mode="wait">
+                {copied ? (
+                  <motion.span
+                    key="check"
+                    initial={{ scale: 0, rotate: -90 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    exit={{ scale: 0, rotate: 90 }}
+                  >
+                    <Check size={20} className="text-emerald-500" />
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="copy"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    exit={{ scale: 0 }}
+                    className="opacity-40 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Copy size={16} />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </p>
+          </motion.div>
+          <Link to="/products">
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(0,0,0,0.2)" }}
+              whileTap={{ scale: 0.95 }}
+              className="w-full py-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl font-bold uppercase tracking-wider text-sm transition-transform shadow-lg"
+            >
+              Shop Now
+            </motion.button>
           </Link>
-        ))}
+        </div>
       </motion.div>
     </section>
   );
 };
 
-// --- REVIEWS ---
+// --- TRENDING PRODUCTS ---
+const TrendingMarquee = () => {
+  const [products, setProducts] = useState([]);
+  useEffect(() => {
+    axios.get(`${API_URL}/api/products`).then((res) => {
+      const all = res.data.products || [];
+      const trending = all.filter((p) => p.trending);
+      setProducts([...trending, ...trending, ...trending]);
+    });
+  }, []);
+
+  const getImageUrl = (path) => {
+    if (!path) return "";
+    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  };
+
+  return (
+    <section className="py-24 overflow-hidden border-t border-gray-200 dark:border-white/5 transition-colors duration-300 relative">
+      <div className="container mx-auto px-6 mb-12 flex justify-between items-end relative z-10">
+        <TextReveal
+          text="Best Sellers"
+          className="text-4xl font-serif text-slate-900 dark:text-white transition-colors duration-300"
+        />
+      </div>
+      <div className="relative w-full z-10">
+        <motion.div
+          className="flex gap-8 w-max"
+          animate={{ x: ["0%", "-33.33%"] }}
+          transition={{ repeat: Infinity, duration: 20, ease: "linear" }}
+        >
+          {products.map((p, i) => (
+            <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[300px] group">
+              <motion.div
+                whileHover={{ y: -12, rotate: -1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="bg-white dark:bg-[#0e1d30] border border-gray-200 dark:border-white/5 rounded-[2rem] p-6 hover:bg-white/80 dark:hover:bg-[#112238] transition-colors backdrop-blur-sm shadow-sm hover:shadow-xl"
+              >
+                <div className="h-[220px] mb-6 flex items-center justify-center relative overflow-hidden">
+                  <motion.img
+                    src={getImageUrl(p.image)}
+                    alt={p.name}
+                    className="w-48 h-48 object-contain drop-shadow-2xl"
+                    whileHover={{ scale: 1.15, rotate: 5 }}
+                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                </div>
+                <div>
+                  <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-1 truncate">
+                    {p.name}
+                  </h3>
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-500 dark:text-slate-400 text-xs uppercase">
+                      {p.category}
+                    </span>
+                    <span className="text-lg font-mono text-blue-600 dark:text-blue-300">
+                      ₹{p.basePrice}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
+          ))}
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+// --- REVIEWS & PROMISE ---
 const SeaBitePromise = () => {
   const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    axios.get(`${API_URL}/api/products/top-reviews`).then(res => setReviews(res.data));
+    axios
+      .get(`${API_URL}/api/products/top-reviews`)
+      .then((res) => {
+        setReviews(res.data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   return (
-    <section className="py-12 px-6 relative">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-10">
-          <TextReveal text="Loved by Seafood Lovers" className="text-3xl md:text-4xl font-serif" />
+    <section className="py-24 px-6 relative overflow-hidden transition-colors duration-300">
+      <div className="max-w-7xl mx-auto relative z-10 pt-10">
+        <div className="text-center mb-12">
+          <TextReveal
+            text="Loved by Seafood Lovers"
+            className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white mb-4"
+          />
         </div>
         <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {reviews.slice(0, 3).map((r, i) => (
+          {loading ? (
+            <p className="text-center col-span-3 text-slate-400">Loading reviews...</p>
+          ) : reviews.length > 0 ? (
+            reviews.map((r, i) => (
+              <StaggerItem key={i}>
+                <motion.div
+                  whileHover={{ y: -10, boxShadow: "0 25px 50px rgba(0,0,0,0.1)" }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="bg-white/80 dark:bg-[#0e1d30]/90 p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 relative shadow-sm backdrop-blur-sm h-full"
+                >
+                  <div className="flex items-center gap-1 mb-6">
+                    {[...Array(5)].map((_, starI) => (
+                      <motion.div
+                        key={starI}
+                        initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                        whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: starI * 0.08, type: "spring", stiffness: 300 }}
+                      >
+                        <Star
+                          className={`w-4 h-4 ${
+                            starI < r.rating ? "text-amber-400 fill-amber-400" : "text-slate-300"
+                          }`}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                  <p className="text-slate-700 dark:text-slate-300 mb-8 italic leading-relaxed">
+                    &quot;{r.comment}&quot;
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm">
+                      <User size={16} />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">
+                        {r.userName}
+                      </h4>
+                      <span className="text-xs text-blue-500 uppercase tracking-wide font-bold">
+                        {r.productName}
+                      </span>
+                    </div>
+                  </div>
+                </motion.div>
+              </StaggerItem>
+            ))
+          ) : (
+            <p className="text-center col-span-3 text-slate-400">No reviews yet.</p>
+          )}
+        </StaggerContainer>
+      </div>
+    </section>
+  );
+};
+
+// --- WHY SEABITE TRUST SECTION ---
+const WhySeaBite = () => {
+  const features = [
+    {
+      icon: <ShieldCheck size={24} />,
+      title: "Quality Guaranteed",
+      desc: "Every batch is lab-tested and certified for freshness and safety.",
+      color: "text-emerald-600 dark:text-emerald-400",
+      bg: "bg-emerald-50 dark:bg-emerald-900/20",
+    },
+    {
+      icon: <Thermometer size={24} />,
+      title: "Cold Chain Delivery",
+      desc: "Temperature-controlled packaging from ocean to your doorstep.",
+      color: "text-blue-600 dark:text-blue-400",
+      bg: "bg-blue-50 dark:bg-blue-900/20",
+    },
+    {
+      icon: <Truck size={24} />,
+      title: "Same Day Dispatch",
+      desc: "Orders before 2 PM ship the same day for express freshness.",
+      color: "text-amber-600 dark:text-amber-400",
+      bg: "bg-amber-50 dark:bg-amber-900/20",
+    },
+    {
+      icon: <Utensils size={24} />,
+      title: "Chef Approved",
+      desc: "Trusted by 500+ restaurants and home cooks across the coast.",
+      color: "text-rose-600 dark:text-rose-400",
+      bg: "bg-rose-50 dark:bg-rose-900/20",
+    },
+  ];
+
+  return (
+    <section className="py-20 md:py-28 px-6 relative overflow-hidden transition-colors duration-300">
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="text-center mb-16">
+          <TextReveal
+            text="Why SeaBite?"
+            className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white mb-4"
+          />
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            className="text-slate-500 dark:text-slate-400 max-w-md mx-auto"
+          >
+            We set the bar higher so you can taste the difference.
+          </motion.p>
+        </div>
+
+        {/* Stats Bar */}
+        <SectionReveal direction="scale">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+            {[
+              { value: 10000, suffix: "+", label: "Happy Customers" },
+              { value: 50, suffix: "+", label: "Varieties" },
+              { value: 98, suffix: "%", label: "Freshness Score" },
+              { value: 4, suffix: ".8", label: "Average Rating" },
+            ].map((stat, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -4 }}
+                className="bg-white dark:bg-[#0e1d30] border border-slate-100 dark:border-white/5 rounded-2xl p-6 text-center shadow-sm hover:shadow-lg transition-all"
+              >
+                <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1">
+                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+                  {stat.label}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </SectionReveal>
+
+        {/* Features Grid */}
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+          {features.map((feature, i) => (
             <StaggerItem key={i}>
-              <div className="bg-white/80 dark:bg-[#0e1d30]/90 p-8 rounded-[2rem] border border-gray-100 shadow-sm h-full backdrop-blur-sm">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, s) => (<Star key={s} size={14} className={s < r.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"} />))}
+              <motion.div
+                whileHover={{ y: -8, boxShadow: "0 20px 40px rgba(0,0,0,0.08)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="bg-white dark:bg-[#0e1d30] border border-slate-100 dark:border-white/5 rounded-2xl p-6 md:p-8 h-full shadow-sm"
+              >
+                <div className={`w-12 h-12 rounded-xl ${feature.bg} ${feature.color} flex items-center justify-center mb-5`}>
+                  {feature.icon}
                 </div>
-                <p className="text-slate-700 dark:text-slate-300 italic mb-6 leading-relaxed">"{r.comment}"</p>
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white"><User size={16} /></div>
-                  <div><h4 className="font-bold text-sm">{r.userName}</h4><span className="text-[10px] text-blue-500 uppercase font-bold">{r.productName}</span></div>
-                </div>
-              </div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {feature.desc}
+                </p>
+              </motion.div>
             </StaggerItem>
           ))}
         </StaggerContainer>
@@ -559,112 +970,213 @@ const SeaBitePromise = () => {
   );
 };
 
-// --- WHY SEABITE ---
-const WhySeaBite = () => {
-  const features = [
-    { icon: <ShieldCheck size={24}/>, title: "Quality Guaranteed", desc: "Lab-tested for safety.", bg: "bg-emerald-50 text-emerald-600" },
-    { icon: <Thermometer size={24}/>, title: "Cold Chain", desc: "Temp-controlled delivery.", bg: "bg-blue-50 text-blue-600" },
-    { icon: <Truck size={24}/>, title: "Fast Dispatch", desc: "Same day shipping.", bg: "bg-amber-50 text-amber-600" },
-    { icon: <Utensils size={24}/>, title: "Chef Approved", desc: "Trusted by top cooks.", bg: "bg-rose-50 text-rose-600" },
-  ];
+// --- NEWSLETTER SECTION ---
+const Newsletter = () => {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (email) {
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 3000);
+      setEmail("");
+    }
+  };
+
   return (
     <section className="py-16 px-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-12"><TextReveal text="Why SeaBite?" className="text-4xl font-serif" /></div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          {[{v:10000, s:"+", l:"Customers"}, {v:50, s:"+", l:"Varieties"}, {v:98, s:"%", l:"Freshness"}, {v:4, s:".8", l:"Rating"}].map((st, i) => (
-            <div key={i} className="bg-white dark:bg-[#0e1d30] p-6 rounded-2xl text-center shadow-sm border border-slate-50 dark:border-white/5">
-              <p className="text-3xl font-black mb-1"><AnimatedCounter value={st.v} suffix={st.s}/></p>
-              <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">{st.l}</p>
-            </div>
-          ))}
+      <SectionReveal direction="up">
+        <div className="max-w-3xl mx-auto bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 rounded-3xl p-8 md:p-14 text-center relative overflow-hidden shadow-2xl shadow-blue-600/20">
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-blue-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+
+          <div className="relative z-10">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="inline-flex items-center gap-2 bg-white/10 backdrop-blur px-4 py-1.5 rounded-full text-[10px] font-bold text-white/90 uppercase tracking-widest mb-6 border border-white/10"
+            >
+              <Gift size={12} /> Stay Fresh
+            </motion.div>
+            <h2 className="text-3xl md:text-4xl font-serif text-white mb-3">
+              Get Exclusive Deals
+            </h2>
+            <p className="text-blue-100 text-sm mb-8 max-w-md mx-auto">
+              Subscribe for early access to flash sales, new arrivals, and members-only discounts.
+            </p>
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                className="flex-1 px-5 py-3.5 rounded-xl bg-white/10 backdrop-blur border border-white/20 text-white placeholder:text-white/40 text-sm font-medium outline-none focus:ring-2 focus:ring-white/30 transition-all"
+              />
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                className="px-8 py-3.5 bg-white text-blue-700 rounded-xl font-bold text-sm uppercase tracking-wider hover:bg-blue-50 transition-colors shadow-lg"
+              >
+                <AnimatePresence mode="wait">
+                  {submitted ? (
+                    <motion.span key="done" initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+                      <Check size={14} /> Subscribed
+                    </motion.span>
+                  ) : (
+                    <motion.span key="sub" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      Subscribe
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </form>
+          </div>
         </div>
-        <StaggerContainer className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {features.map((f, i) => (
-            <StaggerItem key={i}>
-              <div className="bg-white dark:bg-[#0e1d30] p-8 rounded-2xl border border-slate-50 dark:border-white/5 h-full shadow-sm">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 ${f.bg}`}>{f.icon}</div>
-                <h3 className="text-lg font-bold mb-2">{f.title}</h3>
-                <p className="text-sm text-slate-500">{f.desc}</p>
-              </div>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
-      </div>
+      </SectionReveal>
     </section>
   );
 };
 
 // --- FOOTER ---
-const Footer = () => (
-  <footer className="relative bg-gray-50 dark:bg-[#081220] border-t border-gray-100 dark:border-white/5 overflow-hidden z-10 transition-colors">
-    <div className="absolute inset-0 flex items-center pointer-events-none opacity-5 overflow-hidden">
-      <motion.div initial={{ x: 0 }} animate={{ x: "-50%" }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }} className="flex gap-20">
-        <h2 className="text-[15vw] font-black text-slate-900 select-none uppercase tracking-tighter">SEABITE SEABITE SEABITE</h2>
-      </motion.div>
-    </div>
-    <div className="relative z-10 flex flex-col items-center justify-center py-24 text-center">
-      <p className="text-slate-500 font-light text-lg mb-8">Experience the true taste of the ocean.</p>
-      <Link to="/products"><motion.button whileHover={{ scale: 1.05 }} className="px-12 py-5 bg-[#0f172a] dark:bg-white text-white dark:text-slate-900 rounded-full font-bold text-lg shadow-xl">Start Your Order</motion.button></Link>
-    </div>
-    <div className="relative z-10 border-t border-slate-200/50 px-6 py-10">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-        <div className="flex items-center gap-3"><span className="text-xl font-serif font-bold">SeaBite</span><span className="text-xs text-slate-400">Fresh Coastal Catch</span></div>
-        <div className="flex gap-6 text-xs font-medium text-slate-500">
-          <Link to="/products">Products</Link><Link to="/orders">My Orders</Link><Link to="/notifications">Notifications</Link>
-        </div>
-        <p className="text-[10px] text-slate-400">&copy; {new Date().getFullYear()} SeaBite. All rights reserved.</p>
+const Footer = () => {
+  return (
+    <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white border-t border-gray-200 dark:border-white/5 overflow-hidden transition-colors duration-300 z-10">
+      {/* Marquee Background */}
+      <div className="absolute inset-0 flex items-center whitespace-nowrap pointer-events-none overflow-hidden">
+        <motion.div
+          initial={{ x: 0 }}
+          animate={{ x: "-50%" }}
+          transition={{ duration: 20, ease: "linear", repeat: Infinity }}
+          className="flex gap-20"
+        >
+          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">
+            SEABITE SEABITE SEABITE
+          </h2>
+          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">
+            SEABITE SEABITE SEABITE
+          </h2>
+        </motion.div>
       </div>
-    </div>
-  </footer>
-);
+
+      {/* CTA Section */}
+      <div className="relative z-10 flex flex-col items-center justify-center py-24 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
+          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          viewport={{ once: true }}
+          className="space-y-6"
+        >
+          <p className="text-slate-600 dark:text-slate-400 font-light text-lg transition-colors duration-300 tracking-tight">
+            Experience the true taste of the ocean.
+          </p>
+          <Link to="/products" className="inline-block">
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}
+              whileTap={{ scale: 0.93 }}
+              className="group px-12 py-5 bg-[#0f172a] dark:bg-white text-white dark:text-slate-900 rounded-full font-bold text-lg transition-all shadow-xl relative overflow-hidden"
+            >
+              <span className="relative z-10">Start Your Order</span>
+              <motion.div
+                className="absolute inset-0 bg-blue-600"
+                initial={{ y: "100%" }}
+                whileHover={{ y: "0%" }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </motion.button>
+          </Link>
+        </motion.div>
+      </div>
+
+      {/* Footer Links */}
+      <div className="relative z-10 border-t border-slate-200/50 dark:border-white/5 px-6 py-10">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-3">
+            <span className="text-xl font-serif font-bold text-slate-900 dark:text-white">SeaBite</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">Fresh Coastal Catch</span>
+          </div>
+          <div className="flex flex-wrap justify-center gap-6 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <Link to="/products" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Products</Link>
+            <Link to="/orders" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">My Orders</Link>
+            <Link to="/notifications" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Notifications</Link>
+          </div>
+          <p className="text-[10px] text-slate-400 dark:text-slate-600 font-medium">
+            &copy; {new Date().getFullYear()} SeaBite. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+};
 
 export default function Home() {
-  const [showOffer, setShowOffer] = useState(false);
-  const [offer, setOffer] = useState({ code: "SEABITE20", value: 20 });
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!sessionStorage.getItem("offerSeen")) {
-        setShowOffer(true);
-        sessionStorage.setItem("offerSeen", "true");
-      }
-    }, 2500);
-    axios.get(`${API_URL}/api/coupons/public`).then(res => res.data?.length > 0 && setOffer(res.data[0])).catch(() => {});
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
-    <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white transition-colors duration-300">
-      <DiscountPopup isOpen={showOffer} onClose={() => setShowOffer(false)} offer={offer} />
+    <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-colors duration-300">
       <VideoHero />
       <RollingText />
       <div className="relative w-full overflow-hidden">
-        {/* Intricate background fish system restored */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden h-full w-full z-0">
-          {[...Array(10)].map((_, i) => (
+          {[...Array(15)].map((_, i) => (
             <motion.div
               key={i}
               initial={{ x: "-200px", opacity: 0 }}
-              animate={{ x: "100vw", opacity: [0, 0.2, 0.2, 0], rotate: [0, 5, -5, 0] }}
-              transition={{ x: { duration: Math.random() * 20 + 15, repeat: Infinity, delay: i * 2, ease: "linear" }, rotate: { duration: 2, repeat: Infinity, ease: "easeInOut" } }}
-              style={{ position: "absolute", top: `${Math.random() * 100}%`, scale: Math.random() * 1.5 + 1.0 }}
+              animate={{
+                x: "100vw",
+                opacity: [0, 0.2, 0.2, 0],
+                rotate: [0, 5, -5, 0],
+              }}
+              transition={{
+                x: {
+                  duration: Math.random() * 20 + 15,
+                  repeat: Infinity,
+                  delay: Math.random() * 10,
+                  ease: "linear",
+                },
+                rotate: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+              }}
+              style={{
+                position: "absolute",
+                top: `${Math.random() * 100}%`,
+                scale: Math.random() * 1.5 + 1.0,
+              }}
               className="text-blue-500/30 dark:text-blue-400/20"
             >
               <Fish size={64} strokeWidth={1} fill="currentColor" />
             </motion.div>
           ))}
         </div>
-        <div className="relative z-10 space-y-2">
-          <SectionReveal direction="up"><CategoryPanel /></SectionReveal>
-          <SectionReveal direction="scale"><FlashSale /></SectionReveal>
-          <div className="py-2">
-            <SectionReveal direction="left"><CategoryRow title="Fresh From The Nets" filterType="Fish" /></SectionReveal>
-            <SectionReveal direction="right"><CategoryRow title="Shellfish Specials" filterType="Shellfish" /></SectionReveal>
-          </div>
-          <SectionReveal direction="up"><TrendingMarquee /></SectionReveal>
-          <SectionReveal direction="up"><SeaBitePromise /></SectionReveal>
-          <SectionReveal direction="scale"><WhySeaBite /></SectionReveal>
+        <div className="relative z-10">
+          <SectionReveal direction="up">
+            <CategoryPanel />
+          </SectionReveal>
+          <SectionReveal direction="scale" delay={0.1}>
+            <FlashSale />
+          </SectionReveal>
+          <SectionReveal direction="left">
+            <CategoryRow title="Fresh From The Nets" filterType="Fish" />
+          </SectionReveal>
+          <SectionReveal direction="right">
+            <CategoryRow title="Shellfish Specials" filterType="Shellfish" />
+          </SectionReveal>
+          <SectionReveal direction="scale" delay={0.1}>
+            <OfferBanner />
+          </SectionReveal>
+          <SectionReveal direction="up">
+            <TrendingMarquee />
+          </SectionReveal>
+          <SectionReveal direction="up">
+            <SeaBitePromise />
+          </SectionReveal>
+          <SectionReveal direction="scale" delay={0.1}>
+            <WhySeaBite />
+          </SectionReveal>
+          <SectionReveal direction="up">
+            <Newsletter />
+          </SectionReveal>
         </div>
       </div>
       <Footer />
