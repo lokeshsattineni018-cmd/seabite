@@ -1,8 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, useInView, useSpring, useMotionValue, useAnimationFrame, useVelocity, AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { ArrowRight, Star, ShieldCheck, Truck, Clock, Quote, Fish, Sparkles, X, Copy, Check, Gift, Zap, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight } from "lucide-react";
+import { ArrowRight, Star, ShieldCheck, Truck, Clock, Quote, Fish, Sparkles, X, Copy, Check, Gift, Zap, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight, Heart, Share2, Eye, Plus, Minus } from "lucide-react";
+import toast from "react-hot-toast";
+import { CartContext } from "../context/CartContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -125,6 +127,458 @@ const TextReveal = ({ text, className = "", delay = 0 }) => {
   );
 };
 
+// --- SCROLL TO TOP BUTTON ---
+const ScrollToTopButton = () => {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const toggleVisibility = () => {
+      if (window.pageYOffset > 500) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener('scroll', toggleVisibility);
+    return () => window.removeEventListener('scroll', toggleVisibility);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 transition-colors"
+        >
+          <ChevronDown size={24} className="rotate-180" />
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// --- QUICK VIEW MODAL ---
+const QuickViewModal = ({ product, isOpen, onClose }) => {
+  const { addToCart } = useContext(CartContext);
+  const [quantity, setQuantity] = useState(1);
+
+  if (!product) return null;
+
+  const getImageUrl = (path) => {
+    if (!path) return "";
+    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  };
+
+  const handleAddToCart = () => {
+    addToCart({ ...product, quantity });
+    toast.success(`${quantity}x ${product.name} added to cart!`, {
+      icon: '🛒',
+    });
+    onClose();
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+          />
+
+          {/* Modal */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed inset-0 z-[101] flex items-center justify-center p-4"
+          >
+            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-auto relative">
+              {/* Close Button */}
+              <motion.button
+                whileHover={{ scale: 1.1, rotate: 90 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={onClose}
+                className="absolute top-4 right-4 w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center z-10"
+              >
+                <X size={20} />
+              </motion.button>
+
+              <div className="grid md:grid-cols-2 gap-8 p-8">
+                {/* Image */}
+                <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-8 flex items-center justify-center">
+                  <img
+                    src={getImageUrl(product.image)}
+                    alt={product.name}
+                    className="w-full h-64 object-contain"
+                  />
+                </div>
+
+                {/* Details */}
+                <div className="flex flex-col">
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                    {product.name}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                    {product.netWeight}
+                  </p>
+
+                  <div className="flex items-baseline gap-3 mb-6">
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                      ₹{product.basePrice}
+                    </span>
+                    <span className="text-lg text-slate-400 line-through">
+                      ₹{(product.basePrice * 1.2).toFixed(0)}
+                    </span>
+                    <span className="text-sm font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded">
+                      20% OFF
+                    </span>
+                  </div>
+
+                  {/* Stock Status */}
+                  <div className="flex items-center gap-2 mb-6">
+                    <div className={`w-2 h-2 rounded-full ${product.stock > 0 ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+                    <span className="text-sm font-bold text-slate-600 dark:text-slate-400">
+                      {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}
+                    </span>
+                  </div>
+
+                  {/* Quantity Selector */}
+                  <div className="mb-6">
+                    <label className="text-sm font-bold text-slate-700 dark:text-slate-300 mb-2 block">
+                      Quantity
+                    </label>
+                    <div className="flex items-center gap-4 bg-slate-100 dark:bg-slate-800 rounded-xl p-2 w-fit">
+                      <motion.button
+                        whileTap={{ scale: 0.8 }}
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="w-8 h-8 flex items-center justify-center"
+                      >
+                        <Minus size={16} />
+                      </motion.button>
+                      <span className="font-bold text-lg w-8 text-center">{quantity}</span>
+                      <motion.button
+                        whileTap={{ scale: 0.8 }}
+                        onClick={() => setQuantity(Math.min(product.stock || 99, quantity + 1))}
+                        className="w-8 h-8 flex items-center justify-center"
+                      >
+                        <Plus size={16} />
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* Add to Cart Button */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleAddToCart}
+                    disabled={product.stock === 0}
+                    className={`w-full py-4 rounded-xl font-bold text-lg mb-4 ${
+                      product.stock === 0
+                        ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 cursor-not-allowed'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    } transition-colors`}
+                  >
+                    {product.stock === 0 ? 'Out of Stock' : `Add to Cart - ₹${product.basePrice * quantity}`}
+                  </motion.button>
+
+                  <Link to={`/products/${product._id}`} onClick={onClose}>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full py-3 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold"
+                    >
+                      View Full Details
+                    </motion.button>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// --- ENHANCED PRODUCT CARD ---
+const EnhancedProductCard = ({ product, onQuickView }) => {
+  const { addToCart } = useContext(CartContext);
+  const [quantity, setQuantity] = useState(1);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [showQuantity, setShowQuantity] = useState(false);
+
+  const getImageUrl = (path) => {
+    if (!path) return "";
+    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  };
+
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    addToCart({ ...product, quantity });
+    toast.success(`${quantity}x ${product.name} added to cart!`, {
+      icon: '🛒',
+    });
+    setShowQuantity(false);
+    setQuantity(1);
+  };
+
+  const handleWishlist = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsWishlisted(!isWishlisted);
+    toast.success(isWishlisted ? 'Removed from wishlist' : 'Added to wishlist!', {
+      icon: isWishlisted ? '💔' : '❤️',
+    });
+  };
+
+  const handleShare = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: product.name,
+          text: `Check out ${product.name} at SeaBite!`,
+          url: `${window.location.origin}/products/${product._id}`,
+        });
+      } catch (err) {
+        // User cancelled share
+      }
+    } else {
+      navigator.clipboard.writeText(`${window.location.origin}/products/${product._id}`);
+      toast.success('Link copied to clipboard!');
+    }
+  };
+
+  const getStockStatus = () => {
+    if (!product.stock || product.stock === 0) return { label: 'OUT OF STOCK', color: 'bg-red-500' };
+    if (product.stock < 10) return { label: 'LOW STOCK', color: 'bg-orange-500' };
+    return { label: 'IN STOCK', color: 'bg-green-500' };
+  };
+
+  const stockStatus = getStockStatus();
+  const isNew = product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  return (
+    <Link to={`/products/${product._id}`}>
+      <motion.div
+        whileHover={{ y: -8, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden h-full flex flex-col relative"
+      >
+        {/* Action Buttons Overlay */}
+        <div className="absolute top-2 right-2 z-20 flex flex-col gap-2">
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleWishlist}
+            className={`w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center transition-all ${
+              isWishlisted 
+                ? 'bg-red-500 text-white' 
+                : 'bg-white/80 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300'
+            }`}
+          >
+            <Heart size={14} fill={isWishlisted ? 'currentColor' : 'none'} />
+          </motion.button>
+          
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={handleShare}
+            className="w-8 h-8 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300"
+          >
+            <Share2 size={14} />
+          </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onQuickView(product);
+            }}
+            className="w-8 h-8 rounded-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-md flex items-center justify-center text-slate-600 dark:text-slate-300"
+          >
+            <Eye size={14} />
+          </motion.button>
+        </div>
+
+        {/* Image Section */}
+        <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4 overflow-hidden">
+          <motion.img
+            src={getImageUrl(product.image)}
+            alt={product.name}
+            className="w-full h-full object-contain"
+            whileHover={{ scale: 1.12, rotate: 2 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          />
+          
+          {/* Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {product.trending && (
+              <motion.span
+                initial={{ x: -60, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm flex items-center gap-1"
+              >
+                <Flame size={10} /> HOT
+              </motion.span>
+            )}
+            {isNew && (
+              <motion.span
+                initial={{ x: -60, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
+              >
+                NEW
+              </motion.span>
+            )}
+            {product.stock < 10 && product.stock > 0 && (
+              <motion.span
+                initial={{ x: -60, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
+              >
+                ONLY {product.stock} LEFT
+              </motion.span>
+            )}
+          </div>
+        </div>
+
+        {/* Content Section */}
+        <div className="p-4 flex flex-col flex-grow">
+          <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">
+            {product.name}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{product.netWeight}</p>
+          
+          {/* Stock Status */}
+          <div className="flex items-center gap-2 mb-3">
+            <div className={`w-2 h-2 rounded-full ${stockStatus.color} animate-pulse`} />
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+              {stockStatus.label}
+            </span>
+          </div>
+
+          {/* Price & Add to Cart */}
+          <div className="mt-auto">
+            <div className="flex justify-between items-center mb-2">
+              <div>
+                <span className="text-xs text-slate-400 line-through mr-2">
+                  ₹{(product.basePrice * 1.2).toFixed(0)}
+                </span>
+                <span className="font-bold text-slate-900 dark:text-white">
+                  ₹{product.basePrice}
+                </span>
+              </div>
+            </div>
+
+            {/* Quick Add to Cart */}
+            <AnimatePresence mode="wait">
+              {showQuantity ? (
+                <motion.div
+                  key="quantity"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex gap-2"
+                >
+                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-2 flex-1">
+                    <motion.button
+                      whileTap={{ scale: 0.8 }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setQuantity(Math.max(1, quantity - 1));
+                      }}
+                      className="p-1"
+                    >
+                      <Minus size={12} />
+                    </motion.button>
+                    <span className="font-bold text-sm">{quantity}</span>
+                    <motion.button
+                      whileTap={{ scale: 0.8 }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setQuantity(Math.min(product.stock || 99, quantity + 1));
+                      }}
+                      className="p-1"
+                    >
+                      <Plus size={12} />
+                    </motion.button>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleAddToCart}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs"
+                  >
+                    Add
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="add-button"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!product.stock || product.stock === 0) {
+                      toast.error('Out of stock!');
+                      return;
+                    }
+                    setShowQuantity(true);
+                  }}
+                  disabled={!product.stock || product.stock === 0}
+                  className={`w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 ${
+                    !product.stock || product.stock === 0
+                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                      : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white'
+                  } transition-colors`}
+                >
+                  <ShoppingBag size={14} />
+                  {!product.stock || product.stock === 0 ? 'Out of Stock' : 'Quick Add'}
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </motion.div>
+    </Link>
+  );
+};
+
 // --- HERO SECTION ---
 const VideoHero = () => {
   const { scrollY } = useScroll();
@@ -140,7 +594,6 @@ const VideoHero = () => {
         <video autoPlay loop muted playsInline src="1.mp4" className="w-full h-full object-cover" />
       </motion.div>
 
-      {/* Animated grid overlay */}
       <div className="absolute inset-0 z-10 pointer-events-none opacity-[0.03]"
         style={{
           backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
@@ -224,7 +677,6 @@ const VideoHero = () => {
           </motion.div>
         </motion.div>
 
-        {/* Scroll indicator */}
         <motion.div
           className="absolute bottom-8 flex flex-col items-center gap-2"
           initial={{ opacity: 0 }}
@@ -244,7 +696,7 @@ const VideoHero = () => {
   );
 };
 
-// --- ROLLING MARQUEE (scroll-velocity reactive) ---
+// --- ROLLING MARQUEE ---
 const RollingText = () => {
   const baseX = useMotionValue(0);
   const { scrollY } = useScroll();
@@ -281,7 +733,7 @@ const RollingText = () => {
   );
 };
 
-// --- CATEGORIES with enhanced expand + parallax images ---
+// --- CATEGORIES ---
 const categories = [
   { title: "Premium Fish", img: "/fish.png", bg: "from-blue-100/80 to-white dark:from-blue-900/40 dark:to-[#0a1625]" },
   { title: "Jumbo Prawns", img: "/prawn.png", bg: "from-indigo-100/80 to-white dark:from-indigo-900/40 dark:to-[#0a1625]" },
@@ -403,7 +855,6 @@ const FlashSale = () => {
       >
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
 
-        {/* Animated shine sweep */}
         <motion.div
           className="absolute inset-0 z-30 pointer-events-none"
           initial={{ opacity: 0 }}
@@ -504,9 +955,10 @@ const FlashSale = () => {
   );
 };
 
-// --- PRODUCT SHOWCASE ROW with stagger ---
+// --- PRODUCT SHOWCASE ROW ---
 const CategoryRow = ({ title, filterType }) => {
   const [products, setProducts] = useState([]);
+  const [quickViewProduct, setQuickViewProduct] = useState(null);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`).then((res) => {
@@ -521,82 +973,40 @@ const CategoryRow = ({ title, filterType }) => {
     });
   }, [filterType]);
 
-  const getImageUrl = (path) => {
-    if (!path) return "";
-    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  };
-
   if (products.length === 0) return null;
 
   return (
-    <section className="py-12 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            {filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />}
-            {title}
-          </h2>
-          <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-            See All <ChevronRight size={14} />
-          </Link>
+    <>
+      <section className="py-12 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              {filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />}
+              {title}
+            </h2>
+            <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+              See All <ChevronRight size={14} />
+            </Link>
+          </div>
+          <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+            {products.map((p) => (
+              <StaggerItem key={p._id}>
+                <EnhancedProductCard 
+                  product={p} 
+                  onQuickView={setQuickViewProduct}
+                />
+              </StaggerItem>
+            ))}
+          </StaggerContainer>
         </div>
-        <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-          {products.map((p) => (
-            <StaggerItem key={p._id}>
-              <Link to={`/products/${p._id}`}>
-                <motion.div
-                  whileHover={{ y: -8, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden h-full flex flex-col"
-                >
-                  <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4 overflow-hidden">
-                    <motion.img
-                      src={getImageUrl(p.image)}
-                      alt={p.name}
-                      className="w-full h-full object-contain"
-                      whileHover={{ scale: 1.12, rotate: 2 }}
-                      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                    />
-                    {p.trending && (
-                      <motion.span
-                        initial={{ x: -60, opacity: 0 }}
-                        whileInView={{ x: 0, opacity: 1 }}
-                        viewport={{ once: true }}
-                        className="absolute top-2 left-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
-                      >
-                        BESTSELLER
-                      </motion.span>
-                    )}
-                  </div>
-                  <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">
-                      {p.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{p.netWeight}</p>
-                    <div className="mt-auto flex justify-between items-center">
-                      <div>
-                        <span className="text-xs text-slate-400 line-through mr-2">
-                          ₹{(p.basePrice * 1.2).toFixed(0)}
-                        </span>
-                        <span className="font-bold text-slate-900 dark:text-white">₹{p.basePrice}</span>
-                      </div>
-                      <motion.button
-                        whileHover={{ scale: 1.2, rotate: 15 }}
-                        whileTap={{ scale: 0.8 }}
-                        className="w-8 h-8 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors"
-                      >
-                        <ShoppingBag size={14} />
-                      </motion.button>
-                    </div>
-                  </div>
-                </motion.div>
-              </Link>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
-      </div>
-    </section>
+      </section>
+
+      <QuickViewModal 
+        product={quickViewProduct}
+        isOpen={!!quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+      />
+    </>
   );
 };
 
@@ -607,7 +1017,7 @@ const OfferBanner = () => {
 
   useEffect(() => {
     axios
-      .get(`${API_URL}/api/coupons/public`)  // ✅ Changed from /api/coupons to /api/coupons/public
+      .get(`${API_URL}/api/coupons/public`)
       .then((res) => {
         if (res.data && res.data.length > 0) {
           const activeCoupon = res.data.find((c) => c.isActive) || res.data[0];
@@ -620,6 +1030,7 @@ const OfferBanner = () => {
   const handleCopy = () => {
     navigator.clipboard.writeText(offer.code);
     setCopied(true);
+    toast.success('Coupon code copied!', { icon: '📋' });
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -866,7 +1277,7 @@ const SeaBitePromise = () => {
   );
 };
 
-// --- WHY SEABITE TRUST SECTION ---
+// --- WHY SEABITE ---
 const WhySeaBite = () => {
   const features = [
     {
@@ -918,7 +1329,6 @@ const WhySeaBite = () => {
           </motion.p>
         </div>
 
-        {/* Stats Bar */}
         <SectionReveal direction="scale">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
             {[
@@ -943,7 +1353,6 @@ const WhySeaBite = () => {
           </div>
         </SectionReveal>
 
-        {/* Features Grid */}
         <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           {features.map((feature, i) => (
             <StaggerItem key={i}>
@@ -970,7 +1379,7 @@ const WhySeaBite = () => {
   );
 };
 
-// --- NEWSLETTER SECTION ---
+// --- NEWSLETTER ---
 const Newsletter = () => {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -979,6 +1388,7 @@ const Newsletter = () => {
     e.preventDefault();
     if (email) {
       setSubmitted(true);
+      toast.success('Thank you for subscribing!', { icon: '🎉' });
       setTimeout(() => setSubmitted(false), 3000);
       setEmail("");
     }
@@ -988,7 +1398,6 @@ const Newsletter = () => {
     <section className="py-16 px-6">
       <SectionReveal direction="up">
         <div className="max-w-3xl mx-auto bg-gradient-to-br from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 rounded-3xl p-8 md:p-14 text-center relative overflow-hidden shadow-2xl shadow-blue-600/20">
-          {/* Decorative elements */}
           <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-blue-400/10 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
 
@@ -1014,6 +1423,7 @@ const Newsletter = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
                 className="flex-1 px-5 py-3.5 rounded-xl bg-white/10 backdrop-blur border border-white/20 text-white placeholder:text-white/40 text-sm font-medium outline-none focus:ring-2 focus:ring-white/30 transition-all"
+                required
               />
               <motion.button
                 type="submit"
@@ -1045,7 +1455,6 @@ const Newsletter = () => {
 const Footer = () => {
   return (
     <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white border-t border-gray-200 dark:border-white/5 overflow-hidden transition-colors duration-300 z-10">
-      {/* Marquee Background */}
       <div className="absolute inset-0 flex items-center whitespace-nowrap pointer-events-none overflow-hidden">
         <motion.div
           initial={{ x: 0 }}
@@ -1062,7 +1471,6 @@ const Footer = () => {
         </motion.div>
       </div>
 
-      {/* CTA Section */}
       <div className="relative z-10 flex flex-col items-center justify-center py-24 text-center">
         <motion.div
           initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
@@ -1092,7 +1500,6 @@ const Footer = () => {
         </motion.div>
       </div>
 
-      {/* Footer Links */}
       <div className="relative z-10 border-t border-slate-200/50 dark:border-white/5 px-6 py-10">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-3">
@@ -1113,6 +1520,7 @@ const Footer = () => {
   );
 };
 
+// --- MAIN EXPORT ---
 export default function Home() {
   return (
     <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-colors duration-300">
@@ -1180,6 +1588,7 @@ export default function Home() {
         </div>
       </div>
       <Footer />
+      <ScrollToTopButton />
     </div>
   );
 }
