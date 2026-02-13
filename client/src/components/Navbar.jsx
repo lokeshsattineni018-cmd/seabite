@@ -128,11 +128,31 @@ export default function Navbar({ openCart }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // ✅ CHECK IF USER CAN SPIN - Only show popup if eligible
   useEffect(() => {
-    if (user) {
-      const timer = setTimeout(() => setShowSpinWheel(true), 2000);
-      return () => clearTimeout(timer);
-    }
+    const checkCanSpin = async () => {
+      if (!user) return;
+
+      try {
+        const res = await axios.get(`${API_URL}/api/spin/can-spin`, {
+          withCredentials: true,
+        });
+
+        console.log("Can spin response:", res.data);
+
+        if (res.data.canSpin) {
+          // Wait 2 seconds then show spin wheel
+          const timer = setTimeout(() => setShowSpinWheel(true), 2000);
+          return () => clearTimeout(timer);
+        } else {
+          console.log("User cannot spin:", res.data.reason);
+        }
+      } catch (err) {
+        console.error("Can spin check failed:", err);
+      }
+    };
+
+    checkCanSpin();
   }, [user]);
 
   const handleLogout = async () => {

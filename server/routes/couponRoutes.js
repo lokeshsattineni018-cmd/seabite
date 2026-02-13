@@ -3,45 +3,52 @@ import Coupon from "../models/Coupon.js";
 
 const router = express.Router();
 
-// 1. Validate Coupon (Checks MongoDB for user-bound prizes)
+// ✅ Validate ADMIN Coupons Only (not spin coupons)
 router.post("/validate", async (req, res) => {
   try {
-    const { code, cartTotal, email, isAutoCheck } = req.body;
-    let coupon;
+    const { code, cartTotal, email } = req.body;
+    
+    if (!code) {
+      return res.status(404).json({ success: false, message: "No coupon code provided." });
+    }
 
-    // FORCE lowercase for safe matching
     const safeEmail = (email || "").toLowerCase();
 
-    if (isAutoCheck && safeEmail) {
-      // Find the most recent unused spin coupon for this email in MongoDB
-      coupon = await Coupon.findOne({
-        userEmail: safeEmail,
-        isSpinCoupon: true,
-        isActive: true,
-        usedCount: 0
-      });
-    } else if (code) {
-      coupon = await Coupon.findOne({
-        code: code.toUpperCase(),
-        isActive: true,
-      });
-    }
+    // ✅ Find ADMIN coupon only (not spin coupons)
+    const coupon = await Coupon.findOne({
+      code: code.toUpperCase(),
+      isActive: true,
+      isSpinCoupon: false, // ✅ Only admin coupons
+    });
 
     if (!coupon) {
-      return res.status(404).json({ success: false, message: "No valid discount found for this account." });
+      return res.status(404).json({ success: false, message: "Invalid coupon code." });
     }
 
-    // Strict account binding check
+    // Check if user-specific
     if (coupon.userEmail && safeEmail !== coupon.userEmail.toLowerCase()) {
       return res.status(400).json({
         success: false,
-        message: "This reward belongs to a different account.",
+        message: "This coupon is not valid for your account.",
       });
     }
 
     // Check expiry
     if (coupon.expiresAt && coupon.expiresAt < new Date()) {
       return res.status(400).json({ success: false, message: "Coupon has expired." });
+    }
+
+    // Check min order amount
+    if (coupon.minOrderAmount > 0 && cartTotal < coupon.minOrderAmount) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Minimum order amount ₹${coupon.minOrderAmount} required.` 
+      });
+    }
+
+    // Check usage limit
+    if (coupon.maxUses > 0 && coupon.usedCount >= coupon.maxUses) {
+      return res.status(400).json({ success: false, message: "Coupon usage limit reached." });
     }
 
     // Calculate Discount
@@ -59,7 +66,7 @@ router.post("/validate", async (req, res) => {
       success: true,
       discountAmount: Math.floor(discountAmount),
       code: coupon.code,
-      message: "Reward found and applied!",
+      message: `${coupon.value}${coupon.discountType === 'percent' ? '%' : '₹'} discount applied!`,
     });
   } catch (error) {
     console.error(error);
@@ -67,10 +74,11 @@ router.post("/validate", async (req, res) => {
   }
 });
 
-// Admin Routes (Creation, etc.)
+// ✅ Admin: Create Coupon
 router.post("/", async (req, res) => {
   try {
-    const { code, value, minOrderAmount, discountType, maxDiscount, isActive } = req.body;
+    const { code, value, minOrderAmount, discountType, maxDiscount, isActive, expiresAt, maxUses } = req.body;
+    
     const newCoupon = await Coupon.create({
       code: code.toUpperCase(),
       value,
@@ -78,23 +86,61 @@ router.post("/", async (req, res) => {
       discountType: discountType || "percent",
       maxDiscount: maxDiscount || 0,
       isActive: typeof isActive === "boolean" ? isActive : true,
-      isSpinCoupon: false,
+      isSpinCoupon: false, // ✅ Admin coupons are NOT spin coupons
+      expiresAt: expiresAt || null,
+      maxUses: maxUses || 0,
     });
+    
     res.status(201).json(newCoupon);
   } catch (error) {
     res.status(500).json({ message: "Error creating coupon" });
   }
 });
 
+// ✅ Admin: Get ALL admin coupons (for admin panel)
 router.get("/", async (req, res) => {
   try {
-    const coupons = await Coupon.find().sort({ createdAt: -1 });
+    // Only return admin coupons in admin panel
+    const coupons = await Coupon.find({ isSpinCoupon: false }).sort({ createdAt: -1 });
     res.json(coupons);
   } catch (error) {
     res.status(500).json({ message: "Error fetching coupons" });
   }
 });
 
+// ✅ Public: Get ACTIVE admin coupons (for homepage display)
+router.get("/public", async (req, res) => {
+  try {
+    const coupons = await Coupon.find({
+      isActive: true,
+      isSpinCoupon: false, // ✅ Only admin coupons
+      $or: [
+        { expiresAt: { $gte: new Date() } },
+        { expiresAt: null }
+      ]
+    }).sort({ createdAt: -1 });
+    
+    res.json(coupons);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching coupons" });
+  }
+});
+
+// Admin: Update coupon
+router.put("/:id", async (req, res) => {
+  try {
+    const updated = await Coupon.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating coupon" });
+  }
+});
+
+// Admin: Delete coupon
 router.delete("/:id", async (req, res) => {
   try {
     await Coupon.findByIdAndDelete(req.params.id);

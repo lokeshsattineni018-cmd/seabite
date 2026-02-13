@@ -607,7 +607,7 @@ const OfferBanner = () => {
 
   useEffect(() => {
     axios
-      .get(`${API_URL}/api/coupons`)
+      .get(`${API_URL}/api/coupons/public`)  // ✅ Changed from /api/coupons to /api/coupons/public
       .then((res) => {
         if (res.data && res.data.length > 0) {
           const activeCoupon = res.data.find((c) => c.isActive) || res.data[0];
