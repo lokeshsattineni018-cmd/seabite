@@ -1,194 +1,464 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiShoppingBag,
-  FiChevronRight,
-  FiFileText,
-  FiMapPin,
+  FiClock,
   FiPackage,
+  FiMapPin,
+  FiCheck,
+  FiX,
+  FiRefreshCcw,
+  FiChevronRight,
+  FiShoppingBag,
   FiStar,
   FiEdit2,
+  FiTag,
 } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 import { ThemeContext } from "../context/ThemeContext";
 import ReviewModal from "../components/ReviewModal";
 import PopupModal from "../components/PopupModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// --- HERO 1: THE PRAWN JOURNEY (S-Curve Progress) ---
-const PrawnProgress = ({ progress, status }) => {
-  const isDelivered = status === "Delivered";
-  const isCancelled = status === "Cancelled";
+const getStatusClasses = (status) => {
+  switch (status) {
+    case "Delivered":
+      return {
+        bg: "bg-emerald-100 dark:bg-emerald-900/30",
+        text: "text-emerald-700 dark:text-emerald-400",
+        icon: <FiCheck size={14} className="mr-1.5" />,
+      };
+    case "Cancelled":
+      return {
+        bg: "bg-red-100 dark:bg-red-900/30",
+        text: "text-red-700 dark:text-red-400",
+        icon: <FiX size={14} className="mr-1.5" />,
+      };
+    default:
+      return {
+        bg: "bg-blue-100 dark:bg-blue-900/30",
+        text: "text-blue-700 dark:text-blue-400",
+        icon: <FiRefreshCcw size={14} className="mr-1.5" />,
+      };
+  }
+};
 
-  return (
-    <div className="relative w-32 h-20 flex flex-col items-center justify-center group">
-      <svg viewBox="0 0 100 50" className="w-full h-full drop-shadow-2xl">
-        {/* The organic path of the prawn */}
-        <path
-          d="M10,40 Q30,10 50,30 T90,10"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1"
-          className="text-white/10"
-        />
-        <motion.path
-          d="M10,40 Q30,10 50,30 T90,10"
-          fill="none"
-          stroke={isCancelled ? "#ef4444" : isDelivered ? "#f472b6" : "#3b82f6"}
-          strokeWidth="3"
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: progress / 100 }}
-          transition={{ duration: 2, ease: "easeInOut" }}
-        />
-        {/* Pulsing Eye/Head */}
-        <motion.circle
-          cx="90"
-          cy="10"
-          r="2"
-          fill={isDelivered ? "#f472b6" : "#3b82f6"}
-          animate={{ opacity: [0.3, 1, 0.3] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-        />
-      </svg>
-      <span className={`text-[8px] font-black uppercase tracking-widest mt-1 ${isDelivered ? 'text-pink-400' : 'text-blue-400'}`}>
-        {status}
-      </span>
-    </div>
-  );
+const formatCurrency = (amount) => {
+  if (amount === undefined || amount === null) return "\u20B90.00";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(amount);
 };
 
 export default function Order() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedReview, setSelectedReview] = useState(null);
-  const [modalConfig, setModalConfig] = useState({ show: false, message: "", type: "info" });
+  const [modalConfig, setModalConfig] = useState({
+    show: false,
+    message: "",
+    type: "info",
+  });
 
   const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
+  const FETCH_URL = `${API_URL}/api/orders/myorders`;
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get(FETCH_URL, { withCredentials: true });
+      setOrders(response.data);
+    } catch (err) {
+      console.error(err);
+      if (err.response && err.response.status === 401) {
+        setTimeout(() => navigate("/login"), 1000);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const handleMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
-    window.addEventListener("mousemove", handleMove);
-    const fetchOrders = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/api/orders/myorders`, { withCredentials: true });
-        setOrders(response.data);
-      } finally { setLoading(false); }
-    };
     fetchOrders();
-    return () => window.removeEventListener("mousemove", handleMove);
-  }, []);
+  }, [navigate]);
 
-  if (loading) return (
-    <div className="min-h-screen bg-[#020617] flex flex-col items-center justify-center">
-      <motion.div 
-        animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.7, 0.3] }}
-        transition={{ repeat: Infinity, duration: 2 }}
-        className="w-16 h-16 bg-blue-500/20 rounded-full blur-xl" 
-      />
-      <p className="text-blue-400 text-[10px] font-black uppercase tracking-[0.4em] mt-4 animate-pulse">Scanning Depths...</p>
-    </div>
-  );
+  const getUserReview = (item, orderUserId) => {
+    const productData = item.productId || item.product;
+    if (!productData || !productData.reviews) return null;
+    return productData.reviews.find((r) => {
+      const reviewUserId = typeof r.user === "object" ? r.user._id : r.user;
+      const currentUserId =
+        typeof orderUserId === "object" ? orderUserId._id : orderUserId;
+      return reviewUserId?.toString() === currentUserId?.toString();
+    });
+  };
+
+  const openReviewModal = (item, existingReview) => {
+    let realProductId;
+    if (item.productId) {
+      realProductId =
+        typeof item.productId === "object" ? item.productId._id : item.productId;
+    } else if (item.product) {
+      realProductId =
+        typeof item.product === "object" ? item.product._id : item.product;
+    } else {
+      realProductId = item._id;
+    }
+    const productData = { _id: realProductId, name: item.name };
+    setSelectedProduct(productData);
+    setSelectedReview(existingReview);
+    setIsReviewOpen(true);
+  };
+
+  const handleReviewSuccess = () => {
+    setModalConfig({
+      show: true,
+      message: "Review Saved Successfully!",
+      type: "success",
+    });
+    fetchOrders();
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] flex flex-col items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-blue-100 border-t-blue-600 rounded-full mb-4"
+        />
+        <p className="text-slate-500 font-medium tracking-widest text-xs uppercase">
+          Loading History...
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white p-4 md:p-12 pt-32 md:pt-44 relative overflow-hidden">
-      
-      {/* 2. THE SCHOOL OF FISH (Interactive Background) */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-blue-400/20 rounded-full blur-[1px]"
-            animate={{
-              x: [Math.random() * 1000, Math.random() * 1200],
-              y: [Math.random() * 800, Math.random() * 900],
-            }}
-            transition={{ duration: 20 + Math.random() * 10, repeat: Infinity, ease: "linear" }}
-            style={{
-              left: (mousePos.x * 0.015) + (i * 50) + "px",
-              top: (mousePos.y * 0.015) + (i * 30) + "px",
-            }}
-          />
-        ))}
-      </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-200 p-4 md:p-8 font-sans transition-colors duration-500 pt-24 md:pt-36 overflow-x-hidden">
+      <PopupModal
+        show={modalConfig.show}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onClose={() => setModalConfig({ ...modalConfig, show: false })}
+      />
 
-      <div className="max-w-6xl mx-auto relative z-10">
-        {/* HEADER: Fluid Typography */}
-        <header className="mb-24">
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }}>
-            <span className="text-blue-500 font-black text-[10px] uppercase tracking-[0.6em] mb-4 block">SeaBite Vault</span>
-            <h1 className="text-6xl md:text-9xl font-serif font-bold tracking-tighter leading-none mb-4">
-              Your <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-200 to-blue-900 italic font-light">Catches</span>
-            </h1>
-          </motion.div>
-        </header>
+      <ReviewModal
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        product={selectedProduct}
+        existingReview={selectedReview}
+        token={null}
+        API_URL={API_URL}
+        onSuccess={handleReviewSuccess}
+      />
+
+      <div className="fixed top-0 left-0 w-full h-[400px] bg-gradient-to-b from-blue-100/40 to-transparent dark:from-blue-900/10 pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: -20, filter: "blur(8px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4"
+        >
+          <div>
+            <br className="hidden md:block" />
+            <br className="hidden md:block" />
+            <br className="hidden md:block" />
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">
+              My<span className="text-blue-600">Orders</span>
+            </h2>
+          </div>
+          {orders.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="px-4 py-1.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 shadow-sm text-xs font-bold text-slate-600 dark:text-slate-300"
+            >
+              {orders.length} {orders.length === 1 ? "Order" : "Orders"}
+            </motion.div>
+          )}
+        </motion.div>
 
         {orders.length === 0 ? (
-            <div className="text-center py-20 bg-white/5 backdrop-blur-3xl rounded-[3rem] border border-white/10">
-                <FiShoppingBag className="mx-auto mb-6 text-blue-500/50" size={50} />
-                <p className="font-serif italic text-xl">The waters are quiet. No catches found.</p>
-                <button onClick={() => navigate("/products")} className="mt-8 px-10 py-4 bg-blue-600 rounded-full font-bold text-xs uppercase tracking-widest">Explore Market</button>
+          <motion.div
+            initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="bg-white dark:bg-slate-800 p-8 md:p-12 rounded-[2rem] border border-slate-100 dark:border-white/5 text-center shadow-xl"
+          >
+            <div className="w-16 h-16 bg-blue-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FiShoppingBag className="text-blue-400 dark:text-slate-400" size={28} />
             </div>
+            <h3 className="text-xl font-serif font-bold text-slate-900 dark:text-white mb-2">
+              No Past Orders
+            </h3>
+            <p className="text-xs text-slate-500 mb-6 max-w-xs mx-auto">
+              You haven't placed any orders yet. Visit the marketplace to catch
+              something fresh.
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/products")}
+              className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 rounded-full font-bold text-xs hover:bg-blue-600 transition-colors shadow-lg"
+            >
+              Start Shopping
+            </motion.button>
+          </motion.div>
         ) : (
-          <div className="space-y-24">
-            {orders.map((order, index) => (
-              <motion.div
-                key={order._id}
-                initial={{ opacity: 0, filter: "blur(20px)" }}
-                whileInView={{ opacity: 1, filter: "blur(0px)" }}
-                viewport={{ once: true }}
-                className="relative group"
-              >
-                {/* 3. FLUID CONTENT CONTAINER */}
-                <div className="flex flex-col lg:flex-row items-center gap-12 bg-gradient-to-br from-white/5 to-transparent backdrop-blur-2xl p-10 md:p-16 rounded-[4rem] border border-white/10 hover:border-blue-500/40 transition-all duration-700">
-                  
-                  {/* Prawn Visualization */}
-                  <div className="shrink-0 scale-125 md:scale-150">
-                    <PrawnProgress 
-                      status={order.status} 
-                      progress={order.status === "Delivered" ? 100 : order.status === "Shipped" ? 70 : 30} 
-                    />
-                  </div>
+          <div className="grid grid-cols-1 gap-6">
+            <AnimatePresence>
+              {orders.map((order, index) => {
+                const statusInfo = getStatusClasses(order.status);
+                const isDelivered = order.status === "Delivered";
 
-                  {/* Info Section */}
-                  <div className="flex-1 text-center lg:text-left space-y-4">
-                    <div className="inline-block px-4 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-[9px] font-black uppercase tracking-widest text-blue-400">
-                      ID: #{order.orderId || order._id.slice(-6).toUpperCase()}
-                    </div>
-                    <h2 className="text-3xl md:text-5xl font-serif font-bold">
-                      {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(order.totalAmount)}
-                    </h2>
-                    <p className="text-slate-400 text-xs font-medium tracking-wide flex items-center justify-center lg:justify-start gap-2">
-                       <FiMapPin className="text-blue-500" /> {order.shippingAddress?.city} — {order.items.length} Varieties
-                    </p>
-                  </div>
-
-                  {/* Navigation Trigger */}
-                  <button 
-                    onClick={() => navigate(`/orders/${order._id}`)}
-                    className="w-20 h-20 rounded-full border border-white/10 flex items-center justify-center group-hover:bg-blue-600 group-hover:border-blue-600 transition-all duration-500 shadow-2xl"
+                return (
+                  <motion.div
+                    key={order._id}
+                    initial={{ opacity: 0, y: 30, filter: "blur(6px)" }}
+                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                    transition={{
+                      delay: index * 0.08,
+                      duration: 0.6,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                    className="bg-white dark:bg-slate-800 rounded-[1.5rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 group"
                   >
-                    <FiChevronRight size={30} className="group-hover:translate-x-1 transition-transform" />
-                  </button>
-                </div>
+                    <div className="p-4 md:p-5 flex flex-col sm:flex-row justify-between items-start gap-3 border-b border-slate-100 dark:border-slate-700/50">
+                      <div className="flex gap-3 items-center">
+                        <div className="p-2.5 bg-blue-50 dark:bg-slate-700 rounded-xl hidden xs:block">
+                          <FiPackage
+                            className="text-blue-600 dark:text-blue-400"
+                            size={20}
+                          />
+                        </div>
+                        <div>
+                          <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            Order ID
+                          </p>
+                          <h3 className="text-sm md:text-base font-mono font-bold text-slate-900 dark:text-white">
+                            #{order.orderId || order._id.slice(-6).toUpperCase()}
+                          </h3>
+                          <p className="flex items-center text-[10px] text-slate-500 font-medium mt-0.5">
+                            <FiClock size={10} className="mr-1" />
+                            {new Date(order.createdAt).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </p>
+                        </div>
+                      </div>
 
-                {/* Bioluminescent Glow */}
-                <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-              </motion.div>
-            ))}
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                            order.paymentMethod === "Prepaid"
+                              ? "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400"
+                              : "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400"
+                          }`}
+                        >
+                          {order.paymentMethod || "COD"}
+                        </span>
+                        <div
+                          className={`px-3 py-1 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-wide flex items-center shadow-sm ${statusInfo.bg} ${statusInfo.text}`}
+                        >
+                          {statusInfo.icon} {order.status}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 md:p-5 grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div className="space-y-3 bg-slate-50/50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                        <div>
+                          <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
+                            Bill Details
+                          </p>
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between text-[10px] md:text-[11px] font-semibold text-slate-500">
+                              <span>Subtotal</span>
+                              <span className="text-slate-700 dark:text-slate-300">
+                                {"\u20B9"}{(order.itemsPrice || 0).toFixed(2)}
+                              </span>
+                            </div>
+
+                            {order.discount > 0 && (
+                              <div className="flex justify-between text-[9px] md:text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-1.5 py-1 rounded border border-emerald-100 dark:border-emerald-800/30">
+                                <span className="flex items-center gap-1">
+                                  <FiTag size={10} /> Coupon
+                                </span>
+                                <span>- {"\u20B9"}{(order.discount || 0).toFixed(2)}</span>
+                              </div>
+                            )}
+
+                            <div className="flex justify-between text-[10px] md:text-[11px] font-semibold text-slate-500">
+                              <span>Shipping Fee</span>
+                              <span
+                                className={
+                                  order.shippingPrice === 0
+                                    ? "text-emerald-500 font-bold"
+                                    : "text-slate-700 dark:text-slate-300"
+                                }
+                              >
+                                {order.shippingPrice === 0
+                                  ? "FREE"
+                                  : `\u20B9${order.shippingPrice.toFixed(2)}`}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-[10px] md:text-[11px] font-semibold text-slate-500">
+                              <span>Tax (GST 5%)</span>
+                              <span className="text-slate-700 dark:text-slate-300">
+                                {"\u20B9"}{(order.taxPrice || 0).toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex flex-col">
+                          <span className="text-[10px] md:text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                            {formatCurrency(order.totalAmount)}{" "}
+                            {order.isPaid ? "Paid" : "Payable"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="md:col-span-2 flex flex-col justify-center">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg text-blue-500 shrink-0">
+                            <FiMapPin size={16} />
+                          </div>
+                          <div>
+                            <p className="text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+                              Shipping To
+                            </p>
+                            <p className="text-xs md:text-sm font-bold text-slate-900 dark:text-white mb-0.5">
+                              {order.shippingAddress?.fullName}
+                            </p>
+                            <p className="text-[11px] text-slate-500 leading-snug">
+                              {order.shippingAddress?.houseNo},{" "}
+                              {order.shippingAddress?.street},{" "}
+                              {order.shippingAddress?.city} --{" "}
+                              {order.shippingAddress?.zip}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <details className="group/details">
+                      <summary className="list-none px-4 md:px-5 py-3 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700/50 cursor-pointer flex justify-between items-center select-none">
+                        <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                          <FiShoppingBag size={12} /> Items ({order.items.length})
+                        </span>
+                        <FiChevronRight
+                          className="transition-transform duration-300 group-open/details:rotate-90 text-slate-400"
+                          size={16}
+                        />
+                      </summary>
+
+                      <div className="p-4 md:p-5 bg-slate-50 dark:bg-slate-900/50 pt-0 space-y-4">
+                        <div className="h-px bg-slate-200 dark:bg-slate-700 w-full mb-4" />
+                        {order.items.map((item, idx) => {
+                          const myReview = getUserReview(item, order.user);
+                          return (
+                            <div key={idx} className="flex flex-col gap-2">
+                              <div className="flex flex-row items-center gap-3 justify-between">
+                                <div className="flex items-center gap-2 md:gap-3 overflow-hidden">
+                                  <div className="relative shrink-0">
+                                    <img
+                                      src={`${API_URL}/uploads/${item.image
+                                        ?.replace(/^\/|\\/g, "")
+                                        .replace("uploads/", "")}`}
+                                      alt={item.name}
+                                      className="w-10 h-10 md:w-12 md:h-12 object-contain rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-1 shadow-sm"
+                                      onError={(e) => {
+                                        e.target.src =
+                                          "https://via.placeholder.com/100?text=SeaBite";
+                                      }}
+                                    />
+                                    <span className="absolute -top-1.5 -right-1.5 bg-blue-600 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center border border-white">
+                                      {item.qty}
+                                    </span>
+                                  </div>
+                                  <div className="min-w-0">
+                                    <h4 className="font-bold text-slate-900 dark:text-white text-[11px] md:text-xs truncate">
+                                      {item.name}
+                                    </h4>
+                                    <p className="text-[9px] md:text-[10px] text-slate-500">
+                                      {formatCurrency(item.price)}
+                                    </p>
+                                  </div>
+                                </div>
+                                {isDelivered && (
+                                  <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                                    {myReview && (
+                                      <div className="hidden sm:flex text-amber-400">
+                                        {[...Array(5)].map((_, i) => (
+                                          <FiStar
+                                            key={i}
+                                            size={10}
+                                            fill={
+                                              i < myReview.rating
+                                                ? "currentColor"
+                                                : "none"
+                                            }
+                                          />
+                                        ))}
+                                      </div>
+                                    )}
+                                    {myReview ? (
+                                      <button
+                                        onClick={() =>
+                                          openReviewModal(item, myReview)
+                                        }
+                                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-[9px] md:text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 rounded-full hover:bg-blue-100"
+                                      >
+                                        <FiEdit2 size={10} /> Edit
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() =>
+                                          openReviewModal(item, null)
+                                        }
+                                        className="flex items-center gap-1.5 px-2.5 py-1.5 text-[9px] md:text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-full hover:bg-amber-100"
+                                      >
+                                        <FiStar size={10} /> Review
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </details>
+
+                    <div className="px-4 md:px-5 py-3 flex justify-end border-t border-slate-100 dark:border-slate-700/50 bg-slate-50/30 dark:bg-slate-900/20">
+                      <motion.button
+                        whileHover={{ x: 4 }}
+                        onClick={() => navigate(`/orders/${order._id}`)}
+                        className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 hover:text-blue-800 transition-all flex items-center gap-1.5"
+                      >
+                        Details & Tracking <FiChevronRight size={14} />
+                      </motion.button>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         )}
       </div>
-
-      <footer className="mt-40 py-20 text-center opacity-20 text-[10px] font-black uppercase tracking-[1em]">
-        End of Depth
-      </footer>
     </div>
   );
 }

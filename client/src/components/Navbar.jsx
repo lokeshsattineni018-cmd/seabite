@@ -108,7 +108,7 @@ export default function Navbar({ openCart }) {
       });
       setUnreadCount(res.data.filter((n) => !n.read).length);
     } catch (err) {
-      console.error("Notification fetch failed");
+     // console.error("Notification fetch failed");
     }
   };
 

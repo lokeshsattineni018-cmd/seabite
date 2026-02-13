@@ -1,202 +1,239 @@
-import React, { useState, useEffect, useContext, useMemo } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSearch, FiShoppingBag, FiChevronRight, FiFileText, FiTruck, FiRefreshCw } from "react-icons/fi";
+import {
+  FiShoppingBag,
+  FiCalendar,
+  FiChevronRight,
+  FiAlertCircle,
+  FiPackage,
+  FiTruck,
+} from "react-icons/fi";
 import { ThemeContext } from "../context/ThemeContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// --- HERO COMPONENT: THE PRAWN JOURNEY ---
-const PrawnProgress = ({ progress, status }) => {
-  const isDelivered = status === "Delivered";
-  return (
-    <div className="relative w-24 h-20 flex items-center justify-center">
-      <svg viewBox="0 0 100 60" className="w-full h-full drop-shadow-[0_0_10px_rgba(59,130,246,0.4)]">
-        {/* Organic S-Curve Path */}
-        <motion.path
-          d="M10,45 Q30,5 50,30 T90,15"
-          fill="none"
-          stroke={isDelivered ? "#fb7185" : "#3b82f6"} // Coral pink if delivered, Bio-blue if processing
-          strokeWidth="3"
-          strokeLinecap="round"
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: Math.max(0.1, progress / 100) }}
-          transition={{ duration: 2, ease: "easeInOut" }}
-        />
-        {/* The Head / Eye Pulse */}
-        <motion.circle
-          cx="90" cy="15" r="2.5"
-          fill={isDelivered ? "#fda4af" : "#60a5fa"}
-          animate={{ opacity: [0.3, 1, 0.3], scale: [1, 1.2, 1] }}
-          transition={{ repeat: Infinity, duration: 2 }}
-        />
-      </svg>
-    </div>
-  );
-};
-
-// --- HERO COMPONENT: THE CRAB PINCER HUB ---
-const CrabActions = ({ onTrack, onInvoice }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  return (
-    <div className="relative" onMouseEnter={() => setIsOpen(true)} onMouseLeave={() => setIsOpen(false)}>
-      <motion.div 
-        animate={{ y: [0, -4, 0] }}
-        transition={{ repeat: Infinity, duration: 3 }}
-        className="w-14 h-10 bg-orange-600 dark:bg-orange-500 rounded-t-full relative cursor-pointer shadow-xl z-20"
-      >
-        <div className="absolute -left-1 top-2 w-3 h-5 bg-orange-700 rounded-full origin-bottom -rotate-12" />
-        <div className="absolute -right-1 top-2 w-3 h-5 bg-orange-700 rounded-full origin-bottom rotate-12" />
-      </motion.div>
-
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0, scale: 0, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0, y: 20 }}
-            className="absolute bottom-full mb-4 left-1/2 -translate-x-1/2 flex gap-3 z-10"
-          >
-            <button onClick={onTrack} className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-blue-600 transition-all text-white" title="Track">
-              <FiTruck size={18} />
-            </button>
-            <button onClick={onInvoice} className="p-3 bg-white/10 backdrop-blur-md border border-white/20 rounded-full hover:bg-emerald-600 transition-all text-white" title="Invoice">
-              <FiFileText size={18} />
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+const formatCurrency = (amount) => {
+  if (amount === undefined || amount === null) return "\u20B90.00";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 2,
+  }).format(amount);
 };
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [error, setError] = useState(null);
+  const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
-    window.addEventListener("mousemove", handleMove);
-    const fetch = async () => {
+    const fetchOrders = async () => {
       try {
-        const res = await axios.get(`${API_URL}/api/orders/myorders`, { withCredentials: true });
+        const res = await axios.get(`${API_URL}/api/orders/myorders`, {
+          withCredentials: true,
+        });
         setOrders(res.data);
-      } finally { setLoading(false); }
+      } catch (err) {
+        console.error("Failed to fetch orders:", err);
+        if (err.response && err.response.status === 401) {
+          // not authenticated
+        } else {
+          setError(
+            "Unable to load order history. Please try again later."
+          );
+        }
+      } finally {
+        setLoading(false);
+      }
     };
-    fetch();
-    return () => window.removeEventListener("mousemove", handleMove);
+
+    fetchOrders();
   }, []);
 
-  const filteredOrders = useMemo(() => orders.filter(o => 
-    (o.orderId || o._id).toLowerCase().includes(searchTerm.toLowerCase())
-  ), [orders, searchTerm]);
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-GB", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] flex flex-col items-center justify-center transition-colors duration-500">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-4 border-blue-100 border-t-blue-600 rounded-full mb-6"
+        />
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+          className="text-slate-500 font-medium tracking-widest text-sm uppercase"
+        >
+          Loading History...
+        </motion.p>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white p-6 md:p-12 pt-32 relative overflow-hidden selection:bg-blue-500/30">
-      
-      {/* 1. THE SCHOOL OF FISH (Interactive Background) */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        {[...Array(18)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-blue-400/20 rounded-full blur-[1px]"
-            animate={{
-              x: [Math.random() * 1000, Math.random() * 1200],
-              y: [Math.random() * 800, Math.random() * 1000],
-            }}
-            transition={{ duration: 25 + Math.random() * 10, repeat: Infinity, ease: "linear" }}
-            style={{
-              left: (mousePos.x * 0.02) + (i * 40) + "px",
-              top: (mousePos.y * 0.02) + (i * 40) + "px",
-            }}
-          />
-        ))}
-      </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-900 dark:text-slate-200 p-4 md:p-12 font-sans transition-colors duration-500 pt-24 md:pt-32 relative overflow-x-hidden">
+      {/* Ambient */}
+      <div className="fixed top-0 left-0 w-full h-[500px] bg-gradient-to-b from-blue-100/40 to-transparent dark:from-blue-900/10 pointer-events-none -z-10" />
 
-      <div className="max-w-6xl mx-auto relative z-10">
-        <header className="mb-24">
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }}>
-            <span className="text-blue-500 font-black text-[10px] uppercase tracking-[0.6em] mb-4 block">SeaBite Deep Storage</span>
-            <h1 className="text-6xl md:text-9xl font-serif font-bold tracking-tighter leading-none">
-              Your <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-100 to-blue-900 italic font-light">Archive</span>
+      <div className="max-w-5xl mx-auto relative z-10">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: -20, filter: "blur(8px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 md:mb-12 gap-4"
+        >
+          <div>
+            <span className="text-[10px] md:text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest mb-1 md:mb-2 block">
+              Account Activity
+            </span>
+            <h1 className="text-3xl md:text-5xl font-serif font-bold text-slate-900 dark:text-white tracking-tight">
+              Past <span className="text-blue-600">Orders</span>
             </h1>
+          </div>
+          {orders.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="bg-white dark:bg-slate-800 px-4 py-1.5 md:px-5 md:py-2 rounded-full border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-[10px] md:text-sm font-bold shadow-sm"
+            >
+              {orders.length} Records Found
+            </motion.div>
+          )}
+        </motion.div>
+
+        {error ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-8 text-center bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-900/20 rounded-3xl text-red-600 dark:text-red-400 font-medium flex flex-col items-center justify-center gap-2"
+          >
+            <FiAlertCircle size={32} />
+            {error}
           </motion.div>
-
-          <div className="mt-12 relative max-w-md group">
-            <FiSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-blue-400 group-focus-within:scale-125 transition-transform" />
-            <input 
-              type="text" 
-              placeholder="Target a Reference ID..." 
-              className="w-full bg-white/5 backdrop-blur-2xl border border-white/10 rounded-full py-5 pl-14 pr-8 text-sm outline-none focus:border-blue-500/50 transition-all"
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </header>
-
-        {loading ? (
-          <div className="space-y-12 animate-pulse">
-            {[1, 2].map(n => <div key={n} className="h-64 bg-white/5 rounded-[4rem]" />)}
-          </div>
+        ) : orders.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="bg-white dark:bg-slate-800 p-10 md:p-16 rounded-[2rem] border border-slate-100 dark:border-white/5 text-center shadow-xl shadow-slate-200/50 dark:shadow-none"
+          >
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-blue-50 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FiShoppingBag
+                className="text-blue-400 dark:text-slate-400"
+                size={28}
+              />
+            </div>
+            <h3 className="text-xl md:text-2xl font-serif font-bold text-slate-900 dark:text-white mb-2">
+              No Order History
+            </h3>
+            <p className="text-xs md:text-sm text-slate-500 mb-8 max-w-md mx-auto px-4">
+              It looks like you haven't made any purchases yet.
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/products")}
+              className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-2.5 md:px-8 md:py-3 rounded-full font-bold text-xs md:text-sm hover:bg-blue-600 dark:hover:bg-blue-100 transition-colors shadow-lg"
+            >
+              Start Shopping
+            </motion.button>
+          </motion.div>
         ) : (
-          <div className="space-y-32">
+          <div className="grid gap-4 md:gap-6">
             <AnimatePresence mode="popLayout">
-              {filteredOrders.map((order, idx) => (
+              {orders.map((order, index) => (
                 <motion.div
                   key={order._id}
-                  layout
-                  initial={{ opacity: 0, filter: "blur(20px)" }}
-                  whileInView={{ opacity: 1, filter: "blur(0px)" }}
-                  className="relative group"
+                  initial={{ y: 30, opacity: 0, filter: "blur(6px)" }}
+                  animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
+                  transition={{
+                    delay: index * 0.08,
+                    duration: 0.6,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  whileHover={{
+                    y: -3,
+                    boxShadow: "0 20px 50px rgba(0,0,0,0.08)",
+                  }}
+                  className="bg-white dark:bg-slate-800 p-5 md:p-8 rounded-[1.5rem] md:rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-100 dark:border-white/5 group cursor-pointer"
+                  onClick={() =>
+                    navigate(`/orders/${order.orderId || order._id}`)
+                  }
                 >
-                  {/* FLUID WATER POCKET CONTAINER */}
-                  <div className="flex flex-col lg:flex-row items-center gap-12 bg-gradient-to-br from-white/10 to-transparent backdrop-blur-3xl p-10 md:p-16 rounded-[4rem] border border-white/5 hover:border-blue-500/40 transition-all duration-700">
-                    
-                    {/* Prawn Progress Section */}
-                    <div className="shrink-0 scale-125 md:scale-150 group-hover:rotate-6 transition-transform duration-700">
-                      <PrawnProgress 
-                        status={order.status} 
-                        progress={order.status === "Delivered" ? 100 : order.status === "Shipped" ? 70 : 35} 
-                      />
+                  <div className="flex flex-col md:flex-row gap-4 md:gap-12 items-start md:items-center">
+                    {/* Icon */}
+                    <div className="hidden md:flex shrink-0 w-16 h-16 bg-blue-50 dark:bg-slate-700/50 rounded-2xl items-center justify-center text-blue-600 dark:text-blue-400">
+                      {order.status === "Delivered" ? (
+                        <FiPackage size={24} />
+                      ) : (
+                        <FiTruck size={24} />
+                      )}
                     </div>
 
-                    {/* Meta Section */}
-                    <div className="flex-1 text-center lg:text-left space-y-4">
-                      <p className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-400">Biological Record</p>
-                      <h2 className="text-3xl md:text-5xl font-serif font-bold tracking-tight">
-                        {new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(order.totalAmount)}
-                      </h2>
-                      <div className="flex flex-wrap justify-center lg:justify-start gap-4 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                        <span className="bg-white/5 px-3 py-1 rounded-full border border-white/10">ID: #{order._id.slice(-6).toUpperCase()}</span>
-                        <span className="bg-white/5 px-3 py-1 rounded-full border border-white/10">{order.items.length} Varieties</span>
+                    {/* Info */}
+                    <div className="flex-1 w-full">
+                      <div className="flex items-center justify-between md:justify-start gap-3">
+                        <h3 className="font-mono font-bold text-base md:text-lg text-slate-900 dark:text-white">
+                          #{order.orderId || order._id.slice(-6).toUpperCase()}
+                        </h3>
+                        <span
+                          className={`text-[8px] md:text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 md:px-3 md:py-1 rounded-full border ${
+                            order.status === "Delivered"
+                              ? "bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-900/30"
+                              : "bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-900/30"
+                          }`}
+                        >
+                          {order.status}
+                        </span>
                       </div>
+                      <p className="text-[11px] md:text-sm text-slate-500 flex items-center gap-2 mt-1">
+                        <FiCalendar size={12} /> {formatDate(order.createdAt)}
+                      </p>
                     </div>
 
-                    {/* Crab Action Hub */}
-                    <div className="shrink-0">
-                      <CrabActions 
-                        onTrack={() => navigate(`/orders/${order._id}`)}
-                        onInvoice={() => window.print()}
-                      />
+                    {/* Total */}
+                    <div className="flex flex-row md:flex-col justify-between md:justify-center items-center md:items-end min-w-0 md:min-w-[120px] w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-50 dark:border-slate-700/50">
+                      <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider md:mb-1">
+                        Total Amount
+                      </p>
+                      <p className="text-lg md:text-xl font-bold text-slate-900 dark:text-white font-sans">
+                        {formatCurrency(order.totalAmount)}
+                      </p>
                     </div>
+
+                    {/* Arrow */}
+                    <motion.div
+                      whileHover={{ scale: 1.1 }}
+                      className="hidden md:flex w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 items-center justify-center text-slate-400 group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-white dark:group-hover:text-slate-900 transition-colors"
+                    >
+                      <FiChevronRight size={18} />
+                    </motion.div>
                   </div>
 
-                  {/* Bioluminescent Glow */}
-                  <div className="absolute inset-0 bg-blue-500/10 blur-[120px] rounded-full -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                  {/* Mobile link */}
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 md:hidden flex justify-between items-center text-blue-600 dark:text-blue-400 text-xs font-bold">
+                    View Order Details <FiChevronRight />
+                  </div>
                 </motion.div>
               ))}
             </AnimatePresence>
           </div>
         )}
       </div>
-
-      <footer className="mt-60 py-20 text-center opacity-10 text-[10px] font-black uppercase tracking-[2em]">
-        Bottom of the Abyss
-      </footer>
     </div>
   );
 }
