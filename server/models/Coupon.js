@@ -5,7 +5,8 @@ const couponSchema = new mongoose.Schema({
     type: String, 
     required: true, 
     unique: true, 
-    uppercase: true 
+    uppercase: true,
+    trim: true // ✅ Added trim
   },
 
   // Global logic for standard coupons
@@ -43,7 +44,7 @@ const couponSchema = new mongoose.Schema({
   userEmail: { 
     type: String, 
     default: null, 
-    lowercase: true, // ✅ FIX: Ensures email matching always works with sessions
+    lowercase: true, // ✅ Ensures email matching always works with sessions
     trim: true 
   }, 
   expiresAt: { 

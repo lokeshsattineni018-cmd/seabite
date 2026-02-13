@@ -69,31 +69,74 @@ router.post("/validate", async (req, res) => {
       message: `${coupon.value}${coupon.discountType === 'percent' ? '%' : '₹'} discount applied!`,
     });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Validate coupon error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
-// ✅ Admin: Create Coupon
+// ✅ Admin: Create Coupon (FIXED WITH PROPER ERROR HANDLING)
 router.post("/", async (req, res) => {
   try {
+    console.log("📥 Received coupon creation request:", req.body);
+
     const { code, value, minOrderAmount, discountType, maxDiscount, isActive, expiresAt, maxUses } = req.body;
     
-    const newCoupon = await Coupon.create({
-      code: code.toUpperCase(),
-      value,
-      minOrderAmount: minOrderAmount || 0,
+    // ✅ Validation
+    if (!code || code.trim() === "") {
+      console.log("❌ Validation failed: No code provided");
+      return res.status(400).json({ message: "Coupon code is required" });
+    }
+
+    if (!value || isNaN(value) || Number(value) <= 0) {
+      console.log("❌ Validation failed: Invalid value");
+      return res.status(400).json({ message: "Valid discount value is required" });
+    }
+
+    // ✅ Check for duplicate code
+    const existing = await Coupon.findOne({ code: code.toUpperCase() });
+    if (existing) {
+      console.log(`❌ Duplicate code: ${code.toUpperCase()} already exists`);
+      return res.status(400).json({ message: `Coupon code "${code.toUpperCase()}" already exists!` });
+    }
+
+    // ✅ Prepare coupon data with proper type conversion
+    const couponData = {
+      code: code.toUpperCase().trim(),
+      value: Number(value),
+      minOrderAmount: minOrderAmount ? Number(minOrderAmount) : 0,
       discountType: discountType || "percent",
-      maxDiscount: maxDiscount || 0,
+      maxDiscount: maxDiscount ? Number(maxDiscount) : 0,
       isActive: typeof isActive === "boolean" ? isActive : true,
       isSpinCoupon: false, // ✅ Admin coupons are NOT spin coupons
       expiresAt: expiresAt || null,
-      maxUses: maxUses || 0,
-    });
+      maxUses: maxUses ? Number(maxUses) : 0,
+      usedCount: 0, // ✅ Initialize usedCount
+    };
+
+    console.log("💾 Creating coupon with data:", couponData);
+
+    const newCoupon = await Coupon.create(couponData);
+    
+    console.log("✅ Coupon created successfully:", newCoupon._id);
     
     res.status(201).json(newCoupon);
   } catch (error) {
-    res.status(500).json({ message: "Error creating coupon" });
+    console.error("❌ Create coupon error:");
+    console.error("   Error name:", error.name);
+    console.error("   Error message:", error.message);
+    console.error("   Error code:", error.code);
+    if (error.errors) {
+      console.error("   Validation errors:", error.errors);
+    }
+    console.error("   Full error:", error);
+    
+    // ✅ Send detailed error response
+    res.status(500).json({ 
+      message: "Error creating coupon", 
+      error: error.message,
+      errorType: error.name,
+      details: error.errors ? Object.keys(error.errors).join(", ") : null
+    });
   }
 });
 
@@ -104,6 +147,7 @@ router.get("/", async (req, res) => {
     const coupons = await Coupon.find({ isSpinCoupon: false }).sort({ createdAt: -1 });
     res.json(coupons);
   } catch (error) {
+    console.error("❌ Fetch coupons error:", error);
     res.status(500).json({ message: "Error fetching coupons" });
   }
 });
@@ -122,6 +166,7 @@ router.get("/public", async (req, res) => {
     
     res.json(coupons);
   } catch (error) {
+    console.error("❌ Fetch public coupons error:", error);
     res.status(500).json({ message: "Error fetching coupons" });
   }
 });
@@ -132,10 +177,16 @@ router.put("/:id", async (req, res) => {
     const updated = await Coupon.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true }
+      { new: true, runValidators: true }
     );
+    
+    if (!updated) {
+      return res.status(404).json({ message: "Coupon not found" });
+    }
+    
     res.json(updated);
   } catch (error) {
+    console.error("❌ Update coupon error:", error);
     res.status(500).json({ message: "Error updating coupon" });
   }
 });
@@ -143,9 +194,15 @@ router.put("/:id", async (req, res) => {
 // Admin: Delete coupon
 router.delete("/:id", async (req, res) => {
   try {
-    await Coupon.findByIdAndDelete(req.params.id);
+    const deleted = await Coupon.findByIdAndDelete(req.params.id);
+    
+    if (!deleted) {
+      return res.status(404).json({ message: "Coupon not found" });
+    }
+    
     res.json({ success: true, message: "Coupon Deleted" });
   } catch (error) {
+    console.error("❌ Delete coupon error:", error);
     res.status(500).json({ message: "Error deleting coupon" });
   }
 });
