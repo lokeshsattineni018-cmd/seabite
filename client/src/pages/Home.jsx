@@ -170,7 +170,7 @@ const ScrollToTopButton = () => {
   );
 };
 
-// --- ENHANCED PRODUCT CARD (Simplified - No wishlist, share, quick view) ---
+// --- ENHANCED PRODUCT CARD ---
 const EnhancedProductCard = ({ product }) => {
   const { addToCart } = useContext(CartContext);
   const [quantity, setQuantity] = useState(1);
@@ -526,7 +526,7 @@ const categories = [
 const CategoryPanel = () => {
   const [hovered, setHovered] = useState(0);
   return (
-    <section className="py-20 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
+    <section className="py-16 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto mb-12 text-center relative z-10">
         <TextReveal
           text="Shop By Category"
@@ -630,7 +630,7 @@ const FlashSale = () => {
   const formatTime = (value) => value.toString().padStart(2, "0");
 
   return (
-    <section className="py-10 px-4">
+    <section className="py-8 px-4">
       <motion.div
         whileHover={{ scale: 1.01 }}
         transition={{ duration: 0.4 }}
@@ -758,11 +758,11 @@ const CategoryRow = ({ title, filterType }) => {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-12 px-4 md:px-8">
+    <section className="py-8 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            {filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />}
+          <h2 className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white flex items-center gap-3">
+            {filterType === "Fish" ? <Fish className="text-blue-500" size={32} /> : <Anchor className="text-orange-500" size={32} />}
             {title}
           </h2>
           <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
@@ -781,16 +781,16 @@ const CategoryRow = ({ title, filterType }) => {
   );
 };
 
-// --- ENHANCED TRENDING MARQUEE (Best Sellers) ---
+// --- ENHANCED TRENDING MARQUEE (Best Sellers) - FIXED ---
 const TrendingMarquee = () => {
+  const { addToCart } = useContext(CartContext);
   const [products, setProducts] = useState([]);
   const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`).then((res) => {
       const all = res.data.products || [];
-      const trending = all.filter((p) => p.trending).slice(0, 8); // Get top 8 trending
-      // Triple them for smooth infinite scroll
+      const trending = all.filter((p) => p.trending).slice(0, 8);
       setProducts([...trending, ...trending, ...trending]);
     });
   }, []);
@@ -800,15 +800,23 @@ const TrendingMarquee = () => {
     return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
   };
 
+  const handleQuickAdd = (e, product) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addToCart({ ...product, quantity: 1 });
+    toast.success(`${product.name} added to cart!`, {
+      icon: '🛒',
+    });
+  };
+
   return (
-    <section className="py-32 overflow-hidden border-y border-gray-200 dark:border-white/5 transition-colors duration-300 relative bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-[#0a1625] dark:via-[#0d1a2d] dark:to-[#0a1625]">
-      {/* Decorative Background */}
+    <section className="py-16 overflow-hidden border-y border-gray-200 dark:border-white/5 transition-colors duration-300 relative bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-[#0a1625] dark:via-[#0d1a2d] dark:to-[#0a1625]">
       <div className="absolute inset-0 pointer-events-none opacity-5">
         <div className="absolute top-10 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl" />
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl" />
       </div>
 
-      <div className="container mx-auto px-6 mb-16 flex flex-col items-center text-center relative z-10">
+      <div className="container mx-auto px-6 mb-12 flex flex-col items-center text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -820,7 +828,7 @@ const TrendingMarquee = () => {
         </motion.div>
         <TextReveal
           text="Best Sellers"
-          className="text-5xl md:text-6xl font-serif text-slate-900 dark:text-white transition-colors duration-300 mb-4"
+          className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white transition-colors duration-300 mb-4"
         />
         <motion.p
           initial={{ opacity: 0 }}
@@ -839,7 +847,7 @@ const TrendingMarquee = () => {
         onMouseLeave={() => setIsPaused(false)}
       >
         <motion.div
-          className="flex gap-8 w-max"
+          className="flex gap-6 w-max"
           animate={{ x: isPaused ? undefined : ["0%", "-33.33%"] }}
           transition={{ 
             repeat: Infinity, 
@@ -849,85 +857,84 @@ const TrendingMarquee = () => {
           }}
         >
           {products.map((p, i) => (
-            <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[320px] group">
-              <motion.div
-                whileHover={{ y: -16, rotate: -2, scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="bg-white dark:bg-[#0e1d30] border-2 border-gray-200 dark:border-white/10 rounded-3xl p-8 hover:border-blue-500 dark:hover:border-blue-400 transition-all backdrop-blur-sm shadow-lg hover:shadow-2xl relative overflow-hidden"
-              >
-                {/* Gradient overlay on hover */}
-                <motion.div 
-                  className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                />
-
-                {/* Best Seller Badge */}
-                <div className="absolute top-4 right-4 z-10">
-                  <motion.div
-                    initial={{ rotate: -12 }}
-                    whileHover={{ rotate: 0, scale: 1.1 }}
-                    className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1"
-                  >
-                    <Star size={10} fill="currentColor" /> Top Pick
-                  </motion.div>
-                </div>
-
-                <div className="h-[240px] mb-8 flex items-center justify-center relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 rounded-2xl">
-                  <motion.img
-                    src={getImageUrl(p.image)}
-                    alt={p.name}
-                    className="w-56 h-56 object-contain drop-shadow-2xl relative z-10"
-                    whileHover={{ scale: 1.2, rotate: 8 }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            <div key={`${p._id}-${i}`} className="w-[280px] group">
+              <Link to={`/products/${p._id}`}>
+                <motion.div
+                  whileHover={{ y: -12, rotate: -1, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="bg-white dark:bg-[#0e1d30] border-2 border-gray-200 dark:border-white/10 rounded-2xl p-6 hover:border-blue-500 dark:hover:border-blue-400 transition-all backdrop-blur-sm shadow-lg hover:shadow-2xl relative overflow-hidden h-full flex flex-col"
+                >
+                  <motion.div 
+                    className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                   />
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 bg-gradient-radial from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
 
-                <div className="relative z-10">
-                  <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-2 font-bold">
-                    {p.name}
-                  </h3>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wide">
-                      {p.category}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">4.8</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
-                    <div>
-                      <span className="text-sm text-slate-400 line-through mr-2">
-                        ₹{(p.basePrice * 1.2).toFixed(0)}
-                      </span>
-                      <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        ₹{p.basePrice}
-                      </span>
-                    </div>
+                  <div className="absolute top-3 right-3 z-10">
                     <motion.div
-                      whileHover={{ scale: 1.1, rotate: 15 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg cursor-pointer"
+                      initial={{ rotate: -12 }}
+                      whileHover={{ rotate: 0, scale: 1.1 }}
+                      className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1"
                     >
-                      <ShoppingBag size={18} />
+                      <Star size={10} fill="currentColor" /> Top
                     </motion.div>
                   </div>
-                </div>
-              </motion.div>
-            </Link>
+
+                  <div className="h-[180px] mb-6 flex items-center justify-center relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 rounded-xl">
+                    <motion.img
+                      src={getImageUrl(p.image)}
+                      alt={p.name}
+                      className="w-40 h-40 object-contain drop-shadow-2xl relative z-10"
+                      whileHover={{ scale: 1.15, rotate: 5 }}
+                      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-radial from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  </div>
+
+                  <div className="relative z-10 flex-grow flex flex-col">
+                    <h3 className="text-base font-serif text-slate-900 dark:text-white mb-2 font-bold line-clamp-2">
+                      {p.name}
+                    </h3>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">
+                        {p.category}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <Star size={12} className="text-yellow-400 fill-yellow-400" />
+                        <span className="text-xs font-bold text-slate-700 dark:text-slate-300">4.8</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-white/10 mt-auto">
+                      <div>
+                        <span className="text-xs text-slate-400 line-through mr-2">
+                          ₹{(p.basePrice * 1.2).toFixed(0)}
+                        </span>
+                        <span className="text-xl font-black text-slate-900 dark:text-white">
+                          ₹{p.basePrice}
+                        </span>
+                      </div>
+                      <motion.button
+                        whileHover={{ scale: 1.15, rotate: 15 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => handleQuickAdd(e, p)}
+                        className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg cursor-pointer hover:bg-blue-700 transition-colors"
+                      >
+                        <ShoppingBag size={16} />
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+              </Link>
+            </div>
           ))}
         </motion.div>
       </div>
 
-      {/* Pause indicator */}
       <AnimatePresence>
         {isPaused && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="text-center mt-8 relative z-10"
+            className="text-center mt-6 relative z-10"
           >
             <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
               Hovering to explore • Scroll paused
@@ -955,8 +962,8 @@ const SeaBitePromise = () => {
   }, []);
 
   return (
-    <section className="py-24 px-6 relative overflow-hidden transition-colors duration-300">
-      <div className="max-w-7xl mx-auto relative z-10 pt-10">
+    <section className="py-16 px-6 relative overflow-hidden transition-colors duration-300">
+      <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-12">
           <TextReveal
             text="Loved by Seafood Lovers"
@@ -1053,9 +1060,9 @@ const WhySeaBite = () => {
   ];
 
   return (
-    <section className="py-20 md:py-28 px-6 relative overflow-hidden transition-colors duration-300">
+    <section className="py-16 px-6 relative overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <TextReveal
             text="Why SeaBite?"
             className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white mb-4"
@@ -1072,7 +1079,7 @@ const WhySeaBite = () => {
         </div>
 
         <SectionReveal direction="scale">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
             {[
               { value: 10000, suffix: "+", label: "Happy Customers" },
               { value: 50, suffix: "+", label: "Varieties" },
