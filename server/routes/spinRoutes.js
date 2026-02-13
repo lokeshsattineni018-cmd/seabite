@@ -54,9 +54,9 @@ router.post("/spin", async (req, res) => {
       outcome = { type: "PERCENT", value: 5 };
     } else if (rand < 50) {
       outcome = { type: "NO_PRIZE" };
-    } else if (rand < 66.66) {
-      outcome = { type: "PERCENT", value: 10 };
     } else if (rand < 83.33) {
+      outcome = { type: "PERCENT", value: 10 };
+    } else if (rand < 66.66) {
       outcome = { type: "PERCENT", value: 20 };
     } else {
       outcome = { type: "PERCENT", value: 50 };
