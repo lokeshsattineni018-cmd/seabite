@@ -22,17 +22,17 @@ import Profile from "./pages/Profile";
 
 // Lazy Load Secondary Pages
 import Checkout from "./pages/Checkout";
-const Login = lazy(() => import("./pages/Login"));
-const OrderSuccess = lazy(() => import("./pages/OrderSuccess"));
-const Orders = lazy(() => import("./pages/Orders"));
-const OrderDetails = lazy(() => import("./pages/OrderDetails"));
-const Notifications = lazy(() => import("./pages/Notifications"));
-const Spin = lazy(() => import("./pages/Spin"));
-const About = lazy(() => import("./pages/About"));
-const FAQ = lazy(() => import("./pages/FAQ"));
-const Terms = lazy(() => import("./pages/Terms"));
-const Privacy = lazy(() => import("./pages/Privacy"));
-const Cancellation = lazy(() => import("./pages/Cancellation"));
+import Login from "./pages/Login";
+import OrderSuccess from"./pages/OrderSuccess";
+import Orders from"./pages/Orders";
+import OrderDetails from "./pages/OrderDetails";
+import Notifications from"./pages/Notifications";
+import Spin from "./pages/Spin";
+import About from "./pages/About";
+import FAQ from "./pages/FAQ";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import Cancellation from "./pages/Cancellation";
 
 // Admin Imports
 import AdminLayout from "./admin/AdminLayout";
