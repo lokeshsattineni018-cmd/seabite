@@ -185,3 +185,6 @@ const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
+// ✅ FIXED FOR VERCEL: Default export for serverless functions
+export default app;
