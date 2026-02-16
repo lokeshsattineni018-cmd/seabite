@@ -9,12 +9,22 @@ const calculateTotals = (cart) => {
     let count = 0;
 
     for (const item of cart) {
-        // Ensure price and quantity are valid numbers, prioritizing 'price' saved on cart item
-        const price = Number(item.price || item.basePrice || 0);
+        // Robust parsing: handle strings, numbers, and missing values
+        let price = parseFloat(item.price);
+        if (isNaN(price)) {
+            price = parseFloat(item.basePrice);
+        }
+        if (isNaN(price)) {
+            price = 0;
+        }
+
         const qty = Number(item.qty || 1);
 
-        subtotal += price * qty;
-        count += qty;
+        // Ensure we don't propagate NaN
+        if (!isNaN(price) && !isNaN(qty)) {
+            subtotal += price * qty;
+            count += qty;
+        }
     }
 
     // Define your business logic for fixed tax and delivery here (adjust as needed)

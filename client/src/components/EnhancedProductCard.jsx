@@ -72,6 +72,19 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
             );
 
             await refreshMe();
+
+            if (!previousState) {
+                toast.success("Added to Wishlist", {
+                    style: { background: '#ef4444', color: '#fff', fontSize: '12px' },
+                    icon: '❤️'
+                });
+            } else {
+                toast.success("Removed from Wishlist", {
+                    style: { fontSize: '12px' },
+                    icon: '💔'
+                });
+            }
+
             if (onWishlistChange && previousState) {
                 // If it was wishlisted and we toggled it (removed), notify parent instantly
                 onWishlistChange(product._id);
@@ -108,10 +121,10 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
                 onClick={handleWishlistToggle}
                 disabled={loadingWishlist}
                 className={`absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-full transition-colors shadow-sm ${isWishlistMode
-                        ? "bg-white text-slate-400 hover:bg-red-50 hover:text-red-500"
-                        : isWishlisted
-                            ? "text-red-600 bg-red-50"
-                            : "text-slate-900 bg-white/80 hover:text-red-600 hover:bg-white"
+                    ? "bg-white text-slate-400 hover:bg-red-50 hover:text-red-500"
+                    : isWishlisted
+                        ? "text-red-600 bg-red-50"
+                        : "text-slate-900 bg-white/80 hover:text-red-600 hover:bg-white"
                     }`}
                 title={isWishlistMode ? "Remove from Wishlist" : isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
             >
