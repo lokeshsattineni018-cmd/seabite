@@ -307,7 +307,7 @@ export default function OrderSuccess() {
               </motion.span>
             </motion.button>
           </Link>
-          <Link to="/" className="w-full">
+          <Link to="/products" className="w-full">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.97 }}
@@ -334,20 +334,18 @@ export default function OrderSuccess() {
             ].map((step, i) => (
               <div key={i} className="flex flex-col items-center gap-1.5">
                 <div
-                  className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-                    step.active
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${step.active
                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                       : "bg-slate-100 dark:bg-slate-800 text-slate-400"
-                  }`}
+                    }`}
                 >
                   {step.icon}
                 </div>
                 <span
-                  className={`text-[8px] font-bold uppercase tracking-wider ${
-                    step.active
+                  className={`text-[8px] font-bold uppercase tracking-wider ${step.active
                       ? "text-emerald-600 dark:text-emerald-400"
                       : "text-slate-400"
-                  }`}
+                    }`}
                 >
                   {step.label}
                 </span>

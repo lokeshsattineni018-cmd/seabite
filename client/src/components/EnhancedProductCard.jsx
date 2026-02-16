@@ -101,6 +101,8 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
         }
     };
 
+    const isOutOfStock = product.stock === "out" || !product.stock;
+
     const isNew = product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
     return (
@@ -146,7 +148,7 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
                 <img
                     src={getImageUrl(product.image)}
                     alt={product.name}
-                    className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
+                    className={`w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
                     loading="lazy"
                 />
             </Link>
@@ -164,9 +166,9 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
 
                 {/* Stock Indicator */}
                 <div className="flex items-center gap-2 mb-4">
-                    <div className={`w-2 h-2 rounded-full ${product.stock ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wide ${product.stock ? 'text-slate-500' : 'text-red-500'}`}>
-                        {product.stock ? 'In Stock' : 'Out of Stock'}
+                    <div className={`w-2 h-2 rounded-full ${!isOutOfStock ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className={`text-[10px] font-bold uppercase tracking-wide ${!isOutOfStock ? 'text-slate-500' : 'text-red-500'}`}>
+                        {!isOutOfStock ? 'In Stock' : 'Out of Stock'}
                     </span>
                 </div>
 
@@ -183,15 +185,15 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
                     {/* Outlined Button */}
                     <button
                         onClick={handleAddToCart}
-                        disabled={!product.stock || isAdding}
-                        className={`w-full py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all border ${!product.stock
+                        disabled={isOutOfStock || isAdding}
+                        className={`w-full py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all border ${isOutOfStock
                             ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
                             : isAdding
                                 ? "bg-emerald-50 border-emerald-500 text-emerald-600"
                                 : "bg-white dark:bg-transparent border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                             }`}
                     >
-                        {isAdding ? "Added" : !product.stock ? "Sold Out" : "Add to Cart"}
+                        {isAdding ? "Added" : isOutOfStock ? "Sold Out" : "Add to Cart"}
                     </button>
                 </div>
             </div>

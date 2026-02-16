@@ -44,13 +44,35 @@ router.get("/top-reviews", async (req, res) => {
 // --- GET ALL PRODUCTS ---
 router.get("/", async (req, res) => {
   try {
-    const { category, search } = req.query;
+    const { category, search, minPrice, maxPrice, inStock, sort } = req.query;
     let query = { active: true };
 
+    // Category Filter
     if (category && category !== "all") query.category = { $regex: `^${category}$`, $options: "i" };
+
+    // Search Filter
     if (search) query.name = { $regex: search, $options: "i" };
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
+    // Price Range Filter
+    if (minPrice || maxPrice) {
+      query.basePrice = {};
+      if (minPrice) query.basePrice.$gte = Number(minPrice);
+      if (maxPrice) query.basePrice.$lte = Number(maxPrice);
+    }
+
+    // Stock Filter (Assuming "out" means out of stock)
+    if (inStock === "true") {
+      query.stock = { $ne: "out" };
+    }
+
+    // Sorting
+    let sortOptions = { createdAt: -1 }; // Default: Newest
+    if (sort === "price-asc") sortOptions = { basePrice: 1 };
+    if (sort === "price-desc") sortOptions = { basePrice: -1 };
+    if (sort === "rating") sortOptions = { rating: -1 };
+    if (sort === "newest") sortOptions = { createdAt: -1 };
+
+    const products = await Product.find(query).sort(sortOptions);
     res.json({ products });
   } catch (err) {
     res.status(500).json({ message: err.message });

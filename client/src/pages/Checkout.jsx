@@ -530,11 +530,10 @@ export default function Checkout() {
                     key={addr._id}
                     onClick={() => {
                       setDeliveryAddress(addr);
-                      // Validation check implies if it's in the list it's likely valid, but we can re-verify if needed
                     }}
-                    className={`cursor-pointer p-4 rounded-xl border-2 transition-all relative group ${deliveryAddress._id === addr._id
-                      ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20"
-                      : "border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700"
+                    className={`cursor-pointer p-4 rounded-xl border transition-all relative group shadow-sm ${deliveryAddress._id === addr._id
+                      ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 ring-1 ring-blue-500"
+                      : "border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md"
                       }`}
                   >
                     <div className="flex justify-between items-start mb-1">
@@ -613,9 +612,9 @@ export default function Checkout() {
               <motion.div
                 whileTap={{ scale: 0.98 }}
                 onClick={() => setPaymentMethod("COD")}
-                className={`cursor-pointer p-4 md:p-5 rounded-xl border-2 transition-all flex items-center gap-4 ${paymentMethod === "COD"
-                  ? "border-blue-500 bg-blue-50/40 dark:bg-blue-900/20 shadow-sm shadow-blue-500/10"
-                  : "border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600"
+                className={`cursor-pointer p-4 md:p-5 rounded-xl border transition-all flex items-center gap-4 shadow-sm ${paymentMethod === "COD"
+                  ? "border-blue-500 bg-blue-50/40 dark:bg-blue-900/20 ring-1 ring-blue-500"
+                  : "border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600 hover:shadow-md"
                   }`}
               >
                 <div
