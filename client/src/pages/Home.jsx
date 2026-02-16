@@ -588,160 +588,55 @@ const CategoryRow = ({ title, filterType }) => {
   );
 };
 
-// --- ENHANCED TRENDING MARQUEE (Best Sellers) ---
+// --- ENHANCED TRENDING SECTION (Best Sellers) ---
 const TrendingMarquee = () => {
   const [products, setProducts] = useState([]);
-  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`).then((res) => {
       const all = res.data.products || [];
-      const trending = all.filter((p) => p.trending).slice(0, 8); // Get top 8 trending
-      // Triple them for smooth infinite scroll
-      setProducts([...trending, ...trending, ...trending]);
+      const trending = all.filter((p) => p.trending).slice(0, 8);
+      setProducts(trending);
     });
   }, []);
 
-  const getImageUrl = (path) => {
-    if (!path) return "";
-    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  };
+  if (products.length === 0) return null;
 
   return (
-    <section className="py-32 overflow-hidden border-y border-gray-200 dark:border-white/5 transition-colors duration-300 relative bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-[#0a1625] dark:via-[#0d1a2d] dark:to-[#0a1625]">
-      {/* Decorative Background */}
-      <div className="absolute inset-0 pointer-events-none opacity-5">
-        <div className="absolute top-10 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl" />
-      </div>
-
-      <div className="container mx-auto px-6 mb-8 flex flex-col items-center text-center relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 bg-yellow-400/10 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-widest mb-6 border border-yellow-400/20"
-        >
-          <Flame size={14} /> Customer Favorites
-        </motion.div>
-        <TextReveal
-          text="Best Sellers"
-          className="text-5xl md:text-6xl font-serif text-slate-900 dark:text-white transition-colors duration-300 mb-4"
-        />
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-          className="text-slate-600 dark:text-slate-400 max-w-2xl"
-        >
-          Handpicked from our ocean-fresh collection. These crowd favorites fly off the shelves!
-        </motion.p>
-      </div>
-
-      <div
-        className="relative w-full z-10"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
-        <motion.div
-          className="flex gap-8 w-max"
-          animate={{ x: isPaused ? undefined : ["0%", "-33.33%"] }}
-          transition={{
-            repeat: Infinity,
-            duration: 30,
-            ease: "linear",
-            ...(isPaused && { duration: 0 })
-          }}
-        >
-          {products.map((p, i) => (
-            <Link to={`/products/${p._id}`} key={`${p._id}-${i}`} className="w-[320px] group">
-              <motion.div
-                whileHover={{ y: -16, rotate: -2, scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="bg-white dark:bg-[#0e1d30] border-2 border-gray-200 dark:border-white/10 rounded-3xl p-8 hover:border-blue-500 dark:hover:border-blue-400 transition-all backdrop-blur-sm shadow-lg hover:shadow-2xl relative overflow-hidden"
-              >
-                {/* Gradient overlay on hover */}
-                <motion.div
-                  className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                />
-
-                {/* Best Seller Badge */}
-                <div className="absolute top-4 right-4 z-10">
-                  <motion.div
-                    initial={{ rotate: -12 }}
-                    whileHover={{ rotate: 0, scale: 1.1 }}
-                    className="bg-gradient-to-r from-yellow-400 to-orange-400 text-yellow-900 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg flex items-center gap-1"
-                  >
-                    <Star size={10} fill="currentColor" /> Top Pick
-                  </motion.div>
-                </div>
-
-                <div className="h-[240px] mb-8 flex items-center justify-center relative overflow-hidden bg-slate-50 dark:bg-slate-900/50 rounded-2xl">
-                  <motion.img
-                    src={getImageUrl(p.image)}
-                    alt={p.name}
-                    className="w-56 h-56 object-contain drop-shadow-2xl relative z-10"
-                    whileHover={{ scale: 1.2, rotate: 8 }}
-                    transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  />
-                  {/* Glow effect */}
-                  <div className="absolute inset-0 bg-gradient-radial from-blue-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                </div>
-
-                <div className="relative z-10">
-                  <h3 className="text-xl font-serif text-slate-900 dark:text-white mb-2 font-bold">
-                    {p.name}
-                  </h3>
-                  <div className="flex justify-between items-center mb-4">
-                    <span className="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wide">
-                      {p.category}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Star size={14} className="text-yellow-400 fill-yellow-400" />
-                      <span className="text-sm font-bold text-slate-700 dark:text-slate-300">4.8</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-white/10">
-                    <div>
-                      <span className="text-sm text-slate-400 line-through mr-2">
-                        ₹{(p.basePrice * 1.2).toFixed(0)}
-                      </span>
-                      <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        ₹{p.basePrice}
-                      </span>
-                    </div>
-                    <motion.div
-                      whileHover={{ scale: 1.1, rotate: 15 }}
-                      whileTap={{ scale: 0.9 }}
-                      className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg cursor-pointer"
-                    >
-                      <ShoppingBag size={18} />
-                    </motion.div>
-                  </div>
-                </div>
-              </motion.div>
-            </Link>
-          ))}
-        </motion.div>
-      </div>
-
-      {/* Pause indicator */}
-      <AnimatePresence>
-        {isPaused && (
+    <section className="py-20 px-4 md:px-8 bg-white dark:bg-[#0b1221] transition-colors duration-300">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="text-center mt-8 relative z-10"
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
           >
-            <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
-              Hovering to explore • Scroll paused
+            <span className="text-blue-600 font-bold tracking-widest text-xs uppercase mb-2 block">
+              Customer Favorites
+            </span>
+            <TextReveal
+              text="Best Sellers"
+              className="text-3xl md:text-5xl font-medium text-slate-900 dark:text-white mb-3 block"
+            />
+            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-xl">
+              Handpicked from our ocean-fresh collection. These crowd favorites fly off the shelves!
             </p>
           </motion.div>
-        )}
-      </AnimatePresence>
+
+          <Link to="/products" className="group flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600 hover:text-blue-800 transition-colors mb-2">
+            View All
+            <ChevronRight className="transition-transform group-hover:translate-x-1" size={16} />
+          </Link>
+        </div>
+
+        <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          {products.map((p) => (
+            <StaggerItem key={p._id}>
+              <EnhancedProductCard product={p} />
+            </StaggerItem>
+          ))}
+        </StaggerContainer>
+      </div>
     </section>
   );
 };
