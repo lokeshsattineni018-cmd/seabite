@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, useScroll, useVelocity, useSpring, useTransform, useAnimationFrame, AnimatePresence } from "framer-motion";
-import { FiArrowRight, Flame, Star } from "react-icons/fi"; // Adjusted imports
+import { Flame } from "lucide-react";
 import axios from "axios";
 import EnhancedProductCard from "./EnhancedProductCard";
 
