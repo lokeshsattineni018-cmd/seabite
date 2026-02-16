@@ -5,7 +5,7 @@ import AdminSidebar from "./AdminSidebar";
 import { FiMenu, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
-import { io } from "socket.io-client";
+import { io } from "socket.io-client"; // Kept for reference but unused
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -34,52 +34,12 @@ export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
-  // 🟢 GLOBAL REAL-TIME LISTENER
+  // 🟢 REAL-TIME DISABLED FOR VERCEL STABILITY
+  // Socket.io causes 404s in serverless environments.
+  // We now rely on manual refresh or polling if strictly necessary.
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
-    const socket = io(API_URL, {
-      withCredentials: true,
-      path: '/socket.io/',
-      transports: ['polling', 'websocket'],
-      reconnectionAttempts: 5
-    });
-
-    socket.on("newOrder", (order) => {
-      // Play sound (optional)
-      // const audio = new Audio('/sounds/notification.mp3');
-      // audio.play().catch(e => console.log("Audio play failed", e));
-
-      toast.custom((t) => (
-        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5 cursor-pointer border-l-4 border-emerald-500`} onClick={() => { navigate("/admin/orders"); toast.dismiss(t.id); }}>
-          <div className="flex-1 w-0 p-4">
-            <div className="flex items-start">
-              <div className="flex-shrink-0 pt-0.5">
-                <div className="h-10 w-10 text-emerald-500 bg-emerald-50 rounded-full flex items-center justify-center font-bold text-xl">🔔</div>
-              </div>
-              <div className="ml-3 flex-1">
-                <p className="text-sm font-bold text-gray-900">
-                  New Order Received! 🚀
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  <span className="font-semibold text-gray-800">{order.user?.name || "Customer"}</span> placed an order for <span className="font-bold text-emerald-600">₹{order.totalAmount}</span>
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="flex border-l border-gray-200">
-            <button
-              onClick={(e) => { e.stopPropagation(); toast.dismiss(t.id); }}
-              className="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      ), { duration: 6000, position: "top-right" });
-    });
-
-    return () => socket.disconnect();
-  }, [navigate]);
+    // No-op
+  }, []);
 
   return (
     <div className="flex h-screen w-full bg-[#f8fafc] font-sans overflow-hidden relative">

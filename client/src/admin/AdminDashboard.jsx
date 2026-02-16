@@ -15,7 +15,7 @@ import {
   FiAlertCircle, FiPower, FiCheckCircle
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { io } from "socket.io-client";
+import { io } from "socket.io-client"; // Unused
 import toast from "react-hot-toast";
 
 const PLACEHOLDER_IMG =
@@ -133,28 +133,11 @@ export default function AdminDashboard() {
   }, [fetchDashboardData]);
 
   // 🟢 REAL-TIME: Socket.io Listener
+  // 🟢 REAL-TIME DISABLED
+  // We use the 30s interval above for updates instead of Socket.io
   useEffect(() => {
-    const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
-    const socket = io(API_URL, {
-      withCredentials: true,
-      path: '/socket.io/',
-      transports: ['polling', 'websocket'],
-      reconnectionAttempts: 5
-    });
-
-    socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket.id);
-    });
-
-    socket.on("newOrder", (order) => {
-      console.log("🔔 Dashboard: Refreshing data for new order", order._id);
-      fetchDashboardData();
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-  }, [fetchDashboardData, navigate]);
+    // No-op
+  }, []);
 
   const deleteReviewHandler = async (productId, reviewId) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
