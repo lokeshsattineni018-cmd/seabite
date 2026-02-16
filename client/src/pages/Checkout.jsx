@@ -48,7 +48,7 @@ const DEFAULT_DELIVERY_ADDRESS = {
   street: "",
   city: "",
   state: "",
-  zip: "",
+  postalCode: "",
 };
 
 const ease = [0.22, 1, 0.36, 1];
@@ -326,12 +326,12 @@ export default function Checkout() {
       !deliveryAddress.street ||
       !deliveryAddress.houseNo ||
       !deliveryAddress.city ||
-      !deliveryAddress.zip
+      !deliveryAddress.postalCode
     ) {
       setModal({
         show: true,
         message:
-          "Please complete your delivery address. Zip/Pincode is required.",
+          "Please complete your delivery address. Valid Pincode is required.",
         type: "error",
       });
       return;

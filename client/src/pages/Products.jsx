@@ -113,7 +113,7 @@ export default function Products() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#0b1221] pt-28 pb-12 px-4 transition-colors duration-500 overflow-x-hidden font-sans">
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#0b1221] pt-28 pb-12 px-4 transition-colors duration-500 font-sans">
       {/* Ambient gradient */}
       <motion.div
         key={`gradient-${filters.category}`}
