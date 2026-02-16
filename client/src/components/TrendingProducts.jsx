@@ -40,7 +40,7 @@ export default function TrendingProducts() {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-24 overflow-hidden border-y border-gray-200 dark:border-white/5 transition-colors duration-300 relative bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-[#0a1625] dark:via-[#0d1a2d] dark:to-[#0a1625]">
+    <section className="py-12 overflow-hidden border-y border-gray-200 dark:border-white/5 transition-colors duration-300 relative bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-[#0a1625] dark:via-[#0d1a2d] dark:to-[#0a1625]">
       {/* Decorative Background */}
       <div className="absolute inset-0 pointer-events-none opacity-5">
         <div className="absolute top-10 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl" />

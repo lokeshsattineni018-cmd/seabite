@@ -74,7 +74,7 @@ export const googleLogin = async (req, res) => {
     if (!req.session) {
       //console.error(
       //  "❌ Session middleware failed to initialize. Check MongoDB connection."
-     // );
+      // );
       return res.status(500).json({ message: "Server Session Error" });
     }
 
@@ -101,7 +101,7 @@ export const googleLogin = async (req, res) => {
       console.log("✅ Session saved successfully!");
       console.log("🔑 Session ID after save:", req.sessionID);
       console.log("👤 Session user:", req.session.user);
-      
+
       // Send welcome email (non-blocking)
       sendAuthEmail(user.email, user.name, isNewUser).catch((err) => {
         console.log("⚠️ Email send failed (non-critical):", err.message);
@@ -111,7 +111,7 @@ export const googleLogin = async (req, res) => {
       const cookieHeader = res.getHeader('Set-Cookie');
       console.log("🍪 Set-Cookie header:", cookieHeader);
 
-      res.status(200).json({ 
+      res.status(200).json({
         user: req.session.user,
         sessionId: req.sessionID, // Include for debugging
         debug: {
@@ -133,7 +133,7 @@ export const getLoggedUser = async (req, res) => {
   console.log("🍪 Cookie header:", req.headers.cookie);
   console.log("🔑 Session ID:", req.sessionID);
   console.log("👤 Session user:", req.session?.user);
-  
+
   if (!req.user) {
     console.log("❌ No user in request (protect middleware failed)");
     return res.status(401).json({ message: "Not authenticated" });
@@ -147,12 +147,13 @@ export const getLoggedUser = async (req, res) => {
     role: req.user.role,
     phone: req.user.phone || "",
     addresses: req.user.addresses || [],
+    wishlist: req.user.wishlist || [],
   });
 };
 
 export const updateUserProfile = async (req, res) => {
   console.log("✏️ updateUserProfile called");
-  
+
   if (!req.session?.user) {
     console.log("❌ No session user");
     return res.status(401).json({ message: "Not authenticated" });
@@ -164,9 +165,9 @@ export const updateUserProfile = async (req, res) => {
       { $set: req.body },
       { new: true, runValidators: true, select: "-password" }
     );
-    
+
     console.log("✅ Profile updated for:", updatedUser.email);
-    
+
     res.json({
       message: "Profile updated successfully",
       name: updatedUser.name,

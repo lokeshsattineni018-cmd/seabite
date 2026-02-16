@@ -337,7 +337,7 @@ const categories = [
 const CategoryPanel = () => {
   const [hovered, setHovered] = useState(0);
   return (
-    <section className="py-20 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
+    <section className="py-12 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto mb-12 text-center relative z-10">
         <TextReveal
           text="Shop By Category"
