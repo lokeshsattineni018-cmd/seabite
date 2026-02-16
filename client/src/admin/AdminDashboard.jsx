@@ -149,16 +149,10 @@ export default function AdminDashboard() {
     }
   };
 
-  // ... (Existing imports)
-  import { FiLock, FiX } from "react-icons/fi"; // Added locks
-
-  // ... (Inside AdminDashboard component)
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otp, setOtp] = useState("");
   const [pendingMaintenanceState, setPendingMaintenanceState] = useState(null);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
-
-  // ... (Existing code)
 
   // 🟢 Modified Toggle Handler
   const toggleMaintenanceClick = async () => {
@@ -201,129 +195,116 @@ export default function AdminDashboard() {
     }
   };
 
-  // ... (Render Logic)
-
-  return (
-    <motion.div ... >
-      {/* ... (Header) ... */}
-
-      {/* ✅ OTP MODAL */}
-      <AnimatePresence>
-        {showOtpModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-              onClick={() => setShowOtpModal(false)}
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 lg:p-8 overflow-hidden"
-            >
-              <button
-                onClick={() => setShowOtpModal(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-50 transition-colors"
-              >
-                <FiX size={20} />
-              </button>
-
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-inner">
-                  <FiLock size={32} />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900">Security Check</h3>
-                <p className="text-sm text-slate-500 mt-2">
-                  To {pendingMaintenanceState ? "activate" : "deactivate"} Maintenance Mode, please enter the 6-digit code sent to your email.
-                </p>
-              </div>
-
-              <form onSubmit={handleVerifyOtp} className="space-y-6">
-                <input
-                  type="text"
-                  value={otp}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                    setOtp(val);
-                  }}
-                  placeholder="0 0 0 0 0 0"
-                  className="w-full text-center text-3xl font-mono tracking-[0.5em] font-bold text-slate-800 border-2 border-slate-200 rounded-xl py-4 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-200"
-                  autoFocus
-                />
-
-                <button
-                  type="submit"
-                  disabled={verifyingOtp || otp.length !== 6}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
-                >
-                  {verifyingOtp ? <FiRefreshCw className="animate-spin" /> : <FiCheckCircle />}
-                  Verify & {pendingMaintenanceState ? "Lock" : "Unlock"}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* ✅ ENTERPRISE: MAINTENANCE BAR */}
-      <motion.div
-        variants={fadeUp}
-        custom={0.5}
-        className={`p-4 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-500 ${settings.isMaintenanceMode
-          ? "bg-red-50 border-red-200 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
-          : "bg-emerald-50 border-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
-          }`}
-      >
-        <div className="flex items-center gap-4">
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${settings.isMaintenanceMode ? "bg-red-100 text-red-600 border-red-200" : "bg-emerald-100 text-emerald-600 border-emerald-200"
-            }`}>
-            {settings.isMaintenanceMode ? <FiSettings size={22} className="animate-spin-slow" /> : <FiCheckCircle size={22} />}
-          </div>
-          <div>
-            <h3 className={`text-sm font-black uppercase tracking-tight ${settings.isMaintenanceMode ? "text-red-700" : "text-emerald-700"}`}>
-              Store Status: {settings.isMaintenanceMode ? "Maintenance Active" : "Fully Operational"}
-            </h3>
-            <p className="text-[10px] text-slate-500 font-medium">
-              {settings.isMaintenanceMode ? "Customers see the maintenance page. Admin bypass is active." : "Store is public and accepting orders."}
-            </p>
-          </div>
-        </div>
-        <button
-          onClick={toggleMaintenanceClick} // Updated Handler
-          disabled={isUpdatingSettings}
-          className={`px-6 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${settings.isMaintenanceMode
-            ? "bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200"
-            : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-200"
-            }`}
-        >
-          {isUpdatingSettings ? <FiRefreshCw className="animate-spin" /> : <FiPower />}
-          {settings.isMaintenanceMode ? "Deactivate Maintenance" : "Activate Maintenance"}
-        </button>
-      </motion.div>
-
+  // 🟢 Helper: Get Image URL
   const getImageUrl = (imagePath) => {
     if (!imagePath) return PLACEHOLDER_IMG;
-      const filename = imagePath.split(/[/\\]/).pop();
-      return `/uploads/${filename}`;
+    const filename = imagePath.split(/[/\\]/).pop();
+    return `/uploads/${filename}`;
   };
 
   // Compute order status distribution for pie chart
   const orderStatusData = recentOrders.reduce((acc, o) => {
     const status = o.status || "Pending";
     const existing = acc.find((d) => d.name === status);
-      if (existing) existing.value += 1;
-      else acc.push({name: status, value: 1 });
-      return acc;
+    if (existing) {
+      existing.value += 1;
+    } else {
+      acc.push({ name: status, value: 1 });
+    }
+    return acc;
   }, []);
 
-  // Mini sparkline data for stat cards
-  const revenueSparkline = graph.slice(-7).map((g, i) => ({v: g.orders * 150 + i * 20 }));
-  const ordersSparkline = graph.slice(-7).map((g) => ({v: g.orders }));
+  // ... (Render Logic)
 
-      if (loading) return <DashboardSkeleton />;
+  <motion.div
+    initial="hidden" animate="visible" variants={staggerContainer}
+    className="p-6 md:p-10 space-y-10 max-w-[1600px] mx-auto min-h-screen font-sans text-slate-800"
+  >
+    {/* HEADER */}
 
-      return (
+    {/* ✅ OTP MODAL */}
+    <AnimatePresence>
+      {showOtpModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            onClick={() => setShowOtpModal(false)}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 lg:p-8 overflow-hidden"
+          >
+            <button
+              onClick={() => setShowOtpModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-50 transition-colors"
+            >
+              <FiX size={20} />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-inner">
+                <FiLock size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">Security Check</h3>
+              <p className="text-sm text-slate-500 mt-2">
+                To {pendingMaintenanceState ? "activate" : "deactivate"} Maintenance Mode, please enter the 6-digit code sent to your email.
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifyOtp} className="space-y-6">
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setOtp(val);
+                }}
+                placeholder="0 0 0 0 0 0"
+                className="w-full text-center text-3xl font-mono tracking-[0.5em] font-bold text-slate-800 border-2 border-slate-200 rounded-xl py-4 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all placeholder:text-slate-200"
+                autoFocus
+              />
+
+              <button
+                type="submit"
+                disabled={verifyingOtp || otp.length !== 6}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+              >
+                {verifyingOtp ? <FiRefreshCw className="animate-spin" /> : <FiCheckCircle />}
+                Verify & {pendingMaintenanceState ? "Lock" : "Unlock"}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+
+    {/* ✅ ENTERPRISE: MAINTENANCE BAR */}
+    <motion.div
+      variants={fadeUp}
+      custom={0.5}
+      className={`p-4 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-500 ${settings.isMaintenanceMode
+        ? "bg-red-50 border-red-200 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+        : "bg-emerald-50 border-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
+        }`}
+    >
+      <div className="flex items-center gap-4">
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${settings.isMaintenanceMode ? "bg-red-100 text-red-600 border-red-200" : "bg-emerald-100 text-emerald-600 border-emerald-200"
+          }`}>
+          {settings.isMaintenanceMode ? <FiSettings size={22} className="animate-spin-slow" /> : <FiCheckCircle size={22} />}
+        </div>
+        <div>
+          <h3 className={`text-sm font-black uppercase tracking-tight ${settings.isMaintenanceMode ? "text-red-700" : "text-emerald-700"}`}>
+            Store Status: {settings.isMaintenanceMode ? "Maintenance Active" : "Fully Operational"}
+          </h3>
+          <p className="text-[10px] text-slate-500 font-medium">
+            {settings.isMaintenanceMode ? "Customers see the maintenance page. Admin bypass is active." : "Store is public and accepting orders."}
+          </p>
+        </div>
+      </div>
+
       <motion.div
         initial="hidden"
         animate="visible"
@@ -903,6 +884,8 @@ export default function AdminDashboard() {
       );
 }
 
+
+
       // --- Sub Components ---
 
       function StatCard({title, value, icon, trend, trendUp, color, sparkData, index}) {
@@ -913,6 +896,10 @@ export default function AdminDashboard() {
       amber: {bg: "bg-amber-50", text: "text-amber-600", spark: "#d97706" },
   };
       const c = colorMap[color] || colorMap.blue;
+
+      // Animation for StatCard uses same fadeUp variant from parent scope or needs re-definition if outside
+      // Since variants are objects, we can just reference the imported one or the one defined at top level
+      // ensuring fadeUp is defined at module level (which it is, line 26).
 
       return (
       <motion.div
@@ -925,8 +912,7 @@ export default function AdminDashboard() {
           <div className={`w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center ${c.bg} ${c.text}`}>
             {icon}
           </div>
-          <span className={`text-[10px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded-full ${trendUp ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50"
-            }`}>
+          <span className={`text-[10px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded-full ${trendUp ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50"}`}>
             {trendUp ? <FiArrowUpRight size={10} /> : <FiArrowDownRight size={10} />}
             {trend}
           </span>

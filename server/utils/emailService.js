@@ -8,13 +8,15 @@ const resend = process.env.RESEND_API_KEY
 const OFFICIAL_SENDER = 'SeaBite Official <official@seabite.co.in>';
 const ORDERS_SENDER = 'SeaBite Orders <orders@seabite.co.in>';
 
+const LOGO_URL = process.env.LOGO_URL || "https://seabite.co.in/logo.png";
+
 // 🟢 The Aesthetic Wrapper: Glassmorphism & Deep Slate Design
 const aestheticWrapper = (content, subtitle) => `
   <div style="background: #020617; padding: 50px 20px; font-family: 'DM Sans', sans-serif, 'Helvetica Neue', Arial;">
     <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background: #0f172a; border-radius: 24px; border: 1px solid #1e293b; overflow: hidden;">
       <tr>
         <td style="padding: 40px 0; text-align: center;">
-          <img src="https://seabite.co.in/logo.png" width="160" alt="SeaBite" style="margin-bottom: 10px;">
+          <img src="${LOGO_URL}" width="160" alt="SeaBite" style="margin-bottom: 10px;">
           <div style="color: #38bdf8; font-size: 11px; text-transform: uppercase; letter-spacing: 5px; font-weight: 700;">${subtitle}</div>
         </td>
       </tr>
