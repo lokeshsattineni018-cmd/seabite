@@ -102,8 +102,8 @@ const EnhancedProductCard = ({ product, onWishlistChange }) => {
                     onClick={handleWishlistToggle}
                     disabled={loadingWishlist}
                     className={`absolute top-3 right-3 z-20 p-2 rounded-full shadow-sm transition-all ${isWishlisted
-                            ? "bg-red-50 text-red-500"
-                            : "bg-white/80 dark:bg-slate-800/80 text-slate-400 hover:text-red-500"
+                        ? "bg-red-50 text-red-500"
+                        : "bg-white/80 dark:bg-slate-800/80 text-slate-400 hover:text-red-500"
                         }`}
                 >
                     <FiHeart
@@ -114,7 +114,7 @@ const EnhancedProductCard = ({ product, onWishlistChange }) => {
                 </motion.button>
 
                 {/* Image Section */}
-                <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4 overflow-hidden">
+                <div className="relative h-36 md:h-44 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4 overflow-hidden">
                     <motion.img
                         src={getImageUrl(product.image)}
                         alt={product.name}
@@ -158,8 +158,8 @@ const EnhancedProductCard = ({ product, onWishlistChange }) => {
                 </div>
 
                 {/* Content Section */}
-                <div className="p-4 flex flex-col flex-grow">
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">
+                <div className="p-3 flex flex-col flex-grow">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-sm line-clamp-2 mb-1">
                         {product.name}
                     </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
@@ -257,8 +257,8 @@ const EnhancedProductCard = ({ product, onWishlistChange }) => {
                                     }}
                                     disabled={!product.stock || product.stock === 0}
                                     className={`w-full py-2 rounded-lg text-sm font-bold border border-blue-600 transition-colors ${!product.stock || product.stock === 0
-                                            ? "opacity-50 cursor-not-allowed border-slate-300 text-slate-400"
-                                            : "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                        ? "opacity-50 cursor-not-allowed border-slate-300 text-slate-400"
+                                        : "text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                                         }`}
                                 >
                                     {(!product.stock || product.stock === 0) ? "Sold Out" : "Add to Cart"}

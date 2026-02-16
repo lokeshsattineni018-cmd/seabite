@@ -359,8 +359,8 @@ const CategoryPanel = () => {
             key={i}
             onMouseEnter={() => setHovered(i)}
             className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${hovered === i
-                ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20"
-                : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"
+              ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20"
+              : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"
               }`}
           >
             <div className={`absolute inset-0 bg-gradient-to-b ${cat.bg} z-0`} />
@@ -376,8 +376,8 @@ const CategoryPanel = () => {
                 }}
                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
                 className={`object-contain drop-shadow-2xl ${hovered === i
-                    ? "w-[80%] h-[80%] opacity-100"
-                    : "w-24 h-24 opacity-50"
+                  ? "w-[80%] h-[80%] opacity-100"
+                  : "w-24 h-24 opacity-50"
                   } transition-all duration-700`}
               />
             </div>
@@ -615,7 +615,7 @@ const TrendingMarquee = () => {
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl" />
       </div>
 
-      <div className="container mx-auto px-6 mb-16 flex flex-col items-center text-center relative z-10">
+      <div className="container mx-auto px-6 mb-8 flex flex-col items-center text-center relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
