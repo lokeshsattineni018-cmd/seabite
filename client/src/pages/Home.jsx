@@ -607,7 +607,7 @@ const SeaBitePromise = () => {
   }, []);
 
   return (
-    <section className="py-24 px-6 relative overflow-hidden transition-colors duration-300">
+    <section className="py-12 px-6 relative overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto relative z-10 pt-10">
         <div className="text-center mb-12">
           <TextReveal
@@ -704,7 +704,7 @@ const WhySeaBite = () => {
   ];
 
   return (
-    <section className="py-20 md:py-28 px-6 relative overflow-hidden transition-colors duration-300">
+    <section className="py-12 md:py-16 px-6 relative overflow-hidden transition-colors duration-300">
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="text-center mb-16">
           <TextReveal

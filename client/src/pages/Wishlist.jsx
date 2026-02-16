@@ -99,6 +99,7 @@ export default function Wishlist() {
                                     <EnhancedProductCard
                                         product={product}
                                         onWishlistChange={handleRemoveFromWishlist} // Pass callback to remove from list instantly
+                                        isWishlistMode={true}
                                     />
                                 </motion.div>
                             ))}

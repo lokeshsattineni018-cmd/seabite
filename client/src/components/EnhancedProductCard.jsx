@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiHeart, FiShoppingBag, FiCheck } from "react-icons/fi";
+import { FiHeart, FiShoppingBag, FiCheck, FiX } from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -8,7 +8,7 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-const EnhancedProductCard = ({ product, onWishlistChange }) => {
+const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false }) => {
     const { addToCart } = useContext(CartContext);
     const { user, refreshMe } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -103,16 +103,25 @@ const EnhancedProductCard = ({ product, onWishlistChange }) => {
                 )}
             </div>
 
-            {/* Wishlist Button */}
+            {/* Wishlist/Remove Button */}
             <button
                 onClick={handleWishlistToggle}
                 disabled={loadingWishlist}
-                className={`absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-full transition-colors ${isWishlisted
-                    ? "text-blue-500"
-                    : "text-slate-300 hover:text-blue-500"
+                className={`absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-full transition-colors shadow-sm ${isWishlistMode
+                        ? "bg-white text-slate-400 hover:bg-red-50 hover:text-red-500"
+                        : isWishlisted
+                            ? "text-red-600 bg-red-50"
+                            : "text-slate-900 bg-white/80 hover:text-red-600 hover:bg-white"
                     }`}
+                title={isWishlistMode ? "Remove from Wishlist" : isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
             >
-                <FiHeart size={20} fill={isWishlisted ? "currentColor" : "none"} className={loadingWishlist ? "animate-pulse" : ""} />
+                {loadingWishlist ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : isWishlistMode ? (
+                    <FiX size={18} />
+                ) : (
+                    <FiHeart size={20} fill={isWishlisted ? "currentColor" : "none"} />
+                )}
             </button>
 
             {/* Image Area */}
