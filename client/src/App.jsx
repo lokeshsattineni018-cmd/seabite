@@ -19,6 +19,8 @@ import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
 import Wishlist from "./pages/Wishlist";
+import Cart from "./pages/Cart";
+import Profile from "./pages/Profile";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import OrderSuccess from "./pages/OrderSuccess";
