@@ -33,6 +33,7 @@ import FAQ from "./pages/FAQ";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Cancellation from "./pages/Cancellation";
+import Maintenance from "./pages/Maintenance";
 
 // Admin Imports
 import AdminLayout from "./admin/AdminLayout";
@@ -46,6 +47,8 @@ import AdminLogin from "./admin/AdminLogin";
 import AdminMessages from "./admin/AdminMessages";
 import AdminCoupons from "./admin/AdminCoupons";
 import AdminKanban from "./admin/AdminKanban";
+import AdminFlashSale from "./admin/AdminFlashSale";
+import AdminMarketing from "./admin/AdminMarketing";
 
 // Context
 import { CartProvider } from "./context/CartContext";
@@ -67,8 +70,23 @@ function MainLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [maintenance, setMaintenance] = useState({ active: false, message: "" });
 
   const openCart = () => setIsCartOpen(true);
+
+  // ✅ Axios Interceptor for Maintenance Mode
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 503 && error.response.data.maintenance) {
+          setMaintenance({ active: true, message: error.response.data.message });
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => axios.interceptors.response.eject(interceptor);
+  }, []);
 
   // Warm up backend silently
   useEffect(() => {
@@ -114,59 +132,73 @@ function MainLayout() {
         }}
       />
 
-      {!isAdminRoute && <Navbar openCart={openCart} />}
-      {!isAdminRoute && (
-        <CartSidebar
-          isOpen={isCartOpen}
-          onClose={() => setIsCartOpen(false)}
-        />
+      <Toaster
+        position="top-right"
+      // ... (existing toaster config omitted for brevity)
+      />
+
+      {maintenance.active && !isAdminRoute ? (
+        <Maintenance message={maintenance.message} />
+      ) : (
+        <>
+          {!isAdminRoute && <Navbar openCart={openCart} />}
+          {!isAdminRoute && (
+            <CartSidebar
+              isOpen={isCartOpen}
+              onClose={() => setIsCartOpen(false)}
+            />
+          )}
+
+          <div className="flex-grow">
+            {isAdminRoute ? (
+              <Routes>
+                <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
+                <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route path="add-product" element={<AddProduct />} />
+                  <Route path="edit-product/:id" element={<EditProduct />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="kanban" element={<AdminKanban />} />
+                  <Route path="users" element={<AdminUsers />} />
+                  <Route path="messages" element={<AdminMessages />} />
+                  <Route path="coupons" element={<AdminCoupons />} />
+                  <Route path="flash-sale" element={<AdminFlashSale />} />
+                  <Route path="marketing" element={<AdminMarketing />} />
+                </Route>
+              </Routes>
+            ) : (
+              <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
+                <Routes location={location} key={location.pathname}>
+                  <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+                  <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
+                  <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
+                  <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
+                  <Route path="/wishlist" element={<PageTransition><PrivateRoute><Wishlist /></PrivateRoute></PageTransition>} />
+                  <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
+                  <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
+                  <Route path="/notifications" element={<PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition>} />
+                  <Route path="/checkout" element={<PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition>} />
+                  <Route path="/success" element={<PageTransition><PrivateRoute><OrderSuccess /></PrivateRoute></PageTransition>} />
+                  <Route path="/orders" element={<PageTransition><PrivateRoute><Orders /></PrivateRoute></PageTransition>} />
+                  <Route path="/orders/:orderId" element={<PageTransition><PrivateRoute><OrderDetails /></PrivateRoute></PageTransition>} />
+                  <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+                  <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+                  <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
+                  <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
+                  <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
+                  <Route path="/cancellation" element={<PageTransition><Cancellation /></PageTransition>} />
+                  <Route path="/maintenance" element={<Maintenance />} />
+                </Routes>
+              </AnimatePresence>
+            )}
+          </div>
+
+          {!isAdminRoute && <Footer />}
+          {!isAdminRoute && <SupportWidget />}
+        </>
       )}
-
-      <div className="flex-grow">
-        {isAdminRoute ? (
-          <Routes>
-            <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
-            <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="add-product" element={<AddProduct />} />
-              <Route path="edit-product/:id" element={<EditProduct />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="kanban" element={<AdminKanban />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="messages" element={<AdminMessages />} />
-              <Route path="coupons" element={<AdminCoupons />} />
-            </Route>
-          </Routes>
-        ) : (
-          <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
-            <Routes location={location} key={location.pathname}>
-              <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-              <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
-              <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
-              <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
-              <Route path="/wishlist" element={<PageTransition><PrivateRoute><Wishlist /></PrivateRoute></PageTransition>} />
-              <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
-              <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
-              <Route path="/notifications" element={<PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition>} />
-              <Route path="/checkout" element={<PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition>} />
-              <Route path="/success" element={<PageTransition><PrivateRoute><OrderSuccess /></PrivateRoute></PageTransition>} />
-              <Route path="/orders" element={<PageTransition><PrivateRoute><Orders /></PrivateRoute></PageTransition>} />
-              <Route path="/orders/:orderId" element={<PageTransition><PrivateRoute><OrderDetails /></PrivateRoute></PageTransition>} />
-              <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-              <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-              <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
-              <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
-              <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
-              <Route path="/cancellation" element={<PageTransition><Cancellation /></PageTransition>} />
-            </Routes>
-          </AnimatePresence>
-        )}
-      </div>
-
-      {!isAdminRoute && <Footer />}
-      {!isAdminRoute && <SupportWidget />}
     </div>
   );
 }

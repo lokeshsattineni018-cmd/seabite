@@ -1,7 +1,8 @@
 import express from "express";
 import Product from "../models/Product.js";
-import upload from "../config/multerConfig.js"; 
+import upload from "../config/multerConfig.js";
 import { protect } from "../middleware/authMiddleware.js"; // 🟢 Ensure this path is correct
+import SearchInsight from "../models/SearchInsight.js";
 
 const router = express.Router();
 
@@ -12,14 +13,32 @@ router.get("/", async (req, res) => {
     let query = { active: true };
 
     if (category && category !== "all") {
-        query.category = category;
+      query.category = category;
     }
 
     if (search) {
-        query.name = { $regex: search, $options: "i" };
+      query.name = { $regex: search, $options: "i" };
     }
 
     const products = await Product.find(query).sort({ createdAt: -1 });
+
+    // ✅ Enterprise: Log Search Insight
+    if (search) {
+      try {
+        await SearchInsight.findOneAndUpdate(
+          { query: search.toLowerCase().trim() },
+          {
+            $inc: { count: 1 },
+            found: products.length > 0,
+            lastSearched: Date.now()
+          },
+          { upsert: true, new: true }
+        );
+      } catch (err) {
+        console.error("Search Insight Error:", err);
+      }
+    }
+
     res.json({ products });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -40,7 +59,7 @@ router.get("/:id", async (req, res) => {
 // --- CREATE PRODUCT (ADMIN) ---
 router.post("/", upload.single('image'), async (req, res) => {
   const { name, category, desc, trending, stock, basePrice, unit } = req.body;
-  
+
   if (!req.file) return res.status(400).json({ message: "Image file is required." });
   if (!name || !basePrice || !unit) return res.status(400).json({ message: "Missing required details." });
 
@@ -53,7 +72,7 @@ router.post("/", upload.single('image'), async (req, res) => {
       unit,
       trending: trending === 'true',
       stock,
-      image: `/uploads/${req.file.filename}`, 
+      image: `/uploads/${req.file.filename}`,
     });
     res.status(201).json(product);
   } catch (err) {
@@ -65,7 +84,7 @@ router.post("/", upload.single('image'), async (req, res) => {
 // This was missing, causing the 404 error
 router.post("/:id/reviews", protect, async (req, res) => {
   const { rating, comment } = req.body;
-  
+
   try {
     const product = await Product.findById(req.params.id);
 
@@ -100,8 +119,28 @@ router.post("/:id/reviews", protect, async (req, res) => {
       res.status(404).json({ message: "Product not found" });
     }
   } catch (error) {
-      console.error("Review Error:", error);
-      res.status(500).json({ message: "Server Error" });
+    console.error("Review Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// 🟡 ENTERPRISE: JOIN WAITLIST
+router.post("/:id/waitlist", protect, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    // Check if user is already in waitlist
+    if (product.waitlist.includes(req.user._id)) {
+      return res.status(400).json({ message: "You are already on the waitlist for this product" });
+    }
+
+    product.waitlist.push(req.user._id);
+    await product.save();
+
+    res.json({ message: "Successfully joined the waitlist! We'll notify you when it's back in stock." });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to join waitlist" });
   }
 });
 

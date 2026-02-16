@@ -18,6 +18,35 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
 
     // Optimistic Wishlist State
     const [isWishlisted, setIsWishlisted] = useState(false);
+    const [timeLeft, setTimeLeft] = useState("");
+
+    const isActiveFlashSale = product.flashSale?.isFlashSale &&
+        new Date(product.flashSale.saleEndDate) > new Date();
+
+    const displayPrice = isActiveFlashSale ? product.flashSale.discountPrice : product.basePrice;
+
+    useEffect(() => {
+        if (!isActiveFlashSale) return;
+
+        const timer = setInterval(() => {
+            const end = new Date(product.flashSale.saleEndDate);
+            const now = new Date();
+            const diff = end - now;
+
+            if (diff <= 0) {
+                setTimeLeft("EXPIRED");
+                clearInterval(timer);
+                return;
+            }
+
+            const h = Math.floor(diff / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            setTimeLeft(`${h}h ${m}m ${s}s`);
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [product.flashSale, isActiveFlashSale]);
 
     useEffect(() => {
         if (user && user.wishlist) {
@@ -45,7 +74,7 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
             addToCart({
                 ...product,
                 quantity: 1,
-                price: parseFloat(product.basePrice)
+                price: parseFloat(displayPrice)
             });
             toast.success(`Added ${product.name}`, {
                 style: { background: '#10b981', color: '#fff', fontSize: '12px' },
@@ -120,6 +149,11 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
                         NEW
                     </span>
                 )}
+                {isActiveFlashSale && (
+                    <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-md uppercase animate-pulse flex items-center gap-1">
+                        <FiZap size={8} /> FLASH DEAL
+                    </span>
+                )}
             </div>
 
             {/* Wishlist/Remove Button */}
@@ -175,11 +209,16 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
                 <div className="mt-auto">
                     <div className="flex items-baseline gap-2 mb-3">
                         <span className="text-sm text-slate-400 line-through">
-                            ₹{(product.basePrice * 1.2).toFixed(0)}
+                            ₹{(isActiveFlashSale ? product.basePrice : product.basePrice * 1.2).toFixed(0)}
                         </span>
                         <span className="font-bold text-slate-900 dark:text-white text-xl">
-                            ₹{product.basePrice}
+                            ₹{displayPrice}
                         </span>
+                        {isActiveFlashSale && timeLeft && (
+                            <span className="ml-auto text-[9px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-full border border-red-100 uppercase tracking-tighter">
+                                {timeLeft}
+                            </span>
+                        )}
                     </div>
 
                     {/* Outlined Button */}

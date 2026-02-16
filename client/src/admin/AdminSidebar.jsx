@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   FiGrid, FiPlusSquare, FiShoppingBag, FiClipboard,
   FiUsers, FiLogOut, FiGlobe, FiMail, FiTag,
-  FiChevronRight, FiZap,
+  FiChevronRight, FiZap, FiSend, FiLayout
 } from "react-icons/fi";
 import axios from "axios";
 
@@ -13,9 +13,10 @@ const LINKS = [
   { name: "Products", path: "/admin/products", icon: <FiShoppingBag size={18} /> },
   { name: "Add Product", path: "/admin/add-product", icon: <FiPlusSquare size={18} /> },
   { name: "Orders", path: "/admin/orders", icon: <FiClipboard size={18} /> },
-  { name: "Kanban Board", path: "/admin/kanban", icon: <FiTrello size={18} /> },
+  { name: "Kanban Board", path: "/admin/kanban", icon: <FiLayout size={18} /> },
   { name: "Inbox", path: "/admin/messages", icon: <FiMail size={18} /> },
-  { name: "Coupons", path: "/admin/coupons", icon: <FiTag size={18} /> },
+  { name: "Flash Deals", path: "/admin/flash-sale", icon: <FiZap size={18} /> },
+  { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={18} /> },
   { name: "Users", path: "/admin/users", icon: <FiUsers size={18} /> },
 ];
 
@@ -80,8 +81,8 @@ export default function AdminSidebar() {
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.15 }}
                   className={`relative flex items-center justify-between px-3.5 py-2.5 md:py-3 rounded-xl text-[13px] font-semibold transition-colors duration-200 ${isActive
-                      ? "text-white"
-                      : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                    ? "text-white"
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                     }`}
                 >
                   <span className="flex items-center gap-3">

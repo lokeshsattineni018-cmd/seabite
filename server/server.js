@@ -22,6 +22,7 @@ import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import spinRoutes from "./routes/spinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import checkMaintenance from "./middleware/checkMaintenance.js";
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -138,6 +139,9 @@ app.use((req, res, next) => {
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
+
+// ✅ Enterprise: Maintenance Mode
+app.use(checkMaintenance);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);

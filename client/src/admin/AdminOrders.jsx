@@ -9,6 +9,7 @@ import {
 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal";
 import Invoice from "../components/Invoice";
+import { generateInvoicePDF } from "../utils/pdfGenerator";
 
 const STATUS_OPTIONS = [
   "All", "Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Cancelled by User",
@@ -198,8 +199,8 @@ export default function AdminOrders() {
               whileTap={{ scale: 0.96 }}
               onClick={() => setFilter(status)}
               className={`px-3.5 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-1.5 ${filter === status
-                  ? "bg-slate-900 text-white border-slate-900 shadow-md"
-                  : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700"
+                ? "bg-slate-900 text-white border-slate-900 shadow-md"
+                : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700"
                 }`}
             >
               {status}
@@ -371,7 +372,12 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
           </div>
           <div className="flex items-center gap-2">
             <StatusPill status={order.status} />
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => window.print()} className="p-2 bg-slate-50 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => generateInvoicePDF(order)}
+              title="Download PDF Invoice"
+              className="p-2 bg-blue-50 rounded-xl text-blue-600 hover:text-blue-700 hover:bg-blue-100 transition-colors"
+            >
               <FiPrinter size={16} />
             </motion.button>
             <motion.button whileTap={{ scale: 0.9 }} onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors">

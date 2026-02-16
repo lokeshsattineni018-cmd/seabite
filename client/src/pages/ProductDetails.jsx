@@ -40,6 +40,8 @@ export default function ProductDetails() {
   const [isReviewOpen, setIsReviewOpen] = useState(false); // Review Modal State
   const [loadingWishlist, setLoadingWishlist] = useState(false);
   const [canReview, setCanReview] = useState(false);
+  const [isWaitlisting, setIsWaitlisting] = useState(false);
+  const [isJoinedWaitlist, setIsJoinedWaitlist] = useState(false);
   const flyIdRef = useRef(0);
   const addBtnRef = useRef(null);
 
@@ -90,6 +92,16 @@ export default function ProductDetails() {
     fetchProduct();
   }, [fetchProduct]);
 
+  // Check if user is already in waitlist
+  useEffect(() => {
+    if (user && product?.waitlist) {
+      const joined = product.waitlist.some(id =>
+        (typeof id === 'string' ? id : id._id) === user._id
+      );
+      setIsJoinedWaitlist(joined);
+    }
+  }, [user, product]);
+
   const handleReviewSuccess = () => {
     fetchProduct(); // Refresh reviews
   };
@@ -139,6 +151,28 @@ export default function ProductDetails() {
       toast.error("Failed to update wishlist");
     } finally {
       setLoadingWishlist(false);
+    }
+  };
+
+  const handleWaitlistJoin = async () => {
+    if (!user) {
+      toast.error("Please login to join the waitlist");
+      return navigate("/login");
+    }
+
+    setIsWaitlisting(true);
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/products/${product._id}/waitlist`,
+        {},
+        { withCredentials: true }
+      );
+      toast.success(res.data.message, { icon: "📧" });
+      setIsJoinedWaitlist(true);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to join waitlist");
+    } finally {
+      setIsWaitlisting(false);
     }
   };
 
@@ -326,9 +360,19 @@ export default function ProductDetails() {
               <div className="h-6 md:h-8 w-px bg-slate-200 dark:bg-white/10" />
 
               {product.stock === "out" ? (
-                <span className="px-2.5 py-1 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px] md:text-xs font-bold uppercase tracking-wider rounded-full">
-                  Sold Out
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="px-2.5 py-1 bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px] md:text-xs font-bold uppercase tracking-wider rounded-full">
+                    Sold Out
+                  </span>
+                  <button
+                    onClick={handleWaitlistJoin}
+                    disabled={isWaitlisting || isJoinedWaitlist}
+                    className={`text-[10px] font-black uppercase tracking-widest underline underline-offset-4 transition-colors ${isJoinedWaitlist ? "text-emerald-500" : "text-blue-600 hover:text-blue-700"
+                      }`}
+                  >
+                    {isWaitlisting ? "Subscribing..." : isJoinedWaitlist ? "subscribed to alerts" : "Notify Me When Fresh"}
+                  </button>
+                </div>
               ) : (
                 <span className="px-2.5 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] md:text-xs font-bold uppercase tracking-wider rounded-full flex items-center gap-1.5 md:gap-2">
                   <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-emerald-500 rounded-full animate-pulse" />

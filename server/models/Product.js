@@ -3,10 +3,10 @@ import mongoose from "mongoose";
 // --- REVIEW SCHEMA ---
 const reviewSchema = new mongoose.Schema(
   {
-    user: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User', 
-        required: true 
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
     },
     name: { type: String, required: true }, // Store user's name for display
     rating: { type: Number, required: true, default: 0 }, // 1 to 5 stars
@@ -19,19 +19,30 @@ const reviewSchema = new mongoose.Schema(
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    basePrice: { type: Number, required: true }, 
-    unit: { type: String, required: true, default: 'kg' }, 
+    basePrice: { type: Number, required: true },
+    unit: { type: String, required: true, default: 'kg' },
     category: String,
     desc: String,
-    image: String, 
+    image: String,
     trending: { type: Boolean, default: false },
     stock: { type: String, default: "in" },
-    active: { type: Boolean, default: true }, 
-    
+    countInStock: { type: Number, default: 10, required: true },
+    active: { type: Boolean, default: true },
+
+    // --- FLASH SALE ---
+    flashSale: {
+      discountPrice: { type: Number, default: 0 },
+      saleEndDate: { type: Date },
+      isFlashSale: { type: Boolean, default: false }
+    },
+
     // --- NEW REVIEW FIELDS ---
     reviews: [reviewSchema], // Array of review objects
     rating: { type: Number, required: true, default: 0 }, // Average rating
     numReviews: { type: Number, required: true, default: 0 }, // Total review count
+
+    // --- ENTERPRISE: WAITLIST ---
+    waitlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   },
   { timestamps: true }
 );

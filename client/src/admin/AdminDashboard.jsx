@@ -11,7 +11,8 @@ import {
   FiShoppingBag, FiUsers, FiTrendingUp, FiActivity,
   FiDollarSign, FiCalendar, FiMail, FiTrash2, FiStar,
   FiArrowUpRight, FiArrowDownRight, FiClock, FiEye,
-  FiRefreshCw, FiMoreHorizontal, FiPackage,
+  FiRefreshCw, FiMoreHorizontal, FiPackage, FiSettings, FiSearch,
+  FiAlertCircle, FiPower, FiCheckCircle
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { io } from "socket.io-client";
@@ -78,22 +79,36 @@ export default function AdminDashboard() {
   const [popularProducts, setPopularProducts] = useState([]);
   const [recentMessages, setRecentMessages] = useState([]);
   const [allReviews, setAllReviews] = useState([]);
+  const [heatmapData, setHeatmapData] = useState([]);
+  const [topSpenders, setTopSpenders] = useState([]);
+  const [lowStock, setLowStock] = useState([]);
+  const [searchInsights, setSearchInsights] = useState([]);
+  const [settings, setSettings] = useState({ isMaintenanceMode: false, maintenanceMessage: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
+  const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const [dashboardRes, messagesRes, reviewsRes] = await Promise.all([
+      const [dashboardRes, messagesRes, reviewsRes, lowStockRes, settingsRes, insightsRes] = await Promise.all([
         axios.get("/api/admin", { params: { range: timeFilter }, withCredentials: true }),
         axios.get("/api/contact", { withCredentials: true }),
         axios.get("/api/admin/reviews/all", { withCredentials: true }),
+        axios.get("/api/admin/inventory/low-stock", { withCredentials: true }),
+        axios.get("/api/admin/enterprise/settings", { withCredentials: true }),
+        axios.get("/api/admin/insights/search", { withCredentials: true }),
       ]);
 
       setStats(dashboardRes.data.stats);
       setGraph(dashboardRes.data.graph);
       setRecentOrders(dashboardRes.data.recentOrders);
       setPopularProducts(dashboardRes.data.popularProducts);
+      setHeatmapData(dashboardRes.data.heatmapData || []);
+      setTopSpenders(dashboardRes.data.topSpenders || []);
+      setLowStock(lowStockRes.data || []);
+      setSettings(settingsRes.data);
+      setSearchInsights(insightsRes.data || []);
       setRecentMessages(messagesRes.data.slice(0, 5));
       setAllReviews(reviewsRes.data?.slice(0, 6) || []);
       setLoading(false);
@@ -142,6 +157,25 @@ export default function AdminDashboard() {
       fetchDashboardData();
     } catch {
       alert("Failed to delete review.");
+    }
+  };
+
+  const toggleMaintenance = async () => {
+    setIsUpdatingSettings(true);
+    try {
+      const active = !settings.isMaintenanceMode;
+      const res = await axios.put("/api/admin/enterprise/settings", {
+        isMaintenanceMode: active
+      }, { withCredentials: true });
+      setSettings(res.data.settings);
+      toast.success(active ? "Maintenance Mode: ACTIVE" : "Store is now LIVE", {
+        icon: active ? "🚧" : "✅",
+        style: { background: active ? "#b91c1c" : "#059669", color: "#fff" }
+      });
+    } catch (err) {
+      toast.error("Failed to update settings");
+    } finally {
+      setIsUpdatingSettings(false);
     }
   };
 
@@ -205,6 +239,42 @@ export default function AdminDashboard() {
             </span>
           </div>
         </div>
+      </motion.div>
+
+      {/* ✅ ENTERPRISE: MAINTENANCE BAR */}
+      <motion.div
+        variants={fadeUp}
+        custom={0.5}
+        className={`p-4 rounded-2xl border flex flex-col md:flex-row items-center justify-between gap-4 transition-all duration-500 ${settings.isMaintenanceMode
+          ? "bg-red-50 border-red-200 shadow-[0_0_20px_rgba(239,68,68,0.1)]"
+          : "bg-emerald-50 border-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
+          }`}
+      >
+        <div className="flex items-center gap-4">
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center border ${settings.isMaintenanceMode ? "bg-red-100 text-red-600 border-red-200" : "bg-emerald-100 text-emerald-600 border-emerald-200"
+            }`}>
+            {settings.isMaintenanceMode ? <FiSettings size={22} className="animate-spin-slow" /> : <FiCheckCircle size={22} />}
+          </div>
+          <div>
+            <h3 className={`text-sm font-black uppercase tracking-tight ${settings.isMaintenanceMode ? "text-red-700" : "text-emerald-700"}`}>
+              Store Status: {settings.isMaintenanceMode ? "Maintenance Active" : "Fully Operational"}
+            </h3>
+            <p className="text-[10px] text-slate-500 font-medium">
+              {settings.isMaintenanceMode ? "Customers see the maintenance page. Admin bypass is active." : "Store is public and accepting orders."}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={toggleMaintenance}
+          disabled={isUpdatingSettings}
+          className={`px-6 py-2.5 rounded-xl font-bold text-xs flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 ${settings.isMaintenanceMode
+            ? "bg-red-600 text-white hover:bg-red-700 shadow-lg shadow-red-200"
+            : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-lg shadow-emerald-200"
+            }`}
+        >
+          {isUpdatingSettings ? <FiRefreshCw className="animate-spin" /> : <FiPower />}
+          {settings.isMaintenanceMode ? "Deactivate Maintenance" : "Activate Maintenance"}
+        </button>
       </motion.div>
 
       {/* Stat Cards - 4 columns */}
@@ -363,6 +433,211 @@ export default function AdminDashboard() {
         </div>
       </motion.div>
 
+      {/* Inventory Health: Smart Alerts */}
+      <motion.div variants={fadeUp} custom={2.5} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 overflow-hidden relative">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center border border-red-100">
+              <FiAlertCircle size={20} />
+            </div>
+            <div>
+              <h3 className="text-sm md:text-base font-bold text-slate-900">Inventory Health</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Critical stock level monitoring</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500" /><span className="text-[10px] font-bold text-slate-500 uppercase">Critical</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" /><span className="text-[10px] font-bold text-slate-500 uppercase">Warning</span></div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {lowStock.length === 0 ? (
+            <div className="col-span-full py-12 flex flex-col items-center justify-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+              <FiPackage className="text-slate-300 mb-2" size={32} />
+              <p className="text-sm font-bold text-slate-400">All stock levels healthy</p>
+            </div>
+          ) : (
+            lowStock.map((p) => (
+              <div key={p._id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between group hover:border-blue-200 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white p-1 border border-slate-100 shrink-0 shadow-sm">
+                    <img src={getImageUrl(p.image)} alt={p.name} className="w-full h-full object-contain" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-slate-900 truncate uppercase tracking-tight">{p.name}</h4>
+                    <p className={`text-[10px] font-black uppercase tracking-widest mt-0.5 ${p.countInStock < 5 ? "text-red-500" : "text-amber-600"
+                      }`}>
+                      {p.countInStock} Left in Stock
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => toast.success(`Restock request sent to ${p.category} supplier`, { icon: '📦' })}
+                  className="p-2 opacity-0 group-hover:opacity-100 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all"
+                  title="Quick Restock Request"
+                >
+                  <FiRefreshCw size={14} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </motion.div>
+
+      {/* Advanced Insights: Heatmap & VIPs */}
+      <motion.div variants={fadeUp} custom={3.5} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales Heatmap */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h3 className="text-sm md:text-base font-bold text-slate-900">Sales Heatmap</h3>
+              <p className="text-[10px] text-slate-400 mt-0.5">Busiest times by Day & Hour</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded bg-blue-50" />
+              <div className="w-3 h-3 rounded bg-blue-200" />
+              <div className="w-3 h-3 rounded bg-blue-400" />
+              <div className="w-3 h-3 rounded bg-blue-600" />
+              <span className="text-[9px] text-slate-400 font-bold ml-1 uppercase underline tracking-tighter">Density</span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto pb-2">
+            <div className="min-w-[500px]">
+              <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(25, minmax(0, 1fr))' }}>
+                {/* Empty corner */}
+                <div className="h-4 w-10 flex items-center justify-center">
+                  <FiClock size={10} className="text-slate-300" />
+                </div>
+                {/* Hours Header */}
+                {[...Array(24)].map((_, h) => (
+                  <div key={h} className="text-[8px] font-black text-slate-300 text-center uppercase tracking-tighter">
+                    {h}
+                  </div>
+                ))}
+
+                {/* Days Rows */}
+                {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, dIdx) => (
+                  <div key={day} className="contents">
+                    <div className="text-[9px] font-bold text-slate-400 self-center pr-2 uppercase">
+                      {day}
+                    </div>
+                    {[...Array(24)].map((_, hour) => {
+                      const mongoDay = dIdx === 6 ? 1 : dIdx + 2;
+                      const cell = heatmapData.find(h => h._id.day === mongoDay && h._id.hour === hour);
+                      const count = cell ? cell.count : 0;
+
+                      let bg = "bg-slate-50";
+                      if (count > 0) bg = "bg-blue-100";
+                      if (count > 3) bg = "bg-blue-300";
+                      if (count > 7) bg = "bg-blue-500 shadow-[0_0_8px_rgba(37,99,235,0.3)]";
+
+                      return (
+                        <div
+                          key={hour}
+                          title={`${day} @ ${hour}:00 - ${count} orders`}
+                          className={`${bg} h-4 w-full rounded-sm transition-all hover:scale-125 cursor-help`}
+                        />
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <p className="text-[9px] text-slate-400 mt-4 italic font-medium">Darker cells indicate higher order volume during that hour.</p>
+        </div>
+
+        {/* VIP Customer Tracker */}
+        <div className="bg-slate-900 p-6 rounded-2xl shadow-xl border border-slate-800 text-white relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+
+          <div className="flex justify-between items-center mb-6 relative z-10">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm md:text-base font-bold text-white">VIP Customers</h3>
+                <span className="bg-blue-500/20 text-blue-400 text-[9px] font-black px-1.5 py-0.5 rounded uppercase border border-blue-500/30">Top Spenders</span>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-0.5">Identify your whale customers</p>
+            </div>
+            <FiStar className="text-yellow-400" size={18} />
+          </div>
+
+          <div className="space-y-4 relative z-10">
+            {topSpenders.map((user, i) => (
+              <div key={user.email} className="flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-all group">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center font-bold text-white text-xs border border-white/20">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white group-hover:text-blue-300 transition-colors uppercase tracking-tight">{user.name}</h4>
+                    <p className="text-[10px] text-slate-500 lowercase">{user.email}</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-black text-white">₹{user.totalSpent.toLocaleString()}</p>
+                  <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter">{user.orderCount} Orders</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button className="w-full mt-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold transition-all shadow-lg shadow-blue-900/40 uppercase tracking-widest relative z-10">
+            Send VIP Reward Blast
+          </button>
+        </div>
+
+        {/* Search Analytics Insight */}
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-100">
+                <FiSearch size={20} />
+              </div>
+              <div>
+                <h3 className="text-sm md:text-base font-bold text-slate-900">Demand Analytics</h3>
+                <p className="text-[10px] text-slate-400 mt-0.5">Top customer search queries</p>
+              </div>
+            </div>
+            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded">Last 24h</span>
+          </div>
+
+          <div className="space-y-3">
+            {searchInsights.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 text-sm">No search data yet</div>
+            ) : (
+              searchInsights.slice(0, 5).map((insight, idx) => (
+                <div key={insight.query} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl group hover:bg-slate-100 transition-all border border-transparent hover:border-slate-200">
+                  <div className="flex items-center gap-4">
+                    <span className="text-[10px] font-black text-slate-300 w-4">#{idx + 1}</span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 uppercase tracking-tight">{insight.query}</h4>
+                      <p className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${insight.found ? "text-emerald-500" : "text-amber-500"}`}>
+                        {insight.found ? "Items Found" : "Not in Stock / Not Found"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-slate-900">{insight.count}</p>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase">Searches</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          {searchInsights.some(i => !i.found) && (
+            <div className="mt-4 p-3 bg-amber-50 rounded-xl border border-amber-100 flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+              <p className="text-[10px] text-amber-900 font-medium">
+                Users are searching for items you don't carry. Consider expanding your catalog!
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.div>
+
       {/* Bottom Row: Recent Orders, Inquiries, Reviews */}
       <motion.div variants={fadeUp} custom={3} className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-6">
         {/* Recent Orders */}
@@ -487,7 +762,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div >
   );
 }
 

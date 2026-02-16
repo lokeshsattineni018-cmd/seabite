@@ -3,6 +3,8 @@ import adminAuth from "../middleware/adminAuth.js"; // ✅ Uses session logic to
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import User from "../models/User.js";
+import Settings, { getSettings } from "../models/Settings.js";
+import SearchInsight from "../models/SearchInsight.js";
 import { sendStatusUpdateEmail } from "../utils/emailService.js";
 
 const router = express.Router();
@@ -10,7 +12,7 @@ const router = express.Router();
 // 1. ADMIN DASHBOARD SUMMARY (GET /api/admin)
 router.get("/", adminAuth, async (req, res) => {
   try {
-    const { range } = req.query; 
+    const { range } = req.query;
     const limit = range === "1year" ? 12 : 6;
     const today = new Date();
     const startDate = new Date();
@@ -59,19 +61,161 @@ router.get("/", adminAuth, async (req, res) => {
       products: await Product.countDocuments(),
       orders: await Order.countDocuments(),
       users: await User.countDocuments(),
-      totalRevenue: Math.round(totalRevenue) 
+      totalRevenue: Math.round(totalRevenue)
     };
+
+    // 🕵️ EXTRA INTELLIGENCE: Sales Heatmap (Day of Week & Hour)
+    const heatmapData = await Order.aggregate([
+      {
+        $project: {
+          day: { $dayOfWeek: "$createdAt" }, // 1 (Sun) to 7 (Sat)
+          hour: { $hour: "$createdAt" }
+        }
+      },
+      {
+        $group: {
+          _id: { day: "$day", hour: "$hour" },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // 💎 VIP INTELLIGENCE: Top 5 Spenders
+    const topSpenders = await Order.aggregate([
+      { $group: { _id: "$user", totalSpent: { $sum: "$totalAmount" }, orderCount: { $sum: 1 } } },
+      { $sort: { totalSpent: -1 } },
+      { $limit: 5 },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "userDetails"
+        }
+      },
+      { $unwind: "$userDetails" },
+      {
+        $project: {
+          name: "$userDetails.name",
+          email: "$userDetails.email",
+          totalSpent: 1,
+          orderCount: 1
+        }
+      }
+    ]);
 
     const recentOrders = await Order.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .populate('user', 'name'); 
+      .populate('user', 'name');
 
-    res.json({ stats, graph: finalGraph, recentOrders, popularProducts });
+    res.json({ stats, graph: finalGraph, recentOrders, popularProducts, heatmapData, topSpenders });
 
   } catch (err) {
     console.error("❌ ADMIN DASHBOARD CRASH:", err);
     res.status(500).json({ message: "Dashboard error" });
+  }
+});
+
+// 1.2 ENTERPRISE SETTINGS (GET /api/admin/settings)
+router.get("/enterprise/settings", adminAuth, async (req, res) => {
+  try {
+    const settings = await getSettings();
+    res.json(settings);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch settings" });
+  }
+});
+
+// 1.3 UPDATE SETTINGS (PUT /api/admin/settings)
+router.put("/enterprise/settings", adminAuth, async (req, res) => {
+  try {
+    const { isMaintenanceMode, maintenanceMessage } = req.body;
+    let settings = await getSettings();
+    settings.isMaintenanceMode = isMaintenanceMode ?? settings.isMaintenanceMode;
+    settings.maintenanceMessage = maintenanceMessage ?? settings.maintenanceMessage;
+    settings.lastUpdatedBy = req.session.userId;
+    await settings.save();
+    res.json({ message: "Enterprise settings updated", settings });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update settings" });
+  }
+});
+
+// 1.4 SEARCH INSIGHTS (GET /api/admin/insights/search)
+router.get("/insights/search", adminAuth, async (req, res) => {
+  try {
+    const insights = await SearchInsight.find()
+      .sort({ count: -1, lastSearched: -1 })
+      .limit(20);
+    res.json(insights);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch insights" });
+  }
+});
+
+// 1.5 LOW STOCK ALERT (GET /api/admin/inventory/low-stock)
+router.get("/inventory/low-stock", adminAuth, async (req, res) => {
+  try {
+    const lowStockProducts = await Product.find({ countInStock: { $lt: 10 } })
+      .select("name countInStock price image category")
+      .sort({ countInStock: 1 });
+    res.json(lowStockProducts);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch inventory status" });
+  }
+});
+
+// 1.7 FETCH ALL PRODUCTS FOR ADMIN (GET /api/admin/products)
+router.get("/products", adminAuth, async (req, res) => {
+  try {
+    const products = await Product.find({}).sort({ createdAt: -1 });
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch products" });
+  }
+});
+
+// 1.8 CONFIGURE FLASH SALE (PUT /api/admin/products/:id/flash-sale)
+router.put("/products/:id/flash-sale", adminAuth, async (req, res) => {
+  try {
+    const { discountPrice, saleEndDate, isFlashSale } = req.body;
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    product.flashSale = {
+      discountPrice: discountPrice || 0,
+      saleEndDate: saleEndDate,
+      isFlashSale: isFlashSale
+    };
+
+    await product.save();
+    res.json({ message: "Flash Sale updated successfully", product });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update Flash Sale" });
+  }
+});
+
+// 1.9 BULK EMAIL MARKETING (POST /api/admin/marketing/email-blast)
+router.post("/marketing/email-blast", adminAuth, async (req, res) => {
+  try {
+    const { subject, message } = req.body;
+    const users = await User.find({});
+
+    // Batch send (logic should ideally be in a worker but for this phase we loop)
+    let successCount = 0;
+    for (const user of users) {
+      try {
+        await sendMarketingEmail(user.email, user.name, subject, message);
+        successCount++;
+      } catch (e) {
+        console.error(`Failed to send email to ${user.email}:`, e.message);
+      }
+    }
+
+    res.json({ message: `Successfully sent to ${successCount} customers.` });
+  } catch (err) {
+    res.status(500).json({ message: "Marketing blast failed." });
   }
 });
 
@@ -89,9 +233,9 @@ router.put("/orders/:id/status", adminAuth, async (req, res) => {
     try {
       if (status) {
         await sendStatusUpdateEmail(
-          order.user.email, 
-          order.user.name, 
-          order.orderId || order._id, 
+          order.user.email,
+          order.user.name,
+          order.orderId || order._id,
           status
         );
       }
@@ -122,7 +266,7 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
             totalSpent: Math.round(totalSpent),
             orderCount: orders.length,
             reviewCount: reviewsCount,
-            isVIP: totalSpent > 10000 
+            isVIP: totalSpent > 10000
           }
         };
       })
@@ -133,10 +277,10 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
 
 // 4. FETCH ALL USERS
 router.get("/users", adminAuth, async (req, res) => {
-    try {
-        const users = await User.find().select('-password').sort({ createdAt: -1 });
-        res.json(users);
-    } catch (err) { res.status(500).json({ message: 'User list failed' }); }
+  try {
+    const users = await User.find().select('-password').sort({ createdAt: -1 });
+    res.json(users);
+  } catch (err) { res.status(500).json({ message: 'User list failed' }); }
 });
 
 // 5. DELETE PRODUCT REVIEW
@@ -147,8 +291,8 @@ router.delete("/products/:productId/reviews/:reviewId", adminAuth, async (req, r
     if (!product) return res.status(404).json({ message: "Product not found" });
 
     product.reviews = product.reviews.filter((rev) => rev._id.toString() !== reviewId);
-    product.rating = product.reviews.length > 0 
-      ? product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length 
+    product.rating = product.reviews.length > 0
+      ? product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length
       : 0;
     product.numReviews = product.reviews.length;
 

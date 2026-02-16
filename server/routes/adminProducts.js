@@ -16,32 +16,32 @@ cloudinary.config({
 /* ========== MULTER SETUP (MEMORY STORAGE) ========== */
 // ✅ FIXED: Changed from diskStorage to memoryStorage for Vercel
 const storage = multer.memoryStorage();
-const upload = multer({ 
+const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB Limit
 });
 
 /* ========== GET PRODUCT BY ID (ADMIN) ========== */
 router.get("/:id", adminAuth, async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id);
-        if (!product) {
-            return res.status(404).json({ message: "Product not found" });
-        }
-        res.json(product);
-    } catch (err) {
-        console.error("❌ GET ADMIN PRODUCT ERROR:", err);
-        res.status(500).json({ message: "Failed to fetch product details" });
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
     }
+    res.json(product);
+  } catch (err) {
+    console.error("❌ GET ADMIN PRODUCT ERROR:", err);
+    res.status(500).json({ message: "Failed to fetch product details" });
+  }
 });
 
 /* ========== ADD PRODUCT (POST /api/admin/products) ========== */
 router.post(
   "/",
-  adminAuth, 
+  adminAuth,
   upload.single("image"),
   async (req, res) => {
-    
+
     const { name, category, desc, trending, stock, basePrice, unit } = req.body;
 
     try {
@@ -50,7 +50,7 @@ router.post(
       }
 
       if (!basePrice || !unit) {
-          return res.status(400).json({ message: "Missing required price details." });
+        return res.status(400).json({ message: "Missing required price details." });
       }
 
       // ✅ FIXED: Convert Buffer to Cloudinary Data URI
@@ -66,7 +66,7 @@ router.post(
         name: name,
         category: category,
         desc: desc || "",
-        trending: trending === "true", 
+        trending: trending === "true",
         stock: stock || "in",
         active: true,
         image: cloudinaryResponse.secure_url, // Use Cloudinary URL
@@ -75,7 +75,7 @@ router.post(
       });
 
       res.status(201).json(product);
-      
+
     } catch (err) {
       console.error("❌ ADD PRODUCT ERROR:", err);
       res.status(400).json({ message: "Failed to add product: " + err.message });
@@ -85,36 +85,58 @@ router.post(
 
 /* ========== UPDATE PRODUCT (PUT /api/admin/products/:id) ========== */
 router.put("/:id", adminAuth, async (req, res) => {
-    const { name, category, desc, trending, stock, basePrice, unit, image } = req.body;
-    try {
-        const updatedProduct = await Product.findByIdAndUpdate(
-            req.params.id,
-            {
-                $set: {
-                    name,
-                    category,
-                    desc,
-                    trending,
-                    stock,
-                    image, 
-                    basePrice: Number(basePrice), 
-                    unit,
-                }
-            },
-            { new: true, runValidators: true }
-        );
-        if (!updatedProduct) return res.status(404).json({ message: "Product not found" });
-        res.json(updatedProduct);
-    } catch (err) {
-        res.status(400).json({ message: "Unable to update product: " + err.message });
+  const { name, category, desc, trending, stock, basePrice, unit, image, countInStock } = req.body;
+  try {
+    const oldProduct = await Product.findById(req.params.id);
+    if (!oldProduct) return res.status(404).json({ message: "Product not found" });
+
+    const wasOutOfStock = oldProduct.stock === "out" || oldProduct.countInStock === 0;
+    const isNowInStock = stock === "in" || (countInStock !== undefined && Number(countInStock) > 0);
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          name,
+          category,
+          desc,
+          trending,
+          stock,
+          image,
+          basePrice: Number(basePrice),
+          unit,
+          countInStock: countInStock !== undefined ? Number(countInStock) : oldProduct.countInStock
+        }
+      },
+      { new: true, runValidators: true }
+    ).populate('waitlist', 'name email');
+
+    // ✅ Enterprise: Trigger Waitlist Notifications
+    if (wasOutOfStock && isNowInStock && updatedProduct.waitlist.length > 0) {
+      const { sendWaitlistEmail } = await import("../utils/emailService.js");
+
+      // Send emails in background
+      Promise.all(updatedProduct.waitlist.map(user =>
+        sendWaitlistEmail(user.email, user.name, updatedProduct.name, updatedProduct.image)
+          .catch(err => console.error(`Waitlist Email Error for ${user.email}:`, err))
+      )).then(async () => {
+        // Clear waitlist after successful notification
+        updatedProduct.waitlist = [];
+        await updatedProduct.save();
+      });
     }
+
+    res.json(updatedProduct);
+  } catch (err) {
+    res.status(400).json({ message: "Unable to update product: " + err.message });
+  }
 });
 
 /* ========== GET ALL PRODUCTS (ADMIN) ========== */
 router.get("/", adminAuth, async (req, res) => {
   try {
     const products = await Product.find().sort({ createdAt: -1 });
-    res.json({ products }); 
+    res.json({ products });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch products" });
   }
