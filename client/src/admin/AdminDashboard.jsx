@@ -137,7 +137,9 @@ export default function AdminDashboard() {
     const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
     const socket = io(API_URL, {
       withCredentials: true,
-      transports: ['polling', 'websocket']
+      path: '/socket.io/',
+      transports: ['polling', 'websocket'],
+      reconnectionAttempts: 5
     });
 
     socket.on("connect", () => {
@@ -351,8 +353,8 @@ export default function AdminDashboard() {
               </select>
             </div>
           </div>
-          <div className="h-[260px] md:h-[300px] w-full">
-            <ResponsiveContainer width="100%" height="100%" minHeight={260}>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={graph} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
@@ -382,8 +384,8 @@ export default function AdminDashboard() {
 
           {orderStatusData.length > 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center">
-              <div className="w-full h-[160px]">
-                <ResponsiveContainer width="100%" height="100%" minHeight={160}>
+              <div className="w-full h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={orderStatusData}
