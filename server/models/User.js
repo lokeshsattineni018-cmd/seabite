@@ -40,6 +40,9 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    // 🟢 Wishlist
+    wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
+
     lastOrderCompletionTime: {
       type: Date,
       default: null,

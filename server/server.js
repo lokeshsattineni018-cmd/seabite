@@ -19,6 +19,7 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import spinRoutes from "./routes/spinRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -118,8 +119,8 @@ app.use(sessionMiddleware);
 // ✅ Session save error handler
 app.use((req, res, next) => {
   const originalSave = req.session.save.bind(req.session);
-  req.session.save = function(callback) {
-    originalSave(function(err) {
+  req.session.save = function (callback) {
+    originalSave(function (err) {
       if (err) console.error('❌ Session save error:', err);
       if (callback) callback(err);
     });
@@ -140,6 +141,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
+app.use("/api/user", userRoutes);
 
 app.get("/health", (req, res) => {
   const state = mongoose.connection.readyState;
@@ -152,7 +154,7 @@ app.get("/health", (req, res) => {
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
 
 app.use((err, req, res, next) => {
- console.error("❌ Server Error:", err);
+  console.error("❌ Server Error:", err);
   res.status(500).json({ error: "Internal server error" });
 });
 

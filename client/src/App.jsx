@@ -18,8 +18,7 @@ import SupportWidget from "./components/SupportWidget";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
-import Profile from "./pages/Profile";
+import Wishlist from "./pages/Wishlist";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import OrderSuccess from "./pages/OrderSuccess";
@@ -83,7 +82,7 @@ function MainLayout() {
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
-      
+
       {/* ✅ Toast Notifications */}
       <Toaster
         position="top-right"
@@ -143,6 +142,7 @@ function MainLayout() {
               <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
               <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
               <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
+              <Route path="/wishlist" element={<PageTransition><PrivateRoute><Wishlist /></PrivateRoute></PageTransition>} />
               <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
               <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
               <Route path="/notifications" element={<PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition>} />

@@ -15,6 +15,7 @@ import {
   FiSun,
   FiMoon,
   FiChevronDown,
+  FiHeart,
 } from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
@@ -108,7 +109,7 @@ export default function Navbar({ openCart }) {
       });
       setUnreadCount(res.data.filter((n) => !n.read).length);
     } catch (err) {
-     // console.error("Notification fetch failed");
+      // console.error("Notification fetch failed");
     }
   };
 
@@ -129,27 +130,27 @@ export default function Navbar({ openCart }) {
   }, []);
 
   // ✅ CHECK IF USER CAN SPIN - Only show popup if eligible
- // ✅ CHECK IF USER CAN SPIN - Only show popup if eligible
-useEffect(() => {
-  const checkCanSpin = async () => {
-    if (!user) return;
+  // ✅ CHECK IF USER CAN SPIN - Only show popup if eligible
+  useEffect(() => {
+    const checkCanSpin = async () => {
+      if (!user) return;
 
-    try {
-      const res = await axios.get(`${API_URL}/api/spin/can-spin`, {
-        withCredentials: true,
-      });
+      try {
+        const res = await axios.get(`${API_URL}/api/spin/can-spin`, {
+          withCredentials: true,
+        });
 
-      if (res.data.canSpin) {
-        const timer = setTimeout(() => setShowSpinWheel(true), 2000);
-        return () => clearTimeout(timer);
+        if (res.data.canSpin) {
+          const timer = setTimeout(() => setShowSpinWheel(true), 2000);
+          return () => clearTimeout(timer);
+        }
+      } catch (err) {
+        // Silent fail
       }
-    } catch (err) {
-      // Silent fail
-    }
-  };
+    };
 
-  checkCanSpin();
-}, [user]);
+    checkCanSpin();
+  }, [user]);
 
 
   const handleLogout = async () => {
@@ -218,11 +219,10 @@ useEffect(() => {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: hidden ? -100 : 0, opacity: hidden ? 0 : 1 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-0 w-full z-50 transition-all duration-500 ease-in-out border-b ${
-          scrolled
-            ? "bg-white/80 dark:bg-slate-900/70 backdrop-blur-2xl border-slate-200/50 dark:border-white/5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
-            : "bg-transparent border-transparent py-4 md:py-6"
-        }`}
+        className={`fixed top-0 w-full z-50 transition-all duration-500 ease-in-out border-b ${scrolled
+          ? "bg-white/80 dark:bg-slate-900/70 backdrop-blur-2xl border-slate-200/50 dark:border-white/5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
+          : "bg-transparent border-transparent py-4 md:py-6"
+          }`}
       >
         <div className="max-w-7xl mx-auto px-4 md:px-12 flex items-center justify-between">
           {/* Logo with magnetic effect */}
@@ -236,9 +236,8 @@ useEffect(() => {
                 <img
                   src="/logo.png"
                   alt="SeaBite Logo"
-                  className={`h-12 md:h-16 w-auto object-contain transition-all duration-300 drop-shadow-lg ${
-                    isDarkMode ? "filter brightness-0 invert" : ""
-                  }`}
+                  className={`h-12 md:h-16 w-auto object-contain transition-all duration-300 drop-shadow-lg ${isDarkMode ? "filter brightness-0 invert" : ""
+                    }`}
                 />
               </motion.div>
             </MagneticButton>
@@ -254,11 +253,10 @@ useEffect(() => {
                   : "0 0 0 rgba(0,0,0,0)",
               }}
               transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className={`flex items-center rounded-full px-5 py-2.5 max-w-md border transition-all duration-300 group ${
-                scrolled
-                  ? "bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-white/10"
-                  : "bg-white/20 dark:bg-white/10 backdrop-blur-md border-slate-300 dark:border-white/20"
-              }`}
+              className={`flex items-center rounded-full px-5 py-2.5 max-w-md border transition-all duration-300 group ${scrolled
+                ? "bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-white/10"
+                : "bg-white/20 dark:bg-white/10 backdrop-blur-md border-slate-300 dark:border-white/20"
+                }`}
             >
               <motion.div animate={{ rotate: searchFocused ? 90 : 0 }} transition={{ duration: 0.3 }}>
                 <FiSearch className="text-blue-500 dark:text-blue-200 mr-3 text-lg" />
@@ -332,6 +330,20 @@ useEffect(() => {
                 </AnimatePresence>
               </motion.button>
             </MagneticButton>
+
+            {/* Wishlist Button */}
+            {user && (
+              <MagneticButton>
+                <motion.button
+                  onClick={() => navigate("/wishlist")}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.85 }}
+                  className="p-2 text-slate-700 dark:text-blue-100 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                >
+                  <FiHeart size={22} strokeWidth={1.5} />
+                </motion.button>
+              </MagneticButton>
+            )}
 
             {/* Cart button with bounce on count change */}
             <MagneticButton>
@@ -410,6 +422,7 @@ useEffect(() => {
                         </div>
                         <div className="py-2">
                           <DropdownItem icon={<FiUser />} text="My Profile" onClick={() => navigate("/profile")} />
+                          <DropdownItem icon={<FiHeart />} text="Wishlist" onClick={() => navigate("/wishlist")} />
                           <DropdownItem icon={<FiPackage />} text="My Orders" onClick={() => navigate("/orders")} />
                           <DropdownItem
                             icon={<FiBell />}
@@ -558,6 +571,7 @@ useEffect(() => {
                     </p>
                     {[
                       { icon: <FiUser />, text: "My Profile", path: "/profile" },
+                      { icon: <FiHeart />, text: "Wishlist", path: "/wishlist" },
                       { icon: <FiPackage />, text: "My Orders", path: "/orders" },
                       { icon: <FiBell />, text: "Notifications", path: "/notifications", badge: unreadCount },
                       ...(user.role === "admin"
@@ -617,11 +631,10 @@ function DropdownItem({ icon, text, onClick, isDanger, badge = 0 }) {
       }}
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className={`px-5 py-3 cursor-pointer flex items-center justify-between transition-colors ${
-        isDanger
-          ? "text-red-500"
-          : "text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white"
-      }`}
+      className={`px-5 py-3 cursor-pointer flex items-center justify-between transition-colors ${isDanger
+        ? "text-red-500"
+        : "text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white"
+        }`}
     >
       <div className="flex items-center gap-4">
         {icon && (

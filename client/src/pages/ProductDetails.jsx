@@ -1,8 +1,9 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useContext, useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { CartContext } from "../context/CartContext";
 import { ThemeContext } from "../context/ThemeContext";
+import { AuthContext } from "../context/AuthContext";
 import { addToCart } from "../utils/cartStorage";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -14,14 +15,21 @@ import {
   FiInfo,
   FiCheck,
   FiPackage,
+  FiStar,
+  FiMessageSquare,
+  FiHeart,
 } from "react-icons/fi";
+import toast from "react-hot-toast";
+import ReviewModal from "../components/ReviewModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function ProductDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { refreshCartCount } = useContext(CartContext);
   const { isDarkMode } = useContext(ThemeContext);
+  const { token, user, refreshMe } = useContext(AuthContext); // Added AuthContext
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,8 +37,15 @@ export default function ProductDetails() {
   const [activeTab, setActiveTab] = useState("desc");
   const [isAdded, setIsAdded] = useState(false);
   const [flyItems, setFlyItems] = useState([]);
+  const [isReviewOpen, setIsReviewOpen] = useState(false); // Review Modal State
+  const [loadingWishlist, setLoadingWishlist] = useState(false);
   const flyIdRef = useRef(0);
   const addBtnRef = useRef(null);
+
+  // Check Wishlist Status
+  const isWishlisted = user?.wishlist?.some(
+    (item) => (typeof item === "string" ? item : item._id) === id
+  );
 
   const basePrice = product ? parseFloat(product.basePrice) : 0;
   const totalPrice = (basePrice * qty).toFixed(2);
@@ -45,8 +60,7 @@ export default function ProductDetails() {
     return `${API_URL}${cleanPath}`;
   };
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
+  const fetchProduct = useCallback(() => {
     setLoading(true);
     axios
       .get(`${API_URL}/api/products/${id}`, { withCredentials: true })
@@ -55,10 +69,19 @@ export default function ProductDetails() {
         setLoading(false);
       })
       .catch((err) => {
-       // console.error("Failed to fetch product:", err);
+        // console.error("Failed to fetch product:", err);
         setLoading(false);
       });
   }, [id]);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    fetchProduct();
+  }, [fetchProduct]);
+
+  const handleReviewSuccess = () => {
+    fetchProduct(); // Refresh reviews
+  };
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -85,6 +108,29 @@ export default function ProductDetails() {
     setTimeout(() => setIsAdded(false), 2000);
   };
 
+  const handleWishlistToggle = async () => {
+    if (!user) {
+      toast.error("Please login to save items!");
+      return navigate("/login");
+    }
+
+    setLoadingWishlist(true);
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/user/wishlist/${product._id}`,
+        {},
+        { withCredentials: true }
+      );
+
+      toast.success(res.data.message, { icon: "❤️" });
+      await refreshMe();
+    } catch (err) {
+      toast.error("Failed to update wishlist");
+    } finally {
+      setLoadingWishlist(false);
+    }
+  };
+
   const handleFlyComplete = useCallback((id) => {
     setFlyItems((prev) => prev.filter((item) => item.id !== id));
   }, []);
@@ -103,7 +149,7 @@ export default function ProductDetails() {
           transition={{ delay: 0.2 }}
           className="text-slate-500 font-medium tracking-widest text-sm uppercase"
         >
-         // Loading Fresh Catch...
+          Loading Fresh Catch...
         </motion.p>
       </div>
     );
@@ -252,12 +298,12 @@ export default function ProductDetails() {
               {product.name}
             </motion.h1>
 
-            {/* Price & Status */}
+            {/* Price & Status & Rating */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="flex items-center gap-4 md:gap-6 mb-6 md:mb-8"
+              className="flex flex-wrap items-center gap-4 md:gap-6 mb-6 md:mb-8"
             >
               <p className="text-2xl md:text-3xl font-sans font-bold text-slate-900 dark:text-white">
                 {"\u20B9"}{basePrice.toFixed(2)}
@@ -278,6 +324,22 @@ export default function ProductDetails() {
                   In Stock
                 </span>
               )}
+
+              {/* Rating Display */}
+              {product.rating > 0 && (
+                <>
+                  <div className="h-6 md:h-8 w-px bg-slate-200 dark:bg-white/10" />
+                  <div className="flex items-center gap-1 text-amber-500">
+                    <FiStar fill="currentColor" size={16} />
+                    <span className="text-sm font-bold text-slate-800 dark:text-white">
+                      {product.rating.toFixed(1)}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      ({product.numReviews})
+                    </span>
+                  </div>
+                </>
+              )}
             </motion.div>
 
             {/* Tabs Area */}
@@ -288,43 +350,29 @@ export default function ProductDetails() {
               className="mb-8 md:mb-10"
             >
               <div className="flex gap-6 md:gap-8 border-b border-slate-200 dark:border-slate-700 mb-4 md:mb-6 overflow-x-auto no-scrollbar">
-                <button
-                  onClick={() => setActiveTab("desc")}
-                  className={`pb-3 text-xs md:text-sm font-bold uppercase tracking-wider transition-all relative whitespace-nowrap ${
-                    activeTab === "desc"
+                {["desc", "shipping", "reviews"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`pb-3 text-xs md:text-sm font-bold uppercase tracking-wider transition-all relative whitespace-nowrap ${activeTab === tab
                       ? "text-blue-600 dark:text-blue-400"
                       : "text-slate-400 hover:text-slate-600 dark:text-slate-500"
-                  }`}
-                >
-                  Description
-                  {activeTab === "desc" && (
-                    <motion.div
-                      layoutId="tabLine"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"
-                    />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab("shipping")}
-                  className={`pb-3 text-xs md:text-sm font-bold uppercase tracking-wider transition-all relative whitespace-nowrap ${
-                    activeTab === "shipping"
-                      ? "text-blue-600 dark:text-blue-400"
-                      : "text-slate-400 hover:text-slate-600 dark:text-slate-500"
-                  }`}
-                >
-                  Delivery
-                  {activeTab === "shipping" && (
-                    <motion.div
-                      layoutId="tabLine"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"
-                    />
-                  )}
-                </button>
+                      }`}
+                  >
+                    {tab === "desc" ? "Description" : tab === "shipping" ? "Delivery" : `Reviews (${product.numReviews || 0})`}
+                    {activeTab === tab && (
+                      <motion.div
+                        layoutId="tabLine"
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full"
+                      />
+                    )}
+                  </button>
+                ))}
               </div>
 
               <div className="min-h-[60px] md:min-h-[80px]">
                 <AnimatePresence mode="wait">
-                  {activeTab === "desc" ? (
+                  {activeTab === "desc" && (
                     <motion.p
                       key="desc"
                       initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
@@ -336,7 +384,9 @@ export default function ProductDetails() {
                       {product.desc ||
                         "Premium quality seafood sourced directly from local fishermen. Guaranteed fresh and stored at optimal temperatures to maintain flavor and texture."}
                     </motion.p>
-                  ) : (
+                  )}
+
+                  {activeTab === "shipping" && (
                     <motion.div
                       key="shipping"
                       initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
@@ -367,6 +417,57 @@ export default function ProductDetails() {
                           </p>
                         </div>
                       </div>
+                    </motion.div>
+                  )}
+
+                  {activeTab === "reviews" && (
+                    <motion.div
+                      key="reviews"
+                      initial={{ opacity: 0, y: 10, filter: "blur(4px)" }}
+                      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                      exit={{ opacity: 0, y: -10, filter: "blur(4px)" }}
+                      className="space-y-4"
+                    >
+                      {product.reviews && product.reviews.length > 0 ? (
+                        <div className="space-y-4 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
+                          {product.reviews.map((review, i) => (
+                            <div key={i} className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700">
+                              <div className="flex justify-between items-start mb-2">
+                                <span className="font-bold text-slate-900 dark:text-white text-sm">
+                                  {review.name}
+                                </span>
+                                <div className="flex text-amber-500">
+                                  {[...Array(5)].map((_, s) => (
+                                    <FiStar
+                                      key={s}
+                                      size={12}
+                                      fill={s < review.rating ? "currentColor" : "none"}
+                                      className={s < review.rating ? "text-amber-500" : "text-slate-300"}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-slate-600 dark:text-slate-300 text-sm">
+                                {review.comment}
+                              </p>
+                              <span className="text-[10px] text-slate-400 mt-2 block">
+                                {new Date(review.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-6 border border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                          <p className="text-slate-500 text-sm mb-3">No reviews yet.</p>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => setIsReviewOpen(true)}
+                        className="w-full py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 text-sm font-bold rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <FiMessageSquare size={16} /> Write a Review
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -407,6 +508,20 @@ export default function ProductDetails() {
                 </motion.button>
               </div>
 
+              {/* Wishlist Button */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleWishlistToggle}
+                disabled={loadingWishlist}
+                className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-colors ${isWishlisted
+                    ? "border-red-500 bg-red-50 text-red-500"
+                    : "border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-red-400 hover:text-red-400"
+                  }`}
+              >
+                <FiHeart size={24} fill={isWishlisted ? "currentColor" : "none"} className={loadingWishlist ? "animate-pulse" : ""} />
+              </motion.button>
+
               <motion.button
                 ref={addBtnRef}
                 whileHover={
@@ -421,10 +536,9 @@ export default function ProductDetails() {
                 disabled={isAdded || product.stock === "out"}
                 className={`
                   flex-1 py-3.5 md:py-4 px-6 md:px-8 rounded-full font-bold text-xs md:text-sm uppercase tracking-wider shadow-lg transition-all duration-300 flex items-center justify-center gap-2 md:gap-3
-                  ${
-                    isAdded
-                      ? "bg-emerald-500 text-white shadow-emerald-500/20"
-                      : product.stock === "out"
+                  ${isAdded
+                    ? "bg-emerald-500 text-white shadow-emerald-500/20"
+                    : product.stock === "out"
                       ? "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none"
                       : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-600 dark:hover:bg-blue-200 hover:text-white"
                   }
@@ -460,6 +574,15 @@ export default function ProductDetails() {
           </motion.div>
         </div>
       </div>
+
+      <ReviewModal
+        isOpen={isReviewOpen}
+        onClose={() => setIsReviewOpen(false)}
+        product={product}
+        token={token}
+        API_URL={API_URL}
+        onSuccess={handleReviewSuccess}
+      />
     </div>
   );
 }

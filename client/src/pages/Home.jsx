@@ -170,197 +170,7 @@ const ScrollToTopButton = () => {
   );
 };
 
-// --- ENHANCED PRODUCT CARD (Simplified - No wishlist, share, quick view) ---
-const EnhancedProductCard = ({ product }) => {
-  const { addToCart } = useContext(CartContext);
-  const [quantity, setQuantity] = useState(1);
-  const [showQuantity, setShowQuantity] = useState(false);
-
-  const getImageUrl = (path) => {
-    if (!path) return "";
-    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  };
-
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    addToCart({ ...product, quantity });
-    toast.success(`${quantity}x ${product.name} added to cart!`, {
-      icon: '🛒',
-    });
-    setShowQuantity(false);
-    setQuantity(1);
-  };
-
-  const getStockStatus = () => {
-    if (!product.stock || product.stock === 0) return { label: 'OUT OF STOCK', color: 'bg-red-500' };
-    if (product.stock < 10) return { label: 'LOW STOCK', color: 'bg-orange-500' };
-    return { label: 'IN STOCK', color: 'bg-green-500' };
-  };
-
-  const stockStatus = getStockStatus();
-  const isNew = product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-  return (
-    <Link to={`/products/${product._id}`}>
-      <motion.div
-        whileHover={{ y: -8, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
-        whileTap={{ scale: 0.97 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        className="group bg-white dark:bg-[#1e293b] border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden h-full flex flex-col relative"
-      >
-        {/* Image Section */}
-        <div className="relative h-40 md:h-48 bg-slate-50 dark:bg-[#0f172a] flex items-center justify-center p-4 overflow-hidden">
-          <motion.img
-            src={getImageUrl(product.image)}
-            alt={product.name}
-            className="w-full h-full object-contain"
-            whileHover={{ scale: 1.12, rotate: 2 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          />
-          
-          {/* Badges */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
-            {product.trending && (
-              <motion.span
-                initial={{ x: -60, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                className="bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm flex items-center gap-1"
-              >
-                <Flame size={10} /> HOT
-              </motion.span>
-            )}
-            {isNew && (
-              <motion.span
-                initial={{ x: -60, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
-              >
-                NEW
-              </motion.span>
-            )}
-            {product.stock < 10 && product.stock > 0 && (
-              <motion.span
-                initial={{ x: -60, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm"
-              >
-                ONLY {product.stock} LEFT
-              </motion.span>
-            )}
-          </div>
-        </div>
-
-        {/* Content Section */}
-        <div className="p-4 flex flex-col flex-grow">
-          <h3 className="font-bold text-slate-900 dark:text-white text-sm md:text-base line-clamp-2 mb-1">
-            {product.name}
-          </h3>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{product.netWeight}</p>
-          
-          {/* Stock Status */}
-          <div className="flex items-center gap-2 mb-3">
-            <div className={`w-2 h-2 rounded-full ${stockStatus.color} animate-pulse`} />
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-              {stockStatus.label}
-            </span>
-          </div>
-
-          {/* Price & Add to Cart */}
-          <div className="mt-auto">
-            <div className="flex justify-between items-center mb-2">
-              <div>
-                <span className="text-xs text-slate-400 line-through mr-2">
-                  ₹{(product.basePrice * 1.2).toFixed(0)}
-                </span>
-                <span className="font-bold text-slate-900 dark:text-white">
-                  ₹{product.basePrice}
-                </span>
-              </div>
-            </div>
-
-            {/* Quick Add to Cart */}
-            <AnimatePresence mode="wait">
-              {showQuantity ? (
-                <motion.div
-                  key="quantity"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="flex gap-2"
-                >
-                  <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-lg px-2 flex-1">
-                    <motion.button
-                      whileTap={{ scale: 0.8 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setQuantity(Math.max(1, quantity - 1));
-                      }}
-                      className="p-1"
-                    >
-                      <Minus size={12} />
-                    </motion.button>
-                    <span className="font-bold text-sm">{quantity}</span>
-                    <motion.button
-                      whileTap={{ scale: 0.8 }}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setQuantity(Math.min(product.stock || 99, quantity + 1));
-                      }}
-                      className="p-1"
-                    >
-                      <Plus size={12} />
-                    </motion.button>
-                  </div>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleAddToCart}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-bold text-xs"
-                  >
-                    Add
-                  </motion.button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="add-button"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!product.stock || product.stock === 0) {
-                      toast.error('Out of stock!');
-                      return;
-                    }
-                    setShowQuantity(true);
-                  }}
-                  disabled={!product.stock || product.stock === 0}
-                  className={`w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 ${
-                    !product.stock || product.stock === 0
-                      ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
-                      : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white'
-                  } transition-colors`}
-                >
-                  <ShoppingBag size={14} />
-                  {!product.stock || product.stock === 0 ? 'Out of Stock' : 'Quick Add'}
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </motion.div>
-    </Link>
-  );
-};
+import EnhancedProductCard from "../components/EnhancedProductCard";
 
 // --- HERO SECTION ---
 const VideoHero = () => {
@@ -548,11 +358,10 @@ const CategoryPanel = () => {
             to={`/products?category=${cat.title.split(" ")[1]}`}
             key={i}
             onMouseEnter={() => setHovered(i)}
-            className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${
-              hovered === i
+            className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${hovered === i
                 ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20"
                 : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"
-            }`}
+              }`}
           >
             <div className={`absolute inset-0 bg-gradient-to-b ${cat.bg} z-0`} />
             <div className="absolute inset-0 flex items-center justify-center z-10 p-6">
@@ -566,18 +375,16 @@ const CategoryPanel = () => {
                   filter: hovered === i ? "grayscale(0)" : "grayscale(1)",
                 }}
                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                className={`object-contain drop-shadow-2xl ${
-                  hovered === i
+                className={`object-contain drop-shadow-2xl ${hovered === i
                     ? "w-[80%] h-[80%] opacity-100"
                     : "w-24 h-24 opacity-50"
-                } transition-all duration-700`}
+                  } transition-all duration-700`}
               />
             </div>
             <div className="absolute bottom-0 left-0 w-full p-8 z-20 bg-gradient-to-t from-white via-white/80 dark:from-black dark:via-[#0a1625]/80 to-transparent">
               <h3
-                className={`font-serif text-slate-900 dark:text-white transition-all duration-500 whitespace-nowrap ${
-                  hovered === i ? "text-3xl opacity-100" : "text-xl opacity-70"
-                }`}
+                className={`font-serif text-slate-900 dark:text-white transition-all duration-500 whitespace-nowrap ${hovered === i ? "text-3xl opacity-100" : "text-xl opacity-70"
+                  }`}
               >
                 {cat.title}
               </h3>
@@ -833,7 +640,7 @@ const TrendingMarquee = () => {
         </motion.p>
       </div>
 
-      <div 
+      <div
         className="relative w-full z-10"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
@@ -841,9 +648,9 @@ const TrendingMarquee = () => {
         <motion.div
           className="flex gap-8 w-max"
           animate={{ x: isPaused ? undefined : ["0%", "-33.33%"] }}
-          transition={{ 
-            repeat: Infinity, 
-            duration: 30, 
+          transition={{
+            repeat: Infinity,
+            duration: 30,
             ease: "linear",
             ...(isPaused && { duration: 0 })
           }}
@@ -856,7 +663,7 @@ const TrendingMarquee = () => {
                 className="bg-white dark:bg-[#0e1d30] border-2 border-gray-200 dark:border-white/10 rounded-3xl p-8 hover:border-blue-500 dark:hover:border-blue-400 transition-all backdrop-blur-sm shadow-lg hover:shadow-2xl relative overflow-hidden"
               >
                 {/* Gradient overlay on hover */}
-                <motion.div 
+                <motion.div
                   className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                 />
 
@@ -984,9 +791,8 @@ const SeaBitePromise = () => {
                         transition={{ delay: starI * 0.08, type: "spring", stiffness: 300 }}
                       >
                         <Star
-                          className={`w-4 h-4 ${
-                            starI < r.rating ? "text-amber-400 fill-amber-400" : "text-slate-300"
-                          }`}
+                          className={`w-4 h-4 ${starI < r.rating ? "text-amber-400 fill-amber-400" : "text-slate-300"
+                            }`}
                         />
                       </motion.div>
                     ))}
