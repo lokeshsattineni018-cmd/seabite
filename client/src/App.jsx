@@ -100,42 +100,17 @@ function MainLayout() {
     warmUpBackend();
   }, []);
 
+  // In MainLayout body
+  const adminLayoutElement = (
+    <AdminRoute>
+      <AdminLayout />
+    </AdminRoute>
+  );
+
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
-
-      {/* ✅ Toast Notifications */}
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: '#1e293b',
-            color: '#fff',
-            borderRadius: '12px',
-            padding: '16px',
-            fontSize: '14px',
-            fontWeight: '600',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-        }}
-      />
-
-      <Toaster
-        position="top-right"
-      // ... (existing toaster config omitted for brevity)
-      />
+      <Toaster position="top-right" toastOptions={{ duration: 3000, style: { background: '#1e293b', color: '#fff', borderRadius: '12px', padding: '16px', fontSize: '14px', fontWeight: '600' } }} />
 
       {maintenance.active && !isAdminRoute ? (
         <Maintenance message={maintenance.message} />
@@ -153,7 +128,7 @@ function MainLayout() {
             {isAdminRoute ? (
               <Routes>
                 <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
-                <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
+                <Route path="/admin" element={adminLayoutElement}>
                   <Route index element={<AdminDashboard />} />
                   <Route path="dashboard" element={<AdminDashboard />} />
                   <Route path="products" element={<AdminProducts />} />

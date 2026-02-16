@@ -136,11 +136,42 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status) => {
 };
 
 /**
- * 🟢 4. MARKETING: PREMIUM PROMOTIONAL BLAST
+ * 🟢 4. MARKETING: PREMIUM PROMOTIONAL BLAST (BATCH)
+ * Sends up to 100 emails in a single API call.
+ */
+export const sendBatchMarketingEmails = async (recipients, subject, messageBody) => {
+  if (!resend) return;
+
+  const batch = recipients.map((user) => {
+    const content = `
+      <h1 style="color: #f8fafc; font-size: 24px; font-weight: 300; margin-bottom: 20px;">
+        Hello <span style="color: #38bdf8;">${user.name || "Customer"}</span>,
+      </h1>
+      <div style="color: #cbd5e1; line-height: 1.8; font-size: 15px;">
+        ${messageBody}
+      </div>
+      <div style="text-align: center; margin-top: 40px;">
+        <a href="https://seabite.co.in" style="background: #38bdf8; color: #020617; padding: 14px 35px; text-decoration: none; border-radius: 50px; font-size: 13px; font-weight: 700; display: inline-block; letter-spacing: 2px;">SHOP DEALS</a>
+      </div>
+    `;
+
+    return {
+      from: OFFICIAL_SENDER,
+      to: user.email,
+      subject: subject,
+      html: aestheticWrapper(content, "EXCLUSIVE UPDATE")
+    };
+  });
+
+  return await resend.batch.send(batch);
+};
+
+/**
+ * 🟢 4.1 MARKETING: SINGLE EMAIL (Legacy Support)
  */
 export const sendMarketingEmail = async (email, name, subject, body) => {
   if (!resend) return;
-
+  // reuse the batch logic for consistency if needed, but keeping separate for now
   const content = `
     <h1 style="color: #f8fafc; font-size: 24px; font-weight: 300; margin-bottom: 20px;">
       Hello <span style="color: #38bdf8;">${name}</span>,

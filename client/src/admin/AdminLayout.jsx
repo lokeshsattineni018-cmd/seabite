@@ -39,7 +39,9 @@ export default function AdminLayout() {
     const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
     const socket = io(API_URL, {
       withCredentials: true,
-      transports: ['polling', 'websocket']
+      path: '/socket.io/',
+      transports: ['polling', 'websocket'],
+      reconnectionAttempts: 5
     });
 
     socket.on("newOrder", (order) => {

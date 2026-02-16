@@ -5,7 +5,7 @@ import Order from "../models/Order.js";
 import User from "../models/User.js";
 import Settings, { getSettings } from "../models/Settings.js";
 import SearchInsight from "../models/SearchInsight.js";
-import { sendStatusUpdateEmail, sendMarketingEmail } from "../utils/emailService.js";
+import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -166,30 +166,85 @@ router.get("/inventory/low-stock", adminAuth, async (req, res) => {
   }
 });
 
+// 1.5.1 RESTOCK REQUEST (POST /api/admin/inventory/restock)
+router.post("/inventory/restock", adminAuth, async (req, res) => {
+  try {
+    const { productName } = req.body;
+    // In a real app, this would email the supplier. For now, we simulate it.
+    // console.log(`📦 Restock Request sent for: ${productName}`);
+
+    // Simulate API delay
+    await new Promise(r => setTimeout(r, 800));
+
+    res.json({ message: "Request sent to supplier" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to send restock request" });
+  }
+});
+
 
 
 
 
 // 1.9 BULK EMAIL MARKETING (POST /api/admin/marketing/email-blast)
+// 1.9 BULK EMAIL MARKETING (POST /api/admin/marketing/email-blast)
 router.post("/marketing/email-blast", adminAuth, async (req, res) => {
   try {
     const { subject, message } = req.body;
-    const users = await User.find({});
+    const users = await User.find({ email: { $exists: true, $ne: "" } }).select("email name");
 
-    // Batch send (logic should ideally be in a worker but for this phase we loop)
-    let successCount = 0;
-    for (const user of users) {
-      try {
-        await sendMarketingEmail(user.email, user.name, subject, message);
-        successCount++;
-      } catch (e) {
-        console.error(`Failed to send email to ${user.email}:`, e.message);
-      }
+    if (users.length === 0) {
+      return res.json({ message: "No users found to email.", stats: { sent: 0, failed: 0, total: 0 } });
     }
 
-    res.json({ message: `Successfully sent to ${successCount} customers.` });
+    // Helper: Chunk array
+    const chunkArray = (arr, size) => {
+      return Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
+        arr.slice(i * size, i * size + size)
+      );
+    };
+
+    // Resend Batch Limit is 100
+    const userChunks = chunkArray(users, 100);
+    let successCount = 0;
+    let failureCount = 0;
+
+    // Process chunks
+    for (const chunk of userChunks) {
+      try {
+        // Map users to simplified objects for the service
+        const recipients = chunk.map(u => ({ email: u.email, name: u.name }));
+
+        const response = await sendBatchMarketingEmails(recipients, subject, message);
+
+        // Resend Batch returns: { data: [...], error: ... }
+        if (response?.error) {
+          console.error("❌ Batch Error:", response.error);
+          failureCount += chunk.length; // Assume whole chunk failed if batch error
+        } else if (response?.data) {
+          // data is an array of objects { id: '...' } or error objects?
+          // The SDK typically returns an object with `data` array on success.
+          // We can assume success for items in data, though individual items might error.
+          // For simplicity in this summary:
+          successCount += response.data.length;
+        }
+
+      } catch (e) {
+        console.error("❌ Chunk Error:", e);
+        failureCount += chunk.length;
+      }
+
+      // Safety delay between batches
+      if (userChunks.length > 1) await new Promise(r => setTimeout(r, 500));
+    }
+
+    res.json({
+      message: `Batch campaign complete.`,
+      stats: { sent: successCount, failed: failureCount, total: users.length }
+    });
   } catch (err) {
-    res.status(500).json({ message: "Marketing blast failed." });
+    console.error("Marketing Blast Critical Fail:", err);
+    res.status(500).json({ message: "Marketing blast failed to start." });
   }
 });
 

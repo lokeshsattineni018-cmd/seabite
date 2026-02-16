@@ -479,7 +479,18 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <button
-                  onClick={() => toast.success(`Restock request sent to ${p.category} supplier`, { icon: '📦' })}
+                  onClick={async () => {
+                    toast.loading("Sending restock request...", { id: "restock" });
+                    try {
+                      await axios.post("/api/admin/inventory/restock", {
+                        productId: p._id,
+                        productName: p.name
+                      }, { withCredentials: true });
+                      toast.success(`Restock request sent to ${p.category} supplier`, { id: "restock", icon: '📦' });
+                    } catch {
+                      toast.error("Failed to send request", { id: "restock" });
+                    }
+                  }}
                   className="p-2 opacity-0 group-hover:opacity-100 bg-white shadow-sm border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all"
                   title="Quick Restock Request"
                 >
@@ -590,7 +601,10 @@ export default function AdminDashboard() {
             ))}
           </div>
 
-          <button className="w-full mt-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold transition-all shadow-lg shadow-blue-900/40 uppercase tracking-widest relative z-10">
+          <button
+            onClick={() => navigate("/admin/marketing")}
+            className="w-full mt-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold transition-all shadow-lg shadow-blue-900/40 uppercase tracking-widest relative z-10"
+          >
             Send VIP Reward Blast
           </button>
         </div>

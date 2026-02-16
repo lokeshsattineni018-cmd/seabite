@@ -208,9 +208,11 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
 
                 <div className="mt-auto">
                     <div className="flex items-baseline gap-2 mb-3">
-                        <span className="text-sm text-slate-400 line-through">
-                            ₹{(isActiveFlashSale ? product.basePrice : product.basePrice * 1.2).toFixed(0)}
-                        </span>
+                        {isActiveFlashSale && (
+                            <span className="text-sm text-slate-400 line-through font-medium">
+                                ₹{product.basePrice}
+                            </span>
+                        )}
                         <span className="font-bold text-slate-900 dark:text-white text-xl">
                             ₹{displayPrice}
                         </span>

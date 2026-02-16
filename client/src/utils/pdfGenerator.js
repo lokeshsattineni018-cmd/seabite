@@ -1,20 +1,50 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export const generateInvoicePDF = (order) => {
+const getBase64ImageFromURL = (url) => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.setAttribute("crossOrigin", "anonymous");
+        img.src = url;
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0);
+            const dataURL = canvas.toDataURL("image/png");
+            resolve(dataURL);
+        };
+        img.onerror = (error) => {
+            // console.warn("Logo load failed:", error);
+            resolve(null); // Continue without logo
+        };
+    });
+};
+
+export const generateInvoicePDF = async (order) => {
     const doc = new jsPDF();
-    const date = new Date().toLocaleDateString();
+
+    // Add Logo
+    try {
+        const logoData = await getBase64ImageFromURL("/logo.png");
+        if (logoData) {
+            doc.addImage(logoData, "PNG", 14, 10, 25, 25); // x, y, w, h
+        }
+    } catch (e) {
+        // console.error("Logo Error", e);
+    }
 
     // ----- Header: Brand & Invoice Info -----
     doc.setFontSize(22);
     doc.setTextColor(15, 23, 42); // slate-900
     doc.setFont("helvetica", "bold");
-    doc.text("SEABITE", 14, 22);
+    doc.text("SEABITE", 14, 42); // Moved down to accommodate logo
 
     doc.setFontSize(10);
     doc.setTextColor(100, 116, 139); // slate-500
     doc.setFont("helvetica", "normal");
-    doc.text("The premium seafood experience", 14, 28);
+    doc.text("The premium seafood experience", 14, 48);
 
     doc.setFontSize(12);
     doc.setTextColor(15, 23, 42);
@@ -29,28 +59,28 @@ export const generateInvoicePDF = (order) => {
 
     // ----- Horizontal Line -----
     doc.setDrawColor(241, 245, 249); // slate-100
-    doc.line(14, 45, 196, 45);
+    doc.line(14, 55, 196, 55);
 
     // ----- Billing & Shipping -----
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text("BILLED TO", 14, 55);
-    doc.text("SHIPPING TO", 100, 55);
+    doc.text("BILLED TO", 14, 65);
+    doc.text("SHIPPING TO", 100, 65);
 
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(51, 65, 85); // slate-700
 
     // Bill to (User)
-    doc.text(order.user?.name || "Customer", 14, 62);
-    doc.text(order.user?.email || "", 14, 67);
+    doc.text(order.user?.name || "Customer", 14, 72);
+    doc.text(order.user?.email || "", 14, 77);
 
     // Ship to (Address)
     const addr = order.shippingAddress;
-    doc.text(`${addr.fullName}`, 100, 62);
-    doc.text(`${addr.houseNo}, ${addr.street}`, 100, 67);
-    doc.text(`${addr.city}, ${addr.state} - ${addr.zip}`, 100, 72);
-    doc.text(`Phone: ${addr.phone}`, 100, 77);
+    doc.text(`${addr.fullName}`, 100, 72);
+    doc.text(`${addr.houseNo}, ${addr.street}`, 100, 77);
+    doc.text(`${addr.city}, ${addr.state} - ${addr.zip}`, 100, 82);
+    doc.text(`Phone: ${addr.phone}`, 100, 87);
 
     // ----- table: Line Items -----
     const tableRows = order.items.map((item) => [
@@ -61,7 +91,7 @@ export const generateInvoicePDF = (order) => {
     ]);
 
     autoTable(doc, {
-        startY: 85,
+        startY: 95,
         head: [["Description", "Price", "Qty", "Total"]],
         body: tableRows,
         theme: "striped",

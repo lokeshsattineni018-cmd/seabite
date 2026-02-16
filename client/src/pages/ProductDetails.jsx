@@ -60,8 +60,12 @@ export default function ProductDetails() {
     }
   }, [user, id]);
 
+  const isActiveFlashSale = product?.flashSale?.isFlashSale &&
+    new Date(product.flashSale.saleEndDate) > new Date();
+
   const basePrice = product ? parseFloat(product.basePrice) : 0;
-  const totalPrice = (basePrice * qty).toFixed(2);
+  const unitPrice = isActiveFlashSale ? product.flashSale.discountPrice : basePrice;
+  const totalPrice = (unitPrice * qty).toFixed(2);
 
   const getFullImageUrl = (imagePath) => {
     if (!imagePath) return "https://placehold.co/400?text=No+Image";
@@ -220,6 +224,8 @@ export default function ProductDetails() {
     );
   }
 
+  const displayPrice = unitPrice;
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] relative font-sans pt-24 md:pt-28 pb-12 md:pb-20 px-4 md:px-6 transition-colors duration-500 overflow-x-hidden">
       <div className="fixed top-0 left-0 w-full h-[500px] bg-gradient-to-b from-blue-100/40 to-transparent dark:from-blue-900/10 pointer-events-none -z-10" />
@@ -305,16 +311,29 @@ export default function ProductDetails() {
                 className="relative z-10 w-full h-full object-contain drop-shadow-lg group-hover:scale-105 transition-transform duration-500 ease-out"
               />
 
-              {product.trending && (
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.6 }}
-                  className="absolute top-4 left-4 md:top-6 md:left-6 z-20 bg-blue-600/90 backdrop-blur text-white px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-lg"
-                >
-                  Trending
-                </motion.div>
-              )}
+              {/* Badges */}
+              <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
+                {product.trending && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="bg-blue-600/90 backdrop-blur text-white px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-lg"
+                  >
+                    Trending
+                  </motion.div>
+                )}
+                {isActiveFlashSale && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 }}
+                    className="bg-red-600/90 backdrop-blur text-white px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1"
+                  >
+                    <FiArrowLeft className="rotate-180" size={10} /> Flash Deal
+                  </motion.div>
+                )}
+              </div>
             </div>
           </motion.div>
 
@@ -350,12 +369,20 @@ export default function ProductDetails() {
               transition={{ delay: 0.6 }}
               className="flex flex-wrap items-center gap-4 md:gap-6 mb-6 md:mb-8"
             >
-              <p className="text-2xl md:text-3xl font-sans font-bold text-slate-900 dark:text-white">
-                {"\u20B9"}{basePrice.toFixed(2)}
-                <span className="text-base md:text-lg text-slate-400 font-normal ml-1">
-                  /{product.unit || "kg"}
-                </span>
-              </p>
+
+              <div className="flex items-baseline gap-2">
+                {isActiveFlashSale && (
+                  <span className="text-lg md:text-xl text-slate-400 line-through font-medium">
+                    {"\u20B9"}{basePrice.toFixed(0)}
+                  </span>
+                )}
+                <p className="text-2xl md:text-3xl font-sans font-bold text-slate-900 dark:text-white">
+                  {"\u20B9"}{Number(displayPrice).toFixed(2)}
+                  <span className="text-base md:text-lg text-slate-400 font-normal ml-1">
+                    /{product.unit || "kg"}
+                  </span>
+                </p>
+              </div>
 
               <div className="h-6 md:h-8 w-px bg-slate-200 dark:bg-white/10" />
 
