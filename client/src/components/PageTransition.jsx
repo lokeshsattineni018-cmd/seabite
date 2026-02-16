@@ -55,7 +55,7 @@ const backgroundRipple = {
 
 export default function SeafoodTransition({ children }) {
   return (
-    <div className="relative w-full min-h-screen overflow-x-hidden bg-[#fafafa]">
+    <div className="relative w-full min-h-screen bg-[#fafafa]">
 
       {/* 1. THE SILKY FIN SWEEP */}
       {/* This mimics the silver-side flash of a fish swimming past */}
