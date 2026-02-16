@@ -42,7 +42,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 const ALLOWED_DELIVERY_STATES = ["Andhra Pradesh", "Telangana", "AP", "TS"];
 
 const DEFAULT_DELIVERY_ADDRESS = {
-  fullName: "",
+  name: "",
   phone: "",
   houseNo: "",
   street: "",
@@ -321,7 +321,7 @@ export default function Checkout() {
     }
 
     if (
-      !deliveryAddress.fullName ||
+      !deliveryAddress.name ||
       !deliveryAddress.phone ||
       !deliveryAddress.street ||
       !deliveryAddress.houseNo ||
@@ -331,7 +331,7 @@ export default function Checkout() {
       setModal({
         show: true,
         message:
-          "Please complete your delivery address. Valid Pincode is required.",
+          "Please complete all delivery address fields.",
         type: "error",
       });
       return;

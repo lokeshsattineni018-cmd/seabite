@@ -4,10 +4,10 @@ import { motion } from "framer-motion";
 // --- ANIMATION VARIANTS ---
 
 const finVariants = {
-  initial: { 
-    x: "-120%", 
-    skewX: -15, 
-    opacity: 0 
+  initial: {
+    x: "-120%",
+    skewX: -15,
+    opacity: 0
   },
   animate: {
     x: "150%",
@@ -21,26 +21,26 @@ const finVariants = {
 };
 
 const contentVariants = {
-  initial: { 
-    opacity: 0, 
-    y: 10, 
-    filter: "blur(12px) brightness(1.3)" 
+  initial: {
+    opacity: 0,
+    y: 10,
+    filter: "blur(12px) brightness(1.3)"
   },
-  in: { 
-    opacity: 1, 
-    y: 0, 
+  in: {
+    opacity: 1,
+    y: 0,
     filter: "blur(0px) brightness(1)",
-    transition: { 
-      duration: 1, 
-      delay: 0.35, 
-      ease: "easeOut" 
-    } 
+    transition: {
+      duration: 1,
+      delay: 0.35,
+      ease: "easeOut"
+    }
   },
-  out: { 
-    opacity: 0, 
-    y: -10, 
+  out: {
+    opacity: 0,
+    y: -10,
     filter: "blur(4px)",
-    transition: { duration: 0.4 } 
+    transition: { duration: 0.4 }
   },
 };
 
@@ -55,8 +55,8 @@ const backgroundRipple = {
 
 export default function SeafoodTransition({ children }) {
   return (
-    <div className="relative w-full min-h-screen overflow-hidden bg-[#fafafa]">
-      
+    <div className="relative w-full min-h-screen overflow-x-hidden bg-[#fafafa]">
+
       {/* 1. THE SILKY FIN SWEEP */}
       {/* This mimics the silver-side flash of a fish swimming past */}
       <motion.div
@@ -98,8 +98,8 @@ export default function SeafoodTransition({ children }) {
       </motion.div>
 
       {/* 4. SOFT VIGNETTE (Adds Depth) */}
-      <div 
-        className="fixed inset-0 pointer-events-none z-[5]" 
+      <div
+        className="fixed inset-0 pointer-events-none z-[5]"
         style={{
           background: "radial-gradient(circle at center, transparent 40%, rgba(200, 230, 255, 0.05) 100%)"
         }}
