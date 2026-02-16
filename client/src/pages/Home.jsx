@@ -884,7 +884,7 @@ export default function Home() {
             <CategoryPanel />
           </SectionReveal>
           <SectionReveal direction="scale" delay={0.1}>
-            <FlashDeals />
+            <FlashSale />
           </SectionReveal>
           <SectionReveal direction="left">
             <CategoryRow title="Fresh From The Nets" filterType="Fish" />
