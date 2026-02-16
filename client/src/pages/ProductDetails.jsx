@@ -39,6 +39,7 @@ export default function ProductDetails() {
   const [flyItems, setFlyItems] = useState([]);
   const [isReviewOpen, setIsReviewOpen] = useState(false); // Review Modal State
   const [loadingWishlist, setLoadingWishlist] = useState(false);
+  const [canReview, setCanReview] = useState(false);
   const flyIdRef = useRef(0);
   const addBtnRef = useRef(null);
 
@@ -46,6 +47,16 @@ export default function ProductDetails() {
   const isWishlisted = user?.wishlist?.some(
     (item) => (typeof item === "string" ? item : item._id) === id
   );
+
+  useEffect(() => {
+    if (user && id) {
+      axios.get(`${API_URL}/api/products/${id}/can-review`, { withCredentials: true })
+        .then(res => setCanReview(res.data.canReview))
+        .catch(() => setCanReview(false));
+    } else {
+      setCanReview(false);
+    }
+  }, [user, id]);
 
   const basePrice = product ? parseFloat(product.basePrice) : 0;
   const totalPrice = (basePrice * qty).toFixed(2);
@@ -462,12 +473,23 @@ export default function ProductDetails() {
                         </div>
                       )}
 
-                      <button
-                        onClick={() => setIsReviewOpen(true)}
-                        className="w-full py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 text-sm font-bold rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors flex items-center justify-center gap-2"
-                      >
-                        <FiMessageSquare size={16} /> Write a Review
-                      </button>
+                      {canReview ? (
+                        <button
+                          onClick={() => setIsReviewOpen(true)}
+                          className="w-full py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 text-sm font-bold rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <FiMessageSquare size={16} /> Write a Review
+                        </button>
+                      ) : (
+                        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl text-center">
+                          <p className="text-xs text-slate-500 dark:text-slate-400">
+                            {user ? "Only verified buyers who have received this product can write a review." : "Please login to write a review."}
+                          </p>
+                          {!user && (
+                            <Link to="/login" className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline mt-1 block">Login Here</Link>
+                          )}
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -515,8 +537,8 @@ export default function ProductDetails() {
                 onClick={handleWishlistToggle}
                 disabled={loadingWishlist}
                 className={`w-14 h-14 rounded-full flex items-center justify-center border-2 transition-colors ${isWishlisted
-                    ? "border-red-500 bg-red-50 text-red-500"
-                    : "border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-red-400 hover:text-red-400"
+                  ? "border-red-500 bg-red-50 text-red-500"
+                  : "border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-red-400 hover:text-red-400"
                   }`}
               >
                 <FiHeart size={24} fill={isWishlisted ? "currentColor" : "none"} className={loadingWishlist ? "animate-pulse" : ""} />

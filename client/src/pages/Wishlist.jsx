@@ -56,7 +56,7 @@ export default function Wishlist() {
                     <span className="text-blue-600 dark:text-blue-400 font-bold tracking-widest text-xs uppercase mb-2 block">
                         Your Personal Collection
                     </span>
-                    <h1 className="text-4xl md:text-5xl font-serif font-bold text-slate-900 dark:text-white mb-4">
+                    <h1 className="text-3xl md:text-4xl font-sans font-bold text-slate-900 dark:text-white mb-4">
                         My Wishlist
                     </h1>
                     <div className="w-24 h-1 bg-blue-500 mx-auto rounded-full" />
@@ -86,7 +86,7 @@ export default function Wishlist() {
                         </Link>
                     </motion.div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 md:gap-8">
                         <AnimatePresence>
                             {wishlist.map((product) => (
                                 <motion.div

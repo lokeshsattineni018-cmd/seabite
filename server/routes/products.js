@@ -1,7 +1,8 @@
 import express from "express";
 import Product from "../models/Product.js";
-import upload from "../config/multerConfig.js"; 
-import { protect } from "../middleware/authMiddleware.js"; 
+import Order from "../models/Order.js";
+import upload from "../config/multerConfig.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -59,7 +60,7 @@ router.get("/", async (req, res) => {
 // --- GET SINGLE PRODUCT ---
 router.get("/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('reviews.user', 'name'); 
+    const product = await Product.findById(req.params.id).populate('reviews.user', 'name');
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
   } catch (err) {
@@ -77,7 +78,7 @@ router.post("/", upload.single('image'), async (req, res) => {
       name, category, desc, stock, unit,
       basePrice: parseFloat(basePrice),
       trending: trending === 'true',
-      image: `/uploads/${req.file.filename}`, 
+      image: `/uploads/${req.file.filename}`,
     });
     res.status(201).json(product);
   } catch (err) {
@@ -85,11 +86,24 @@ router.post("/", upload.single('image'), async (req, res) => {
   }
 });
 
-// 🟢 ADD OR UPDATE REVIEW ROUTE
+// 🟢 ADD OR UPDATE REVIEW ROUTE (Restricted to Valid Buyers)
 router.post("/:id/reviews", protect, async (req, res) => {
   const { rating, comment } = req.body;
-  
+
   try {
+    // 1. Verify Purchase & Delivery
+    const hasPurchased = await Order.findOne({
+      user: req.user._id,
+      isDelivered: true,
+      "items.productId": req.params.id,
+    });
+
+    if (!hasPurchased) {
+      return res.status(403).json({
+        message: "You can only review products you have purchased and received."
+      });
+    }
+
     const product = await Product.findById(req.params.id);
 
     if (product) {
@@ -119,8 +133,23 @@ router.post("/:id/reviews", protect, async (req, res) => {
       res.status(404).json({ message: "Product not found" });
     }
   } catch (error) {
-      console.error("Review Error:", error);
-      res.status(500).json({ message: "Server Error" });
+    console.error("Review Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// 🟢 CHECK REVIEW ELIGIBILITY
+router.get("/:id/can-review", protect, async (req, res) => {
+  try {
+    const hasPurchased = await Order.findOne({
+      user: req.user._id,
+      isDelivered: true,
+      "items.productId": req.params.id,
+    });
+
+    res.json({ canReview: !!hasPurchased });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
   }
 });
 
