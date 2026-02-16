@@ -25,6 +25,7 @@ import userRoutes from "./routes/userRoutes.js";
 import checkMaintenance from "./middleware/checkMaintenance.js";
 
 const app = express();
+const httpServer = createServer(app); // ✅ Restore httpServer definition
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -62,6 +63,51 @@ app.use((req, res, next) => {
   req.io = { emit: () => { } }; // Mock for Vercel
   next();
 });
+
+/* --- SECURITY HARDENING (Phase 25) --- */
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import mongoSanitize from "express-mongo-sanitize";
+import xss from "xss-clean";
+import hpp from "hpp";
+
+// 1. Set Security Headers
+app.use(helmet());
+
+// 2. Global Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later."
+});
+app.use("/api", limiter);
+
+// 3. Stricter Auth Rate Limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit login attempts
+  message: "Too many login attempts, please try again later."
+});
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
+
+// 4. 🛡️ ADMIN FORTRESS: Strict Admin Rate Limiting (Phase 26)
+const adminLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 50, // Limit admin actions to 50 per hour per IP
+  message: "⛔ Admin Rate Limit Exceeded: Action blocked for security."
+});
+app.use("/api/admin", adminLimiter);
+
+// 5. Data Sanitization against NoSQL Query Injection
+app.use(mongoSanitize());
+
+// 5. Data Sanitization against XSS
+app.use(xss());
+
+// 6. Prevent Parameter Pollution
+app.use(hpp());
+
 
 // ✅ Handle static uploads
 const uploadDir = path.join(__dirname, "uploads");
