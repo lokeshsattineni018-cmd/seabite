@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, useScroll, useTransform, useInView, useSpring, useMotionValue, useAnimationFrame, useVelocity, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { ArrowRight, Star, ShieldCheck, Truck, Fish, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight, Plus, Minus, Zap } from "lucide-react";
-import { FiZap } from "react-icons/fi";
+
 import toast from "react-hot-toast";
 import { CartContext } from "../context/CartContext";
 

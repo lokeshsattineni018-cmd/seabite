@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiHeart, FiShoppingBag, FiCheck, FiX } from "react-icons/fi";
+import { FiHeart, FiX, FiZap } from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";

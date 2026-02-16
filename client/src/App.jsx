@@ -46,7 +46,7 @@ import AdminUsers from "./admin/AdminUsers";
 import AdminLogin from "./admin/AdminLogin";
 import AdminMessages from "./admin/AdminMessages";
 import AdminCoupons from "./admin/AdminCoupons";
-import AdminKanban from "./admin/AdminKanban";
+
 import AdminFlashSale from "./admin/AdminFlashSale";
 import AdminMarketing from "./admin/AdminMarketing";
 
