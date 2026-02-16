@@ -1,0 +1,21 @@
+{
+    "version": 2,
+    "rewrites": [
+        {
+            "source": "/socket.io/(.*)",
+            "destination": "/server.js"
+        },
+        {
+            "source": "/api/(.*)",
+            "destination": "/server.js"
+        },
+        {
+            "source": "/uploads/(.*)",
+            "destination": "/server.js"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/server.js"
+        }
+    ]
+}

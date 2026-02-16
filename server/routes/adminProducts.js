@@ -132,10 +132,35 @@ router.put("/:id", adminAuth, async (req, res) => {
   }
 });
 
+/* ========== CONFIGURE FLASH SALE (PUT /api/admin/products/:id/flash-sale) ========== */
+router.put("/:id/flash-sale", adminAuth, async (req, res) => {
+  try {
+    const { discountPrice, saleEndDate, isFlashSale } = req.body;
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+
+    product.flashSale = {
+      discountPrice: discountPrice || 0,
+      saleEndDate: saleEndDate,
+      isFlashSale: isFlashSale
+    };
+
+    await product.save();
+    res.json({ message: "Flash Sale updated successfully", product });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update Flash Sale" });
+  }
+});
+
 /* ========== GET ALL PRODUCTS (ADMIN) ========== */
 router.get("/", adminAuth, async (req, res) => {
   try {
-    const products = await Product.find().sort({ createdAt: -1 });
+    const { search } = req.query;
+    let query = {};
+    if (search) {
+      query.name = { $regex: search, $options: "i" };
+    }
+    const products = await Product.find(query).sort({ createdAt: -1 });
     res.json({ products });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch products" });

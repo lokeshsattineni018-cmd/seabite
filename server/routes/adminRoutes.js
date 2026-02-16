@@ -5,7 +5,7 @@ import Order from "../models/Order.js";
 import User from "../models/User.js";
 import Settings, { getSettings } from "../models/Settings.js";
 import SearchInsight from "../models/SearchInsight.js";
-import { sendStatusUpdateEmail } from "../utils/emailService.js";
+import { sendStatusUpdateEmail, sendMarketingEmail } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -166,35 +166,9 @@ router.get("/inventory/low-stock", adminAuth, async (req, res) => {
   }
 });
 
-// 1.7 FETCH ALL PRODUCTS FOR ADMIN (GET /api/admin/products)
-router.get("/products", adminAuth, async (req, res) => {
-  try {
-    const products = await Product.find({}).sort({ createdAt: -1 });
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch products" });
-  }
-});
 
-// 1.8 CONFIGURE FLASH SALE (PUT /api/admin/products/:id/flash-sale)
-router.put("/products/:id/flash-sale", adminAuth, async (req, res) => {
-  try {
-    const { discountPrice, saleEndDate, isFlashSale } = req.body;
-    const product = await Product.findById(req.params.id);
-    if (!product) return res.status(404).json({ message: "Product not found" });
 
-    product.flashSale = {
-      discountPrice: discountPrice || 0,
-      saleEndDate: saleEndDate,
-      isFlashSale: isFlashSale
-    };
 
-    await product.save();
-    res.json({ message: "Flash Sale updated successfully", product });
-  } catch (err) {
-    res.status(500).json({ message: "Failed to update Flash Sale" });
-  }
-});
 
 // 1.9 BULK EMAIL MARKETING (POST /api/admin/marketing/email-blast)
 router.post("/marketing/email-blast", adminAuth, async (req, res) => {

@@ -30,7 +30,7 @@ export default function AdminFlashSale() {
         setLoading(true);
         try {
             const { data } = await axios.get("/api/admin/products", { withCredentials: true });
-            setProducts(data);
+            setProducts(Array.isArray(data.products) ? data.products : data);
         } catch (err) {
             toast.error("Failed to fetch products");
         } finally {
