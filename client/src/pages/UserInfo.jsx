@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { FiUser, FiMail, FiSmartphone, FiSave, FiX, FiEdit2, FiCheck, FiLock } from 'react-icons/fi';
+import { FiUser, FiMail, FiSmartphone, FiSave, FiX, FiEdit2, FiCheck, FiLock, FiMapPin } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { ThemeContext } from '../context/ThemeContext';
@@ -36,7 +37,7 @@ const EditableInfoRow = ({ icon: Icon, label, initialValue, fieldKey, onSave }) 
       onSave(fieldKey, res.data.user ? res.data.user[fieldKey] : value);
       setIsEditing(false);
     } catch (error) {
-     // console.error(`Failed to update ${fieldKey}:`, error);
+      // console.error(`Failed to update ${fieldKey}:`, error);
       setValue(initialValue);
     } finally {
       setLoading(false);
@@ -51,18 +52,16 @@ const EditableInfoRow = ({ icon: Icon, label, initialValue, fieldKey, onSave }) 
   return (
     <motion.div
       layout
-      className={`group relative flex items-center gap-3 md:gap-5 p-4 md:p-6 rounded-2xl transition-all duration-300 ${
-        isEditing
-          ? 'bg-white dark:bg-slate-800 shadow-xl scale-[1.02] border border-blue-100 dark:border-blue-900/30'
-          : 'hover:bg-white/50 dark:hover:bg-slate-800/50 border border-transparent hover:border-slate-100 dark:hover:border-slate-700/50'
-      }`}
+      className={`group relative flex items-center gap-3 md:gap-5 p-4 md:p-6 rounded-2xl transition-all duration-300 ${isEditing
+        ? 'bg-white dark:bg-slate-800 shadow-xl scale-[1.02] border border-blue-100 dark:border-blue-900/30'
+        : 'hover:bg-white/50 dark:hover:bg-slate-800/50 border border-transparent hover:border-slate-100 dark:hover:border-slate-700/50'
+        }`}
     >
       <div
-        className={`shrink-0 p-2.5 md:p-3 rounded-full transition-colors duration-300 ${
-          isEditing
-            ? 'bg-blue-600 text-white'
-            : 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
-        }`}
+        className={`shrink-0 p-2.5 md:p-3 rounded-full transition-colors duration-300 ${isEditing
+          ? 'bg-blue-600 text-white'
+          : 'bg-blue-50 dark:bg-slate-800 text-blue-600 dark:text-blue-400'
+          }`}
       >
         <Icon size={18} />
       </div>
@@ -87,11 +86,10 @@ const EditableInfoRow = ({ icon: Icon, label, initialValue, fieldKey, onSave }) 
             </motion.div>
           ) : (
             <p
-              className={`text-base md:text-lg font-medium truncate ${
-                isEmailField
-                  ? 'text-slate-500 dark:text-slate-400'
-                  : 'text-slate-900 dark:text-slate-200'
-              }`}
+              className={`text-base md:text-lg font-medium truncate ${isEmailField
+                ? 'text-slate-500 dark:text-slate-400'
+                : 'text-slate-900 dark:text-slate-200'
+                }`}
             >
               {initialValue || (
                 <span className="text-slate-400 italic text-sm">Not provided</span>
@@ -148,16 +146,79 @@ const EditableInfoRow = ({ icon: Icon, label, initialValue, fieldKey, onSave }) 
   );
 };
 
+// ... existing imports
+import AddressForm from "../components/AddressForm";
+import { FiTrash2, FiPlus } from "react-icons/fi";
+
+const AddressCard = ({ address, onDelete }) => (
+  <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 relative group transition-all hover:shadow-md">
+    <div className="flex justify-between items-start mb-2">
+      <h4 className="font-bold text-slate-900 dark:text-white text-sm">{address.name}</h4>
+      {address.isDefault && (
+        <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Default</span>
+      )}
+    </div>
+    <p className="text-slate-500 dark:text-slate-400 text-xs mb-1">{address.phone}</p>
+    <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">
+      {address.houseNo}, {address.street}<br />
+      {address.landmark && <span>{address.landmark}, </span>}
+      {address.city}, {address.state} - {address.postalCode}
+    </p>
+    <button
+      onClick={() => onDelete(address._id)}
+      className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+    >
+      <FiTrash2 size={16} />
+    </button>
+  </div>
+);
+
 export default function UserInfo({ user }) {
   const [currentUser, setCurrentUser] = useState(user);
+  const [addresses, setAddresses] = useState([]);
+  const [showAddressForm, setShowAddressForm] = useState(false);
   const { isDarkMode } = useContext(ThemeContext);
 
   useEffect(() => {
     setCurrentUser(user);
+    if (user.addresses) {
+      setAddresses(user.addresses);
+    }
+    fetchAddresses();
   }, [user]);
+
+  const fetchAddresses = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/user/address`, { withCredentials: true });
+      setAddresses(res.data);
+    } catch (err) {
+      // console.error("Failed to fetch addresses");
+    }
+  }
 
   const handleFieldSave = (fieldKey, newValue) => {
     setCurrentUser((prevUser) => ({ ...prevUser, [fieldKey]: newValue }));
+  };
+
+  const handleSaveAddress = async (newAddress) => {
+    try {
+      const res = await axios.post(`${API_URL}/api/user/address`, newAddress, { withCredentials: true });
+      setAddresses(res.data);
+      setShowAddressForm(false);
+      toast.success("Address added successfully");
+    } catch (err) {
+      toast.error("Failed to save address");
+    }
+  };
+
+  const handleDeleteAddress = async (id) => {
+    try {
+      const res = await axios.delete(`${API_URL}/api/user/address/${id}`, { withCredentials: true });
+      setAddresses(res.data);
+      toast.success("Address removed");
+    } catch (err) {
+      toast.error("Failed to remove address");
+    }
   };
 
   const name = currentUser.name || 'Valued Customer';
@@ -168,6 +229,7 @@ export default function UserInfo({ user }) {
   return (
     <div className="max-w-3xl mx-auto -mt-16 md:-mt-24 relative z-10 px-4 md:px-6 mb-12 md:mb-20 font-sans">
       <div className="flex flex-col items-center mb-8 md:mb-10 text-center">
+        {/* ... existing header profile image code ... */}
         <div className="relative">
           <div className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full" />
 
@@ -206,32 +268,75 @@ export default function UserInfo({ user }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-3xl p-1.5 md:p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none"
+        className="space-y-6"
       >
-        <div className="h-1 w-16 md:w-20 bg-blue-600 mx-auto rounded-full mb-4 md:mb-6 opacity-20" />
+        {/* Personal Info Section */}
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-3xl p-1.5 md:p-8 shadow-2xl shadow-slate-200/50 dark:shadow-none">
+          <div className="h-1 w-16 md:w-20 bg-blue-600 mx-auto rounded-full mb-4 md:mb-6 opacity-20" />
+          <div className="flex flex-col gap-1 md:gap-2">
+            <EditableInfoRow
+              icon={FiUser}
+              label="Full Name"
+              fieldKey="name"
+              initialValue={name}
+              onSave={handleFieldSave}
+            />
+            <EditableInfoRow
+              icon={FiMail}
+              label="Email Address"
+              fieldKey="email"
+              initialValue={email}
+              onSave={handleFieldSave}
+            />
+            <EditableInfoRow
+              icon={FiSmartphone}
+              label="Phone Number"
+              fieldKey="phone"
+              initialValue={phone}
+              onSave={handleFieldSave}
+            />
+          </div>
+        </div>
 
-        <div className="flex flex-col gap-1 md:gap-2">
-          <EditableInfoRow
-            icon={FiUser}
-            label="Full Name"
-            fieldKey="name"
-            initialValue={name}
-            onSave={handleFieldSave}
-          />
-          <EditableInfoRow
-            icon={FiMail}
-            label="Email Address"
-            fieldKey="email"
-            initialValue={email}
-            onSave={handleFieldSave}
-          />
-          <EditableInfoRow
-            icon={FiSmartphone}
-            label="Phone Number"
-            fieldKey="phone"
-            initialValue={phone}
-            onSave={handleFieldSave}
-          />
+        {/* Saved Addresses Section */}
+        <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl border border-slate-100 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-lg">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <FiMapPin className="text-blue-600" /> Saved Addresses
+            </h3>
+            <button
+              onClick={() => setShowAddressForm(true)}
+              className="text-xs font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1"
+            >
+              <FiPlus /> Add New
+            </button>
+          </div>
+
+          <AnimatePresence>
+            {showAddressForm && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-6 overflow-hidden"
+              >
+                <AddressForm
+                  onSave={handleSaveAddress}
+                  onCancel={() => setShowAddressForm(false)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {addresses.length === 0 && !showAddressForm ? (
+              <p className="text-slate-400 text-sm col-span-2 text-center py-4">No saved addresses.</p>
+            ) : (
+              addresses.map(addr => (
+                <AddressCard key={addr._id} address={addr} onDelete={handleDeleteAddress} />
+              ))
+            )}
+          </div>
         </div>
       </motion.div>
     </div>

@@ -1,13 +1,18 @@
 import mongoose from "mongoose";
 
 // 1️⃣ Address Subdocument Schema
+// 1️⃣ Address Subdocument Schema
 const addressSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     phone: { type: String, required: true },
+    houseNo: { type: String, required: true }, // Added
     street: { type: String, required: true },
+    landmark: { type: String }, // Added
     city: { type: String, required: true },
+    state: { type: String, required: true }, // Added (for restriction check)
     postalCode: { type: String, required: true },
+    isDefault: { type: Boolean, default: false }, // Added
   },
   { timestamps: true }
 );

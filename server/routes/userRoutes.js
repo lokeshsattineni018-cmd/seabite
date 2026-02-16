@@ -40,4 +40,15 @@ router.get("/wishlist", protect, async (req, res) => {
     }
 });
 
+// 🟢 ADDRESS MANAGEMENT
+import {
+    addAddress,
+    getAddresses,
+    deleteAddress,
+} from "../controllers/addressController.js";
+
+router.post("/address", protect, addAddress);
+router.get("/address", protect, getAddresses);
+router.delete("/address/:id", protect, deleteAddress);
+
 export default router;
