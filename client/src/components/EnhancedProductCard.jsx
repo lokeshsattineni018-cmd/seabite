@@ -42,7 +42,11 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
         setIsAdding(true);
 
         setTimeout(() => {
-            addToCart({ ...product, quantity: 1 });
+            addToCart({
+                ...product,
+                quantity: 1,
+                price: parseFloat(product.basePrice)
+            });
             toast.success(`Added ${product.name}`, {
                 style: { background: '#10b981', color: '#fff', fontSize: '12px' },
                 icon: '🛒'

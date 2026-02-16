@@ -88,9 +88,15 @@ export const CartProvider = ({ children }) => {
             if (existingItemIndex > -1) {
                 currentCart[existingItemIndex].qty += product.quantity || 1;
             } else {
+                // Ensure price is valid before saving
+                let finalPrice = parseFloat(product.price);
+                if (isNaN(finalPrice)) finalPrice = parseFloat(product.basePrice);
+                if (isNaN(finalPrice)) finalPrice = 0;
+
                 currentCart.push({
                     ...product,
                     qty: product.quantity || 1,
+                    price: finalPrice
                 });
             }
 

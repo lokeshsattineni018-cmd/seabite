@@ -821,7 +821,7 @@ const Footer = () => {
         </motion.div>
       </div>
 
-      <div className="relative z-10 border-t border-slate-200/50 dark:border-white/5 px-6 py-10">
+      {/* <div className="relative z-10 border-t border-slate-200/50 dark:border-white/5 px-6 py-10">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-3">
             <span className="text-xl font-serif font-bold text-slate-900 dark:text-white">SeaBite</span>
@@ -836,7 +836,7 @@ const Footer = () => {
             &copy; {new Date().getFullYear()} SeaBite. All rights reserved.
           </p>
         </div>
-      </div>
+      </div> */}
     </footer>
   );
 };
