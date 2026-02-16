@@ -21,7 +21,6 @@ const TextReveal = ({ text, className = "" }) => (
 
 export default function TrendingProducts() {
   const [products, setProducts] = useState([]);
-  const [isPaused, setIsPaused] = useState(false);
 
   useEffect(() => {
     const fetchTrending = async () => {
@@ -75,19 +74,14 @@ export default function TrendingProducts() {
         </motion.p>
       </div>
 
-      <div
-        className="relative w-full z-10"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-      >
+      <div className="relative w-full z-10">
         <motion.div
           className="flex gap-6 w-max pl-6"
-          animate={{ x: isPaused ? undefined : ["0%", "-33.33%"] }}
+          animate={{ x: ["0%", "-33.33%"] }}
           transition={{
             repeat: Infinity,
-            duration: 40, // Slightly slower for better readability
+            duration: 40,
             ease: "linear",
-            ...(isPaused && { duration: 0 })
           }}
         >
           {products.map((p, i) => (
@@ -97,22 +91,6 @@ export default function TrendingProducts() {
           ))}
         </motion.div>
       </div>
-
-      {/* Pause indicator */}
-      <AnimatePresence>
-        {isPaused && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="text-center mt-8 relative z-10"
-          >
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wide">
-              Paused on hover
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </section>
   );
 }
