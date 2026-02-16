@@ -227,3 +227,38 @@ export const sendWaitlistEmail = async (email, name, productName, productImage) 
     html: aestheticWrapper(content, "BACK IN STOCK")
   });
 };
+
+/**
+ * 🟢 6. SECURITY: OTP VERIFICATION
+ */
+export const sendOtpEmail = async (email, otp) => {
+  if (!resend) return;
+
+  const content = `
+    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
+      Security <span style="color: #38bdf8;">Verification</span>
+    </h1>
+    <p style="margin-bottom: 25px;">
+      A sensitive action (Maintenance Mode Toggle) was requested for your store. 
+      Please use the following One-Time Password to authorize this request.
+    </p>
+    
+    <div style="background: rgba(30, 41, 59, 0.5); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid #1e293b; letter-spacing: 10px; font-size: 32px; font-weight: 700; color: #38bdf8;">
+      ${otp}
+    </div>
+
+    <p style="font-size: 14px; text-align: center; color: #94a3b8; margin-bottom: 10px;">
+      This code is valid for 5 minutes.
+    </p>
+    <p style="font-size: 12px; text-align: center; color: #ef4444;">
+      If you did not request this, please ignore this email and check your admin account security immediately.
+    </p>
+  `;
+
+  return await resend.emails.send({
+    from: OFFICIAL_SENDER,
+    to: email,
+    subject: `SeaBite Security Code: ${otp}`,
+    html: aestheticWrapper(content, "SECURE ACTION")
+  });
+};

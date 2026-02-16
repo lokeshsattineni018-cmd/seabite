@@ -5,7 +5,7 @@ import Order from "../models/Order.js";
 import User from "../models/User.js";
 import Settings, { getSettings } from "../models/Settings.js";
 import SearchInsight from "../models/SearchInsight.js";
-import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails } from "../utils/emailService.js";
+import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -128,15 +128,81 @@ router.get("/enterprise/settings", adminAuth, async (req, res) => {
 });
 
 // 1.3 UPDATE SETTINGS (PUT /api/admin/settings)
-router.put("/enterprise/settings", adminAuth, async (req, res) => {
+// 👉 This is now protected by OTP flow in the frontend, but we should enforce it here ideally.
+// However, for the specific requirement, we are using the new /verify endpoint to actually toggle it.
+// We'll keep this as a generic update but handle the specific toggle via the new route or update client to use this only after OTP.
+
+// 🟢 1.3.1 REQUEST OTP (POST /api/admin/maintenance/request-otp)
+router.post("/maintenance/request-otp", adminAuth, async (req, res) => {
   try {
-    const { isMaintenanceMode, maintenanceMessage } = req.body;
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    req.session.maintenanceOtp = {
+      code: otp,
+      expiresAt: Date.now() + 5 * 60 * 1000 // 5 mins
+    };
+
+    // Email the admin
+    await sendOtpEmail(req.session.user.email, otp);
+
+    res.json({ message: "OTP sent to admin email" });
+  } catch (err) {
+    console.error("OTP Request Failed:", err);
+    res.status(500).json({ message: "Failed to generate OTP" });
+  }
+});
+
+// 🟢 1.3.2 VERIFY OTP & TOGGLE MAINTENANCE (POST /api/admin/maintenance/verify)
+router.post("/maintenance/verify", adminAuth, async (req, res) => {
+  try {
+    const { otp, desiredState } = req.body; // desiredState is boolean boolean
+    const stored = req.session.maintenanceOtp;
+
+    if (!stored || !stored.code) {
+      return res.status(400).json({ message: "No OTP requested" });
+    }
+
+    if (Date.now() > stored.expiresAt) {
+      req.session.maintenanceOtp = null;
+      return res.status(400).json({ message: "OTP expired" });
+    }
+
+    if (stored.code !== otp) {
+      return res.status(400).json({ message: "Invalid OTP" });
+    }
+
+    // OTP Valid!
+    req.session.maintenanceOtp = null; // Consume OTP
+
+    // Update Settings
     let settings = await getSettings();
-    settings.isMaintenanceMode = isMaintenanceMode ?? settings.isMaintenanceMode;
-    settings.maintenanceMessage = maintenanceMessage ?? settings.maintenanceMessage;
+    settings.isMaintenanceMode = desiredState;
+    settings.maintenanceMessage = desiredState
+      ? "We are upgrading our systems to serve you better. We will be back shortly!"
+      : "";
     settings.lastUpdatedBy = req.session.userId;
     await settings.save();
-    res.json({ message: "Enterprise settings updated", settings });
+
+    res.json({ message: "Maintenance Updated Successfully", settings });
+
+  } catch (err) {
+    console.error("OTP Verify Failed:", err);
+    res.status(500).json({ message: "Verification failed" });
+  }
+});
+
+// 1.3 UPDATE SETTINGS (Generic - Kept for other settings)
+router.put("/enterprise/settings", adminAuth, async (req, res) => {
+  try {
+    const { maintenanceMessage } = req.body; // Removed isMaintenanceMode from direct toggle
+    let settings = await getSettings();
+    if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
+
+    // If they try to toggle maintenance here, we ignore it or block it. 
+    // For now, let's assume the frontend calls the new verify route for the toggle.
+
+    settings.lastUpdatedBy = req.session.userId;
+    await settings.save();
+    res.json({ message: "Settings updated", settings });
   } catch (err) {
     res.status(500).json({ message: "Failed to update settings" });
   }
@@ -191,6 +257,19 @@ router.post("/inventory/restock", adminAuth, async (req, res) => {
 router.post("/marketing/email-blast", adminAuth, async (req, res) => {
   try {
     const { subject, message } = req.body;
+
+    // 🟢 SECURITY HOTFIX (Phase 28): Unescape HTML for Email Blast
+    // 'xss-clean' middleware escapes HTML tags (e.g., < to &lt;). 
+    // Since this is an ADMIN-ONLY route, we trust the admin's HTML and revert it for proper rendering.
+    const unescapedMessage = message
+      ? message
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#x27;/g, "'")
+        .replace(/&amp;/g, "&")
+      : "";
+
     const users = await User.find({ email: { $exists: true, $ne: "" } }).select("email name");
 
     if (users.length === 0) {
@@ -215,7 +294,7 @@ router.post("/marketing/email-blast", adminAuth, async (req, res) => {
         // Map users to simplified objects for the service
         const recipients = chunk.map(u => ({ email: u.email, name: u.name }));
 
-        const response = await sendBatchMarketingEmails(recipients, subject, message);
+        const response = await sendBatchMarketingEmails(recipients, subject, unescapedMessage);
 
         // Resend Batch returns: { data: [...], error: ... }
         if (response?.error) {
