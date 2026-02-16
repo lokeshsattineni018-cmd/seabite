@@ -1,6 +1,8 @@
 /* --- 1. LOAD ENV VARIABLES FIRST --- */
 import "dotenv/config";
 import express from "express";
+import { createServer } from "http";
+import { Server } from "socket.io";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
@@ -50,6 +52,12 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
+
+// ✅ Attach IO to request for controllers
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
 
 // ✅ Handle static uploads
 const uploadDir = path.join(__dirname, "uploads");
@@ -158,4 +166,18 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-export default app;
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+  }
+});
+
+export { io }; // Export io for controllers
+
+const PORT = process.env.PORT || 5000;
+httpServer.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});

@@ -1,8 +1,8 @@
-import Order from '../models/Order.js'; 
+import Order from '../models/Order.js';
 import Notification from "../models/notification.js";
-import { 
-    sendOrderPlacedEmail, 
-    sendStatusUpdateEmail 
+import {
+    sendOrderPlacedEmail,
+    sendStatusUpdateEmail
 } from "../utils/emailService.js";
 
 /**
@@ -12,12 +12,12 @@ import {
  */
 export const createOrder = async (req, res) => {
     try {
-        const { 
-            items, 
-            itemsPrice, 
-            discount, 
-            deliveryAddress, 
-            shippingAddress 
+        const {
+            items,
+            itemsPrice,
+            discount,
+            deliveryAddress,
+            shippingAddress
         } = req.body;
 
         if (items && items.length === 0) {
@@ -35,22 +35,30 @@ export const createOrder = async (req, res) => {
             items,
             itemsPrice: subtotal,
             taxPrice,
-            shippingPrice, 
-            totalAmount, 
+            shippingPrice,
+            totalAmount,
             discount: discount || 0,
             shippingAddress: deliveryAddress || shippingAddress
         });
 
         const createdOrder = await order.save();
 
+        // 🟢 REAL-TIME ALERT: Notify Admin Dashboard
+        if (req.io) {
+            req.io.emit("newOrder", {
+                ...createdOrder._doc,
+                user: { name: req.user.name } // Ensure user name is available for the toast
+            });
+        }
+
         // ✅ FIXED EMAIL TRIGGER: Use req.user directly for immediate reliable delivery
         if (req.user && req.user.email) {
             try {
                 // We pass req.user.email and req.user.name to ensure no population delay
                 await sendOrderPlacedEmail(
-                    req.user.email, 
-                    req.user.name, 
-                    createdOrder.orderId || createdOrder._id, 
+                    req.user.email,
+                    req.user.name,
+                    createdOrder.orderId || createdOrder._id,
                     createdOrder.totalAmount,
                     createdOrder.items // Passed for the premium itemized table
                 );
@@ -74,14 +82,14 @@ export const createOrder = async (req, res) => {
  * @access  Private/Admin
  */
 export const updateOrderStatus = async (req, res) => {
-    const { status, refundStatus } = req.body; 
+    const { status, refundStatus } = req.body;
     try {
         // We populate user to get the email for the notification function
         const order = await Order.findById(req.params.id).populate('user', 'name email');
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
         if (status) order.status = status;
-        
+
         if (refundStatus) {
             order.refundStatus = refundStatus;
             if (refundStatus === "Success") {
@@ -89,15 +97,15 @@ export const updateOrderStatus = async (req, res) => {
             }
         }
 
-        const updatedOrder = await order.save(); 
+        const updatedOrder = await order.save();
 
         // ✅ FIXED EMAIL TRIGGER: Multi-Status Amazon/Flipkart Style Notifications
         try {
             if (status && order.user && order.user.email) {
                 await sendStatusUpdateEmail(
-                    order.user.email, 
-                    order.user.name, 
-                    order.orderId || order._id, 
+                    order.user.email,
+                    order.user.name,
+                    order.orderId || order._id,
                     status
                 );
                 console.log(`✅ Status update (${status}) sent to ${order.user.email}`);
@@ -119,7 +127,7 @@ export const updateOrderStatus = async (req, res) => {
  */
 export const cancelOrder = async (req, res) => {
     try {
-        const { reason } = req.body; 
+        const { reason } = req.body;
         const order = await Order.findById(req.params.id);
 
         if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -135,8 +143,8 @@ export const cancelOrder = async (req, res) => {
         }
 
         order.status = 'Cancelled by User';
-        order.cancelReason = reason || "No reason provided"; 
-        
+        order.cancelReason = reason || "No reason provided";
+
         const updatedOrder = await order.save();
 
         // Sync with internal dashboard notifications
@@ -176,7 +184,7 @@ export const getMyOrders = async (req, res) => {
     try {
         const orders = await Order.find({ user: req.user.id })
             .populate('items.productId', 'name image reviews')
-            .sort({ createdAt: -1 }); 
+            .sort({ createdAt: -1 });
         res.json(orders);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching history' });

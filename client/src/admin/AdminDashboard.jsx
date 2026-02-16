@@ -14,6 +14,8 @@ import {
   FiRefreshCw, FiMoreHorizontal, FiPackage,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { io } from "socket.io-client";
+import toast from "react-hot-toast";
 
 const PLACEHOLDER_IMG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
@@ -98,7 +100,7 @@ export default function AdminDashboard() {
       setError(null);
       setLastUpdated(new Date());
     } catch (err) {
-     // console.error("Dashboard Fetch Error:", err);
+      // console.error("Dashboard Fetch Error:", err);
       setLoading(false);
       if (err.response?.status === 401) navigate("/login");
       setError(err.response?.data?.message || "Failed to load dashboard data.");
@@ -114,6 +116,24 @@ export default function AdminDashboard() {
     const interval = setInterval(() => fetchDashboardData(), 30000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
+
+  // 🟢 REAL-TIME: Socket.io Listener
+  useEffect(() => {
+    const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
+
+    socket.on("connect", () => {
+      console.log("✅ Socket connected:", socket.id);
+    });
+
+    socket.on("newOrder", (order) => {
+      console.log("🔔 Dashboard: Refreshing data for new order", order._id);
+      fetchDashboardData();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [fetchDashboardData, navigate]);
 
   const deleteReviewHandler = async (productId, reviewId) => {
     if (!window.confirm("Are you sure you want to delete this review?")) return;
@@ -285,7 +305,7 @@ export default function AdminDashboard() {
         <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
           <h3 className="text-sm md:text-base font-bold text-slate-900 mb-1">Order Breakdown</h3>
           <p className="text-[10px] text-slate-400 mb-4">Status distribution</p>
-          
+
           {orderStatusData.length > 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center">
               <div className="w-full h-[160px]">
@@ -475,10 +495,10 @@ export default function AdminDashboard() {
 
 function StatCard({ title, value, icon, trend, trendUp, color, sparkData, index }) {
   const colorMap = {
-    blue:    { bg: "bg-blue-50", text: "text-blue-600", spark: "#2563eb" },
+    blue: { bg: "bg-blue-50", text: "text-blue-600", spark: "#2563eb" },
     emerald: { bg: "bg-emerald-50", text: "text-emerald-600", spark: "#059669" },
-    indigo:  { bg: "bg-indigo-50", text: "text-indigo-600", spark: "#6366f1" },
-    amber:   { bg: "bg-amber-50", text: "text-amber-600", spark: "#d97706" },
+    indigo: { bg: "bg-indigo-50", text: "text-indigo-600", spark: "#6366f1" },
+    amber: { bg: "bg-amber-50", text: "text-amber-600", spark: "#d97706" },
   };
   const c = colorMap[color] || colorMap.blue;
 
@@ -493,16 +513,15 @@ function StatCard({ title, value, icon, trend, trendUp, color, sparkData, index 
         <div className={`w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center ${c.bg} ${c.text}`}>
           {icon}
         </div>
-        <span className={`text-[10px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded-full ${
-          trendUp ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50"
-        }`}>
+        <span className={`text-[10px] font-bold flex items-center gap-0.5 px-1.5 py-0.5 rounded-full ${trendUp ? "text-emerald-600 bg-emerald-50" : "text-red-600 bg-red-50"
+          }`}>
           {trendUp ? <FiArrowUpRight size={10} /> : <FiArrowDownRight size={10} />}
           {trend}
         </span>
       </div>
       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-0.5">{title}</p>
       <h4 className="text-xl md:text-2xl font-bold text-slate-900">{value}</h4>
-      
+
       {/* Mini sparkline */}
       {sparkData && sparkData.length > 0 && (
         <div className="absolute bottom-0 right-0 w-24 h-12 opacity-30">

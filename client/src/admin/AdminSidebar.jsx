@@ -13,6 +13,7 @@ const LINKS = [
   { name: "Products", path: "/admin/products", icon: <FiShoppingBag size={18} /> },
   { name: "Add Product", path: "/admin/add-product", icon: <FiPlusSquare size={18} /> },
   { name: "Orders", path: "/admin/orders", icon: <FiClipboard size={18} /> },
+  { name: "Kanban Board", path: "/admin/kanban", icon: <FiTrello size={18} /> },
   { name: "Inbox", path: "/admin/messages", icon: <FiMail size={18} /> },
   { name: "Coupons", path: "/admin/coupons", icon: <FiTag size={18} /> },
   { name: "Users", path: "/admin/users", icon: <FiUsers size={18} /> },
@@ -28,7 +29,7 @@ export default function AdminSidebar() {
     try {
       await axios.post("/api/admin/logout", {}, { withCredentials: true });
     } catch (err) {
-     // console.error("Logout error:", err);
+      // console.error("Logout error:", err);
     } finally {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -78,11 +79,10 @@ export default function AdminSidebar() {
                   whileHover={{ x: isActive ? 0 : 3 }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.15 }}
-                  className={`relative flex items-center justify-between px-3.5 py-2.5 md:py-3 rounded-xl text-[13px] font-semibold transition-colors duration-200 ${
-                    isActive
+                  className={`relative flex items-center justify-between px-3.5 py-2.5 md:py-3 rounded-xl text-[13px] font-semibold transition-colors duration-200 ${isActive
                       ? "text-white"
                       : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
-                  }`}
+                    }`}
                 >
                   <span className="flex items-center gap-3">
                     <span className={isActive ? "text-blue-400" : "text-slate-400"}>

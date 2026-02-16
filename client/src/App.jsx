@@ -45,6 +45,7 @@ import AdminUsers from "./admin/AdminUsers";
 import AdminLogin from "./admin/AdminLogin";
 import AdminMessages from "./admin/AdminMessages";
 import AdminCoupons from "./admin/AdminCoupons";
+import AdminKanban from "./admin/AdminKanban";
 
 // Context
 import { CartProvider } from "./context/CartContext";
@@ -132,6 +133,7 @@ function MainLayout() {
               <Route path="add-product" element={<AddProduct />} />
               <Route path="edit-product/:id" element={<EditProduct />} />
               <Route path="orders" element={<AdminOrders />} />
+              <Route path="kanban" element={<AdminKanban />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="messages" element={<AdminMessages />} />
               <Route path="coupons" element={<AdminCoupons />} />

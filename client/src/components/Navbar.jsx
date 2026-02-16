@@ -338,9 +338,22 @@ export default function Navbar({ openCart }) {
                   onClick={() => navigate("/wishlist")}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.85 }}
-                  className="p-2 text-slate-700 dark:text-blue-100 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                  className="relative p-2 text-slate-700 dark:text-blue-100 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                 >
                   <FiHeart size={22} strokeWidth={1.5} />
+                  <AnimatePresence>
+                    {user?.wishlist?.length > 0 && (
+                      <motion.span
+                        key={user.wishlist.length}
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className="absolute top-0 right-0 bg-red-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm border-2 border-white dark:border-slate-900"
+                      >
+                        {user.wishlist.length}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
                 </motion.button>
               </MagneticButton>
             )}

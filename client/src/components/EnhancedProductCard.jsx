@@ -77,7 +77,7 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
 
             await refreshMe();
 
-            if (!previousState) {
+            if (!previousState && !isWishlistMode) {
                 toast.success("Added to Wishlist", {
                     style: { background: '#ef4444', color: '#fff', fontSize: '12px' },
                     icon: '❤️'

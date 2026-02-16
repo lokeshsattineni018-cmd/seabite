@@ -725,8 +725,8 @@ const WhySeaBite = () => {
         <SectionReveal direction="scale">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
             {[
-              { value: 10000, suffix: "+", label: "Happy Customers" },
-              { value: 50, suffix: "+", label: "Varieties" },
+              { value: 100, suffix: "+", label: "Happy Customers" },
+              { value: 20, suffix: "+", label: "Varieties" },
               { value: 98, suffix: "%", label: "Freshness Score" },
               { value: 4, suffix: ".8", label: "Average Rating" },
             ].map((stat, i) => (

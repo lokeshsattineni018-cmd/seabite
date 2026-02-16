@@ -69,7 +69,7 @@ export default function AdminOrders() {
       const res = await axios.get("/api/admin/reviews/all");
       setAllReviews(res.data || []);
     } catch (err) {
-    //  console.error("Reviews Fetch Error:", err);
+      //  console.error("Reviews Fetch Error:", err);
     } finally {
       setReviewsLoading(false);
     }
@@ -197,17 +197,15 @@ export default function AdminOrders() {
               key={status}
               whileTap={{ scale: 0.96 }}
               onClick={() => setFilter(status)}
-              className={`px-3.5 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-1.5 ${
-                filter === status
+              className={`px-3.5 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-1.5 ${filter === status
                   ? "bg-slate-900 text-white border-slate-900 shadow-md"
                   : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700"
-              }`}
+                }`}
             >
               {status}
               {count > 0 && (
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${
-                  filter === status ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
-                }`}>{count}</span>
+                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${filter === status ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
+                  }`}>{count}</span>
               )}
             </motion.button>
           );
@@ -252,9 +250,8 @@ export default function AdminOrders() {
                       </div>
                     </td>
                     <td className="py-3.5 px-5">
-                      <span className={`text-[9px] font-bold px-2 py-1 rounded-md uppercase tracking-wider ${
-                        o.paymentMethod === "Prepaid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                      }`}>{o.paymentMethod}</span>
+                      <span className={`text-[9px] font-bold px-2 py-1 rounded-md uppercase tracking-wider ${o.paymentMethod === "Prepaid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                        }`}>{o.paymentMethod}</span>
                     </td>
                     <td className="py-3.5 px-5 font-bold text-slate-900 text-sm">₹{o.totalAmount.toLocaleString()}</td>
                     <td className="py-3.5 px-5"><StatusPill status={o.status} /></td>
@@ -391,8 +388,20 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
               <p className="text-xs font-semibold text-slate-900">Gateway: <span className="text-blue-600 font-mono">{order.paymentId || "COD"}</span></p>
               <p className="text-xs text-slate-500 mt-1">Method: <span className="font-semibold">{order.paymentMethod}</span></p>
             </div>
+
+            {/* Shipping Details */}
+            <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl">
+              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Shipping Details</h4>
+              <p className="text-sm font-bold text-slate-900">{order.shippingAddress?.fullName}</p>
+              <p className="text-xs text-slate-600 mt-1">{order.shippingAddress?.phone}</p>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                {order.shippingAddress?.houseNo}, {order.shippingAddress?.street}, <br />
+                {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.zip}
+              </p>
+            </div>
+
             {canAutoRefund && (
-              <div className={`p-4 rounded-xl border-2 ${order.refundStatus === "Success" ? "bg-emerald-50 border-emerald-200" : "bg-blue-50 border-blue-200"}`}>
+              <div className={`p-4 rounded-xl border-2 col-span-1 md:col-span-2 ${order.refundStatus === "Success" ? "bg-emerald-50 border-emerald-200" : "bg-blue-50 border-blue-200"}`}>
                 <h4 className="text-[10px] font-bold uppercase tracking-widest mb-3 text-slate-600">Refund Console</h4>
                 {order.refundStatus === "Processing" ? (
                   <motion.button whileTap={{ scale: 0.97 }} onClick={() => updateRefundStatus(order._id, "Success")} className="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors">CONFIRM SUCCESS</motion.button>
