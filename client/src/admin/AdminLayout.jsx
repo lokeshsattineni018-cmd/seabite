@@ -36,7 +36,11 @@ export default function AdminLayout() {
 
   // 🟢 GLOBAL REAL-TIME LISTENER
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
+    const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+    const socket = io(API_URL, {
+      withCredentials: true,
+      transports: ['polling', 'websocket']
+    });
 
     socket.on("newOrder", (order) => {
       // Play sound (optional)

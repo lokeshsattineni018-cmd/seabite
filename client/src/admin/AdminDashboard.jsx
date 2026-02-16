@@ -134,7 +134,11 @@ export default function AdminDashboard() {
 
   // 🟢 REAL-TIME: Socket.io Listener
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
+    const API_URL = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
+    const socket = io(API_URL, {
+      withCredentials: true,
+      transports: ['polling', 'websocket']
+    });
 
     socket.on("connect", () => {
       console.log("✅ Socket connected:", socket.id);

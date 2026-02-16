@@ -35,18 +35,21 @@ const allowedOrigins = [
   "https://seabite.co.in",
   "https://www.seabite.co.in",
   "http://localhost:5173",
+  "https://seabite-server.vercel.app"
 ];
 
-// ✅ Manual CORS for cross-origin requests
+// ✅ ROBURST CORS
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
+  if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
+  } else if (!origin && process.env.NODE_ENV !== 'production') {
+    // Allow local tools like postman
   }
-  res.setHeader("Vary", "Origin");
+
   res.setHeader("Access-Control-Allow-Credentials", "true");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, Cookie, X-Requested-With");
 
   if (req.method === "OPTIONS") return res.sendStatus(200);
   next();
@@ -99,26 +102,23 @@ mongoose.connection.on('reconnected', () => {
 
 await connectDB();
 
-/* --- 4. SESSION SETUP --- */
+// ✅ Session Setup
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || "seabite_default_secret",
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    client: mongoose.connection.getClient(),
+    mongoUrl: process.env.MONGO_URI,
     collectionName: "sessions",
     ttl: 14 * 24 * 60 * 60,
-    touchAfter: 24 * 3600,
-    stringify: false,
-    autoRemove: "native",
   }),
   name: "seabite.sid",
   proxy: true,
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: true,           // ✅ CHANGED from "auto"
-    sameSite: "lax",        // ✅ CHANGED from "none"
+    secure: true, // Always true for production/SSL
+    sameSite: "none", // REQUIRED for cross-site session (Frontend on .co.in, Backend on .vercel.app)
     path: "/",
   },
 });
@@ -173,7 +173,13 @@ app.use((err, req, res, next) => {
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   }

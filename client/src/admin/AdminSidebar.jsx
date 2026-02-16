@@ -13,7 +13,6 @@ const LINKS = [
   { name: "Products", path: "/admin/products", icon: <FiShoppingBag size={18} /> },
   { name: "Add Product", path: "/admin/add-product", icon: <FiPlusSquare size={18} /> },
   { name: "Orders", path: "/admin/orders", icon: <FiClipboard size={18} /> },
-  { name: "Kanban Board", path: "/admin/kanban", icon: <FiLayout size={18} /> },
   { name: "Inbox", path: "/admin/messages", icon: <FiMail size={18} /> },
   { name: "Flash Deals", path: "/admin/flash-sale", icon: <FiZap size={18} /> },
   { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={18} /> },
@@ -28,7 +27,7 @@ export default function AdminSidebar() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("/api/admin/logout", {}, { withCredentials: true });
+      await axios.post("/api/auth/logout", {}, { withCredentials: true });
     } catch (err) {
       // console.error("Logout error:", err);
     } finally {
