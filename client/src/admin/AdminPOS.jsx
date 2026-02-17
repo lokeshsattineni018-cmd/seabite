@@ -3,7 +3,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     FiSearch, FiShoppingCart, FiPlus, FiMinus, FiTrash2,
-    FiUser, FiPhone, FiCheckCircle, FiDollarSign, FiCreditCard
+    FiUser, FiPhone, FiCheckCircle, FiDollarSign, FiCreditCard, FiTruck
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import PopupModal from "../components/PopupModal";
@@ -21,7 +21,11 @@ export default function AdminPOS() {
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
     const [search, setSearch] = useState("");
-    const [customer, setCustomer] = useState({ phone: "", name: "", email: "" });
+    const [customer, setCustomer] = useState({
+        phone: "", name: "", email: "",
+        deliveryType: "Walk-in",
+        houseNo: "", street: "", city: "Vizag", zip: ""
+    });
     const [loading, setLoading] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [modal, setModal] = useState({ show: false, message: "", type: "info" });
@@ -93,6 +97,9 @@ export default function AdminPOS() {
     const handlePlaceOrder = async () => {
         if (cart.length === 0) return toast.error("Cart is empty");
         if (!customer.phone || !customer.name) return toast.error("Customer details required");
+        if (customer.deliveryType === "Delivery" && (!customer.street || !customer.houseNo)) {
+            return toast.error("Delivery address required");
+        }
 
         setProcessing(true);
         try {
@@ -108,7 +115,14 @@ export default function AdminPOS() {
                 })),
                 totalAmount: cartTotal,
                 paymentMethod: "Cash (POS)",
-                source: "POS"
+                source: "POS",
+                deliveryType: customer.deliveryType,
+                address: customer.deliveryType === "Delivery" ? {
+                    houseNo: customer.houseNo,
+                    street: customer.street,
+                    city: customer.city,
+                    zip: customer.zip
+                } : null
             };
 
             await axios.post(`${backendBase}/api/admin/orders/manual`, orderData, { withCredentials: true });
@@ -205,7 +219,23 @@ export default function AdminPOS() {
                 </div>
 
                 {/* Customer Form */}
-                <div className="p-5 bg-slate-50 border-t border-slate-200 space-y-3">
+                <div className="p-5 bg-slate-50 border-t border-slate-200 space-y-3 overflow-y-auto max-h-[40vh] custom-scrollbar">
+                    {/* Order Type Toggle */}
+                    <div className="flex bg-slate-200 p-1 rounded-xl mb-4">
+                        <button
+                            onClick={() => setCustomer({ ...customer, deliveryType: "Walk-in" })}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${customer.deliveryType !== "Delivery" ? "bg-white shadow text-slate-900" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                            Walk-in
+                        </button>
+                        <button
+                            onClick={() => setCustomer({ ...customer, deliveryType: "Delivery" })}
+                            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${customer.deliveryType === "Delivery" ? "bg-white shadow text-blue-600" : "text-slate-500 hover:text-slate-700"}`}
+                        >
+                            <FiTruck className="inline mr-1" /> Delivery
+                        </button>
+                    </div>
+
                     <div className="relative">
                         <FiPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                         <input
@@ -225,6 +255,39 @@ export default function AdminPOS() {
                             className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/10 outline-none"
                         />
                     </div>
+
+                    {/* Delivery Address Fields */}
+                    {customer.deliveryType === "Delivery" && (
+                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2 pt-2 border-t border-slate-200/50">
+                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Delivery Address</p>
+                            <input
+                                placeholder="House No / Flat"
+                                value={customer.houseNo || ""}
+                                onChange={(e) => setCustomer({ ...customer, houseNo: e.target.value })}
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-400"
+                            />
+                            <input
+                                placeholder="Street / Area"
+                                value={customer.street || ""}
+                                onChange={(e) => setCustomer({ ...customer, street: e.target.value })}
+                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-400"
+                            />
+                            <div className="flex gap-2">
+                                <input
+                                    placeholder="City"
+                                    value={customer.city || "Vizag"}
+                                    onChange={(e) => setCustomer({ ...customer, city: e.target.value })}
+                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-400"
+                                />
+                                <input
+                                    placeholder="Zip Code"
+                                    value={customer.zip || ""}
+                                    onChange={(e) => setCustomer({ ...customer, zip: e.target.value })}
+                                    className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs outline-none focus:border-blue-400"
+                                />
+                            </div>
+                        </motion.div>
+                    )}
                 </div>
 
                 {/* Totals & Action */}
