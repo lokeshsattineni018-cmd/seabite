@@ -22,9 +22,17 @@ const LINKS = [
   { name: "Abandoned Cart", path: "/admin/carts", icon: <FiShoppingCart size={18} /> },
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ settings, onUpdateBanner }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleBannerToggle = () => {
+    onUpdateBanner({ ...settings.banner, active: !settings.banner?.active });
+  };
+
+  const handleBannerUrlChange = (e) => {
+    onUpdateBanner({ ...settings.banner, image: e.target.value });
+  };
 
   const handleLogout = async () => {
     try {
@@ -71,8 +79,8 @@ export default function AdminSidebar() {
 
               <div
                 className={`relative flex items-center justify-between px-4 py-3 rounded-xl text-[13px] font-medium transition-all duration-200 ${isActive
-                    ? "text-blue-700 font-bold"
-                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                  ? "text-blue-700 font-bold"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                   }`}
               >
                 <span className="flex items-center gap-3.5">
@@ -91,6 +99,33 @@ export default function AdminSidebar() {
             </NavLink>
           );
         })}
+
+        {/* 🟢 Promo Banner Widget */}
+        <div className="mt-8 px-4">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Promo Banner</p>
+          <div className="bg-slate-50/50 rounded-2xl p-4 border border-slate-100 shadow-sm border-dashed">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold text-slate-600">Active Status</span>
+              <button
+                onClick={handleBannerToggle}
+                className={`w-9 h-5 rounded-full transition-all relative ${settings.banner?.active ? "bg-emerald-500" : "bg-slate-200"}`}
+              >
+                <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.banner?.active ? "left-5" : "left-1"}`} />
+              </button>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-tight">Banner Image URL</label>
+              <input
+                type="text"
+                value={settings.banner?.image || ""}
+                onChange={(e) => onUpdateBanner({ ...settings.banner, image: e.target.value })}
+                onBlur={handleBannerUrlChange}
+                placeholder="https://..."
+                className="w-full bg-white border border-slate-100 rounded-lg py-1.5 px-3 text-[10px] font-medium text-slate-600 outline-none focus:ring-1 focus:ring-blue-500/20 focus:border-blue-200"
+              />
+            </div>
+          </div>
+        </div>
       </nav>
 
       {/* Bottom Actions */}

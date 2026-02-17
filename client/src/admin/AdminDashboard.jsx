@@ -1,6 +1,6 @@
 // AdminDashboard.jsx
 import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import axios from "axios";
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -73,6 +73,7 @@ const PIE_COLORS = ["#2563eb", "#059669", "#d97706", "#dc2626", "#6366f1"];
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [timeFilter, setTimeFilter] = useState("6months");
+  const { settings, setSettings, fetchSettings: refreshSharedSettings } = useOutletContext();
   const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, totalRevenue: 0 });
   const [graph, setGraph] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
@@ -83,7 +84,6 @@ export default function AdminDashboard() {
   const [topSpenders, setTopSpenders] = useState([]);
   const [lowStock, setLowStock] = useState([]);
   const [searchInsights, setSearchInsights] = useState([]);
-  const [settings, setSettings] = useState({ isMaintenanceMode: false, maintenanceMessage: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -114,7 +114,6 @@ export default function AdminDashboard() {
       setHeatmapData(dashboardRes.data.heatmapData || []);
       setTopSpenders(dashboardRes.data.topSpenders || []);
       setLowStock(lowStockRes.data || []);
-      setSettings(settingsRes.data);
       setSearchInsights(insightsRes.data || []);
       setRecentMessages(messagesRes.data.slice(0, 5));
       setAllReviews(reviewsRes.data?.slice(0, 6) || []); // Limit reviews
@@ -235,47 +234,6 @@ export default function AdminDashboard() {
       initial="hidden" animate="visible" variants={staggerContainer}
       className="p-4 md:p-6 space-y-6 max-w-[1440px] mx-auto min-h-screen font-sans text-slate-700 bg-slate-50/30"
     >
-      {/* HEADER OVERHAUL */}
-      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pt-2">
-        <div className="flex flex-col items-center md:items-start text-center md:text-left">
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-none uppercase">
-            Overview
-          </h2>
-          <p className="text-xs text-slate-400 font-medium mt-1">
-            Welcome back, <span className="text-slate-600 font-bold">Lokesh</span>
-          </p>
-        </div>
-
-        <div className="flex flex-1 max-w-md mx-4 relative group w-full md:w-auto">
-          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={14} />
-          <input
-            type="text"
-            placeholder="Search analytics, orders..."
-            className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-[11px] font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-200 transition-all"
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => toast.success("No new notifications")}
-            className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:border-blue-100 transition-all relative group"
-          >
-            <FiActivity size={18} className="group-hover:animate-pulse" />
-            <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>
-          </button>
-
-          <div className="flex items-center gap-2 pl-1 border-l border-slate-200 ml-1">
-            <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-xs font-bold shadow-lg shadow-slate-900/10 border border-slate-700">
-              LS
-            </div>
-            <div className="hidden lg:block text-left">
-              <p className="text-[10px] font-bold text-slate-800 leading-none">Administrator</p>
-              <p className="text-[9px] text-slate-400 font-medium mt-0.5 uppercase tracking-widest">Active</p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
       {/* ✅ OTP MODAL */}
       <AnimatePresence>
         {showOtpModal && (
@@ -343,251 +301,9 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* ✅ BENTO CONTROL CENTER */}
-      <motion.div variants={fadeUp} custom={1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {/* Maintenance Toggle */}
-        <div className={`relative overflow-hidden rounded-2xl p-5 border transition-all duration-300 md:col-span-1 group ${settings.isMaintenanceMode ? "bg-red-50 border-red-100" : "bg-white border-slate-200 shadow-sm"}`}>
-          <div className="flex justify-between items-start mb-3 relative z-10">
-            <div className={`p-2.5 rounded-xl ${settings.isMaintenanceMode ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-400"} transition-colors`}>
-              {settings.isMaintenanceMode ? <FiLock size={18} /> : <FiUnlock size={18} />}
-            </div>
-            {settings.isMaintenanceMode && (
-              <span className="px-2 py-0.5 bg-white rounded text-[10px] font-mono font-bold text-red-600 border border-red-100">
-                {settings.maintenanceOtp || "----"}
-              </span>
-            )}
-          </div>
-          <div className="relative z-10">
-            <h3 className={`text-base font-bold mb-0.5 ${settings.isMaintenanceMode ? "text-red-700" : "text-slate-800"}`}>
-              {settings.isMaintenanceMode ? "Maintenance" : "Store Status"}
-            </h3>
-            <p className="text-[10px] text-slate-400 mb-4 leading-normal h-[30px]">
-              {settings.isMaintenanceMode ? "Admin access only." : "Open for browsing."}
-            </p>
-            <button
-              onClick={toggleMaintenanceClick}
-              className={`w-full py-2.5 rounded-xl text-[10px] font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${settings.isMaintenanceMode ? "bg-white text-red-600 border border-red-100" : "bg-slate-800 text-white"}`}
-            >
-              Toggle Mode
-            </button>
-          </div>
-        </div>
-
-        {/* Happy Hour Toggle */}
-        <div className={`relative overflow-hidden rounded-2xl p-5 border transition-all duration-300 md:col-span-1 group ${settings.globalDiscount > 0 ? "bg-purple-50 border-purple-100" : "bg-white border-slate-200 shadow-sm"}`}>
-          <div className="flex justify-between items-start mb-3 relative z-10">
-            <div className={`p-2.5 rounded-xl ${settings.globalDiscount > 0 ? "bg-purple-100 text-purple-600" : "bg-slate-100 text-slate-400"} transition-colors`}>
-              {settings.globalDiscount > 0 ? <FiZap size={18} /> : <FiClock size={18} />}
-            </div>
-            {settings.globalDiscount > 0 && (
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-[9px] font-bold">
-                -{settings.globalDiscount}%
-              </span>
-            )}
-          </div>
-          <div className="relative z-10">
-            <h3 className={`text-base font-bold mb-0.5 ${settings.globalDiscount > 0 ? "text-purple-700" : "text-slate-800"}`}>
-              Happy Hour
-            </h3>
-            <p className="text-[10px] text-slate-400 mb-4 leading-normal h-[30px]">
-              {settings.globalDiscount > 0 ? "Boost active." : "Normal pricing."}
-            </p>
-            <button
-              onClick={async () => {
-                try {
-                  const newDiscount = settings.globalDiscount > 0 ? 0 : 10;
-                  await axios.put("/api/admin/enterprise/settings", { globalDiscount: newDiscount }, { withCredentials: true });
-                  setSettings(prev => ({ ...prev, globalDiscount: newDiscount }));
-                  toast.success(newDiscount > 0 ? "Activated" : "Deactivated");
-                } catch (err) { toast.error("Failed"); }
-              }}
-              className={`w-full py-2.5 rounded-xl text-[10px] font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${settings.globalDiscount > 0 ? "bg-purple-600 text-white shadow-lg shadow-purple-500/10" : "bg-white border border-slate-200 text-slate-600"}`}
-            >
-              {settings.globalDiscount > 0 ? "End Event" : "Start Event"}
-            </button>
-          </div>
-        </div>
-
-        {/* Banner Manager */}
-        <div className={`relative overflow-hidden rounded-2xl p-5 border transition-all duration-300 md:col-span-1 group ${settings.banner?.active ? "bg-blue-50 border-blue-100" : "bg-white border-slate-200 shadow-sm"}`}>
-          <div className="flex justify-between items-start mb-3 relative z-10">
-            <div className={`p-2.5 rounded-xl ${settings.banner?.active ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-400"} transition-colors`}>
-              <FiStar size={18} />
-            </div>
-            <div className="flex gap-1.5">
-              <button
-                onClick={async () => {
-                  try {
-                    const next = !settings.banner?.active;
-                    await axios.put("/api/admin/enterprise/settings", { banner: { ...settings.banner, active: next } }, { withCredentials: true });
-                    setSettings(prev => ({ ...prev, banner: { ...prev.banner, active: next } }));
-                    toast.success(next ? "On" : "Off");
-                  } catch (err) { toast.error("Error"); }
-                }}
-                className={`px-2 py-1 rounded text-[8px] font-bold transition-all ${settings.banner?.active ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"}`}
-              >
-                {settings.banner?.active ? "LIVE" : "OFF"}
-              </button>
-            </div>
-          </div>
-          <div className="relative z-10">
-            <h3 className={`text-base font-bold mb-0.5 ${settings.banner?.active ? "text-blue-800" : "text-slate-800"}`}>
-              Promotion
-            </h3>
-            <input
-              placeholder="Image URL..."
-              value={settings.banner?.imageUrl || ""}
-              onChange={(e) => setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl: e.target.value } }))}
-              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-medium outline-none focus:bg-white focus:border-blue-200 transition-all"
-            />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* ✅ ENTERPRISE: DATA EXPORTS */}
-      <motion.div
-        variants={fadeUp}
-        custom={1.7}
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-      >
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-full"><FiDollarSign size={20} /></div>
-            <div>
-              <h3 className="font-bold text-slate-900">Sales Report</h3>
-              <p className="text-xs text-slate-500">Export all orders to CSV</p>
-            </div>
-          </div>
-          <button
-            onClick={async () => {
-              const toastId = toast.loading("Exporting Sales...");
-              try {
-                const { data } = await axios.get("/api/orders", { withCredentials: true });
-                const csvContent = [
-                  ["Order ID", "Date", "Customer", "Email", "Items", "Total", "Status", "Payment"],
-                  ...data.map(o => [
-                    o.orderId || o._id,
-                    new Date(o.createdAt).toLocaleDateString(),
-                    o.user?.name || "Guest",
-                    o.user?.email || "N/A",
-                    o.items.map(i => `${i.name} (x${i.qty})`).join("; "),
-                    o.totalAmount,
-                    o.status,
-                    o.paymentMethod
-                  ])
-                ].map(e => e.join(",")).join("\n");
-
-                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = `sales_report_${new Date().toISOString().split('T')[0]}.csv`;
-                link.click();
-                toast.success("Sales Report Downloaded!", { id: toastId });
-              } catch (e) {
-                toast.error("Export Failed", { id: toastId });
-              }
-            }}
-            className="p-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
-          >
-            <FiDownload size={20} />
-          </button>
-        </div>
-
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-full"><FiUsers size={20} /></div>
-            <div>
-              <h3 className="font-bold text-slate-900">Customer Data</h3>
-              <p className="text-xs text-slate-500">Export user list & CLV</p>
-            </div>
-          </div>
-          <button
-            onClick={async () => {
-              const toastId = toast.loading("Exporting Customers...");
-              try {
-                const { data } = await axios.get("/api/admin/users/intelligence", { withCredentials: true });
-                const csvContent = [
-                  ["User ID", "Name", "Email", "Role", "Joined", "Total Spent", "Orders"],
-                  ...data.map(u => [
-                    u._id,
-                    u.name,
-                    u.email,
-                    u.role,
-                    new Date(u.createdAt).toLocaleDateString(),
-                    u.intelligence?.totalSpent || 0,
-                    u.intelligence?.orderCount || 0
-                  ])
-                ].map(e => e.join(",")).join("\n");
-
-                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = `customers_${new Date().toISOString().split('T')[0]}.csv`;
-                link.click();
-                toast.success("Customer Data Downloaded!", { id: toastId });
-              } catch (e) {
-                toast.error("Export Failed", { id: toastId });
-              }
-            }}
-            className="p-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
-          >
-            <FiDownload size={20} />
-          </button>
-        </div>
-      </motion.div>
-
-
-      {/* Stats Grid */}
-      <motion.div
-        variants={staggerContainer}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
-      >
-        <StatCard
-          title="Total Revenue"
-          value={`₹${stats.totalRevenue?.toLocaleString() || 0}`}
-          icon={<FiDollarSign size={22} />}
-          trend="+12.5%"
-          trendUp={true}
-          color="emerald"
-          sparkData={revenueSparkline}
-          index={0}
-        />
-        <StatCard
-          title="Total Orders"
-          value={stats.totalOrders || 0}
-          icon={<FiShoppingBag size={22} />}
-          trend="+8.2%"
-          trendUp={true}
-          color="blue"
-          sparkData={ordersSparkline}
-          index={1}
-        />
-        <StatCard
-          title="Active Customers"
-          value={stats.activeUsers || 0}
-          icon={<FiUsers size={22} />}
-          trend={stats.activeUsers > 10 ? "Growth High" : "+2.4%"}
-          trendUp={true}
-          color="indigo"
-          sparkData={[5, 12, 10, 20, 18, 25, 30]}
-          index={2}
-        />
-        <StatCard
-          title="Pending"
-          value={stats.pendingOrders || 0}
-          icon={<FiClock size={22} />}
-          trend={stats.pendingOrders > 5 ? "Critical" : "Stable"}
-          trendUp={stats.pendingOrders < 5}
-          color="amber"
-          sparkData={[]}
-          index={3}
-        />
-      </motion.div>
-
+      {/* 🟢 REORGANIZED: Charts Top */}
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 mb-5">
         {/* Revenue Chart */}
         <motion.div
           variants={fadeUp}
@@ -703,6 +419,151 @@ export default function AdminDashboard() {
           </div>
         </motion.div>
       </div>
+
+      {/* Stats Grid */}
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 mb-5"
+      >
+        <StatCard
+          title="Total Revenue"
+          value={`₹${stats.totalRevenue?.toLocaleString() || 0}`}
+          icon={<FiDollarSign size={22} />}
+          trend="+12.5%"
+          trendUp={true}
+          color="emerald"
+          sparkData={revenueSparkline}
+          index={0}
+        />
+        <StatCard
+          title="Total Orders"
+          value={stats.totalOrders || 0}
+          icon={<FiShoppingBag size={22} />}
+          trend="+8.2%"
+          trendUp={true}
+          color="blue"
+          sparkData={ordersSparkline}
+          index={1}
+        />
+        <StatCard
+          title="Active Customers"
+          value={stats.activeUsers || 0}
+          icon={<FiUsers size={22} />}
+          trend={stats.activeUsers > 10 ? "Growth High" : "+2.4%"}
+          trendUp={true}
+          color="indigo"
+          sparkData={[5, 12, 10, 20, 18, 25, 30]}
+          index={2}
+        />
+        <StatCard
+          title="Pending"
+          value={stats.pendingOrders || 0}
+          icon={<FiClock size={22} />}
+          trend={stats.pendingOrders > 5 ? "Critical" : "Stable"}
+          trendUp={stats.pendingOrders < 5}
+          color="amber"
+          sparkData={[]}
+          index={3}
+        />
+      </motion.div>
+
+      {/* ✅ ENTERPRISE: DATA EXPORTS */}
+      <motion.div
+        variants={fadeUp}
+        custom={1.7}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5"
+      >
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-full"><FiDollarSign size={20} /></div>
+            <div>
+              <h3 className="font-bold text-slate-900">Sales Report</h3>
+              <p className="text-xs text-slate-500">Export all orders to CSV</p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              const toastId = toast.loading("Exporting Sales...");
+              try {
+                const { data } = await axios.get("/api/orders", { withCredentials: true });
+                const csvContent = [
+                  ["Order ID", "Date", "Customer", "Email", "Items", "Total", "Status", "Payment"],
+                  ...data.map(o => [
+                    o.orderId || o._id,
+                    new Date(o.createdAt).toLocaleDateString(),
+                    o.user?.name || "Guest",
+                    o.user?.email || "N/A",
+                    o.items.map(i => `${i.name} (x${i.qty})`).join("; "),
+                    o.totalAmount,
+                    o.status,
+                    o.paymentMethod
+                  ])
+                ].map(e => e.join(",")).join("\n");
+
+                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `sales_report_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+                toast.success("Sales Report Downloaded!", { id: toastId });
+              } catch (e) {
+                toast.error("Export Failed", { id: toastId });
+              }
+            }}
+            className="p-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
+          >
+            <FiDownload size={20} />
+          </button>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-full"><FiUsers size={20} /></div>
+            <div>
+              <h3 className="font-bold text-slate-900">Customer Data</h3>
+              <p className="text-xs text-slate-500">Export user list & CLV</p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              const toastId = toast.loading("Exporting Customers...");
+              try {
+                const { data } = await axios.get("/api/admin/users/intelligence", { withCredentials: true });
+                const csvContent = [
+                  ["User ID", "Name", "Email", "Role", "Joined", "Total Spent", "Orders"],
+                  ...data.map(u => [
+                    u._id,
+                    u.name,
+                    u.email,
+                    u.role,
+                    new Date(u.createdAt).toLocaleDateString(),
+                    u.intelligence?.totalSpent || 0,
+                    u.intelligence?.orderCount || 0
+                  ])
+                ].map(e => e.join(",")).join("\n");
+
+                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `customers_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+                toast.success("Customer Data Downloaded!", { id: toastId });
+              } catch (e) {
+                toast.error("Export Failed", { id: toastId });
+              }
+            }}
+            className="p-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            <FiDownload size={20} />
+          </button>
+        </div>
+      </motion.div>
+
+
+
+
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 leading-normal">
         {/* Recent Orders - Bento List */}

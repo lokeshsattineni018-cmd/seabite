@@ -1,6 +1,8 @@
-import { useState, Suspense } from "react";
-import { Outlet } from "react-router-dom";
+import { useState, Suspense, useEffect, useCallback } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
+import axios from "axios";
+import toast from "react-hot-toast";
 import { FiMenu, FiX, FiSearch, FiBell } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -24,6 +26,31 @@ const AdminPageLoader = () => (
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [settings, setSettings] = useState({ isMaintenanceMode: false, maintenanceMessage: "", banner: { active: false, image: "", text: "" } });
+  const navigate = useNavigate();
+
+  const fetchSettings = useCallback(async () => {
+    try {
+      const { data } = await axios.get("/api/admin/enterprise/settings", { withCredentials: true });
+      setSettings(data);
+    } catch (err) {
+      if (err.response?.status === 401) navigate("/login");
+    }
+  }, [navigate]);
+
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
+  const updateBanner = async (newBanner) => {
+    try {
+      const { data } = await axios.put("/api/admin/enterprise/settings", { ...settings, banner: newBanner }, { withCredentials: true });
+      setSettings(data);
+      toast.success("Banner updated successfully");
+    } catch (err) {
+      toast.error("Failed to update banner");
+    }
+  };
 
   return (
     <div className="flex h-screen w-full bg-[#f8fafc] font-sans text-slate-900 overflow-hidden selection:bg-blue-100 selection:text-blue-900">
@@ -44,7 +71,7 @@ export default function AdminLayout() {
 
       {/* 🟢 Sidebar (Desktop) */}
       <aside className="hidden md:flex flex-col w-[280px] bg-white border-r border-slate-200/60 z-30 h-full shadow-[4px_0_24px_-12px_rgba(0,0,0,0.02)]">
-        <AdminSidebar />
+        <AdminSidebar settings={settings} onUpdateBanner={updateBanner} />
       </aside>
 
       {/* 🟢 Main Content Area */}
@@ -84,7 +111,7 @@ export default function AdminLayout() {
 
         <div className="px-4 md:px-8 pb-10 min-h-full">
           <Suspense fallback={<AdminPageLoader />}>
-            <Outlet />
+            <Outlet context={{ settings, setSettings, fetchSettings }} />
           </Suspense>
         </div>
       </main>
@@ -116,7 +143,7 @@ export default function AdminLayout() {
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto" onClick={() => setIsSidebarOpen(false)}>
-                <AdminSidebar />
+                <AdminSidebar settings={settings} onUpdateBanner={updateBanner} />
               </div>
             </motion.aside>
           </>
