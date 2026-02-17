@@ -50,12 +50,12 @@ const AdminAbandonedCarts = () => {
         <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans min-h-screen">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 mb-2">Abandoned Carts</h1>
-                    <p className="text-slate-500">Recover lost sales by reminding customers.</p>
+                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Abandoned Carts</h1>
+                    <p className="text-slate-500 text-xs md:text-sm mt-1">Recover lost sales by reminding customers.</p>
                 </div>
-                <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200">
-                    <span className="text-slate-500 text-sm font-bold">Total Potential Revenue: </span>
-                    <span className="text-emerald-600 font-bold text-lg">
+                <div className="bg-white px-5 py-3 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-end">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Potential Revenue</span>
+                    <span className="text-emerald-600 font-bold text-xl">
                         ₹{carts.reduce((acc, c) => acc + c.total, 0).toLocaleString()}
                     </span>
                 </div>
