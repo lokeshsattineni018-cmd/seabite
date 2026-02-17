@@ -538,30 +538,52 @@ router.post("/carts/remind/:userId", adminAuth, async (req, res) => {
 });
 
 // 🟢 POS: MANUAL ORDER CREATION
+// 🟢 POS: MANUAL ORDER CREATION
 router.post("/orders/manual", adminAuth, async (req, res) => {
   try {
     const { customer, items, totalAmount, paymentMethod, source, deliveryType, address } = req.body;
 
+    // Validate essential data
+    if (!customer?.phone || !customer?.name) {
+      return res.status(400).json({ message: "Customer Name and Phone are required." });
+    }
+    if (!items || items.length === 0) {
+      return res.status(400).json({ message: "Cart is empty." });
+    }
+
     // 1. Find or Create User
     let user = await User.findOne({ phone: customer.phone });
     if (!user) {
-      // Create a temporary/guest user
-      user = await User.create({
-        name: customer.name,
-        phone: customer.phone,
-        email: customer.email || `guest_${Date.now()}@seabite.pos`,
-        password: "pos_guest_user", // Placeholder
-        role: "user"
-      });
+      // Create a guest user for POS
+      // Use a unique email if not provided to avoid duplicate key errors if email schema is unique
+      const guestEmail = customer.email || `pos_guest_${customer.phone}_${Date.now()}@seabite.local`;
+
+      try {
+        user = await User.create({
+          name: customer.name,
+          phone: customer.phone,
+          email: guestEmail,
+          password: "pos_guest_user", // Placeholder
+          role: "user"
+        });
+      } catch (userErr) {
+        console.error("User Creation Error in POS:", userErr);
+        // Fallback: try to find user again in case of race condition or just use a generic 'Guest' ID if absolutely necessary (not recommended for data integrity, better to fail or handle gracefully)
+        // For now, if unique email fails, we might try another random one or error out.
+        return res.status(500).json({ message: "Failed to register customer record." });
+      }
     }
 
     // Determine Status
     const isDelivery = deliveryType === "Delivery";
+    // POS orders are usually "Delivered" immediately if Walk-in, or "Pending" if Delivery
     const status = isDelivery ? "Pending" : "Delivered";
     const isDelivered = !isDelivery;
     const deliveredAt = isDelivery ? null : Date.now();
 
     // Construct Address
+    // If Walk-in, we can use a placeholder address structure or just omit if schema allows. 
+    // Assuming Schema requires some address fields based on previous code.
     const shippingAddress = isDelivery ? {
       fullName: customer.name,
       phone: customer.phone,
@@ -574,7 +596,12 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
     } : {
       fullName: customer.name,
       phone: customer.phone,
-      houseNo: "POS", street: "Store Walk-in", city: "Vizag", state: "AP", zip: "530001"
+      houseNo: "POS",
+      street: "Walk-in Customer",
+      city: "Vizag",
+      state: "AP",
+      zip: "530001",
+      country: "India"
     };
 
     // 2. Create Order
@@ -583,36 +610,26 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
       items: items.map(i => ({
         productId: i.productId,
         name: i.name,
-        price: i.price,
-        buyingPrice: i.buyingPrice,
-        qty: i.qty,
+        price: Number(i.price),
+        buyingPrice: Number(i.buyingPrice || 0),
+        qty: Number(i.qty),
         image: i.image
       })),
       shippingAddress,
       paymentMethod: paymentMethod || "Cash",
-      totalAmount,
-      isPaid: true, // POS is always paid
+      totalAmount: Number(totalAmount),
+      isPaid: true, // POS orders are typically paid immediately (Cash/Card)
       paidAt: Date.now(),
       isDelivered,
       deliveredAt,
-      status, // Pending if Delivery, Delivered if Walk-in
+      status,
       source: source || "POS"
     });
 
-    // 3. Update Stock (Decrease)
-    for (const item of items) {
-      const product = await Product.findById(item.productId);
-      if (product) {
-        // If tracking exact count (optional)
-        // product.countInStock -= item.qty;
-        // await product.save();
-      }
-    }
-
-    res.status(201).json({ message: "Order created", order });
+    res.status(201).json({ message: "Order created successfully", order });
   } catch (err) {
     console.error("POS Order Error:", err);
-    res.status(500).json({ message: "Failed to create manual order" });
+    res.status(500).json({ message: "Failed to create manual order", error: err.message });
   }
 });
 

@@ -3,9 +3,8 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiSearch, FiRefreshCw, FiTruck, FiTrash2,
-  FiPrinter, FiXCircle, FiAlertCircle,
-  FiPackage, FiArrowUpRight, FiFilter, FiEye,
+  FiSearch, FiRefreshCw, FiTruck, FiPrinter,
+  FiXCircle, FiPackage, FiArrowUpRight,
 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal";
 import Invoice from "../components/Invoice";
@@ -27,20 +26,18 @@ const fadeUp = {
 
 const OrderSkeletonRow = () => (
   <tr className="animate-pulse border-b border-slate-50">
-    <td className="py-4 px-5"><div className="h-4 w-16 bg-slate-100 rounded" /></td>
-    <td className="py-4 px-5"><div className="h-4 w-28 bg-slate-100 rounded" /></td>
-    <td className="py-4 px-5"><div className="h-5 w-16 bg-slate-100 rounded-full" /></td>
-    <td className="py-4 px-5"><div className="h-4 w-16 bg-slate-100 rounded" /></td>
-    <td className="py-4 px-5"><div className="h-5 w-20 bg-slate-100 rounded-full" /></td>
-    <td className="py-4 px-5 text-right"><div className="h-8 w-24 bg-slate-50 rounded-lg ml-auto" /></td>
+    <td className="py-3 px-4"><div className="h-3 w-12 bg-slate-100 rounded" /></td>
+    <td className="py-3 px-4"><div className="h-3 w-20 bg-slate-100 rounded" /></td>
+    <td className="py-3 px-4"><div className="h-4 w-12 bg-slate-100 rounded-full" /></td>
+    <td className="py-3 px-4"><div className="h-3 w-12 bg-slate-100 rounded" /></td>
+    <td className="py-3 px-4"><div className="h-4 w-16 bg-slate-100 rounded-full" /></td>
+    <td className="py-3 px-4 text-right"><div className="h-6 w-16 bg-slate-50 rounded-lg ml-auto" /></td>
   </tr>
 );
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
-  const [allReviews, setAllReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
   const [filter, setFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
@@ -60,36 +57,12 @@ export default function AdminOrders() {
         setLoading(false);
       })
       .catch((err) => {
-        //console.error("Fetch Error:", err);
         setLoading(false);
       });
   };
 
-  const fetchAllReviews = async () => {
-    setReviewsLoading(true);
-    try {
-      const res = await axios.get("/api/admin/reviews/all");
-      setAllReviews(res.data || []);
-    } catch (err) {
-      //  console.error("Reviews Fetch Error:", err);
-    } finally {
-      setReviewsLoading(false);
-    }
-  };
-
-  const deleteReview = async (productId, reviewId) => {
-    if (!window.confirm("Delete this review?")) return;
-    try {
-      await axios.delete(`/api/admin/products/${productId}/reviews/${reviewId}`, { withCredentials: true });
-      fetchAllReviews();
-    } catch {
-      alert("Failed to delete review.");
-    }
-  };
-
   useEffect(() => {
     fetchOrders();
-    fetchAllReviews();
   }, []);
 
   const updateStatus = async (id, status) => {
@@ -143,7 +116,7 @@ export default function AdminOrders() {
   const deliveredCount = orders.filter((o) => o.status === "Delivered").length;
 
   return (
-    <motion.div initial="hidden" animate="visible" className="p-4 md:p-8 lg:p-10 min-h-screen font-sans text-slate-900">
+    <motion.div initial="hidden" animate="visible" className="p-4 md:p-6 min-h-screen font-sans text-slate-900">
       <PopupModal show={modal.show} message={modal.message} type={modal.type} onClose={() => setModal({ ...modal, show: false })} />
 
       <AnimatePresence>
@@ -215,24 +188,24 @@ export default function AdminOrders() {
       </motion.div>
 
       {/* Orders Table */}
-      <motion.div variants={fadeUp} custom={3} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden mb-10">
+      <motion.div variants={fadeUp} custom={3} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
               <tr>
-                <th className="py-3.5 px-5">Order ID</th>
-                <th className="py-3.5 px-5">Customer</th>
-                <th className="py-3.5 px-5">Payment</th>
-                <th className="py-3.5 px-5">Total</th>
-                <th className="py-3.5 px-5">Status</th>
-                <th className="py-3.5 px-5 text-right">Action</th>
+                <th className="py-2.5 px-4">Order ID</th>
+                <th className="py-2.5 px-4">Customer</th>
+                <th className="py-2.5 px-4">Payment</th>
+                <th className="py-2.5 px-4">Total</th>
+                <th className="py-2.5 px-4">Status</th>
+                <th className="py-2.5 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-50 text-sm">
+            <tbody className="divide-y divide-slate-50 text-xs md:text-sm">
               {loading ? (
                 [...Array(6)].map((_, i) => <OrderSkeletonRow key={i} />)
               ) : filteredOrders.length === 0 ? (
-                <tr><td colSpan={6} className="py-16 text-center text-slate-400 text-sm">No orders match your criteria</td></tr>
+                <tr><td colSpan={6} className="py-12 text-center text-slate-400 text-xs">No orders match your criteria</td></tr>
               ) : (
                 filteredOrders.map((o) => (
                   <motion.tr
@@ -242,27 +215,27 @@ export default function AdminOrders() {
                     onClick={() => setSelectedOrder(o)}
                     className="hover:bg-slate-50/60 transition-colors cursor-pointer group"
                   >
-                    <td className="py-3.5 px-5 font-mono font-semibold text-slate-500 text-xs group-hover:text-blue-600 transition-colors">#{o.orderId}</td>
-                    <td className="py-3.5 px-5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">
+                    <td className="py-3 px-4 font-mono font-semibold text-slate-500 text-[10px] md:text-xs group-hover:text-blue-600 transition-colors">#{o.orderId}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 shrink-0">
                           {o.user?.name?.charAt(0) || "G"}
                         </div>
-                        <span className="font-medium text-slate-900 text-sm">{o.user?.name || "Guest"}</span>
+                        <span className="font-medium text-slate-900 text-xs md:text-sm">{o.user?.name || "Guest"}</span>
                       </div>
                     </td>
-                    <td className="py-3.5 px-5">
-                      <span className={`text-[9px] font-bold px-2 py-1 rounded-md uppercase tracking-wider ${o.paymentMethod === "Prepaid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                    <td className="py-3 px-4">
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${o.paymentMethod === "Prepaid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
                         }`}>{o.paymentMethod}</span>
                     </td>
-                    <td className="py-3.5 px-5 font-bold text-slate-900 text-sm">₹{o.totalAmount.toLocaleString()}</td>
-                    <td className="py-3.5 px-5"><StatusPill status={o.status} /></td>
-                    <td className="py-3.5 px-5 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="py-3 px-4 font-bold text-slate-900 text-xs md:text-sm">₹{o.totalAmount.toLocaleString()}</td>
+                    <td className="py-3 px-4"><StatusPill status={o.status} /></td>
+                    <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <select
                         value={o.status}
                         disabled={o.status.includes("Cancelled")}
                         onChange={(e) => updateStatus(o._id, e.target.value)}
-                        className="border border-slate-200 rounded-lg p-1.5 text-[10px] font-bold outline-none cursor-pointer hover:border-blue-400 bg-white transition-colors disabled:opacity-40"
+                        className="border border-slate-200 rounded-lg p-1 text-[10px] font-bold outline-none cursor-pointer hover:border-blue-400 bg-white transition-colors disabled:opacity-40"
                       >
                         {STATUS_OPTIONS.filter((s) => s !== "All").map((s) => (<option key={s} value={s}>{s}</option>))}
                       </select>
@@ -273,61 +246,6 @@ export default function AdminOrders() {
             </tbody>
           </table>
         </div>
-      </motion.div>
-
-      {/* Reviews Section */}
-      <motion.div variants={fadeUp} custom={4}>
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-xl md:text-2xl font-bold text-slate-900">User Feedback</h2>
-            <p className="text-slate-500 text-xs mt-1">Moderate customer reviews</p>
-          </div>
-          <motion.button whileTap={{ scale: 0.95 }} onClick={fetchAllReviews} className="p-2.5 bg-white rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 transition-all shadow-sm">
-            <FiRefreshCw className={reviewsLoading ? "animate-spin" : ""} size={16} />
-          </motion.button>
-        </div>
-        {reviewsLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[...Array(3)].map((_, i) => <div key={i} className="h-40 bg-white border border-slate-100 animate-pulse rounded-2xl" />)}
-          </div>
-        ) : allReviews.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-slate-100"><p className="text-slate-400 text-sm">No reviews yet</p></div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {allReviews.map((rev, i) => (
-              <motion.div
-                key={rev._id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05, ease }}
-                whileHover={{ y: -2 }}
-                className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm relative group hover:shadow-md transition-all"
-              >
-                <button
-                  onClick={() => deleteReview(rev.productId, rev._id)}
-                  className="absolute top-4 right-4 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-all p-1.5 hover:bg-red-50 rounded-lg"
-                >
-                  <FiTrash2 size={14} />
-                </button>
-                <div className="flex gap-0.5 mb-3">
-                  {[...Array(5)].map((_, j) => (
-                    <span key={j} className={`text-xs ${j < rev.rating ? "text-amber-400" : "text-slate-200"}`}>★</span>
-                  ))}
-                </div>
-                <p className="text-slate-600 text-sm italic mb-4 line-clamp-3 leading-relaxed">"{rev.comment}"</p>
-                <div className="flex items-center gap-3 pt-3 border-t border-slate-50">
-                  <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-[10px] uppercase">
-                    {rev.userName?.charAt(0)}
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-900">{rev.userName}</h4>
-                    <p className="text-[10px] text-blue-500 font-semibold uppercase">{rev.productName}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
       </motion.div>
     </motion.div>
   );
@@ -343,7 +261,7 @@ function StatusPill({ status }) {
     Cancelled: "bg-red-50 text-red-700 border-red-100",
     "Cancelled by User": "bg-red-100 text-red-800 border-red-200",
   };
-  return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${styles[status] || styles.Pending}`}>{status}</span>;
+  return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${styles[status] || styles.Pending}`}>{status}</span>;
 }
 
 function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund }) {
