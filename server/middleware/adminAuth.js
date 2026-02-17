@@ -23,6 +23,7 @@ const adminAuth = async (req, res, next) => {
       return res.status(403).json({ message: "Access denied: User not authorized" });
     }
 
+    req.user = user; // 🟢 Attach user to request for routes to use
     next(); // Identity confirmed, allow access to dashboard
   } catch (err) {
     console.error("⛔ AdminAuth Error:", err.message);
