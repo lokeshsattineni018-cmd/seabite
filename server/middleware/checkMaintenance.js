@@ -10,7 +10,7 @@ const checkMaintenance = async (req, res, next) => {
         }
 
         // 2. Allow admins to bypass maintenance everywhere
-        if (settings.isMaintenanceMode && req.session?.user?.role !== "admin") {
+        if (settings && settings.isMaintenanceMode && req.session?.user?.role !== "admin") {
             return res.status(503).json({
                 maintenance: true,
                 message: settings.maintenanceMessage
@@ -19,7 +19,8 @@ const checkMaintenance = async (req, res, next) => {
 
         next();
     } catch (err) {
-        next(); // Don't block on DB error
+        // console.error("Maintenance check failed:", err);
+        next(); // Proceed even if DB check fails
     }
 };
 

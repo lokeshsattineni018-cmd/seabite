@@ -10,6 +10,7 @@ import {
 import PopupModal from "../components/PopupModal";
 import Invoice from "../components/Invoice";
 import { generateInvoicePDF } from "../utils/pdfGenerator";
+import toast from "react-hot-toast";
 
 const STATUS_OPTIONS = [
   "All", "Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Cancelled by User",
@@ -374,7 +375,16 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
             <StatusPill status={order.status} />
             <motion.button
               whileTap={{ scale: 0.9 }}
-              onClick={() => generateInvoicePDF(order)}
+              onClick={async () => {
+                const toastId = toast.loading("Generating Invoice...");
+                try {
+                  await generateInvoicePDF(order);
+                  toast.success("Invoice Downloaded!", { id: toastId });
+                } catch (err) {
+                  console.error("Invoice Gen Error:", err);
+                  toast.error("Failed to generate invoice. Please try again.", { id: toastId });
+                }
+              }}
               title="Download PDF Invoice"
               className="p-2 bg-blue-50 rounded-xl text-blue-600 hover:text-blue-700 hover:bg-blue-100 transition-colors"
             >

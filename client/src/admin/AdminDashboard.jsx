@@ -88,8 +88,15 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isUpdatingSettings, setIsUpdatingSettings] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchDashboardData = useCallback(async () => {
+  const fetchDashboardData = useCallback(async (isManual = false) => {
+    if (isManual) {
+      setIsRefreshing(true);
+      toast.dismiss();
+      toast.loading("Refreshing data...", { id: "refresh" });
+    }
+
     try {
       const [dashboardRes, messagesRes, reviewsRes, lowStockRes, settingsRes, insightsRes] = await Promise.all([
         axios.get("/api/admin", { params: { range: timeFilter }, withCredentials: true }),
@@ -110,14 +117,20 @@ export default function AdminDashboard() {
       setSettings(settingsRes.data);
       setSearchInsights(insightsRes.data || []);
       setRecentMessages(messagesRes.data.slice(0, 5));
-      setAllReviews(reviewsRes.data?.slice(0, 6) || []);
+      setAllReviews(reviewsRes.data?.slice(0, 6) || []); // Limit reviews
+
       setLoading(false);
       setError(null);
       setLastUpdated(new Date());
+
+      if (isManual) toast.success("Dashboard Updated", { id: "refresh" });
     } catch (err) {
       setLoading(false);
       if (err.response?.status === 401) navigate("/login");
       setError(err.response?.data?.message || "Failed to load dashboard data.");
+      if (isManual) toast.error("Refresh Failed", { id: "refresh" });
+    } finally {
+      if (isManual) setIsRefreshing(false);
     }
   }, [timeFilter, navigate]);
 
@@ -240,10 +253,11 @@ export default function AdminDashboard() {
         </div>
         <div className="flex items-center gap-3 w-full md:w-auto">
           <button
-            onClick={() => fetchDashboardData()}
-            className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm"
+            onClick={() => fetchDashboardData(true)}
+            disabled={isRefreshing}
+            className={`p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm ${isRefreshing ? "opacity-50 cursor-not-allowed" : "active:scale-95"}`}
           >
-            <FiRefreshCw size={16} />
+            <FiRefreshCw size={16} className={isRefreshing ? "animate-spin text-blue-600" : ""} />
           </button>
           <div className="flex items-center gap-2.5 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-sm flex-1 md:flex-none">
             <FiCalendar className="text-slate-400" size={14} />
@@ -365,6 +379,51 @@ export default function AdminDashboard() {
             {settings.isMaintenanceMode ? "Disable Maintenance" : "Enable Maintenance"}
           </button>
         </div>
+      </motion.div>
+
+      {/* ✅ ENTERPRISE: HAPPY HOUR TOGGLE */}
+      <motion.div
+        variants={fadeUp}
+        custom={1.5}
+        className={`bg-white rounded-2xl p-4 border border-l-4 shadow-sm flex items-center justify-between ${settings.globalDiscount > 0
+          ? "border-purple-500 bg-purple-50/50"
+          : "border-slate-300 bg-slate-50/50"
+          }`}
+      >
+        <div className="flex items-center gap-4">
+          <div className={`p-3 rounded-full ${settings.globalDiscount > 0 ? "bg-purple-100 text-purple-600" : "bg-slate-100 text-slate-500"
+            }`}>
+            {settings.globalDiscount > 0 ? <FiZap size={20} /> : <FiClock size={20} />}
+          </div>
+          <div>
+            <h3 className={`font-bold ${settings.globalDiscount > 0 ? "text-purple-700" : "text-slate-700"}`}>
+              {settings.globalDiscount > 0 ? `Happy Hour Active (-${settings.globalDiscount}%)` : "Happy Hour is Off"}
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {settings.globalDiscount > 0
+                ? "Global discount applied to all products."
+                : "Standard pricing is in effect."}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={async () => {
+            try {
+              const newDiscount = settings.globalDiscount > 0 ? 0 : 10;
+              const res = await axios.put("/api/admin/enterprise/settings", { globalDiscount: newDiscount }, { withCredentials: true });
+              setSettings(prev => ({ ...prev, globalDiscount: newDiscount }));
+              toast.success(newDiscount > 0 ? "Happy Hour Activated! 🍹" : "Happy Hour Ended");
+            } catch (err) {
+              toast.error("Failed to toggle Happy Hour");
+            }
+          }}
+          className={`px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95 ${settings.globalDiscount > 0
+            ? "bg-purple-600 text-white hover:bg-purple-700"
+            : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+            }`}
+        >
+          {settings.globalDiscount > 0 ? "End Happy Hour" : "Start Happy Hour (10%)"}
+        </button>
       </motion.div>
 
       {/* Stats Grid */}

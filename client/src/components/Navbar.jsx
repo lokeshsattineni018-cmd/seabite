@@ -87,6 +87,7 @@ export default function Navbar({ openCart }) {
   const [hidden, setHidden] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState([]); // 🟢 NEW
   const [searchFocused, setSearchFocused] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showSpinWheel, setShowSpinWheel] = useState(false);
@@ -245,32 +246,83 @@ export default function Navbar({ openCart }) {
 
           {/* Desktop Search Bar with animated expand on focus */}
           <div className="hidden lg:flex flex-1 justify-center px-12">
-            <motion.div
-              animate={{
-                width: searchFocused ? "100%" : "85%",
-                boxShadow: searchFocused
-                  ? "0 8px 30px rgba(59,130,246,0.15)"
-                  : "0 0 0 rgba(0,0,0,0)",
-              }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className={`flex items-center rounded-full px-5 py-2.5 max-w-md border transition-all duration-300 group ${scrolled
-                ? "bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-white/10"
-                : "bg-white/20 dark:bg-white/10 backdrop-blur-md border-slate-300 dark:border-white/20"
-                }`}
-            >
-              <motion.div animate={{ rotate: searchFocused ? 90 : 0 }} transition={{ duration: 0.3 }}>
-                <FiSearch className="text-blue-500 dark:text-blue-200 mr-3 text-lg" />
+            <div className="relative w-full">
+              <motion.div
+                animate={{
+                  width: searchFocused ? "100%" : "85%",
+                  boxShadow: searchFocused
+                    ? "0 8px 30px rgba(59,130,246,0.15)"
+                    : "0 0 0 rgba(0,0,0,0)",
+                }}
+                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className={`flex items-center rounded-full px-5 py-2.5 w-full border transition-all duration-300 group ${scrolled
+                  ? "bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-white/10"
+                  : "bg-white/20 dark:bg-white/10 backdrop-blur-md border-slate-300 dark:border-white/20"
+                  }`}
+              >
+                <motion.div animate={{ rotate: searchFocused ? 90 : 0 }} transition={{ duration: 0.3 }}>
+                  <FiSearch className="text-blue-500 dark:text-blue-200 mr-3 text-lg" />
+                </motion.div>
+                <input
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    if (e.target.value.length > 1) {
+                      // Simple debounce logic inline or use a library, here simple timeout
+                      const timer = setTimeout(async () => {
+                        try {
+                          const res = await axios.get(`${API_URL}/api/products/search/suggest?q=${e.target.value}`);
+                          setSuggestions(res.data);
+                        } catch (err) { }
+                      }, 300);
+                      return () => clearTimeout(timer);
+                    } else {
+                      setSuggestions([]);
+                    }
+                  }}
+                  onKeyDown={handleSearch}
+                  onFocus={() => setSearchFocused(true)}
+                  onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                  placeholder="Search for fresh catch..."
+                  className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-blue-100 placeholder:text-slate-400 dark:placeholder:text-blue-200/50 font-medium"
+                />
               </motion.div>
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={handleSearch}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                placeholder="Search for fresh catch..."
-                className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-blue-100 placeholder:text-slate-400 dark:placeholder:text-blue-200/50 font-medium"
-              />
-            </motion.div>
+
+              {/* 🟢 SEARCH SUGGESTIONS DROPDOWN */}
+              <AnimatePresence>
+                {searchFocused && suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden z-50"
+                  >
+                    {suggestions[0]?.isDidYouMean && (
+                      <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/20 text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest border-b border-amber-100 dark:border-amber-900/30">
+                        Did you mean?
+                      </div>
+                    )}
+                    {suggestions.map((product) => (
+                      <div
+                        key={product._id}
+                        onClick={() => {
+                          navigate(`/products/${product._id}`);
+                          setSearchFocused(false);
+                        }}
+                        className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer border-b last:border-0 border-slate-100 dark:border-white/5"
+                      >
+                        <img src={`${API_URL}${product.image}`} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
+                        <div>
+                          <p className="text-sm font-bold text-slate-800 dark:text-white">{product.name}</p>
+                          <p className="text-xs text-slate-500 capitalize">{product.category}</p>
+                        </div>
+                        <span className="ml-auto text-sm font-bold text-blue-600">₹{product.basePrice}</span>
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 md:gap-6">

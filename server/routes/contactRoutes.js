@@ -8,9 +8,9 @@ router.post("/", async (req, res) => {
   try {
     const { email, message } = req.body;
     if (!email || !message) {
-        return res.status(400).json({ success: false, message: "All fields are required" });
+      return res.status(400).json({ success: false, message: "All fields are required" });
     }
-    
+
     await Contact.create({ email, message });
     res.status(201).json({ success: true, message: "Message Sent Successfully!" });
   } catch (error) {
@@ -18,7 +18,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 2. GET: Admin fetches all messages (✅ THIS WAS MISSING)
+// 2. GET: Admin fetches all messages
 router.get("/", async (req, res) => {
   try {
     // Fetch all contacts and sort by newest first (-1)
@@ -27,6 +27,27 @@ router.get("/", async (req, res) => {
   } catch (error) {
     console.error("Error fetching messages:", error);
     res.status(500).json({ success: false, message: "Server Error" });
+  }
+});
+
+// 3. POST: Admin replies to a message
+import { sendEmail } from "../utils/emailService.js";
+
+router.post("/reply", async (req, res) => {
+  try {
+    const { to, subject, message, originalMessageId } = req.body;
+
+    if (!to || !message) {
+      return res.status(400).json({ success: false, message: "Recipient and message required" });
+    }
+
+    // Send email using existing service
+    await sendEmail(to, subject || "Response from SeaBite Support", message);
+
+    res.json({ success: true, message: "Reply sent successfully!" });
+  } catch (err) {
+    console.error("Reply Error:", err);
+    res.status(500).json({ success: false, message: "Failed to send reply" });
   }
 });
 

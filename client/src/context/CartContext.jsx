@@ -1,4 +1,8 @@
-import { createContext, useState, useEffect, useCallback } from "react";
+import { createContext, useState, useEffect, useCallback, useContext } from "react";
+import axios from "axios";
+import { AuthContext } from "./AuthContext";
+
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 // 1. Export the Context itself
 export const CartContext = createContext();
@@ -47,6 +51,7 @@ const calculateTotals = (cart) => {
 
 // 2. Export the Provider component
 export const CartProvider = ({ children }) => {
+    const { user } = useContext(AuthContext);
     const [cartState, setCartState] = useState({
         cartItems: [],
         cartCount: 0,
@@ -79,6 +84,69 @@ export const CartProvider = ({ children }) => {
         window.addEventListener("storage", updateCartState);
         return () => window.removeEventListener("storage", updateCartState);
     }, [updateCartState]);
+
+    // 🟢 SYNC: On Login, Merge/Sync Cart
+    useEffect(() => {
+        if (!user) return;
+
+        const syncCart = async () => {
+            const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
+
+            // If local cart is empty, try to fetch from DB
+            if (localCart.length === 0) {
+                try {
+                    const res = await axios.get(`${API_URL}/api/user/cart`, { withCredentials: true });
+                    if (res.data && res.data.length > 0) {
+                        // Transform DB cart format to Local format if needed (usually flatten product object)
+                        const dbCart = res.data.map(item => ({
+                            ...item.product,
+                            qty: item.qty,
+                            // Ensure we use the correct price from product (or historical? usually current)
+                            price: item.product.price || item.product.basePrice // Simplified
+                        }));
+                        localStorage.setItem("cart", JSON.stringify(dbCart));
+                        updateCartState();
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch cart", err);
+                }
+            } else {
+                // If local cart has items, push to DB (Simple Overwrite for now)
+                try {
+                    // We send minimal data: product ID and qty
+                    const payload = localCart.map(item => ({ product: item._id, qty: item.qty }));
+                    await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
+                } catch (err) {
+                    console.error("Failed to sync cart", err);
+                }
+            }
+        };
+
+        syncCart();
+    }, [user, updateCartState]);
+
+    // 🟢 SYNC: Debounce sync when cart changes if logged in
+    useEffect(() => {
+        if (!user) return;
+
+        const timeout = setTimeout(async () => {
+            const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
+            // Only sync if there are changes (we could track dirty state, but simple overwrite is safer for consistency)
+            // Check if local matches state to avoid infinite loops?
+            // Actually, updateCartState updates cartState. 
+            // We can just trust that whenever cartState changes, we sync.
+
+            try {
+                const payload = localCart.map(item => ({ product: item._id, qty: item.qty }));
+                await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
+            } catch (err) {
+                // Silent fail
+            }
+        }, 2000); // 2s debounce
+
+        return () => clearTimeout(timeout);
+    }, [cartState, user]);
+
 
     const addToCart = (product) => {
         try {

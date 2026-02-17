@@ -24,6 +24,106 @@ import ReviewModal from "../components/ReviewModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshCartCount }) => {
+  // Select all related products by default
+  const [selectedItems, setSelectedItems] = useState(relatedProducts.map(p => p._id));
+  const [isAdding, setIsAdding] = useState(false);
+
+  const toggleItem = (id) => {
+    setSelectedItems(prev =>
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const mainPrice = mainProduct.flashSale?.isFlashSale ? mainProduct.flashSale.discountPrice : (mainProduct.basePrice * (1 - (mainProduct.globalDiscount || 0) / 100));
+
+  // Calculate total: Main Product + Selected Related Products
+  const bundleTotal = selectedItems.reduce((acc, id) => {
+    const item = relatedProducts.find(p => p._id === id);
+    return acc + (item ? item.basePrice : 0);
+  }, mainPrice);
+
+  const handleAddBundle = () => {
+    setIsAdding(true);
+
+    // 1. Add Main Product
+    addToCart({ ...mainProduct, price: mainPrice, qty: 1 });
+
+    // 2. Add Selected Related Products
+    selectedItems.forEach(id => {
+      const item = relatedProducts.find(p => p._id === id);
+      if (item) {
+        addToCart({ ...item, price: item.basePrice, qty: 1 }); // Assuming base price for related items
+      }
+    });
+
+    refreshCartCount();
+    toast.success(`Added ${selectedItems.length + 1} items to cart!`, { icon: "📦" });
+
+    setTimeout(() => setIsAdding(false), 1000);
+  };
+
+  return (
+    <div className="bg-white dark:bg-slate-800/50 rounded-3xl p-6 md:p-8 border border-slate-200 dark:border-white/5 shadow-sm">
+      <h3 className="text-xl md:text-2xl font-serif font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+        <span className="bg-blue-100 text-blue-600 p-2 rounded-lg"><FiPackage size={20} /></span>
+        Frequently Bought Together
+      </h3>
+
+      <div className="flex flex-col xl:flex-row gap-8 items-center">
+        {/* Visual Lineup */}
+        <div className="flex-1 flex flex-wrap items-center gap-2 md:gap-4 justify-center md:justify-start">
+
+          {/* Main Item */}
+          <div className="relative group">
+            <div className="w-24 h-24 md:w-32 md:h-32 bg-white dark:bg-slate-800 rounded-2xl border-2 border-blue-500 shadow-lg p-2 relative">
+              <div className="absolute -top-2 -right-2 bg-blue-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full z-10">MAIN</div>
+              <img src={getFullImageUrl(mainProduct.image)} className="w-full h-full object-contain" alt={mainProduct.name} />
+            </div>
+            <p className="text-[10px] md:text-xs font-bold text-center mt-2 text-slate-700 dark:text-slate-300 w-24 md:w-32 truncate">{mainProduct.name}</p>
+            <p className="text-xs font-bold text-center text-blue-600">₹{mainPrice.toFixed(0)}</p>
+          </div>
+
+          <FiPlus className="text-slate-300 shrink-0" size={24} />
+
+          {/* Related Items with Checkboxes */}
+          {relatedProducts.map((rel, index) => (
+            <div key={rel._id} className="flex items-center gap-2 md:gap-4">
+              <div className="relative group cursor-pointer" onClick={() => toggleItem(rel._id)}>
+                <div className={`w-20 h-20 md:w-28 md:h-28 bg-white dark:bg-slate-800 rounded-2xl border-2 transition-all p-2 relative ${selectedItems.includes(rel._id) ? "border-blue-400 shadow-md" : "border-slate-200 dark:border-slate-700 opacity-60 grayscale"}`}>
+                  <div className={`absolute top-2 right-2 w-5 h-5 rounded-md flex items-center justify-center transition-colors ${selectedItems.includes(rel._id) ? "bg-blue-500 text-white" : "bg-slate-200 text-transparent"}`}>
+                    <FiCheck size={12} strokeWidth={4} />
+                  </div>
+                  <img src={getFullImageUrl(rel.image)} className="w-full h-full object-contain" alt={rel.name} />
+                </div>
+                <p className="text-[10px] md:text-xs font-bold text-center mt-2 text-slate-700 dark:text-slate-300 w-20 md:w-28 truncate">{rel.name}</p>
+                <p className="text-xs font-bold text-center text-slate-500">₹{rel.basePrice}</p>
+              </div>
+              {index < relatedProducts.length - 1 && <FiPlus className="text-slate-300 shrink-0" size={24} />}
+            </div>
+          ))}
+        </div>
+
+        {/* Total & Action */}
+        <div className="w-full xl:w-72 bg-slate-50 dark:bg-slate-900/50 rounded-2xl p-6 border border-slate-100 dark:border-white/5 flex flex-col justify-center items-center text-center">
+          <p className="text-slate-500 dark:text-slate-400 text-sm font-medium mb-1">Total Price for {selectedItems.length + 1} items:</p>
+          <p className="text-3xl font-bold text-slate-900 dark:text-white mb-6">₹{bundleTotal.toFixed(0)}</p>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleAddBundle}
+            disabled={isAdding}
+            className="w-full py-3 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-xl font-bold uppercase tracking-wider text-sm shadow-xl shadow-slate-900/10 hover:shadow-2xl transition-all"
+          >
+            {isAdding ? "Adding..." : "Add All To Cart"}
+          </motion.button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -63,8 +163,17 @@ export default function ProductDetails() {
   const isActiveFlashSale = product?.flashSale?.isFlashSale &&
     new Date(product.flashSale.saleEndDate) > new Date();
 
+  // 🟢 DYNAMIC PRICING LOGIC
   const basePrice = product ? parseFloat(product.basePrice) : 0;
-  const unitPrice = isActiveFlashSale ? product.flashSale.discountPrice : basePrice;
+  let unitPrice = isActiveFlashSale ? product.flashSale.discountPrice : basePrice;
+
+  const globalDiscount = product?.globalDiscount || 0;
+  const isGlobalDiscount = !isActiveFlashSale && globalDiscount > 0;
+
+  if (isGlobalDiscount) {
+    unitPrice = Math.round(basePrice * (1 - globalDiscount / 100));
+  }
+
   const totalPrice = (unitPrice * qty).toFixed(2);
 
   const getFullImageUrl = (imagePath) => {
@@ -333,6 +442,16 @@ export default function ProductDetails() {
                     <FiArrowLeft className="rotate-180" size={10} /> Flash Deal
                   </motion.div>
                 )}
+                {isGlobalDiscount && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.7 }}
+                    className="bg-purple-600/90 backdrop-blur text-white px-3 py-1 md:px-4 md:py-1.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-wider shadow-lg flex items-center gap-1"
+                  >
+                    Happy Hour -{globalDiscount}%
+                  </motion.div>
+                )}
               </div>
             </div>
           </motion.div>
@@ -371,13 +490,13 @@ export default function ProductDetails() {
             >
 
               <div className="flex items-baseline gap-2">
-                {isActiveFlashSale && (
+                {(isActiveFlashSale || isGlobalDiscount) && (
                   <span className="text-lg md:text-xl text-slate-400 line-through font-medium">
                     {"\u20B9"}{basePrice.toFixed(0)}
                   </span>
                 )}
                 <p className="text-2xl md:text-3xl font-sans font-bold text-slate-900 dark:text-white">
-                  {"\u20B9"}{Number(displayPrice).toFixed(2)}
+                  {"\u20B9"}{Number(unitPrice).toFixed(2)}
                   <span className="text-base md:text-lg text-slate-400 font-normal ml-1">
                     /{product.unit || "kg"}
                   </span>
@@ -666,16 +785,26 @@ export default function ProductDetails() {
             </motion.div>
           </motion.div>
         </div>
-      </div>
+        <div className="max-w-6xl mx-auto mt-20 md:mt-32">
+          {product.relatedProducts?.length > 0 && (
+            <BundleSection
+              mainProduct={product}
+              relatedProducts={product.relatedProducts}
+              getFullImageUrl={getFullImageUrl}
+              refreshCartCount={refreshCartCount}
+            />
+          )}
+        </div>
 
-      <ReviewModal
-        isOpen={isReviewOpen}
-        onClose={() => setIsReviewOpen(false)}
-        product={product}
-        token={token}
-        API_URL={API_URL}
-        onSuccess={handleReviewSuccess}
-      />
+        <ReviewModal
+          isOpen={isReviewOpen}
+          onClose={() => setIsReviewOpen(false)}
+          product={product}
+          token={token}
+          API_URL={API_URL}
+          onSuccess={handleReviewSuccess}
+        />
+      </div>
     </div>
   );
 }

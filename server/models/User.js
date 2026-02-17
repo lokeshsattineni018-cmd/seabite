@@ -55,6 +55,14 @@ const userSchema = new mongoose.Schema(
 
     // Embedded addresses
     addresses: [addressSchema],
+
+    // 🛒 ABANDONED CART RECOVERY
+    cart: [
+      {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+        qty: { type: Number, default: 1 },
+      }
+    ],
   },
   { timestamps: true }
 );

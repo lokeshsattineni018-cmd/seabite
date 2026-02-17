@@ -51,4 +51,35 @@ router.post("/address", protect, addAddress);
 router.get("/address", protect, getAddresses);
 router.delete("/address/:id", protect, deleteAddress);
 
+// 🛒 CART SYNC (Abandoned Cart Recovery)
+router.post("/cart", protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+        const { cart } = req.body; // Expecting [{ product: id, qty: n }, ...]
+
+        // Simple overwrite sync
+        user.cart = cart.map(item => ({
+            product: item.product?._id || item.product || item._id, // Handle full object or ID
+            qty: item.qty
+        }));
+
+        await user.save();
+        res.json({ message: "Cart synced", cart: user.cart });
+    } catch (error) {
+        // console.error("Cart sync error:", error);
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
+router.get("/cart", protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate("cart.product");
+        // Filter out null products (if deleted)
+        const validCart = user.cart.filter(item => item.product);
+        res.json(validCart);
+    } catch (error) {
+        res.status(500).json({ message: "Server Error" });
+    }
+});
+
 export default router;
