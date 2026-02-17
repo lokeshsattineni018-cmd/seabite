@@ -421,12 +421,21 @@ router.put("/users/:id", adminAuth, async (req, res) => {
       return res.status(400).json({ message: "You cannot ban yourself." });
     }
 
-    if (role) user.role = role;
-    if (typeof isBanned !== 'undefined') user.isBanned = isBanned;
+    // Use findByIdAndUpdate to avoid triggering validation on other fields (like phone/address)
+    // capable of crashing the update if legacy data is invalid.
+    const updates = {};
+    if (role) updates.role = role;
+    if (typeof isBanned !== 'undefined') updates.isBanned = isBanned;
 
-    await user.save();
-    res.json({ message: "User updated successfully", user });
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      { $set: updates },
+      { new: true, runValidators: false } // Disable validation for partial updates
+    );
+
+    res.json({ message: "User updated successfully", user: updatedUser });
   } catch (err) {
+    console.error("User Update Error:", err);
     res.status(500).json({ message: "Failed to update user" });
   }
 });
@@ -531,7 +540,7 @@ router.post("/carts/remind/:userId", adminAuth, async (req, res) => {
 // 🟢 POS: MANUAL ORDER CREATION
 router.post("/orders/manual", adminAuth, async (req, res) => {
   try {
-    const { customer, items, totalAmount, paymentMethod, source } = req.body;
+    const { customer, items, totalAmount, paymentMethod, source, deliveryType, address } = req.body;
 
     // 1. Find or Create User
     let user = await User.findOne({ phone: customer.phone });
@@ -546,6 +555,28 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
       });
     }
 
+    // Determine Status
+    const isDelivery = deliveryType === "Delivery";
+    const status = isDelivery ? "Pending" : "Delivered";
+    const isDelivered = !isDelivery;
+    const deliveredAt = isDelivery ? null : Date.now();
+
+    // Construct Address
+    const shippingAddress = isDelivery ? {
+      fullName: customer.name,
+      phone: customer.phone,
+      houseNo: address?.houseNo || "",
+      street: address?.street || "",
+      city: address?.city || "Vizag",
+      state: "AP",
+      zip: address?.zip || "530001",
+      country: "India"
+    } : {
+      fullName: customer.name,
+      phone: customer.phone,
+      houseNo: "POS", street: "Store Walk-in", city: "Vizag", state: "AP", zip: "530001"
+    };
+
     // 2. Create Order
     const order = await Order.create({
       user: user._id,
@@ -557,18 +588,14 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
         qty: i.qty,
         image: i.image
       })),
-      shippingAddress: {
-        fullName: customer.name,
-        phone: customer.phone,
-        houseNo: "POS", street: "Store Walk-in", city: "Vizag", state: "AP", zip: "530001"
-      },
+      shippingAddress,
       paymentMethod: paymentMethod || "Cash",
       totalAmount,
-      isPaid: true,
+      isPaid: true, // POS is always paid
       paidAt: Date.now(),
-      isDelivered: true, // Instant delivery for POS
-      deliveredAt: Date.now(),
-      status: "Delivered",
+      isDelivered,
+      deliveredAt,
+      status, // Pending if Delivery, Delivered if Walk-in
       source: source || "POS"
     });
 
