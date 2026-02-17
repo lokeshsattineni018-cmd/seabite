@@ -208,11 +208,33 @@ router.post("/maintenance/verify", adminAuth, async (req, res) => {
 // 1.3 UPDATE SETTINGS (Generic - Kept for other settings)
 router.put("/enterprise/settings", adminAuth, async (req, res) => {
   try {
-    const { maintenanceMessage, globalDiscount, banner } = req.body; // Removed isMaintenanceMode from direct toggle
+    const {
+      maintenanceMessage, globalDiscount, banner,
+      storeName, contactPhone, contactEmail, logoUrl,
+      taxRate, deliveryFee, minOrderValue, freeDeliveryThreshold,
+      openingTime, closingTime, isClosed
+    } = req.body;
+
     let settings = await getSettings();
+
     if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
-    if (globalDiscount !== undefined) settings.globalDiscount = globalDiscount; // 🟢 NEW
-    if (banner) settings.banner = banner; // 🟢 NEW: Banner Settings
+    if (globalDiscount !== undefined) settings.globalDiscount = globalDiscount;
+    if (banner) settings.banner = banner;
+
+    // 🟢 Batch Update New Fields
+    if (storeName) settings.storeName = storeName;
+    if (contactPhone) settings.contactPhone = contactPhone;
+    if (contactEmail) settings.contactEmail = contactEmail;
+    if (logoUrl) settings.logoUrl = logoUrl;
+
+    if (taxRate !== undefined) settings.taxRate = taxRate;
+    if (deliveryFee !== undefined) settings.deliveryFee = deliveryFee;
+    if (minOrderValue !== undefined) settings.minOrderValue = minOrderValue;
+    if (freeDeliveryThreshold !== undefined) settings.freeDeliveryThreshold = freeDeliveryThreshold;
+
+    if (openingTime) settings.openingTime = openingTime;
+    if (closingTime) settings.closingTime = closingTime;
+    if (isClosed !== undefined) settings.isClosed = isClosed;
 
     // If they try to toggle maintenance here, we ignore it or block it. 
     // For now, let's assume the frontend calls the new verify route for the toggle.
@@ -246,6 +268,62 @@ router.get("/inventory/low-stock", adminAuth, async (req, res) => {
     res.json(lowStockProducts);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch inventory status" });
+  }
+});
+
+// 🟢 1.6 ADVANCED ANALYTICS (GET /api/admin/analytics/advanced)
+router.get("/analytics/advanced", adminAuth, async (req, res) => {
+  try {
+    // 1. Dead Stock (Products with 0 sales or very low)
+    // We need to aggregate orders to find sold products, then compare with all products
+    const soldProducts = await Order.aggregate([
+      { $unwind: "$items" },
+      { $group: { _id: "$items.productId", totalSold: { $sum: "$items.qty" } } }
+    ]);
+
+    const soldProductIds = soldProducts.map(p => p._id);
+
+    const deadStock = await Product.find({
+      _id: { $nin: soldProductIds } // Products NOT in the sold list
+    }).limit(10).select("name price image category countInStock");
+
+    // 2. Retention Rate
+    const userOrders = await Order.aggregate([
+      { $group: { _id: "$user", count: { $sum: 1 } } }
+    ]);
+
+    const repeatCustomers = userOrders.filter(u => u.count > 1).length;
+    const totalCustomers = userOrders.length;
+    const retentionRate = totalCustomers ? Math.round((repeatCustomers / totalCustomers) * 100) : 0;
+
+    // 3. Busy Hours Heatmap (More detailed)
+    const heatmap = await Order.aggregate([
+      {
+        $project: {
+          day: { $dayOfWeek: "$createdAt" },
+          hour: { $hour: "$createdAt" },
+          amount: "$totalAmount"
+        }
+      },
+      {
+        $group: {
+          _id: { day: "$day", hour: "$hour" },
+          orders: { $sum: 1 },
+          sales: { $sum: "$amount" }
+        }
+      },
+      { $sort: { "_id.day": 1, "_id.hour": 1 } }
+    ]);
+
+    res.json({
+      deadStock,
+      retention: { repeat: repeatCustomers, total: totalCustomers, rate: retentionRate },
+      heatmap
+    });
+
+  } catch (err) {
+    console.error("Analytics Error:", err);
+    res.status(500).json({ message: "Failed to fetch advanced analytics" });
   }
 });
 

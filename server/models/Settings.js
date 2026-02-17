@@ -8,7 +8,24 @@ const settingsSchema = new mongoose.Schema({
         active: { type: Boolean, default: false },
         imageUrl: { type: String, default: "" },
         link: { type: String, default: "" }
-    }, // 🟢 NEW: Banner Settings
+    },
+    // 🟢 General
+    storeName: { type: String, default: "SeaBite" },
+    contactPhone: { type: String, default: "+91 98765 43210" },
+    contactEmail: { type: String, default: "support@seabite.in" },
+    logoUrl: { type: String, default: "/logo.png" },
+
+    // 🟢 Finance
+    taxRate: { type: Number, default: 5 }, // GST %
+    deliveryFee: { type: Number, default: 40 },
+    minOrderValue: { type: Number, default: 200 },
+    freeDeliveryThreshold: { type: Number, default: 500 },
+
+    // 🟢 Operations
+    openingTime: { type: String, default: "09:00" },
+    closingTime: { type: String, default: "23:00" },
+    isClosed: { type: Boolean, default: false }, // Manual Override
+
     lastUpdatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true });
 
