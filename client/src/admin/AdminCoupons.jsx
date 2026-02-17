@@ -26,9 +26,9 @@ export default function AdminCoupons() {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
-  const [formData, setFormData] = useState({ 
-    code: "", 
-    value: "", 
+  const [formData, setFormData] = useState({
+    code: "",
+    value: "",
     minOrderAmount: "",
     discountType: "percent" // ✅ Added this
   });
@@ -39,7 +39,7 @@ export default function AdminCoupons() {
       const res = await axios.get(`${API_URL}/api/coupons`, { withCredentials: true });
       setCoupons(res.data || []);
     } catch (err) {
-     // console.error("Fetch coupons error:", err);
+      // console.error("Fetch coupons error:", err);
     } finally {
       setLoading(false);
     }
@@ -67,7 +67,7 @@ export default function AdminCoupons() {
       setFormData({ code: "", value: "", minOrderAmount: "", discountType: "percent" });
       fetchCoupons(true);
     } catch (err) {
-     // console.error("Create coupon error:", err);
+      // console.error("Create coupon error:", err);
       alert(err.response?.data?.message || "Error creating coupon");
     }
   };
@@ -78,7 +78,7 @@ export default function AdminCoupons() {
       await axios.delete(`${API_URL}/api/coupons/${id}`, { withCredentials: true });
       fetchCoupons(true);
     } catch (err) {
-     // console.error("Delete coupon error:", err);
+      // console.error("Delete coupon error:", err);
     }
   };
 
@@ -156,7 +156,7 @@ export default function AdminCoupons() {
           <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Offers</h3>
           <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{coupons.length} total</span>
         </div>
-        
+
         <div className="space-y-3 max-w-4xl">
           {loading ? (
             [...Array(3)].map((_, i) => <CouponSkeleton key={i} />)
@@ -170,7 +170,7 @@ export default function AdminCoupons() {
                   exit={{ opacity: 0, x: 10 }}
                   transition={{ delay: index * 0.04, ease }}
                   whileHover={{ y: -2 }}
-                  className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center border border-slate-100 border-l-4 border-l-blue-500 group hover:shadow-md transition-all"
+                  className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center border border-slate-200 group hover:shadow-md hover:border-blue-200 transition-all"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg shrink-0">
@@ -204,7 +204,7 @@ export default function AdminCoupons() {
               ))}
             </AnimatePresence>
           )}
-          
+
           {!loading && coupons.length === 0 && (
             <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
               <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300"><FiTag size={24} /></div>

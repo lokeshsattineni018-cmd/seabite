@@ -74,7 +74,7 @@ const AdminAbandonedCarts = () => {
                             key={user._id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow"
+                            className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-all"
                         >
                             <div className="p-6 flex flex-col md:flex-row gap-6">
                                 {/* User Info */}
