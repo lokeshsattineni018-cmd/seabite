@@ -129,14 +129,15 @@ const connectDB = async () => {
 
   if (!cached.promise) {
     const opts = {
-      serverSelectionTimeoutMS: 30000,
-      connectTimeoutMS: 30000,
-      socketTimeoutMS: 45000,
-      maxPoolSize: 5, // 🟢 Reduced to prevents connection spikes in serverless
+      serverSelectionTimeoutMS: 60000, // 🟢 Increased to 60s
+      connectTimeoutMS: 60000,
+      socketTimeoutMS: 60000,
+      maxPoolSize: 5,
       minPoolSize: 1,
       retryWrites: true,
       retryReads: true,
-      bufferCommands: false, // Disable buffering for serverless immediate fail/success
+      // bufferCommands: false, // 🔴 REMOVED: Let mongoose buffer until connected
+      ssl: true, // 🟢 Explicitly enforce SSL for Atlas
     };
 
     console.log("🔄 Initializing new MongoDB connection...");
