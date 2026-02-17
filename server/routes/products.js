@@ -174,13 +174,25 @@ router.get("/:id", async (req, res) => {
     if (!product) return res.status(404).json({ message: "Product not found" });
 
     // 🟢 NEW: Fetch Related Products (Same category, excluding current)
-    const relatedProducts = await Product.find({
+    let relatedProducts = await Product.find({
       category: product.category,
       _id: { $ne: product._id },
       active: true
     })
       .select('name image basePrice stock averageRating')
       .limit(3);
+
+    // 🟢 FALLBACK: If no related products in category, fetch random active products
+    if (relatedProducts.length < 3) {
+      const moreProducts = await Product.find({
+        _id: { $ne: product._id, $nin: relatedProducts.map(p => p._id) },
+        active: true
+      })
+        .select('name image basePrice stock averageRating')
+        .limit(3 - relatedProducts.length);
+
+      relatedProducts = [...relatedProducts, ...moreProducts];
+    }
 
     // 🟢 FETCH GLOBAL SETTINGS (Safe)
     let globalDiscount = 0;

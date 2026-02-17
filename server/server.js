@@ -122,7 +122,7 @@ const connectDB = async () => {
   }
   try {
     await mongoose.connect(process.env.MONGO_URI, {
-      dbName: "seabite",
+      // dbName: "seabite", // 🔴 REMOVED to allow URI to dictate DB (where data is)
       serverSelectionTimeoutMS: 30000,
       connectTimeoutMS: 30000,
       socketTimeoutMS: 45000,

@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   FiGrid, FiPlusSquare, FiShoppingBag, FiClipboard,
   FiUsers, FiLogOut, FiGlobe, FiMail, FiTag,
-  FiChevronRight, FiZap, FiSend, FiLayout
+  FiChevronRight, FiZap, FiSend, FiLayout, FiShoppingCart
 } from "react-icons/fi";
 import axios from "axios";
 
@@ -14,8 +14,10 @@ const LINKS = [
   { name: "Add Product", path: "/admin/add-product", icon: <FiPlusSquare size={18} /> },
   { name: "Orders", path: "/admin/orders", icon: <FiClipboard size={18} /> },
   { name: "Inbox", path: "/admin/messages", icon: <FiMail size={18} /> },
+  { name: "Coupons", path: "/admin/coupons", icon: <FiTag size={18} /> }, // 🟢 NEW
   { name: "Flash Deals", path: "/admin/flash-sale", icon: <FiZap size={18} /> },
   { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={18} /> },
+  { name: "Abandoned Carts", path: "/admin/carts", icon: <FiShoppingCart size={18} /> }, // 🟢 NEW
   { name: "Users", path: "/admin/users", icon: <FiUsers size={18} /> },
 ];
 
