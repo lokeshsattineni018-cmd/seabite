@@ -550,10 +550,13 @@ const FlashSale = () => {
 // --- PRODUCT SHOWCASE ROW ---
 const CategoryRow = ({ title, filterType }) => {
   const [products, setProducts] = useState([]);
+  const [globalDiscount, setGlobalDiscount] = useState(0);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`).then((res) => {
       const all = res.data.products || [];
+      setGlobalDiscount(res.data.globalDiscount || 0); // 🟢 Capture Global Discount
+
       let filtered = [];
       if (filterType === "Fish") {
         filtered = all.filter((p) => p.category === "Fish").slice(0, 4);
@@ -581,7 +584,7 @@ const CategoryRow = ({ title, filterType }) => {
         <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
           {products.map((p) => (
             <StaggerItem key={p._id}>
-              <EnhancedProductCard product={p} />
+              <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
             </StaggerItem>
           ))}
         </StaggerContainer>

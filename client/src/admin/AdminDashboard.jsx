@@ -12,7 +12,7 @@ import {
   FiDollarSign, FiCalendar, FiMail, FiTrash2, FiStar,
   FiArrowUpRight, FiArrowDownRight, FiClock, FiEye,
   FiRefreshCw, FiMoreHorizontal, FiPackage, FiSettings, FiSearch,
-  FiAlertCircle, FiPower, FiCheckCircle, FiLock, FiUnlock, FiX
+  FiAlertCircle, FiPower, FiCheckCircle, FiLock, FiUnlock, FiX, FiZap
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { io } from "socket.io-client"; // Unused
