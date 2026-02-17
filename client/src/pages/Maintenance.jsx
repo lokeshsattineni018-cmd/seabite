@@ -57,7 +57,7 @@ export default function Maintenance({ message }) {
                 </div>
             </motion.div>
 
-            {/* Aesthetic Floating Circles */}
+            {/* Aesthetic Floating Circless */}
             <motion.div
                 animate={{ y: [0, -20, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
