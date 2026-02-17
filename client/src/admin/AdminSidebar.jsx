@@ -1,7 +1,8 @@
 // AdminSidebar.jsx
 import { NavLink, useNavigate, useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-FiChevronRight, FiZap, FiSend, FiLayout, FiShoppingCart, FiCreditCard, FiStar, FiGrid, FiPlusSquare, FiShoppingBag, FiClipboard, FiUsers, FiLogOut, FiGlobe, FiMail, FiTag
+import {
+  FiChevronRight, FiZap, FiSend, FiLayout, FiShoppingCart, FiCreditCard, FiStar, FiGrid, FiPlusSquare, FiShoppingBag, FiClipboard, FiUsers, FiLogOut, FiGlobe, FiMail, FiTag
 } from "react-icons/fi";
 import axios from "axios";
 
