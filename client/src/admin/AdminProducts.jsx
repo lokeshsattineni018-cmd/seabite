@@ -41,6 +41,7 @@ export default function AdminProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All");
   const [viewMode, setViewMode] = useState("table");
   const backendBase = import.meta.env.VITE_API_URL || "";
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
@@ -55,7 +56,6 @@ export default function AdminProducts() {
       const data = res.data;
       setProducts(Array.isArray(data.products) ? data.products : []);
     } catch (err) {
-      // console.error("Admin products fetch error:", err);
       setProducts([]);
       setModal({ show: true, message: err.response?.data?.message || "Failed to load products.", type: "error" });
     } finally {
@@ -86,168 +86,219 @@ export default function AdminProducts() {
     return `${backendBase}/uploads/${file}`;
   };
 
+  // Derived State
+  const categories = ["All", ...new Set(products.map(p => p.category).filter(Boolean))];
+  const filteredProducts = categoryFilter === "All"
+    ? products
+    : products.filter(p => p.category === categoryFilter);
+
   const inStock = products.filter((p) => p.stock === "in").length;
   const outOfStock = products.filter((p) => p.stock !== "in").length;
 
   return (
-    <motion.div initial="hidden" animate="visible" className="p-4 md:p-8 lg:p-10 min-h-screen relative font-sans">
+    <motion.div initial="hidden" animate="visible" className="p-6 max-w-[1600px] mx-auto font-sans text-slate-900">
       <PopupModal show={modal.show} message={modal.message} type={modal.type} onClose={() => setModal({ ...modal, show: false })} />
 
-      {/* Header */}
-      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+      {/* 🟢 Header Section */}
+      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-end gap-6 mb-10">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Inventory</h1>
-          <div className="flex items-center gap-3 mt-1.5">
-            <p className="text-slate-500 text-xs md:text-sm">Manage catalog and stock</p>
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">{inStock} in stock</span>
-            {outOfStock > 0 && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">{outOfStock} out</span>}
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Inventory</h1>
+          <div className="flex items-center gap-4 mt-2">
+            <p className="text-sm font-medium text-slate-500">Manage your product catalog</p>
+            <div className="h-1 w-1 rounded-full bg-slate-300"></div>
+            <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {inStock} Active
+            </span>
+            {outOfStock > 0 && (
+              <span className="text-xs font-bold text-red-600 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span> {outOfStock} Out
+              </span>
+            )}
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-          <div className="flex gap-2 w-full">
-            <motion.button whileTap={{ scale: 0.95 }} onClick={() => fetchProducts()} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
-              <FiRefreshCw className={loading ? "animate-spin" : ""} size={16} />
-            </motion.button>
-            <div className="relative flex-1 sm:w-64">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search catalog..." className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-blue-500/10 text-sm transition-all shadow-sm" />
-            </div>
-            <div className="hidden md:flex border border-slate-200 rounded-xl overflow-hidden">
-              <button onClick={() => setViewMode("table")} className={`p-2.5 ${viewMode === "table" ? "bg-slate-900 text-white" : "bg-white text-slate-400 hover:text-slate-600"} transition-colors`}><FiList size={15} /></button>
-              <button onClick={() => setViewMode("grid")} className={`p-2.5 ${viewMode === "grid" ? "bg-slate-900 text-white" : "bg-white text-slate-400 hover:text-slate-600"} transition-colors`}><FiGrid size={15} /></button>
-            </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+          {/* Controls Group */}
+          <div className="flex items-center gap-2 p-1 bg-white border border-slate-200 rounded-xl shadow-sm">
+            <button onClick={() => setViewMode("table")} className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-slate-100 text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>
+              <FiList size={16} />
+            </button>
+            <button onClick={() => setViewMode("grid")} className={`p-2 rounded-lg transition-all ${viewMode === "grid" ? "bg-slate-100 text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}>
+              <FiGrid size={16} />
+            </button>
           </div>
-          <Link to="/admin/add-product" className="w-full sm:w-auto">
-            <motion.button whileTap={{ scale: 0.97 }} className="w-full h-full px-6 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-sm shadow-lg hover:bg-blue-600 transition-all flex items-center justify-center gap-2 whitespace-nowrap">
-              <FiPlus size={16} /> Add Product
+
+          {/* Filter & Search */}
+          <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-1 pl-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/10 focus-within:border-blue-500/50 transition-all w-full sm:w-80">
+            <FiSearch className="text-slate-400 shrink-0" size={16} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search products..."
+              className="w-full bg-transparent text-sm font-medium outline-none placeholder:text-slate-400"
+            />
+            <div className="h-5 w-[1px] bg-slate-100 mx-1"></div>
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="bg-transparent text-xs font-bold text-slate-600 outline-none cursor-pointer hover:text-blue-600 transition-colors py-1 pr-2"
+            >
+              {categories.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          <Link to="/admin/add-product">
+            <motion.button whileTap={{ scale: 0.97 }} className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-slate-900/20 transition-all">
+              <FiPlus size={16} />
+              <span>Add Product</span>
             </motion.button>
           </Link>
         </div>
       </motion.div>
 
-      {/* Grid View */}
-      {viewMode === "grid" && !loading ? (
-        <motion.div variants={fadeUp} custom={1} className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
-          {products.map((p, i) => (
-            <motion.div
-              key={p._id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.03, ease }}
-              whileHover={{ y: -3 }}
-              className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden group hover:shadow-md transition-all"
-            >
-              <div className="aspect-square bg-slate-50 p-4 relative">
-                <img src={getImageSrc(p.image)} alt={p.name} className="w-full h-full object-contain" />
-                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Link to={`/admin/edit-product/${p._id}`}><button className="p-1.5 bg-white rounded-lg shadow-sm text-slate-500 hover:text-blue-600 transition-colors"><FiEdit2 size={13} /></button></Link>
-                  <button onClick={() => deleteProduct(p._id)} className="p-1.5 bg-white rounded-lg shadow-sm text-slate-500 hover:text-red-600 transition-colors"><FiTrash2 size={13} /></button>
+      {/* 🟢 Content View */}
+      <AnimatePresence mode="wait">
+        {viewMode === "grid" && !loading ? (
+          <motion.div
+            key="grid"
+            variants={fadeUp}
+            custom={1}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
+          >
+            {filteredProducts.map((p, i) => (
+              <motion.div
+                key={p._id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.03, ease }}
+                className="group bg-white rounded-2xl border border-slate-100 hover:border-slate-200 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.1)] transition-all duration-300 overflow-hidden"
+              >
+                <div className="aspect-square bg-slate-50/50 p-6 relative flex items-center justify-center">
+                  <img src={getImageSrc(p.image)} alt={p.name} className="w-full h-full object-contain drop-shadow-sm group-hover:scale-105 transition-transform duration-500 ease-out" />
+
+                  <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0">
+                    <Link to={`/admin/edit-product/${p._id}`}>
+                      <button className="w-8 h-8 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-500 hover:text-blue-600 hover:border-blue-100 transition-colors">
+                        <FiEdit2 size={12} />
+                      </button>
+                    </Link>
+                    <button onClick={() => deleteProduct(p._id)} className="w-8 h-8 rounded-full bg-white shadow-sm border border-slate-100 flex items-center justify-center text-slate-500 hover:text-red-600 hover:border-red-100 transition-colors">
+                      <FiTrash2 size={12} />
+                    </button>
+                  </div>
+
+                  <div className={`absolute top-3 left-3 w-2.5 h-2.5 rounded-full border-2 border-white shadow-sm ${p.stock === "in" ? "bg-emerald-500" : "bg-red-500"}`} title={p.stock === "in" ? "In Stock" : "Out of Stock"} />
                 </div>
-                <span className={`absolute top-2 left-2 text-[8px] font-bold px-1.5 py-0.5 rounded-md uppercase ${p.stock === "in" ? "bg-emerald-500 text-white" : "bg-red-500 text-white"}`}>
-                  {p.stock === "in" ? "In Stock" : "Out"}
-                </span>
-              </div>
-              <div className="p-3.5">
-                <h3 className="font-semibold text-sm text-slate-900 truncate">{p.name}</h3>
-                <div className="flex items-center justify-between mt-1.5">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase">{p.category}</span>
-                  <span className="font-mono font-bold text-sm text-slate-900">{formatPrice(p.basePrice)}</span>
+
+                <div className="p-4">
+                  <p className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-1">{p.category}</p>
+                  <h3 className="font-bold text-slate-900 text-sm truncate leading-tight group-hover:text-blue-600 transition-colors">{p.name}</h3>
+                  <div className="flex items-baseline justify-between mt-3">
+                    <span className="font-mono font-bold text-slate-900">{formatPrice(p.basePrice)}</span>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      ) : (
-        /* Table View */
-        <motion.div variants={fadeUp} custom={1} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                <tr>
-                  <th className="py-3.5 px-5">Product</th>
-                  <th className="py-3.5 px-5">Category</th>
-                  <th className="py-3.5 px-5">Price</th>
-                  <th className="py-3.5 px-5">Stock</th>
-                  <th className="py-3.5 px-5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50 text-sm">
-                {loading ? (
-                  [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
-                ) : (
-                  products.map((p) => (
-                    <motion.tr key={p._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="hover:bg-slate-50/60 transition-colors group">
-                      <td className="py-3.5 px-5">
-                        <div className="flex items-center gap-3.5">
-                          <div className="w-10 h-10 rounded-xl bg-slate-50 overflow-hidden border border-slate-100 shrink-0 p-1">
-                            <img src={getImageSrc(p.image)} alt={p.name} className="w-full h-full object-contain" />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          /* 🟢 Table View */
+          <motion.div
+            key="table"
+            variants={fadeUp}
+            custom={1}
+            initial="hidden"
+            animate="visible"
+            exit="hidden"
+            className="bg-white rounded-2xl shadow-sm border border-slate-200/60 overflow-hidden"
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead className="bg-slate-50/50 border-b border-slate-100">
+                  <tr>
+                    <th className="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Product</th>
+                    <th className="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Category</th>
+                    <th className="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Price</th>
+                    <th className="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                    <th className="py-4 px-6 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {loading ? (
+                    [...Array(5)].map((_, i) => <SkeletonRow key={i} />)
+                  ) : filteredProducts.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="py-20 text-center">
+                        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4 text-slate-300">
+                          <FiPackage size={24} />
+                        </div>
+                        <p className="text-slate-500 font-medium">No products found.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredProducts.map((p) => (
+                      <tr key={p._id} className="group hover:bg-slate-50/60 transition-colors">
+                        <td className="py-3 px-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 p-1 shrink-0">
+                              <img src={getImageSrc(p.image)} alt={p.name} className="w-full h-full object-contain" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-sm text-slate-700 group-hover:text-blue-600 transition-colors">{p.name}</h4>
+                              {p.description && <p className="text-[10px] text-slate-400 max-w-[150px] truncate hidden md:block">{p.description}</p>}
+                            </div>
                           </div>
-                          <span className="font-semibold text-slate-900 truncate max-w-[200px]">{p.name}</span>
-                        </div>
-                      </td>
-                      <td className="py-3.5 px-5">
-                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">{p.category}</span>
-                      </td>
-                      <td className="py-3.5 px-5 font-mono font-bold text-slate-700">
-                        {formatPrice(p.basePrice)} <span className="text-slate-400 text-[10px] font-sans">/ {p.unit || "kg"}</span>
-                      </td>
-                      <td className="py-3.5 px-5">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${p.stock === "in" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
-                          {p.stock === "in" ? "In Stock" : "Out"}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-5 text-right">
-                        <div className="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
-                          <Link to={`/admin/edit-product/${p._id}`}><button className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"><FiEdit2 size={15} /></button></Link>
-                          <button onClick={() => deleteProduct(p._id)} className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"><FiTrash2 size={15} /></button>
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                        </td>
+                        <td className="py-3 px-6">
+                          <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wide group-hover:bg-white group-hover:shadow-sm transition-all">{p.category}</span>
+                        </td>
+                        <td className="py-3 px-6">
+                          <div className="font-mono font-bold text-sm text-slate-700">{formatPrice(p.basePrice)}</div>
+                        </td>
+                        <td className="py-3 px-6">
+                          <div className="flex items-center gap-2">
+                            <span className={`w-2 h-2 rounded-full ${p.stock === "in" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-red-500"}`}></span>
+                            <span className={`text-xs font-bold ${p.stock === "in" ? "text-emerald-700" : "text-slate-400"}`}>
+                              {p.stock === "in" ? "In Stock" : "Out"}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-6 text-right">
+                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Link to={`/admin/edit-product/${p._id}`}><button className="p-2 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all"><FiEdit2 size={14} /></button></Link>
+                            <button onClick={() => deleteProduct(p._id)} className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"><FiTrash2 size={14} /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-          {/* Mobile Cards */}
-          <div className="md:hidden divide-y divide-slate-50">
-            {loading ? (
-              [...Array(5)].map((_, i) => <SkeletonCard key={i} />)
-            ) : (
-              products.map((p) => (
-                <div key={p._id} className="p-4 flex items-center gap-4 active:bg-slate-50 transition-colors">
-                  <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 overflow-hidden shrink-0 p-1">
-                    <img src={getImageSrc(p.image)} alt={p.name} className="w-full h-full object-contain" />
+            {/* Mobile Card List (Visible only on very small screens if needed, otherwise Table scrolls) */}
+            <div className="md:hidden divide-y divide-slate-50 block sm:hidden">
+              {filteredProducts.map((p) => (
+                <div key={p._id} className="p-4 flex gap-4 active:bg-slate-50">
+                  <div className="w-16 h-16 rounded-xl bg-white border border-slate-100 p-2 shrink-0">
+                    <img src={getImageSrc(p.image)} className="w-full h-full object-contain" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-slate-900 truncate">{p.name}</h3>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded uppercase">{p.category}</span>
-                      <span className={`text-[10px] font-bold ${p.stock === "in" ? "text-emerald-600" : "text-red-600"}`}>
-                        {p.stock === "in" ? "In Stock" : "Out"}
-                      </span>
+                  <div className="flex-1">
+                    <div className="flex justify-between items-start">
+                      <h4 className="font-bold text-sm text-slate-800">{p.name}</h4>
+                      <span className={`w-2 h-2 rounded-full ${p.stock === "in" ? "bg-emerald-500" : "bg-red-500"}`} />
                     </div>
-                    <p className="mt-1 font-mono font-bold text-xs text-slate-900">{formatPrice(p.basePrice)}</p>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Link to={`/admin/edit-product/${p._id}`} className="p-2 bg-slate-50 rounded-lg text-slate-500 hover:text-blue-600 transition-colors"><FiEdit2 size={14} /></Link>
-                    <button onClick={() => deleteProduct(p._id)} className="p-2 bg-red-50 rounded-lg text-red-500 hover:text-red-700 transition-colors"><FiTrash2 size={14} /></button>
+                    <p className="text-[10px] text-slate-400 uppercase font-bold mt-1">{p.category}</p>
+                    <p className="font-mono font-bold text-sm mt-1">{formatPrice(p.basePrice)}</p>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
-
-          {!loading && products.length === 0 && (
-            <div className="py-20 text-center px-6">
-              <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300"><FiPackage size={28} /></div>
-              <h3 className="text-slate-900 font-bold text-lg">Empty Inventory</h3>
-              <p className="text-slate-400 text-sm mt-1">No products match your search criteria.</p>
+              ))}
             </div>
-          )}
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

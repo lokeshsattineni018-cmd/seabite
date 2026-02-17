@@ -52,7 +52,7 @@ const Maintenance = ({ message }) => {
                 </p>
                 <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm text-slate-500 dark:text-slate-300 shadow-sm backdrop-blur-sm bg-opacity-80">
                     <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                    Back shortly
+                    We Will Be Back shortly
                 </div>
 
                 {/* Helper for admin refresh check */}
