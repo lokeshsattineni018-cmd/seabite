@@ -233,44 +233,45 @@ export default function AdminDashboard() {
   return (
     <motion.div
       initial="hidden" animate="visible" variants={staggerContainer}
-      className="p-6 md:p-10 space-y-8 max-w-[1600px] mx-auto min-h-screen font-sans text-slate-800"
+      className="p-4 md:p-6 space-y-6 max-w-[1440px] mx-auto min-h-screen font-sans text-slate-700 bg-slate-50/30"
     >
-      {/* HEADER */}
-      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-2">
-        <div>
-          <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-none bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent">
-            Dashboard
+      {/* HEADER OVERHAUL */}
+      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 pt-2">
+        <div className="flex flex-col items-center md:items-start text-center md:text-left">
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-none uppercase">
+            Overview
           </h2>
-          <div className="flex items-center gap-3 mt-2">
-            <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 border border-slate-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Live Store
-            </span>
-            {lastUpdated && (
-              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5">
-                <FiClock size={10} />
-                Updated {lastUpdated.toLocaleTimeString()}
-              </span>
-            )}
-          </div>
+          <p className="text-xs text-slate-400 font-medium mt-1">
+            Welcome back, <span className="text-slate-600 font-bold">Lokesh</span>
+          </p>
         </div>
-        <div className="flex items-center gap-3 w-full md:w-auto">
+
+        <div className="flex flex-1 max-w-md mx-4 relative group w-full md:w-auto">
+          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={14} />
+          <input
+            type="text"
+            placeholder="Search analytics, orders..."
+            className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-10 pr-4 text-[11px] font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-200 transition-all"
+          />
+        </div>
+
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => fetchDashboardData(true)}
-            disabled={isRefreshing}
-            className={`p-3 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-blue-600 hover:border-blue-100 hover:shadow-lg hover:shadow-blue-500/10 transition-all active:scale-95 ${isRefreshing ? "opacity-50 cursor-not-allowed" : ""}`}
+            onClick={() => toast.success("No new notifications")}
+            className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:border-blue-100 transition-all relative group"
           >
-            <FiRefreshCw size={18} className={isRefreshing ? "animate-spin text-blue-600" : ""} />
+            <FiActivity size={18} className="group-hover:animate-pulse" />
+            <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-red-500 rounded-full border border-white"></span>
           </button>
-          <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex-1 md:flex-none hover:shadow-md transition-shadow">
-            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
-              <FiCalendar size={14} />
+
+          <div className="flex items-center gap-2 pl-1 border-l border-slate-200 ml-1">
+            <div className="w-10 h-10 rounded-xl bg-slate-800 text-white flex items-center justify-center text-xs font-bold shadow-lg shadow-slate-900/10 border border-slate-700">
+              LS
             </div>
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
-              {new Date().toLocaleDateString(undefined, {
-                weekday: "short", month: "short", day: "numeric",
-              })}
-            </span>
+            <div className="hidden lg:block text-left">
+              <p className="text-[10px] font-bold text-slate-800 leading-none">Administrator</p>
+              <p className="text-[9px] text-slate-400 font-medium mt-0.5 uppercase tracking-widest">Active</p>
+            </div>
           </div>
         </div>
       </motion.div>
@@ -302,7 +303,7 @@ export default function AdminDashboard() {
                 <div className="w-20 h-20 bg-white text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-5 border border-blue-100 shadow-xl shadow-blue-500/10 rotate-3 hover:rotate-6 transition-transform duration-500">
                   <FiLock size={32} />
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">Security Check</h3>
+                <h3 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Security Check</h3>
                 <p className="text-sm text-slate-500 max-w-[280px] mx-auto leading-relaxed">
                   Enter the 6-digit code sent to your admin email to confirm this action.
                 </p>
@@ -343,129 +344,102 @@ export default function AdminDashboard() {
       </AnimatePresence>
 
       {/* ✅ BENTO CONTROL CENTER */}
-      <motion.div variants={fadeUp} custom={1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <motion.div variants={fadeUp} custom={1} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {/* Maintenance Toggle */}
-        <div className={`relative overflow-hidden rounded-[2rem] p-6 border transition-all duration-300 md:col-span-1 group ${settings.isMaintenanceMode ? "bg-red-50 border-red-100 shadow-xl shadow-red-500/10" : "bg-white border-slate-100 shadow-sm hover:border-slate-200"}`}>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className={`p-3.5 rounded-2xl ${settings.isMaintenanceMode ? "bg-red-100 text-red-600" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600"} transition-colors`}>
-              {settings.isMaintenanceMode ? <FiLock size={20} /> : <FiUnlock size={20} />}
+        <div className={`relative overflow-hidden rounded-2xl p-5 border transition-all duration-300 md:col-span-1 group ${settings.isMaintenanceMode ? "bg-red-50 border-red-100" : "bg-white border-slate-200 shadow-sm"}`}>
+          <div className="flex justify-between items-start mb-3 relative z-10">
+            <div className={`p-2.5 rounded-xl ${settings.isMaintenanceMode ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-400"} transition-colors`}>
+              {settings.isMaintenanceMode ? <FiLock size={18} /> : <FiUnlock size={18} />}
             </div>
             {settings.isMaintenanceMode && (
-              <span className="px-3 py-1 bg-white/60 backdrop-blur-sm rounded-lg text-xs font-mono font-bold text-red-600 border border-red-100">
-                OTP: {settings.maintenanceOtp || "----"}
+              <span className="px-2 py-0.5 bg-white rounded text-[10px] font-mono font-bold text-red-600 border border-red-100">
+                {settings.maintenanceOtp || "----"}
               </span>
             )}
           </div>
           <div className="relative z-10">
-            <h3 className={`text-lg font-bold mb-1 ${settings.isMaintenanceMode ? "text-red-700" : "text-slate-800"}`}>
-              {settings.isMaintenanceMode ? "Maintenance Active" : "Store is Live"}
+            <h3 className={`text-base font-bold mb-0.5 ${settings.isMaintenanceMode ? "text-red-700" : "text-slate-800"}`}>
+              {settings.isMaintenanceMode ? "Maintenance" : "Store Status"}
             </h3>
-            <p className="text-xs text-slate-500 mb-6 leading-relaxed h-[36px]">
-              {settings.isMaintenanceMode
-                ? "Public access blocked. Admin bypass active."
-                : "Standard operation. Customers can browse."}
+            <p className="text-[10px] text-slate-400 mb-4 leading-normal h-[30px]">
+              {settings.isMaintenanceMode ? "Admin access only." : "Open for browsing."}
             </p>
             <button
               onClick={toggleMaintenanceClick}
-              className={`w-full py-3 rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 ${settings.isMaintenanceMode
-                ? "bg-white text-red-600 hover:bg-red-50"
-                : "bg-slate-900 text-white hover:bg-slate-800"
-                }`}
+              className={`w-full py-2.5 rounded-xl text-[10px] font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${settings.isMaintenanceMode ? "bg-white text-red-600 border border-red-100" : "bg-slate-800 text-white"}`}
             >
-              {settings.isMaintenanceMode ? "Disable Mode" : "Turn On Maintenance"}
+              Toggle Mode
             </button>
           </div>
-          {settings.isMaintenanceMode && <div className="absolute inset-0 bg-red-500/5 mix-blend-multiply pointer-events-none" />}
         </div>
 
         {/* Happy Hour Toggle */}
-        <div className={`relative overflow-hidden rounded-[2rem] p-6 border transition-all duration-300 md:col-span-1 group ${settings.globalDiscount > 0 ? "bg-purple-50 border-purple-100 shadow-xl shadow-purple-500/10" : "bg-white border-slate-100 shadow-sm hover:border-slate-200"}`}>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className={`p-3.5 rounded-2xl ${settings.globalDiscount > 0 ? "bg-purple-100 text-purple-600" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600"} transition-colors`}>
-              {settings.globalDiscount > 0 ? <FiZap size={20} /> : <FiClock size={20} />}
+        <div className={`relative overflow-hidden rounded-2xl p-5 border transition-all duration-300 md:col-span-1 group ${settings.globalDiscount > 0 ? "bg-purple-50 border-purple-100" : "bg-white border-slate-200 shadow-sm"}`}>
+          <div className="flex justify-between items-start mb-3 relative z-10">
+            <div className={`p-2.5 rounded-xl ${settings.globalDiscount > 0 ? "bg-purple-100 text-purple-600" : "bg-slate-100 text-slate-400"} transition-colors`}>
+              {settings.globalDiscount > 0 ? <FiZap size={18} /> : <FiClock size={18} />}
             </div>
             {settings.globalDiscount > 0 && (
-              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-lg text-xs font-bold animate-pulse">
-                -{settings.globalDiscount}% OFF
+              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-[9px] font-bold">
+                -{settings.globalDiscount}%
               </span>
             )}
           </div>
           <div className="relative z-10">
-            <h3 className={`text-lg font-bold mb-1 ${settings.globalDiscount > 0 ? "text-purple-700" : "text-slate-800"}`}>
-              {settings.globalDiscount > 0 ? "Happy Hour Live" : "Happy Hour"}
+            <h3 className={`text-base font-bold mb-0.5 ${settings.globalDiscount > 0 ? "text-purple-700" : "text-slate-800"}`}>
+              Happy Hour
             </h3>
-            <p className="text-xs text-slate-500 mb-6 leading-relaxed h-[36px]">
-              {settings.globalDiscount > 0
-                ? "All products are discounted by 10%."
-                : "Standard pricing. Enable sales boost."}
+            <p className="text-[10px] text-slate-400 mb-4 leading-normal h-[30px]">
+              {settings.globalDiscount > 0 ? "Boost active." : "Normal pricing."}
             </p>
             <button
               onClick={async () => {
                 try {
                   const newDiscount = settings.globalDiscount > 0 ? 0 : 10;
-                  const res = await axios.put("/api/admin/enterprise/settings", { globalDiscount: newDiscount }, { withCredentials: true });
+                  await axios.put("/api/admin/enterprise/settings", { globalDiscount: newDiscount }, { withCredentials: true });
                   setSettings(prev => ({ ...prev, globalDiscount: newDiscount }));
-                  toast.success(newDiscount > 0 ? "Happy Hour Activated! 🍹" : "Happy Hour Ended");
-                } catch (err) {
-                  toast.error("Failed to toggle Happy Hour");
-                }
+                  toast.success(newDiscount > 0 ? "Activated" : "Deactivated");
+                } catch (err) { toast.error("Failed"); }
               }}
-              className={`w-full py-3 rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 ${settings.globalDiscount > 0
-                ? "bg-purple-600 text-white hover:bg-purple-700 shadow-lg shadow-purple-500/30"
-                : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                }`}
+              className={`w-full py-2.5 rounded-xl text-[10px] font-bold transition-all active:scale-95 flex items-center justify-center gap-2 ${settings.globalDiscount > 0 ? "bg-purple-600 text-white shadow-lg shadow-purple-500/10" : "bg-white border border-slate-200 text-slate-600"}`}
             >
-              {settings.globalDiscount > 0 ? "End Event" : "Start Happy Hour"}
+              {settings.globalDiscount > 0 ? "End Event" : "Start Event"}
             </button>
           </div>
         </div>
 
         {/* Banner Manager */}
-        <div className={`relative overflow-hidden rounded-[2rem] p-6 border transition-all duration-300 md:col-span-1 group ${settings.banner?.active ? "bg-blue-50 border-blue-100 shadow-xl shadow-blue-500/10" : "bg-white border-slate-100 shadow-sm hover:border-slate-200"}`}>
-          <div className="flex justify-between items-start mb-4 relative z-10">
-            <div className={`p-3.5 rounded-2xl ${settings.banner?.active ? "bg-blue-100 text-blue-600" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-600"} transition-colors`}>
-              {settings.banner?.active ? <FiStar size={20} /> : <FiSearch size={20} />}
+        <div className={`relative overflow-hidden rounded-2xl p-5 border transition-all duration-300 md:col-span-1 group ${settings.banner?.active ? "bg-blue-50 border-blue-100" : "bg-white border-slate-200 shadow-sm"}`}>
+          <div className="flex justify-between items-start mb-3 relative z-10">
+            <div className={`p-2.5 rounded-xl ${settings.banner?.active ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-400"} transition-colors`}>
+              <FiStar size={18} />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <button
                 onClick={async () => {
                   try {
-                    const newActiveState = !settings.banner?.active;
-                    const newBanner = { ...settings.banner, active: newActiveState };
-                    await axios.put("/api/admin/enterprise/settings", { banner: newBanner }, { withCredentials: true });
-                    setSettings(prev => ({ ...prev, banner: newBanner }));
-                    toast.success(newActiveState ? "Banner On 🚀" : "Banner Off");
-                  } catch (err) { toast.error("Failed"); }
+                    const next = !settings.banner?.active;
+                    await axios.put("/api/admin/enterprise/settings", { banner: { ...settings.banner, active: next } }, { withCredentials: true });
+                    setSettings(prev => ({ ...prev, banner: { ...prev.banner, active: next } }));
+                    toast.success(next ? "On" : "Off");
+                  } catch (err) { toast.error("Error"); }
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${settings.banner?.active ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500 hover:bg-slate-300"}`}
+                className={`px-2 py-1 rounded text-[8px] font-bold transition-all ${settings.banner?.active ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-500"}`}
               >
-                {settings.banner?.active ? "ON" : "OFF"}
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    await axios.put("/api/admin/enterprise/settings", { banner: settings.banner }, { withCredentials: true });
-                    toast.success("Saved");
-                  } catch (e) { toast.error("Error"); }
-                }}
-                className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-400 hover:text-blue-600 transition-colors"
-              >
-                <FiCheckCircle size={14} />
+                {settings.banner?.active ? "LIVE" : "OFF"}
               </button>
             </div>
           </div>
           <div className="relative z-10">
-            <h3 className={`text-lg font-bold mb-1 ${settings.banner?.active ? "text-blue-800" : "text-slate-800"}`}>
-              Promo Banner
+            <h3 className={`text-base font-bold mb-0.5 ${settings.banner?.active ? "text-blue-800" : "text-slate-800"}`}>
+              Promotion
             </h3>
-            <div className="space-y-2 mb-1">
-              <input
-                placeholder="Image Path..."
-                value={settings.banner?.imageUrl || ""}
-                onChange={(e) => setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl: e.target.value } }))}
-                className="w-full bg-white/50 border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-medium focus:bg-white focus:ring-2 focus:ring-blue-500/10 outline-none"
-              />
-            </div>
+            <input
+              placeholder="Image URL..."
+              value={settings.banner?.imageUrl || ""}
+              onChange={(e) => setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl: e.target.value } }))}
+              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-[10px] font-medium outline-none focus:bg-white focus:border-blue-200 transition-all"
+            />
           </div>
         </div>
       </motion.div>
@@ -613,28 +587,26 @@ export default function AdminDashboard() {
       </motion.div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Revenue Chart */}
         <motion.div
           variants={fadeUp}
           custom={4}
-          className="lg:col-span-8 bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden group"
+          className="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group"
         >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/50 blur-[100px] -mr-32 -mt-32 rounded-full pointer-events-none" />
-
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 relative z-10 gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 relative z-10 gap-4">
             <div>
-              <h3 className="text-xl font-black text-slate-900 tracking-tight">Revenue Analytics</h3>
-              <p className="text-sm text-slate-400 mt-1 font-medium italic">Smooth progression over {timeFilter}</p>
+              <h3 className="text-base font-bold text-slate-800 tracking-tight uppercase">Analytics</h3>
+              <p className="text-[10px] text-slate-400 font-medium">Revenue progression</p>
             </div>
-            <div className="flex bg-slate-50 p-1.5 rounded-2xl border border-slate-100 shadow-inner">
+            <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
               {["6months", "1year"].map((f) => (
                 <button
                   key={f}
                   onClick={() => setTimeFilter(f)}
-                  className={`px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${timeFilter === f ? "bg-white text-blue-600 shadow-md ring-1 ring-black/5" : "text-slate-400 hover:text-slate-600"}`}
+                  className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${timeFilter === f ? "bg-white text-blue-600 shadow-sm border border-slate-200" : "text-slate-400"}`}
                 >
-                  {f === "6months" ? "6 Months" : "1 Year"}
+                  {f === "6months" ? "6M" : "1Y"}
                 </button>
               ))}
             </div>
@@ -682,12 +654,12 @@ export default function AdminDashboard() {
         <motion.div
           variants={fadeUp}
           custom={5}
-          className="lg:col-span-4 bg-white p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 flex flex-col group relative overflow-hidden"
+          className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col group relative overflow-hidden"
         >
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-50/50 blur-[80px] -ml-24 -mb-24 rounded-full pointer-events-none" />
 
-          <h3 className="text-xl font-black text-slate-900 mb-1 tracking-tight relative z-10">Order Status</h3>
-          <p className="text-sm text-slate-400 mb-8 font-medium relative z-10">Live distribution</p>
+          <h3 className="text-base font-bold text-slate-800 mb-0.5 uppercase tracking-tight">Status</h3>
+          <p className="text-[10px] text-slate-400 mb-6 font-medium uppercase">Distribution</p>
 
           <div className="flex-1 min-h-[300px] relative z-10">
             <ResponsiveContainer width="100%" height="100%">
@@ -713,8 +685,8 @@ export default function AdminDashboard() {
             </ResponsiveContainer>
 
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-4xl font-black text-slate-900 tracking-tighter">{stats.totalOrders || 0}</span>
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Total</span>
+              <span className="text-2xl font-bold text-slate-800">{stats.totalOrders || 0}</span>
+              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
             </div>
           </div>
 
@@ -723,7 +695,7 @@ export default function AdminDashboard() {
               <div key={index} className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
                 <div className="w-2 h-2 rounded-full shadow-[0_0_8px] shadow-current transition-all" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length], color: PIE_COLORS[index % PIE_COLORS.length] }} />
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-slate-900 uppercase leading-none">{entry.name}</span>
+                  <span className="text-[9px] font-bold text-slate-900 uppercase leading-none">{entry.name}</span>
                   <span className="text-[10px] font-bold text-slate-400 mt-1">{entry.value} orders</span>
                 </div>
               </div>
@@ -732,69 +704,60 @@ export default function AdminDashboard() {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 leading-normal">
         {/* Recent Orders - Bento List */}
         <div className="lg:col-span-8">
           <motion.div
             variants={fadeUp}
             custom={6}
-            className="bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden flex flex-col h-full"
+            className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow"
           >
-            <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+            <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/20">
               <div>
-                <h3 className="text-xl font-black text-slate-900 tracking-tight">Recent Orders</h3>
-                <p className="text-xs text-slate-400 mt-1 font-medium">Latest store activity</p>
+                <h3 className="text-sm font-bold text-slate-800 tracking-tight uppercase">Recent Orders</h3>
+                <p className="text-[10px] text-slate-400 font-medium font-mono uppercase tracking-widest mt-0.5">Live Traffic</p>
               </div>
               <button
                 onClick={() => navigate("/admin/orders")}
-                className="group flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-900 hover:text-blue-600 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-500/10 transition-all active:scale-95 shadow-sm"
+                className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[9px] font-bold uppercase tracking-widest text-slate-600 hover:text-blue-600 hover:border-blue-100 transition-all active:scale-95 shadow-sm"
               >
-                Explore <FiArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                View All
               </button>
             </div>
 
             <div className="flex-1 overflow-x-auto">
-              <div className="min-w-[600px] p-4">
+              <div className="min-w-[500px] p-3">
                 {recentOrders.length === 0 ? (
-                  <div className="py-20 text-center">
-                    <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-4 text-slate-300">
-                      <FiShoppingBag size={32} />
-                    </div>
-                    <p className="text-sm text-slate-400 font-bold italic">No recent transactions.</p>
+                  <div className="py-12 text-center text-[10px] text-slate-300 font-bold uppercase tracking-widest">
+                    No transactions.
                   </div>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {recentOrders.map((order) => (
-                      <motion.div
+                      <div
                         key={order._id}
-                        whileHover={{ x: 5 }}
                         onClick={() => navigate(`/admin/orders`)}
-                        className="flex items-center justify-between p-4 bg-white border border-slate-50 rounded-2xl hover:bg-blue-50/30 hover:shadow-md hover:border-blue-100 transition-all cursor-pointer group"
+                        className="flex items-center justify-between p-3 bg-white border border-slate-50 rounded-xl hover:bg-slate-50 transition-all cursor-pointer group"
                       >
-                        <div className="flex items-center gap-4 flex-1">
-                          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 font-bold text-xs ring-1 ring-slate-100 group-hover:bg-blue-100 group-hover:text-blue-600 transition-colors">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400 font-bold text-[10px] border border-slate-100">
                             #{order._id.slice(-4)}
                           </div>
                           <div>
-                            <h4 className="font-black text-slate-900 text-sm group-hover:text-blue-700 transition-colors">
-                              {order.user?.name || "Guest Customer"}
+                            <h4 className="font-bold text-slate-800 text-xs truncate max-w-[120px]">
+                              {order.user?.name || "Customer"}
                             </h4>
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wide mt-1">
-                              {new Date(order.createdAt).toLocaleDateString(undefined, { Month: 'short', day: 'numeric', year: 'numeric' })}
+                            <p className="text-[9px] text-slate-400 font-medium uppercase mt-0.5">
+                              {new Date(order.createdAt).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-8">
-                          <div className="text-right">
-                            <p className="font-black text-slate-900 text-sm">₹{order.totalPrice?.toLocaleString()}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">Auto-paid</p>
-                          </div>
-                          <div className="w-24 text-center">
-                            <StatusPill status={order.status} />
-                          </div>
+                        <div className="flex items-center gap-6">
+                          <p className="font-bold text-slate-800 text-xs text-right w-16">₹{order.totalPrice?.toLocaleString()}</p>
+                          <StatusPill status={order.status} />
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -804,93 +767,73 @@ export default function AdminDashboard() {
         </div>
 
         {/* Right Column: Messages & Feedback */}
-        <motion.div variants={fadeUp} custom={7} className="lg:col-span-4 space-y-6">
+        <motion.div variants={fadeUp} custom={7} className="lg:col-span-4 space-y-5">
           {/* Recent Inquiries */}
-          <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-8 group">
-            <div className="flex justify-between items-center mb-8">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 group flex flex-col h-[320px]">
+            <div className="flex justify-between items-center mb-5 shrink-0">
               <div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">Inquiries</h3>
-                <p className="text-xs text-slate-400 mt-1 font-medium">Customer Support</p>
+                <h3 className="text-sm font-bold text-slate-800 tracking-tight uppercase">Inquiries</h3>
               </div>
-              <button
-                onClick={() => navigate("/admin/messages")}
-                className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-slate-100 group-hover:border-blue-100 group-hover:shadow-md"
-              >
-                <FiMail size={16} />
+              <button onClick={() => navigate("/admin/messages")} className="text-slate-300 hover:text-blue-500 transition-colors">
+                <FiMail size={14} />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3 overflow-y-auto pr-1 custom-scrollbar">
               {recentMessages?.length === 0 ? (
-                <p className="text-center py-12 text-xs text-slate-300 font-bold italic">Inbox empty.</p>
+                <p className="text-center py-8 text-[9px] text-slate-300 font-bold uppercase tracking-tighter">Inbox empty.</p>
               ) : (
                 recentMessages?.map((msg) => (
                   <div
                     key={msg._id}
                     onClick={() => navigate("/admin/messages")}
-                    className="p-4 bg-slate-50/50 hover:bg-blue-50/50 rounded-2xl border border-transparent hover:border-blue-100 transition-all cursor-pointer relative group/msg"
+                    className="p-3 bg-slate-50/50 hover:bg-white hover:shadow-sm rounded-xl border border-transparent hover:border-slate-100 transition-all cursor-pointer"
                   >
-                    <div className="flex justify-between items-start mb-1.5">
-                      <h4 className="text-[11px] font-black text-slate-800 group-hover/msg:text-blue-700 transition-colors truncate w-32">
+                    <div className="flex justify-between items-start mb-1">
+                      <h4 className="text-[10px] font-bold text-slate-700 truncate w-32">
                         {msg.email}
                       </h4>
-                      <span className="text-[9px] font-black text-slate-300 uppercase letter-spacing-wide">
-                        {new Date(msg.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      <span className="text-[8px] font-bold text-slate-300 uppercase tracking-tight">
+                        {new Date(msg.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-500 line-clamp-2 leading-relaxed font-medium">{msg.message}</p>
+                    <p className="text-[10px] text-slate-500 line-clamp-1 leading-normal italic">"{msg.message}"</p>
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* Feedback Moderation */}
-          <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 border border-slate-100 p-8 overflow-hidden relative group">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-50/50 blur-[60px] -mr-16 -mt-16 rounded-full pointer-events-none" />
-
-            <div className="flex justify-between items-center mb-8 relative z-10">
-              <div>
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">Feedback</h3>
-                <p className="text-xs text-slate-400 mt-1 font-medium">Reputation</p>
-              </div>
-              <div className="px-3 py-1 bg-amber-50 rounded-lg border border-amber-100 text-amber-600 text-[10px] font-black">
-                {allReviews.length} TOTAL
-              </div>
+          {/* Feedback */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col h-[320px]">
+            <div className="flex justify-between items-center mb-5 shrink-0">
+              <h3 className="text-sm font-bold text-slate-800 tracking-tight uppercase">Reviews</h3>
+              <span className="text-[9px] font-bold text-slate-300 bg-slate-100 px-1.5 py-0.5 rounded uppercase">
+                {allReviews.length}
+              </span>
             </div>
 
-            <div className="space-y-4 relative z-10">
+            <div className="space-y-3 overflow-y-auto pr-1 custom-scrollbar">
               {allReviews?.length === 0 ? (
-                <p className="text-center py-12 text-xs text-slate-300 font-bold italic">No reviews yet.</p>
+                <p className="text-center py-8 text-[9px] text-slate-300 font-bold uppercase tracking-tighter">No feedback.</p>
               ) : (
                 allReviews?.map((rev) => (
-                  <div key={rev._id} className="p-4 bg-white/40 backdrop-blur-sm rounded-2xl border border-slate-100 shadow-sm relative group hover:shadow-md transition-all">
+                  <div key={rev._id} className="p-3 bg-white hover:shadow-sm rounded-xl border border-slate-100 transition-all group relative">
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteReviewHandler(rev.productId, rev._id);
-                      }}
-                      className="absolute top-3 right-3 w-8 h-8 bg-white border border-slate-100 text-slate-300 hover:text-red-500 rounded-lg flex items-center justify-center transition-all opacity-0 group-hover:opacity-100 hover:border-red-100 hover:shadow-md shadow-sm"
+                      onClick={(e) => { e.stopPropagation(); deleteReviewHandler(rev.productId, rev._id); }}
+                      className="absolute top-2 right-2 text-slate-200 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all scale-100 hover:scale-125"
                     >
-                      <FiTrash2 size={12} />
+                      <FiTrash2 size={10} />
                     </button>
                     <div className="flex gap-0.5 mb-2">
                       {[...Array(5)].map((_, i) => (
-                        <FiStar
-                          key={i}
-                          size={10}
-                          className={i < rev.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"}
-                        />
+                        <FiStar key={i} size={8} className={i < rev.rating ? "text-amber-300 fill-amber-300" : "text-slate-100"} />
                       ))}
                     </div>
-                    <p className="text-[11px] text-slate-600 font-medium line-clamp-2 leading-relaxed mb-3">
-                      "{rev.comment}"
-                    </p>
-                    <div className="flex justify-between items-end">
-                      <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{rev.userName}</span>
-                      <span className="text-[9px] bg-blue-100 text-blue-700 font-black px-2 py-0.5 rounded-full ring-1 ring-blue-200">
-                        {rev.productName}
-                      </span>
+                    <p className="text-[10px] text-slate-600 leading-normal line-clamp-2 italic mb-2">"{rev.comment}"</p>
+                    <div className="flex justify-between items-center text-[8px] font-bold uppercase tracking-widest">
+                      <span className="text-slate-400">{rev.userName}</span>
+                      <span className="text-blue-500 font-bold">{rev.productName}</span>
                     </div>
                   </div>
                 ))
@@ -908,10 +851,10 @@ export default function AdminDashboard() {
 
 function StatCard({ title, value, icon, trend, trendUp, color, sparkData, index }) {
   const colorMap = {
-    blue: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-100", spark: "#3b82f6", shadow: "shadow-blue-500/10" },
-    emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-100", spark: "#10b981", shadow: "shadow-emerald-500/10" },
-    indigo: { bg: "bg-indigo-50", text: "text-indigo-600", border: "border-indigo-100", spark: "#6366f1", shadow: "shadow-indigo-500/10" },
-    amber: { bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-100", spark: "#f59e0b", shadow: "shadow-amber-500/10" },
+    blue: { bg: "bg-blue-50", text: "text-blue-500", border: "border-blue-100", spark: "#3b82f6" },
+    emerald: { bg: "bg-emerald-50", text: "text-emerald-500", border: "border-emerald-100", spark: "#10b981" },
+    indigo: { bg: "bg-indigo-50", text: "text-indigo-500", border: "border-indigo-100", spark: "#6366f1" },
+    amber: { bg: "bg-amber-50", text: "text-amber-500", border: "border-amber-100", spark: "#f59e0b" },
   };
   const c = colorMap[color] || colorMap.blue;
 
@@ -919,46 +862,27 @@ function StatCard({ title, value, icon, trend, trendUp, color, sparkData, index 
     <motion.div
       variants={fadeUp}
       custom={index}
-      whileHover={{ y: -5 }}
-      initial="hidden"
-      animate="visible"
-      className={`relative overflow-hidden bg-white rounded-[2rem] p-6 border ${c.border} shadow-xl ${c.shadow} hover:shadow-2xl transition-all duration-300 group`}
+      className={`relative overflow-hidden bg-white rounded-2xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition-all group`}
     >
-      {/* Background Blob */}
-      <div className={`absolute -top-12 -right-12 w-40 h-40 rounded-full ${c.bg} blur-3xl opacity-50 group-hover:opacity-100 transition-opacity duration-500`} />
-
-      <div className="relative z-10 flex justify-between items-start mb-6">
+      <div className="relative z-10 flex justify-between items-start">
         <div>
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-3 ${c.bg} ${c.text} shadow-sm ring-1 ring-black/5`}>
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.bg} ${c.text} border ${c.border}`}>
             {icon}
           </div>
-          <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{title}</p>
-          <h4 className="text-3xl font-black text-slate-800 mt-1 tracking-tight">{value}</h4>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{title}</p>
+          <h4 className="text-xl font-bold text-slate-800 mt-1 tracking-tight">{value}</h4>
         </div>
-        <span className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wide border ${trendUp ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-red-50 text-red-600 border-red-100"}`}>
-          {trendUp ? <FiArrowUpRight size={12} /> : <FiArrowDownRight size={12} />}
+        <span className={`text-[8px] font-bold uppercase px-1.5 py-0.5 rounded-lg border ${trendUp ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-red-50 text-red-600 border-red-100"}`}>
           {trend}
         </span>
       </div>
 
       {/* Sparkline Overlay */}
       {sparkData && sparkData.length > 0 && (
-        <div className="absolute bottom-0 left-0 right-0 h-20 opacity-30 mask-linear-gradient">
+        <div className="absolute bottom-0 left-0 right-0 h-12 opacity-10 pointer-events-none">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={sparkData}>
-              <defs>
-                <linearGradient id={`grad-${index}`} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={c.spark} stopOpacity={0.8} />
-                  <stop offset="100%" stopColor={c.spark} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Area
-                type="natural"
-                dataKey="v"
-                stroke={c.spark}
-                strokeWidth={3}
-                fill={`url(#grad-${index})`}
-              />
+              <Area type="natural" dataKey="v" stroke={c.spark} strokeWidth={2} fill={c.spark} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -976,7 +900,7 @@ function StatusPill({ status }) {
     Cancelled: "text-red-600 bg-red-50 border-red-100",
   };
   return (
-    <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider border ${styles[status] || styles.Pending}`}>
+    <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest border ${styles[status] || styles.Pending}`}>
       {status || "Pending"}
     </span>
   );
@@ -1009,7 +933,7 @@ function PieTooltip({ active, payload }) {
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: payload[0].payload.fill }} />
           <p className="font-bold text-sm">{payload[0].name}</p>
         </div>
-        <p className="text-xl font-black mt-1 ml-5">{payload[0].value}</p>
+        <p className="text-xl font-bold mt-1 ml-5">{payload[0].value}</p>
       </div>
     );
   }
