@@ -1,215 +1,198 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-    FiMail, FiSend, FiInfo, FiCheckCircle,
-    FiAlertTriangle, FiLoader, FiType, FiMessageSquare,
-    FiTarget, FiLayers
+  FiMail, FiSend, FiRefreshCw, FiCheckCircle,
+  FiAlertCircle, FiUsers, FiFileText, FiX
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 
 const fadeUp = {
-    hidden: { opacity: 0, y: 15 },
-    visible: (i = 0) => ({
-        opacity: 1, y: 0,
-        transition: { delay: i * 0.05, duration: 0.4 }
-    })
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.06, duration: 0.5 }
+  })
 };
 
 export default function AdminMarketing() {
-    const [subject, setSubject] = useState("");
-    const [message, setMessage] = useState("");
-    const [sending, setSending] = useState(false);
-    const [lastSent, setLastSent] = useState(null);
+  const [campaigns, setCampaigns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({
+    subject: "",
+    message: "",
+    targetSegment: "all"
+  });
+  const [sending, setSending] = useState(false);
 
-    const handleSendBlast = async () => {
-        if (!subject || !message) {
-            return toast.error("Please fill both subject and message");
-        }
+  const fetchCampaigns = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.get("/api/admin/marketing/campaigns", { withCredentials: true });
+      setCampaigns(res.data || []);
+    } catch (err) {
+      toast.error("Failed to fetch campaigns");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (!window.confirm("Send this email to ALL registered users? This action cannot be undone.")) return;
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
 
-        setSending(true);
-        const toastId = toast.loading("Sending bulk emails...");
+  const handleSendCampaign = async (e) => {
+    e.preventDefault();
+    if (!formData.subject || !formData.message) {
+      return toast.error("Fill all fields");
+    }
 
-        try {
-            const { data } = await axios.post("/api/admin/marketing/email-blast", {
-                subject,
-                message
-            }, { withCredentials: true });
+    setSending(true);
+    try {
+      await axios.post("/api/admin/marketing/send", formData, { withCredentials: true });
+      toast.success("Campaign sent successfully!");
+      setFormData({ subject: "", message: "", targetSegment: "all" });
+      setShowForm(false);
+      fetchCampaigns();
+    } catch (err) {
+      toast.error("Failed to send campaign");
+    } finally {
+      setSending(false);
+    }
+  };
 
-            toast.success(data.message, { id: toastId });
-            setLastSent(new Date());
-            setSubject("");
-            setMessage("");
-        } catch (err) {
-            toast.error(err.response?.data?.message || "Marketing blast failed", { id: toastId });
-        } finally {
-            setSending(false);
-        }
-    };
-
-    return (
-        <div className="p-4 md:p-8 lg:p-10 font-sans min-h-screen bg-slate-50">
-            <motion.div variants={fadeUp} initial="hidden" animate="visible" className="max-w-6xl mx-auto mb-10">
-                <div className="flex items-center gap-4 mb-2">
-                    <div className="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-200">
-                        <FiTarget size={28} />
-                    </div>
-                    <div>
-                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Marketing Center</h1>
-                        <p className="text-sm text-slate-500 font-medium">Create and manage high-conversion email campaigns</p>
-                    </div>
-                </div>
-            </motion.div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-                {/* Editor */}
-                <motion.div
-                    variants={fadeUp}
-                    initial="hidden"
-                    animate="visible"
-                    custom={1}
-                    className="lg:col-span-2 space-y-6"
-                >
-                    {/* Compose Card */}
-                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-8">
-                        <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-100">
-                            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                                <FiMail className="text-indigo-600" /> Compose Blast
-                            </h2>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-lg">
-                                HTML Enabled
-                            </span>
-                        </div>
-
-                        <div className="space-y-6">
-                            <div>
-                                <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">
-                                    <FiType size={12} /> Campaign Subject
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="Ex: Flash Sale Alert! 50% Off Giant Prawns 🦐"
-                                    value={subject}
-                                    onChange={(e) => setSubject(e.target.value)}
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all font-bold text-slate-900 placeholder:text-slate-300"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">
-                                    <FiMessageSquare size={12} /> Message Body
-                                </label>
-                                <textarea
-                                    rows={12}
-                                    placeholder="Write your promotional message here..."
-                                    value={message}
-                                    onChange={(e) => setMessage(e.target.value)}
-                                    className="w-full px-5 py-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all font-medium text-slate-700 leading-relaxed resize-none placeholder:text-slate-300"
-                                />
-                                <div className="flex items-center justify-between mt-3 text-[11px] text-slate-400 font-medium">
-                                    <span className="flex items-center gap-1.5 ">
-                                        <FiLayers size={12} /> Auto-wrapped in "Elite Glass" Template
-                                    </span>
-                                    <span>{message.length} chars</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex justify-end pt-4">
-                        <button
-                            onClick={handleSendBlast}
-                            disabled={sending}
-                            className={`px-8 py-4 rounded-xl flex items-center gap-3 text-sm font-bold uppercase tracking-widest transition-all shadow-xl shadow-indigo-200 ${sending
-                                ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                                : "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-indigo-300 active:scale-95"
-                                }`}
-                        >
-                            {sending ? (
-                                <>
-                                    <FiLoader className="animate-spin" size={18} /> Sending...
-                                </>
-                            ) : (
-                                <>
-                                    <FiSend size={18} /> Launch Campaign
-                                </>
-                            )}
-                        </button>
-                    </div>
-                </motion.div>
-
-                {/* Sidebar Info */}
-                <div className="space-y-6">
-                    <motion.div
-                        variants={fadeUp}
-                        initial="hidden"
-                        animate="visible"
-                        custom={2}
-                        className="bg-slate-900 rounded-3xl p-6 text-white relative overflow-hidden shadow-2xl shadow-indigo-900/20"
-                    >
-                        {/* Background Decoration */}
-                        <div className="absolute -top-10 -right-10 w-40 h-40 bg-indigo-500/30 rounded-full blur-3xl" />
-                        <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500/30 rounded-full blur-3xl" />
-
-                        <div className="relative z-10">
-                            <h3 className="text-xs font-black uppercase tracking-widest text-indigo-300 mb-6 flex items-center gap-2">
-                                <FiCheckCircle size={14} /> Campaign Status
-                            </h3>
-
-                            <div className="space-y-6">
-                                <div>
-                                    <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-1">Service Node</p>
-                                    <p className="text-sm font-bold text-white flex items-center gap-2">
-                                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Resend Enterprise
-                                    </p>
-                                </div>
-
-                                {lastSent ? (
-                                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                                        <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold mb-2">Last Blast</p>
-                                        <p className="text-xs font-bold text-white mb-0.5">{lastSent.toLocaleDateString()}</p>
-                                        <p className="text-[10px] text-slate-400">{lastSent.toLocaleTimeString()}</p>
-                                    </div>
-                                ) : (
-                                    <div className="p-4 bg-white/5 rounded-2xl border border-white/10 border-dashed">
-                                        <p className="text-xs text-slate-400 text-center italic">No campaigns sent this session</p>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    <motion.div
-                        variants={fadeUp}
-                        initial="hidden"
-                        animate="visible"
-                        custom={3}
-                        className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm"
-                    >
-                        <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500 mb-5 flex items-center gap-2">
-                            <FiAlertTriangle className="text-amber-500" size={14} /> Guidelines
-                        </h3>
-                        <div className="space-y-4">
-                            {[
-                                { title: "Target Audience", desc: "All emails sent to registered active users." },
-                                { title: "Content Policy", desc: "Strictly promotional or update-related content only." },
-                                { title: "Rate Limits", desc: "System handles batches of 100/min automatically." }
-                            ].map((item, i) => (
-                                <div key={i} className="flex gap-3">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                                    <div>
-                                        <h4 className="text-xs font-bold text-slate-900">{item.title}</h4>
-                                        <p className="text-[10px] text-slate-500 leading-relaxed">{item.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </div>
-            </div>
+  return (
+    <motion.div initial="hidden" animate="visible" className="p-5 md:p-8 lg:p-10 min-h-screen">
+      {/* Header */}
+      <motion.div variants={fadeUp} custom={0} className="mb-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-indigo-400 via-blue-400 to-cyan-400 bg-clip-text text-transparent flex items-center gap-3">
+              <motion.div whileHover={{ scale: 1.1 }} className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-blue-500/20 flex items-center justify-center text-indigo-400 border border-indigo-500/30">
+                <FiMail size={24} />
+              </motion.div>
+              Email Marketing
+            </h1>
+            <p className="text-slate-400 text-sm mt-2 ml-16">Create and send promotional campaigns</p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowForm(!showForm)}
+            className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-bold rounded-xl hover:from-indigo-600 hover:to-blue-600 transition-all shadow-lg shadow-indigo-500/20"
+          >
+            {showForm ? "Cancel" : "+ New Campaign"}
+          </motion.button>
         </div>
-    );
+      </motion.div>
+
+      {/* New Campaign Form */}
+      <AnimatePresence>
+        {showForm && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700/50 rounded-2xl p-6 mb-8 backdrop-blur-sm"
+          >
+            <form onSubmit={handleSendCampaign} className="space-y-5">
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Campaign Subject</label>
+                <input
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  className="w-full bg-slate-900/50 border border-slate-700/50 p-3 rounded-xl text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                  placeholder="e.g., Summer Sale 50% Off!"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Message</label>
+                <textarea
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  className="w-full bg-slate-900/50 border border-slate-700/50 p-3 rounded-xl text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all resize-none"
+                  rows="5"
+                  placeholder="Write your campaign message..."
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Target Segment</label>
+                <select
+                  value={formData.targetSegment}
+                  onChange={(e) => setFormData({ ...formData, targetSegment: e.target.value })}
+                  className="w-full bg-slate-900/50 border border-slate-700/50 p-3 rounded-xl text-slate-300 outline-none focus:ring-2 focus:ring-indigo-500/40 transition-all"
+                >
+                  <option value="all">All Customers</option>
+                  <option value="purchased">Purchased Before</option>
+                  <option value="newsletter">Newsletter Subscribers</option>
+                  <option value="inactive">Inactive Users</option>
+                </select>
+              </div>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={sending}
+                className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 text-white font-bold py-3 rounded-xl hover:from-indigo-600 hover:to-blue-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {sending ? "Sending..." : <>
+                  <FiSend size={16} /> Send Campaign
+                </>}
+              </motion.button>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Campaigns List */}
+      <motion.div variants={fadeUp} custom={1}>
+        <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+          <FiFileText className="text-indigo-400" size={20} />
+          Recent Campaigns
+        </h3>
+        {loading ? (
+          <div className="text-center py-12">
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity }} className="w-8 h-8 border-2 border-indigo-400 border-t-transparent rounded-full mx-auto" />
+          </div>
+        ) : campaigns.length === 0 ? (
+          <div className="text-center py-12 bg-gradient-to-br from-slate-800/20 to-slate-900/20 rounded-2xl border border-dashed border-slate-700/50">
+            <FiMail size={32} className="text-slate-600 mx-auto mb-3" />
+            <p className="text-slate-400">No campaigns yet</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {campaigns.map((campaign, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700/50 rounded-xl p-5 hover:border-slate-600/50 transition-all group"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-white">{campaign.subject}</h4>
+                      <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">
+                        <FiCheckCircle className="inline mr-1" size={12} />
+                        Sent
+                      </span>
+                    </div>
+                    <p className="text-slate-400 text-sm mt-2">{campaign.message.substring(0, 100)}...</p>
+                    <p className="text-slate-500 text-xs mt-3">
+                      Recipients: <strong>{campaign.recipientCount || "—"}</strong> • 
+                      Sent: <strong>{new Date(campaign.sentAt).toLocaleDateString()}</strong>
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
 }

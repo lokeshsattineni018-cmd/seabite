@@ -1,138 +1,240 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { FiShoppingBag, FiMail, FiClock, FiTrash2, FiAlertCircle } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  FiShoppingCart, FiSearch, FiTrash2, FiRefreshCw,
+  FiDollarSign, FiMail, FiEye, FiClock
+} from "react-icons/fi";
 import toast from "react-hot-toast";
 
-const API_URL = import.meta.env.VITE_API_URL || "";
-
-const AdminAbandonedCarts = () => {
-    const [carts, setCarts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [sending, setSending] = useState(null);
-
-    const fetchCarts = async () => {
-        try {
-            const res = await axios.get(`${API_URL}/api/admin/carts/abandoned`, { withCredentials: true });
-            setCarts(res.data);
-        } catch (err) {
-            toast.error("Failed to load abandoned carts");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchCarts();
-    }, []);
-
-    const handleRemind = async (userId) => {
-        setSending(userId);
-        try {
-            await axios.post(`${API_URL}/api/admin/carts/remind/${userId}`, {}, { withCredentials: true });
-            toast.success("Reminder email sent!");
-        } catch (err) {
-            toast.error("Failed to send reminder");
-        } finally {
-            setSending(null);
-        }
-    };
-
-    const getImageUrl = (imagePath) => {
-        if (!imagePath) return "https://placehold.co/100?text=No+Image";
-        if (imagePath.startsWith("http")) return imagePath;
-        return `${API_URL}${imagePath.startsWith("/") ? "" : "/uploads/"}${imagePath}`;
-    };
-
-    if (loading) return <div className="p-8 text-center text-slate-500">Loading carts...</div>;
-
-    return (
-        <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans min-h-screen">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900 mb-2">Abandoned Carts</h1>
-                    <p className="text-slate-500">Recover lost sales by reminding customers.</p>
-                </div>
-                <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200">
-                    <span className="text-slate-500 text-sm font-bold">Total Potential Revenue: </span>
-                    <span className="text-emerald-600 font-bold text-lg">
-                        ₹{carts.reduce((acc, c) => acc + c.total, 0).toLocaleString()}
-                    </span>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-6">
-                {carts.length === 0 ? (
-                    <div className="bg-white p-12 rounded-2xl shadow-sm text-center border border-dashed border-slate-300">
-                        <FiShoppingBag size={48} className="mx-auto text-slate-300 mb-4" />
-                        <h3 className="text-lg font-bold text-slate-900">No Abandoned Carts</h3>
-                        <p className="text-slate-500">All carts are empty or converted!</p>
-                    </div>
-                ) : (
-                    carts.map((user) => (
-                        <motion.div
-                            key={user._id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-md transition-shadow"
-                        >
-                            <div className="p-6 flex flex-col md:flex-row gap-6">
-                                {/* User Info */}
-                                <div className="w-full md:w-1/4 space-y-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase">
-                                            {user.name[0]}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-slate-900">{user.name}</h3>
-                                            <p className="text-xs text-slate-500">{user.email}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 p-2 rounded-lg">
-                                        <FiClock />
-                                        Last active: {new Date(user.updatedAt).toLocaleDateString()} {new Date(user.updatedAt).toLocaleTimeString()}
-                                    </div>
-                                    <button
-                                        onClick={() => handleRemind(user._id)}
-                                        disabled={sending === user._id}
-                                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                                    >
-                                        {sending === user._id ? "Sending..." : <><FiMail /> Send Reminder</>}
-                                    </button>
-                                </div>
-
-                                {/* Cart Items */}
-                                <div className="flex-1 bg-slate-50 rounded-xl p-4">
-                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex justify-between">
-                                        <span>Cart Contents ({user.cart.length})</span>
-                                        <span>Total: ₹{user.total.toLocaleString()}</span>
-                                    </h4>
-                                    <div className="space-y-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
-                                        {user.cart.map((item, i) => (
-                                            <div key={i} className="flex items-center gap-3 bg-white p-2 rounded-lg border border-slate-100">
-                                                <img
-                                                    src={getImageUrl(item.product?.image)}
-                                                    alt={item.product?.name}
-                                                    className="w-12 h-12 object-contain bg-slate-50 rounded-md p-1"
-                                                />
-                                                <div className="flex-1">
-                                                    <p className="text-sm font-bold text-slate-900 line-clamp-1">{item.product?.name}</p>
-                                                    <p className="text-xs text-slate-500">Qty: {item.qty} × ₹{item.product?.price}</p>
-                                                </div>
-                                                <span className="font-bold text-slate-700 text-sm">
-                                                    ₹{(item.qty * (item.product?.price || 0)).toLocaleString()}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    ))
-                )}
-            </div>
-        </div>
-    );
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i = 0) => ({
+    opacity: 1, y: 0,
+    transition: { delay: i * 0.05, duration: 0.5 }
+  })
 };
 
-export default AdminAbandonedCarts;
+export default function AdminAbandonedCarts() {
+  const [carts, setCarts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCart, setSelectedCart] = useState(null);
+
+  const fetchAbandonedCarts = async (isSilent = false) => {
+    if (!isSilent) setLoading(true);
+    try {
+      const res = await axios.get("/api/admin/abandoned-carts", { withCredentials: true });
+      setCarts(res.data || []);
+    } catch (err) {
+      toast.error("Failed to fetch carts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAbandonedCarts();
+  }, []);
+
+  const handleRemoveCart = async (id) => {
+    if (!window.confirm("Remove this cart?")) return;
+    try {
+      await axios.delete(`/api/admin/abandoned-carts/${id}`, { withCredentials: true });
+      fetchAbandonedCarts(true);
+      setSelectedCart(null);
+      toast.success("Cart removed!");
+    } catch (err) {
+      toast.error("Failed to remove cart");
+    }
+  };
+
+  const sendReminder = async (cartId, email) => {
+    try {
+      await axios.post(`/api/admin/abandoned-carts/${cartId}/remind`, { email }, { withCredentials: true });
+      toast.success("Reminder sent!");
+    } catch (err) {
+      toast.error("Failed to send reminder");
+    }
+  };
+
+  const filteredCarts = carts.filter(cart =>
+    cart.customerEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    cart.customerName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const totalAbandonedValue = carts.reduce((sum, cart) => sum + (cart.totalValue || 0), 0);
+  const recoveryRate = ((carts.filter(c => c.recovered).length / carts.length) * 100 || 0).toFixed(1);
+
+  return (
+    <motion.div initial="hidden" animate="visible" className="p-5 md:p-8 lg:p-10 min-h-screen">
+      {/* Header */}
+      <motion.div variants={fadeUp} custom={0} className="mb-10">
+        <div>
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-red-400 via-pink-400 to-rose-400 bg-clip-text text-transparent flex items-center gap-3">
+            <motion.div whileHover={{ scale: 1.1, rotate: -5 }} className="w-12 h-12 rounded-2xl bg-gradient-to-br from-red-500/20 to-pink-500/20 flex items-center justify-center text-red-400 border border-red-500/30">
+              <FiShoppingCart size={24} />
+            </motion.div>
+            Abandoned Carts
+          </h1>
+          <p className="text-slate-400 text-sm mt-2 ml-16">Recover lost sales by re-engaging customers</p>
+        </div>
+      </motion.div>
+
+      {/* Stats */}
+      <motion.div variants={fadeUp} custom={1} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="bg-gradient-to-br from-red-500/20 to-pink-500/20 border border-red-500/30 rounded-xl p-5">
+          <p className="text-red-400 text-xs font-bold uppercase">Abandoned Carts</p>
+          <p className="text-3xl font-bold text-white mt-2">{carts.length}</p>
+        </div>
+        <div className="bg-gradient-to-br from-pink-500/20 to-rose-500/20 border border-pink-500/30 rounded-xl p-5">
+          <p className="text-pink-400 text-xs font-bold uppercase">Total Value</p>
+          <p className="text-3xl font-bold text-white mt-2">₹{totalAbandonedValue.toLocaleString()}</p>
+        </div>
+        <div className="bg-gradient-to-br from-rose-500/20 to-orange-500/20 border border-rose-500/30 rounded-xl p-5">
+          <p className="text-rose-400 text-xs font-bold uppercase">Recovery Rate</p>
+          <p className="text-3xl font-bold text-white mt-2">{recoveryRate}%</p>
+        </div>
+      </motion.div>
+
+      {/* Search */}
+      <motion.div variants={fadeUp} custom={2} className="mb-6">
+        <div className="relative">
+          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+          <input
+            placeholder="Search by customer or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-slate-800/50 border border-slate-700/50 pl-10 pr-4 py-3 rounded-xl text-slate-300 outline-none focus:ring-2 focus:ring-red-500/40 transition-all"
+          />
+        </div>
+      </motion.div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Carts List */}
+        <motion.div variants={fadeUp} custom={3} className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">All Abandoned Carts</h3>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              onClick={() => fetchAbandonedCarts(true)}
+              className="p-1.5 text-slate-500 hover:text-red-400 transition-colors"
+            >
+              <FiRefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            </motion.button>
+          </div>
+
+          <div className="space-y-3">
+            {loading ? (
+              [...Array(5)].map((_, i) => (
+                <motion.div key={i} animate={{ opacity: [0.5, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="bg-slate-800/30 rounded-xl h-20" />
+              ))
+            ) : filteredCarts.length === 0 ? (
+              <div className="text-center py-16 bg-gradient-to-br from-slate-800/20 to-slate-900/20 rounded-2xl border border-dashed border-slate-700/50">
+                <FiShoppingCart size={32} className="text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-400">No abandoned carts found</p>
+              </div>
+            ) : (
+              <AnimatePresence>
+                {filteredCarts.map((cart, i) => (
+                  <motion.div
+                    key={cart._id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ delay: i * 0.05 }}
+                    onClick={() => setSelectedCart(cart)}
+                    className={`bg-gradient-to-br ${selectedCart?._id === cart._id ? "from-red-500/10 to-pink-500/10 border-red-500/40" : "from-slate-800/40 to-slate-900/40 border-slate-700/50"} border rounded-xl p-4 cursor-pointer hover:border-red-500/30 transition-all group`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-bold text-white">{cart.customerName || "Unknown"}</p>
+                        <p className="text-slate-400 text-sm">{cart.customerEmail}</p>
+                        <div className="flex items-center gap-4 mt-2">
+                          <span className="text-red-400 font-bold">₹{cart.totalValue || 0}</span>
+                          <span className="text-slate-500 text-xs flex items-center gap-1">
+                            <FiClock size={12} />
+                            {new Date(cart.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-slate-600 group-hover:text-red-400 transition-colors">
+                        <FiEye size={18} />
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Cart Details */}
+        <motion.div variants={fadeUp} custom={4}>
+          {selectedCart ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700/50 rounded-2xl p-6 sticky top-8 backdrop-blur-sm"
+            >
+              <h3 className="font-bold text-white text-lg mb-6">Cart Details</h3>
+
+              <div className="space-y-4 mb-6 pb-6 border-b border-slate-700/50">
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-2">Customer</p>
+                  <p className="text-white font-medium">{selectedCart.customerName}</p>
+                  <a href={`mailto:${selectedCart.customerEmail}`} className="text-red-400 text-sm hover:text-red-300">
+                    {selectedCart.customerEmail}
+                  </a>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-2">Items</p>
+                  <div className="space-y-2">
+                    {selectedCart.items?.map((item, i) => (
+                      <div key={i} className="flex justify-between text-sm">
+                        <span className="text-slate-300">{item.name}</span>
+                        <span className="text-slate-400">x{item.qty}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-700/30">
+                  <div className="flex justify-between items-center">
+                    <p className="text-slate-400 text-sm">Cart Total:</p>
+                    <p className="text-red-400 font-bold text-lg">₹{selectedCart.totalValue || 0}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => sendReminder(selectedCart._id, selectedCart.customerEmail)}
+                  className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white font-bold py-2.5 rounded-xl hover:from-red-600 hover:to-pink-600 transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  <FiMail size={14} /> Send Reminder
+                </motion.button>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleRemoveCart(selectedCart._id)}
+                  className="w-full bg-slate-700/30 text-slate-300 border border-slate-700/50 font-bold py-2.5 rounded-xl hover:bg-slate-700/50 transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  <FiTrash2 size={14} /> Remove Cart
+                </motion.button>
+              </div>
+            </motion.div>
+          ) : (
+            <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700/50 rounded-2xl p-6 text-center">
+              <FiShoppingCart size={32} className="text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 text-sm">Select a cart to view details</p>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}

@@ -1,244 +1,228 @@
-// AdminMessages.jsx
 import { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  FiMail, FiCalendar, FiUser, FiRefreshCw,
-  FiSearch, FiInbox, FiClock, FiChevronRight,
-  FiSend, FiTrash2, FiStar, FiX
-} from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  FiMessageSquare, FiSearch, FiTrash2, FiRefreshCw,
+  FiArrowRight, FiClock, FiUser, FiMail, FiX
+} from "react-icons/fi";
 import toast from "react-hot-toast";
 
-const ease = [0.22, 1, 0.36, 1];
 const fadeUp = {
-  hidden: { opacity: 0, y: 10 },
+  hidden: { opacity: 0, y: 20 },
   visible: (i = 0) => ({
     opacity: 1, y: 0,
-    transition: { delay: i * 0.05, duration: 0.4, ease },
-  }),
+    transition: { delay: i * 0.05, duration: 0.5 }
+  })
 };
 
 export default function AdminMessages() {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [selectedMsg, setSelectedMsg] = useState(null);
-  const [replyModal, setReplyModal] = useState(false);
-  const [replyText, setReplyText] = useState("");
-  const [sending, setSending] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedMessage, setSelectedMessage] = useState(null);
 
   const fetchMessages = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
-      const res = await axios.get("/api/contact");
+      const res = await axios.get("/api/contact", { withCredentials: true });
       setMessages(res.data || []);
     } catch (err) {
-      toast.error("Failed to load messages");
+      toast.error("Failed to fetch messages");
     } finally {
-      if (!isSilent) setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchMessages();
+    const interval = setInterval(() => fetchMessages(true), 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  const handleReply = async () => {
-    if (!replyText.trim()) return toast.error("Message cannot be empty");
-
-    setSending(true);
-    const toastId = toast.loading("Sending reply...");
-
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this message?")) return;
     try {
-      await axios.post("/api/contact/reply", {
-        to: selectedMsg.email,
-        subject: `Re: Inquiry from ${new Date(selectedMsg.createdAt).toLocaleDateString()}`,
-        message: replyText,
-        originalMessageId: selectedMsg._id
-      });
-
-      toast.success("Reply sent successfully!", { id: toastId });
-      setReplyModal(false);
-      setReplyText("");
+      await axios.delete(`/api/contact/${id}`, { withCredentials: true });
+      fetchMessages(true);
+      setSelectedMessage(null);
+      toast.success("Message deleted!");
     } catch (err) {
-      toast.error("Failed to send reply", { id: toastId });
-    } finally {
-      setSending(false);
+      toast.error("Failed to delete message");
     }
   };
 
-  const filtered = messages.filter(
-    (msg) =>
-      msg.email?.toLowerCase().includes(search.toLowerCase()) ||
-      msg.message?.toLowerCase().includes(search.toLowerCase())
+  const filteredMessages = messages.filter(m =>
+    m.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    m.message?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getInitials = (email) => email ? email.charAt(0).toUpperCase() : "?";
-
   return (
-    <div className="p-4 md:p-8 h-screen max-h-screen flex flex-col font-sans bg-slate-50/50">
+    <motion.div initial="hidden" animate="visible" className="p-5 md:p-8 lg:p-10 min-h-screen">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6 shrink-0">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-200">
-              <FiInbox size={20} />
-            </div>
-            Inbox
-            <span className="text-sm font-medium text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-              {messages.length}
-            </span>
-          </h1>
-        </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => fetchMessages()}
-            className="p-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-all"
+      <motion.div variants={fadeUp} custom={0} className="mb-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 bg-clip-text text-transparent flex items-center gap-3">
+              <motion.div whileHover={{ scale: 1.1 }} className="w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center text-cyan-400 border border-cyan-500/30">
+                <FiMessageSquare size={24} />
+              </motion.div>
+              Customer Messages
+            </h1>
+            <p className="text-slate-400 text-sm mt-2 ml-16">Manage inquiries and customer communication</p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => fetchMessages(true)}
+            className="p-2.5 rounded-xl bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:text-cyan-400 transition-all"
           >
-            <FiRefreshCw size={18} />
-          </button>
+            <FiRefreshCw className={loading ? "animate-spin" : ""} size={18} />
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Main Content - Split View */}
-      <div className="flex-1 flex gap-6 min-h-0">
-        {/* Left: Message List */}
-        <div className="w-full md:w-1/3 lg:w-96 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
-          <div className="p-4 border-b border-slate-100">
-            <div className="relative">
-              <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500/10 transition-all upstream-text-slate-900"
-              />
-            </div>
+      {/* Search */}
+      <motion.div variants={fadeUp} custom={1} className="mb-6">
+        <div className="relative">
+          <FiSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+          <input
+            placeholder="Search messages..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-slate-800/50 border border-slate-700/50 pl-10 pr-4 py-3 rounded-xl text-slate-300 outline-none focus:ring-2 focus:ring-cyan-500/40 transition-all"
+          />
+        </div>
+      </motion.div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Messages List */}
+        <motion.div variants={fadeUp} custom={2} className="lg:col-span-2">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">All Messages</h3>
+            <span className="text-xs font-bold text-cyan-400 bg-cyan-500/10 px-2.5 py-0.5 rounded-full border border-cyan-500/20">
+              {messages.length} total
+            </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          <div className="space-y-3">
             {loading ? (
               [...Array(5)].map((_, i) => (
-                <div key={i} className="h-20 bg-slate-50 rounded-xl animate-pulse mx-2" />
+                <motion.div key={i} animate={{ opacity: [0.5, 1] }} transition={{ repeat: Infinity, duration: 2 }} className="bg-slate-800/30 rounded-xl h-20" />
               ))
-            ) : filtered.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 text-sm">No messages found</div>
+            ) : filteredMessages.length === 0 ? (
+              <div className="text-center py-16 bg-gradient-to-br from-slate-800/20 to-slate-900/20 rounded-2xl border border-dashed border-slate-700/50">
+                <FiMessageSquare size={32} className="text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-400">No messages found</p>
+              </div>
             ) : (
-              filtered.map((msg) => (
-                <div
-                  key={msg._id}
-                  onClick={() => setSelectedMsg(msg)}
-                  className={`p-3 rounded-xl cursor-pointer transition-all border ${selectedMsg?._id === msg._id ? "bg-blue-50 border-blue-100 shadow-sm" : "bg-transparent border-transparent hover:bg-slate-50"}`}
-                >
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className={`text-sm font-bold truncate ${selectedMsg?._id === msg._id ? "text-blue-700" : "text-slate-900"}`}>
-                      {msg.email}
-                    </h4>
-                    <span className="text-[10px] text-slate-400 shrink-0">
-                      {new Date(msg.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                  <p className={`text-xs line-clamp-2 ${selectedMsg?._id === msg._id ? "text-blue-600/80" : "text-slate-500"}`}>
-                    {msg.message}
-                  </p>
-                </div>
-              ))
+              <AnimatePresence>
+                {filteredMessages.map((msg, i) => (
+                  <motion.div
+                    key={msg._id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 20 }}
+                    transition={{ delay: i * 0.05 }}
+                    onClick={() => setSelectedMessage(msg)}
+                    className={`bg-gradient-to-br ${selectedMessage?._id === msg._id ? "from-cyan-500/10 to-blue-500/10 border-cyan-500/40" : "from-slate-800/40 to-slate-900/40 border-slate-700/50"} border rounded-xl p-4 cursor-pointer hover:border-cyan-500/30 transition-all group`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-bold text-white">{msg.name}</p>
+                          <span className="text-xs text-slate-500">{msg.email}</span>
+                        </div>
+                        <p className="text-slate-400 text-sm line-clamp-2">{msg.message}</p>
+                        <p className="text-slate-500 text-xs mt-2 flex items-center gap-1">
+                          <FiClock size={12} />
+                          {new Date(msg.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <FiArrowRight className="text-slate-600 group-hover:text-cyan-400 transition-colors ml-2 shrink-0" size={16} />
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             )}
           </div>
-        </div>
+        </motion.div>
 
-        {/* Right: Reading Pane */}
-        <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col overflow-hidden relative">
-          {selectedMsg ? (
-            <>
-              {/* Message Header */}
-              <div className="p-6 border-b border-slate-100 flex justify-between items-start">
-                <div className="flex gap-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold text-lg shadow-md">
-                    {getInitials(selectedMsg.email)}
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900">{selectedMsg.email}</h2>
-                    <p className="text-sm text-slate-500 flex items-center gap-2">
-                      <span className="bg-slate-100 px-2 py-0.5 rounded text-xs font-mono text-slate-600">Customer</span>
-                      &bull;
-                      <span>{new Date(selectedMsg.createdAt).toLocaleString()}</span>
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setReplyModal(true)}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:shadow-blue-300 transition-all flex items-center gap-2"
-                  >
-                    <FiSend /> Reply
-                  </button>
-                </div>
-              </div>
-
-              {/* Message Body */}
-              <div className="flex-1 p-8 overflow-y-auto bg-slate-50/30">
-                <div className="max-w-3xl">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Original Message</h3>
-                  <div className="text-slate-800 leading-relaxed text-base whitespace-pre-wrap font-medium">
-                    {selectedMsg.message}
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-300">
-              <FiInbox size={64} className="mb-4 opacity-50" />
-              <p className="text-lg font-medium">Select a conversation to start reading</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Reply Modal */}
-      <AnimatePresence>
-        {replyModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+        {/* Message Details */}
+        <motion.div variants={fadeUp} custom={3}>
+          {selectedMessage ? (
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
+              className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700/50 rounded-2xl p-6 sticky top-8 backdrop-blur-sm"
             >
-              <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                <h3 className="font-bold text-slate-800">Reply to {selectedMsg?.email}</h3>
-                <button onClick={() => setReplyModal(false)}><FiX className="text-slate-400 hover:text-slate-600" /></button>
+              <div className="flex items-start justify-between mb-6">
+                <h3 className="font-bold text-white text-lg">Message Details</h3>
+                <button
+                  onClick={() => setSelectedMessage(null)}
+                  className="text-slate-500 hover:text-slate-300 p-1"
+                >
+                  <FiX size={18} />
+                </button>
               </div>
-              <div className="p-6">
-                <textarea
-                  autoFocus
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder="Write your response here..."
-                  className="w-full h-40 p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/10 focus:border-blue-400 resize-none text-slate-700"
-                />
-                <div className="flex justify-end gap-3 mt-4">
-                  <button
-                    onClick={() => setReplyModal(false)}
-                    className="px-4 py-2 text-slate-500 hover:bg-slate-50 rounded-lg text-sm font-bold"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleReply}
-                    disabled={sending}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-bold hover:bg-blue-700 shadow-md shadow-blue-200 disabled:opacity-50 flex items-center gap-2"
-                  >
-                    {sending ? <FiRefreshCw className="animate-spin" /> : <FiSend />}
-                    Send Reply
-                  </button>
+
+              <div className="space-y-5">
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-2">Name</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center text-white text-xs font-bold">
+                      {selectedMessage.name?.charAt(0).toUpperCase()}
+                    </div>
+                    <p className="text-white font-medium">{selectedMessage.name}</p>
+                  </div>
                 </div>
+
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-2">Email</p>
+                  <a href={`mailto:${selectedMessage.email}`} className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 text-sm">
+                    <FiMail size={14} /> {selectedMessage.email}
+                  </a>
+                </div>
+
+                {selectedMessage.phone && (
+                  <div>
+                    <p className="text-xs text-slate-400 font-bold uppercase mb-2">Phone</p>
+                    <p className="text-white font-medium">{selectedMessage.phone}</p>
+                  </div>
+                )}
+
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-2">Message</p>
+                  <p className="text-slate-300 text-sm leading-relaxed bg-slate-700/20 p-3 rounded-lg">
+                    {selectedMessage.message}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-slate-400 font-bold uppercase mb-2">Received</p>
+                  <p className="text-slate-400 text-sm">
+                    {new Date(selectedMessage.createdAt).toLocaleString()}
+                  </p>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleDelete(selectedMessage._id)}
+                  className="w-full bg-red-500/20 text-red-300 border border-red-500/30 rounded-lg py-2 font-bold hover:bg-red-500/30 transition-all flex items-center justify-center gap-2 text-sm"
+                >
+                  <FiTrash2 size={14} /> Delete Message
+                </motion.button>
               </div>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
+          ) : (
+            <div className="bg-gradient-to-br from-slate-800/40 to-slate-900/40 border border-slate-700/50 rounded-2xl p-6 text-center">
+              <FiMessageSquare size={32} className="text-slate-600 mx-auto mb-3" />
+              <p className="text-slate-400 text-sm">Select a message to view details</p>
+            </div>
+          )}
+        </motion.div>
+      </div>
+    </motion.div>
   );
 }
