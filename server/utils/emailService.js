@@ -257,18 +257,26 @@ export const sendOtpEmail = async (email, otp) => {
     </p>
   `;
 
-  /**
-   * 🟢 7. GENERIC: SUPPORT REPLY / CUSTOM EMAIL
-   */
-  export const sendEmail = async (to, subject, content) => {
-    if (!resend) return;
+  return await resend.emails.send({
+    from: OFFICIAL_SENDER,
+    to: email,
+    subject: `SeaBite Security Code: ${otp}`,
+    html: aestheticWrapper(content, "SECURE ACTION")
+  });
+};
 
-    const html = aestheticWrapper(content, "SUPPORT MESSAGE");
+/**
+ * 🟢 7. GENERIC: SUPPORT REPLY / CUSTOM EMAIL
+ */
+export const sendEmail = async (to, subject, content) => {
+  if (!resend) return;
 
-    return await resend.emails.send({
-      from: OFFICIAL_SENDER,
-      to,
-      subject,
-      html
-    });
-  };
+  const html = aestheticWrapper(content, "SUPPORT MESSAGE");
+
+  return await resend.emails.send({
+    from: OFFICIAL_SENDER,
+    to,
+    subject,
+    html
+  });
+};
