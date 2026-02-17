@@ -547,6 +547,13 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
     if (!customer?.phone || !customer?.name) {
       return res.status(400).json({ message: "Customer Name and Phone are required." });
     }
+
+    // 🟢 Strict Phone Validation
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(customer.phone)) {
+      return res.status(400).json({ message: "Phone number must be exactly 10 digits." });
+    }
+
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "Cart is empty." });
     }

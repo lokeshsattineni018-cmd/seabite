@@ -239,7 +239,16 @@ export default function AdminPOS() {
                         <div className="grid grid-cols-2 gap-2">
                             <div className="relative">
                                 <FiPhone className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
-                                <input placeholder="Phone" value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })} className="w-full pl-7 pr-3 py-2 text-xs border border-slate-200 rounded-lg focus:border-blue-400 outline-none" />
+                                <input
+                                    placeholder="Phone (10 digits)"
+                                    value={customer.phone}
+                                    maxLength={10}
+                                    onChange={e => {
+                                        const val = e.target.value.replace(/\D/g, '');
+                                        setCustomer({ ...customer, phone: val });
+                                    }}
+                                    className="w-full pl-7 pr-3 py-2 text-xs border border-slate-200 rounded-lg focus:border-blue-400 outline-none"
+                                />
                             </div>
                             <div className="relative">
                                 <FiUser className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" size={12} />
