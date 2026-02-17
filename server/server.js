@@ -114,37 +114,51 @@ const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 app.use("/uploads", express.static(uploadDir));
 
-/* --- 3. DATABASE CONNECTION --- */
+/* --- 3. DATABASE CONNECTION (Optimized for Serverless) --- */
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
 const connectDB = async () => {
-  if (mongoose.connection.readyState >= 1) {
+  if (cached.conn) {
     console.log("➡️ Using existing MongoDB connection");
-    return;
+    return cached.conn;
   }
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      // dbName: "seabite", // 🔴 REMOVED to allow URI to dictate DB (where data is)
+
+  if (!cached.promise) {
+    const opts = {
       serverSelectionTimeoutMS: 30000,
       connectTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      maxPoolSize: 10,
-      minPoolSize: 2,
+      maxPoolSize: 5, // 🟢 Reduced to prevents connection spikes in serverless
+      minPoolSize: 1,
       retryWrites: true,
       retryReads: true,
+      bufferCommands: false, // Disable buffering for serverless immediate fail/success
+    };
+
+    console.log("🔄 Initializing new MongoDB connection...");
+    cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
+      console.log("✅ MongoDB Connected");
+      return mongoose;
     });
-    console.log("✅ MongoDB Connected");
-  } catch (error) {
-    console.error("❌ MongoDB Connection Error:", error);
-    throw error;
+  }
+
+  try {
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (e) {
+    cached.promise = null;
+    console.error("❌ MongoDB Connection Error:", e);
+    throw e;
   }
 };
 
-mongoose.connection.on('disconnected', () => {
-  console.log('⚠️ MongoDB disconnected');
-});
-
-mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB reconnected');
-});
+// Global handlers for connection events
+mongoose.connection.on('disconnected', () => console.log('⚠️ MongoDB disconnected'));
+mongoose.connection.on('reconnected', () => console.log('✅ MongoDB reconnected'));
 
 await connectDB();
 
