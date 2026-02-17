@@ -70,6 +70,12 @@ export const googleLogin = async (req, res) => {
       console.log("✅ New user created");
     }
 
+    // 🚫 BAN CHECK
+    if (user.isBanned) {
+      console.log("🚫 Banned user attempted login:", email);
+      return res.status(403).json({ message: "Access Denied: Your account has been suspended." });
+    }
+
     // ✅ SESSION VERIFICATION
     if (!req.session) {
       //console.error(
