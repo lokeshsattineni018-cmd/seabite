@@ -366,56 +366,94 @@ export default function AdminDashboard() {
           </div>
         </motion.div>
 
-        {/* Status Pie Chart */}
+        {/* 🟢 VERTICAL CONTROL STACK */}
         <motion.div
           variants={fadeUp}
           custom={5}
-          className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col group relative overflow-hidden"
+          className="lg:col-span-4 flex flex-col gap-4 h-full"
         >
-          <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-50/50 blur-[80px] -ml-24 -mb-24 rounded-full pointer-events-none" />
-
-          <h3 className="text-base font-bold text-slate-800 mb-0.5 uppercase tracking-tight">Status</h3>
-          <p className="text-[10px] text-slate-400 mb-6 font-medium uppercase">Distribution</p>
-
-          <div className="flex-1 min-h-[300px] relative z-10">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={orderStatusData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={85}
-                  outerRadius={110}
-                  paddingAngle={8}
-                  dataKey="value"
-                  animationBegin={500}
-                  animationDuration={1500}
-                  stroke="none"
-                >
-                  {orderStatusData.map((entry, index) => (
-                    <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} className="hover:opacity-80 transition-opacity cursor-pointer outline-none" />
-                  ))}
-                </Pie>
-                <Tooltip content={<PieTooltip />} />
-              </PieChart>
-            </ResponsiveContainer>
-
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-bold text-slate-800">{stats.totalOrders || 0}</span>
-              <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Total</span>
+          {/* 1. Maintenance Toggle */}
+          <div
+            onClick={toggleMaintenanceClick}
+            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group ${settings.isMaintenanceMode ? "bg-red-50 border-red-100" : "bg-white border-slate-200 shadow-sm hover:shadow-md"}`}
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className={`p-2 rounded-xl ${settings.isMaintenanceMode ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-400"}`}>
+                {settings.isMaintenanceMode ? <FiLock size={20} /> : <FiUnlock size={20} />}
+              </div>
+              <div className={`w-3 h-3 rounded-full ${settings.isMaintenanceMode ? "bg-red-500 animate-pulse" : "bg-emerald-500"}`} />
+            </div>
+            <div>
+              <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.isMaintenanceMode ? "text-red-700" : "text-slate-800"}`}>
+                {settings.isMaintenanceMode ? "Maintenance On" : "Store Live"}
+              </h3>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                {settings.isMaintenanceMode ? "Store is currently locked." : "Accepting orders normally."}
+              </p>
             </div>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 gap-3 relative z-10">
-            {orderStatusData.slice(0, 4).map((entry, index) => (
-              <div key={index} className="flex items-center gap-2.5 p-2.5 bg-slate-50 rounded-2xl border border-slate-100 shadow-sm">
-                <div className="w-2 h-2 rounded-full shadow-[0_0_8px] shadow-current transition-all" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length], color: PIE_COLORS[index % PIE_COLORS.length] }} />
-                <div className="flex flex-col">
-                  <span className="text-[9px] font-bold text-slate-900 uppercase leading-none">{entry.name}</span>
-                  <span className="text-[10px] font-bold text-slate-400 mt-1">{entry.value} orders</span>
-                </div>
+          {/* 2. Happy Hour Toggle */}
+          <div
+            onClick={async () => {
+              try {
+                const newDiscount = settings.globalDiscount > 0 ? 0 : 10;
+                await axios.put("/api/admin/enterprise/settings", { globalDiscount: newDiscount }, { withCredentials: true });
+                setSettings(prev => ({ ...prev, globalDiscount: newDiscount }));
+                toast.success(newDiscount > 0 ? "Happy Hour Status: ON" : "Happy Hour Status: OFF");
+              } catch (err) { toast.error("Failed"); }
+            }}
+            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group ${settings.globalDiscount > 0 ? "bg-purple-50 border-purple-100" : "bg-white border-slate-200 shadow-sm hover:shadow-md"}`}
+          >
+            <div className="flex justify-between items-start mb-2">
+              <div className={`p-2 rounded-xl ${settings.globalDiscount > 0 ? "bg-purple-100 text-purple-600" : "bg-slate-100 text-slate-400"}`}>
+                {settings.globalDiscount > 0 ? <FiZap size={20} /> : <FiClock size={20} />}
               </div>
-            ))}
+              {settings.globalDiscount > 0 && <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded">-10% OFF</span>}
+            </div>
+            <div>
+              <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.globalDiscount > 0 ? "text-purple-700" : "text-slate-800"}`}>
+                {settings.globalDiscount > 0 ? "Happy Hour Active" : "Happy Hour Off"}
+              </h3>
+              <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                {settings.globalDiscount > 0 ? "Global discount applied." : "Standard pricing active."}
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Promo Banner Toggle */}
+          <div className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all group ${settings.banner?.active ? "bg-blue-50 border-blue-100" : "bg-white border-slate-200 shadow-sm hover:shadow-md"}`}>
+            <div className="flex justify-between items-start mb-2">
+              <div className={`p-2 rounded-xl ${settings.banner?.active ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-400"}`}>
+                <FiStar size={20} />
+              </div>
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  try {
+                    const next = !settings.banner?.active;
+                    await axios.put("/api/admin/enterprise/settings", { banner: { ...settings.banner, active: next } }, { withCredentials: true });
+                    setSettings(prev => ({ ...prev, banner: { ...prev.banner, active: next } }));
+                    toast.success(next ? "Banner Live" : "Banner Hidden");
+                  } catch (err) { toast.error("Error"); }
+                }}
+                className={`w-10 h-5 rounded-full transition-all relative ${settings.banner?.active ? "bg-blue-500" : "bg-slate-200"}`}
+              >
+                <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.banner?.active ? "left-6" : "left-1"}`} />
+              </button>
+            </div>
+            <div>
+              <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.banner?.active ? "text-blue-800" : "text-slate-800"}`}>
+                Promo Banner
+              </h3>
+              <input
+                type="text"
+                value={settings.banner?.imageUrl || ""}
+                onChange={(e) => setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl: e.target.value } }))}
+                placeholder="Banner Image URL..."
+                className="w-full mt-2 bg-white/50 border border-slate-200/50 rounded-lg px-2 py-1 text-[10px] font-medium outline-none focus:bg-white focus:border-blue-300 transition-all placeholder:text-slate-400"
+              />
+            </div>
           </div>
         </motion.div>
       </div>
