@@ -43,9 +43,10 @@ import AddProduct from "./admin/AddProduct";
 import EditProduct from "./admin/EditProduct";
 import AdminOrders from "./admin/AdminOrders";
 import AdminUsers from "./admin/AdminUsers";
-import AdminLogin from "./admin/AdminLogin";
 import AdminMessages from "./admin/AdminMessages";
+import AdminReviews from "./admin/AdminReviews"; // 🟢 NEW IMPORT
 import AdminCoupons from "./admin/AdminCoupons";
+import AdminPOS from "./admin/AdminPOS"; // 🟢 NEW IMPORT
 
 import AdminFlashSale from "./admin/AdminFlashSale";
 import AdminMarketing from "./admin/AdminMarketing";
@@ -89,19 +90,23 @@ function MainLayout() {
     return () => axios.interceptors.response.eject(interceptor);
   }, []);
 
-  // Warm up backend & Check Maintenance
+  // 🟢 Fetch Global Settings (Maintenance, Happy Hour, Banner)
   useEffect(() => {
-    const checkStatus = async () => {
+    const fetchSettings = async () => {
       try {
-        await axios.get("/api/products?limit=1");
-        // If successful, do nothing (maintenance is false)
-      } catch (err) {
-        if (err.response?.status === 503 && err.response.data.maintenance) {
-          setMaintenance({ active: true, message: err.response.data.message });
-        }
+        const { data } = await axios.get(`${axios.defaults.baseURL}/api/admin/enterprise/settings`);
+        setMaintenance({
+          active: data.isMaintenanceMode,
+          message: data.maintenanceMessage,
+          banner: data.banner // 🟢 Capture Banner Settings
+        });
+      } catch (error) {
+        // console.error("Failed to check maintenance mode:", error);
       }
     };
-    checkStatus();
+    fetchSettings();
+    const interval = setInterval(fetchSettings, 60000); // Check every minute
+    return () => clearInterval(interval);
   }, []);
 
   // In MainLayout body
@@ -115,6 +120,9 @@ function MainLayout() {
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
       <Toaster position="top-right" toastOptions={{ duration: 3000, style: { background: '#1e293b', color: '#fff', borderRadius: '12px', padding: '16px', fontSize: '14px', fontWeight: '600' } }} />
+
+      {/* 🟢 Global Popup Banner */}
+      <BannerPopup bannerSettings={maintenance.banner} />
 
       {maintenance.active && !isAdminRoute && location.pathname !== "/login" ? ( // 🟢 Exempt /login
         <Maintenance message={maintenance.message} />
@@ -131,7 +139,6 @@ function MainLayout() {
           <div className="flex-grow">
             {isAdminRoute ? (
               <Routes>
-                <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
                 <Route path="/admin" element={adminLayoutElement}>
                   <Route index element={<AdminDashboard />} />
                   <Route path="dashboard" element={<AdminDashboard />} />
@@ -141,6 +148,8 @@ function MainLayout() {
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="messages" element={<AdminMessages />} />
+                  <Route path="reviews" element={<AdminReviews />} /> {/* 🟢 NEW ROUTE */}
+                  <Route path="pos" element={<AdminPOS />} /> {/* 🟢 NEW ROUTE */}
                   <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="flash-sale" element={<AdminFlashSale />} />
                   <Route path="marketing" element={<AdminMarketing />} />

@@ -10,9 +10,9 @@ import {
 import {
   FiShoppingBag, FiUsers, FiTrendingUp, FiActivity,
   FiDollarSign, FiCalendar, FiMail, FiTrash2, FiStar,
-  FiArrowUpRight, FiArrowDownRight, FiClock, FiEye,
+  FiArrowUpRight, FiArrowDownRight, FiClock, FiEye, FiTrendingUp,
   FiRefreshCw, FiMoreHorizontal, FiPackage, FiSettings, FiSearch,
-  FiAlertCircle, FiPower, FiCheckCircle, FiLock, FiUnlock, FiX, FiZap
+  FiAlertCircle, FiPower, FiCheckCircle, FiLock, FiUnlock, FiX, FiZap, FiDownload // 🟢 Added
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { io } from "socket.io-client"; // Unused
@@ -426,6 +426,173 @@ export default function AdminDashboard() {
         </button>
       </motion.div>
 
+      {/* ✅ ENTERPRISE: BANNER MANAGEMENT */}
+      <motion.div
+        variants={fadeUp}
+        custom={1.6}
+        className={`bg-white rounded-2xl p-4 border border-l-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4 ${settings.banner?.active
+          ? "border-blue-500 bg-blue-50/50"
+          : "border-slate-300 bg-slate-50/50"
+          }`}
+      >
+        <div className="flex items-center gap-4 w-full md:w-auto">
+          <div className={`p-3 rounded-full ${settings.banner?.active ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-500"
+            }`}>
+            {settings.banner?.active ? <FiStar size={20} /> : <FiSearch size={20} />}
+          </div>
+          <div className="flex-1">
+            <h3 className={`font-bold ${settings.banner?.active ? "text-blue-700" : "text-slate-700"}`}>
+              {settings.banner?.active ? "Popup Banner Active" : "Popup Banner Inactive"}
+            </h3>
+            <div className="flex flex-col gap-2 mt-2 w-full md:w-96">
+              <input
+                type="text"
+                placeholder="Image URL (e.g. /banners/sale.jpg)"
+                className="text-xs border border-slate-200 rounded px-2 py-1 w-full"
+                value={settings.banner?.imageUrl || ""}
+                onChange={(e) => setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl: e.target.value } }))}
+              />
+              <input
+                type="text"
+                placeholder="Link URL (Optional)"
+                className="text-xs border border-slate-200 rounded px-2 py-1 w-full"
+                value={settings.banner?.link || ""}
+                onChange={(e) => setSettings(prev => ({ ...prev, banner: { ...prev.banner, link: e.target.value } }))}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              try {
+                const res = await axios.put("/api/admin/enterprise/settings", {
+                  banner: settings.banner
+                }, { withCredentials: true });
+                toast.success("Banner Updated!");
+              } catch (err) {
+                toast.error("Failed to save banner details");
+              }
+            }}
+            className="px-4 py-2.5 rounded-xl text-sm font-bold bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm transition-all active:scale-95"
+          >
+            Save Details
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const newActiveState = !settings.banner?.active;
+                const newBanner = { ...settings.banner, active: newActiveState };
+                const res = await axios.put("/api/admin/enterprise/settings", { banner: newBanner }, { withCredentials: true });
+                setSettings(prev => ({ ...prev, banner: newBanner }));
+                toast.success(newActiveState ? "Banner Activated! 🚀" : "Banner Disabled");
+              } catch (err) {
+                toast.error("Failed to toggle Banner");
+              }
+            }}
+            className={`px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm transition-all active:scale-95 ${settings.banner?.active
+              ? "bg-blue-600 text-white hover:bg-blue-700"
+              : "bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+              }`}
+          >
+            {settings.banner?.active ? "Disable Banner" : "Enable Banner"}
+          </button>
+        </div>
+      </motion.div>
+
+      {/* ✅ ENTERPRISE: DATA EXPORTS */}
+      <motion.div
+        variants={fadeUp}
+        custom={1.7}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+      >
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-full"><FiDollarSign size={20} /></div>
+            <div>
+              <h3 className="font-bold text-slate-900">Sales Report</h3>
+              <p className="text-xs text-slate-500">Export all orders to CSV</p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              const toastId = toast.loading("Exporting Sales...");
+              try {
+                const { data } = await axios.get("/api/orders", { withCredentials: true });
+                const csvContent = [
+                  ["Order ID", "Date", "Customer", "Email", "Items", "Total", "Status", "Payment"],
+                  ...data.map(o => [
+                    o.orderId || o._id,
+                    new Date(o.createdAt).toLocaleDateString(),
+                    o.user?.name || "Guest",
+                    o.user?.email || "N/A",
+                    o.items.map(i => `${i.name} (x${i.qty})`).join("; "),
+                    o.totalAmount,
+                    o.status,
+                    o.paymentMethod
+                  ])
+                ].map(e => e.join(",")).join("\n");
+
+                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `sales_report_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+                toast.success("Sales Report Downloaded!", { id: toastId });
+              } catch (e) {
+                toast.error("Export Failed", { id: toastId });
+              }
+            }}
+            className="p-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors"
+          >
+            <FiDownload size={20} />
+          </button>
+        </div>
+
+        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-blue-50 text-blue-600 rounded-full"><FiUsers size={20} /></div>
+            <div>
+              <h3 className="font-bold text-slate-900">Customer Data</h3>
+              <p className="text-xs text-slate-500">Export user list & CLV</p>
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              const toastId = toast.loading("Exporting Customers...");
+              try {
+                const { data } = await axios.get("/api/admin/users/intelligence", { withCredentials: true });
+                const csvContent = [
+                  ["User ID", "Name", "Email", "Role", "Joined", "Total Spent", "Orders"],
+                  ...data.map(u => [
+                    u._id,
+                    u.name,
+                    u.email,
+                    u.role,
+                    new Date(u.createdAt).toLocaleDateString(),
+                    u.intelligence?.totalSpent || 0,
+                    u.intelligence?.orderCount || 0
+                  ])
+                ].map(e => e.join(",")).join("\n");
+
+                const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = `customers_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+                toast.success("Customer Data Downloaded!", { id: toastId });
+              } catch (e) {
+                toast.error("Export Failed", { id: toastId });
+              }
+            }}
+            className="p-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors"
+          >
+            <FiDownload size={20} />
+          </button>
+        </div>
+      </motion.div>
+
+
       {/* Stats Grid */}
       <motion.div
         variants={staggerContainer}
@@ -442,6 +609,17 @@ export default function AdminDashboard() {
           color="emerald"
           sparkData={revenueSparkline}
           index={0}
+        />
+        {/* 🟢 NEW: Net Profit Card */}
+        <StatCard
+          title="Net Profit"
+          value={`₹${stats.netProfit?.toLocaleString() || 0}`}
+          icon={<FiTrendingUp size={20} />}
+          trend="+8.2%"
+          trendUp={true}
+          color="blue"
+          sparkData={[5, 8, 12, 15, 20, 25, 30]}
+          index={1}
         />
         <StatCard
           title="Total Orders"
@@ -713,7 +891,7 @@ export default function AdminDashboard() {
         </motion.div>
       </div>
 
-    </motion.div>
+    </motion.div >
   );
 }
 

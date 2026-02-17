@@ -42,7 +42,7 @@ export default function EditProduct() {
       .get(`${backendBase}/api/admin/products/${id}`, { withCredentials: true })
       .then((res) => {
         const data = res.data || {};
-        setForm({ ...data, basePrice: data.basePrice || "", unit: data.unit || "kg", stock: data.stock || "in" });
+        setForm({ ...data, basePrice: data.basePrice || "", buyingPrice: data.buyingPrice || "", unit: data.unit || "kg", stock: data.stock || "in" });
         setLoading(false);
       })
       .catch((err) => {
@@ -62,13 +62,13 @@ export default function EditProduct() {
     setSubmitting(true);
     try {
       await axios.put(`${backendBase}/api/admin/products/${id}`, {
-        name: form.name, category: form.category, basePrice: Number(form.basePrice),
+        name: form.name, category: form.category, basePrice: Number(form.basePrice), buyingPrice: Number(form.buyingPrice),
         unit: form.unit, desc: form.desc, image: form.image, trending: form.trending, stock: form.stock,
       }, { withCredentials: true });
       setModal({ show: true, message: "Product updated successfully!", type: "success" });
       setTimeout(() => navigate("/admin/products"), 1500);
     } catch (err) {
-     // console.error("Edit product update error:", err);
+      // console.error("Edit product update error:", err);
       setModal({ show: true, message: "Update failed.", type: "error" });
       setSubmitting(false);
     }
@@ -138,8 +138,12 @@ export default function EditProduct() {
                 <div className="relative"><FiTag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><select name="category" value={form.category} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none appearance-none cursor-pointer text-sm font-semibold focus:border-blue-400 transition-all"><option value="Fish">Fish</option><option value="Prawn">Prawn</option><option value="Crab">Crab</option></select></div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Price</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Selling Price</label>
                 <div className="relative"><FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input type="number" name="basePrice" value={form.basePrice} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none font-mono font-semibold text-sm focus:border-blue-400 transition-all" /></div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Cost Price</label>
+                <div className="relative"><FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input type="number" name="buyingPrice" value={form.buyingPrice} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none font-mono font-semibold text-sm focus:border-blue-400 transition-all" /></div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Unit</label>

@@ -62,12 +62,21 @@ router.get("/", adminAuth, async (req, res) => {
     const allOrders = await Order.find({});
     const totalRevenue = allOrders.reduce((acc, item) => acc + (item.totalAmount || 0), 0);
 
+    // 🟢 NEW: Calculate Total Cost (Buying Price * Qty)
+    const totalCost = allOrders.reduce((acc, order) => {
+      const orderCost = order.items.reduce((sum, item) => sum + ((item.buyingPrice || 0) * item.qty), 0);
+      return acc + orderCost;
+    }, 0);
+
+    const netProfit = totalRevenue - totalCost;
+
     const stats = {
       products: await Product.countDocuments(),
       totalOrders: await Order.countDocuments(), // 🟢 Renamed for frontend
       activeUsers: await User.countDocuments(), // 🟢 Renamed for frontend
       pendingOrders: await Order.countDocuments({ status: "Pending" }), // 🟢 Added
-      totalRevenue: Math.round(totalRevenue)
+      totalRevenue: Math.round(totalRevenue),
+      netProfit: Math.round(netProfit) // 🟢 NEW
     };
 
     // 🕵️ EXTRA INTELLIGENCE: Sales Heatmap (Day of Week & Hour)
@@ -199,10 +208,11 @@ router.post("/maintenance/verify", adminAuth, async (req, res) => {
 // 1.3 UPDATE SETTINGS (Generic - Kept for other settings)
 router.put("/enterprise/settings", adminAuth, async (req, res) => {
   try {
-    const { maintenanceMessage, globalDiscount } = req.body; // Removed isMaintenanceMode from direct toggle
+    const { maintenanceMessage, globalDiscount, banner } = req.body; // Removed isMaintenanceMode from direct toggle
     let settings = await getSettings();
     if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
     if (globalDiscount !== undefined) settings.globalDiscount = globalDiscount; // 🟢 NEW
+    if (banner) settings.banner = banner; // 🟢 NEW: Banner Settings
 
     // If they try to toggle maintenance here, we ignore it or block it. 
     // For now, let's assume the frontend calls the new verify route for the toggle.
@@ -398,6 +408,29 @@ router.get("/users", adminAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'User list failed' }); }
 });
 
+// 4.1 UPDATE USER ROLE/BAN
+router.put("/users/:id", adminAuth, async (req, res) => {
+  try {
+    const { role, isBanned } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Prevent Admin from banning themselves
+    if (user._id.toString() === req.user._id.toString() && isBanned) {
+      return res.status(400).json({ message: "You cannot ban yourself." });
+    }
+
+    if (role) user.role = role;
+    if (typeof isBanned !== 'undefined') user.isBanned = isBanned;
+
+    await user.save();
+    res.json({ message: "User updated successfully", user });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update user" });
+  }
+});
+
 // 5. DELETE PRODUCT REVIEW
 router.delete("/products/:productId/reviews/:reviewId", adminAuth, async (req, res) => {
   try {
@@ -492,6 +525,67 @@ router.post("/carts/remind/:userId", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("Cart Reminder Failed:", err);
     res.status(500).json({ message: "Failed to send reminder" });
+  }
+});
+
+// 🟢 POS: MANUAL ORDER CREATION
+router.post("/orders/manual", adminAuth, async (req, res) => {
+  try {
+    const { customer, items, totalAmount, paymentMethod, source } = req.body;
+
+    // 1. Find or Create User
+    let user = await User.findOne({ phone: customer.phone });
+    if (!user) {
+      // Create a temporary/guest user
+      user = await User.create({
+        name: customer.name,
+        phone: customer.phone,
+        email: customer.email || `guest_${Date.now()}@seabite.pos`,
+        password: "pos_guest_user", // Placeholder
+        role: "user"
+      });
+    }
+
+    // 2. Create Order
+    const order = await Order.create({
+      user: user._id,
+      items: items.map(i => ({
+        productId: i.productId,
+        name: i.name,
+        price: i.price,
+        buyingPrice: i.buyingPrice,
+        qty: i.qty,
+        image: i.image
+      })),
+      shippingAddress: {
+        fullName: customer.name,
+        phone: customer.phone,
+        houseNo: "POS", street: "Store Walk-in", city: "Vizag", state: "AP", zip: "530001"
+      },
+      paymentMethod: paymentMethod || "Cash",
+      totalAmount,
+      isPaid: true,
+      paidAt: Date.now(),
+      isDelivered: true, // Instant delivery for POS
+      deliveredAt: Date.now(),
+      status: "Delivered",
+      source: source || "POS"
+    });
+
+    // 3. Update Stock (Decrease)
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+      if (product) {
+        // If tracking exact count (optional)
+        // product.countInStock -= item.qty;
+        // await product.save();
+      }
+    }
+
+    res.status(201).json({ message: "Order created", order });
+  } catch (err) {
+    console.error("POS Order Error:", err);
+    res.status(500).json({ message: "Failed to create manual order" });
   }
 });
 

@@ -9,36 +9,19 @@ import { ThemeContext } from "../context/ThemeContext";
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Cart({ open, onClose }) {
-  const [cart, setCart] = useState([]);
+  const { cartItems, removeFromCart, updateQuantity } = useContext(CartContext); // 🟢 Use Context
   const [showPopup, setShowPopup] = useState(false);
   const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (open) {
-      setCart(getCart());
-    }
-  }, [open]);
+  // Remove local useEffect for getCart - Context handles it
 
-  const updateQty = (id, change) => {
-    const updated = cart
-      .map((item) =>
-        item.id === id ? { ...item, qty: item.qty + change } : item
-      )
-      .filter((item) => item.qty > 0);
-
-    setCart(updated);
-    saveCart(updated);
-  };
-
-  const removeItem = (id) => {
-    const updated = cart.filter((item) => item.id !== id);
-    setCart(updated);
-    saveCart(updated);
+  const handleUpdateQty = (id, currentQty, change) => {
+    updateQuantity(id, currentQty + change);
   };
 
   const handleCheckout = () => {
-    if (cart.length === 0) {
+    if (cartItems.length === 0) {
       setShowPopup(true);
       return;
     }
@@ -46,7 +29,7 @@ export default function Cart({ open, onClose }) {
     navigate("/checkout");
   };
 
-  const total = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const total = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
 
   return (
     <>
@@ -78,7 +61,7 @@ export default function Cart({ open, onClose }) {
               transition={{ type: "spring", damping: 28, stiffness: 220 }}
               className="fixed top-0 right-0 h-full w-full md:w-[450px] bg-white dark:bg-[#0f172a] z-[70] shadow-2xl flex flex-col border-l border-slate-100 dark:border-white/5 font-sans"
             >
-              
+
               {/* HEADER */}
               <motion.div
                 initial={{ opacity: 0, y: -15 }}
@@ -87,18 +70,18 @@ export default function Cart({ open, onClose }) {
                 className="px-6 py-5 flex items-center justify-between border-b border-slate-100 dark:border-white/5 bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-10"
               >
                 <div className="flex items-center gap-3">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.25 }}
-                      className="bg-blue-600 text-white p-2 rounded-lg"
-                    >
-                        <FiShoppingBag size={20} />
-                    </motion.div>
-                    <div>
-                        <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-none">My Cart</h2>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{cart.length} items selected</p>
-                    </div>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.25 }}
+                    className="bg-blue-600 text-white p-2 rounded-lg"
+                  >
+                    <FiShoppingBag size={20} />
+                  </motion.div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-white leading-none">My Cart</h2>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{cart.length} items selected</p>
+                  </div>
                 </div>
                 <motion.button
                   whileHover={{ scale: 1.1, rotate: 90 }}
@@ -152,30 +135,30 @@ export default function Cart({ open, onClose }) {
                       >
                         {/* Image */}
                         <div className="w-24 h-24 shrink-0 bg-slate-50 dark:bg-slate-900 rounded-xl p-2 flex items-center justify-center border border-slate-100 dark:border-white/5">
-                           <img 
-                            src={item.image} 
-                            alt={item.name} 
-                            className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-screen" 
-                           />
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-screen"
+                          />
                         </div>
 
                         {/* Details */}
                         <div className="flex-1 min-w-0 flex flex-col justify-between">
                           <div className="flex justify-between items-start gap-2">
-                              <div>
-                                <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{item.name}</h3>
-                                <p className="text-xs text-slate-500 mt-0.5">{"\u20B9"}{item.price.toFixed(2)} / unit</p>
-                              </div>
-                              <motion.button
-                                whileHover={{ scale: 1.2 }}
-                                whileTap={{ scale: 0.8 }}
-                                onClick={() => removeItem(item.id)}
-                                className="text-slate-300 hover:text-red-500 transition-colors p-1"
-                              >
-                                <FiTrash2 size={16} />
-                              </motion.button>
+                            <div>
+                              <h3 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{item.name}</h3>
+                              <p className="text-xs text-slate-500 mt-0.5">{"\u20B9"}{item.price.toFixed(2)} / unit</p>
+                            </div>
+                            <motion.button
+                              whileHover={{ scale: 1.2 }}
+                              whileTap={{ scale: 0.8 }}
+                              onClick={() => removeItem(item.id)}
+                              className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                            >
+                              <FiTrash2 size={16} />
+                            </motion.button>
                           </div>
-                          
+
                           <div className="flex items-center justify-between mt-3">
                             {/* Quantity */}
                             <div className="flex items-center bg-slate-100 dark:bg-slate-900 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
@@ -206,7 +189,7 @@ export default function Cart({ open, onClose }) {
               </div>
 
               {/* FOOTER */}
-              {cart.length > 0 && (
+              {cartItems.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -215,12 +198,12 @@ export default function Cart({ open, onClose }) {
                 >
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Subtotal</span>
-                        <span className="font-bold text-slate-900 dark:text-white">{"\u20B9"}{total.toFixed(2)}</span>
+                      <span className="text-slate-500">Subtotal</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{"\u20B9"}{total.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                        <span className="text-slate-500">Shipping</span>
-                        <span className="font-bold text-emerald-600">Calculated at checkout</span>
+                      <span className="text-slate-500">Shipping</span>
+                      <span className="font-bold text-emerald-600">Calculated at checkout</span>
                     </div>
                   </div>
 
@@ -230,10 +213,10 @@ export default function Cart({ open, onClose }) {
                     onClick={handleCheckout}
                     className="w-full py-3.5 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-full font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 group"
                   >
-                    Checkout 
+                    Checkout
                     <FiArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </motion.button>
-                  
+
                   <p className="text-center text-xs text-slate-400 mt-4 flex items-center justify-center gap-1.5">
                     <FiLock size={12} /> Secure Transaction
                   </p>

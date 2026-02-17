@@ -8,43 +8,49 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 export const CartContext = createContext();
 
 // Function to calculate totals from the cart array (kept outside Provider)
-const calculateTotals = (cart) => {
+// Function to calculate totals from the cart array (kept outside Provider)
+const calculateTotals = (cart, globalDiscount = 0) => {
     let subtotal = 0;
     let count = 0;
 
-    for (const item of cart) {
-        // Robust parsing: handle strings, numbers, and missing values
-        let price = parseFloat(item.price);
-        if (isNaN(price)) {
-            price = parseFloat(item.basePrice);
-        }
-        if (isNaN(price)) {
-            price = 0;
+    const updatedCart = cart.map(item => {
+        let price = parseFloat(item.basePrice); // Always start from basePrice
+        if (isNaN(price)) price = parseFloat(item.price) || 0;
+
+        // Check for Flash Sale (need to ensure item has flashSale data)
+        const isFlashSale = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
+
+        if (isFlashSale) {
+            price = parseFloat(item.flashSale.discountPrice);
+        } else if (globalDiscount > 0) {
+            price = Math.round(price * (1 - globalDiscount / 100));
         }
 
         const qty = Number(item.qty || 1);
 
-        // Ensure we don't propagate NaN
         if (!isNaN(price) && !isNaN(qty)) {
             subtotal += price * qty;
             count += qty;
         }
-    }
+
+        return { ...item, price }; // Return item with effective price
+    });
 
     // Define your business logic for fixed tax and delivery here (adjust as needed)
     const taxRate = 0.05; // Example: 5% tax
-    const deliveryFee = subtotal >= 1500 ? 0 : 75; // Example: Free delivery over ₹1500
+    const deliveryFee = subtotal >= 1000 ? 0 : 99; // Updated to match Checkout logic (1000)
 
-    const tax = subtotal * taxRate;
+    const tax = Math.round(subtotal * taxRate);
     const grandTotal = subtotal + tax + deliveryFee;
 
     return {
-        cartItems: cart,
+        cartItems: updatedCart,
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
         deliveryFee: deliveryFee.toFixed(2),
         grandTotal: grandTotal.toFixed(2),
         cartCount: count,
+        globalDiscount, // Expose it
     };
 };
 
@@ -59,20 +65,45 @@ export const CartProvider = ({ children }) => {
         grandTotal: '0.00',
         tax: '0.00',
         deliveryFee: '0.00',
+        globalDiscount: 0, // 🟢 NEW
     });
+
+    // Fetch Global Discount
+    const [globalDiscount, setGlobalDiscount] = useState(0);
+
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                // We'll use the products endpoint since it returns globalDiscount
+                // Or ideally a dedicated settings endpoint. For now, products is safe.
+                const res = await axios.get(`${API_URL}/api/products?limit=1`);
+                if (res.data.globalDiscount) {
+                    setGlobalDiscount(res.data.globalDiscount);
+                }
+            } catch (err) {
+                // console.error(err);
+            }
+        };
+        fetchSettings();
+    }, []);
+
+    // Recalculate totals whenever cart OR discount changes
+    useEffect(() => {
+        updateCartState();
+    }, [globalDiscount]); // Add discount dependency
 
     // Function to read cart data from localStorage and update state
     const updateCartState = useCallback(() => {
         try {
             const cart = JSON.parse(localStorage.getItem("cart") || "[]");
-            const totals = calculateTotals(cart);
+            const totals = calculateTotals(cart, globalDiscount); // Pass discount
 
             // Set the full state object
             setCartState(totals);
         } catch (e) {
             // console.error("Failed to parse cart data from localStorage:", e);
         }
-    }, []);
+    }, [globalDiscount]); // Add dependency
 
     // Function exposed to components (like Products.jsx) to trigger a refresh
     const refreshCartCount = updateCartState;

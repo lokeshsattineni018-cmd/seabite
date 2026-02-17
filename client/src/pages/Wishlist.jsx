@@ -2,6 +2,7 @@ import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
+import { CartContext } from "../context/CartContext"; // 🟢 Import
 import { ThemeContext } from "../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import EnhancedProductCard from "../components/EnhancedProductCard";
@@ -12,6 +13,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 export default function Wishlist() {
     const { user } = useContext(AuthContext);
     const { isDarkMode } = useContext(ThemeContext);
+    const { globalDiscount } = useContext(CartContext); // 🟢 Consume
     const [wishlist, setWishlist] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -98,8 +100,9 @@ export default function Wishlist() {
                                 >
                                     <EnhancedProductCard
                                         product={product}
-                                        onWishlistChange={handleRemoveFromWishlist} // Pass callback to remove from list instantly
+                                        onWishlistChange={handleRemoveFromWishlist}
                                         isWishlistMode={true}
+                                        globalDiscount={globalDiscount} // 🟢 Pass from Context
                                     />
                                 </motion.div>
                             ))}

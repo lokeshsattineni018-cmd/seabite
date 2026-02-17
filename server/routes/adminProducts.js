@@ -71,6 +71,7 @@ router.post(
         active: true,
         image: cloudinaryResponse.secure_url, // Use Cloudinary URL
         basePrice: Number(basePrice),
+        buyingPrice: Number(req.body.buyingPrice || 0), // 🟢 NEW
         unit: unit,
       });
 
@@ -104,6 +105,7 @@ router.put("/:id", adminAuth, async (req, res) => {
           stock,
           image,
           basePrice: Number(basePrice),
+          buyingPrice: Number(req.body.buyingPrice || 0), // 🟢 NEW
           unit,
           countInStock: countInStock !== undefined ? Number(countInStock) : oldProduct.countInStock
         }

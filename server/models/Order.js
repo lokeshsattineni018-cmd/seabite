@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 
 const shippingAddressSchema = new mongoose.Schema({
-    fullName: { type: String, required: true },
-    phone: { type: String, required: true },
-    houseNo: { type: String, required: true }, 
-    street: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    zip: { type: String, required: true },
+  fullName: { type: String, required: true },
+  phone: { type: String, required: true },
+  houseNo: { type: String, required: true },
+  street: { type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  zip: { type: String, required: true },
 });
 
 const counterSchema = new mongoose.Schema({
@@ -27,26 +27,27 @@ const orderSchema = new mongoose.Schema(
     },
     items: [
       {
-        productId: { 
-            type: mongoose.Schema.Types.ObjectId, 
-            ref: "Product", 
-            required: true 
-        }, 
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+          required: true
+        },
         name: { type: String, required: true },
         price: { type: Number, default: 0 },
+        buyingPrice: { type: Number, default: 0 }, // 🟢 NEW: Snapshot of Cost Price
         qty: { type: Number, default: 1 }, // Used for Top Selling aggregation
         image: { type: String, required: true }, // Required for Dashboard thumbnails
       },
     ],
-    itemsPrice: { type: Number, default: 0 },    
-    taxPrice: { type: Number, default: 0 },      
-    shippingPrice: { type: Number, default: 0 }, 
-    discount: { type: Number, default: 0 },      
+    itemsPrice: { type: Number, default: 0 },
+    taxPrice: { type: Number, default: 0 },
+    shippingPrice: { type: Number, default: 0 },
+    discount: { type: Number, default: 0 },
     totalAmount: { type: Number, required: true }, // Used for Dashboard Revenue stats
-    
-    razorpay_order_id: { type: String, index: true }, 
-    paymentMethod: { type: String, required: true, default: "COD" }, 
-    
+
+    razorpay_order_id: { type: String, index: true },
+    paymentMethod: { type: String, required: true, default: "COD" },
+
     paymentId: { type: String },
     isPaid: { type: Boolean, default: false },
     paidAt: { type: Date },
@@ -56,16 +57,16 @@ const orderSchema = new mongoose.Schema(
     deliveredAt: { type: Date },
 
     shippingAddress: {
-        type: shippingAddressSchema,
-        required: true,
+      type: shippingAddressSchema,
+      required: true,
     },
     status: {
       type: String,
       default: "Pending", // Options: Pending, Shipped, Delivered, Cancelled
     },
-    refundStatus: { 
-      type: String, 
-      default: "None" 
+    refundStatus: {
+      type: String,
+      default: "None"
     },
     cancelReason: {
       type: String,
@@ -77,7 +78,7 @@ const orderSchema = new mongoose.Schema(
 
 // Auto-increment logic for Order ID
 orderSchema.pre("save", async function () {
-  if (this.isNew && !this.orderId) { 
+  if (this.isNew && !this.orderId) {
     const counter = await Counter.findOneAndUpdate(
       { name: "order" },
       { $inc: { seq: 1 } },

@@ -113,7 +113,7 @@ const CheckoutSteps = ({ currentStep }) => (
 );
 
 export default function Checkout() {
-  const [cart, setCart] = useState([]);
+  const { cartItems, subtotal, grandTotal: contextGrandTotal, refreshCartCount, clearCart } = useContext(CartContext); // 🟢 Use Context
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({
     show: false,
@@ -127,10 +127,10 @@ export default function Checkout() {
   const [couponMessage, setCouponMessage] = useState(null);
   const [verifyingCoupon, setVerifyingCoupon] = useState(false);
 
+  // Load spin discount from localStorage
   const [spinDiscount, setSpinDiscount] = useState(null);
 
   const navigate = useNavigate();
-  const { refreshCartCount } = useContext(CartContext);
   const { isDarkMode } = useContext(ThemeContext);
 
   const [addresses, setAddresses] = useState([]); // Saved addresses state
@@ -160,7 +160,6 @@ export default function Checkout() {
     }
   }, []);
 
-  // Load spin discount from localStorage
   useEffect(() => {
     const savedDiscount = localStorage.getItem("seabiteSpinDiscount");
     if (savedDiscount) {
@@ -190,47 +189,34 @@ export default function Checkout() {
   };
 
   useEffect(() => {
-    const c = getCart();
-    if (c.length === 0) {
+    if (cartItems.length === 0) {
       setModal({
         show: true,
         message: "Your cart is empty!",
         type: "error",
       });
       setTimeout(() => navigate("/products"), 2000);
-    } else {
-      setCart(c);
     }
-  }, [navigate]);
+  }, [cartItems, navigate]);
 
-  const handleUpdateQty = (id, change) => {
-    const updated = cart
-      .map((item) =>
-        item._id === id
-          ? { ...item, qty: Math.max(0, item.qty + change) }
-          : item
-      )
-      .filter((item) => item.qty > 0);
+  // Handlers (using local set for now, but really should use Context if we want to update qty here)
+  // Checkout usually doesn't allow editing Qty, but existing code had logic. Context has updateQuantity.
 
-    setCart(updated);
-    saveCart(updated);
-    refreshCartCount();
-    if (isCouponApplied) handleRemoveCoupon();
+  // existing handleUpdateQty was local. We should use Context if we want to support it. 
+  // For now, I'll remove updating qty in checkout or use context methods if needed. 
+  // Since Checkout UI shows +/- buttons, I should use Context.
+  const { updateQuantity, removeFromCart } = useContext(CartContext);
+
+  const handleUpdateQty = (id, currentQty, change) => {
+    updateQuantity(id, currentQty + change);
   };
 
   const handleRemoveItem = (id) => {
-    const updated = cart.filter((item) => item._id !== id);
-    setCart(updated);
-    saveCart(updated);
-    refreshCartCount();
-    if (isCouponApplied) handleRemoveCoupon();
+    removeFromCart(id);
   };
 
-  const itemTotal = cart.reduce(
-    (sum, item) => sum + item.price * item.qty,
-    0
-  );
-
+  // derived itemTotal from Context Subtotal (string -> number)
+  const itemTotal = parseFloat(subtotal);
   const deliveryCharge = itemTotal >= 1000 ? 0 : 99;
 
   // Around line 112 - This line looks fine, but let's verify the error handling:
@@ -341,7 +327,7 @@ export default function Checkout() {
 
     const orderDetails = {
       amount: grandTotal,
-      items: cart.map((item) => ({
+      items: cartItems.map((item) => ({ // 🟢 Use cartItems
         productId: item._id,
         name: item.name,
         price: item.price,
@@ -668,13 +654,13 @@ export default function Checkout() {
                 Your Items
               </h3>
               <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-lg">
-                {cart.length} {cart.length === 1 ? "item" : "items"}
+                {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
               </span>
             </div>
 
             <div className="space-y-3">
               <AnimatePresence mode="popLayout">
-                {cart.map((item, index) => (
+                {cartItems.map((item, index) => (
                   <motion.div
                     key={item._id}
                     layout
@@ -710,7 +696,7 @@ export default function Checkout() {
                       <div className="flex items-center bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <motion.button
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleUpdateQty(item._id, -1)}
+                          onClick={() => handleUpdateQty(item._id, item.qty, -1)}
                           className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                         >
                           <FiMinus size={12} />
@@ -720,7 +706,7 @@ export default function Checkout() {
                         </span>
                         <motion.button
                           whileTap={{ scale: 0.9 }}
-                          onClick={() => handleUpdateQty(item._id, 1)}
+                          onClick={() => handleUpdateQty(item._id, item.qty, 1)}
                           className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                         >
                           <FiPlus size={12} />

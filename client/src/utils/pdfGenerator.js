@@ -113,7 +113,7 @@ export const generateInvoicePDF = async (order) => {
     });
 
     // ----- Summary -----
-    const finalY = doc.previousAutoTable.finalY + 10;
+    const finalY = (doc.lastAutoTable?.finalY || doc.previousAutoTable?.finalY || 95) + 10;
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
