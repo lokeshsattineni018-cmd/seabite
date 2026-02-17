@@ -375,21 +375,24 @@ export default function AdminDashboard() {
           {/* 1. Maintenance Toggle */}
           <div
             onClick={toggleMaintenanceClick}
-            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group ${settings.isMaintenanceMode ? "bg-red-50 border-red-100" : "bg-white border-slate-200 shadow-sm hover:shadow-md"}`}
+            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group flex justify-between items-center ${settings.isMaintenanceMode ? "bg-red-50 border-red-200 shadow-md shadow-red-100" : "bg-white border-slate-200 shadow-sm hover:border-slate-300"}`}
           >
-            <div className="flex justify-between items-start mb-2">
-              <div className={`p-2 rounded-xl ${settings.isMaintenanceMode ? "bg-red-100 text-red-600" : "bg-slate-100 text-slate-400"}`}>
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-full transition-colors ${settings.isMaintenanceMode ? "bg-red-500 text-white" : "bg-slate-100 text-slate-400"}`}>
                 {settings.isMaintenanceMode ? <FiLock size={20} /> : <FiUnlock size={20} />}
               </div>
-              <div className={`w-3 h-3 rounded-full ${settings.isMaintenanceMode ? "bg-red-500 animate-pulse" : "bg-emerald-500"}`} />
+              <div>
+                <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.isMaintenanceMode ? "text-red-700" : "text-slate-800"}`}>
+                  {settings.isMaintenanceMode ? "Maintenance On" : "Maintenance Off"}
+                </h3>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                  {settings.isMaintenanceMode ? "Store is currently locked." : "Store is live."}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.isMaintenanceMode ? "text-red-700" : "text-slate-800"}`}>
-                {settings.isMaintenanceMode ? "Maintenance On" : "Store Live"}
-              </h3>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-                {settings.isMaintenanceMode ? "Store is currently locked." : "Accepting orders normally."}
-              </p>
+            {/* Toggle Switch */}
+            <div className={`w-12 h-7 rounded-full p-1 transition-colors ${settings.isMaintenanceMode ? "bg-red-500 shadow-inner" : "bg-slate-200"}`}>
+              <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.isMaintenanceMode ? "translate-x-5" : "translate-x-0"}`} />
             </div>
           </div>
 
@@ -400,33 +403,47 @@ export default function AdminDashboard() {
                 const newDiscount = settings.globalDiscount > 0 ? 0 : 10;
                 await axios.put("/api/admin/enterprise/settings", { globalDiscount: newDiscount }, { withCredentials: true });
                 setSettings(prev => ({ ...prev, globalDiscount: newDiscount }));
-                toast.success(newDiscount > 0 ? "Happy Hour Status: ON" : "Happy Hour Status: OFF");
-              } catch (err) { toast.error("Failed"); }
+                toast.success(newDiscount > 0 ? "Happy Hour Activated! ⚡" : "Happy Hour Ended.");
+              } catch (err) { toast.error("Failed to update status."); }
             }}
-            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group ${settings.globalDiscount > 0 ? "bg-purple-50 border-purple-100" : "bg-white border-slate-200 shadow-sm hover:shadow-md"}`}
+            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group flex justify-between items-center ${settings.globalDiscount > 0 ? "bg-purple-50 border-purple-200 shadow-md shadow-purple-100" : "bg-white border-slate-200 shadow-sm hover:border-slate-300"}`}
           >
-            <div className="flex justify-between items-start mb-2">
-              <div className={`p-2 rounded-xl ${settings.globalDiscount > 0 ? "bg-purple-100 text-purple-600" : "bg-slate-100 text-slate-400"}`}>
+            <div className="flex items-center gap-4">
+              <div className={`p-3 rounded-full transition-colors ${settings.globalDiscount > 0 ? "bg-purple-500 text-white" : "bg-slate-100 text-slate-400"}`}>
                 {settings.globalDiscount > 0 ? <FiZap size={20} /> : <FiClock size={20} />}
               </div>
-              {settings.globalDiscount > 0 && <span className="text-[10px] font-bold bg-purple-100 text-purple-700 px-2 py-0.5 rounded">-10% OFF</span>}
+              <div>
+                <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.globalDiscount > 0 ? "text-purple-700" : "text-slate-800"}`}>
+                  {settings.globalDiscount > 0 ? "Happy Hour On" : "Happy Hour Off"}
+                </h3>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                  {settings.globalDiscount > 0 ? "-10% Global Discount." : "Normal pricing."}
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.globalDiscount > 0 ? "text-purple-700" : "text-slate-800"}`}>
-                {settings.globalDiscount > 0 ? "Happy Hour Active" : "Happy Hour Off"}
-              </h3>
-              <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-                {settings.globalDiscount > 0 ? "Global discount applied." : "Standard pricing active."}
-              </p>
+            {/* Toggle Switch */}
+            <div className={`w-12 h-7 rounded-full p-1 transition-colors ${settings.globalDiscount > 0 ? "bg-purple-500 shadow-inner" : "bg-slate-200"}`}>
+              <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.globalDiscount > 0 ? "translate-x-5" : "translate-x-0"}`} />
             </div>
           </div>
 
           {/* 3. Promo Banner Toggle */}
-          <div className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all group ${settings.banner?.active ? "bg-blue-50 border-blue-100" : "bg-white border-slate-200 shadow-sm hover:shadow-md"}`}>
-            <div className="flex justify-between items-start mb-2">
-              <div className={`p-2 rounded-xl ${settings.banner?.active ? "bg-blue-100 text-blue-600" : "bg-slate-100 text-slate-400"}`}>
-                <FiStar size={20} />
+          <div className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all group flex flex-col justify-center ${settings.banner?.active ? "bg-blue-50 border-blue-200 shadow-md shadow-blue-100" : "bg-white border-slate-200 shadow-sm hover:border-slate-300"}`}>
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-4">
+                <div className={`p-3 rounded-full transition-colors ${settings.banner?.active ? "bg-blue-500 text-white" : "bg-slate-100 text-slate-400"}`}>
+                  <FiStar size={20} />
+                </div>
+                <div>
+                  <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.banner?.active ? "text-blue-800" : "text-slate-800"}`}>
+                    Promo Banner
+                  </h3>
+                  <p className="text-[10px] text-slate-400 font-medium mt-0.5">
+                    {settings.banner?.active ? "Banner is visible." : "Banner is hidden."}
+                  </p>
+                </div>
               </div>
+              {/* Toggle Switch */}
               <button
                 onClick={async (e) => {
                   e.stopPropagation();
@@ -434,26 +451,22 @@ export default function AdminDashboard() {
                     const next = !settings.banner?.active;
                     await axios.put("/api/admin/enterprise/settings", { banner: { ...settings.banner, active: next } }, { withCredentials: true });
                     setSettings(prev => ({ ...prev, banner: { ...prev.banner, active: next } }));
-                    toast.success(next ? "Banner Live" : "Banner Hidden");
-                  } catch (err) { toast.error("Error"); }
+                    toast.success(next ? "Banner Published! 🎉" : "Banner Unpublished.");
+                  } catch (err) { toast.error("Error updating banner."); }
                 }}
-                className={`w-10 h-5 rounded-full transition-all relative ${settings.banner?.active ? "bg-blue-500" : "bg-slate-200"}`}
+                className={`w-12 h-7 rounded-full p-1 transition-colors ${settings.banner?.active ? "bg-blue-500 shadow-inner" : "bg-slate-200"}`}
               >
-                <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${settings.banner?.active ? "left-6" : "left-1"}`} />
+                <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.banner?.active ? "translate-x-5" : "translate-x-0"}`} />
               </button>
             </div>
-            <div>
-              <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.banner?.active ? "text-blue-800" : "text-slate-800"}`}>
-                Promo Banner
-              </h3>
-              <input
-                type="text"
-                value={settings.banner?.imageUrl || ""}
-                onChange={(e) => setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl: e.target.value } }))}
-                placeholder="Banner Image URL..."
-                className="w-full mt-2 bg-white/50 border border-slate-200/50 rounded-lg px-2 py-1 text-[10px] font-medium outline-none focus:bg-white focus:border-blue-300 transition-all placeholder:text-slate-400"
-              />
-            </div>
+            {/* Input Area (Collapsed when inactive could be an option, but kept visible for ease) */}
+            <input
+              type="text"
+              value={settings.banner?.imageUrl || ""}
+              onChange={(e) => setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl: e.target.value } }))}
+              placeholder="Paste Banner Image URL here..."
+              className="w-full bg-white/50 border border-slate-200/50 rounded-lg px-3 py-2 text-[10px] font-medium outline-none focus:bg-white focus:border-blue-300 transition-all placeholder:text-slate-400"
+            />
           </div>
         </motion.div>
       </div>

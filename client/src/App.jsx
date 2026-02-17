@@ -120,7 +120,35 @@ function MainLayout() {
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
-      <Toaster position="top-right" toastOptions={{ duration: 3000, style: { background: '#1e293b', color: '#fff', borderRadius: '12px', padding: '16px', fontSize: '14px', fontWeight: '600' } }} />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(12px)',
+            color: '#0f172a',
+            borderRadius: '16px',
+            padding: '16px 24px',
+            fontSize: '14px',
+            fontWeight: '600',
+            border: '1px solid rgba(255,255,255,0.5)',
+            boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)'
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: 'white',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: 'white',
+            },
+          }
+        }}
+      />
 
       {/* 🟢 Global Popup Banner */}
       <BannerPopup bannerSettings={maintenance.banner} />

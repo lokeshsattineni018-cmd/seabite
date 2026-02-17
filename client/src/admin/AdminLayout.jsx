@@ -94,11 +94,29 @@ export default function AdminLayout() {
               />
             </div>
 
-            {/* Notifications */}
-            <button className="relative p-2.5 bg-white border border-slate-200/80 rounded-xl text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm active:scale-95">
-              <FiBell size={18} />
-              <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-            </button>
+            {/* Notifications Dropdown */}
+            <div className="relative group">
+              <button className="relative p-2.5 bg-white border border-slate-200/80 rounded-xl text-slate-500 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm active:scale-95">
+                <FiBell size={18} />
+                <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              </button>
+
+              {/* Dropdown Content (Hover or Focus) */}
+              <div className="absolute right-0 top-full mt-3 w-80 bg-white rounded-2xl shadow-xl border border-slate-100 p-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all z-50 transform origin-top-right scale-95 group-hover:scale-100">
+                <div className="px-3 py-2 border-b border-slate-50 flex justify-between items-center">
+                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">Notifications</span>
+                  <span className="text-[10px] font-bold text-blue-500 cursor-pointer">Mark all read</span>
+                </div>
+                <div className="max-h-60 overflow-y-auto">
+                  <div className="p-4 text-center">
+                    <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-2 text-slate-300">
+                      <FiBell size={16} />
+                    </div>
+                    <p className="text-xs text-slate-400 font-medium">No new notifications</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Profile Avatar */}
             <div className="flex items-center gap-3 pl-2 border-l border-slate-200">
