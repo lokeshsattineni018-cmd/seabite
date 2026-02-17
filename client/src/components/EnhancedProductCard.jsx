@@ -8,7 +8,7 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false }) => {
+const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false, globalDiscount = 0 }) => {
     const { addToCart } = useContext(CartContext);
     const { user, refreshMe } = useContext(AuthContext);
     const navigate = useNavigate();
@@ -23,7 +23,13 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
     const isActiveFlashSale = product.flashSale?.isFlashSale &&
         new Date(product.flashSale.saleEndDate) > new Date();
 
-    const displayPrice = isActiveFlashSale ? product.flashSale.discountPrice : product.basePrice;
+    // 🟢 DYNAMIC PRICING LOGIC
+    let displayPrice = isActiveFlashSale ? product.flashSale.discountPrice : product.basePrice;
+    const globalDiscountApplied = !isActiveFlashSale && globalDiscount > 0;
+
+    if (globalDiscountApplied) {
+        displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
+    }
 
     useEffect(() => {
         if (!isActiveFlashSale) return;
@@ -154,6 +160,11 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
                         <FiZap size={8} /> FLASH DEAL
                     </span>
                 )}
+                {globalDiscountApplied && (
+                    <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-md uppercase flex items-center gap-1">
+                        HAPPY HOUR -{globalDiscount}%
+                    </span>
+                )}
             </div>
 
             {/* Wishlist/Remove Button */}
@@ -208,7 +219,7 @@ const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false
 
                 <div className="mt-auto">
                     <div className="flex items-baseline gap-2 mb-3">
-                        {isActiveFlashSale && (
+                        {(isActiveFlashSale || globalDiscountApplied) && (
                             <span className="text-sm text-slate-400 line-through font-medium">
                                 ₹{product.basePrice}
                             </span>

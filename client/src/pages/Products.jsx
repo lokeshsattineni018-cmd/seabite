@@ -43,6 +43,7 @@ export default function Products() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
+  const [globalDiscount, setGlobalDiscount] = useState(0); // 🟢 NEW
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -86,6 +87,7 @@ export default function Products() {
 
       const res = await axios.get(`${API_URL}/api/products`, { params });
       setProducts(res.data.products || res.data || []);
+      setGlobalDiscount(res.data.globalDiscount || 0); // 🟢 NEW
     } catch (err) {
       console.error("Products fetch error:", err);
     } finally {
@@ -233,7 +235,7 @@ export default function Products() {
                       exit={{ opacity: 0, scale: 0.9 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <EnhancedProductCard product={p} />
+                      <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
                     </motion.div>
                   ))
                 ) : (

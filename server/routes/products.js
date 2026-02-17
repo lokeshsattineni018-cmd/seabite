@@ -4,6 +4,7 @@ import Order from "../models/Order.js";
 import upload from "../config/multerConfig.js";
 import { protect } from "../middleware/authMiddleware.js";
 import SearchInsight from "../models/SearchInsight.js";
+import { getSettings } from "../models/Settings.js"; // 🟢 Import
 
 const router = express.Router();
 
@@ -92,12 +93,80 @@ router.get("/", async (req, res) => {
       }
     }
 
-    res.json({ products });
+    // 🟢 FETCH GLOBAL SETTINGS for Dynamic Pricing (Safe)
+    let globalDiscount = 0;
+    try {
+      const settings = await getSettings();
+      if (settings) globalDiscount = settings.globalDiscount || 0;
+    } catch (err) {
+      // console.error("Failed to fetch settings:", err);
+    }
+
+    res.json({ products, globalDiscount });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
+// Simple Levenshtein Distance for "Did you mean?"
+const levenshtein = (a, b) => {
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1, // substitution
+          Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1) // insertion/deletion
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+};
+
+// 🟢 SMART SEARCH AUTOSUGGEST
+router.get("/search/suggest", async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json([]);
+
+    let suggestions = await Product.find({
+      name: { $regex: q, $options: "i" },
+      active: true
+    })
+      .select("name image category basePrice")
+      .limit(5);
+
+    // 🟢 "DID YOU MEAN?" LOGIC (If no results)
+    if (suggestions.length === 0 && q.length > 2) {
+      const allProducts = await Product.find({ active: true }).select("name image category basePrice");
+
+      const fuzzyMatches = allProducts.map(p => ({
+        ...p.toObject(),
+        dist: levenshtein(q.toLowerCase(), p.name.toLowerCase())
+      }))
+        .filter(p => p.dist <= 3) // Allow up to 3 typos
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 3)
+        .map(p => ({ ...p, isDidYouMean: true }));
+
+      if (fuzzyMatches.length > 0) {
+        suggestions = fuzzyMatches;
+      }
+    }
+
+    res.json(suggestions);
+  } catch (err) {
+    res.status(500).json({ message: "Search failed" });
+  }
+});
+
+// --- GET SINGLE PRODUCT ---
 // --- GET SINGLE PRODUCT WITH RELATED ITEMS ---
 router.get("/:id", async (req, res) => {
   try {
@@ -113,28 +182,18 @@ router.get("/:id", async (req, res) => {
       .select('name image basePrice stock averageRating')
       .limit(3);
 
-    res.json({ ...product.toObject(), relatedProducts });
+    // 🟢 FETCH GLOBAL SETTINGS (Safe)
+    let globalDiscount = 0;
+    try {
+      const settings = await getSettings();
+      if (settings) globalDiscount = settings.globalDiscount || 0;
+    } catch (err) {
+      // console.error("Global discount fetch failed", err);
+    }
+
+    res.json({ ...product.toObject(), relatedProducts, globalDiscount });
   } catch (err) {
     res.status(500).json({ message: err.message });
-  }
-});
-
-// 🟢 NEW: SMART SEARCH AUTOSUGGEST
-router.get("/search/suggest", async (req, res) => {
-  try {
-    const { q } = req.query;
-    if (!q) return res.json([]);
-
-    const suggestions = await Product.find({
-      name: { $regex: q, $options: "i" },
-      active: true
-    })
-      .select("name image category basePrice")
-      .limit(5);
-
-    res.json(suggestions);
-  } catch (err) {
-    res.status(500).json({ message: "Search failed" });
   }
 });
 

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const settingsSchema = new mongoose.Schema({
     isMaintenanceMode: { type: Boolean, default: false },
     maintenanceMessage: { type: String, default: "SeaBite is currently undergoing scheduled maintenance. We'll be back shortly with fresh catches!" },
+    globalDiscount: { type: Number, default: 0 }, // 🟢 NEW
     lastUpdatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true });
 

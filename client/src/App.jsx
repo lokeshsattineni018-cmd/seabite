@@ -49,6 +49,7 @@ import AdminCoupons from "./admin/AdminCoupons";
 
 import AdminFlashSale from "./admin/AdminFlashSale";
 import AdminMarketing from "./admin/AdminMarketing";
+import AdminAbandonedCarts from "./admin/AdminAbandonedCarts"; // 🟢 NEW IMPORT
 
 // Context
 import { CartProvider } from "./context/CartContext";
@@ -88,16 +89,19 @@ function MainLayout() {
     return () => axios.interceptors.response.eject(interceptor);
   }, []);
 
-  // Warm up backend silently
+  // Warm up backend & Check Maintenance
   useEffect(() => {
-    const warmUpBackend = async () => {
+    const checkStatus = async () => {
       try {
         await axios.get("/api/products?limit=1");
+        // If successful, do nothing (maintenance is false)
       } catch (err) {
-        // Silent fail - non-critical
+        if (err.response?.status === 503 && err.response.data.maintenance) {
+          setMaintenance({ active: true, message: err.response.data.message });
+        }
       }
     };
-    warmUpBackend();
+    checkStatus();
   }, []);
 
   // In MainLayout body
@@ -140,6 +144,7 @@ function MainLayout() {
                   <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="flash-sale" element={<AdminFlashSale />} />
                   <Route path="marketing" element={<AdminMarketing />} />
+                  <Route path="carts" element={<AdminAbandonedCarts />} /> {/* 🟢 NEW ROUTE */}
                 </Route>
               </Routes>
             ) : (
@@ -180,11 +185,11 @@ function MainLayout() {
 export default function App() {
   return (
     <ThemeProvider>
-      <CartProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <CartProvider>
           <MainLayout />
-        </AuthProvider>
-      </CartProvider>
+        </CartProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

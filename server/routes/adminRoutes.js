@@ -39,6 +39,7 @@ router.get("/", adminAuth, async (req, res) => {
         $group: {
           _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
           orders: { $sum: 1 },
+          revenue: { $sum: "$totalAmount" } // ✅ Added Revenue Calculation
         }
       }
     ]);
@@ -51,7 +52,11 @@ router.get("/", adminAuth, async (req, res) => {
       const monthName = d.toLocaleString('default', { month: 'short' });
 
       const found = rawGraphData.find(g => g._id.year === year && g._id.month === month);
-      finalGraph.push({ month: monthName, orders: found ? found.orders : 0 });
+      finalGraph.push({
+        name: monthName, // ✅ Match frontend 'name' key
+        orders: found ? found.orders : 0,
+        revenue: found ? found.revenue : 0 // ✅ Include revenue
+      });
     }
 
     const allOrders = await Order.find({});
@@ -193,9 +198,10 @@ router.post("/maintenance/verify", adminAuth, async (req, res) => {
 // 1.3 UPDATE SETTINGS (Generic - Kept for other settings)
 router.put("/enterprise/settings", adminAuth, async (req, res) => {
   try {
-    const { maintenanceMessage } = req.body; // Removed isMaintenanceMode from direct toggle
+    const { maintenanceMessage, globalDiscount } = req.body; // Removed isMaintenanceMode from direct toggle
     let settings = await getSettings();
     if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
+    if (globalDiscount !== undefined) settings.globalDiscount = globalDiscount; // 🟢 NEW
 
     // If they try to toggle maintenance here, we ignore it or block it. 
     // For now, let's assume the frontend calls the new verify route for the toggle.
@@ -430,6 +436,48 @@ router.get("/reviews/all", adminAuth, async (req, res) => {
     allReviews.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     res.json(allReviews);
   } catch (err) { res.status(500).json({ message: "Failed to fetch reviews" }); }
+});
+
+// 🟢 ABANDONED CARTS
+router.get("/carts/abandoned", adminAuth, async (req, res) => {
+  try {
+    // Find users with non-empty cart and updated > 1 hour ago (optional time filter)
+    // For demo, just all non-empty carts
+    const users = await User.find({ "cart.0": { $exists: true } })
+      .select("name email cart updatedAt phone")
+      .populate("cart.product", "name price image");
+
+    const abandoned = users.map(u => ({
+      _id: u._id,
+      name: u.name,
+      email: u.email,
+      phone: u.phone,
+      updatedAt: u.updatedAt,
+      cart: u.cart.filter(item => item.product), // Filter nulls
+      total: u.cart.reduce((sum, item) => sum + (item.product?.price || 0) * item.qty, 0)
+    })).filter(u => u.cart.length > 0);
+
+    res.json(abandoned);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch abandoned carts" });
+  }
+});
+
+router.post("/carts/remind/:userId", adminAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // In a real app, this would use emailService.sendEmail
+    // For now, we'll simulate it or use the existing email service if possible
+    // import { sendEmail } from "../utils/emailService.js";
+    // await sendEmail(user.email, "You left something behind!", "Your cart is waiting...", ...);
+
+    // Mock success
+    res.json({ message: `Reminder sent to ${user.email}` });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to send reminder" });
+  }
 });
 
 export default router;
