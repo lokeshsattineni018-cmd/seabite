@@ -64,13 +64,13 @@ export default function AdminUsers() {
     e.preventDefault();
     try {
       if (!editingUser) return;
+      // Only sending isBanned status, Role is no longer editable here
       const res = await axios.put(`/api/admin/users/${editingUser._id}`, {
-        role: editingUser.role,
         isBanned: editingUser.isBanned
       }, { withCredentials: true });
 
-      toast.success("User updated successfully");
-      setUsers(users.map(u => u._id === editingUser._id ? { ...u, role: editingUser.role, isBanned: editingUser.isBanned } : u));
+      toast.success(editingUser.isBanned ? "User Banned Successfully" : "User Unbanned Successfully");
+      setUsers(users.map(u => u._id === editingUser._id ? { ...u, isBanned: editingUser.isBanned } : u));
       setEditingUser(null);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update user");
@@ -87,16 +87,12 @@ export default function AdminUsers() {
   const totalRevenue = users.reduce((sum, u) => sum + (u.intelligence?.totalSpent || 0), 0);
 
   return (
-    <motion.div initial="hidden" animate="visible" className="p-4 md:p-8 lg:p-10 min-h-screen relative font-sans">
+    <motion.div initial="hidden" animate="visible" className="p-4 md:p-6 min-h-screen relative font-sans flex flex-col">
       {/* Header */}
-      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">Users</h1>
-          <div className="flex items-center gap-3 mt-1.5">
-            <p className="text-slate-500 text-xs md:text-sm">Manage accounts and permissions</p>
-            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{users.length} total</span>
-            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{adminCount} admins</span>
-          </div>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Users & Permissions</h1>
+          <p className="text-slate-500 text-xs md:text-sm mt-1">Manage customer access and monitor bans</p>
         </div>
         <div className="flex gap-2 w-full md:w-auto">
           <motion.button whileTap={{ scale: 0.95 }} onClick={() => fetchUsers()} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
@@ -110,18 +106,18 @@ export default function AdminUsers() {
       </motion.div>
 
       {/* Quick Stats */}
-      <motion.div variants={fadeUp} custom={1} className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-white border border-slate-100 rounded-xl p-3.5 flex items-center gap-3 shadow-sm">
-          <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600"><FiUsers size={15} /></div>
-          <div><p className="text-[10px] font-semibold text-slate-400 uppercase">Total Users</p><p className="text-lg font-bold text-slate-900">{users.length}</p></div>
+      <motion.div variants={fadeUp} custom={1} className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+        <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col md:flex-row items-center md:items-start gap-4 shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600"><FiUsers size={18} /></div>
+          <div><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Users</p><p className="text-xl font-bold text-slate-900">{users.length}</p></div>
         </div>
-        <div className="bg-white border border-slate-100 rounded-xl p-3.5 flex items-center gap-3 shadow-sm">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600"><FiShield size={15} /></div>
-          <div><p className="text-[10px] font-semibold text-slate-400 uppercase">Admins</p><p className="text-lg font-bold text-slate-900">{adminCount}</p></div>
+        <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col md:flex-row items-center md:items-start gap-4 shadow-sm">
+          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"><FiShield size={18} /></div>
+          <div><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admins</p><p className="text-xl font-bold text-slate-900">{adminCount}</p></div>
         </div>
-        <div className="bg-white border border-slate-100 rounded-xl p-3.5 flex items-center gap-3 shadow-sm">
-          <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600"><FiArrowUpRight size={15} /></div>
-          <div><p className="text-[10px] font-semibold text-slate-400 uppercase">Total CLV</p><p className="text-lg font-bold text-slate-900">₹{totalRevenue.toLocaleString()}</p></div>
+        <div className="bg-white border border-slate-100 rounded-xl p-4 flex flex-col md:flex-row items-center md:items-start gap-4 shadow-sm col-span-2 md:col-span-1">
+          <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600"><FiArrowUpRight size={18} /></div>
+          <div><p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total CLV</p><p className="text-xl font-bold text-slate-900">₹{totalRevenue.toLocaleString()}</p></div>
         </div>
       </motion.div>
 
@@ -133,123 +129,97 @@ export default function AdminUsers() {
         )}
       </AnimatePresence>
 
-      {/* Users Table */}
-      <motion.div variants={fadeUp} custom={2} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        {/* Desktop */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              <tr>
-                <th className="py-3.5 px-5">User</th>
-                <th className="py-3.5 px-5">Email</th>
-                <th className="py-3.5 px-5">Role</th>
-                <th className="py-3.5 px-5">Joined</th>
-                <th className="py-3.5 px-5 text-right">Value & Activity</th>
-                <th className="py-3.5 px-5 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 text-sm">
-              {loading ? (
-                [...Array(6)].map((_, i) => <SkeletonRow key={i} />)
-              ) : (
-                filteredUsers.map((u, i) => (
-                  <motion.tr
-                    key={u._id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.03 }}
-                    className={`hover:bg-slate-50/60 transition-colors group ${u.isBanned ? "bg-red-50/30" : ""}`}
-                  >
-                    <td className="py-3.5 px-5">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 shadow-sm ${u.role === "admin" ? "bg-slate-800" : "bg-blue-600"}`}>
-                          {u.name?.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-slate-900 flex items-center gap-2">
-                            {u.name}
-                            {u.isBanned && <span className="text-[9px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded uppercase font-bold">Banned</span>}
-                          </p>
-                          <p className="text-[10px] text-slate-400 font-mono">#{u._id.slice(-6)}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-3.5 px-5 text-slate-600 text-sm">{u.email}</td>
-                    <td className="py-3.5 px-5">
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${u.role === "admin" ? "bg-slate-100 text-slate-700" : "bg-blue-50 text-blue-700"}`}>
-                        {u.role === "admin" ? (
-                          <span className="flex items-center gap-1"><FiShield size={9} /> Admin</span>
-                        ) : (
-                          <span className="flex items-center gap-1"><FiUser size={9} /> User</span>
-                        )}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-5 text-slate-500 text-sm">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-"}</td>
-                    <td className="py-3.5 px-5 text-right">
-                      <p className="font-bold text-slate-900">₹{u.intelligence?.totalSpent?.toLocaleString() || 0}</p>
-                      <p className="text-[10px] font-semibold text-slate-400">{u.intelligence?.orderCount || 0} orders</p>
-                    </td>
-                    <td className="py-3.5 px-5 text-center">
-                      <button
-                        onClick={() => setEditingUser(u)}
-                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                      >
-                        <FiEdit2 size={16} />
-                      </button>
-                    </td>
-                  </motion.tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      {/* Users Table Card */}
+      <motion.div variants={fadeUp} custom={2} className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex-1 flex flex-col">
+        {/* Desktop Table Header */}
+        <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b border-slate-200 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <div className="col-span-4">User Details</div>
+          <div className="col-span-3">Role & Status</div>
+          <div className="col-span-2 text-right">Activity</div>
+          <div className="col-span-3 text-right">Actions</div>
         </div>
 
-        {/* Mobile Cards */}
-        <div className="md:hidden divide-y divide-slate-50">
+        {/* Content Area */}
+        <div className="overflow-y-auto flex-1 custom-scrollbar">
           {loading ? (
-            [...Array(5)].map((_, i) => <SkeletonCard key={i} />)
-          ) : (
-            filteredUsers.map((u) => (
-              <div key={u._id} className={`p-4 flex items-center gap-3.5 active:bg-slate-50 transition-colors ${u.isBanned ? "bg-red-50/30" : ""}`}>
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-sm ${u.role === "admin" ? "bg-slate-800" : "bg-blue-600"}`}>
-                  {u.name?.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-semibold text-sm text-slate-900 truncate flex items-center gap-2">
-                      {u.name}
-                      {u.isBanned && <span className="text-[8px] bg-red-100 text-red-600 px-1 py-0.5 rounded uppercase font-bold">Banned</span>}
-                    </h3>
-                    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md ${u.role === "admin" ? "bg-slate-100 text-slate-600" : "bg-blue-50 text-blue-600"}`}>{u.role}</span>
+            <div className="p-6 space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex gap-4 animate-pulse">
+                  <div className="w-10 h-10 bg-slate-100 rounded-full" />
+                  <div className="flex-1 space-y-2 py-1">
+                    <div className="h-4 bg-slate-100 rounded w-1/4" />
+                    <div className="h-3 bg-slate-50 rounded w-1/3" />
                   </div>
-                  <p className="text-xs text-slate-500 truncate">{u.email}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <button
-                      onClick={() => setEditingUser(u)}
-                      className="flex items-center gap-1 text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg"
-                    >
-                      <FiEdit2 size={12} /> Edit
-                    </button>
-                    <div className="text-right">
-                      <p className="text-xs font-bold text-slate-900">₹{u.intelligence?.totalSpent?.toLocaleString() || 0}</p>
+                </div>
+              ))}
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-slate-400">
+              <FiUsers size={32} className="mb-2 opacity-50" />
+              <p className="text-sm">No users found matching "{search}"</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-50">
+              {filteredUsers.map((u, i) => (
+                <motion.div
+                  key={u._id}
+                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.02 }}
+                  className={`p-4 hover:bg-slate-50 transition-colors group ${u.isBanned ? "bg-red-50/40 hover:bg-red-50/60" : ""}`}
+                >
+                  <div className="flex flex-col md:grid md:grid-cols-12 md:gap-4 md:items-center">
+                    {/* User Info */}
+                    <div className="flex items-center gap-3 col-span-4 mb-2 md:mb-0">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-sm ${u.role === "admin" ? "bg-slate-800" : "bg-blue-600"} ${u.isBanned ? "grayscale opacity-75" : ""}`}>
+                        {u.name?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-slate-900 truncate">{u.name}</p>
+                          {u.isBanned && <span className="text-[9px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded-md uppercase tracking-wide">Banned</span>}
+                        </div>
+                        <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                      </div>
+                    </div>
+
+                    {/* Role & Status */}
+                    <div className="flex items-center justify-between md:justify-start gap-4 col-span-3 mb-2 md:mb-0">
+                      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase flex items-center gap-1.5 ${u.role === "admin" ? "bg-slate-100 text-slate-700" : "bg-blue-50 text-blue-700"}`}>
+                        {u.role === "admin" ? <FiShield /> : <FiUser />} {u.role}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-400 md:hidden">#{u._id.slice(-4)}</span>
+                    </div>
+
+                    {/* Activity */}
+                    <div className="flex justify-between md:block text-right col-span-2 mb-2 md:mb-0">
+                      <span className="md:hidden text-xs text-slate-400">Spent</span>
+                      <div>
+                        <p className="font-bold text-slate-900">₹{u.intelligence?.totalSpent?.toLocaleString() || 0}</p>
+                        <p className="text-[10px] font-semibold text-slate-400">{u.intelligence?.orderCount || 0} orders</p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex justify-end col-span-3">
+                      {u.role !== "admin" ? (
+                        <button
+                          onClick={() => setEditingUser(u)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white border border-slate-200 text-slate-600 hover:border-blue-300 hover:text-blue-600 transition-all shadow-sm flex items-center gap-2"
+                        >
+                          <FiEdit2 size={12} /> Manage
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-300 uppercase select-none">Protected</span>
+                      )}
                     </div>
                   </div>
-                </div>
-              </div>
-            ))
+                </motion.div>
+              ))}
+            </div>
           )}
         </div>
-
-        {!loading && filteredUsers.length === 0 && (
-          <div className="py-20 text-center px-6">
-            <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300"><FiUsers size={28} /></div>
-            <h3 className="text-slate-900 font-bold text-lg">No Users Found</h3>
-            <p className="text-slate-400 text-sm mt-1">Try a different search term.</p>
-          </div>
-        )}
       </motion.div>
 
-      {/* 🟢 EDIT USER MODAL */}
+      {/* 🟢 EDIT USER MODAL (Simplified) */}
       <AnimatePresence>
         {editingUser && (
           <div className="fixed inset-0 z-[999] flex items-center justify-center px-4">
@@ -259,68 +229,67 @@ export default function AdminUsers() {
               onClick={() => setEditingUser(null)}
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden"
             >
               <div className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-lg font-bold text-slate-900">Edit User</h2>
-                  <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500">
+                  <h2 className="text-lg font-bold text-slate-900">Manage User</h2>
+                  <button onClick={() => setEditingUser(null)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
                     <FiX size={20} />
                   </button>
                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex gap-4 items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center font-bold">
+                <div className="space-y-6">
+                  {/* User Profile Summary */}
+                  <div className="flex gap-4 items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                    <div className="w-12 h-12 bg-white border border-slate-100 text-blue-600 rounded-full flex items-center justify-center font-bold text-lg shadow-sm">
                       {editingUser.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-bold text-slate-900">{editingUser.name}</p>
+                      <p className="font-bold text-slate-900 text-lg leading-tight">{editingUser.name}</p>
                       <p className="text-xs text-slate-500">{editingUser.email}</p>
+                      <div className="flex gap-2 mt-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-100 px-1.5 rounded">{editingUser.role}</span>
+                        {editingUser.isBanned && <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-50 px-1.5 rounded">Banned</span>}
+                      </div>
                     </div>
                   </div>
 
+                  {/* Ban Toggle Section */}
                   <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Role</label>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setEditingUser({ ...editingUser, role: "user" })}
-                        className={`flex-1 py-3 rounded-xl border text-sm font-bold transition-all ${editingUser.role === "user" ? "bg-blue-600 text-white border-blue-600 shadow-md" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
-                      >
-                        User
-                      </button>
-                      <button
-                        onClick={() => setEditingUser({ ...editingUser, role: "admin" })}
-                        className={`flex-1 py-3 rounded-xl border text-sm font-bold transition-all ${editingUser.role === "admin" ? "bg-slate-900 text-white border-slate-900 shadow-md" : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"}`}
-                      >
-                        Admin
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-500 uppercase">Status</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Account Status</label>
                     <button
                       onClick={() => setEditingUser({ ...editingUser, isBanned: !editingUser.isBanned })}
-                      className={`w-full py-3 rounded-xl border text-sm font-bold transition-all flex items-center justify-center gap-2 ${editingUser.isBanned ? "bg-red-50 text-red-600 border-red-200 hover:bg-red-100" : "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-100"}`}
+                      className={`w-full py-4 rounded-xl border-2 text-sm font-bold transition-all flex items-center justify-center gap-3 ${editingUser.isBanned ? "bg-red-50 text-red-600 border-red-100 hover:border-red-200" : "bg-emerald-50 text-emerald-600 border-emerald-100 hover:border-emerald-200"}`}
                     >
                       {editingUser.isBanned ? (
-                        <>🚫 User is Banned (Click to Unban)</>
+                        <><FiShield size={18} /> Account Banned</>
                       ) : (
-                        <>✅ User is Active (Click to Ban)</>
+                        <><FiCheck size={18} /> Account Active</>
                       )}
                     </button>
+                    <p className="text-[10px] text-center text-slate-400 px-4">
+                      {editingUser.isBanned
+                        ? "This user is currently blocked from logging in."
+                        : "This user has full access to their account."}
+                    </p>
                   </div>
 
-                  <button
-                    onClick={handleUpdateUser}
-                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 mt-4"
-                  >
-                    Save Changes
-                  </button>
+                  {/* Actions */}
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <button onClick={() => setEditingUser(null)} className="py-3 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors">
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUpdateUser}
+                      className="py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 text-sm"
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </div>
               </div>
             </motion.div>
