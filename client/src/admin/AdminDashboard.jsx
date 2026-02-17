@@ -10,7 +10,7 @@ import {
 import {
   FiShoppingBag, FiUsers, FiTrendingUp, FiActivity,
   FiDollarSign, FiCalendar, FiMail, FiTrash2, FiStar,
-  FiArrowUpRight, FiArrowDownRight, FiClock, FiEye, FiTrendingUp,
+  FiArrowUpRight, FiArrowDownRight, FiClock, FiEye,
   FiRefreshCw, FiMoreHorizontal, FiPackage, FiSettings, FiSearch,
   FiAlertCircle, FiPower, FiCheckCircle, FiLock, FiUnlock, FiX, FiZap, FiDownload // 🟢 Added
 } from "react-icons/fi";
