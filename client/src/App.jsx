@@ -13,6 +13,7 @@ import ScrollToTop from "./components/ScrollToTop";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import SupportWidget from "./components/SupportWidget";
+import BannerPopup from "./components/BannerPopup"; // 🟢 Added
 
 // Direct Imports for Critical Pages
 import Home from "./pages/Home";
