@@ -138,7 +138,7 @@ export default function AdminPOS() {
     };
 
     return (
-        <motion.div initial="hidden" animate="visible" className="flex flex-col md:flex-row h-[calc(100vh-80px)] overflow-hidden bg-slate-50">
+        <motion.div initial="hidden" animate="visible" className="flex flex-col md:flex-row h-full overflow-hidden bg-slate-50">
             <PopupModal show={modal.show} message={modal.message} type={modal.type} onClose={() => setModal({ ...modal, show: false })} />
 
             {/* Left: Product Grid */}

@@ -93,7 +93,7 @@ export default function AdminMarketing() {
                                     placeholder="Ex: Flash Sale Alert! 50% Off Giant Prawns 🦐"
                                     value={subject}
                                     onChange={(e) => setSubject(e.target.value)}
-                                    className="w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all font-bold text-slate-900 placeholder:text-slate-300"
+                                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-bold text-slate-900 placeholder:text-slate-400 text-sm"
                                 />
                             </div>
 
@@ -106,7 +106,7 @@ export default function AdminMarketing() {
                                     placeholder="Write your promotional message here..."
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value)}
-                                    className="w-full px-5 py-5 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/5 transition-all font-medium text-slate-700 leading-relaxed resize-none placeholder:text-slate-300"
+                                    className="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:bg-white focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all font-medium text-slate-700 leading-relaxed resize-none placeholder:text-slate-400 text-sm"
                                 />
                                 <div className="flex items-center justify-between mt-3 text-[11px] text-slate-400 font-medium">
                                     <span className="flex items-center gap-1.5 ">

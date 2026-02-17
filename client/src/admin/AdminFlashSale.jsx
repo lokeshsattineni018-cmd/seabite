@@ -127,7 +127,7 @@ export default function AdminFlashSale() {
                         initial="hidden"
                         animate="visible"
                         custom={i}
-                        className={`group bg-white rounded-3xl border-2 transition-all overflow-hidden ${p.flashSale?.isFlashSale ? "border-yellow-400 shadow-xl shadow-yellow-50" : "border-slate-100 shadow-sm"
+                        className={`group bg-white rounded-3xl border transition-all overflow-hidden ${p.flashSale?.isFlashSale ? "border-yellow-200 ring-4 ring-yellow-400/5 shadow-xl shadow-yellow-100/50" : "border-slate-200 shadow-sm hover:shadow-md hover:border-blue-200"
                             }`}
                     >
                         {/* Header */}
