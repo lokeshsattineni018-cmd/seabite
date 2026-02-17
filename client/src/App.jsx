@@ -116,7 +116,7 @@ function MainLayout() {
       <ScrollToTop />
       <Toaster position="top-right" toastOptions={{ duration: 3000, style: { background: '#1e293b', color: '#fff', borderRadius: '12px', padding: '16px', fontSize: '14px', fontWeight: '600' } }} />
 
-      {maintenance.active && !isAdminRoute ? (
+      {maintenance.active && !isAdminRoute && location.pathname !== "/login" ? ( // 🟢 Exempt /login
         <Maintenance message={maintenance.message} />
       ) : (
         <>
