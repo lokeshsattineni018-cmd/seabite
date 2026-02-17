@@ -1,32 +1,35 @@
-import React from "react";
+import { useMemo } from "react";
 
 const Bubbles = () => {
-    // Generate random bubbles
-    const bubbles = Array.from({ length: 15 }).map((_, i) => ({
-        id: i,
-        left: `${Math.random() * 100}%`,
-        size: Math.random() * 20 + 10,
-        delay: Math.random() * 5,
-        duration: Math.random() * 10 + 10,
-    }));
+    const bubbles = useMemo(
+        () =>
+            Array.from({ length: 15 }, (_, i) => ({
+                id: i,
+                left: `${Math.random() * 100}%`,
+                size: 4 + Math.random() * 12,
+                delay: Math.random() * 8,
+                duration: 6 + Math.random() * 8,
+            })),
+        []
+    );
 
     return (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {bubbles.map((bubble) => (
+        <>
+            {bubbles.map((b) => (
                 <div
-                    key={bubble.id}
+                    key={b.id}
                     className="bubble"
                     style={{
-                        left: bubble.left,
-                        width: `${bubble.size}px`,
-                        height: `${bubble.size}px`,
-                        bottom: `-${bubble.size}px`,
-                        animationDelay: `${bubble.delay}s`,
-                        animationDuration: `${bubble.duration}s`,
+                        left: b.left,
+                        bottom: "-20px",
+                        width: b.size,
+                        height: b.size,
+                        animationDelay: `${b.delay}s`,
+                        animationDuration: `${b.duration}s`,
                     }}
                 />
             ))}
-        </div>
+        </>
     );
 };
 

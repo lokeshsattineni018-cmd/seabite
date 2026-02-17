@@ -5,7 +5,7 @@ import Order from "../models/Order.js";
 import User from "../models/User.js";
 import Settings, { getSettings } from "../models/Settings.js";
 import SearchInsight from "../models/SearchInsight.js";
-import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail } from "../utils/emailService.js";
+import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail, sendEmail } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -64,8 +64,9 @@ router.get("/", adminAuth, async (req, res) => {
 
     const stats = {
       products: await Product.countDocuments(),
-      orders: await Order.countDocuments(),
-      users: await User.countDocuments(),
+      totalOrders: await Order.countDocuments(), // 🟢 Renamed for frontend
+      activeUsers: await User.countDocuments(), // 🟢 Renamed for frontend
+      pendingOrders: await Order.countDocuments({ status: "Pending" }), // 🟢 Added
       totalRevenue: Math.round(totalRevenue)
     };
 
@@ -445,7 +446,7 @@ router.get("/carts/abandoned", adminAuth, async (req, res) => {
     // For demo, just all non-empty carts
     const users = await User.find({ "cart.0": { $exists: true } })
       .select("name email cart updatedAt phone")
-      .populate("cart.product", "name price image");
+      .populate("cart.product", "name basePrice image"); // 🟢 Fix: basePrice
 
     const abandoned = users.map(u => ({
       _id: u._id,
@@ -454,7 +455,7 @@ router.get("/carts/abandoned", adminAuth, async (req, res) => {
       phone: u.phone,
       updatedAt: u.updatedAt,
       cart: u.cart.filter(item => item.product), // Filter nulls
-      total: u.cart.reduce((sum, item) => sum + (item.product?.price || 0) * item.qty, 0)
+      total: u.cart.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.qty, 0) // 🟢 Fix: basePrice
     })).filter(u => u.cart.length > 0);
 
     res.json(abandoned);
@@ -465,17 +466,31 @@ router.get("/carts/abandoned", adminAuth, async (req, res) => {
 
 router.post("/carts/remind/:userId", adminAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId);
+    const user = await User.findById(req.params.userId).populate("cart.product", "name basePrice");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // In a real app, this would use emailService.sendEmail
-    // For now, we'll simulate it or use the existing email service if possible
-    // import { sendEmail } from "../utils/emailService.js";
-    // await sendEmail(user.email, "You left something behind!", "Your cart is waiting...", ...);
+    // 🟢 Send Real Email
+    const cartItemsList = user.cart
+      .filter(item => item.product)
+      .map(item => `<li>${item.product.name} (Qty: ${item.qty})</li>`)
+      .join("");
 
-    // Mock success
+    const emailContent = `
+      <h2 style="color: #38bdf8;">You left something behind!</h2>
+      <p>Hi ${user.name}, checking out is easy. Here's what you left in your cart:</p>
+      <ul>${cartItemsList}</ul>
+      <p><strong>Total Value: ₹${user.cart.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.qty, 0)}</strong></p>
+      <p>Return to your cart to complete your purchase using the link below:</p>
+      <div style="text-align: center; margin-top: 20px;">
+        <a href="https://seabite.co.in/cart" style="background: #38bdf8; color: #020617; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Return to Cart</a>
+      </div>
+    `;
+
+    await sendEmail(user.email, "Your Cart is Waiting! 🛒", emailContent);
+
     res.json({ message: `Reminder sent to ${user.email}` });
   } catch (err) {
+    console.error("Cart Reminder Failed:", err);
     res.status(500).json({ message: "Failed to send reminder" });
   }
 });
