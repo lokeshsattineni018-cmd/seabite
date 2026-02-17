@@ -57,18 +57,18 @@ const DashboardSkeleton = () => (
   </div>
 );
 
-// --- Seafood Color Palette ---
+// --- Color Palette ---
 const COLORS = {
-  primary: "#0f4a6b", // Deep ocean blue
-  accent: "#0ea5a5", // Teal
-  accentLight: "#14b8a6", // Light teal
-  success: "#10b981", // Sea green
-  warning: "#f97316", // Coral/orange
-  danger: "#ef4444", // Red
+  primary: "#0f172a",
+  accent: "#2563eb",
+  accentLight: "#3b82f6",
+  success: "#059669",
+  warning: "#d97706",
+  danger: "#dc2626",
   muted: "#64748b",
 };
 
-const PIE_COLORS = ["#0ea5a5", "#10b981", "#f97316", "#ef4444", "#06b6d4"];
+const PIE_COLORS = ["#2563eb", "#059669", "#d97706", "#dc2626", "#6366f1"];
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -232,7 +232,7 @@ export default function AdminDashboard() {
   return (
     <motion.div
       initial="hidden" animate="visible" variants={staggerContainer}
-      className="p-4 md:p-6 space-y-6 max-w-[1440px] mx-auto min-h-screen font-sans text-slate-700 bg-gradient-to-br from-cyan-50 via-blue-50 to-teal-50"
+      className="p-4 md:p-6 space-y-6 max-w-[1440px] mx-auto min-h-screen font-sans text-slate-700 bg-slate-50/30"
     >
       {/* ✅ OTP MODAL */}
       <AnimatePresence>
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 overflow-hidden border border-white/20"
             >
-              <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-cyan-50 via-teal-50 to-transparent pointer-events-none" />
+              <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-blue-50 to-transparent pointer-events-none" />
               <button
                 onClick={() => setShowOtpModal(false)}
                 className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-50 transition-colors z-10"
@@ -258,7 +258,7 @@ export default function AdminDashboard() {
               </button>
 
               <div className="text-center mb-8 relative z-10">
-                <div className="w-20 h-20 bg-gradient-to-br from-teal-50 to-cyan-50 text-teal-600 rounded-3xl flex items-center justify-center mx-auto mb-5 border border-teal-200 shadow-xl shadow-teal-500/10 rotate-3 hover:rotate-6 transition-transform duration-500">
+                <div className="w-20 h-20 bg-white text-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-5 border border-blue-100 shadow-xl shadow-blue-500/10 rotate-3 hover:rotate-6 transition-transform duration-500">
                   <FiLock size={32} />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-2 tracking-tight">Security Check</h3>
@@ -273,7 +273,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="w-full px-4 py-5 bg-cyan-50 border-2 border-teal-200 rounded-2xl font-mono text-3xl text-center tracking-[0.5em] focus:bg-white focus:border-teal-500 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none font-bold text-teal-800 placeholder:text-teal-200 placeholder:tracking-widest"
+                    className="w-full px-4 py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl font-mono text-3xl text-center tracking-[0.5em] focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all outline-none font-bold text-slate-800 placeholder:text-slate-200 placeholder:tracking-widest"
                     placeholder="••••••"
                     autoFocus
                   />
@@ -283,7 +283,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={verifyingOtp || otp.length !== 6}
-                  className="w-full py-4 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white font-bold rounded-2xl transition-all shadow-xl hover:shadow-teal-600/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-95 group"
+                  className="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white font-bold rounded-2xl transition-all shadow-xl hover:shadow-blue-600/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-95 group"
                 >
                   {verifyingOtp ? (
                     <>
@@ -315,12 +315,12 @@ export default function AdminDashboard() {
               <h3 className="text-base font-bold text-slate-800 tracking-tight uppercase">Analytics</h3>
               <p className="text-[10px] text-slate-400 font-medium">Revenue progression</p>
             </div>
-            <div className="flex bg-cyan-50 p-1 rounded-xl border border-teal-200">
+            <div className="flex bg-slate-50 p-1 rounded-xl border border-slate-100">
               {["6months", "1year"].map((f) => (
                 <button
                   key={f}
                   onClick={() => setTimeFilter(f)}
-                  className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${timeFilter === f ? "bg-white text-teal-600 shadow-sm border border-teal-200" : "text-teal-400"}`}
+                  className={`px-4 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest transition-all ${timeFilter === f ? "bg-white text-blue-600 shadow-sm border border-slate-200" : "text-slate-400"}`}
                 >
                   {f === "6months" ? "6M" : "1Y"}
                 </button>
@@ -333,8 +333,8 @@ export default function AdminDashboard() {
               <AreaChart data={graph} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="mainRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#14b8a6" stopOpacity={0.25} />
-                    <stop offset="100%" stopColor="#14b8a6" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="8 8" vertical={false} stroke="#f1f5f9" />
@@ -355,7 +355,7 @@ export default function AdminDashboard() {
                 <Area
                   type="natural"
                   dataKey="revenue"
-                  stroke="#14b8a6"
+                  stroke="#3b82f6"
                   strokeWidth={4}
                   fillOpacity={1}
                   fill="url(#mainRev)"
@@ -375,14 +375,14 @@ export default function AdminDashboard() {
           {/* 1. Maintenance Toggle */}
           <div
             onClick={toggleMaintenanceClick}
-            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group flex justify-between items-center ${settings.isMaintenanceMode ? "bg-orange-50 border-orange-200 shadow-md shadow-orange-100" : "bg-gradient-to-br from-white to-cyan-50 border-teal-200 shadow-sm hover:shadow-md hover:border-teal-300"}`}
+            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group flex justify-between items-center ${settings.isMaintenanceMode ? "bg-red-50 border-red-200 shadow-md shadow-red-100" : "bg-white border-slate-200 shadow-sm hover:border-slate-300"}`}
           >
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-full transition-colors ${settings.isMaintenanceMode ? "bg-orange-500 text-white" : "bg-gradient-to-br from-teal-100 to-cyan-100 text-teal-600"}`}>
+              <div className={`p-3 rounded-full transition-colors ${settings.isMaintenanceMode ? "bg-red-500 text-white" : "bg-slate-100 text-slate-400"}`}>
                 {settings.isMaintenanceMode ? <FiLock size={20} /> : <FiUnlock size={20} />}
               </div>
               <div>
-                <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.isMaintenanceMode ? "text-orange-700" : "text-teal-800"}`}>
+                <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.isMaintenanceMode ? "text-red-700" : "text-slate-800"}`}>
                   {settings.isMaintenanceMode ? "Maintenance On" : "Maintenance Off"}
                 </h3>
                 <p className="text-[10px] text-slate-400 font-medium mt-0.5">
@@ -391,7 +391,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             {/* Toggle Switch */}
-            <div className={`w-12 h-7 rounded-full p-1 transition-colors ${settings.isMaintenanceMode ? "bg-orange-500 shadow-inner" : "bg-teal-300"}`}>
+            <div className={`w-12 h-7 rounded-full p-1 transition-colors ${settings.isMaintenanceMode ? "bg-red-500 shadow-inner" : "bg-slate-200"}`}>
               <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.isMaintenanceMode ? "translate-x-5" : "translate-x-0"}`} />
             </div>
           </div>
@@ -406,14 +406,14 @@ export default function AdminDashboard() {
                 toast.success(newDiscount > 0 ? "Happy Hour Activated! ⚡" : "Happy Hour Ended.");
               } catch (err) { toast.error("Failed to update status."); }
             }}
-            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group flex justify-between items-center ${settings.globalDiscount > 0 ? "bg-rose-50 border-rose-200 shadow-md shadow-rose-100" : "bg-gradient-to-br from-white to-blue-50 border-cyan-200 shadow-sm hover:shadow-md hover:border-cyan-300"}`}
+            className={`flex-1 relative overflow-hidden rounded-2xl p-5 border transition-all cursor-pointer group flex justify-between items-center ${settings.globalDiscount > 0 ? "bg-purple-50 border-purple-200 shadow-md shadow-purple-100" : "bg-white border-slate-200 shadow-sm hover:border-slate-300"}`}
           >
             <div className="flex items-center gap-4">
-              <div className={`p-3 rounded-full transition-colors ${settings.globalDiscount > 0 ? "bg-rose-500 text-white" : "bg-gradient-to-br from-cyan-100 to-blue-100 text-cyan-600"}`}>
+              <div className={`p-3 rounded-full transition-colors ${settings.globalDiscount > 0 ? "bg-purple-500 text-white" : "bg-slate-100 text-slate-400"}`}>
                 {settings.globalDiscount > 0 ? <FiZap size={20} /> : <FiClock size={20} />}
               </div>
               <div>
-                <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.globalDiscount > 0 ? "text-rose-700" : "text-cyan-800"}`}>
+                <h3 className={`text-sm font-bold uppercase tracking-tight ${settings.globalDiscount > 0 ? "text-purple-700" : "text-slate-800"}`}>
                   {settings.globalDiscount > 0 ? "Happy Hour On" : "Happy Hour Off"}
                 </h3>
                 <p className="text-[10px] text-slate-400 font-medium mt-0.5">
@@ -422,7 +422,7 @@ export default function AdminDashboard() {
               </div>
             </div>
             {/* Toggle Switch */}
-            <div className={`w-12 h-7 rounded-full p-1 transition-colors ${settings.globalDiscount > 0 ? "bg-rose-500 shadow-inner" : "bg-cyan-300"}`}>
+            <div className={`w-12 h-7 rounded-full p-1 transition-colors ${settings.globalDiscount > 0 ? "bg-purple-500 shadow-inner" : "bg-slate-200"}`}>
               <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.globalDiscount > 0 ? "translate-x-5" : "translate-x-0"}`} />
             </div>
           </div>
