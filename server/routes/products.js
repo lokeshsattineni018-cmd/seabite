@@ -98,14 +98,43 @@ router.get("/", async (req, res) => {
   }
 });
 
-// --- GET SINGLE PRODUCT ---
+// --- GET SINGLE PRODUCT WITH RELATED ITEMS ---
 router.get("/:id", async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate('reviews.user', 'name');
     if (!product) return res.status(404).json({ message: "Product not found" });
-    res.json(product);
+
+    // 🟢 NEW: Fetch Related Products (Same category, excluding current)
+    const relatedProducts = await Product.find({
+      category: product.category,
+      _id: { $ne: product._id },
+      active: true
+    })
+      .select('name image basePrice stock averageRating')
+      .limit(3);
+
+    res.json({ ...product.toObject(), relatedProducts });
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+});
+
+// 🟢 NEW: SMART SEARCH AUTOSUGGEST
+router.get("/search/suggest", async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json([]);
+
+    const suggestions = await Product.find({
+      name: { $regex: q, $options: "i" },
+      active: true
+    })
+      .select("name image category basePrice")
+      .limit(5);
+
+    res.json(suggestions);
+  } catch (err) {
+    res.status(500).json({ message: "Search failed" });
   }
 });
 
