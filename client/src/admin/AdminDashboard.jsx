@@ -233,38 +233,40 @@ export default function AdminDashboard() {
   return (
     <motion.div
       initial="hidden" animate="visible" variants={staggerContainer}
-      className="p-4 md:p-6 space-y-5 max-w-[1400px] mx-auto min-h-screen font-sans text-slate-700"
+      className="p-6 md:p-10 space-y-8 max-w-[1600px] mx-auto min-h-screen font-sans text-slate-800"
     >
       {/* HEADER */}
-      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-2">
+      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-2">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-none uppercase">
+          <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-none bg-gradient-to-r from-slate-900 via-slate-700 to-slate-900 bg-clip-text text-transparent">
             Dashboard
           </h2>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="bg-slate-100 text-slate-500 px-2.5 py-1 rounded-full text-[9px] font-semibold uppercase tracking-widest flex items-center gap-1.5 border border-slate-200">
+          <div className="flex items-center gap-3 mt-2">
+            <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 border border-slate-200">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              Live
+              Live Store
             </span>
             {lastUpdated && (
-              <span className="text-[9px] text-slate-400 font-medium flex items-center gap-1">
+              <span className="text-[10px] text-slate-400 font-medium flex items-center gap-1.5">
                 <FiClock size={10} />
-                {lastUpdated.toLocaleTimeString()}
+                Updated {lastUpdated.toLocaleTimeString()}
               </span>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex items-center gap-3 w-full md:w-auto">
           <button
             onClick={() => fetchDashboardData(true)}
             disabled={isRefreshing}
-            className={`p-2 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all active:scale-95 ${isRefreshing ? "opacity-50 cursor-not-allowed" : ""}`}
+            className={`p-3 rounded-2xl bg-white border border-slate-100 text-slate-400 hover:text-blue-600 hover:border-blue-100 hover:shadow-lg hover:shadow-blue-500/10 transition-all active:scale-95 ${isRefreshing ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <FiRefreshCw size={16} className={isRefreshing ? "animate-spin text-blue-600" : ""} />
+            <FiRefreshCw size={18} className={isRefreshing ? "animate-spin text-blue-600" : ""} />
           </button>
-          <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex-1 md:flex-none">
-            <FiCalendar className="text-slate-400" size={12} />
-            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">
+          <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm flex-1 md:flex-none hover:shadow-md transition-shadow">
+            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+              <FiCalendar size={14} />
+            </div>
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">
               {new Date().toLocaleDateString(undefined, {
                 weekday: "short", month: "short", day: "numeric",
               })}
