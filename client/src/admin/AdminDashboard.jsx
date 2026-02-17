@@ -910,7 +910,32 @@ function BannerControl({ settings, setSettings }) {
   );
 }
 
+function ChartTooltip({ active, payload, label }) {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl border border-slate-700">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">{label}</p>
+        <p className="text-sm font-bold">₹{payload[0].value.toLocaleString()}</p>
+      </div>
+    );
+  }
+  return null;
+}
 
+function StatusPill({ status }) {
+  const styles = {
+    Pending: "text-amber-600 bg-amber-50 border-amber-100",
+    Processing: "text-blue-600 bg-blue-50 border-blue-100",
+    Shipped: "text-indigo-600 bg-indigo-50 border-indigo-100",
+    Delivered: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    Cancelled: "text-red-600 bg-red-50 border-red-100",
+  };
+  return (
+    <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest border ${styles[status] || styles.Pending}`}>
+      {status || "Pending"}
+    </span>
+  );
+}
 
 function ChartTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
