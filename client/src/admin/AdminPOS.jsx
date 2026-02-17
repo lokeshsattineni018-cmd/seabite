@@ -227,7 +227,7 @@ export default function AdminPOS() {
                     </div>
                 </div>
 
-                {/* Totals g& Action */}
+                {/* Totals & Action */}
                 <div className="p-5 border-t border-slate-200 bg-white space-y-4">
                     <div className="flex justify-between items-end">
                         <span className="text-slate-500 text-sm">Total Amount</span>
