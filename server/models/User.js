@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: false },
 
     role: { type: String, default: "user" },
+    isBanned: { type: Boolean, default: false }, // 🟢 NEW
 
     // Google OAuth ID
     googleId: { type: String },

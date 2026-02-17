@@ -1,4 +1,4 @@
-const CART_KEY = "cart"; 
+const CART_KEY = "cart";
 
 // ✅ DISPATCHER: Informs the Navbar & Sidebar to update without a white-page refresh
 const notifyCartUpdate = () => {
@@ -17,7 +17,7 @@ export const getCart = () => {
     const cart = localStorage.getItem(CART_KEY);
     return cart ? JSON.parse(cart) : [];
   } catch (err) {
-   console.error("Cart corruption detected, clearing...");
+    console.error("Cart corruption detected, clearing...");
     localStorage.removeItem(CART_KEY);
     return [];
   }
@@ -25,8 +25,8 @@ export const getCart = () => {
 
 export const addToCart = (product) => {
   const cart = getCart();
-  const existing = cart.find((item) => item._id === product._id); 
-  
+  const existing = cart.find((item) => item._id === product._id);
+
   // 🔴 FIX: Derive stable unitPrice to prevent "Price Doubling"
   const derivedUnitPrice = product.qty > 0 ? (product.price / product.qty) : product.price;
 
@@ -34,17 +34,19 @@ export const addToCart = (product) => {
     // Increment quantity only
     existing.qty += (product.qty || 1);
     existing.unitPrice = existing.unitPrice || derivedUnitPrice;
-    existing.price = existing.unitPrice; 
+    existing.price = existing.unitPrice;
   } else {
     // ✅ OPTIMIZATION: Create a clean object to save memory
     const newItem = {
-        _id: product._id,
-        name: product.name,
-        image: product.image,
-        unitPrice: derivedUnitPrice,
-        price: derivedUnitPrice, // Keep as unit price for calculation safety
-        qty: product.qty || 1,
-        unit: product.unit || 'kg'
+      _id: product._id,
+      name: product.name,
+      image: product.image,
+      unitPrice: derivedUnitPrice,
+      basePrice: product.basePrice || derivedUnitPrice, // 🟢 Save Base Price
+      price: derivedUnitPrice, // Keep as unit price for calculation safety
+      qty: product.qty || 1,
+      unit: product.unit || 'kg',
+      flashSale: product.flashSale, // 🟢 Save Flash Sale Data if present
     };
     cart.push(newItem);
   }
@@ -66,9 +68,9 @@ export const updateQty = (id, newQty) => {
     if (newQty > 0) {
       item.qty = newQty;
       const stablePrice = item.unitPrice || item.price;
-      
+
       // 🔴 PREVENT CORRUPTION: Keep price as the UNIT price
-      item.price = stablePrice; 
+      item.price = stablePrice;
       item.unitPrice = stablePrice;
 
       saveCart(cart);
@@ -82,7 +84,7 @@ export const updateQty = (id, newQty) => {
 export const getCartTotals = (couponDiscount = 0) => {
   const cart = getCart();
   const subtotal = cart.reduce((acc, item) => acc + (item.unitPrice * item.qty), 0);
-  
+
   // Flash Sale Logic (e.g., SEABITE10)
   const discountAmount = (subtotal * couponDiscount) / 100;
   const total = subtotal - discountAmount;

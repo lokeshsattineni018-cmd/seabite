@@ -21,6 +21,7 @@ const TextReveal = ({ text, className = "" }) => (
 
 export default function TrendingProducts() {
   const [products, setProducts] = useState([]);
+  const [globalDiscount, setGlobalDiscount] = useState(0); // 🟢 NEW
 
   useEffect(() => {
     const fetchTrending = async () => {
@@ -28,8 +29,8 @@ export default function TrendingProducts() {
         const res = await axios.get(`${API_URL}/api/products`);
         const all = res.data.products || [];
         const trending = all.filter((p) => p.trending).slice(0, 8);
-        // Triple them for smooth infinite scroll
         setProducts([...trending, ...trending, ...trending]);
+        setGlobalDiscount(res.data.globalDiscount || 0); // 🟢 Capture Discount
       } catch (err) {
         // Fallback or silent fail
       }
@@ -86,7 +87,7 @@ export default function TrendingProducts() {
         >
           {products.map((p, i) => (
             <div key={`${p._id}-${i}`} className="w-[280px] shrink-0">
-              <EnhancedProductCard product={p} />
+              <EnhancedProductCard product={p} globalDiscount={globalDiscount} /> {/* 🟢 Pass Prop */}
             </div>
           ))}
         </motion.div>

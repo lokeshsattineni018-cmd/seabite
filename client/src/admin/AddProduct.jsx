@@ -30,7 +30,7 @@ const AddProductSkeleton = () => (
 
 export default function AddProduct() {
   const [form, setForm] = useState({
-    name: "", category: "", basePrice: "", unit: "kg", desc: "", trending: false, stock: "in",
+    name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in",
   });
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -187,8 +187,12 @@ export default function AddProduct() {
                 <div className="relative"><FiLayers className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><select name="category" value={form.category} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-blue-400 transition-all font-semibold text-slate-900 text-sm appearance-none cursor-pointer"><option value="">Select...</option><option value="Fish">Fish</option><option value="Prawn">Prawn</option><option value="Crab">Crab</option></select></div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Price</label>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Selling Price</label>
                 <div className="relative"><FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input type="number" name="basePrice" value={form.basePrice} onChange={handleChange} placeholder="0.00" className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-blue-400 transition-all font-mono font-semibold text-slate-900 text-sm" /></div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Buying Price (Cost)</label>
+                <div className="relative"><FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input type="number" name="buyingPrice" value={form.buyingPrice} onChange={handleChange} placeholder="0.00" className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:border-blue-400 transition-all font-mono font-semibold text-slate-900 text-sm" /></div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Unit</label>
