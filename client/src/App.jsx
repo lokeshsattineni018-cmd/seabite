@@ -51,7 +51,9 @@ import AdminPOS from "./admin/AdminPOS"; // 🟢 NEW IMPORT
 
 import AdminFlashSale from "./admin/AdminFlashSale";
 import AdminMarketing from "./admin/AdminMarketing";
-import AdminAbandonedCarts from "./admin/AdminAbandonedCarts"; // 🟢 NEW IMPORT
+import AdminAbandonedCarts from "./admin/AdminAbandonedCarts";
+import AdminSettings from "./admin/AdminSettings"; // 🟢 NEW IMPORT
+import AdminAnalytics from "./admin/AdminAnalytics"; // 🟢 NEW IMPORT
 
 // Context
 import { CartProvider } from "./context/CartContext";
@@ -182,7 +184,9 @@ function MainLayout() {
                   <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="flash-sale" element={<AdminFlashSale />} />
                   <Route path="marketing" element={<AdminMarketing />} />
-                  <Route path="carts" element={<AdminAbandonedCarts />} /> {/* 🟢 NEW ROUTE */}
+                  <Route path="carts" element={<AdminAbandonedCarts />} />
+                  <Route path="settings" element={<AdminSettings />} /> {/* 🟢 NEW ROUTE */}
+                  <Route path="analytics" element={<AdminAnalytics />} /> {/* 🟢 NEW ROUTE */}
                 </Route>
               </Routes>
             ) : (
