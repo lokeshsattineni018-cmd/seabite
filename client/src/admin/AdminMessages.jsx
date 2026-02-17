@@ -76,7 +76,7 @@ export default function AdminMessages() {
   const getInitials = (email) => email ? email.charAt(0).toUpperCase() : "?";
 
   return (
-    <div className="p-4 md:p-8 h-screen max-h-screen flex flex-col font-sans bg-slate-50/50">
+    <div className="p-4 md:p-8 h-full flex flex-col font-sans bg-slate-50/50">
       {/* Header */}
       <div className="flex justify-between items-center mb-6 shrink-0">
         <div>
@@ -129,17 +129,17 @@ export default function AdminMessages() {
                 <div
                   key={msg._id}
                   onClick={() => setSelectedMsg(msg)}
-                  className={`p-3 rounded-xl cursor-pointer transition-all border ${selectedMsg?._id === msg._id ? "bg-blue-50 border-blue-100 shadow-sm" : "bg-transparent border-transparent hover:bg-slate-50"}`}
+                  className={`p-3.5 rounded-xl cursor-pointer transition-all border group ${selectedMsg?._id === msg._id ? "bg-blue-50 border-blue-100 shadow-sm ring-1 ring-blue-200" : "bg-white border-transparent hover:bg-slate-50 hover:border-slate-100"}`}
                 >
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className={`text-sm font-bold truncate ${selectedMsg?._id === msg._id ? "text-blue-700" : "text-slate-900"}`}>
+                  <div className="flex justify-between items-start mb-1.5">
+                    <h4 className={`text-sm font-bold truncate transition-colors ${selectedMsg?._id === msg._id ? "text-blue-700" : "text-slate-900 group-hover:text-blue-600"}`}>
                       {msg.email}
                     </h4>
-                    <span className="text-[10px] text-slate-400 shrink-0">
+                    <span className="text-[10px] text-slate-400 shrink-0 bg-slate-100 px-1.5 py-0.5 rounded-md font-medium">
                       {new Date(msg.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
-                  <p className={`text-xs line-clamp-2 ${selectedMsg?._id === msg._id ? "text-blue-600/80" : "text-slate-500"}`}>
+                  <p className={`text-xs line-clamp-2 leading-relaxed ${selectedMsg?._id === msg._id ? "text-blue-600/80" : "text-slate-500 group-hover:text-slate-600"}`}>
                     {msg.message}
                   </p>
                 </div>
