@@ -113,7 +113,7 @@ const CheckoutSteps = ({ currentStep }) => (
 );
 
 export default function Checkout() {
-  const { cartItems, subtotal, grandTotal: contextGrandTotal, refreshCartCount, clearCart } = useContext(CartContext); // 🟢 Use Context
+  const { cartItems, subtotal, storeSettings, grandTotal: contextGrandTotal, refreshCartCount, clearCart } = useContext(CartContext); // 🟢 Use Context
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({
     show: false,
@@ -215,11 +215,15 @@ export default function Checkout() {
     removeFromCart(id);
   };
 
-  // derived itemTotal from Context Subtotal (string -> number)
+  // Derived itemTotal from Context Subtotal
   const itemTotal = parseFloat(subtotal);
-  const deliveryCharge = itemTotal >= 1000 ? 0 : 99;
 
-  // Around line 112 - This line looks fine, but let's verify the error handling:
+  // 🟢 Dynamic Settings from Context
+  const taxRate = storeSettings?.taxRate ? storeSettings.taxRate / 100 : 0.05;
+  const deliveryFee = storeSettings?.deliveryFee !== undefined ? storeSettings.deliveryFee : 99;
+  const freeThreshold = storeSettings?.freeDeliveryThreshold !== undefined ? storeSettings.freeDeliveryThreshold : 1000;
+
+  const deliveryCharge = itemTotal >= freeThreshold ? 0 : deliveryFee;
 
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
@@ -280,7 +284,7 @@ export default function Checkout() {
   }, [itemTotal, spinDiscount, isCouponApplied, couponDiscount]);
 
   const taxableAmount = Math.max(0, itemTotal - discountAmount);
-  const gst = Math.round(taxableAmount * 0.05);
+  const gst = Math.round(taxableAmount * taxRate); // 🟢 Use dynamic tax rate
   const grandTotal = taxableAmount + deliveryCharge + gst;
 
   const saveNewAddress = async (newAddress) => {

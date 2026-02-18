@@ -351,11 +351,10 @@ router.post("/inventory/restock", adminAuth, async (req, res) => {
 // 1.9 BULK EMAIL MARKETING (POST /api/admin/marketing/email-blast)
 router.post("/marketing/email-blast", adminAuth, async (req, res) => {
   try {
-    const { subject, message } = req.body;
+    const { subject, message, recipients } = req.body; // 🟢 Added recipients
 
-    // 🟢 SECURITY HOTFIX (Phase 28): Unescape HTML for Email Blast
-    // 'xss-clean' middleware escapes HTML tags (e.g., < to &lt;). 
-    // Since this is an ADMIN-ONLY route, we trust the admin's HTML and revert it for proper rendering.
+    // ... (HTML unescape logic) ...
+
     const unescapedMessage = message
       ? message
         .replace(/&lt;/g, "<")
@@ -365,10 +364,17 @@ router.post("/marketing/email-blast", adminAuth, async (req, res) => {
         .replace(/&amp;/g, "&")
       : "";
 
-    const users = await User.find({ email: { $exists: true, $ne: "" } }).select("email name");
+    let query = { email: { $exists: true, $ne: "" } };
+
+    // 🟢 Targeted Sending Logic
+    if (recipients && Array.isArray(recipients) && recipients.length > 0) {
+      query._id = { $in: recipients };
+    }
+
+    const users = await User.find(query).select("email name");
 
     if (users.length === 0) {
-      return res.json({ message: "No users found to email.", stats: { sent: 0, failed: 0, total: 0 } });
+      return res.json({ message: "No users found matching criteria.", stats: { sent: 0, failed: 0, total: 0 } });
     }
 
     // Helper: Chunk array

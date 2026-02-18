@@ -22,26 +22,78 @@ export default function AdminMarketing() {
     const [sending, setSending] = useState(false);
     const [lastSent, setLastSent] = useState(null);
 
+    // 🟢 Targeted Marketing State
+    const [targetMode, setTargetMode] = useState("all"); // "all" | "select"
+    const [users, setUsers] = useState([]);
+    const [selectedUsers, setSelectedUsers] = useState(new Set());
+    const [loadingUsers, setLoadingUsers] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+
+    // Fetch users for selection
+    const fetchUsers = async () => {
+        setLoadingUsers(true);
+        try {
+            const { data } = await axios.get("/api/admin/users?limit=1000"); // Standard list
+            setUsers(data.users || []); // Assuming paginated response structure
+        } catch (err) {
+            toast.error("Failed to load users for selection");
+        } finally {
+            setLoadingUsers(false);
+        }
+    };
+
+    const toggleUser = (id) => {
+        const newSelected = new Set(selectedUsers);
+        if (newSelected.has(id)) newSelected.delete(id);
+        else newSelected.add(id);
+        setSelectedUsers(newSelected);
+    };
+
+    const toggleAll = () => {
+        if (selectedUsers.size === filteredUsers.length) {
+            setSelectedUsers(new Set());
+        } else {
+            setSelectedUsers(new Set(filteredUsers.map(u => u._id)));
+        }
+    };
+
+    const filteredUsers = users.filter(u =>
+        u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     const handleSendBlast = async () => {
         if (!subject || !message) {
             return toast.error("Please fill both subject and message");
         }
 
-        if (!window.confirm("Send this email to ALL registered users? This action cannot be undone.")) return;
+        const recipients = targetMode === "select" ? Array.from(selectedUsers) : [];
+        if (targetMode === "select" && recipients.length === 0) {
+            return toast.error("Please select at least one user or switch to 'All Users'");
+        }
+
+        const confirmMsg = targetMode === "all"
+            ? "Send this email to ALL registered users? This action cannot be undone."
+            : `Send this email to ${recipients.length} selected users?`;
+
+        if (!window.confirm(confirmMsg)) return;
 
         setSending(true);
-        const toastId = toast.loading("Sending bulk emails...");
+        const toastId = toast.loading("Sending emails...");
 
         try {
             const { data } = await axios.post("/api/admin/marketing/email-blast", {
                 subject,
-                message
+                message,
+                recipients // 🟢 Send specific list if selected
             }, { withCredentials: true });
 
             toast.success(data.message, { id: toastId });
             setLastSent(new Date());
             setSubject("");
             setMessage("");
+            // Optional: clear selection?
+            if (targetMode === "select") setSelectedUsers(new Set());
         } catch (err) {
             toast.error(err.response?.data?.message || "Marketing blast failed", { id: toastId });
         } finally {
@@ -84,6 +136,91 @@ export default function AdminMarketing() {
                         </div>
 
                         <div className="space-y-6">
+                            {/* Target Modes */}
+                            <div>
+                                <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">
+                                    <FiTarget size={12} /> Target Audience
+                                </label>
+                                <div className="flex bg-slate-100 p-1 rounded-xl w-fit">
+                                    <button
+                                        onClick={() => setTargetMode("all")}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${targetMode === "all" ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700"}`}
+                                    >
+                                        All Users
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setTargetMode("select");
+                                            if (users.length === 0) fetchUsers();
+                                        }}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${targetMode === "select" ? "bg-white shadow-sm text-indigo-600" : "text-slate-500 hover:text-slate-700"}`}
+                                    >
+                                        Select Users
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* User Selection Table */}
+                            {targetMode === "select" && (
+                                <div className="border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+                                    <div className="p-3 border-b border-slate-200 bg-white flex justify-between items-center">
+                                        <input
+                                            type="text"
+                                            placeholder="Search users..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="text-xs bg-slate-100 border-none rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-indigo-500/20 w-full max-w-xs"
+                                        />
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase">
+                                            {selectedUsers.size} Selected
+                                        </div>
+                                    </div>
+                                    <div className="max-h-60 overflow-y-auto">
+                                        {loadingUsers ? (
+                                            <div className="p-8 text-center text-slate-400 text-xs">Loading users...</div>
+                                        ) : (
+                                            <table className="w-full text-left text-xs">
+                                                <thead className="bg-slate-100 text-slate-500 font-bold uppercase tracking-wider sticky top-0">
+                                                    <tr>
+                                                        <th className="p-3 w-10 text-center">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedUsers.size > 0 && selectedUsers.size === filteredUsers.length}
+                                                                onChange={toggleAll}
+                                                                className="rounded border-slate-300 text-indigo-600 focus:ring-0"
+                                                            />
+                                                        </th>
+                                                        <th className="p-3">Name</th>
+                                                        <th className="p-3">Email</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-200">
+                                                    {filteredUsers.map(u => (
+                                                        <tr key={u._id} className={selectedUsers.has(u._id) ? "bg-indigo-50/50" : "bg-white"}>
+                                                            <td className="p-3 text-center">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={selectedUsers.has(u._id)}
+                                                                    onChange={() => toggleUser(u._id)}
+                                                                    className="rounded border-slate-300 text-indigo-600 focus:ring-0"
+                                                                />
+                                                            </td>
+                                                            <td className="p-3 font-medium text-slate-700">{u.name}</td>
+                                                            <td className="p-3 text-slate-500">{u.email}</td>
+                                                        </tr>
+                                                    ))}
+                                                    {filteredUsers.length === 0 && (
+                                                        <tr>
+                                                            <td colSpan="3" className="p-4 text-center text-slate-400 italic">No users found</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">
                                     <FiType size={12} /> Campaign Subject
@@ -134,7 +271,7 @@ export default function AdminMarketing() {
                                 </>
                             ) : (
                                 <>
-                                    <FiSend size={18} /> Launch Campaign
+                                    <FiSend size={18} /> {targetMode === "select" ? `Send to ${selectedUsers.size}` : "Launch Campaign"}
                                 </>
                             )}
                         </button>
@@ -194,7 +331,7 @@ export default function AdminMarketing() {
                         </h3>
                         <div className="space-y-4">
                             {[
-                                { title: "Target Audience", desc: "All emails sent to registered active users." },
+                                { title: "Target Audience", desc: targetMode === "all" ? "All registered users selected." : `${selectedUsers.size} specific users selected.` },
                                 { title: "Content Policy", desc: "Strictly promotional or update-related content only." },
                                 { title: "Rate Limits", desc: "System handles batches of 100/min automatically." }
                             ].map((item, i) => (
