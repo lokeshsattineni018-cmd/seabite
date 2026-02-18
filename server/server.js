@@ -180,8 +180,8 @@ const sessionMiddleware = session({
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: true, // Always true for production/SSL
-    sameSite: "none",
+    secure: process.env.NODE_ENV === "production", // 🟢 Auto-detect
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 🟢 Lax for local
     path: "/",
   },
 });

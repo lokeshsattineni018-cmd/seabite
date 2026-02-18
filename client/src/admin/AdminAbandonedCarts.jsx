@@ -1,283 +1,159 @@
-// AdminAbandonedCarts.jsx — SeaBite · Cream & Stone Design System v2
-// Abandoned cart recovery interface
-
 import { useState, useEffect } from "react";
 import axios from "axios";
+import { FiShoppingBag, FiMail, FiClock, FiTrash2 } from "react-icons/fi";
 import { motion } from "framer-motion";
-import { FiShoppingCart, FiMail, FiClock, FiArrowRight } from "react-icons/fi";
 import toast from "react-hot-toast";
 
-const ease = [0.22, 1, 0.36, 1];
-
-const T = {
-  bg:          "#FAFAF8",
-  surface:     "#FFFFFF",
-  surfaceWarm: "#F7F5F0",
-  surfaceMid:  "#F0EDE6",
-  border:      "rgba(120,113,108,0.12)",
-  borderSoft:  "rgba(120,113,108,0.07)",
-  teal:    "#0D9488", tealL: "#F0FDFA",
-  coral:   "#DC6B52", coralL: "#FFF1EE",
-  text:      "#1C1917",
-  textMid:   "#57534E",
-  textSoft:  "#A8A29E",
-  textGhost: "#D6D3D1",
-  shadowSm:   "0 1px 2px rgba(28,25,23,0.04), 0 1px 1px rgba(28,25,23,0.03)",
-  shadowMd:   "0 4px 12px rgba(28,25,23,0.05), 0 1px 3px rgba(28,25,23,0.04)",
-};
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 const fadeUp = {
-  hidden:  { opacity:0, y:12 },
-  visible: (i=0) => ({ opacity:1, y:0, transition:{ delay:i*0.055, duration:0.45, ease } }),
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
 };
-const stagger = { hidden:{}, visible:{ transition:{ staggerChildren:0.055 } } };
-
-const GS = () => (
-  <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
-    *, *::before, *::after { box-sizing:border-box; margin:0; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    @keyframes shimmer{ 0%{background-position:-400px 0}100%{background-position:400px 0} }
-    .sb { font-family:'Geist',system-ui,-apple-system,sans-serif; }
-    ::-webkit-scrollbar { width:3px; height:3px; }
-    ::-webkit-scrollbar-track { background:transparent; }
-    ::-webkit-scrollbar-thumb { background:${T.textGhost}; border-radius:3px; }
-  `}</style>
-);
-
-function Card({ children, style={}, hover=true }) {
-  const [on, setOn] = useState(false);
-  return (
-    <div
-      onMouseEnter={() => hover && setOn(true)}
-      onMouseLeave={() => hover && setOn(false)}
-      style={{
-        background: T.surface,
-        border: `1px solid ${on ? "rgba(120,113,108,0.17)" : T.border}`,
-        borderRadius: 22,
-        boxShadow: on ? T.shadowMd : T.shadowSm,
-        transition: "all 0.28s cubic-bezier(0.22,1,0.36,1)",
-        transform: on ? "translateY(-1px)" : "translateY(0)",
-        overflow: "hidden",
-        ...style,
-      }}
-    >{children}</div>
-  );
-}
-
-function Chip({ children, color="stone" }) {
-  const m = { teal:{bg:T.tealL,fg:T.teal}, coral:{bg:T.coralL,fg:T.coral} };
-  const c = m[color] || { bg:T.surfaceMid, fg:T.textMid };
-  return <span style={{ display:"inline-flex", alignItems:"center", background:c.bg, color:c.fg, fontSize:9, fontWeight:600, letterSpacing:"0.07em", textTransform:"uppercase", borderRadius:6, padding:"4px 8px" }}>{children}</span>;
-}
-
-const Skeleton = () => (
-  <div style={{ padding:28, background:T.bg, minHeight:"100vh" }}>
-    <GS/>
-    <div style={{ maxWidth:1200, margin:"0 auto" }}>
-      <div style={{ height:10, width:140, borderRadius:6, background:T.surfaceMid, animation:"shimmer 1.4s infinite", backgroundSize:"400px", backgroundImage:`linear-gradient(90deg,${T.surfaceMid} 25%,${T.surfaceWarm} 50%,${T.surfaceMid} 75%)`, marginBottom:20 }}/>
-      <div style={{ display:"grid", gap:14 }}>
-        {[...Array(3)].map((_,i)=>(
-          <div key={i} style={{ height:180, borderRadius:22, border:`1px solid ${T.border}`, background:`linear-gradient(90deg,${T.surface} 25%,${T.surfaceWarm} 50%,${T.surface} 75%)`, backgroundSize:"400px", animation:"shimmer 1.4s infinite" }}/>
-        ))}
-      </div>
-    </div>
-  </div>
-);
 
 export default function AdminAbandonedCarts() {
-  const [carts, setCarts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(null);
+    const [carts, setCarts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [sending, setSending] = useState(null);
 
-  useEffect(() => {
-    fetchCarts();
-  }, []);
+    const fetchCarts = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/api/admin/carts/abandoned`, { withCredentials: true });
+            setCarts(res.data);
+        } catch (err) {
+            toast.error("Failed to load carts");
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  const fetchCarts = async () => {
-    try {
-      const { data } = await axios.get("/api/admin/carts/abandoned", { withCredentials:true });
-      setCarts(data || []);
-    } catch { toast.error("Failed to load carts"); }
-    finally { setLoading(false); }
-  };
+    useEffect(() => {
+        fetchCarts();
+    }, []);
 
-  const handleRemind = async (userId) => {
-    setSending(userId);
-    try {
-      await axios.post(`/api/admin/carts/remind/${userId}`, {}, { withCredentials:true });
-      toast.success("Reminder sent! 📧");
-    } catch { toast.error("Failed to send"); }
-    finally { setSending(null); }
-  };
+    const handleRemind = async (userId) => {
+        setSending(userId);
+        try {
+            await axios.post(`${API_URL}/api/admin/carts/remind/${userId}`, {}, { withCredentials: true });
+            toast.success("Reminder sent!");
+        } catch (err) {
+            toast.error("Failed to send");
+        } finally {
+            setSending(null);
+        }
+    };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return "https://images.pexels.com/photos/2903391/pexels-photo-2903391.jpeg?auto=compress&cs=tinysrgb&w=100";
-    return imagePath.startsWith("http") ? imagePath : `/uploads/${imagePath}`;
-  };
+    const getImageUrl = (imagePath) => {
+        if (!imagePath) return "https://images.pexels.com/photos/2903391/pexels-photo-2903391.jpeg?auto=compress&cs=tinysrgb&w=100";
+        if (imagePath.startsWith("http")) return imagePath;
+        return `${API_URL}${imagePath.startsWith("/") ? "" : "/uploads/"}${imagePath}`;
+    };
 
-  if (loading) return <Skeleton/>;
+    if (loading) return (
+        <div className="p-8 text-center text-stone-500">
+            <div className="w-8 h-8 border-2 border-stone-300 border-t-stone-900 rounded-full animate-spin mx-auto" />
+        </div>
+    );
 
-  return (
-    <>
-      <GS/>
-      <motion.div className="sb" initial="hidden" animate="visible" variants={stagger}
-        style={{ minHeight:"100vh", background:T.bg, padding:"28px", maxWidth:1200, margin:"0 auto", color:T.text }}
-      >
-        {/* ── HEADER ─────────────────────────────────── */}
-        <motion.div variants={fadeUp} style={{ marginBottom:28, borderBottom:`1px solid ${T.borderSoft}`, paddingBottom:20 }}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-            <div>
-              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-                <FiShoppingCart size={14} style={{ color:T.teal }}/>
-                <span style={{ fontSize:10, fontWeight:500, color:T.teal, letterSpacing:"0.08em", textTransform:"uppercase" }}>Recovery</span>
-              </div>
-              <h1 style={{ fontSize:24, fontWeight:600, color:T.text, letterSpacing:"-0.02em", marginBottom:6 }}>Abandoned Carts</h1>
-              <p style={{ fontSize:13, color:T.textSoft, fontWeight:400 }}>Recover sales by reminding customers of their items</p>
+    return (
+        <div className="p-6 md:p-10 max-w-7xl mx-auto font-sans min-h-screen bg-gradient-to-br from-white via-stone-50 to-white">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4 border-b border-stone-200/50 pb-8">
+                <div>
+                    <h1 className="text-4xl md:text-5xl font-light text-stone-900 tracking-tight mb-2">
+                        Abandoned Carts
+                    </h1>
+                    <p className="text-sm text-stone-500">Recover sales by reminding customers</p>
+                </div>
+                <div className="bg-white px-6 py-4 rounded-2xl border border-stone-200/50 shadow-sm">
+                    <span className="text-xs font-medium text-stone-500 uppercase tracking-wide block mb-1">Potential Revenue</span>
+                    <span className="text-2xl font-light text-stone-900">
+                        ₹{carts.reduce((acc, c) => acc + c.total, 0).toLocaleString()}
+                    </span>
+                </div>
             </div>
-            <div style={{
-              background:`linear-gradient(135deg, ${T.tealL} 0%, ${T.surface} 100%)`,
-              borderRadius:14, padding:"12px 16px", border:`1px solid ${T.border}`,
-              boxShadow:T.shadowSm,
-            }}>
-              <p style={{ fontSize:9, fontWeight:500, color:T.textSoft, letterSpacing:"0.07em", textTransform:"uppercase", marginBottom:4 }}>Potential Revenue</p>
-              <p style={{ fontSize:20, fontWeight:600, color:T.teal, fontFamily:"Geist Mono, monospace" }}>
-                ₹{carts.reduce((a,c)=>a+(c.total||0),0).toLocaleString()}
-              </p>
-            </div>
-          </div>
-        </motion.div>
 
-        {/* ── CART CARDS ─────────────────────────────── */}
-        {carts.length === 0 ? (
-          <motion.div variants={fadeUp}>
-            <Card hover={false}>
-              <div style={{ padding:"60px 40px", textAlign:"center" }}>
-                <FiShoppingCart size={40} style={{ color:T.textGhost, margin:"0 auto 12px", display:"block" }}/>
-                <h3 style={{ fontSize:14, fontWeight:600, color:T.text, marginBottom:4 }}>No Abandoned Carts</h3>
-                <p style={{ fontSize:12, color:T.textSoft }}>All customers completed their purchases! 🎉</p>
-              </div>
-            </Card>
-          </motion.div>
-        ) : (
-          <motion.div variants={stagger} initial="hidden" animate="visible" style={{ display:"grid", gap:14 }}>
-            {carts.map((user, idx) => (
-              <motion.div key={user._id} variants={fadeUp} custom={idx}>
-                <Card>
-                  <div style={{ padding:"18px 20px", display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, alignItems:"start" }}>
-
-                    {/* ── LEFT: User & Action ──────────────── */}
-                    <div>
-                      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:16 }}>
-                        <div style={{
-                          width:42, height:42, borderRadius:11,
-                          background:T.tealL, color:T.teal,
-                          display:"flex", alignItems:"center", justifyContent:"center",
-                          fontSize:14, fontWeight:600,
-                        }}>
-                          {user.name?.[0]?.toUpperCase() || "C"}
-                        </div>
-                        <div>
-                          <h3 style={{ fontSize:13, fontWeight:600, color:T.text, marginBottom:3 }}>{user.name || "Customer"}</h3>
-                          <p style={{ fontSize:11, color:T.textSoft, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                            {user.email}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div style={{
-                        display:"flex", alignItems:"center", gap:8,
-                        padding:"10px 12px", borderRadius:11,
-                        background:T.surfaceWarm, border:`1px solid ${T.border}`,
-                        marginBottom:12,
-                      }}>
-                        <FiClock size={13} style={{ color:T.textSoft, flexShrink:0 }}/>
-                        <span style={{ fontSize:11, color:T.textSoft }}>
-                          {new Date(user.updatedAt).toLocaleDateString("en-IN",{ day:"numeric", month:"short", year:"2-digit" })}
-                        </span>
-                      </div>
-
-                      <button onClick={() => handleRemind(user._id)} disabled={sending === user._id}
-                        style={{
-                          width:"100%", padding:"11px",
-                          background: sending === user._id ? T.surfaceMid : T.teal,
-                          color: sending === user._id ? T.textGhost : "#FFF",
-                          border:"none", borderRadius:11,
-                          fontSize:11, fontWeight:600, letterSpacing:"0.04em", textTransform:"uppercase",
-                          cursor: sending === user._id ? "not-allowed" : "pointer",
-                          display:"flex", alignItems:"center", justifyContent:"center", gap:7,
-                          transition:"all 0.25s ease",
-                          boxShadow: sending === user._id ? "none" : `0 2px 8px rgba(13,148,136,0.16)`,
-                        }}
-                      >
-                        {sending === user._id ? (
-                          <><div style={{ width:9, height:9, border:"1.5px solid rgba(255,255,255,0.4)", borderTopColor:"#FFF", borderRadius:"50%", animation:"spin 0.6s linear infinite" }}/> Sending…</>
-                        ) : (
-                          <><FiMail size={12}/> Send Reminder</>
-                        )}
-                      </button>
+            <div className="space-y-5">
+                {carts.length === 0 ? (
+                    <div className="bg-white p-16 rounded-3xl border border-stone-200/50 shadow-sm text-center">
+                        <FiShoppingBag size={48} className="mx-auto text-stone-300 mb-4" />
+                        <h3 className="text-lg font-light text-stone-900 mb-1">No Abandoned Carts</h3>
+                        <p className="text-sm text-stone-500">All customers completed their purchases!</p>
                     </div>
-
-                    {/* ── RIGHT: Cart Items ────────────────── */}
-                    <div>
-                      <div style={{ marginBottom:10 }}>
-                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                          <p style={{ fontSize:10, fontWeight:600, color:T.textSoft, letterSpacing:"0.06em", textTransform:"uppercase" }}>
-                            Items ({user.cart?.length || 0})
-                          </p>
-                          <p style={{ fontSize:13, fontWeight:700, color:T.text, fontFamily:"Geist Mono, monospace" }}>
-                            ₹{(user.total || 0).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div style={{
-                        background:T.surfaceWarm, border:`1px solid ${T.border}`, borderRadius:12,
-                        padding:"12px", maxHeight:180, overflowY:"auto",
-                      }}>
-                        {user.cart && user.cart.length > 0 ? (
-                          <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
-                            {user.cart.map((item, i) => (
-                              <div key={i} style={{
-                                display:"flex", alignItems:"center", gap:10,
-                                padding:"9px 10px", borderRadius:9,
-                                background:T.surface, border:`1px solid ${T.border}`,
-                              }}>
-                                <img
-                                  src={getImageUrl(item.product?.image)}
-                                  alt={item.product?.name}
-                                  style={{
-                                    width:36, height:36, borderRadius:8,
-                                    objectFit:"contain", background:T.surfaceWarm,
-                                    padding:2, flexShrink:0,
-                                  }}
-                                />
-                                <div style={{ flex:1, minWidth:0 }}>
-                                  <p style={{ fontSize:11, fontWeight:500, color:T.text, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", marginBottom:3 }}>
-                                    {item.product?.name || "Product"}
-                                  </p>
-                                  <p style={{ fontSize:10, color:T.textGhost }}>
-                                    {item.qty}x ₹{item.product?.price || 0}
-                                  </p>
+                ) : (
+                    carts.map((user, idx) => (
+                        <motion.div
+                            key={user._id}
+                            initial="hidden" animate="visible" variants={fadeUp}
+                            transition={{ delay: idx * 0.05 }}
+                            className="bg-white rounded-3xl border border-stone-200/50 shadow-sm hover:shadow-md transition-all overflow-hidden"
+                        >
+                            <div className="p-6 flex flex-col md:flex-row gap-6">
+                                {/* User Info */}
+                                <div className="w-full md:w-1/4 space-y-4">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-600 font-medium text-sm">
+                                                {user.name[0]}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-medium text-stone-900">{user.name}</h3>
+                                                <p className="text-xs text-stone-500">{user.email}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-xs text-stone-500 bg-stone-50/50 p-3 rounded-2xl border border-stone-100/50">
+                                            <FiClock size={14} />
+                                            {new Date(user.updatedAt).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => handleRemind(user._id)}
+                                        disabled={sending === user._id}
+                                        className="w-full py-3 bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium rounded-2xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {sending === user._id ? (
+                                            <>
+                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                Sending...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FiMail size={14} />
+                                                Send Reminder
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
-                                <span style={{ fontSize:11, fontWeight:600, color:T.text, whitespace:"nowrap", fontFamily:"Geist Mono, monospace", minWidth:50, textAlign:"right" }}>
-                                  ₹{((item.qty || 0) * (item.product?.price || 0)).toLocaleString()}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p style={{ textAlign:"center", padding:"12px", fontSize:11, color:T.textGhost }}>No items in cart</p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
-      </motion.div>
-    </>
-  );
+
+                                {/* Cart Items */}
+                                <div className="flex-1 bg-stone-50/30 rounded-2xl p-4 border border-stone-100/50">
+                                    <h4 className="text-xs font-medium text-stone-500 uppercase tracking-wide mb-4 flex justify-between">
+                                        <span>Items ({user.cart.length})</span>
+                                        <span className="font-medium text-stone-900">₹{user.total.toLocaleString()}</span>
+                                    </h4>
+                                    <div className="space-y-3 max-h-48 overflow-y-auto pr-2">
+                                        {user.cart.map((item, i) => (
+                                            <div key={i} className="flex items-center gap-3 bg-white p-3 rounded-xl border border-stone-100/50 hover:border-stone-200 transition-all">
+                                                <img
+                                                    src={getImageUrl(item.product?.image)}
+                                                    alt={item.product?.name}
+                                                    className="w-12 h-12 object-contain bg-stone-100 rounded-lg p-1"
+                                                />
+                                                <div className="flex-1">
+                                                    <p className="text-sm font-medium text-stone-900 line-clamp-1">{item.product?.name}</p>
+                                                    <p className="text-xs text-stone-500 mt-0.5">Qty: {item.qty} × ₹{item.product?.price}</p>
+                                                </div>
+                                                <span className="font-medium text-stone-900 text-sm whitespace-nowrap">
+                                                    ₹{(item.qty * (item.product?.price || 0)).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
 }
