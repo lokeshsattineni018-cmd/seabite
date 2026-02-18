@@ -83,15 +83,18 @@ router.get("/", async (req, res) => {
         await SearchInsight.findOneAndUpdate(
           { query: search.toLowerCase().trim() },
           {
+          {
             $inc: { count: 1 },
-            found: products.length > 0,
-            lastSearched: Date.now()
+            $set: {
+              found: products.length > 0,
+              lastSearched: Date.now()
+            }
           },
           { upsert: true, new: true }
         );
 
         // 🟢 WATCHTOWER LOGGING
-        import { logActivity } from "../utils/activityLogger.js";
+        // 🟢 WATCHTOWER LOGGING
         logActivity("SEARCH", `Searched for "${search}"`, req, { results: products.length });
 
       } catch (err) {
