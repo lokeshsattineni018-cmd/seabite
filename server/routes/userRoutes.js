@@ -2,6 +2,11 @@ import express from "express";
 import User from "../models/User.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { logActivity } from "../utils/activityLogger.js"; // 🟢 Added import
+import {
+    addAddress,
+    getAddresses,
+    deleteAddress,
+} from "../controllers/addressController.js";
 
 const router = express.Router();
 
@@ -47,12 +52,7 @@ router.get("/wishlist", protect, async (req, res) => {
 });
 
 // 🟢 ADDRESS MANAGEMENT
-import {
-    addAddress,
-    getAddresses,
-    deleteAddress,
-} from "../controllers/addressController.js";
-
+// 🟢 ADDRESS MANAGEMENT
 router.post("/address", protect, addAddress);
 router.get("/address", protect, getAddresses);
 router.delete("/address/:id", protect, deleteAddress);
