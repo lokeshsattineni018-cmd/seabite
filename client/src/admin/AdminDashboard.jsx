@@ -23,10 +23,10 @@ const PLACEHOLDER_IMG =
 // --- Animation Presets ---
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
-  hidden: { opacity: 0, y: 24, filter: "blur(8px)" },
+  hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
   visible: (i = 0) => ({
     opacity: 1, y: 0, filter: "blur(0px)",
-    transition: { delay: i * 0.05, duration: 0.7, ease },
+    transition: { delay: i * 0.05, duration: 0.6, ease },
   }),
 };
 
@@ -37,16 +37,16 @@ const staggerContainer = {
 
 // --- Skeleton ---
 const DashboardSkeleton = () => (
-  <div className="space-y-8 animate-pulse p-6">
-    <div className="h-10 w-80 bg-gradient-to-r from-slate-200 to-slate-100 rounded-2xl" />
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  <div className="space-y-8 animate-pulse p-8">
+    <div className="h-9 w-72 bg-gradient-to-r from-stone-100 to-stone-50 rounded-2xl" />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-40 bg-gradient-to-br from-white to-slate-50 border border-slate-100 rounded-3xl shadow-sm" />
+        <div key={i} className="h-40 bg-gradient-to-br from-stone-50 to-white border border-stone-100 rounded-3xl" />
       ))}
     </div>
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <div className="lg:col-span-8 h-[480px] bg-gradient-to-br from-white to-slate-50 border border-slate-100 rounded-3xl shadow-sm" />
-      <div className="lg:col-span-4 h-[480px] bg-gradient-to-br from-white to-slate-50 border border-slate-100 rounded-3xl shadow-sm" />
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <div className="lg:col-span-8 h-[420px] bg-gradient-to-br from-stone-50 to-white border border-stone-100 rounded-3xl" />
+      <div className="lg:col-span-4 h-[420px] bg-gradient-to-br from-stone-50 to-white border border-stone-100 rounded-3xl" />
     </div>
   </div>
 );
@@ -58,13 +58,8 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, totalRevenue: 0 });
   const [graph, setGraph] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
-  const [popularProducts, setPopularProducts] = useState([]);
   const [recentMessages, setRecentMessages] = useState([]);
   const [allReviews, setAllReviews] = useState([]);
-  const [heatmapData, setHeatmapData] = useState([]);
-  const [topSpenders, setTopSpenders] = useState([]);
-  const [lowStock, setLowStock] = useState([]);
-  const [searchInsights, setSearchInsights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -73,7 +68,7 @@ export default function AdminDashboard() {
   const fetchDashboardData = useCallback(async (isManual = false) => {
     if (isManual) {
       setIsRefreshing(true);
-      toast.loading("Refreshing data...", { id: "refresh" });
+      toast.loading("Refreshing...", { id: "refresh" });
     }
 
     try {
@@ -89,11 +84,6 @@ export default function AdminDashboard() {
       setStats(dashboardRes.data.stats);
       setGraph(dashboardRes.data.graph);
       setRecentOrders(dashboardRes.data.recentOrders);
-      setPopularProducts(dashboardRes.data.popularProducts);
-      setHeatmapData(dashboardRes.data.heatmapData || []);
-      setTopSpenders(dashboardRes.data.topSpenders || []);
-      setLowStock(lowStockRes.data || []);
-      setSearchInsights(insightsRes.data || []);
       setRecentMessages(messagesRes.data.slice(0, 5));
       setAllReviews(reviewsRes.data?.slice(0, 6) || []);
 
@@ -101,12 +91,12 @@ export default function AdminDashboard() {
       setError(null);
       setLastUpdated(new Date());
 
-      if (isManual) toast.success("Dashboard Updated", { id: "refresh" });
+      if (isManual) toast.success("Updated", { id: "refresh" });
     } catch (err) {
       setLoading(false);
       if (err.response?.status === 401) navigate("/login");
-      setError(err.response?.data?.message || "Failed to load dashboard data.");
-      if (isManual) toast.error("Refresh Failed", { id: "refresh" });
+      setError(err.response?.data?.message || "Failed to load data");
+      if (isManual) toast.error("Update failed", { id: "refresh" });
     } finally {
       if (isManual) setIsRefreshing(false);
     }
@@ -122,13 +112,13 @@ export default function AdminDashboard() {
   }, [fetchDashboardData]);
 
   const deleteReviewHandler = async (productId, reviewId) => {
-    if (!window.confirm("Delete this review permanently?")) return;
+    if (!window.confirm("Delete this review?")) return;
     try {
       await axios.delete(`/api/admin/products/${productId}/reviews/${reviewId}`, { withCredentials: true });
       fetchDashboardData();
-      toast.success("Review removed");
+      toast.success("Review deleted");
     } catch {
-      toast.error("Failed to delete review");
+      toast.error("Failed to delete");
     }
   };
 
@@ -141,10 +131,10 @@ export default function AdminDashboard() {
     const nextState = !settings.isMaintenanceMode;
     setPendingMaintenanceState(nextState);
 
-    const toastId = toast.loading("Requesting Security OTP...");
+    const toastId = toast.loading("Requesting OTP...");
     try {
       await axios.post("/api/admin/maintenance/request-otp", {}, { withCredentials: true });
-      toast.success("OTP sent to your email!", { id: toastId });
+      toast.success("OTP sent!", { id: toastId });
       setShowOtpModal(true);
       setOtp("");
     } catch (err) {
@@ -154,7 +144,7 @@ export default function AdminDashboard() {
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (!otp || otp.length !== 6) return toast.error("Enter valid 6-digit OTP");
+    if (!otp || otp.length !== 6) return toast.error("Enter 6-digit OTP");
 
     setVerifyingOtp(true);
     const toastId = toast.loading("Verifying...");
@@ -181,86 +171,68 @@ export default function AdminDashboard() {
     return `/uploads/${filename}`;
   };
 
-  const orderStatusData = recentOrders.reduce((acc, o) => {
-    const status = o.status || "Pending";
-    const existing = acc.find((d) => d.name === status);
-    if (existing) {
-      existing.value += 1;
-    } else {
-      acc.push({ name: status, value: 1 });
-    }
-    return acc;
-  }, []);
-
   if (loading) return <DashboardSkeleton />;
 
   return (
     <motion.div
       initial="hidden" animate="visible" variants={staggerContainer}
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50/30 p-4 md:p-8 font-sans"
+      className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white p-6 md:p-10 font-sans"
     >
-      <div className="max-w-[1600px] mx-auto space-y-8">
-        
+      <div className="max-w-[1600px] mx-auto space-y-10">
+
         {/* OTP Modal */}
         <AnimatePresence>
           {showOtpModal && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-slate-900/70 backdrop-blur-xl"
+                className="absolute inset-0 bg-black/20 backdrop-blur-sm"
                 onClick={() => setShowOtpModal(false)}
               />
               <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative w-full max-w-md bg-white rounded-[32px] shadow-2xl p-10 border border-slate-100"
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="relative w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-stone-200"
               >
                 <button
                   onClick={() => setShowOtpModal(false)}
-                  className="absolute top-6 right-6 text-slate-400 hover:text-slate-700 p-2 rounded-2xl hover:bg-slate-50 transition-all"
+                  className="absolute top-5 right-5 text-stone-300 hover:text-stone-600 p-2 rounded-full hover:bg-stone-50 transition-all"
                 >
                   <FiX size={20} />
                 </button>
 
-                <div className="text-center mb-10">
-                  <div className="w-20 h-20 bg-gradient-to-br from-slate-900 to-slate-700 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-slate-900/20 rotate-3 hover:rotate-6 transition-transform duration-500">
-                    <FiLock size={36} />
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 bg-gradient-to-br from-stone-100 to-stone-50 text-stone-400 rounded-3xl flex items-center justify-center mx-auto mb-5 border border-stone-200">
+                    <FiLock size={28} />
                   </div>
-                  <h3 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">Security Verification</h3>
-                  <p className="text-sm text-slate-500 max-w-xs mx-auto leading-relaxed">
-                    Enter the 6-digit code sent to your admin email
-                  </p>
+                  <h3 className="text-2xl font-light text-stone-900 mb-2 tracking-tight">Verify Identity</h3>
+                  <p className="text-sm text-stone-500">Enter the code sent to your email</p>
                 </div>
 
                 <form onSubmit={handleVerifyOtp} className="space-y-6">
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      className="w-full px-6 py-6 bg-slate-50 border-2 border-slate-200 rounded-3xl font-mono text-4xl text-center tracking-[0.6em] focus:bg-white focus:border-slate-900 focus:ring-4 focus:ring-slate-900/10 transition-all outline-none font-bold text-slate-900 placeholder:text-slate-300"
-                      placeholder="000000"
-                      autoFocus
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    className="w-full px-5 py-5 bg-stone-50 border border-stone-200 rounded-2xl font-mono text-3xl text-center tracking-[0.5em] focus:bg-white focus:border-stone-400 focus:ring-2 focus:ring-stone-300/50 transition-all outline-none text-stone-800 placeholder:text-stone-300"
+                    placeholder="000000"
+                    autoFocus
+                  />
 
                   <button
                     type="submit"
                     disabled={verifyingOtp || otp.length !== 6}
-                    className="w-full py-5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-3xl transition-all shadow-xl shadow-slate-900/20 hover:shadow-2xl hover:shadow-slate-900/30 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-3 active:scale-[0.98] text-lg"
+                    className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white font-medium rounded-2xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-95"
                   >
                     {verifyingOtp ? (
                       <>
-                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         Verifying...
                       </>
                     ) : (
-                      <>
-                        Verify & Continue
-                        <FiArrowUpRight className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-                      </>
+                      "Verify"
                     )}
                   </button>
                 </form>
@@ -270,238 +242,190 @@ export default function AdminDashboard() {
         </AnimatePresence>
 
         {/* Header */}
-        <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <motion.div variants={fadeUp} className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-stone-200/50 pb-8">
           <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight mb-2">
+            <h1 className="text-4xl md:text-5xl font-light text-stone-900 tracking-tight mb-2">
               Dashboard
             </h1>
-            <p className="text-slate-500 flex items-center gap-2 text-sm">
-              <FiActivity size={16} className="text-emerald-500" />
-              Live metrics · Updated {lastUpdated?.toLocaleTimeString()}
+            <p className="text-sm text-stone-500 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-stone-300" />
+              Last updated {lastUpdated?.toLocaleTimeString()}
             </p>
           </div>
           <button
             onClick={() => fetchDashboardData(true)}
             disabled={isRefreshing}
-            className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl font-semibold flex items-center gap-3 transition-all shadow-lg shadow-slate-900/20 hover:shadow-xl disabled:opacity-50 active:scale-95"
+            className="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl font-medium flex items-center gap-2 transition-all disabled:opacity-50"
           >
-            <FiRefreshCw size={18} className={isRefreshing ? "animate-spin" : ""} />
-            {isRefreshing ? "Refreshing..." : "Refresh Data"}
+            <FiRefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+            Refresh
           </button>
         </motion.div>
 
         {/* Stats Grid */}
         <motion.div
           variants={staggerContainer}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
         >
           <StatCard
-            title="Total Revenue"
+            title="Revenue"
             value={`₹${stats.totalRevenue?.toLocaleString() || 0}`}
-            icon={<FiDollarSign size={24} />}
-            trend="+12.5%"
-            trendUp={true}
-            gradient="from-emerald-500 to-teal-600"
+            icon={<FiDollarSign size={20} />}
+            color="from-amber-50 to-orange-50"
             index={0}
           />
           <StatCard
-            title="Total Orders"
+            title="Orders"
             value={stats.totalOrders || 0}
-            icon={<FiShoppingBag size={24} />}
-            trend="+8.2%"
-            trendUp={true}
-            gradient="from-blue-500 to-cyan-600"
+            icon={<FiShoppingBag size={20} />}
+            color="from-blue-50 to-cyan-50"
             index={1}
           />
           <StatCard
-            title="Active Customers"
+            title="Customers"
             value={stats.activeUsers || 0}
-            icon={<FiUsers size={24} />}
-            trend="+5.7%"
-            trendUp={true}
-            gradient="from-violet-500 to-purple-600"
+            icon={<FiUsers size={20} />}
+            color="from-teal-50 to-emerald-50"
             index={2}
           />
           <StatCard
-            title="Pending Orders"
+            title="Pending"
             value={stats.pendingOrders || 0}
-            icon={<FiClock size={24} />}
-            trend={stats.pendingOrders > 5 ? "Critical" : "Stable"}
-            trendUp={stats.pendingOrders < 5}
-            gradient="from-orange-500 to-amber-600"
+            icon={<FiClock size={20} />}
+            color="from-rose-50 to-pink-50"
             index={3}
           />
         </motion.div>
 
-        {/* Main Analytics & Controls */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           {/* Revenue Chart */}
           <motion.div
             variants={fadeUp}
             custom={4}
-            className="lg:col-span-8 bg-white rounded-[32px] border border-slate-200/60 shadow-xl shadow-slate-900/5 p-8 relative overflow-hidden"
+            className="lg:col-span-8 bg-white rounded-3xl border border-stone-200/50 shadow-sm p-8 hover:shadow-md transition-shadow"
           >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-transparent rounded-full blur-3xl opacity-50 pointer-events-none" />
-            
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 relative z-10 gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1">Revenue Analytics</h3>
-                <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Performance Overview</p>
+                <h3 className="text-xl font-light text-stone-900 mb-1">Revenue Trend</h3>
+                <p className="text-xs text-stone-400 uppercase tracking-wide">Last {timeFilter === "6months" ? "6 months" : "year"}</p>
               </div>
-              <div className="flex bg-slate-100 p-1.5 rounded-2xl gap-1">
+              <div className="flex bg-stone-100/60 p-1 rounded-2xl gap-1">
                 {["6months", "1year"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setTimeFilter(f)}
-                    className={`px-6 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${timeFilter === f ? "bg-white text-slate-900 shadow-lg shadow-slate-900/10" : "text-slate-500 hover:text-slate-700"}`}
+                    className={`px-5 py-2 rounded-xl text-xs font-medium transition-all ${timeFilter === f ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
                   >
-                    {f === "6months" ? "6 Months" : "1 Year"}
+                    {f === "6months" ? "6M" : "1Y"}
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="h-[380px] w-full relative z-10">
+            <div className="h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={graph} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={graph} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
+                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f97316" stopOpacity={0.15} />
+                      <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis
-                    dataKey="name"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fontWeight: 600, fill: "#94a3b8" }}
-                    dy={10}
-                  />
-                  <YAxis
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 11, fontWeight: 600, fill: "#94a3b8" }}
-                    tickFormatter={(v) => `₹${v / 1000}k`}
-                  />
-                  <Tooltip content={<ChartTooltip />} cursor={{ stroke: "#e2e8f0", strokeWidth: 2 }} />
-                  <Area
-                    type="monotone"
-                    dataKey="revenue"
-                    stroke="#3b82f6"
-                    strokeWidth={3}
-                    fillOpacity={1}
-                    fill="url(#revenueGradient)"
-                    animationDuration={1500}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#a8a29e" }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#a8a29e" }} tickFormatter={(v) => `₹${v / 1000}k`} />
+                  <Tooltip content={<ChartTooltip />} />
+                  <Area type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={2.5} fill="url(#revenueGrad)" animationDuration={1200} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </motion.div>
 
-          {/* Control Panel */}
+          {/* Controls */}
           <motion.div
             variants={fadeUp}
             custom={5}
             className="lg:col-span-4 space-y-4"
           >
-            {/* Maintenance Toggle */}
+            {/* Maintenance */}
             <div
               onClick={toggleMaintenanceClick}
-              className={`relative overflow-hidden rounded-[28px] p-6 border transition-all cursor-pointer group ${settings.isMaintenanceMode ? "bg-gradient-to-br from-red-50 to-red-100/50 border-red-200 shadow-xl shadow-red-900/10" : "bg-white border-slate-200/60 shadow-lg shadow-slate-900/5 hover:shadow-xl"}`}
+              className={`rounded-3xl p-5 border cursor-pointer transition-all ${settings.isMaintenanceMode ? "bg-rose-50/40 border-rose-200/50 hover:border-rose-300" : "bg-stone-50/30 border-stone-200/40 hover:border-stone-300"}`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`p-4 rounded-2xl transition-all ${settings.isMaintenanceMode ? "bg-red-500 text-white shadow-lg shadow-red-500/30" : "bg-slate-100 text-slate-400"}`}>
-                    {settings.isMaintenanceMode ? <FiLock size={22} /> : <FiUnlock size={22} />}
+                <div className="flex items-center gap-3">
+                  <div className={`p-3 rounded-2xl ${settings.isMaintenanceMode ? "bg-rose-100 text-rose-600" : "bg-stone-200 text-stone-600"}`}>
+                    {settings.isMaintenanceMode ? <FiLock size={18} /> : <FiUnlock size={18} />}
                   </div>
                   <div>
-                    <h3 className={`text-base font-bold ${settings.isMaintenanceMode ? "text-red-900" : "text-slate-900"}`}>
-                      Maintenance Mode
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {settings.isMaintenanceMode ? "Store locked" : "Store active"}
-                    </p>
+                    <h3 className="text-sm font-medium text-stone-900">Maintenance</h3>
+                    <p className="text-xs text-stone-500 mt-0.5">{settings.isMaintenanceMode ? "Store locked" : "Store live"}</p>
                   </div>
                 </div>
-                <div className={`w-14 h-8 rounded-full p-1 transition-all ${settings.isMaintenanceMode ? "bg-red-500" : "bg-slate-200"}`}>
-                  <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${settings.isMaintenanceMode ? "translate-x-6" : "translate-x-0"}`} />
+                <div className={`w-12 h-7 rounded-full p-1 transition-all ${settings.isMaintenanceMode ? "bg-rose-400" : "bg-stone-300"}`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.isMaintenanceMode ? "translate-x-5" : "translate-x-0"}`} />
                 </div>
               </div>
             </div>
 
-            {/* Happy Hour Toggle */}
+            {/* Happy Hour */}
             <div
               onClick={async () => {
                 try {
                   const newDiscount = settings.globalDiscount > 0 ? 0 : 10;
                   await axios.put("/api/admin/enterprise/settings", { globalDiscount: newDiscount }, { withCredentials: true });
                   setSettings(prev => ({ ...prev, globalDiscount: newDiscount }));
-                  toast.success(newDiscount > 0 ? "Happy Hour Active!" : "Happy Hour Ended");
+                  toast.success(newDiscount > 0 ? "Happy Hour On!" : "Happy Hour Off");
                 } catch (err) { toast.error("Update failed"); }
               }}
-              className={`relative overflow-hidden rounded-[28px] p-6 border transition-all cursor-pointer group ${settings.globalDiscount > 0 ? "bg-gradient-to-br from-amber-50 to-orange-100/50 border-amber-200 shadow-xl shadow-amber-900/10" : "bg-white border-slate-200/60 shadow-lg shadow-slate-900/5 hover:shadow-xl"}`}
+              className={`rounded-3xl p-5 border cursor-pointer transition-all ${settings.globalDiscount > 0 ? "bg-amber-50/40 border-amber-200/50 hover:border-amber-300" : "bg-stone-50/30 border-stone-200/40 hover:border-stone-300"}`}
             >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className={`p-4 rounded-2xl transition-all ${settings.globalDiscount > 0 ? "bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-500/30" : "bg-slate-100 text-slate-400"}`}>
-                    {settings.globalDiscount > 0 ? <FiZap size={22} /> : <FiClock size={22} />}
+                <div className="flex items-center gap-3">
+                  <div className={`p-3 rounded-2xl ${settings.globalDiscount > 0 ? "bg-amber-100 text-amber-600" : "bg-stone-200 text-stone-600"}`}>
+                    {settings.globalDiscount > 0 ? <FiZap size={18} /> : <FiClock size={18} />}
                   </div>
                   <div>
-                    <h3 className={`text-base font-bold ${settings.globalDiscount > 0 ? "text-amber-900" : "text-slate-900"}`}>
-                      Happy Hour
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {settings.globalDiscount > 0 ? "10% off sitewide" : "Standard pricing"}
-                    </p>
+                    <h3 className="text-sm font-medium text-stone-900">Happy Hour</h3>
+                    <p className="text-xs text-stone-500 mt-0.5">{settings.globalDiscount > 0 ? "10% off" : "Normal pricing"}</p>
                   </div>
                 </div>
-                <div className={`w-14 h-8 rounded-full p-1 transition-all ${settings.globalDiscount > 0 ? "bg-gradient-to-r from-amber-500 to-orange-500" : "bg-slate-200"}`}>
-                  <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${settings.globalDiscount > 0 ? "translate-x-6" : "translate-x-0"}`} />
+                <div className={`w-12 h-7 rounded-full p-1 transition-all ${settings.globalDiscount > 0 ? "bg-amber-400" : "bg-stone-300"}`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.globalDiscount > 0 ? "translate-x-5" : "translate-x-0"}`} />
                 </div>
               </div>
             </div>
 
-            {/* Banner Control */}
+            {/* Banner */}
             <BannerControl settings={settings} setSettings={setSettings} />
           </motion.div>
         </div>
 
-        {/* Export Tools */}
+        {/* Exports */}
         <motion.div
           variants={fadeUp}
           custom={6}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 gap-5"
         >
           <ExportCard
             title="Sales Report"
-            description="Export all orders to CSV"
-            icon={<FiDollarSign size={20} />}
-            gradient="from-emerald-500 to-teal-600"
+            desc="Export all orders"
+            icon={<FiDollarSign size={18} />}
             onClick={async () => {
-              const toastId = toast.loading("Generating report...");
+              const toastId = toast.loading("Generating...");
               try {
                 const { data } = await axios.get("/api/orders", { withCredentials: true });
-                const csvContent = [
-                  ["Order ID", "Date", "Customer", "Email", "Items", "Total", "Status", "Payment"],
-                  ...data.map(o => [
-                    o.orderId || o._id,
-                    new Date(o.createdAt).toLocaleDateString(),
-                    o.user?.name || "Guest",
-                    o.user?.email || "N/A",
-                    o.items.map(i => `${i.name} (x${i.qty})`).join("; "),
-                    o.totalAmount,
-                    o.status,
-                    o.paymentMethod
-                  ])
+                const csv = [
+                  ["Order ID", "Date", "Customer", "Email", "Total", "Status"],
+                  ...data.map(o => [o.orderId || o._id, new Date(o.createdAt).toLocaleDateString(), o.user?.name || "Guest", o.user?.email || "N/A", o.totalAmount, o.status])
                 ].map(e => e.join(",")).join("\n");
-
-                const blob = new Blob([csvContent], { type: "text/csv" });
+                const blob = new Blob([csv], { type: "text/csv" });
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(blob);
                 link.download = `sales_${new Date().toISOString().split('T')[0]}.csv`;
                 link.click();
-                toast.success("Report downloaded!", { id: toastId });
+                toast.success("Downloaded!", { id: toastId });
               } catch (e) {
                 toast.error("Export failed", { id: toastId });
               }
@@ -510,32 +434,22 @@ export default function AdminDashboard() {
 
           <ExportCard
             title="Customer Data"
-            description="Export user list & analytics"
-            icon={<FiUsers size={20} />}
-            gradient="from-blue-500 to-cyan-600"
+            desc="Export user list"
+            icon={<FiUsers size={18} />}
             onClick={async () => {
-              const toastId = toast.loading("Generating report...");
+              const toastId = toast.loading("Generating...");
               try {
                 const { data } = await axios.get("/api/admin/users/intelligence", { withCredentials: true });
-                const csvContent = [
-                  ["User ID", "Name", "Email", "Role", "Joined", "Total Spent", "Orders"],
-                  ...data.map(u => [
-                    u._id,
-                    u.name,
-                    u.email,
-                    u.role,
-                    new Date(u.createdAt).toLocaleDateString(),
-                    u.intelligence?.totalSpent || 0,
-                    u.intelligence?.orderCount || 0
-                  ])
+                const csv = [
+                  ["User ID", "Name", "Email", "Joined", "Total Spent"],
+                  ...data.map(u => [u._id, u.name, u.email, new Date(u.createdAt).toLocaleDateString(), u.intelligence?.totalSpent || 0])
                 ].map(e => e.join(",")).join("\n");
-
-                const blob = new Blob([csvContent], { type: "text/csv" });
+                const blob = new Blob([csv], { type: "text/csv" });
                 const link = document.createElement("a");
                 link.href = URL.createObjectURL(blob);
                 link.download = `customers_${new Date().toISOString().split('T')[0]}.csv`;
                 link.click();
-                toast.success("Report downloaded!", { id: toastId });
+                toast.success("Downloaded!", { id: toastId });
               } catch (e) {
                 toast.error("Export failed", { id: toastId });
               }
@@ -543,61 +457,49 @@ export default function AdminDashboard() {
           />
         </motion.div>
 
-        {/* Recent Orders & Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Orders List */}
+        {/* Orders & Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          {/* Orders */}
           <motion.div
             variants={fadeUp}
             custom={7}
-            className="lg:col-span-8 bg-white rounded-[32px] border border-slate-200/60 shadow-xl shadow-slate-900/5 overflow-hidden"
+            className="lg:col-span-8 bg-white rounded-3xl border border-stone-200/50 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
           >
-            <div className="p-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-              <div className="flex justify-between items-center">
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900">Recent Orders</h3>
-                  <p className="text-xs text-slate-500 mt-1">Live transaction feed</p>
-                </div>
-                <button
-                  onClick={() => navigate("/admin/orders")}
-                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg shadow-slate-900/20 active:scale-95"
-                >
-                  View All
-                </button>
-              </div>
+            <div className="p-6 border-b border-stone-100/50 flex justify-between items-center">
+              <h3 className="text-lg font-light text-stone-900">Recent Orders</h3>
+              <button
+                onClick={() => navigate("/admin/orders")}
+                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-xs font-medium transition-all"
+              >
+                View All
+              </button>
             </div>
 
-            <div className="p-4 max-h-[600px] overflow-y-auto">
+            <div className="p-4 max-h-[500px] overflow-y-auto">
               {recentOrders.length === 0 ? (
-                <div className="py-20 text-center">
-                  <FiShoppingBag className="mx-auto text-slate-200 mb-4" size={48} />
-                  <p className="text-slate-400 font-medium">No recent orders</p>
+                <div className="py-16 text-center">
+                  <FiShoppingBag className="mx-auto text-stone-300 mb-3" size={40} />
+                  <p className="text-stone-400 text-sm">No recent orders</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {recentOrders.map((order) => (
                     <div
                       key={order._id}
                       onClick={() => navigate(`/admin/orders`)}
-                      className="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-white rounded-3xl border border-transparent hover:border-slate-200 hover:shadow-lg transition-all cursor-pointer group"
+                      className="flex items-center justify-between p-4 bg-stone-50/30 hover:bg-stone-100/50 rounded-2xl border border-transparent hover:border-stone-200 transition-all cursor-pointer group"
                     >
-                      <div className="flex items-center gap-4 flex-1">
-                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-slate-900 to-slate-700 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-slate-900/20">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div className="w-10 h-10 rounded-xl bg-stone-200 flex items-center justify-center text-stone-600 font-medium text-xs">
                           #{order._id.slice(-4)}
                         </div>
                         <div>
-                          <h4 className="font-bold text-slate-900 text-sm">
-                            {order.user?.name || "Guest Customer"}
-                          </h4>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            {new Date(order.createdAt).toLocaleDateString()}
-                          </p>
+                          <h4 className="text-sm font-medium text-stone-900">{order.user?.name || "Customer"}</h4>
+                          <p className="text-xs text-stone-400">{new Date(order.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-6">
-                        <p className="font-bold text-slate-900 text-base">
-                          ₹{(order.totalAmount || order.totalPrice || 0).toLocaleString()}
-                        </p>
+                      <div className="flex items-center gap-4">
+                        <p className="font-medium text-stone-900">₹{(order.totalAmount || 0).toLocaleString()}</p>
                         <StatusPill status={order.status} />
                       </div>
                     </div>
@@ -607,44 +509,35 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
 
-          {/* Activity Feed */}
-          <motion.div variants={fadeUp} custom={8} className="lg:col-span-4 space-y-6">
+          {/* Activity */}
+          <motion.div variants={fadeUp} custom={8} className="lg:col-span-4 space-y-5">
             {/* Messages */}
-            <div className="bg-white rounded-[32px] border border-slate-200/60 shadow-xl shadow-slate-900/5 p-6 h-[300px] flex flex-col">
+            <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 h-[280px] flex flex-col hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-4 shrink-0">
-                <h3 className="text-lg font-bold text-slate-900">Messages</h3>
-                <button 
-                  onClick={() => navigate("/admin/messages")}
-                  className="text-slate-400 hover:text-slate-700 transition-colors"
-                >
-                  <FiMail size={18} />
+                <h3 className="text-lg font-light text-stone-900">Messages</h3>
+                <button onClick={() => navigate("/admin/messages")} className="text-stone-400 hover:text-stone-600 transition-colors">
+                  <FiMail size={16} />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+              <div className="flex-1 overflow-y-auto space-y-2">
                 {recentMessages?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full">
-                    <FiMail className="text-slate-200 mb-2" size={32} />
-                    <p className="text-xs text-slate-400">No messages</p>
+                    <FiMail className="text-stone-300 mb-2" size={28} />
+                    <p className="text-xs text-stone-400">No messages</p>
                   </div>
                 ) : (
                   recentMessages?.map((msg) => (
                     <div
                       key={msg._id}
                       onClick={() => navigate("/admin/messages")}
-                      className="p-3 bg-slate-50 hover:bg-slate-100 rounded-2xl cursor-pointer transition-all group border border-transparent hover:border-slate-200"
+                      className="p-3 bg-stone-50/40 hover:bg-stone-100/50 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-stone-200 group"
                     >
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="text-xs font-bold text-slate-900 truncate max-w-[140px]">
-                          {msg.email}
-                        </h4>
-                        <span className="text-[10px] text-slate-400">
-                          {new Date(msg.createdAt).toLocaleDateString()}
-                        </span>
+                      <div className="flex justify-between items-start mb-1">
+                        <h4 className="text-xs font-medium text-stone-900 truncate max-w-[120px]">{msg.email}</h4>
+                        <span className="text-[10px] text-stone-400">{new Date(msg.createdAt).toLocaleDateString()}</span>
                       </div>
-                      <p className="text-xs text-slate-600 line-clamp-2">
-                        {msg.message}
-                      </p>
+                      <p className="text-xs text-stone-600 line-clamp-1">{msg.message}</p>
                     </div>
                   ))
                 )}
@@ -652,40 +545,36 @@ export default function AdminDashboard() {
             </div>
 
             {/* Reviews */}
-            <div className="bg-white rounded-[32px] border border-slate-200/60 shadow-xl shadow-slate-900/5 p-6 h-[300px] flex flex-col">
+            <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 h-[280px] flex flex-col hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-4 shrink-0">
-                <h3 className="text-lg font-bold text-slate-900">Reviews</h3>
-                <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                  {allReviews.length}
-                </span>
+                <h3 className="text-lg font-light text-stone-900">Reviews</h3>
+                <span className="text-xs font-medium text-stone-500 bg-stone-100/50 px-2.5 py-1 rounded-full">{allReviews.length}</span>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-3 pr-2">
+              <div className="flex-1 overflow-y-auto space-y-2">
                 {allReviews?.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full">
-                    <FiStar className="text-slate-200 mb-2" size={32} />
-                    <p className="text-xs text-slate-400">No reviews yet</p>
+                    <FiStar className="text-stone-300 mb-2" size={28} />
+                    <p className="text-xs text-stone-400">No reviews yet</p>
                   </div>
                 ) : (
                   allReviews?.map((rev) => (
-                    <div key={rev._id} className="p-3 bg-slate-50 rounded-2xl group relative border border-transparent hover:border-slate-200 transition-all">
+                    <div key={rev._id} className="p-3 bg-stone-50/40 rounded-2xl group relative border border-transparent hover:border-stone-200 transition-all hover:bg-stone-100/50">
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteReviewHandler(rev.productId, rev._id); }}
-                        className="absolute top-2 right-2 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all p-1 hover:scale-110"
+                        className="absolute top-2 right-2 text-stone-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all p-1 hover:scale-110"
                       >
                         <FiTrash2 size={12} />
                       </button>
-                      <div className="flex gap-1 mb-2">
+                      <div className="flex gap-0.5 mb-2">
                         {[...Array(5)].map((_, i) => (
-                          <FiStar key={i} size={10} className={i < rev.rating ? "text-amber-400 fill-amber-400" : "text-slate-200"} />
+                          <FiStar key={i} size={10} className={i < rev.rating ? "text-amber-400 fill-amber-400" : "text-stone-200"} />
                         ))}
                       </div>
-                      <p className="text-xs text-slate-700 mb-2 line-clamp-2">
-                        "{rev.comment}"
-                      </p>
-                      <div className="flex justify-between items-center text-[10px]">
-                        <span className="text-slate-500 font-medium">{rev.userName}</span>
-                        <span className="text-blue-600 font-semibold">{rev.productName}</span>
+                      <p className="text-xs text-stone-700 line-clamp-1">"{rev.comment}"</p>
+                      <div className="flex justify-between items-center text-[10px] mt-2 text-stone-500">
+                        <span>{rev.userName}</span>
+                        <span className="text-stone-400">{rev.productName}</span>
                       </div>
                     </div>
                   ))
@@ -694,6 +583,7 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
         </div>
+
       </div>
     </motion.div>
   );
@@ -701,25 +591,20 @@ export default function AdminDashboard() {
 
 // --- Components ---
 
-function StatCard({ title, value, icon, trend, trendUp, gradient, index }) {
+function StatCard({ title, value, icon, color, index }) {
   return (
     <motion.div
       variants={fadeUp}
       custom={index}
-      className="relative overflow-hidden bg-white rounded-[28px] p-6 border border-slate-200/60 shadow-xl shadow-slate-900/5 hover:shadow-2xl transition-all group"
+      className={`bg-gradient-to-br ${color} rounded-3xl p-6 border border-stone-200/30 shadow-sm hover:shadow-md transition-all group relative overflow-hidden`}
     >
-      <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${gradient} opacity-5 rounded-full blur-3xl group-hover:opacity-10 transition-opacity`} />
-      
+      <div className="absolute top-0 right-0 w-24 h-24 bg-white/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className="relative z-10">
-        <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform`}>
+        <div className="text-stone-600 mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
           {icon}
         </div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">{title}</p>
-        <h4 className="text-3xl font-bold text-slate-900 mb-3">{value}</h4>
-        <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl ${trendUp ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
-          {trendUp ? <FiArrowUpRight size={14} /> : <FiArrowDownRight size={14} />}
-          {trend}
-        </span>
+        <p className="text-xs font-medium uppercase tracking-wide text-stone-500 mb-2">{title}</p>
+        <h4 className="text-2xl font-light text-stone-900">{value}</h4>
       </div>
     </motion.div>
   );
@@ -727,38 +612,33 @@ function StatCard({ title, value, icon, trend, trendUp, gradient, index }) {
 
 function StatusPill({ status }) {
   const map = {
-    "Pending": { bg: "bg-amber-100", text: "text-amber-700", dot: "bg-amber-500" },
-    "Cooking": { bg: "bg-blue-100", text: "text-blue-700", dot: "bg-blue-500" },
-    "Ready": { bg: "bg-purple-100", text: "text-purple-700", dot: "bg-purple-500" },
-    "Completed": { bg: "bg-emerald-100", text: "text-emerald-700", dot: "bg-emerald-500" },
-    "Cancelled": { bg: "bg-red-100", text: "text-red-700", dot: "bg-red-500" }
+    "Pending": "bg-amber-100/60 text-amber-700 border-amber-200/50",
+    "Cooking": "bg-blue-100/60 text-blue-700 border-blue-200/50",
+    "Ready": "bg-teal-100/60 text-teal-700 border-teal-200/50",
+    "Completed": "bg-emerald-100/60 text-emerald-700 border-emerald-200/50",
+    "Cancelled": "bg-rose-100/60 text-rose-700 border-rose-200/50"
   };
-  const s = map[status] || { bg: "bg-slate-100", text: "text-slate-600", dot: "bg-slate-400" };
+  const s = map[status] || "bg-stone-100/60 text-stone-600 border-stone-200/50";
   
   return (
-    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold ${s.bg} ${s.text}`}>
-      <span className={`w-2 h-2 rounded-full ${s.dot} animate-pulse`} />
+    <span className={`px-3 py-1.5 rounded-full text-xs font-medium border ${s}`}>
       {status}
     </span>
   );
 }
 
-function ExportCard({ title, description, icon, gradient, onClick }) {
+function ExportCard({ title, desc, icon, onClick }) {
   return (
-    <div className="bg-white rounded-[28px] p-6 border border-slate-200/60 shadow-xl shadow-slate-900/5 hover:shadow-2xl transition-all group cursor-pointer" onClick={onClick}>
+    <div onClick={onClick} className="bg-gradient-to-br from-stone-50 to-white rounded-3xl p-6 border border-stone-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className={`p-4 rounded-2xl bg-gradient-to-br ${gradient} text-white shadow-lg`}>
-            {icon}
-          </div>
+        <div className="flex items-center gap-3">
+          <div className="text-stone-600 opacity-60 group-hover:opacity-100 transition-opacity">{icon}</div>
           <div>
-            <h3 className="font-bold text-slate-900 text-base">{title}</h3>
-            <p className="text-xs text-slate-500 mt-1">{description}</p>
+            <h3 className="font-medium text-stone-900 text-sm">{title}</h3>
+            <p className="text-xs text-stone-500 mt-0.5">{desc}</p>
           </div>
         </div>
-        <button className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-2xl transition-all group-hover:scale-110 group-hover:bg-slate-900 group-hover:text-white">
-          <FiDownload size={20} />
-        </button>
+        <FiDownload className="text-stone-400 group-hover:text-stone-600 transition-colors" size={18} />
       </div>
     </div>
   );
@@ -770,14 +650,14 @@ function BannerControl({ settings, setSettings }) {
 
   const handleFileUpload = async (file) => {
     if (!file) return;
-    if (!file.type.startsWith("image/")) return toast.error("Please upload an image");
+    if (!file.type.startsWith("image/")) return toast.error("Upload an image");
     if (file.size > 5 * 1024 * 1024) return toast.error("Image too large (Max 5MB)");
 
     const formData = new FormData();
     formData.append("image", file);
 
     setUploading(true);
-    const toastId = toast.loading("Uploading banner...");
+    const toastId = toast.loading("Uploading...");
 
     try {
       const res = await axios.post("/api/upload", formData, {
@@ -801,19 +681,15 @@ function BannerControl({ settings, setSettings }) {
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-[28px] p-6 border transition-all ${settings.banner?.active ? "bg-gradient-to-br from-violet-50 to-purple-100/50 border-violet-200 shadow-xl shadow-violet-900/10" : "bg-white border-slate-200/60 shadow-lg shadow-slate-900/5"}`}>
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-4">
-          <div className={`p-4 rounded-2xl transition-all ${settings.banner?.active ? "bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-500/30" : "bg-slate-100 text-slate-400"}`}>
-            <FiStar size={22} />
+    <div className={`rounded-3xl p-5 border transition-all ${settings.banner?.active ? "bg-teal-50/40 border-teal-200/50 hover:border-teal-300" : "bg-stone-50/30 border-stone-200/40 hover:border-stone-300"}`}>
+      <div className="flex justify-between items-center mb-3">
+        <div className="flex items-center gap-3">
+          <div className={`p-3 rounded-2xl ${settings.banner?.active ? "bg-teal-100 text-teal-600" : "bg-stone-200 text-stone-600"}`}>
+            <FiStar size={18} />
           </div>
           <div>
-            <h3 className={`text-base font-bold ${settings.banner?.active ? "text-violet-900" : "text-slate-900"}`}>
-              Promo Banner
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              {settings.banner?.active ? "Currently visible" : "Hidden from site"}
-            </p>
+            <h3 className="text-sm font-medium text-stone-900">Promo Banner</h3>
+            <p className="text-xs text-stone-500 mt-0.5">{settings.banner?.active ? "Visible" : "Hidden"}</p>
           </div>
         </div>
 
@@ -824,17 +700,17 @@ function BannerControl({ settings, setSettings }) {
               const next = !settings.banner?.active;
               await axios.put("/api/admin/enterprise/settings", { banner: { ...settings.banner, active: next } }, { withCredentials: true });
               setSettings(prev => ({ ...prev, banner: { ...prev.banner, active: next } }));
-              toast.success(next ? "Banner published!" : "Banner hidden");
+              toast.success(next ? "Published!" : "Hidden");
             } catch (err) { toast.error("Update failed"); }
           }}
-          className={`w-14 h-8 rounded-full p-1 transition-all ${settings.banner?.active ? "bg-gradient-to-r from-violet-500 to-purple-500" : "bg-slate-200"}`}
+          className={`w-12 h-7 rounded-full p-1 transition-all ${settings.banner?.active ? "bg-teal-400" : "bg-stone-300"}`}
         >
-          <div className={`w-6 h-6 bg-white rounded-full shadow-md transition-transform ${settings.banner?.active ? "translate-x-6" : "translate-x-0"}`} />
+          <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.banner?.active ? "translate-x-5" : "translate-x-0"}`} />
         </button>
       </div>
 
       <div
-        className={`relative border-2 border-dashed rounded-2xl p-4 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${isDragging ? "border-violet-500 bg-violet-50" : "border-slate-200 hover:border-violet-300 bg-slate-50/50"}`}
+        className={`border-2 border-dashed rounded-2xl p-3 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${isDragging ? "border-teal-400 bg-teal-50/50" : "border-stone-200 hover:border-stone-300 bg-stone-50/30"}`}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={(e) => {
@@ -851,22 +727,19 @@ function BannerControl({ settings, setSettings }) {
         />
 
         {uploading ? (
-          <div className="py-4">
-            <div className="w-8 h-8 border-4 border-violet-200 border-t-violet-600 rounded-full animate-spin mx-auto mb-2" />
-            <span className="text-xs font-semibold text-violet-700">Uploading...</span>
+          <div className="py-2">
+            <div className="w-5 h-5 border-2 border-stone-300 border-t-stone-700 rounded-full animate-spin mx-auto mb-1" />
+            <span className="text-xs text-stone-600">Uploading...</span>
           </div>
         ) : settings.banner?.imageUrl ? (
           <div className="w-full group">
-            <img src={settings.banner.imageUrl} alt="Banner" className="h-24 w-full object-cover rounded-xl" />
-            <div className="mt-2 text-xs text-slate-500 font-medium group-hover:text-violet-600 transition-colors">
-              Click to change image
-            </div>
+            <img src={settings.banner.imageUrl} alt="Banner" className="h-16 w-full object-cover rounded-lg" />
+            <p className="text-xs text-stone-500 mt-2 group-hover:text-stone-700 transition-colors">Click to change</p>
           </div>
         ) : (
-          <div className="py-6">
-            <FiCheckCircle className="mx-auto text-slate-300 mb-2" size={28} />
-            <p className="text-xs font-semibold text-slate-600">Drop banner image here</p>
-            <p className="text-[10px] text-slate-400 mt-1">or click to browse</p>
+          <div className="py-4">
+            <FiCheckCircle className="mx-auto text-stone-300 mb-2" size={20} />
+            <p className="text-xs font-medium text-stone-600">Drop image here</p>
           </div>
         )}
       </div>
@@ -877,16 +750,9 @@ function BannerControl({ settings, setSettings }) {
 function ChartTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-slate-900/95 backdrop-blur-xl text-white px-5 py-4 rounded-3xl shadow-2xl border border-white/10">
-        <p className="font-bold text-xs text-slate-400 mb-3 uppercase tracking-wider">{label}</p>
-        {payload.map((p, i) => (
-          <div key={i} className="flex items-center gap-3 mb-1">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: p.color }} />
-            <p className="font-bold text-base">
-              ₹{Number(p.value).toLocaleString()}
-            </p>
-          </div>
-        ))}
+      <div className="bg-white border border-stone-200 px-4 py-3 rounded-2xl shadow-lg text-xs">
+        <p className="font-medium text-stone-600 mb-2 uppercase tracking-wide text-[10px]">{label}</p>
+        <p className="font-semibold text-stone-900">₹{Number(payload[0].value).toLocaleString()}</p>
       </div>
     );
   }
