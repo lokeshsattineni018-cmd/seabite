@@ -20,6 +20,7 @@ const LINKS = [
   { name: "Flash Sales", path: "/admin/flash-sale", icon: <FiZap size={18} /> },
   { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={18} /> },
   { name: "Abandoned Cart", path: "/admin/carts", icon: <FiShoppingCart size={18} /> },
+  { name: "Live Ops", path: "/admin/watchtower", icon: <FiActivity size={18} /> }, // 🟢 NEW
   { name: "Analytics", path: "/admin/analytics", icon: <FiActivity size={18} /> }, // 🟢 NEW
   { name: "Settings", path: "/admin/settings", icon: <FiSettings size={18} /> }, // 🟢 NEW
 ];

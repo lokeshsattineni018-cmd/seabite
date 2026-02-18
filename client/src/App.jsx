@@ -51,6 +51,7 @@ import AdminPOS from "./admin/AdminPOS"; // 🟢 NEW IMPORT
 
 import AdminFlashSale from "./admin/AdminFlashSale";
 import AdminMarketing from "./admin/AdminMarketing";
+import AdminWatchtower from "./admin/AdminWatchtower"; // 🟢 Added import
 import AdminAbandonedCarts from "./admin/AdminAbandonedCarts";
 import AdminSettings from "./admin/AdminSettings"; // 🟢 NEW IMPORT
 import AdminAnalytics from "./admin/AdminAnalytics"; // 🟢 NEW IMPORT
@@ -184,6 +185,7 @@ function MainLayout() {
                   <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="flash-sale" element={<AdminFlashSale />} />
                   <Route path="marketing" element={<AdminMarketing />} />
+                  <Route path="watchtower" element={<AdminWatchtower />} /> {/* 🟢 Added Route */}
                   <Route path="carts" element={<AdminAbandonedCarts />} />
                   <Route path="settings" element={<AdminSettings />} /> {/* 🟢 NEW ROUTE */}
                   <Route path="analytics" element={<AdminAnalytics />} /> {/* 🟢 NEW ROUTE */}

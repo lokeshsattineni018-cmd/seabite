@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import { sendAuthEmail } from "../utils/emailService.js";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
+import { logActivity } from "../utils/activityLogger.js"; // 🟢 Added import
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -116,6 +117,9 @@ export const googleLogin = async (req, res) => {
       // ✅ Explicitly set cookie in response headers (redundant but ensures it's sent)
       const cookieHeader = res.getHeader('Set-Cookie');
       console.log("🍪 Set-Cookie header:", cookieHeader);
+
+      // 🟢 WATCHTOWER LOGGING
+      logActivity("LOGIN", `User Logged In: ${user.name} (${user.email})`, req);
 
       res.status(200).json({
         user: req.session.user,

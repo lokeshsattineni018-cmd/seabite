@@ -1,6 +1,7 @@
 import express from "express";
 import User from "../models/User.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { logActivity } from "../utils/activityLogger.js"; // 🟢 Added import
 
 const router = express.Router();
 
@@ -14,15 +15,20 @@ router.post("/wishlist/:id", protect, async (req, res) => {
 
         const isWishlisted = user.wishlist.includes(productId);
 
+        // 🟢 WATCHTOWER LOG
+        // import { logActivity } from "../utils/activityLogger.js"; // Removed from here
+
         if (isWishlisted) {
             // Remove
             user.wishlist = user.wishlist.filter((id) => id.toString() !== productId);
             await user.save();
+            logActivity("WISHLIST_REMOVE", `Removed product ${productId} from wishlist`, req);
             res.json({ message: "Removed from Wishlist", wishlist: user.wishlist });
         } else {
             // Add
             user.wishlist.push(productId);
             await user.save();
+            logActivity("WISHLIST_ADD", `Added product ${productId} to wishlist`, req);
             res.json({ message: "Added to Wishlist", wishlist: user.wishlist });
         }
     } catch (error) {
@@ -64,6 +70,13 @@ router.post("/cart", protect, async (req, res) => {
         }));
 
         await user.save();
+
+        // 🟢 WATCHTOWER LOG (Debounce or check if cart not empty)
+        if (cart.length > 0) {
+            // import { logActivity } from "../utils/activityLogger.js"; // Removed from here
+            logActivity("CART_UPDATE", `Updated Cart: ${cart.length} items`, req);
+        }
+
         res.json({ message: "Cart synced", cart: user.cart });
     } catch (error) {
         // console.error("Cart sync error:", error);
