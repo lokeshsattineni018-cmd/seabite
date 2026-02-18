@@ -22,7 +22,6 @@ import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import spinRoutes from "./routes/spinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js"; // 🟢 NEW
 import checkMaintenance from "./middleware/checkMaintenance.js";
 
