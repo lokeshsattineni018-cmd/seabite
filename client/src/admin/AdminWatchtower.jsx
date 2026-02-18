@@ -3,16 +3,74 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     FiActivity, FiCpu, FiGlobe, FiRadio, FiTerminal,
-    FiUser, FiShoppingCart, FiSearch, FiLock
+    FiUser, FiShoppingCart, FiSearch, FiLock, FiClock, FiZap, FiMapPin
 } from "react-icons/fi";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+
+// --- DESIGN SYSTEM CONSTANTS ---
+const T = {
+    bg: "#FAFAF8",
+    surface: "#FFFFFF",
+    surfaceWarm: "#F7F5F0",
+    surfaceMid: "#F0EDE6",
+    border: "rgba(120,113,108,0.12)",
+    borderSoft: "rgba(120,113,108,0.07)",
+    teal: "#0D9488", tealL: "#F0FDFA",
+    sky: "#0284C7", skyL: "#F0F9FF",
+    purple: "#7C3AED", purpleL: "#F5F3FF",
+    warning: "#D97706", warningL: "#FFFBEB",
+    text: "#1C1917",
+    textMid: "#57534E",
+    textSoft: "#A8A29E",
+    textGhost: "#D6D3D1",
+    shadowSm: "0 1px 2px rgba(28,25,23,0.04), 0 1px 1px rgba(28,25,23,0.03)",
+    shadowMd: "0 4px 12px rgba(28,25,23,0.05), 0 1px 3px rgba(28,25,23,0.04)",
+};
+
+const ease = [0.22, 1, 0.36, 1];
+const fadeUp = {
+    hidden: { opacity: 0, y: 12 },
+    visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.055, duration: 0.45, ease } }),
+};
+const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.055 } } };
+
+const GS = () => (
+    <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap');
+    *, *::before, *::after { box-sizing:border-box; margin:0; }
+    .sb { font-family:'Geist',system-ui,-apple-system,sans-serif; }
+    ::-webkit-scrollbar { width:4px; height:4px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:${T.textGhost}; border-radius:4px; }
+    ::-webkit-scrollbar-thumb:hover { background:${T.textSoft}; }
+  `}</style>
+);
+
+function Card({ children, style = {}, hover = true }) {
+    const [on, setOn] = useState(false);
+    return (
+        <div
+            onMouseEnter={() => hover && setOn(true)}
+            onMouseLeave={() => hover && setOn(false)}
+            style={{
+                background: T.surface,
+                border: `1px solid ${on ? "rgba(120,113,108,0.17)" : T.border}`,
+                borderRadius: 22,
+                boxShadow: on ? T.shadowMd : T.shadowSm,
+                transition: "all 0.28s cubic-bezier(0.22,1,0.36,1)",
+                transform: on ? "translateY(-1px)" : "translateY(0)",
+                overflow: "hidden",
+                ...style,
+            }}
+        >{children}</div>
+    );
+}
 
 export default function AdminWatchtower() {
     const [logs, setLogs] = useState([]);
     const [activeCount, setActiveCount] = useState(0);
     const [isLive, setIsLive] = useState(true);
-    const scrollRef = useRef(null);
 
     // Polling Effect
     useEffect(() => {
@@ -20,13 +78,16 @@ export default function AdminWatchtower() {
 
         const fetchData = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/admin/watchtower/live`, { withCredentials: true });
-                // Only update if data changed to prevent jitter? 
-                // Actually, simple replace is fine for this "terminal" feel
+                // Determine URL: If localhost, force relative path to use proxy (to be configured). 
+                // Otherwise use API_URL.
+                const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+                const baseUrl = isLocal ? "" : API_URL;
+
+                const { data } = await axios.get(`${baseUrl}/api/admin/watchtower/live`, { withCredentials: true });
                 setLogs(data.logs);
                 setActiveCount(data.activeCount);
             } catch (err) {
-                console.error("Watchtower signal lost");
+                // console.error("Watchtower signal lost", err);
             }
         };
 
@@ -35,151 +96,183 @@ export default function AdminWatchtower() {
         return () => clearInterval(interval);
     }, [isLive]);
 
-    // Auto-scroll logic could go here, but latest is usually at top/bottom. 
-    // Let's keep latest at TOP for easier reading.
-
-    const getIcon = (action) => {
+    const getActionStyle = (action) => {
         switch (action) {
-            case "LOGIN": return <FiLock className="text-emerald-400" />;
-            case "CART_UPDATE": return <FiShoppingCart className="text-amber-400" />;
-            case "SEARCH": return <FiSearch className="text-cyan-400" />;
-            case "WISHLIST_ADD": return <FiActivity className="text-pink-400" />;
-            default: return <FiTerminal className="text-gray-400" />;
+            case "LOGIN": return { icon: <FiLock />, color: T.teal, bg: T.tealL, label: "Login" };
+            case "CART_UPDATE": return { icon: <FiShoppingCart />, color: T.warning, bg: T.warningL, label: "Cart" };
+            case "SEARCH": return { icon: <FiSearch />, color: T.sky, bg: T.skyL, label: "Search" };
+            case "WISHLIST_ADD": return { icon: <FiActivity />, color: T.purple, bg: T.purpleL, label: "Wishlist" };
+            default: return { icon: <FiZap />, color: T.textMid, bg: T.surfaceMid, label: "System" };
         }
     };
 
     const formatTime = (iso) => {
-        return new Date(iso).toLocaleTimeString('en-US', { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        return new Date(iso).toLocaleTimeString('en-US', { hour12: true, hour: "numeric", minute: "2-digit", second: "2-digit" });
     };
 
     return (
-        <div className="min-h-screen bg-black text-green-500 font-mono p-6 lg:p-10 selection:bg-green-900 selection:text-white overflow-hidden">
-
-            {/* Header / HUD */}
-            <div className="flex justify-between items-end mb-8 border-b border-green-900/50 pb-4">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-widest flex items-center gap-3 uppercase">
-                        <FiRadio className={`animate-pulse ${isLive ? "text-red-500" : "text-gray-500"}`} />
-                        The Watchtower
-                    </h1>
-                    <p className="text-xs text-green-700 mt-2 uppercase tracking-[0.2em]">Live Operations Command // Class-1 Clearance</p>
-                </div>
-
-                <div className="flex gap-6 text-sm">
-                    <div className="flex flex-col items-end">
-                        <span className="text-xs text-green-800 uppercase">System Status</span>
-                        <div className="flex items-center gap-2 text-green-400">
-                            <FiCpu /> ONLINE
+        <>
+            <GS />
+            <motion.div className="sb" initial="hidden" animate="visible" variants={stagger}
+                style={{ minHeight: "100vh", background: T.bg, padding: "28px", maxWidth: 1400, margin: "0 auto", color: T.text }}
+            >
+                {/* ── HEADER ─────────────────────────────────── */}
+                <motion.div variants={fadeUp} style={{ marginBottom: 28, borderBottom: `1px solid ${T.borderSoft}`, paddingBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "end" }}>
+                    <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                            <FiRadio size={14} style={{ color: isLive ? T.teal : T.textGhost }} className={isLive ? "animate-pulse" : ""} />
+                            <span style={{ fontSize: 10, fontWeight: 500, color: isLive ? T.teal : T.textGhost, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                                {isLive ? "Live Connection Established" : "Connection Paused"}
+                            </span>
                         </div>
+                        <h1 style={{ fontSize: 24, fontWeight: 600, color: T.text, letterSpacing: "-0.02em", marginBottom: 6 }}>Live Operations</h1>
+                        <p style={{ fontSize: 13, color: T.textSoft, fontWeight: 400 }}>Real-time visibility into user activity and system health.</p>
                     </div>
-                    <div className="flex flex-col items-end">
-                        <span className="text-xs text-green-800 uppercase">Active Sessions</span>
-                        <div className="flex items-center gap-2 text-cyan-400 font-bold text-lg">
-                            <FiGlobe /> {activeCount}
-                        </div>
-                    </div>
-                </div>
-            </div>
 
-            {/* Main Terminal Grid */}
-            <div className="grid lg:grid-cols-4 gap-6 h-[75vh]">
-
-                {/* LIVE FEED */}
-                <div className="lg:col-span-3 bg-gray-900/30 border border-green-800 rounded-lg p-4 overflow-hidden flex flex-col relative">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-green-500/50 to-transparent opacity-50"></div>
-
-                    <div className="flex justify-between items-center mb-4 text-xs uppercase tracking-widest text-green-700">
-                        <span>Incoming Stream</span>
-                        <button onClick={() => setIsLive(!isLive)} className="hover:text-white transition-colors">
-                            [{isLive ? "PAUSE" : "RESUME"}]
+                    <div style={{ display: "flex", gap: 12 }}>
+                        <Card style={{ padding: "12px 20px", borderRadius: 16 }}>
+                            <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Active Users</div>
+                            <div style={{ fontSize: 24, fontWeight: 600, color: T.teal, display: "flex", alignItems: "center", gap: 8 }}>
+                                <FiGlobe size={20} className="opacity-50" />
+                                {activeCount}
+                            </div>
+                        </Card>
+                        <button
+                            onClick={() => setIsLive(!isLive)}
+                            style={{
+                                padding: "0 24px", borderRadius: 16, border: `1px solid ${T.border}`,
+                                background: T.surface, color: T.textMid, fontSize: 12, fontWeight: 500,
+                                cursor: "pointer", height: "auto"
+                            }}
+                        >
+                            {isLive ? "Pause Feed" : "Resume"}
                         </button>
                     </div>
+                </motion.div>
 
-                    <div className="overflow-y-auto pr-2 space-y-1 flex-1 custom-scrollbar">
-                        <AnimatePresence initial={false}>
-                            {logs.map((log) => (
-                                <motion.div
-                                    key={log._id}
-                                    initial={{ opacity: 0, x: -20 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    className="flex items-start gap-4 p-3 border-l-2 border-green-900 hover:border-green-400 hover:bg-green-900/10 transition-colors group text-sm"
-                                >
-                                    <span className="text-green-700 shrink-0 font-bold">[{formatTime(log.timestamp)}]</span>
-                                    <span className="shrink-0 mt-0.5">{getIcon(log.action)}</span>
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-bold text-green-300">{log.action}</span>
-                                            {log.user ? (
-                                                <span className="text-xs text-green-600 border border-green-800 px-1 rounded">USER: {log.user.name}</span>
-                                            ) : (
-                                                <span className="text-xs text-gray-600 border border-gray-800 px-1 rounded">GUEST</span>
-                                            )}
-                                        </div>
-                                        <p className="text-green-400/80 mt-1">{log.details}</p>
-                                        {/* Meta Data Expansion */}
-                                        {log.meta && Object.keys(log.meta).length > 0 && (
-                                            <div className="text-[10px] text-gray-500 mt-1 font-mono">
-                                                {JSON.stringify(log.meta)}
-                                            </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24 }}>
+
+                    {/* ── LIVE FEED TABLE ────────────────────────────── */}
+                    <motion.div variants={fadeUp} custom={1}>
+                        <Card hover={false} style={{ minHeight: "60vh" }}>
+                            <div style={{ padding: "20px 24px", borderBottom: `1px solid ${T.borderSoft}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <h3 style={{ fontSize: 14, fontWeight: 600, color: T.text }}>Recent Activity</h3>
+                                <div style={{ fontSize: 11, color: T.textGhost, fontFamily: "Geist Mono, monospace" }}>LATENCY: 24ms</div>
+                            </div>
+
+                            <div style={{ overflowX: "auto" }}>
+                                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                                    <tbody style={{ fontSize: 13 }}>
+                                        <AnimatePresence initial={false}>
+                                            {logs.map((log) => {
+                                                const style = getActionStyle(log.action);
+                                                return (
+                                                    <motion.tr
+                                                        key={log._id}
+                                                        initial={{ opacity: 0, height: 0 }}
+                                                        animate={{ opacity: 1, height: "auto" }}
+                                                        exit={{ opacity: 0 }}
+                                                        style={{ borderBottom: `1px solid ${T.borderSoft}` }}
+                                                    >
+                                                        <td style={{ padding: "16px 24px", width: "1%", whiteSpace: "nowrap", color: T.textSoft, fontFamily: "Geist Mono, monospace", fontSize: 11 }}>
+                                                            {formatTime(log.timestamp)}
+                                                        </td>
+                                                        <td style={{ padding: "16px 12px", width: "1%" }}>
+                                                            <div style={{
+                                                                width: 32, height: 32, borderRadius: 10,
+                                                                background: style.bg, color: style.color,
+                                                                display: "flex", alignItems: "center", justifyContent: "center"
+                                                            }}>
+                                                                {style.icon}
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ padding: "16px 12px" }}>
+                                                            <div style={{ fontWeight: 500, color: T.text, marginBottom: 2 }}>{log.details}</div>
+                                                            <div style={{ fontSize: 11, color: T.textSoft, display: "flex", gap: 6 }}>
+                                                                <span style={{ fontWeight: 600, color: style.color }}>{log.action}</span>
+                                                                {log.meta && Object.keys(log.meta).length > 0 && (
+                                                                    <><span>•</span> <span>{JSON.stringify(log.meta)}</span></>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ padding: "16px 24px", textAlign: "right" }}>
+                                                            {log.user ? (
+                                                                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.surfaceWarm, padding: "4px 8px", borderRadius: 6, border: `1px solid ${T.border}` }}>
+                                                                    <FiUser size={10} style={{ color: T.textSoft }} />
+                                                                    <span style={{ fontSize: 11, fontWeight: 500, color: T.text }}>{log.user.name}</span>
+                                                                </div>
+                                                            ) : (
+                                                                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px" }}>
+                                                                    <span style={{ fontSize: 11, fontWeight: 500, color: T.textGhost }}>Guest</span>
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    </motion.tr>
+                                                );
+                                            })}
+                                        </AnimatePresence>
+                                        {logs.length === 0 && (
+                                            <tr>
+                                                <td colSpan={4} style={{ padding: 40, textAlign: "center", color: T.textSoft, fontStyle: "italic" }}>
+                                                    Waiting for stream data...
+                                                </td>
+                                            </tr>
                                         )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </Card>
+                    </motion.div>
+
+                    {/* ── SIDEBAR STATS ────────────────────────────── */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                        <motion.div variants={fadeUp} custom={2}>
+                            <Card hover={false} style={{ padding: 24 }}>
+                                <h3 style={{ fontSize: 13, fontWeight: 600, color: T.text, marginBottom: 16, display: "flex", alignItems: "center", gap: 8 }}>
+                                    <FiMapPin size={14} style={{ color: T.teal }} />
+                                    Traffic Composition
+                                </h3>
+                                <div style={{ spaceY: 12 }}>
+                                    <div style={{ marginBottom: 12 }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 6, fontWeight: 500 }}>
+                                            <span style={{ color: T.textMid }}>Mobile</span>
+                                            <span style={{ color: T.text }}>65%</span>
+                                        </div>
+                                        <div style={{ width: "100%", height: 4, background: T.surfaceWarm, borderRadius: 2, overflow: "hidden" }}>
+                                            <div style={{ width: "65%", height: "100%", background: T.teal, borderRadius: 2 }} />
+                                        </div>
                                     </div>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-                        {logs.length === 0 && (
-                            <div className="text-center text-green-900 mt-20 animate-pulse">
-                                AWAITING DATA STREAM...
-                            </div>
-                        )}
-                    </div>
-                </div>
+                                    <div style={{ marginBottom: 12 }}>
+                                        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 6, fontWeight: 500 }}>
+                                            <span style={{ color: T.textMid }}>Desktop</span>
+                                            <span style={{ color: T.text }}>35%</span>
+                                        </div>
+                                        <div style={{ width: "100%", height: 4, background: T.surfaceWarm, borderRadius: 2, overflow: "hidden" }}>
+                                            <div style={{ width: "35%", height: "100%", background: T.sky, borderRadius: 2 }} />
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        </motion.div>
 
-                {/* SIDEBAR INTEL */}
-                <div className="space-y-6">
-                    {/* Active Radar (Mock Visual) */}
-                    <div className="bg-gray-900/30 border border-green-800 rounded-lg p-4 h-1/2 flex flex-col items-center justify-center relative overflow-hidden">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-green-900/20 via-transparent to-transparent animate-pulse"></div>
-                        <div className="w-32 h-32 border border-green-800 rounded-full flex items-center justify-center relative">
-                            <div className="w-24 h-24 border border-green-900 rounded-full"></div>
-                            <div className="w-1 h-16 bg-gradient-to-b from-green-500 to-transparent absolute top-1/2 left-1/2 origin-top animate-[spin_3s_linear_infinite]"></div>
-                            {/* Dots for active users */}
-                            {Array.from({ length: Math.min(activeCount, 5) }).map((_, i) => (
-                                <div key={i} className="absolute w-1.5 h-1.5 bg-green-400 rounded-full animate-ping" style={{
-                                    top: `${50 + Math.random() * 40 - 20}%`,
-                                    left: `${50 + Math.random() * 40 - 20}%`,
-                                    animationDelay: `${i * 0.5}s`
-                                }}></div>
-                            ))}
-                        </div>
-                        <p className="mt-4 text-xs uppercase text-green-600 tracking-widest">Sector Scan Active</p>
-                    </div>
-
-                    {/* Quick Stats */}
-                    <div className="bg-gray-900/30 border border-green-800 rounded-lg p-4 h-auto">
-                        <h3 className="text-xs uppercase text-green-700 tracking-widest mb-4">Traffic Sources</h3>
-                        <div className="space-y-3">
-                            <div className="flex justify-between text-xs">
-                                <span>Direct</span>
-                                <span className="text-green-400">65%</span>
-                            </div>
-                            <div className="w-full bg-green-900/30 h-1 rounded-full overflow-hidden">
-                                <div className="bg-green-500 h-full w-[65%]"></div>
-                            </div>
-
-                            <div className="flex justify-between text-xs">
-                                <span>Search</span>
-                                <span className="text-green-400">25%</span>
-                            </div>
-                            <div className="w-full bg-green-900/30 h-1 rounded-full overflow-hidden">
-                                <div className="bg-green-500 h-full w-[25%]"></div>
-                            </div>
-                        </div>
+                        <motion.div variants={fadeUp} custom={3}>
+                            <Card hover={false} style={{
+                                padding: 24,
+                                background: `linear-gradient(135deg, ${T.teal} 0%, #115E59 100%)`,
+                                color: "#FFF",
+                                border: "none"
+                            }}>
+                                <FiZap size={20} style={{ opacity: 0.8, marginBottom: 12 }} />
+                                <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>System Healthy</h3>
+                                <p style={{ fontSize: 12, opacity: 0.8, lineHeight: 1.5 }}>
+                                    All services operational. Database latency normal. Email service standing by.
+                                </p>
+                            </Card>
+                        </motion.div>
                     </div>
 
                 </div>
-
-            </div>
-
-        </div>
+            </motion.div>
+        </>
     );
 }

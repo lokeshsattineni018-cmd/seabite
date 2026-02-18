@@ -3,43 +3,38 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { FiTrash2, FiTag, FiPlus, FiRefreshCw, FiPercent, FiDollarSign, FiCopy, FiCheck } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-const ease = [0.22, 1, 0.36, 1];
+const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
-  hidden: { opacity: 0, y: 16, filter: "blur(6px)" },
+  hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
   visible: (i = 0) => ({
     opacity: 1, y: 0, filter: "blur(0px)",
-    transition: { delay: i * 0.05, duration: 0.5, ease },
+    transition: { delay: i * 0.05, duration: 0.6, ease },
   }),
 };
-
-const CouponSkeleton = () => (
-  <div className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center border border-slate-100 animate-pulse">
-    <div className="space-y-2"><div className="h-5 w-32 bg-slate-100 rounded" /><div className="h-3 w-48 bg-slate-50 rounded" /></div>
-    <div className="h-8 w-8 bg-slate-50 rounded-lg" />
-  </div>
-);
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.05 } },
+};
 
 export default function AdminCoupons() {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
   const [formData, setFormData] = useState({
-    code: "",
-    value: "",
-    minOrderAmount: "",
-    discountType: "percent" // ✅ Added this
+    code: "", value: "", minOrderAmount: "", discountType: "percent"
   });
 
   const fetchCoupons = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
-      const res = await axios.get(`${API_URL}/api/coupons`, { withCredentials: true });
-      setCoupons(res.data || []);
-    } catch (err) {
-      // console.error("Fetch coupons error:", err);
+      const { data } = await axios.get(`${API_URL}/api/coupons`, { withCredentials: true });
+      setCoupons(data || []);
+    } catch {
+      toast.error("Failed to load coupons");
     } finally {
       setLoading(false);
     }
@@ -52,7 +47,6 @@ export default function AdminCoupons() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
-      // ✅ Send complete data with defaults
       const couponData = {
         code: formData.code.toUpperCase(),
         value: Number(formData.value),
@@ -60,15 +54,15 @@ export default function AdminCoupons() {
         discountType: "percent",
         maxDiscount: 0,
         isActive: true,
-        isSpinCoupon: false, // ✅ Important: Mark as admin coupon
+        isSpinCoupon: false,
       };
 
       await axios.post(`${API_URL}/api/coupons`, couponData, { withCredentials: true });
       setFormData({ code: "", value: "", minOrderAmount: "", discountType: "percent" });
       fetchCoupons(true);
+      toast.success("Coupon created successfully");
     } catch (err) {
-      // console.error("Create coupon error:", err);
-      alert(err.response?.data?.message || "Error creating coupon");
+      toast.error(err.response?.data?.message || "Failed to create coupon");
     }
   };
 
@@ -77,8 +71,9 @@ export default function AdminCoupons() {
     try {
       await axios.delete(`${API_URL}/api/coupons/${id}`, { withCredentials: true });
       fetchCoupons(true);
-    } catch (err) {
-      // console.error("Delete coupon error:", err);
+      toast.success("Coupon deleted");
+    } catch {
+      toast.error("Delete failed");
     }
   };
 
@@ -86,134 +81,142 @@ export default function AdminCoupons() {
     navigator.clipboard.writeText(code);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+    toast.success("Code copied");
   };
 
   return (
-    <motion.div initial="hidden" animate="visible" className="p-4 md:p-8 lg:p-10 min-h-screen font-sans">
-      {/* Header */}
-      <motion.div variants={fadeUp} custom={0} className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600"><FiTag size={18} /></div>
-            Coupons
-          </h1>
-          <p className="text-slate-500 text-xs md:text-sm mt-1.5 ml-[52px]">Manage discount codes and offers</p>
-        </div>
-        <motion.button whileTap={{ scale: 0.95 }} onClick={() => fetchCoupons()} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
-          <FiRefreshCw className={loading ? "animate-spin" : ""} size={16} />
-        </motion.button>
-      </motion.div>
+    <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="p-6 md:p-10 min-h-screen bg-gradient-to-br from-white via-stone-50 to-white font-sans">
+      <div className="max-w-[1600px] mx-auto space-y-8">
 
-      {/* Create Form */}
-      <motion.div variants={fadeUp} custom={1} className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
-        <h3 className="font-bold text-slate-900 mb-5 flex items-center gap-2 text-sm">
-          <FiPlus className="text-blue-500" size={16} /> Create New Coupon
-        </h3>
-        <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4">
-          <div className="relative">
-            <FiTag className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input
-              placeholder="Code (e.g. FRESH20)"
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-              className="w-full bg-slate-50 border border-slate-200 p-3 pl-10 rounded-xl uppercase font-bold text-sm outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-300 transition-all"
-              required
-            />
+        {/* Header */}
+        <motion.div variants={fadeUp} className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-stone-200/50 pb-8">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-light text-stone-900 tracking-tight mb-2">Coupons</h1>
+            <p className="text-sm text-stone-500">Manage discounts & offers</p>
           </div>
-          <div className="relative">
-            <FiPercent className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input
-              type="number"
-              placeholder="Discount %"
-              value={formData.value}
-              onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-              className="w-full bg-slate-50 border border-slate-200 p-3 pl-10 rounded-xl text-sm font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-300 transition-all"
-              required
-              min="1"
-              max="100"
-            />
-          </div>
-          <div className="relative">
-            <FiDollarSign className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-            <input
-              type="number"
-              placeholder="Min Order (optional)"
-              value={formData.minOrderAmount}
-              onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
-              className="w-full bg-slate-50 border border-slate-200 p-3 pl-10 rounded-xl text-sm font-semibold outline-none focus:bg-white focus:ring-2 focus:ring-blue-500/10 focus:border-blue-300 transition-all"
-              min="0"
-            />
-          </div>
-          <motion.button whileTap={{ scale: 0.97 }} type="submit" className="bg-slate-900 text-white font-bold rounded-xl py-3 hover:bg-blue-600 transition-all shadow-lg text-sm flex items-center justify-center gap-2">
-            <FiPlus size={15} /> Create
-          </motion.button>
-        </form>
-      </motion.div>
+          <button onClick={() => fetchCoupons()} className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-2xl transition-colors">
+            <FiRefreshCw className={loading ? "animate-spin" : ""} size={18} />
+          </button>
+        </motion.div>
 
-      {/* Coupon List */}
-      <motion.div variants={fadeUp} custom={2}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Offers</h3>
-          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">{coupons.length} total</span>
-        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Create Form */}
+          <motion.div variants={fadeUp} custom={1} className="lg:col-span-1 h-fit bg-white p-8 rounded-3xl shadow-sm border border-stone-200/60 sticky top-4">
+            <h3 className="text-lg font-bold text-stone-900 mb-6 flex items-center gap-2">
+              Create New Offer
+            </h3>
+            <form onSubmit={handleCreate} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Coupon Code</label>
+                <div className="relative">
+                  <FiTag className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+                  <input
+                    placeholder="e.g. WELCOME50"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 uppercase font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300"
+                    required
+                  />
+                </div>
+              </div>
 
-        <div className="space-y-3 max-w-4xl">
-          {loading ? (
-            [...Array(3)].map((_, i) => <CouponSkeleton key={i} />)
-          ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Discount %</label>
+                  <div className="relative">
+                    <FiPercent className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={formData.value}
+                      onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300"
+                      required
+                      min="1"
+                      max="100"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Min Order</label>
+                  <div className="relative">
+                    <FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+                    <input
+                      type="number"
+                      placeholder="0"
+                      value={formData.minOrderAmount}
+                      onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300"
+                      min="0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button type="submit" className="w-full py-4 bg-stone-900 text-white rounded-xl font-bold text-xs uppercase hover:bg-stone-800 transition-all shadow-lg flex items-center justify-center gap-2 mt-4">
+                <FiPlus size={16} /> Create Coupon
+              </button>
+            </form>
+          </motion.div>
+
+          {/* Coupon List */}
+          <motion.div variants={fadeUp} custom={2} className="lg:col-span-2 space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Active Coupons</h3>
+              <span className="bg-stone-100 text-stone-600 px-3 py-1 rounded-full text-xs font-bold">{coupons.length} total</span>
+            </div>
+
             <AnimatePresence>
-              {coupons.map((coupon, index) => (
-                <motion.div
-                  key={coupon._id}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 10 }}
-                  transition={{ delay: index * 0.04, ease }}
-                  whileHover={{ y: -2 }}
-                  className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center border border-slate-200 group hover:shadow-md hover:border-blue-200 transition-all"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg shrink-0">
-                      {coupon.value}%
+              {loading ? (
+                [...Array(3)].map((_, i) => <div key={i} className="h-24 bg-stone-50 rounded-3xl animate-pulse" />)
+              ) : coupons.length === 0 ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-20 text-center bg-white rounded-3xl border border-dashed border-stone-200">
+                  <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-300"><FiTag size={24} /></div>
+                  <p className="text-stone-500 font-medium">No active coupons</p>
+                </motion.div>
+              ) : (
+                coupons.map((coupon) => (
+                  <motion.div
+                    key={coupon._id}
+                    layout
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="bg-white p-6 rounded-3xl border border-stone-200/60 shadow-sm hover:shadow-md transition-all group flex items-center gap-6"
+                  >
+                    <div className="w-16 h-16 rounded-2xl bg-stone-50 border border-stone-100 flex flex-col items-center justify-center shrink-0">
+                      <span className="text-xl font-bold text-stone-900">{coupon.value}%</span>
+                      <span className="text-[8px] font-bold text-stone-400 uppercase">OFF</span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">{coupon.code}</h3>
-                        <motion.button
-                          whileTap={{ scale: 0.85 }}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-lg font-bold text-stone-900 tracking-tight">{coupon.code}</h3>
+                        <button
                           onClick={() => copyCode(coupon.code, coupon._id)}
-                          className="p-1 text-slate-300 hover:text-blue-600 transition-colors"
-                          title="Copy code"
+                          className="p-1.5 rounded-lg text-stone-300 hover:text-stone-600 hover:bg-stone-100 transition-colors"
                         >
-                          {copiedId === coupon._id ? <FiCheck size={13} className="text-emerald-500" /> : <FiCopy size={13} />}
-                        </motion.button>
+                          {copiedId === coupon._id ? <FiCheck size={14} className="text-emerald-500" /> : <FiCopy size={14} />}
+                        </button>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                        {coupon.value}% discount {coupon.minOrderAmount ? `on orders above ₹${coupon.minOrderAmount}` : "on all orders"}
+                      <p className="text-xs font-medium text-stone-500 truncate">
+                        {coupon.minOrderAmount ? `Orders over ₹${coupon.minOrderAmount}` : "No minimum order amount"}
                       </p>
                     </div>
-                  </div>
-                  <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => handleDelete(coupon._id)}
-                    className="text-slate-300 p-2.5 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all opacity-60 group-hover:opacity-100"
-                  >
-                    <FiTrash2 size={18} />
-                  </motion.button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          )}
 
-          {!loading && coupons.length === 0 && (
-            <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
-              <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-300"><FiTag size={24} /></div>
-              <h3 className="text-slate-900 font-bold">No Active Coupons</h3>
-              <p className="text-slate-400 text-sm mt-1">Create your first coupon above</p>
-            </div>
-          )}
+                    <button
+                      onClick={() => handleDelete(coupon._id)}
+                      className="p-3 rounded-xl text-stone-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                    >
+                      <FiTrash2 size={18} />
+                    </button>
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </motion.div>
         </div>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }

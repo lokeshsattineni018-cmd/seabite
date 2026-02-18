@@ -46,7 +46,6 @@ export default function EditProduct() {
         setLoading(false);
       })
       .catch((err) => {
-        //console.error("Edit product load error:", err);
         setModal({ show: true, message: "Failed to load product data.", type: "error" });
         setLoading(false);
       });
@@ -68,7 +67,6 @@ export default function EditProduct() {
       setModal({ show: true, message: "Product updated successfully!", type: "success" });
       setTimeout(() => navigate("/admin/products"), 1500);
     } catch (err) {
-      // console.error("Edit product update error:", err);
       setModal({ show: true, message: "Update failed.", type: "error" });
       setSubmitting(false);
     }
@@ -76,107 +74,143 @@ export default function EditProduct() {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-[60vh] p-6 text-center">
-      <div className="w-10 h-10 border-3 border-slate-200 border-t-blue-600 rounded-full animate-spin mb-4" />
-      <p className="text-slate-400 font-medium text-sm">Loading product...</p>
+      <div className="w-10 h-10 border-2 border-stone-200 border-t-stone-800 rounded-full animate-spin mb-4" />
+      <p className="text-stone-400 font-bold text-xs uppercase tracking-widest">Loading product...</p>
     </div>
   );
 
   return (
-    <motion.div initial="hidden" animate="visible" className="p-4 md:p-8 lg:p-10 min-h-screen relative font-sans">
+    <motion.div initial="hidden" animate="visible" className="p-6 md:p-10 min-h-screen bg-gradient-to-br from-white via-stone-50 to-white font-sans">
       <PopupModal show={modal.show} message={modal.message} type={modal.type} onClose={() => setModal({ ...modal, show: false })} />
 
-      <motion.div variants={fadeUp} custom={0} className="mb-6 md:mb-8 flex items-center gap-4 max-w-5xl mx-auto">
-        <motion.button whileTap={{ scale: 0.92 }} onClick={() => navigate("/admin/products")} className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 shadow-sm shrink-0 transition-colors">
-          <FiArrowLeft size={16} />
-        </motion.button>
-        <div className="min-w-0">
-          <h1 className="text-xl md:text-3xl font-bold text-slate-900 tracking-tight truncate">Edit Product</h1>
-          <p className="text-slate-500 text-xs md:text-sm truncate">Update <span className="font-semibold text-slate-700">{form.name}</span></p>
-        </div>
-      </motion.div>
-
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-5 md:gap-8 max-w-5xl mx-auto">
-        {/* Left Column */}
-        <motion.div variants={fadeUp} custom={1} className="lg:col-span-1 space-y-4 md:space-y-5">
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-            <label className="block text-[10px] font-bold text-slate-400 mb-3 uppercase tracking-widest">Product Visual</label>
-            <div className="relative aspect-square rounded-xl bg-slate-50 overflow-hidden border border-slate-100 mb-4 flex items-center justify-center p-4">
-              {form.image ? (
-                <img src={getFullImageUrl(form.image)} alt="Preview" className="w-full h-full object-contain mix-blend-multiply" />
-              ) : (
-                <div className="text-slate-400 flex flex-col items-center"><FiImage size={28} /><span className="text-xs mt-2 font-medium">No Image</span></div>
-              )}
-            </div>
-            <div className="relative">
-              <FiImage className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={13} />
-              <input value={form.image} className="w-full bg-slate-50 border border-slate-100 rounded-lg py-2 pl-9 pr-4 text-[10px] font-medium text-slate-400" disabled />
-            </div>
-          </div>
-
-          <div onClick={() => setForm({ ...form, trending: !form.trending })} className="bg-white p-4 md:p-5 rounded-2xl shadow-sm border border-slate-100 flex items-center justify-between cursor-pointer active:bg-slate-50 transition-colors">
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors ${form.trending ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-400"}`}><FiTrendingUp size={16} /></div>
-              <div><p className="font-semibold text-sm text-slate-900">Trending</p><p className="text-[10px] text-slate-400">Homepage highlight</p></div>
-            </div>
-            <div className={`w-10 h-5 rounded-full relative transition-colors ${form.trending ? "bg-blue-600" : "bg-slate-200"}`}>
-              <div className={`absolute top-[2px] left-[2px] bg-white w-4 h-4 rounded-full shadow-sm transition-transform ${form.trending ? "translate-x-5" : "translate-x-0"}`} />
-            </div>
+      <div className="max-w-[1600px] mx-auto space-y-8">
+        {/* Header */}
+        <motion.div variants={fadeUp} custom={0} className="flex items-center gap-4 border-b border-stone-200/50 pb-8">
+          <motion.button whileTap={{ scale: 0.92 }} onClick={() => navigate("/admin/products")} className="w-12 h-12 rounded-2xl bg-white border border-stone-200 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:border-stone-300 shadow-sm shrink-0 transition-colors">
+            <FiArrowLeft size={20} />
+          </motion.button>
+          <div className="min-w-0">
+            <h1 className="text-3xl md:text-5xl font-light text-stone-900 tracking-tight">Edit Product</h1>
+            <p className="text-stone-500 text-sm mt-1">Update details for <span className="font-bold text-stone-700">{form.name}</span></p>
           </div>
         </motion.div>
 
-        {/* Right Column - Form */}
-        <motion.div variants={fadeUp} custom={2} className="lg:col-span-2">
-          <div className="bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-slate-100 space-y-5 md:space-y-6">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Product Name</label>
-              <div className="relative"><FiType className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input name="name" value={form.name} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 transition-all font-semibold text-slate-900 text-sm" /></div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Category</label>
-                <div className="relative"><FiTag className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><select name="category" value={form.category} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none appearance-none cursor-pointer text-sm font-semibold focus:border-blue-400 transition-all"><option value="Fish">Fish</option><option value="Prawn">Prawn</option><option value="Crab">Crab</option></select></div>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Visuals */}
+          <motion.div variants={fadeUp} custom={1} className="lg:col-span-1 space-y-6">
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60">
+              <label className="block text-[10px] font-bold text-stone-400 mb-4 uppercase tracking-widest">Product Visual</label>
+              <div className="relative aspect-square rounded-2xl bg-stone-50 overflow-hidden border border-stone-100 mb-6 flex items-center justify-center p-6 group">
+                {form.image ? (
+                  <img src={getFullImageUrl(form.image)} alt="Preview" className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="text-stone-300 flex flex-col items-center"><FiImage size={32} /><span className="text-xs mt-3 font-bold uppercase tracking-wider">No Image</span></div>
+                )}
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Selling Price</label>
-                <div className="relative"><FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input type="number" name="basePrice" value={form.basePrice} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none font-mono font-semibold text-sm focus:border-blue-400 transition-all" /></div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Cost Price</label>
-                <div className="relative"><FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><input type="number" name="buyingPrice" value={form.buyingPrice} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none font-mono font-semibold text-sm focus:border-blue-400 transition-all" /></div>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Unit</label>
-                <div className="relative"><FiBox className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={15} /><select name="unit" value={form.unit} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 outline-none appearance-none text-sm font-semibold focus:border-blue-400 transition-all"><option value="kg">kg</option><option value="g">g</option><option value="pc">pc</option></select></div>
+              <div className="relative">
+                <FiImage className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+                <input value={form.image} className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold text-stone-500 outline-none" disabled />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Description</label>
-              <textarea name="desc" value={form.desc} onChange={handleChange} rows="4" className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 outline-none focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-500/10 transition-all text-sm resize-none leading-relaxed" />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Availability</label>
-              <div className="grid grid-cols-2 gap-3">
-                <motion.div whileTap={{ scale: 0.98 }} onClick={() => setForm({ ...form, stock: "in" })} className={`cursor-pointer rounded-xl p-3.5 border-2 flex items-center justify-center gap-2 transition-all ${form.stock === "in" ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-slate-200 text-slate-500"}`}>
-                  <span className="text-sm font-bold">In Stock</span>{form.stock === "in" && <FiCheck size={16} />}
-                </motion.div>
-                <motion.div whileTap={{ scale: 0.98 }} onClick={() => setForm({ ...form, stock: "out" })} className={`cursor-pointer rounded-xl p-3.5 border-2 flex items-center justify-center gap-2 transition-all ${form.stock === "out" ? "border-red-500 bg-red-50 text-red-700" : "border-slate-200 text-slate-500"}`}>
-                  <span className="text-sm font-bold">Out of Stock</span>{form.stock === "out" && <FiCheck size={16} />}
-                </motion.div>
+            <div onClick={() => setForm({ ...form, trending: !form.trending })} className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 flex items-center justify-between cursor-pointer active:scale-[0.98] transition-all hover:bg-stone-50/50">
+              <div className="flex items-center gap-4">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${form.trending ? "bg-amber-100 text-amber-600" : "bg-stone-100 text-stone-400"}`}><FiTrendingUp size={20} /></div>
+                <div><p className="font-bold text-stone-900">Trending Product</p><p className="text-xs text-stone-500 font-medium">Highlight on homepage</p></div>
+              </div>
+              <div className={`w-12 h-7 rounded-full relative transition-colors ${form.trending ? "bg-amber-400" : "bg-stone-200"}`}>
+                <div className={`absolute top-[2px] left-[2px] bg-white w-6 h-6 rounded-full shadow-sm transition-transform ${form.trending ? "translate-x-5" : "translate-x-0"}`} />
               </div>
             </div>
+          </motion.div>
 
-            <div className="flex flex-col md:flex-row items-center gap-3 pt-5 border-t border-slate-100">
-              <button type="button" onClick={() => navigate("/admin/products")} className="w-full md:w-auto px-8 py-3 rounded-xl font-bold text-xs uppercase tracking-wider text-slate-500 hover:bg-slate-100 transition-colors order-2 md:order-1">Cancel</button>
-              <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={submitting} className="w-full md:flex-1 bg-slate-900 text-white py-3.5 rounded-xl font-bold shadow-lg hover:bg-blue-600 transition-all disabled:opacity-70 flex items-center justify-center gap-2 text-xs uppercase order-1 md:order-2">
-                {submitting ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</> : <><FiSave size={15} /> Save Changes</>}
-              </motion.button>
+          {/* Right Column - Details */}
+          <motion.div variants={fadeUp} custom={2} className="lg:col-span-2">
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-stone-200/60 space-y-8">
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-light text-stone-900 border-b border-stone-100 pb-2">Basic Info</h3>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Product Name</label>
+                  <div className="relative">
+                    <FiType className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+                    <input name="name" value={form.name} onChange={handleChange} className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-4 pl-12 pr-4 outline-none focus:bg-white focus:border-stone-400 focus:ring-4 focus:ring-stone-100 transition-all font-bold text-stone-900 text-base" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Category</label>
+                    <div className="relative">
+                      <FiTag className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+                      <select name="category" value={form.category} onChange={handleChange} className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-4 pl-12 pr-4 outline-none appearance-none cursor-pointer text-sm font-bold text-stone-700 focus:bg-white focus:border-stone-400 transition-all">
+                        <option value="Fish">Fish</option>
+                        <option value="Prawn">Prawn</option>
+                        <option value="Crab">Crab</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Unit Type</label>
+                    <div className="relative">
+                      <FiBox className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+                      <select name="unit" value={form.unit} onChange={handleChange} className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-4 pl-12 pr-4 outline-none appearance-none cursor-pointer text-sm font-bold text-stone-700 focus:bg-white focus:border-stone-400 transition-all">
+                        <option value="kg">Kilogram (kg)</option>
+                        <option value="g">Gram (g)</option>
+                        <option value="pc">Piece (pc)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-light text-stone-900 border-b border-stone-100 pb-2 pt-2">Pricing & Profit</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Cost Price (Buying)</label>
+                    <div className="relative">
+                      <FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+                      <input type="number" name="buyingPrice" value={form.buyingPrice} onChange={handleChange} className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-4 pl-12 pr-4 outline-none font-mono font-bold text-stone-900 focus:bg-white focus:border-stone-400 transition-all" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Selling Price</label>
+                    <div className="relative">
+                      <FiDollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+                      <input type="number" name="basePrice" value={form.basePrice} onChange={handleChange} className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-4 pl-12 pr-4 outline-none font-mono font-bold text-stone-900 focus:bg-white focus:border-stone-400 transition-all" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Product Description</label>
+                <textarea name="desc" value={form.desc} onChange={handleChange} rows="4" className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-4 px-6 outline-none focus:bg-white focus:border-stone-400 focus:ring-4 focus:ring-stone-100 transition-all text-sm font-medium text-stone-600 resize-none leading-relaxed" />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Inventory Status</label>
+                <div className="grid grid-cols-2 gap-4">
+                  <motion.div whileTap={{ scale: 0.98 }} onClick={() => setForm({ ...form, stock: "in" })} className={`cursor-pointer rounded-2xl p-4 border-2 flex items-center justify-center gap-3 transition-all ${form.stock === "in" ? "border-emerald-500 bg-emerald-50 text-emerald-800" : "border-stone-100 bg-stone-50 text-stone-400 hover:border-stone-200"}`}>
+                    <span className="text-sm font-bold">In Stock</span>{form.stock === "in" && <FiCheck size={18} />}
+                  </motion.div>
+                  <motion.div whileTap={{ scale: 0.98 }} onClick={() => setForm({ ...form, stock: "out" })} className={`cursor-pointer rounded-2xl p-4 border-2 flex items-center justify-center gap-3 transition-all ${form.stock === "out" ? "border-rose-500 bg-rose-50 text-rose-800" : "border-stone-100 bg-stone-50 text-stone-400 hover:border-stone-200"}`}>
+                    <span className="text-sm font-bold">Out of Stock</span>{form.stock === "out" && <FiCheck size={18} />}
+                  </motion.div>
+                </div>
+              </div>
+
+              <div className="flex flex-col md:flex-row items-center gap-4 pt-4">
+                <button type="button" onClick={() => navigate("/admin/products")} className="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-xs uppercase tracking-wider text-stone-400 hover:text-stone-600 hover:bg-stone-50 transition-colors order-2 md:order-1">Cancel</button>
+                <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={submitting} className="w-full md:flex-1 bg-stone-900 text-white py-4 rounded-2xl font-bold shadow-xl shadow-stone-200 hover:bg-stone-800 transition-all disabled:opacity-70 flex items-center justify-center gap-3 text-xs uppercase tracking-widest order-1 md:order-2">
+                  {submitting ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</> : <><FiSave size={18} /> Save Changes</>}
+                </motion.button>
+              </div>
             </div>
-          </div>
-        </motion.div>
-      </form>
+          </motion.div>
+        </form>
+      </div>
     </motion.div>
   );
 }
