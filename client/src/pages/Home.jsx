@@ -1,50 +1,72 @@
-import { useState, useEffect, useRef, useContext } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform, useInView, useSpring, useMotionValue, useAnimationFrame, useVelocity, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useInView,
+  useSpring,
+  AnimatePresence,
+} from "framer-motion";
 import axios from "axios";
-import { ArrowRight, Star, ShieldCheck, Truck, Fish, User, Anchor, Thermometer, Utensils, ChevronDown, ShoppingBag, Flame, ChevronRight, Plus, Minus, Zap } from "lucide-react";
-
+import {
+  ArrowRight,
+  Star,
+  ShieldCheck,
+  Truck,
+  Fish,
+  User,
+  Anchor,
+  Thermometer,
+  Utensils,
+  ChevronDown,
+  Flame,
+  ChevronRight,
+  Zap,
+  ArrowUpRight,
+  Waves,
+  LeafyGreen,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { CartContext } from "../context/CartContext";
 
+// ─────────────────────────────────────────────
+// 🎨  DESIGN TOKENS
+// ─────────────────────────────────────────────
+// Primary:    #5BA8A0  (seafoam teal)
+// Secondary:  #89C2D9  (sky-water blue)
+// Accent:     #E8816A  (soft coral)
+// Sand:       #F5EFE6  (warm sand)
+// Background: #F8FAFB  (off-white)
+// Card:       #FFFFFF
+// Border:     #E8EEF2
+// Text-dark:  #1A2B35
+// Text-mid:   #4A6572
+// Text-light: #8BA5B3
+// ─────────────────────────────────────────────
+
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// --- ADVANCED ANIMATION WRAPPER ---
-const SectionReveal = ({ children, direction = "up", delay = 0 }) => {
+// ── SCROLL REVEAL ──────────────────────────────
+const Reveal = ({ children, delay = 0, y = 24 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-12% 0px" });
-
-  const directions = {
-    up: { y: 60, x: 0, rotateX: 8 },
-    left: { y: 0, x: -80, rotateX: 0 },
-    right: { y: 0, x: 80, rotateX: 0 },
-    scale: { y: 0, x: 0, scale: 0.9 },
-  };
-
-  const from = directions[direction] || directions.up;
-
+  const isInView = useInView(ref, { once: true, margin: "-8% 0px" });
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, filter: "blur(8px)", ...from }}
-      animate={
-        isInView
-          ? { opacity: 1, y: 0, x: 0, rotateX: 0, scale: 1, filter: "blur(0px)" }
-          : { opacity: 0, filter: "blur(8px)", ...from }
-      }
-      transition={{ duration: 0.9, delay, ease: [0.22, 1, 0.36, 1] }}
-      style={{ perspective: 800 }}
+      initial={{ opacity: 0, y }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.65, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
   );
 };
 
-// --- STAGGER WRAPPER ---
-const StaggerContainer = ({ children, className = "" }) => {
+// ── STAGGER ────────────────────────────────────
+const Stagger = ({ children, className = "" }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
-
+  const isInView = useInView(ref, { once: true, margin: "-8% 0px" });
   return (
     <motion.div
       ref={ref}
@@ -52,7 +74,7 @@ const StaggerContainer = ({ children, className = "" }) => {
       animate={isInView ? "visible" : "hidden"}
       variants={{
         hidden: {},
-        visible: { transition: { staggerChildren: 0.1, delayChildren: 0.15 } },
+        visible: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } },
       }}
       className={className}
     >
@@ -60,12 +82,11 @@ const StaggerContainer = ({ children, className = "" }) => {
     </motion.div>
   );
 };
-
-const StaggerItem = ({ children, className = "" }) => (
+const SI = ({ children, className = "" }) => (
   <motion.div
     variants={{
-      hidden: { opacity: 0, y: 30, filter: "blur(4px)" },
-      visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] } },
+      hidden: { opacity: 0, y: 20 },
+      visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
     }}
     className={className}
   >
@@ -73,254 +94,277 @@ const StaggerItem = ({ children, className = "" }) => (
   </motion.div>
 );
 
-// --- ANIMATED COUNTER ---
-const AnimatedCounter = ({ value, prefix = "", suffix = "" }) => {
+// ── ANIMATED COUNTER ───────────────────────────
+const Counter = ({ value, suffix = "" }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
-  const springValue = useSpring(0, { stiffness: 60, damping: 20 });
+  const spring = useSpring(0, { stiffness: 60, damping: 22 });
   const [display, setDisplay] = useState(0);
-
-  useEffect(() => {
-    if (isInView) springValue.set(value);
-  }, [isInView, value, springValue]);
-
-  useEffect(() => {
-    const unsubscribe = springValue.on("change", (v) => setDisplay(Math.round(v)));
-    return unsubscribe;
-  }, [springValue]);
-
-  return (
-    <span ref={ref}>
-      {prefix}{display}{suffix}
-    </span>
-  );
+  useEffect(() => { if (isInView) spring.set(value); }, [isInView, value]);
+  useEffect(() => spring.on("change", (v) => setDisplay(Math.round(v))), [spring]);
+  return <span ref={ref}>{display}{suffix}</span>;
 };
 
-// --- TEXT REVEAL ---
-const TextReveal = ({ text, className = "", delay = 0 }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
-  const words = text.split(" ");
-
-  return (
-    <span ref={ref} className={className}>
-      {words.map((word, wi) => (
-        <span key={wi} className="inline-block mr-[0.3em]">
-          {word.split("").map((char, ci) => (
-            <motion.span
-              key={`${wi}-${ci}`}
-              className="inline-block"
-              initial={{ opacity: 0, y: 30, rotateX: -60 }}
-              animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
-              transition={{
-                duration: 0.5,
-                delay: delay + wi * 0.08 + ci * 0.025,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              style={{ perspective: 400 }}
-            >
-              {char}
-            </motion.span>
-          ))}
-        </span>
-      ))}
-    </span>
-  );
-};
-
-// --- SCROLL TO TOP BUTTON ---
-const ScrollToTopButton = () => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    const toggleVisibility = () => {
-      if (window.pageYOffset > 500) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
-    };
-
-    window.addEventListener('scroll', toggleVisibility);
-    return () => window.removeEventListener('scroll', toggleVisibility);
-  }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth',
-    });
+// ── LABEL CHIP ────────────────────────────────
+const Chip = ({ children, color = "teal" }) => {
+  const palettes = {
+    teal: "bg-[#EAF6F5] text-[#3D8C85] border-[#C5E6E4]",
+    coral: "bg-[#FEF0EC] text-[#C05A45] border-[#F5C4BB]",
+    sand: "bg-[#FAF4EC] text-[#8B6D45] border-[#EAD9C0]",
+    sky: "bg-[#EDF5FB] text-[#3A7DA0] border-[#BDD9EE]",
   };
-
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-blue-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:bg-blue-700 transition-colors"
-        >
-          <ChevronDown size={24} className="rotate-180" />
-        </motion.button>
-      )}
-    </AnimatePresence>
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase border ${palettes[color]}`}>
+      {children}
+    </span>
   );
 };
 
-import EnhancedProductCard from "../components/EnhancedProductCard";
-import TrendingProducts from "../components/TrendingProducts";
+// ── SECTION LABEL ─────────────────────────────
+const SectionLabel = ({ children }) => (
+  <div className="flex items-center gap-3 mb-4">
+    <div className="w-6 h-px bg-[#5BA8A0]" />
+    <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-[#5BA8A0]">{children}</span>
+  </div>
+);
 
-// --- HERO SECTION ---
-const VideoHero = () => {
+// ── CTA BUTTON ────────────────────────────────
+const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
+  const base = "inline-flex items-center gap-2.5 font-semibold text-sm transition-all duration-300 rounded-full";
+  const styles = {
+    primary: "px-7 py-3.5 bg-[#1A2B35] text-white hover:bg-[#5BA8A0] shadow-sm hover:shadow-[0_4px_20px_rgba(91,168,160,0.35)]",
+    outline: "px-7 py-3.5 border border-[#CBD8DF] text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] bg-white",
+    coral: "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
+  };
+  return (
+    <Link to={to}>
+      <motion.button
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.97 }}
+        className={`${base} ${styles[variant]} ${className}`}
+      >
+        {children}
+      </motion.button>
+    </Link>
+  );
+};
+
+// ─────────────────────────────────────────────
+// HERO SECTION
+// ─────────────────────────────────────────────
+const Hero = () => {
   const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 1000], [0, 400]);
-  const opacity = useTransform(scrollY, [0, 500], [1, 0]);
-  const scale = useTransform(scrollY, [0, 500], [1, 1.15]);
-  const textY = useTransform(scrollY, [0, 400], [0, -80]);
+  const videoY = useTransform(scrollY, [0, 600], [0, 120]);
+  const videoOpacity = useTransform(scrollY, [0, 400], [1, 0.3]);
 
   return (
-    <div className="relative h-screen w-screen left-1/2 -translate-x-1/2 overflow-hidden bg-slate-900 z-20">
-      <motion.div style={{ y, opacity, scale }} className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/60 z-10" />
-        <video autoPlay loop muted playsInline src="1.mp4" className="w-full h-full object-cover" />
+    <section className="relative h-screen min-h-[680px] max-h-[900px] bg-[#F8FAFB] overflow-hidden">
+      {/* Background video tinted to light */}
+      <motion.div
+        style={{ y: videoY, opacity: videoOpacity }}
+        className="absolute inset-0 z-0"
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-[#F8FAFB]/40 to-[#F8FAFB] z-10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#F8FAFB]/50 to-transparent z-10" />
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          src="1.mp4"
+          className="w-full h-full object-cover scale-105"
+          style={{ filter: "saturate(0.7) brightness(1.1)" }}
+        />
       </motion.div>
 
-      <div className="absolute inset-0 z-10 pointer-events-none opacity-[0.03]"
+      {/* Subtle dot grid */}
+      <div
+        className="absolute inset-0 z-10 opacity-[0.025]"
         style={{
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-          backgroundSize: "60px 60px",
+          backgroundImage: "radial-gradient(circle, #1A2B35 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
         }}
       />
 
-      <motion.div style={{ y: textY }} className="relative z-20 h-full flex flex-col items-center justify-center text-center px-4">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="space-y-6"
-        >
-          <motion.p
-            initial={{ opacity: 0, letterSpacing: "0em" }}
-            animate={{ opacity: 1, letterSpacing: "0.5em" }}
-            transition={{ duration: 1.2, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            className="text-blue-200 font-mono text-xs md:text-sm uppercase drop-shadow-md"
-          >
-            The Ocean&apos;s Finest
-          </motion.p>
+      {/* Wave decoration bottom */}
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+          <path d="M0 40C240 80 480 0 720 40C960 80 1200 0 1440 40V80H0V40Z" fill="#F8FAFB" />
+        </svg>
+      </div>
 
-          <motion.h1
-            className="text-[15vw] md:text-[12vw] leading-none font-serif text-white opacity-95 select-none drop-shadow-2xl overflow-hidden"
-          >
-            {"SEABITE".split("").map((char, i) => (
-              <motion.span
-                key={i}
-                className="inline-block"
-                initial={{ y: "120%", opacity: 0, rotateX: -40 }}
-                animate={{ y: "0%", opacity: 1, rotateX: 0 }}
-                transition={{
-                  duration: 0.8,
-                  delay: 0.5 + i * 0.07,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-                style={{ perspective: 500 }}
-              >
-                {char}
-              </motion.span>
-            ))}
-          </motion.h1>
+      {/* Content */}
+      <div className="relative z-30 h-full flex items-center">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid md:grid-cols-2 gap-12 items-center">
 
+          {/* Left */}
+          <div className="space-y-8">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Chip color="teal"><Waves size={11} /> Fresh Catch Daily</Chip>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-[#1A2B35]"
+              style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
+            >
+              Ocean-Fresh
+              <br />
+              <span className="text-[#5BA8A0]">Seafood</span>
+              <br />
+              Delivered.
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.55 }}
+              className="text-[#4A6572] text-lg leading-relaxed max-w-md"
+            >
+              Premium fish, prawns & crabs — sourced daily from the coast,
+              cold-chain delivered straight to your kitchen.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.7 }}
+              className="flex flex-wrap gap-3"
+            >
+              <CTAButton to="/products" variant="primary">
+                Shop Now <ArrowRight size={15} />
+              </CTAButton>
+              <CTAButton to="/products" variant="outline">
+                View All Catch
+              </CTAButton>
+            </motion.div>
+
+            {/* Trust badges */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+              className="flex items-center gap-5 pt-2"
+            >
+              {[
+                { n: "500+", label: "Happy Customers" },
+                { n: "98%", label: "Fresh Score" },
+                { n: "4.8★", label: "Avg Rating" },
+              ].map((s, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  {i > 0 && <div className="w-px h-8 bg-[#E8EEF2]" />}
+                  <div>
+                    <p className="text-sm font-bold text-[#1A2B35]">{s.n}</p>
+                    <p className="text-[11px] text-[#8BA5B3]">{s.label}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Right — floating card cluster */}
           <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ delay: 1.2, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="h-[1px] bg-gradient-to-r from-transparent via-white/60 to-transparent mx-auto w-[120px] origin-center"
-          />
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.5, duration: 0.6 }}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="hidden md:flex justify-center items-center relative h-[420px]"
           >
-            <Link to="/products">
-              <motion.button
-                whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(59,130,246,0.3)" }}
-                whileTap={{ scale: 0.93 }}
-                className="group mt-8 px-10 py-4 bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full font-bold tracking-widest text-xs hover:bg-white hover:text-black transition-all duration-500 shadow-xl relative overflow-hidden"
-              >
-                <span className="relative z-10 flex items-center gap-3">
-                  Shop Now
-                  <motion.span
-                    className="inline-block"
-                    animate={{ x: [0, 4, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-                  >
-                    <ArrowRight size={14} />
-                  </motion.span>
-                </span>
-                <motion.div
-                  className="absolute inset-0 bg-white"
-                  initial={{ x: "-100%" }}
-                  whileHover={{ x: "0%" }}
-                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                />
-              </motion.button>
-            </Link>
+            {/* Main seafood badge */}
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-3xl shadow-[0_8px_40px_rgba(91,168,160,0.15)] border border-[#E8EEF2] p-8 text-center w-52"
+            >
+              <div className="text-6xl mb-3">🦐</div>
+              <p className="text-sm font-semibold text-[#1A2B35]">Jumbo Prawns</p>
+              <p className="text-xs text-[#8BA5B3] mt-1">Just arrived today</p>
+            </motion.div>
+
+            {/* Floating tag top-left */}
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut", delay: 0.5 }}
+              className="absolute top-8 left-4 bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-[#E8EEF2] px-4 py-3"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#EAF6F5] flex items-center justify-center text-sm">🐟</div>
+                <div>
+                  <p className="text-xs font-semibold text-[#1A2B35]">Fresh Fish</p>
+                  <p className="text-[10px] text-[#5BA8A0] font-medium">Caught this morning</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Floating tag bottom-right */}
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 1 }}
+              className="absolute bottom-12 right-2 bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.07)] border border-[#E8EEF2] px-4 py-3"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#FEF0EC] flex items-center justify-center text-sm">🦀</div>
+                <div>
+                  <p className="text-xs font-semibold text-[#1A2B35]">Live Crabs</p>
+                  <p className="text-[10px] text-[#E8816A] font-medium">Limited stock</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Rating pill */}
+            <motion.div
+              animate={{ y: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.2 }}
+              className="absolute bottom-8 left-8 bg-[#1A2B35] text-white rounded-2xl px-4 py-2.5 flex items-center gap-2"
+            >
+              <Star size={13} className="text-amber-400 fill-amber-400" />
+              <span className="text-sm font-semibold">4.9</span>
+              <span className="text-[10px] text-white/50">· 200+ reviews</span>
+            </motion.div>
           </motion.div>
-        </motion.div>
+        </div>
+      </div>
 
-        <motion.div
-          className="absolute bottom-8 flex flex-col items-center gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2 }}
-        >
-          <motion.span className="text-white/40 text-[10px] uppercase tracking-[0.3em]">Scroll</motion.span>
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-          >
-            <ChevronDown className="text-white/40" size={20} />
-          </motion.div>
+      {/* Scroll cue */}
+      <motion.div
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.4 }}
+      >
+        <span className="text-[10px] text-[#8BA5B3] uppercase tracking-[0.2em]">Scroll</span>
+        <motion.div animate={{ y: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>
+          <ChevronDown size={16} className="text-[#8BA5B3]" />
         </motion.div>
       </motion.div>
-    </div>
+    </section>
   );
 };
 
-// --- ROLLING MARQUEE ---
-const RollingText = () => {
-  const baseX = useMotionValue(0);
-  const { scrollY } = useScroll();
-  const scrollVelocity = useVelocity(scrollY);
-  const smoothVelocity = useSpring(scrollVelocity, { damping: 50, stiffness: 400 });
-  const velocityFactor = useTransform(smoothVelocity, [0, 1000], [0, 5], { clamp: false });
-  const x = useTransform(baseX, (v) => `${v}%`);
-  const directionFactor = useRef(1);
-  const skewX = useTransform(smoothVelocity, [-1000, 0, 1000], [-3, 0, 3]);
-
-  useAnimationFrame((t, delta) => {
-    let moveBy = directionFactor.current * 2 * (delta / 1000);
-    if (velocityFactor.get() < 0) directionFactor.current = -1;
-    else if (velocityFactor.get() > 0) directionFactor.current = 1;
-    moveBy += directionFactor.current * moveBy * velocityFactor.get();
-    baseX.set(baseX.get() + moveBy);
-  });
-
+// ─────────────────────────────────────────────
+// MARQUEE TICKER
+// ─────────────────────────────────────────────
+const Ticker = () => {
+  const items = [
+    "Fresh Catch Daily", "Ocean to Table", "Sustainable Sourcing",
+    "Cold Chain Delivery", "Chef Approved", "Lab Tested Quality",
+  ];
   return (
-    <div className="bg-[#0a1625] border-y border-white/5 py-4 relative z-30 overflow-hidden text-white">
-      <motion.div className="flex whitespace-nowrap" style={{ x, skewX }}>
-        {[...Array(4)].map((_, i) => (
+    <div className="bg-[#1A2B35] py-3.5 overflow-hidden relative">
+      <motion.div
+        className="flex whitespace-nowrap"
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ duration: 22, ease: "linear", repeat: Infinity }}
+      >
+        {[...items, ...items].map((item, i) => (
           <div key={i} className="flex items-center">
-            <span className="text-sm font-bold uppercase tracking-[0.2em] mx-8 text-blue-200">Fresh Catch Daily</span>
-            <Star className="w-3 h-3 text-blue-500" fill="currentColor" />
-            <span className="text-sm font-bold uppercase tracking-[0.2em] mx-8 text-white">Sustainable</span>
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mx-6" />
-            <span className="text-sm font-bold uppercase tracking-[0.2em] mx-8 text-blue-200">Ocean to Table</span>
-            <Star className="w-3 h-3 text-blue-500" fill="currentColor" />
+            <span className="text-xs font-semibold tracking-[0.15em] uppercase text-white/70 mx-8">{item}</span>
+            <div className="w-1 h-1 rounded-full bg-[#5BA8A0] mx-2" />
           </div>
         ))}
       </motion.div>
@@ -328,586 +372,635 @@ const RollingText = () => {
   );
 };
 
-// --- CATEGORIES ---
+// ─────────────────────────────────────────────
+// CATEGORY SECTION
+// ─────────────────────────────────────────────
 const categories = [
-  { title: "Premium Fish", img: "/fish.png", bg: "from-blue-100/80 to-white dark:from-blue-900/40 dark:to-[#0a1625]" },
-  { title: "Jumbo Prawns", img: "/prawn.png", bg: "from-indigo-100/80 to-white dark:from-indigo-900/40 dark:to-[#0a1625]" },
-  { title: "Live Crabs", img: "/crab.png", bg: "from-cyan-100/80 to-white dark:from-cyan-900/40 dark:to-[#0a1625]" },
+  {
+    title: "Premium Fish",
+    sub: "20+ varieties",
+    img: "/fish.png",
+    tag: "Fish",
+    bg: "from-[#EAF6F5] to-[#F8FAFB]",
+    accent: "#5BA8A0",
+    emoji: "🐟",
+  },
+  {
+    title: "Jumbo Prawns",
+    sub: "Wild-caught daily",
+    img: "/prawn.png",
+    tag: "Prawn",
+    bg: "from-[#EDF5FB] to-[#F8FAFB]",
+    accent: "#89C2D9",
+    emoji: "🦐",
+  },
+  {
+    title: "Live Crabs",
+    sub: "Ships in tank water",
+    img: "/crab.png",
+    tag: "Crab",
+    bg: "from-[#FEF0EC] to-[#F8FAFB]",
+    accent: "#E8816A",
+    emoji: "🦀",
+  },
 ];
 
-const CategoryPanel = () => {
-  const [hovered, setHovered] = useState(0);
+const CategorySection = () => {
+  const [hovered, setHovered] = useState(null);
   return (
-    <section className="py-12 px-4 md:px-12 relative overflow-hidden transition-colors duration-300">
-      <div className="max-w-7xl mx-auto mb-12 text-center relative z-10">
-        <TextReveal
-          text="Shop By Category"
-          className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white transition-colors duration-300"
-        />
-        <motion.p
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="text-blue-600 dark:text-blue-200 mt-2 font-light tracking-wide transition-colors duration-300"
-        >
-          Select your catch
-        </motion.p>
-      </div>
-      <div className="flex flex-col md:flex-row h-[400px] gap-4 max-w-6xl mx-auto relative z-10">
-        {categories.map((cat, i) => (
-          <Link
-            to={`/products?category=${cat.title.split(" ")[1]}`}
-            key={i}
-            onMouseEnter={() => setHovered(i)}
-            className={`relative rounded-[2rem] overflow-hidden cursor-pointer transition-all duration-700 ease-[0.25, 1, 0.5, 1] border border-gray-200 dark:border-white/10 ${hovered === i
-              ? "flex-[3] shadow-2xl shadow-blue-900/10 dark:shadow-blue-900/20"
-              : "flex-[1] opacity-80 dark:opacity-60 hover:opacity-100"
-              }`}
-          >
-            <div className={`absolute inset-0 bg-gradient-to-b ${cat.bg} z-0`} />
-            <div className="absolute inset-0 flex items-center justify-center z-10 p-6">
-              <motion.img
-                layout
-                src={cat.img}
-                alt={cat.title}
-                animate={{
-                  scale: hovered === i ? 1.05 : 0.8,
-                  rotate: hovered === i ? 0 : -5,
-                  filter: hovered === i ? "grayscale(0)" : "grayscale(1)",
-                }}
-                transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                className={`object-contain drop-shadow-2xl ${hovered === i
-                  ? "w-[80%] h-[80%] opacity-100"
-                  : "w-24 h-24 opacity-50"
-                  } transition-all duration-700`}
-              />
-            </div>
-            <div className="absolute bottom-0 left-0 w-full p-8 z-20 bg-gradient-to-t from-white via-white/80 dark:from-black dark:via-[#0a1625]/80 to-transparent">
-              <h3
-                className={`font-serif text-slate-900 dark:text-white transition-all duration-500 whitespace-nowrap ${hovered === i ? "text-3xl opacity-100" : "text-xl opacity-70"
-                  }`}
-              >
-                {cat.title}
-              </h3>
-              <motion.div
-                animate={{
-                  maxHeight: hovered === i ? 40 : 0,
-                  opacity: hovered === i ? 1 : 0,
-                }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className="flex items-center gap-2 text-blue-600 dark:text-blue-300 text-sm font-bold uppercase tracking-widest mt-2 overflow-hidden"
-              >
-                Explore
-                <motion.span animate={{ x: hovered === i ? [0, 6, 0] : 0 }} transition={{ repeat: Infinity, duration: 1 }}>
-                  <ArrowRight />
-                </motion.span>
-              </motion.div>
-            </div>
-          </Link>
-        ))}
+    <section className="py-20 px-6 md:px-12 bg-[#F8FAFB]">
+      <div className="max-w-7xl mx-auto">
+        <Reveal>
+          <SectionLabel>Browse Categories</SectionLabel>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>
+              What are you<br />craving today?
+            </h2>
+            <CTAButton to="/products" variant="outline">
+              All Products <ArrowRight size={14} />
+            </CTAButton>
+          </div>
+        </Reveal>
+
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {categories.map((cat, i) => (
+            <SI key={i}>
+              <Link to={`/products?category=${cat.tag}`}>
+                <motion.div
+                  onMouseEnter={() => setHovered(i)}
+                  onMouseLeave={() => setHovered(null)}
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.3 }}
+                  className={`relative rounded-2xl overflow-hidden border border-[#E8EEF2] bg-gradient-to-br ${cat.bg} p-6 h-64 cursor-pointer group shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-shadow duration-300`}
+                >
+                  {/* Top row */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-[#1A2B35]">{cat.title}</h3>
+                      <p className="text-sm text-[#8BA5B3] mt-0.5">{cat.sub}</p>
+                    </div>
+                    <motion.div
+                      animate={{ rotate: hovered === i ? 45 : 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="w-8 h-8 rounded-full border border-[#E8EEF2] bg-white flex items-center justify-center"
+                    >
+                      <ArrowRight size={14} className="text-[#8BA5B3]" />
+                    </motion.div>
+                  </div>
+
+                  {/* Image */}
+                  <motion.img
+                    src={cat.img}
+                    alt={cat.title}
+                    animate={{ scale: hovered === i ? 1.06 : 1, rotate: hovered === i ? 3 : 0 }}
+                    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                    className="absolute bottom-4 right-4 w-36 h-36 object-contain drop-shadow-lg"
+                  />
+
+                  {/* Bottom badge */}
+                  <div className="absolute bottom-5 left-6">
+                    <motion.div
+                      animate={{ opacity: hovered === i ? 1 : 0, y: hovered === i ? 0 : 6 }}
+                      transition={{ duration: 0.25 }}
+                      className="text-xs font-bold text-white px-3 py-1.5 rounded-full"
+                      style={{ backgroundColor: cat.accent }}
+                    >
+                      Explore →
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </Link>
+            </SI>
+          ))}
+        </Stagger>
       </div>
     </section>
   );
 };
 
-// --- FLASH SALE BANNER ---
+// ─────────────────────────────────────────────
+// FLASH SALE BANNER  (light version)
+// ─────────────────────────────────────────────
 const FlashSale = () => {
-  const [timeLeft, setTimeLeft] = useState({ hours: 4, minutes: 32, seconds: 18 });
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      const now = new Date();
-      const midnight = new Date();
-      midnight.setHours(24, 0, 0, 0);
-      const diff = midnight - now;
-      if (diff > 0) {
+    const calc = () => {
+      const diff = new Date().setHours(24, 0, 0, 0) - Date.now();
+      if (diff > 0)
         setTimeLeft({
-          hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-          minutes: Math.floor((diff / 1000 / 60) % 60),
-          seconds: Math.floor((diff / 1000) % 60),
+          hours: Math.floor((diff / 36e5) % 24),
+          minutes: Math.floor((diff / 6e4) % 60),
+          seconds: Math.floor((diff / 1e3) % 60),
         });
-      } else {
-        setTimeLeft({ hours: 0, minutes: 0, seconds: 0 });
-      }
     };
-    const timer = setInterval(calculateTimeLeft, 1000);
-    calculateTimeLeft();
-    return () => clearInterval(timer);
+    calc();
+    const t = setInterval(calc, 1000);
+    return () => clearInterval(t);
   }, []);
 
-  const formatTime = (value) => value.toString().padStart(2, "0");
+  const pad = (v) => String(v).padStart(2, "0");
 
   return (
-    <section className="py-10 px-4">
-      <motion.div
-        whileHover={{ scale: 1.01 }}
-        transition={{ duration: 0.4 }}
-        className="max-w-6xl mx-auto bg-gradient-to-r from-red-600 to-rose-600 rounded-2xl shadow-2xl p-8 md:p-12 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8"
-      >
-        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
+    <section className="px-6 md:px-12 py-6 bg-[#F8FAFB]">
+      <div className="max-w-7xl mx-auto">
+        <Reveal>
+          <div className="relative rounded-2xl overflow-hidden border border-[#E8EEF2] bg-white shadow-sm">
+            {/* Soft sand stripe accent */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#5BA8A0] via-[#89C2D9] to-[#E8816A]" />
 
-        <motion.div
-          className="absolute inset-0 z-30 pointer-events-none"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-        >
-          <motion.div
-            animate={{ x: ["-100%", "200%"] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", repeatDelay: 3 }}
-            className="w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
-          />
-        </motion.div>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 md:p-10">
+              {/* Left content */}
+              <div className="flex items-center gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-[#FEF0EC] flex items-center justify-center flex-shrink-0">
+                  <Flame size={22} className="text-[#E8816A]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Chip color="coral"><Zap size={10} /> Flash Deal</Chip>
+                  </div>
+                  <p className="text-[#1A2B35] font-bold text-lg md:text-xl leading-snug">
+                    Order above <span className="text-[#5BA8A0]">₹1,699</span> — get{" "}
+                    <span className="text-[#E8816A]">10% OFF</span>
+                  </p>
+                  <p className="text-[#8BA5B3] text-sm mt-1">
+                    Use coupon{" "}
+                    <span className="font-mono font-bold text-[#1A2B35] bg-[#F5EFE6] px-2 py-0.5 rounded-md text-xs border border-[#E8D9C4]">
+                      SEABITE10
+                    </span>{" "}
+                    at checkout
+                  </p>
+                </div>
+              </div>
 
-        <div className="relative z-10 text-white text-center md:text-left">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-4 border border-white/30"
-          >
-            <Flame size={14} className="text-yellow-300" /> Flash Deal
-          </motion.div>
-          <h2 className="text-4xl md:text-5xl font-black italic tracking-tighter mb-4">
-            {"TODAY'S CATCH".split("").map((ch, i) => (
-              <motion.span
-                key={i}
-                className="inline-block"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.03, duration: 0.4 }}
-              >
-                {ch === " " ? "\u00A0" : ch}
-              </motion.span>
-            ))}
-          </h2>
-          <p className="text-red-50 text-xl md:text-2xl font-serif italic tracking-wide leading-relaxed">
-            Order above{" "}
-            <span className="text-yellow-300 font-bold decoration-wavy underline decoration-white/30">
-              ₹1699
-            </span>{" "}
-            and use coupon{" "}
-            <span className="mx-2 bg-white text-red-600 px-3 py-1 rounded-lg font-black font-mono not-italic text-lg border-2 border-dashed border-red-600 transform -rotate-2 inline-block shadow-lg">
-              SEABITE10
-            </span>{" "}
-            to avail{" "}
-            <span className="font-black text-white not-italic text-2xl drop-shadow-md">
-              10% OFF
-            </span>
-          </p>
-        </div>
-        <motion.div
-          initial={{ opacity: 0, rotate: 6, scale: 0.9 }}
-          whileInView={{ opacity: 1, rotate: 2, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ type: "spring", stiffness: 200, damping: 20 }}
-          className="relative z-10 bg-white p-6 rounded-xl shadow-lg"
-        >
-          <div className="text-center">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Ends In</p>
-            <div className="flex gap-2 text-slate-900 font-mono font-black text-3xl">
-              {[
-                { val: timeLeft.hours, color: "" },
-                { val: timeLeft.minutes, color: "" },
-                { val: timeLeft.seconds, color: "text-red-600" },
-              ].map((t, i) => (
-                <span key={i} className="contents">
-                  {i > 0 && <span>:</span>}
-                  <AnimatePresence mode="popLayout">
-                    <motion.span
-                      key={t.val}
-                      initial={{ y: -20, opacity: 0, scale: 0.8 }}
-                      animate={{ y: 0, opacity: 1, scale: 1 }}
-                      exit={{ y: 20, opacity: 0, scale: 0.8 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      className={`bg-slate-100 px-2 rounded inline-block ${t.color}`}
-                    >
-                      {formatTime(t.val)}
-                    </motion.span>
-                  </AnimatePresence>
-                </span>
-              ))}
+              {/* Right — timer + CTA */}
+              <div className="flex items-center gap-5 flex-shrink-0">
+                {/* Countdown */}
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { v: timeLeft.hours, label: "HRS" },
+                    { v: timeLeft.minutes, label: "MIN" },
+                    { v: timeLeft.seconds, label: "SEC" },
+                  ].map((t, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      {i > 0 && <span className="text-[#CBD8DF] font-bold text-lg mb-2">:</span>}
+                      <div className="text-center">
+                        <AnimatePresence mode="popLayout">
+                          <motion.div
+                            key={t.v}
+                            initial={{ y: -10, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: 10, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-11 h-11 bg-[#F8FAFB] border border-[#E8EEF2] rounded-xl flex items-center justify-center font-bold text-[#1A2B35] text-base tabular-nums"
+                          >
+                            {pad(t.v)}
+                          </motion.div>
+                        </AnimatePresence>
+                        <p className="text-[9px] text-[#8BA5B3] mt-1 font-medium tracking-wider">{t.label}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <CTAButton to="/products" variant="coral">
+                  Grab Deal <ArrowRight size={14} />
+                </CTAButton>
+              </div>
             </div>
           </div>
-          <Link to="/products">
-            <motion.button
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="block mt-4 w-full bg-slate-900 text-white text-center py-3 rounded-lg font-bold text-sm uppercase tracking-wide hover:bg-slate-800 transition-colors"
-            >
-              Grab The Deal
-            </motion.button>
-          </Link>
-        </motion.div>
-      </motion.div>
+        </Reveal>
+      </div>
     </section>
   );
 };
 
-// --- PRODUCT SHOWCASE ROW ---
-const CategoryRow = ({ title, filterType }) => {
+// ─────────────────────────────────────────────
+// PRODUCT ROW
+// ─────────────────────────────────────────────
+const CategoryRow = ({ title, filterType, icon }) => {
   const [products, setProducts] = useState([]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products`).then((res) => {
       const all = res.data.products || [];
-      setGlobalDiscount(res.data.globalDiscount || 0); // 🟢 Capture Global Discount
-
-      let filtered = [];
-      if (filterType === "Fish") {
-        filtered = all.filter((p) => p.category === "Fish").slice(0, 4);
-      } else if (filterType === "Shellfish") {
-        filtered = all.filter((p) => p.category === "Prawn" || p.category === "Crab").slice(0, 4);
-      }
+      setGlobalDiscount(res.data.globalDiscount || 0);
+      const filtered = filterType === "Fish"
+        ? all.filter((p) => p.category === "Fish").slice(0, 4)
+        : all.filter((p) => p.category === "Prawn" || p.category === "Crab").slice(0, 4);
       setProducts(filtered);
     });
   }, [filterType]);
 
-  if (products.length === 0) return null;
+  if (!products.length) return null;
 
   return (
-    <section className="py-12 px-4 md:px-8">
+    <section className="py-16 px-6 md:px-12 bg-[#F8FAFB]">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-8 border-b border-gray-200 dark:border-gray-800 pb-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            {filterType === "Fish" ? <Fish className="text-blue-500" /> : <Anchor className="text-orange-500" />}
-            {title}
-          </h2>
-          <Link to="/products" className="text-sm font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-            See All <ChevronRight size={14} />
-          </Link>
-        </div>
-        <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+        <Reveal>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <SectionLabel>{filterType === "Fish" ? "Fish" : "Shellfish"}</SectionLabel>
+              <h2 className="text-2xl md:text-3xl font-bold text-[#1A2B35]" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>
+                {title}
+              </h2>
+            </div>
+            <Link
+              to="/products"
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#5BA8A0] hover:text-[#3D8C85] transition-colors group"
+            >
+              See all
+              <motion.span whileHover={{ x: 3 }} className="inline-block">
+                <ChevronRight size={15} />
+              </motion.span>
+            </Link>
+          </div>
+        </Reveal>
+
+        <Stagger className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {products.map((p) => (
-            <StaggerItem key={p._id}>
-              <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
-            </StaggerItem>
+            <SI key={p._id}>
+              {/* Wrap existing EnhancedProductCard — light theme will be inherited via parent CSS vars */}
+              <div className="bg-white rounded-2xl border border-[#E8EEF2] overflow-hidden hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1">
+                <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
+              </div>
+            </SI>
           ))}
-        </StaggerContainer>
+        </Stagger>
       </div>
     </section>
   );
 };
 
+// ─────────────────────────────────────────────
+// WHY SEABITE — Features + Stats
+// ─────────────────────────────────────────────
+const WhySeaBite = () => {
+  const features = [
+    {
+      icon: <ShieldCheck size={20} />,
+      title: "Quality Guaranteed",
+      desc: "Every batch lab-tested for freshness and safety before dispatch.",
+      color: "text-[#3D8C85]",
+      bg: "bg-[#EAF6F5]",
+    },
+    {
+      icon: <Thermometer size={20} />,
+      title: "Cold Chain Delivery",
+      desc: "Temperature-controlled packaging from ocean to your doorstep.",
+      color: "text-[#3A7DA0]",
+      bg: "bg-[#EDF5FB]",
+    },
+    {
+      icon: <Truck size={20} />,
+      title: "Same Day Dispatch",
+      desc: "Order before 2 PM and it ships today — freshness guaranteed.",
+      color: "text-[#8B6D45]",
+      bg: "bg-[#FAF4EC]",
+    },
+    {
+      icon: <Utensils size={20} />,
+      title: "Chef Approved",
+      desc: "Trusted by restaurants and home cooks across the coastline.",
+      color: "text-[#C05A45]",
+      bg: "bg-[#FEF0EC]",
+    },
+  ];
 
+  const stats = [
+    { value: 500, suffix: "+", label: "Happy Customers" },
+    { value: 20, suffix: "+", label: "Varieties Available" },
+    { value: 98, suffix: "%", label: "Freshness Score" },
+    { value: 4, suffix: ".8★", label: "Average Rating" },
+  ];
 
-// --- REVIEWS ---
-const SeaBitePromise = () => {
+  return (
+    <section className="py-20 px-6 md:px-12 bg-white">
+      <div className="max-w-7xl mx-auto">
+        <Reveal>
+          <SectionLabel>Why Choose Us</SectionLabel>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>
+              The SeaBite<br />difference.
+            </h2>
+            <p className="text-[#4A6572] max-w-sm text-[15px] leading-relaxed">
+              We set the bar higher so every meal you cook starts with the finest, freshest ingredient possible.
+            </p>
+          </div>
+        </Reveal>
+
+        {/* Stats bar */}
+        <Reveal delay={0.1}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            {stats.map((s, i) => (
+              <div
+                key={i}
+                className="bg-[#F8FAFB] border border-[#E8EEF2] rounded-2xl p-6 text-center hover:border-[#C5E6E4] hover:bg-[#EAF6F5]/30 transition-colors duration-300"
+              >
+                <p className="text-3xl font-black text-[#1A2B35] mb-1">
+                  <Counter value={s.value} suffix={s.suffix} />
+                </p>
+                <p className="text-[11px] text-[#8BA5B3] font-medium uppercase tracking-wider">
+                  {s.label}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+
+        {/* Feature cards */}
+        <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {features.map((f, i) => (
+            <SI key={i}>
+              <motion.div
+                whileHover={{ y: -4 }}
+                transition={{ duration: 0.3 }}
+                className="bg-[#F8FAFB] border border-[#E8EEF2] rounded-2xl p-6 h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-shadow duration-300"
+              >
+                <div className={`w-10 h-10 rounded-xl ${f.bg} ${f.color} flex items-center justify-center mb-5`}>
+                  {f.icon}
+                </div>
+                <h3 className="font-bold text-[#1A2B35] mb-2 text-[15px]">{f.title}</h3>
+                <p className="text-sm text-[#8BA5B3] leading-relaxed">{f.desc}</p>
+              </motion.div>
+            </SI>
+          ))}
+        </Stagger>
+      </div>
+    </section>
+  );
+};
+
+// ─────────────────────────────────────────────
+// REVIEWS
+// ─────────────────────────────────────────────
+const Reviews = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get(`${API_URL}/api/products/top-reviews`)
-      .then((res) => {
-        setReviews(res.data);
-        setLoading(false);
-      })
+    axios.get(`${API_URL}/api/products/top-reviews`)
+      .then((res) => { setReviews(res.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
   return (
-    <section className="py-12 px-6 relative overflow-hidden transition-colors duration-300">
-      <div className="max-w-7xl mx-auto relative z-10 pt-10">
-        <div className="text-center mb-12">
-          <TextReveal
-            text="Loved by Seafood Lovers"
-            className="text-3xl md:text-4xl font-serif text-slate-900 dark:text-white mb-4"
-          />
-        </div>
-        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <section className="py-20 px-6 md:px-12 bg-[#F8FAFB]">
+      <div className="max-w-7xl mx-auto">
+        <Reveal>
+          <SectionLabel>Customer Reviews</SectionLabel>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] mb-12" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>
+            Loved by seafood lovers.
+          </h2>
+        </Reveal>
+
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {loading ? (
-            <p className="text-center col-span-3 text-slate-400">Loading reviews...</p>
-          ) : reviews.length > 0 ? (
-            reviews.map((r, i) => (
-              <StaggerItem key={i}>
-                <motion.div
-                  whileHover={{ y: -10, boxShadow: "0 25px 50px rgba(0,0,0,0.1)" }}
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className="bg-white/80 dark:bg-[#0e1d30]/90 p-8 rounded-[2rem] border border-gray-100 dark:border-white/5 relative shadow-sm backdrop-blur-sm h-full"
-                >
-                  <div className="flex items-center gap-1 mb-6">
-                    {[...Array(5)].map((_, starI) => (
-                      <motion.div
-                        key={starI}
-                        initial={{ opacity: 0, scale: 0, rotate: -180 }}
-                        whileInView={{ opacity: 1, scale: 1, rotate: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: starI * 0.08, type: "spring", stiffness: 300 }}
-                      >
-                        <Star
-                          className={`w-4 h-4 ${starI < r.rating ? "text-amber-400 fill-amber-400" : "text-slate-300"
-                            }`}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 mb-8 italic leading-relaxed">
-                    &quot;{r.comment}&quot;
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm">
-                      <User size={16} />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm">
-                        {r.userName}
-                      </h4>
-                      <span className="text-xs text-blue-500 uppercase tracking-wide font-bold">
-                        {r.productName}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              </StaggerItem>
-            ))
-          ) : (
-            <p className="text-center col-span-3 text-slate-400">No reviews yet.</p>
-          )}
-        </StaggerContainer>
-      </div>
-    </section>
-  );
-};
-
-// --- WHY SEABITE ---
-const WhySeaBite = () => {
-  const features = [
-    {
-      icon: <ShieldCheck size={24} />,
-      title: "Quality Guaranteed",
-      desc: "Every batch is lab-tested and certified for freshness and safety.",
-      color: "text-emerald-600 dark:text-emerald-400",
-      bg: "bg-emerald-50 dark:bg-emerald-900/20",
-    },
-    {
-      icon: <Thermometer size={24} />,
-      title: "Cold Chain Delivery",
-      desc: "Temperature-controlled packaging from ocean to your doorstep.",
-      color: "text-blue-600 dark:text-blue-400",
-      bg: "bg-blue-50 dark:bg-blue-900/20",
-    },
-    {
-      icon: <Truck size={24} />,
-      title: "Same Day Dispatch",
-      desc: "Orders before 2 PM ship the same day for express freshness.",
-      color: "text-amber-600 dark:text-amber-400",
-      bg: "bg-amber-50 dark:bg-amber-900/20",
-    },
-    {
-      icon: <Utensils size={24} />,
-      title: "Chef Approved",
-      desc: "Trusted by 500+ restaurants and home cooks across the coast.",
-      color: "text-rose-600 dark:text-rose-400",
-      bg: "bg-rose-50 dark:bg-rose-900/20",
-    },
-  ];
-
-  return (
-    <section className="py-12 md:py-16 px-6 relative overflow-hidden transition-colors duration-300">
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="text-center mb-16">
-          <TextReveal
-            text="Why SeaBite?"
-            className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white mb-4"
-          />
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.4 }}
-            className="text-slate-500 dark:text-slate-400 max-w-md mx-auto"
-          >
-            We set the bar higher so you can taste the difference.
-          </motion.p>
-        </div>
-
-        <SectionReveal direction="scale">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-            {[
-              { value: 100, suffix: "+", label: "Happy Customers" },
-              { value: 20, suffix: "+", label: "Varieties" },
-              { value: 98, suffix: "%", label: "Freshness Score" },
-              { value: 4, suffix: ".8", label: "Average Rating" },
-            ].map((stat, i) => (
+            <p className="col-span-3 text-center text-[#8BA5B3] py-12">Loading reviews...</p>
+          ) : reviews.length > 0 ? reviews.map((r, i) => (
+            <SI key={i}>
               <motion.div
-                key={i}
                 whileHover={{ y: -4 }}
-                className="bg-white dark:bg-[#0e1d30] border border-slate-100 dark:border-white/5 rounded-2xl p-6 text-center shadow-sm hover:shadow-lg transition-all"
+                transition={{ duration: 0.3 }}
+                className="bg-white border border-[#E8EEF2] rounded-2xl p-6 h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-shadow duration-300"
               >
-                <p className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-1">
-                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
-                  {stat.label}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </SectionReveal>
-
-        <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-          {features.map((feature, i) => (
-            <StaggerItem key={i}>
-              <motion.div
-                whileHover={{ y: -8, boxShadow: "0 20px 40px rgba(0,0,0,0.08)" }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                className="bg-white dark:bg-[#0e1d30] border border-slate-100 dark:border-white/5 rounded-2xl p-6 md:p-8 h-full shadow-sm"
-              >
-                <div className={`w-12 h-12 rounded-xl ${feature.bg} ${feature.color} flex items-center justify-center mb-5`}>
-                  {feature.icon}
+                {/* Stars */}
+                <div className="flex gap-0.5 mb-5">
+                  {[...Array(5)].map((_, j) => (
+                    <Star
+                      key={j}
+                      size={13}
+                      className={j < r.rating ? "text-amber-400 fill-amber-400" : "text-[#E8EEF2] fill-[#E8EEF2]"}
+                    />
+                  ))}
                 </div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {feature.desc}
+
+                <p className="text-[#4A6572] text-sm leading-relaxed mb-6">
+                  &ldquo;{r.comment}&rdquo;
                 </p>
+
+                <div className="flex items-center gap-3 pt-4 border-t border-[#F5F7F9]">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#5BA8A0] to-[#89C2D9] flex items-center justify-center text-white">
+                    <User size={14} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-[#1A2B35]">{r.userName}</p>
+                    <p className="text-[11px] text-[#5BA8A0] font-medium">{r.productName}</p>
+                  </div>
+                </div>
               </motion.div>
-            </StaggerItem>
-          ))}
-        </StaggerContainer>
+            </SI>
+          )) : (
+            <p className="col-span-3 text-center text-[#8BA5B3]">No reviews yet.</p>
+          )}
+        </Stagger>
       </div>
     </section>
   );
 };
 
-// --- FOOTER ---
-const Footer = () => {
-  return (
-    <footer className="relative bg-gray-50 dark:bg-[#081220] text-slate-900 dark:text-white border-t border-gray-200 dark:border-white/5 overflow-hidden transition-colors duration-300 z-10">
-      <div className="absolute inset-0 flex items-center whitespace-nowrap pointer-events-none overflow-hidden">
-        <motion.div
-          initial={{ x: 0 }}
-          animate={{ x: "-50%" }}
-          transition={{ duration: 20, ease: "linear", repeat: Infinity }}
-          className="flex gap-20"
-        >
-          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">
-            SEABITE SEABITE SEABITE
-          </h2>
-          <h2 className="text-[18vw] leading-none font-black text-gray-200/60 dark:text-[#0f1b2d] select-none uppercase tracking-tighter">
-            SEABITE SEABITE SEABITE
-          </h2>
-        </motion.div>
-      </div>
+// ─────────────────────────────────────────────
+// CTA FOOTER BANNER
+// ─────────────────────────────────────────────
+const CTABanner = () => (
+  <section className="px-6 md:px-12 py-6 bg-[#F8FAFB]">
+    <div className="max-w-7xl mx-auto">
+      <Reveal>
+        <div className="relative rounded-2xl overflow-hidden bg-[#1A2B35] p-10 md:p-14 text-center">
+          {/* Subtle pattern */}
+          <div
+            className="absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          {/* Teal glow */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-96 h-96 rounded-full bg-[#5BA8A0] opacity-10 blur-3xl" />
+          </div>
 
-      <div className="relative z-10 flex flex-col items-center justify-center py-24 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 40, filter: "blur(10px)" }}
-          whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          viewport={{ once: true }}
-          className="space-y-6"
-        >
-          <p className="text-slate-600 dark:text-slate-400 font-light text-lg transition-colors duration-300 tracking-tight">
-            Experience the true taste of the ocean.
-          </p>
-          <Link to="/products" className="inline-block">
-            <motion.button
-              whileHover={{ scale: 1.05, boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}
-              whileTap={{ scale: 0.93 }}
-              className="group px-12 py-5 bg-[#0f172a] dark:bg-white text-white dark:text-slate-900 rounded-full font-bold text-lg transition-all shadow-xl relative overflow-hidden"
+          <div className="relative z-10 space-y-5">
+            <Chip color="teal"><Waves size={11} /> Ocean Fresh</Chip>
+            <h2
+              className="text-3xl md:text-5xl font-bold text-white leading-tight"
+              style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
             >
-              <span className="relative z-10">Start Your Order</span>
-              <motion.div
-                className="absolute inset-0 bg-blue-600"
-                initial={{ y: "100%" }}
-                whileHover={{ y: "0%" }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              />
-            </motion.button>
-          </Link>
-        </motion.div>
-      </div>
-
-      {/* <div className="relative z-10 border-t border-slate-200/50 dark:border-white/5 px-6 py-10">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-3">
-            <span className="text-xl font-serif font-bold text-slate-900 dark:text-white">SeaBite</span>
-            <span className="text-xs text-slate-400 dark:text-slate-500">Fresh Coastal Catch</span>
+              Taste the ocean,<br />delivered today.
+            </h2>
+            <p className="text-white/50 max-w-md mx-auto text-[15px]">
+              Premium seafood, cold-chain delivered. From the coast to your plate in hours.
+            </p>
+            <div className="pt-2">
+              <Link to="/products">
+                <motion.button
+                  whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(91,168,160,0.4)" }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-flex items-center gap-2.5 px-8 py-4 bg-[#5BA8A0] text-white font-semibold rounded-full text-sm transition-all"
+                >
+                  Start Your Order <ArrowRight size={15} />
+                </motion.button>
+              </Link>
+            </div>
           </div>
-          <div className="flex flex-wrap justify-center gap-6 text-xs font-medium text-slate-500 dark:text-slate-400">
-            <Link to="/products" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Products</Link>
-            <Link to="/orders" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">My Orders</Link>
-            <Link to="/notifications" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Notifications</Link>
-          </div>
-          <p className="text-[10px] text-slate-400 dark:text-slate-600 font-medium">
-            &copy; {new Date().getFullYear()} SeaBite. All rights reserved.
-          </p>
         </div>
-      </div> */}
-    </footer>
+      </Reveal>
+    </div>
+  </section>
+);
+
+// ─────────────────────────────────────────────
+// FOOTER
+// ─────────────────────────────────────────────
+const Footer = () => (
+  <footer className="bg-white border-t border-[#E8EEF2] px-6 md:px-12 py-10">
+    <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-5">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 rounded-lg bg-[#1A2B35] flex items-center justify-center">
+          <Waves size={16} className="text-[#5BA8A0]" />
+        </div>
+        <span className="font-bold text-[#1A2B35] text-base">SeaBite</span>
+        <span className="text-[#8BA5B3] text-xs">Fresh Coastal Catch</span>
+      </div>
+      <div className="flex gap-6 text-sm text-[#4A6572]">
+        <Link to="/products" className="hover:text-[#5BA8A0] transition-colors">Products</Link>
+        <Link to="/orders" className="hover:text-[#5BA8A0] transition-colors">My Orders</Link>
+        <Link to="/notifications" className="hover:text-[#5BA8A0] transition-colors">Notifications</Link>
+      </div>
+      <p className="text-[11px] text-[#8BA5B3]">
+        © {new Date().getFullYear()} SeaBite. All rights reserved.
+      </p>
+    </div>
+  </footer>
+);
+
+// ─────────────────────────────────────────────
+// SCROLL TO TOP
+// ─────────────────────────────────────────────
+const ScrollTop = () => {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    const h = () => setShow(window.scrollY > 500);
+    window.addEventListener("scroll", h);
+    return () => window.removeEventListener("scroll", h);
+  }, []);
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          whileHover={{ y: -2 }}
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed bottom-8 right-8 z-50 w-11 h-11 bg-white border border-[#E8EEF2] rounded-full shadow-md flex items-center justify-center text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] transition-colors"
+        >
+          <ChevronDown size={18} className="rotate-180" />
+        </motion.button>
+      )}
+    </AnimatePresence>
   );
 };
 
-// --- MAIN EXPORT ---
+// ─────────────────────────────────────────────
+// DESIGN SYSTEM REFERENCE (embedded as comments)
+// ─────────────────────────────────────────────
+/*
+  ╔══════════════════════════════════════╗
+  ║        SEABITE DESIGN SYSTEM         ║
+  ╠══════════════════════════════════════╣
+  ║ COLOR PALETTE                        ║
+  ║  Background  : #F8FAFB               ║
+  ║  Surface      : #FFFFFF              ║
+  ║  Border       : #E8EEF2              ║
+  ║  Text dark    : #1A2B35              ║
+  ║  Text mid     : #4A6572              ║
+  ║  Text light   : #8BA5B3             ║
+  ║  Primary      : #5BA8A0 (seafoam)   ║
+  ║  Primary dark : #3D8C85             ║
+  ║  Secondary    : #89C2D9 (sky)       ║
+  ║  Accent       : #E8816A (coral)     ║
+  ║  Sand         : #F5EFE6             ║
+  ╠══════════════════════════════════════╣
+  ║ TYPOGRAPHY                           ║
+  ║  Display  : Bricolage Grotesque      ║
+  ║  Body     : Plus Jakarta Sans        ║
+  ║  Mono     : JetBrains Mono           ║
+  ║  Scale:                              ║
+  ║    xs:  11px / tracking-wide         ║
+  ║    sm:  13px                         ║
+  ║    base: 15px                        ║
+  ║    lg:  18px                         ║
+  ║    xl:  22px                         ║
+  ║    2xl: 28px                         ║
+  ║    3xl: 36px                         ║
+  ║    4xl: 48px                         ║
+  ║    5xl: 64px                         ║
+  ╠══════════════════════════════════════╣
+  ║ SPACING                              ║
+  ║  4 → 8 → 12 → 16 → 20 →            ║
+  ║  24 → 32 → 40 → 48 → 64 → 80       ║
+  ╠══════════════════════════════════════╣
+  ║ RADII                                ║
+  ║  sm: 8px  md: 12px  lg: 16px        ║
+  ║  xl: 20px  2xl: 24px  pill: 9999px  ║
+  ╠══════════════════════════════════════╣
+  ║ SHADOWS                              ║
+  ║  sm: 0 1px 4px rgba(0,0,0,0.04)     ║
+  ║  md: 0 4px 16px rgba(0,0,0,0.06)    ║
+  ║  lg: 0 8px 30px rgba(0,0,0,0.08)    ║
+  ║  brand: 0 8px 30px rgba(91,168,160,0.25) ║
+  ╠══════════════════════════════════════╣
+  ║ ANIMATION                            ║
+  ║  easing: [0.22, 1, 0.36, 1]         ║
+  ║  reveal: fade + y(24px), 650ms      ║
+  ║  hover lift: y(-4px), 300ms         ║
+  ║  stagger children: 90ms             ║
+  ╚══════════════════════════════════════╝
+*/
+
+// ─────────────────────────────────────────────
+// PAGE EXPORT
+// ─────────────────────────────────────────────
+import EnhancedProductCard from "../components/EnhancedProductCard";
+import TrendingProducts from "../components/TrendingProducts";
+
 export default function Home() {
   return (
-    <div className="bg-slate-50 dark:bg-[#0a1625] min-h-screen text-slate-900 dark:text-slate-200 selection:bg-blue-500 selection:text-white font-sans transition-colors duration-300">
-      <VideoHero />
-      <RollingText />
-      <div className="relative w-full overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none overflow-hidden h-full w-full z-0">
-          {[...Array(15)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ x: "-200px", opacity: 0 }}
-              animate={{
-                x: "100vw",
-                opacity: [0, 0.2, 0.2, 0],
-                rotate: [0, 5, -5, 0],
-              }}
-              transition={{
-                x: {
-                  duration: Math.random() * 20 + 15,
-                  repeat: Infinity,
-                  delay: Math.random() * 10,
-                  ease: "linear",
-                },
-                rotate: { duration: 2, repeat: Infinity, ease: "easeInOut" },
-              }}
-              style={{
-                position: "absolute",
-                top: `${Math.random() * 100}%`,
-                scale: Math.random() * 1.5 + 1.0,
-              }}
-              className="text-blue-500/30 dark:text-blue-400/20"
-            >
-              <Fish size={64} strokeWidth={1} fill="currentColor" />
-            </motion.div>
-          ))}
+    <div
+      className="bg-[#F8FAFB] min-h-screen text-[#1A2B35] selection:bg-[#C5E6E4] selection:text-[#1A2B35] antialiased"
+      style={{ fontFamily: "'Plus Jakarta Sans', 'Manrope', sans-serif" }}
+    >
+      {/* Google Fonts injection — add to your index.html instead for production */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        * { -webkit-font-smoothing: antialiased; }
+      `}</style>
+
+      <Hero />
+      <Ticker />
+      <CategorySection />
+      <FlashSale />
+
+      <CategoryRow title="Fresh From The Nets" filterType="Fish" icon="fish" />
+      <CategoryRow title="Shellfish Specials" filterType="Shellfish" icon="anchor" />
+
+      {/* Trending — wrapped in clean white surface */}
+      <section className="py-4 px-6 md:px-12 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <SectionLabel>Trending</SectionLabel>
+          </Reveal>
+          <TrendingProducts />
         </div>
-        <div className="relative z-10">
-          <SectionReveal direction="up">
-            <CategoryPanel />
-          </SectionReveal>
-          <SectionReveal direction="scale" delay={0.1}>
-            <FlashSale />
-          </SectionReveal>
-          <SectionReveal direction="left">
-            <CategoryRow title="Fresh From The Nets" filterType="Fish" />
-          </SectionReveal>
-          <SectionReveal direction="right">
-            <CategoryRow title="Shellfish Specials" filterType="Shellfish" />
-          </SectionReveal>
-          <SectionReveal direction="up">
-            <TrendingProducts />
-          </SectionReveal>
-          <SectionReveal direction="up">
-            <SeaBitePromise />
-          </SectionReveal>
-          <SectionReveal direction="scale" delay={0.1}>
-            <WhySeaBite />
-          </SectionReveal>
-        </div>
-      </div>
+      </section>
+
+      <Reviews />
+      <WhySeaBite />
+      <CTABanner />
       <Footer />
-      <ScrollToTopButton />
+      <ScrollTop />
     </div>
   );
 }

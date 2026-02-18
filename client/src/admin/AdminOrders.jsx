@@ -4,7 +4,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiRefreshCw, FiTruck, FiPrinter,
-  FiXCircle, FiPackage, FiArrowUpRight,
+  FiXCircle, FiPackage, FiArrowUpRight, FiFilter
 } from "react-icons/fi";
 import PopupModal from "../components/PopupModal";
 import Invoice from "../components/Invoice";
@@ -15,25 +15,18 @@ const STATUS_OPTIONS = [
   "All", "Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Cancelled by User",
 ];
 
-const ease = [0.22, 1, 0.36, 1];
+const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
-  hidden: { opacity: 0, y: 16, filter: "blur(6px)" },
+  hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
   visible: (i = 0) => ({
     opacity: 1, y: 0, filter: "blur(0px)",
-    transition: { delay: i * 0.06, duration: 0.5, ease },
+    transition: { delay: i * 0.05, duration: 0.6, ease },
   }),
 };
-
-const OrderSkeletonRow = () => (
-  <tr className="animate-pulse border-b border-slate-50">
-    <td className="py-3 px-4"><div className="h-3 w-12 bg-slate-100 rounded" /></td>
-    <td className="py-3 px-4"><div className="h-3 w-20 bg-slate-100 rounded" /></td>
-    <td className="py-3 px-4"><div className="h-4 w-12 bg-slate-100 rounded-full" /></td>
-    <td className="py-3 px-4"><div className="h-3 w-12 bg-slate-100 rounded" /></td>
-    <td className="py-3 px-4"><div className="h-4 w-16 bg-slate-100 rounded-full" /></td>
-    <td className="py-3 px-4 text-right"><div className="h-6 w-16 bg-slate-50 rounded-lg ml-auto" /></td>
-  </tr>
-);
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.05 } },
+};
 
 export default function AdminOrders() {
   const [orders, setOrders] = useState([]);
@@ -43,22 +36,20 @@ export default function AdminOrders() {
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const fetchOrders = (isSilent = false) => {
+  const fetchOrders = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
-    axios
-      .get("/api/orders")
-      .then((res) => {
-        const list = res.data || [];
-        setOrders(list);
-        if (selectedOrder) {
-          const updated = list.find((o) => o._id === selectedOrder._id);
-          if (updated) setSelectedOrder(updated);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        setLoading(false);
-      });
+    try {
+      const { data } = await axios.get("/api/orders");
+      setOrders(Array.isArray(data) ? data : []);
+      if (selectedOrder) {
+        const updated = data.find((o) => o._id === selectedOrder._id);
+        if (updated) setSelectedOrder(updated);
+      }
+    } catch {
+      toast.error("Failed to load orders");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -66,38 +57,36 @@ export default function AdminOrders() {
   }, []);
 
   const updateStatus = async (id, status) => {
-    const orderToUpdate = orders.find((o) => o._id === id);
-    if (orderToUpdate?.status.includes("Cancelled")) {
-      setModal({ show: true, message: "Action Restricted: Status cannot be modified.", type: "error" });
-      return;
+    if (orders.find((o) => o._id === id)?.status.includes("Cancelled")) {
+      return toast.error("Cannot modify cancelled orders");
     }
     try {
       await axios.put(`/api/orders/${id}/status`, { status });
-      setModal({ show: true, message: `Order status updated to ${status}`, type: "success" });
+      toast.success(`Updated to ${status}`);
       fetchOrders(true);
     } catch {
-      setModal({ show: true, message: "Failed to update status.", type: "error" });
+      toast.error("Update failed");
     }
   };
 
   const handleRazorpayRefund = async (orderId) => {
-    if (!window.confirm("Refund full amount via Razorpay and cancel the order?")) return;
+    if (!window.confirm("Refund full amount via Razorpay and cancel?")) return;
     try {
       await axios.put("/api/payment/refund", { orderId, reason: "Admin Request" });
-      setModal({ show: true, message: "Refund Initiated.", type: "success" });
+      toast.success("Refund Initiated");
       fetchOrders(true);
     } catch (err) {
-      setModal({ show: true, message: err.response?.data?.message || "Refund Failed", type: "error" });
+      toast.error(err.response?.data?.message || "Refund Failed");
     }
   };
 
   const updateRefundStatus = async (id, refundStatus) => {
     try {
       await axios.put(`/api/orders/${id}/status`, { refundStatus });
-      setModal({ show: true, message: `Refund state: ${refundStatus}`, type: "success" });
+      toast.success(`Refund: ${refundStatus}`);
       fetchOrders(true);
     } catch {
-      setModal({ show: true, message: "Failed to update refund status", type: "error" });
+      toast.error("Failed to update refund status");
     }
   };
 
@@ -110,13 +99,12 @@ export default function AdminOrders() {
     );
   });
 
-  // Stats
   const pendingCount = orders.filter((o) => o.status === "Pending").length;
   const processingCount = orders.filter((o) => o.status === "Processing").length;
   const deliveredCount = orders.filter((o) => o.status === "Delivered").length;
 
   return (
-    <motion.div initial="hidden" animate="visible" className="p-4 md:p-6 min-h-screen font-sans text-slate-900">
+    <motion.div initial="hidden" animate="visible" variants={staggerContainer} className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white p-6 md:p-10 font-sans">
       <PopupModal show={modal.show} message={modal.message} type={modal.type} onClose={() => setModal({ ...modal, show: false })} />
 
       <AnimatePresence>
@@ -130,138 +118,158 @@ export default function AdminOrders() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <motion.div variants={fadeUp} custom={0} className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Order Management</h1>
-          <p className="text-slate-500 text-xs md:text-sm mt-1">Track, update, and manage all orders</p>
-        </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <motion.button whileTap={{ scale: 0.95 }} onClick={() => fetchOrders()} className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all shadow-sm">
-            <FiRefreshCw className={loading ? "animate-spin" : ""} size={16} />
-          </motion.button>
-          <div className="relative flex-1 md:w-64">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-            <input type="text" placeholder="Search orders..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 bg-white outline-none focus:ring-2 focus:ring-blue-500/10 text-sm transition-all shadow-sm" />
+      <div className="max-w-[1600px] mx-auto space-y-8">
+
+        {/* Header */}
+        <motion.div variants={fadeUp} className="flex flex-col md:flex-row justify-between items-end gap-6 border-b border-stone-200/50 pb-8">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-light text-stone-900 tracking-tight mb-2">Orders</h1>
+            <p className="text-sm text-stone-500">Track and manage shipments</p>
           </div>
-        </div>
-      </motion.div>
+          <div className="flex gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:w-72">
+              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search ID or Customer..."
+                className="w-full pl-11 pr-5 py-3 rounded-2xl bg-stone-50 border border-stone-200/50 text-stone-800 font-medium placeholder:text-stone-400 focus:bg-white focus:border-stone-300 focus:ring-2 focus:ring-stone-200/50 transition-all outline-none"
+              />
+            </div>
+            <button onClick={() => fetchOrders()} className="p-3.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-2xl transition-colors">
+              <FiRefreshCw className={loading ? "animate-spin" : ""} size={18} />
+            </button>
+          </div>
+        </motion.div>
 
-      {/* Quick Stats Bar */}
-      <motion.div variants={fadeUp} custom={1} className="grid grid-cols-3 gap-3 mb-6">
-        <div className="bg-amber-50 border border-amber-100 rounded-xl p-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600"><FiPackage size={15} /></div>
-          <div><p className="text-[10px] font-semibold text-amber-600 uppercase">Pending</p><p className="text-lg font-bold text-amber-900">{pendingCount}</p></div>
-        </div>
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600"><FiTruck size={15} /></div>
-          <div><p className="text-[10px] font-semibold text-blue-600 uppercase">Processing</p><p className="text-lg font-bold text-blue-900">{processingCount}</p></div>
-        </div>
-        <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600"><FiArrowUpRight size={15} /></div>
-          <div><p className="text-[10px] font-semibold text-emerald-600 uppercase">Delivered</p><p className="text-lg font-bold text-emerald-900">{deliveredCount}</p></div>
-        </div>
-      </motion.div>
+        {/* Stats */}
+        <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <StatCard
+            title="Pending"
+            value={pendingCount}
+            icon={<FiPackage size={20} />}
+            color="bg-amber-50/50 text-amber-700 border-amber-100/50"
+          />
+          <StatCard
+            title="Processing"
+            value={processingCount}
+            icon={<FiTruck size={20} />}
+            color="bg-blue-50/50 text-blue-700 border-blue-100/50"
+          />
+          <StatCard
+            title="Delivered"
+            value={deliveredCount}
+            icon={<FiArrowUpRight size={20} />}
+            color="bg-emerald-50/50 text-emerald-700 border-emerald-100/50"
+          />
+        </motion.div>
 
-      {/* Filter Bar */}
-      <motion.div variants={fadeUp} custom={2} className="flex gap-2 overflow-x-auto pb-4 mb-4 no-scrollbar">
-        {STATUS_OPTIONS.map((status) => {
-          const count = status === "All" ? orders.length : orders.filter((o) => o.status === status).length;
-          return (
-            <motion.button
-              key={status}
-              whileTap={{ scale: 0.96 }}
-              onClick={() => setFilter(status)}
-              className={`px-3.5 py-1.5 rounded-full text-[10px] md:text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-1.5 ${filter === status
-                ? "bg-slate-900 text-white border-slate-900 shadow-md"
-                : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:text-slate-700"
-                }`}
-            >
-              {status}
-              {count > 0 && (
-                <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${filter === status ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
-                  }`}>{count}</span>
-              )}
-            </motion.button>
-          );
-        })}
-      </motion.div>
+        {/* Filters */}
+        <motion.div variants={fadeUp} className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
+          {STATUS_OPTIONS.map((status) => {
+            const count = status === "All" ? orders.length : orders.filter((o) => o.status === status).length;
+            return (
+              <button
+                key={status}
+                onClick={() => setFilter(status)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-2 ${filter === status
+                    ? "bg-stone-900 text-white border-stone-900 shadow-md"
+                    : "bg-white text-stone-500 border-stone-200 hover:bg-stone-50 hover:text-stone-700"
+                  }`}
+              >
+                {status}
+                {count > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${filter === status ? "bg-white/20 text-white" : "bg-stone-100 text-stone-500"}`}>{count}</span>
+                )}
+              </button>
+            );
+          })}
+        </motion.div>
 
-      {/* Orders Table */}
-      <motion.div variants={fadeUp} custom={3} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-slate-50/80 border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              <tr>
-                <th className="py-2.5 px-4">Order ID</th>
-                <th className="py-2.5 px-4">Customer</th>
-                <th className="py-2.5 px-4">Payment</th>
-                <th className="py-2.5 px-4">Total</th>
-                <th className="py-2.5 px-4">Status</th>
-                <th className="py-2.5 px-4 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 text-xs md:text-sm">
-              {loading ? (
-                [...Array(6)].map((_, i) => <OrderSkeletonRow key={i} />)
-              ) : filteredOrders.length === 0 ? (
-                <tr><td colSpan={6} className="py-12 text-center text-slate-400 text-xs">No orders match your criteria</td></tr>
-              ) : (
-                filteredOrders.map((o) => (
-                  <motion.tr
-                    key={o._id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    onClick={() => setSelectedOrder(o)}
-                    className="hover:bg-slate-50/60 transition-colors cursor-pointer group"
-                  >
-                    <td className="py-3 px-4 font-mono font-semibold text-slate-500 text-[10px] md:text-xs group-hover:text-blue-600 transition-colors">#{o.orderId}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500 shrink-0">
-                          {o.user?.name?.charAt(0) || "G"}
-                        </div>
-                        <span className="font-medium text-slate-900 text-xs md:text-sm">{o.user?.name || "Guest"}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider ${o.paymentMethod === "Prepaid" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                        }`}>{o.paymentMethod}</span>
-                    </td>
-                    <td className="py-3 px-4 font-bold text-slate-900 text-xs md:text-sm">₹{o.totalAmount.toLocaleString()}</td>
-                    <td className="py-3 px-4"><StatusPill status={o.status} /></td>
-                    <td className="py-3 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                      <select
-                        value={o.status}
-                        disabled={o.status.includes("Cancelled")}
-                        onChange={(e) => updateStatus(o._id, e.target.value)}
-                        className="border border-slate-200 rounded-lg p-1 text-[10px] font-bold outline-none cursor-pointer hover:border-blue-400 bg-white transition-colors disabled:opacity-40"
-                      >
-                        {STATUS_OPTIONS.filter((s) => s !== "All").map((s) => (<option key={s} value={s}>{s}</option>))}
-                      </select>
-                    </td>
-                  </motion.tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </motion.div>
+        {/* Table */}
+        <motion.div variants={fadeUp} className="bg-white rounded-3xl border border-stone-200/50 shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-stone-50/50 border-b border-stone-100 text-[10px] font-bold uppercase tracking-wider text-stone-400">
+                <tr>
+                  <th className="px-6 py-4">Order ID</th>
+                  <th className="px-6 py-4">Customer</th>
+                  <th className="px-6 py-4">Payment</th>
+                  <th className="px-6 py-4">Total</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-stone-50">
+                {loading ? (
+                  [...Array(5)].map((_, i) => (
+                    <tr key={i} className="animate-pulse">
+                      <td className="px-6 py-4" colSpan={6}><div className="h-10 bg-stone-50 rounded-xl" /></td>
+                    </tr>
+                  ))
+                ) : filteredOrders.length === 0 ? (
+                  <tr><td colSpan={6} className="py-12 text-center text-stone-400 font-medium">No orders found</td></tr>
+                ) : (
+                  filteredOrders.map((o) => (
+                    <tr
+                      key={o._id}
+                      onClick={() => setSelectedOrder(o)}
+                      className="group hover:bg-stone-50/50 transition-colors cursor-pointer"
+                    >
+                      <td className="px-6 py-4 font-mono text-sm font-medium text-stone-500 group-hover:text-blue-600 transition-colors">#{o.orderId}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-stone-900">{o.user?.name || "Guest"}</td>
+                      <td className="px-6 py-4">
+                        <span className={`text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wide border ${o.paymentMethod === "Prepaid" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-amber-50 text-amber-700 border-amber-100"}`}>
+                          {o.paymentMethod}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-mono text-sm font-bold text-stone-900">₹{o.totalAmount.toLocaleString()}</td>
+                      <td className="px-6 py-4"><StatusPill status={o.status} /></td>
+                      <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        <select
+                          value={o.status}
+                          disabled={o.status.includes("Cancelled")}
+                          onChange={(e) => updateStatus(o._id, e.target.value)}
+                          className="bg-white border border-stone-200 rounded-lg py-1.5 px-2 text-xs font-bold text-stone-600 outline-none cursor-pointer hover:border-blue-400 transition-colors disabled:opacity-50"
+                        >
+                          {STATUS_OPTIONS.filter(s => s !== "All").map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+
+      </div>
     </motion.div>
   );
 }
 
-// --- Sub components ---
+function StatCard({ title, value, icon, color }) {
+  return (
+    <div className={`p-6 rounded-3xl border flex items-center gap-5 transition-transform hover:scale-[1.02] ${color}`}>
+      <div className="p-3 bg-white/60 rounded-2xl backdrop-blur-sm shadow-sm">{icon}</div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-wider opacity-60 mb-0.5">{title}</p>
+        <p className="text-2xl font-light">{value}</p>
+      </div>
+    </div>
+  );
+}
+
 function StatusPill({ status }) {
   const styles = {
-    Pending: "bg-amber-50 text-amber-700 border-amber-100",
-    Processing: "bg-blue-50 text-blue-700 border-blue-100",
-    Shipped: "bg-indigo-50 text-indigo-700 border-indigo-100",
-    Delivered: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    Cancelled: "bg-red-50 text-red-700 border-red-100",
-    "Cancelled by User": "bg-red-100 text-red-800 border-red-200",
+    Pending: "bg-amber-50 text-amber-700 border-amber-200",
+    Processing: "bg-blue-50 text-blue-700 border-blue-200",
+    Shipped: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    Delivered: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    Cancelled: "bg-rose-50 text-rose-700 border-rose-200",
+    "Cancelled by User": "bg-rose-100 text-rose-800 border-rose-300",
   };
-  return <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${styles[status] || styles.Pending}`}>{status}</span>;
+  return <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${styles[status] || styles.Pending}`}>{status}</span>;
 }
 
 function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund }) {
@@ -275,91 +283,91 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
   const canAutoRefund = order.paymentMethod === "Prepaid" && order.isPaid && order.paymentId;
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-end md:items-center justify-center p-0 md:p-4">
+    <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <motion.div
-        initial={{ y: "100%", opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: "100%", opacity: 0 }}
-        transition={{ type: "spring", damping: 28, stiffness: 260 }}
-        className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]"
+        initial={{ y: 20, opacity: 0, scale: 0.95 }}
+        animate={{ y: 0, opacity: 1, scale: 1 }}
+        exit={{ y: 20, opacity: 0, scale: 0.95 }}
+        className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Header */}
-        <div className="flex justify-between items-center px-6 md:px-8 py-5 border-b border-slate-100 sticky top-0 bg-white z-10">
+        <div className="flex justify-between items-center px-8 py-6 border-b border-stone-100 bg-stone-50/50">
           <div>
-            <h2 className="text-lg md:text-xl font-bold text-slate-900">Order #{order.orderId}</h2>
-            <span className="text-[10px] text-slate-400 font-mono">ID: {order._id}</span>
+            <h2 className="text-xl font-bold text-stone-900">Order #{order.orderId}</h2>
+            <span className="text-[10px] text-stone-400 font-mono uppercase tracking-wider">ID: {order._id}</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <StatusPill status={order.status} />
-            <motion.button
-              whileTap={{ scale: 0.9 }}
+            <button
               onClick={async () => {
-                const toastId = toast.loading("Generating Invoice...");
-                try {
-                  await generateInvoicePDF(order);
-                  toast.success("Invoice Downloaded!", { id: toastId });
-                } catch (err) {
-                  console.error("Invoice Gen Error:", err);
-                  toast.error("Failed to generate invoice. Please try again.", { id: toastId });
-                }
+                const t = toast.loading("Generating Invoice...");
+                try { await generateInvoicePDF(order); toast.success("Downloaded!", { id: t }); }
+                catch { toast.error("Failed", { id: t }); }
               }}
-              title="Download PDF Invoice"
-              className="p-2 bg-blue-50 rounded-xl text-blue-600 hover:text-blue-700 hover:bg-blue-100 transition-colors"
+              className="p-2.5 bg-white border border-stone-200 rounded-xl text-stone-500 hover:text-blue-600 hover:border-blue-200 transition-colors"
             >
-              <FiPrinter size={16} />
-            </motion.button>
-            <motion.button whileTap={{ scale: 0.9 }} onClick={onClose} className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 transition-colors">
-              <FiXCircle size={20} />
-            </motion.button>
+              <FiPrinter size={18} />
+            </button>
+            <button onClick={onClose} className="p-2.5 hover:bg-stone-200/50 rounded-xl text-stone-400 hover:text-stone-600 transition-colors">
+              <FiXCircle size={24} />
+            </button>
           </div>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Transaction</h4>
-              <p className="text-xs font-semibold text-slate-900">Gateway: <span className="text-blue-600 font-mono">{order.paymentId || "COD"}</span></p>
-              <p className="text-xs text-slate-500 mt-1">Method: <span className="font-semibold">{order.paymentMethod}</span></p>
+        {/* content */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Payment Info */}
+            <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+              <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Payment Information</h4>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-stone-900 flex justify-between">Method <span>{order.paymentMethod}</span></p>
+                <p className="text-sm font-medium text-stone-900 flex justify-between">Transaction ID <span className="font-mono text-stone-500">{order.paymentId || "N/A"}</span></p>
+                <p className="text-sm font-medium text-stone-900 flex justify-between">Paid Status <span className={order.isPaid ? "text-emerald-600" : "text-amber-600"}>{order.isPaid ? "Paid" : "Unpaid"}</span></p>
+              </div>
             </div>
 
-            {/* Shipping Details */}
-            <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Shipping Details</h4>
-              <p className="text-sm font-bold text-slate-900">{order.shippingAddress?.fullName}</p>
-              <p className="text-xs text-slate-600 mt-1">{order.shippingAddress?.phone}</p>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {order.shippingAddress?.houseNo}, {order.shippingAddress?.street}, <br />
+            {/* Shipping Info */}
+            <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+              <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Shipping Information</h4>
+              <p className="font-bold text-stone-900">{order.shippingAddress?.fullName}</p>
+              <p className="text-sm text-stone-600 mt-1">{order.shippingAddress?.phone}</p>
+              <p className="text-sm text-stone-500 mt-2 leading-relaxed">
+                {order.shippingAddress?.houseNo}, {order.shippingAddress?.street}<br />
                 {order.shippingAddress?.city}, {order.shippingAddress?.state} - {order.shippingAddress?.zip}
               </p>
             </div>
 
             {canAutoRefund && (
-              <div className={`p-4 rounded-xl border-2 col-span-1 md:col-span-2 ${order.refundStatus === "Success" ? "bg-emerald-50 border-emerald-200" : "bg-blue-50 border-blue-200"}`}>
-                <h4 className="text-[10px] font-bold uppercase tracking-widest mb-3 text-slate-600">Refund Console</h4>
-                {order.refundStatus === "Processing" ? (
-                  <motion.button whileTap={{ scale: 0.97 }} onClick={() => updateRefundStatus(order._id, "Success")} className="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition-colors">CONFIRM SUCCESS</motion.button>
-                ) : (
-                  order.refundStatus !== "Success" && (
-                    <motion.button whileTap={{ scale: 0.97 }} onClick={() => onProcessRefund(order._id)} className="w-full py-2.5 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-slate-800 transition-colors">PROCESS RAZORPAY REFUND</motion.button>
-                  )
+              <div className={`col-span-1 md:col-span-2 p-6 rounded-2xl border border-stone-200 ${order.refundStatus === "Success" ? "bg-emerald-50/50" : "bg-blue-50/50"}`}>
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Refund Console</h4>
+                  <span className="text-xs font-bold px-2 py-0.5 bg-white rounded-md border border-stone-200">{order.refundStatus || "None"}</span>
+                </div>
+                {order.refundStatus !== "Success" && (
+                  <button
+                    onClick={() => onProcessRefund(order._id)}
+                    className="w-full py-3 bg-stone-900 text-white rounded-xl font-bold text-xs uppercase hover:bg-stone-800 transition-colors"
+                  >
+                    Process Razorpay Refund
+                  </button>
                 )}
               </div>
             )}
           </div>
 
-          {/* Line Items */}
+          {/* Items */}
           <div>
-            <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-2 mb-3">Line Items</h3>
-            <div className="space-y-2">
-              {order.items.map((item, index) => (
-                <div key={index} className="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                  <img src={getFullImageUrl(item.image)} alt={item.name} className="w-10 h-10 object-contain bg-white rounded-lg border border-slate-100 p-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-slate-900 truncate">{item.name}</p>
-                    <p className="text-[10px] text-slate-500">₹{item.price} x {item.qty}</p>
+            <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Order Items</h4>
+            <div className="space-y-3">
+              {order.items.map((item, i) => (
+                <div key={i} className="flex items-center gap-4 p-4 bg-white border border-stone-100 rounded-2xl shadow-sm">
+                  <img src={getFullImageUrl(item.image)} className="w-12 h-12 object-contain bg-stone-50 rounded-lg p-1" />
+                  <div className="flex-1">
+                    <p className="font-bold text-stone-900 text-sm">{item.name}</p>
+                    <p className="text-xs text-stone-500 font-medium">Qty: {item.qty}</p>
                   </div>
-                  <p className="text-sm font-bold text-blue-600">₹{(item.price * item.qty).toLocaleString()}</p>
+                  <p className="font-mono font-bold text-stone-900">₹{(item.price * item.qty).toLocaleString()}</p>
                 </div>
               ))}
             </div>
@@ -367,18 +375,18 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
         </div>
 
         {/* Footer */}
-        <div className="px-6 md:px-8 py-5 bg-slate-50 border-t border-slate-100">
-          <div className="max-w-xs ml-auto space-y-1.5 mb-4">
-            <div className="flex justify-between text-xs text-slate-500"><span>Subtotal:</span><span className="font-bold text-slate-900">₹{(order.itemsPrice || 0).toLocaleString()}</span></div>
-            <div className="flex justify-between text-xs text-slate-500"><span>GST (5%):</span><span className="font-bold text-slate-900">+₹{(order.taxPrice || 0).toLocaleString()}</span></div>
-            <div className="flex justify-between text-xs text-slate-500"><span>Shipping:</span><span className="font-bold text-slate-900">+₹{(order.shippingPrice || 0).toLocaleString()}</span></div>
-            <div className="flex justify-between border-t border-slate-200 pt-2 font-bold text-lg text-blue-600"><span>Total:</span><span>₹{order.totalAmount.toLocaleString()}</span></div>
+        <div className="px-8 py-6 bg-stone-50 border-t border-stone-100">
+          <div className="flex justify-between items-end">
+            <button onClick={onClose} className="px-6 py-3 bg-white border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-100 text-xs uppercase">Close</button>
+            <div className="text-right space-y-1">
+              <p className="text-xs text-stone-500">Subtotal: <span className="font-bold text-stone-900">₹{order.itemsPrice}</span></p>
+              <p className="text-xs text-stone-500">Tax: <span className="font-bold text-stone-900">₹{order.taxPrice}</span></p>
+              <p className="text-xl font-light text-stone-900 mt-2">Total: <span className="font-bold">₹{order.totalAmount.toLocaleString()}</span></p>
+            </div>
           </div>
-          <motion.button whileTap={{ scale: 0.98 }} onClick={onClose} className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase transition-all hover:bg-slate-800">
-            Close
-          </motion.button>
+          <div className="hidden"><Invoice order={order} /></div>
         </div>
-        <div><Invoice order={order} type="invoice" /></div>
+
       </motion.div>
     </div>
   );
