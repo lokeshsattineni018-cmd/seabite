@@ -1,56 +1,779 @@
-// AdminDashboard.jsx
+// AdminDashboard.jsx — SeaBite · Coastal Morning Design System
+// Font: Manrope (display) + DM Sans (body) — loaded via @import in index.css or index.html
+
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import axios from "axios";
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip,
+  AreaChart, Area, XAxis, YAxis, Tooltip,
   ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell,
-  LineChart, Line,
 } from "recharts";
 import {
   FiShoppingBag, FiUsers, FiTrendingUp, FiActivity,
   FiDollarSign, FiCalendar, FiMail, FiTrash2, FiStar,
   FiArrowUpRight, FiArrowDownRight, FiClock, FiEye,
   FiRefreshCw, FiMoreHorizontal, FiPackage, FiSettings, FiSearch,
-  FiAlertCircle, FiPower, FiCheckCircle, FiLock, FiUnlock, FiX, FiZap, FiDownload
+  FiAlertCircle, FiPower, FiCheckCircle, FiLock, FiUnlock, FiX,
+  FiZap, FiDownload, FiWind, FiDroplet, FiSun, FiBell,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 
+// ─────────────────────────────────────────────
+// DESIGN SYSTEM — SeaBite Coastal Tokens
+// ─────────────────────────────────────────────
+/*
+  TYPOGRAPHY
+    Display:  Manrope (500/600/700/800)
+    Body:     DM Sans (400/500)
+    Mono:     JetBrains Mono (for IDs, codes)
+
+  COLORS
+    Background:    #F5F8FC   (coastal dawn sky)
+    Surface:       #FFFFFF   (white foam)
+    SurfaceAlt:    #F0F5FB   (sea glass wash)
+    Border:        #E2EAF4   (shoreline haze)
+    BorderSubtle:  #EDF2F9
+
+    Primary:       #0B8F7F   (deep seafoam teal)
+    PrimaryLight:  #E6F5F3   (seafoam mist)
+    PrimaryMid:    #12A898   (active seafoam)
+
+    Sky:           #3B82C4   (sky blue, calm)
+    SkyLight:      #EBF3FC
+
+    Sand:          #B68D5D   (warm sand)
+    SandLight:     #FBF5ED
+
+    Coral:         #D96B52   (sunrise coral — CTAs, alerts)
+    CoralLight:    #FDEEE9
+
+    Success:       #2A9D6E
+    SuccessLight:  #E6F5EE
+    Warning:       #C9883A
+    WarningLight:  #FDF3E3
+    Danger:        #C84B4B
+    DangerLight:   #FDE8E8
+
+    Text:          #18283D   (deep ocean)
+    TextMid:       #4B607C   (mid-tide)
+    TextSoft:      #8898B3   (sea mist)
+    TextGhost:     #B8C8DA
+
+  SPACING (4px base)
+    xs:  4px    sm:  8px    md: 16px
+    lg:  24px   xl:  32px   2xl: 48px
+
+  RADIUS
+    sm: 8px    md: 12px    lg: 16px    xl: 20px    2xl: 24px
+
+  SHADOW
+    sm:  0 1px 3px rgba(11,143,127,0.05), 0 1px 2px rgba(0,0,0,0.04)
+    md:  0 4px 16px rgba(11,143,127,0.07), 0 1px 4px rgba(0,0,0,0.04)
+    lg:  0 8px 32px rgba(11,143,127,0.09), 0 2px 8px rgba(0,0,0,0.04)
+    glow: 0 0 0 3px rgba(11,143,127,0.12)
+
+  ANIMATION
+    Easing: cubic-bezier(0.22, 1, 0.36, 1)   (swift settle)
+    Duration: 0.4s–0.6s for enter, 0.2s for hover
+    Hover lift: translateY(-2px)
+    Hover glow: box-shadow 0 0 0 3px rgba(11,143,127,0.12)
+*/
+
 const PLACEHOLDER_IMG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
-// --- Animation Presets ---
-const ease = [0.16, 1, 0.3, 1];
+// ─────────────────────────────────────────────
+// ANIMATION CONFIG
+// ─────────────────────────────────────────────
+const ease = [0.22, 1, 0.36, 1];
+
 const fadeUp = {
-  hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
+  hidden: { opacity: 0, y: 16 },
   visible: (i = 0) => ({
-    opacity: 1, y: 0, filter: "blur(0px)",
-    transition: { delay: i * 0.05, duration: 0.6, ease },
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.06, duration: 0.5, ease },
   }),
 };
 
-const staggerContainer = {
+const stagger = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.06 } },
 };
 
-// --- Skeleton ---
-const DashboardSkeleton = () => (
-  <div className="space-y-8 animate-pulse p-8">
-    <div className="h-9 w-72 bg-gradient-to-r from-stone-100 to-stone-50 rounded-2xl" />
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.97 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.4, ease } },
+};
+
+// ─────────────────────────────────────────────
+// SKELETON
+// ─────────────────────────────────────────────
+const Skeleton = () => (
+  <div className="animate-pulse space-y-8 p-6">
+    <div className="flex justify-between items-end">
+      <div className="space-y-2.5">
+        <div className="h-7 w-56 rounded-xl" style={{ background: "#E2EAF4" }} />
+        <div className="h-4 w-36 rounded-lg" style={{ background: "#EDF2F9" }} />
+      </div>
+      <div className="h-9 w-28 rounded-xl" style={{ background: "#E2EAF4" }} />
+    </div>
+    <div className="grid grid-cols-4 gap-5">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-40 bg-gradient-to-br from-stone-50 to-white border border-stone-100 rounded-3xl" />
+        <div key={i} className="h-32 rounded-2xl" style={{ background: "#FFFFFF", border: "1px solid #E2EAF4" }} />
       ))}
     </div>
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-      <div className="lg:col-span-8 h-[420px] bg-gradient-to-br from-stone-50 to-white border border-stone-100 rounded-3xl" />
-      <div className="lg:col-span-4 h-[420px] bg-gradient-to-br from-stone-50 to-white border border-stone-100 rounded-3xl" />
+    <div className="grid grid-cols-3 gap-5">
+      <div className="col-span-2 h-96 rounded-2xl" style={{ background: "#FFFFFF", border: "1px solid #E2EAF4" }} />
+      <div className="h-96 rounded-2xl" style={{ background: "#FFFFFF", border: "1px solid #E2EAF4" }} />
     </div>
   </div>
 );
 
+// ─────────────────────────────────────────────
+// DESIGN TOKENS (inline style helpers)
+// ─────────────────────────────────────────────
+const T = {
+  bg: "#F5F8FC",
+  surface: "#FFFFFF",
+  surfaceAlt: "#F0F5FB",
+  border: "#E2EAF4",
+  borderSubtle: "#EDF2F9",
+
+  primary: "#0B8F7F",
+  primaryLight: "#E6F5F3",
+  primaryMid: "#12A898",
+
+  sky: "#3B82C4",
+  skyLight: "#EBF3FC",
+
+  coral: "#D96B52",
+  coralLight: "#FDEEE9",
+
+  sand: "#B68D5D",
+  sandLight: "#FBF5ED",
+
+  success: "#2A9D6E",
+  successLight: "#E6F5EE",
+  warning: "#C9883A",
+  warningLight: "#FDF3E3",
+  danger: "#C84B4B",
+  dangerLight: "#FDE8E8",
+
+  text: "#18283D",
+  textMid: "#4B607C",
+  textSoft: "#8898B3",
+  textGhost: "#B8C8DA",
+
+  shadowSm: "0 1px 3px rgba(11,143,127,0.05), 0 1px 2px rgba(0,0,0,0.04)",
+  shadowMd: "0 4px 16px rgba(11,143,127,0.07), 0 1px 4px rgba(0,0,0,0.04)",
+  shadowLg: "0 8px 32px rgba(11,143,127,0.09), 0 2px 8px rgba(0,0,0,0.04)",
+};
+
+// ─────────────────────────────────────────────
+// REUSABLE CARD
+// ─────────────────────────────────────────────
+function Card({ children, className = "", style = {}, hover = true }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => hover && setHovered(true)}
+      onMouseLeave={() => hover && setHovered(false)}
+      style={{
+        background: T.surface,
+        border: `1px solid ${hovered ? "#CBD8EC" : T.border}`,
+        borderRadius: 20,
+        boxShadow: hovered ? T.shadowMd : T.shadowSm,
+        transition: "all 0.25s cubic-bezier(0.22,1,0.36,1)",
+        transform: hovered ? "translateY(-1px)" : "translateY(0px)",
+        ...style,
+      }}
+      className={`overflow-hidden ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// BADGE
+// ─────────────────────────────────────────────
+function Badge({ children, color = "primary" }) {
+  const map = {
+    primary: { bg: T.primaryLight, color: T.primary },
+    sky: { bg: T.skyLight, color: T.sky },
+    coral: { bg: T.coralLight, color: T.coral },
+    sand: { bg: T.sandLight, color: T.sand },
+    success: { bg: T.successLight, color: T.success },
+    warning: { bg: T.warningLight, color: T.warning },
+    danger: { bg: T.dangerLight, color: T.danger },
+    ghost: { bg: T.surfaceAlt, color: T.textSoft },
+  };
+  const c = map[color] || map.ghost;
+  return (
+    <span
+      style={{
+        background: c.bg,
+        color: c.color,
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        borderRadius: 8,
+        padding: "3px 8px",
+        fontFamily: "Manrope, sans-serif",
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────
+// BUTTON
+// ─────────────────────────────────────────────
+function Btn({ children, variant = "primary", size = "md", onClick, disabled = false, icon, className = "" }) {
+  const [hovered, setHovered] = useState(false);
+  const variants = {
+    primary: {
+      bg: hovered ? T.primaryMid : T.primary,
+      color: "#FFFFFF",
+      border: "none",
+      shadow: hovered ? `0 4px 16px rgba(11,143,127,0.3), 0 0 0 3px rgba(11,143,127,0.12)` : T.shadowSm,
+    },
+    ghost: {
+      bg: hovered ? T.surfaceAlt : "transparent",
+      color: T.textMid,
+      border: `1px solid ${hovered ? "#CBD8EC" : T.border}`,
+      shadow: "none",
+    },
+    coral: {
+      bg: hovered ? "#C05A42" : T.coral,
+      color: "#FFFFFF",
+      border: "none",
+      shadow: hovered ? `0 4px 16px rgba(217,107,82,0.3)` : T.shadowSm,
+    },
+  };
+  const sizes = {
+    sm: { padding: "6px 14px", fontSize: 11, borderRadius: 10 },
+    md: { padding: "9px 20px", fontSize: 12, borderRadius: 12 },
+    lg: { padding: "12px 28px", fontSize: 13, borderRadius: 14 },
+  };
+  const v = variants[variant] || variants.ghost;
+  const s = sizes[size] || sizes.md;
+  return (
+    <button
+      disabled={disabled}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        ...v,
+        ...s,
+        fontFamily: "Manrope, sans-serif",
+        fontWeight: 600,
+        letterSpacing: "0.01em",
+        transition: "all 0.22s cubic-bezier(0.22,1,0.36,1)",
+        transform: hovered && !disabled ? "translateY(-1px)" : "translateY(0px)",
+        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? "not-allowed" : "pointer",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 7,
+      }}
+      className={className}
+    >
+      {icon && icon}
+      {children}
+    </button>
+  );
+}
+
+// ─────────────────────────────────────────────
+// TOGGLE SWITCH
+// ─────────────────────────────────────────────
+function Toggle({ active, color = T.primary }) {
+  return (
+    <div
+      style={{
+        width: 44,
+        height: 24,
+        borderRadius: 12,
+        background: active ? color : "#D8E4F0",
+        padding: 3,
+        transition: "background 0.25s ease",
+        display: "flex",
+        alignItems: "center",
+        flexShrink: 0,
+      }}
+    >
+      <div
+        style={{
+          width: 18,
+          height: 18,
+          borderRadius: "50%",
+          background: "#FFFFFF",
+          boxShadow: "0 1px 4px rgba(0,0,0,0.15)",
+          transform: active ? "translateX(20px)" : "translateX(0px)",
+          transition: "transform 0.25s cubic-bezier(0.22,1,0.36,1)",
+        }}
+      />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// STATUS PILL
+// ─────────────────────────────────────────────
+function StatusPill({ status }) {
+  const map = {
+    Pending:   { bg: T.warningLight, color: T.warning },
+    Cooking:   { bg: T.skyLight,     color: T.sky },
+    Ready:     { bg: T.primaryLight, color: T.primary },
+    Completed: { bg: T.successLight, color: T.success },
+    Cancelled: { bg: T.dangerLight,  color: T.danger },
+  };
+  const c = map[status] || { bg: T.surfaceAlt, color: T.textSoft };
+  return (
+    <span
+      style={{
+        background: c.bg,
+        color: c.color,
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: "0.06em",
+        textTransform: "uppercase",
+        borderRadius: 8,
+        padding: "4px 10px",
+        fontFamily: "Manrope, sans-serif",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {status}
+    </span>
+  );
+}
+
+// ─────────────────────────────────────────────
+// CHART TOOLTIP
+// ─────────────────────────────────────────────
+function ChartTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div
+      style={{
+        background: T.surface,
+        border: `1px solid ${T.border}`,
+        borderRadius: 14,
+        padding: "12px 16px",
+        boxShadow: T.shadowLg,
+        fontFamily: "Manrope, sans-serif",
+      }}
+    >
+      <p style={{ fontSize: 10, fontWeight: 700, color: T.textSoft, letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 8 }}>{label}</p>
+      {payload.map((p, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: p.color }} />
+          <span style={{ fontSize: 14, fontWeight: 700, color: T.text }}>
+            {p.dataKey === "revenue" ? `₹${Number(p.value).toLocaleString()}` : `${p.value} orders`}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// STAT CARD
+// ─────────────────────────────────────────────
+function StatCard({ title, value, icon, trend, trendUp, accentColor, accentLight, sparkData, index }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <motion.div variants={fadeUp} custom={index}>
+      <div
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          background: T.surface,
+          border: `1px solid ${hovered ? "#CBD8EC" : T.border}`,
+          borderRadius: 20,
+          padding: "22px 22px 16px",
+          boxShadow: hovered ? T.shadowMd : T.shadowSm,
+          transition: "all 0.3s cubic-bezier(0.22,1,0.36,1)",
+          transform: hovered ? "translateY(-2px)" : "translateY(0px)",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* Top Row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 16 }}>
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 12,
+              background: accentLight,
+              color: accentColor,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {icon}
+          </div>
+          <Badge color={trendUp ? "success" : "danger"}>
+            {trendUp ? "▲" : "▼"} {trend}
+          </Badge>
+        </div>
+
+        {/* Value */}
+        <p style={{ fontSize: 11, fontWeight: 600, color: T.textSoft, letterSpacing: "0.07em", textTransform: "uppercase", fontFamily: "Manrope, sans-serif", marginBottom: 4 }}>{title}</p>
+        <h4 style={{ fontSize: 26, fontWeight: 800, color: T.text, fontFamily: "Manrope, sans-serif", lineHeight: 1 }}>{value}</h4>
+
+        {/* Sparkline overlay */}
+        {sparkData?.length > 1 && (
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 40, opacity: 0.15, pointerEvents: "none" }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={sparkData}>
+                <defs>
+                  <linearGradient id={`spark-${index}`} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={accentColor} stopOpacity={0.8} />
+                    <stop offset="100%" stopColor={accentColor} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <Area type="monotone" dataKey="v" stroke={accentColor} strokeWidth={2} fill={`url(#spark-${index})`} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// CONTROL TOGGLE ROW (Maintenance, Happy Hour)
+// ─────────────────────────────────────────────
+function ControlRow({ icon, label, sublabel, active, onClick, accentColor, accentLight }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "16px 20px",
+        borderRadius: 16,
+        border: `1px solid ${active ? accentColor + "30" : T.border}`,
+        background: active ? accentLight : hovered ? T.surfaceAlt : T.surface,
+        cursor: "pointer",
+        transition: "all 0.25s cubic-bezier(0.22,1,0.36,1)",
+        boxShadow: active ? `0 2px 12px ${accentColor}18` : T.shadowSm,
+        transform: hovered ? "translateY(-1px)" : "translateY(0px)",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ width: 38, height: 38, borderRadius: 10, background: active ? accentColor : T.surfaceAlt, color: active ? "#FFF" : T.textSoft, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.25s ease" }}>
+          {icon}
+        </div>
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 700, color: active ? accentColor : T.text, fontFamily: "Manrope, sans-serif", letterSpacing: "0.01em" }}>{label}</p>
+          <p style={{ fontSize: 10, color: T.textSoft, marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>{sublabel}</p>
+        </div>
+      </div>
+      <Toggle active={active} color={accentColor} />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// BANNER CONTROL
+// ─────────────────────────────────────────────
+function BannerControl({ settings, setSettings }) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  const handleFileUpload = async (file) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) return toast.error("Please upload an image file.");
+    if (file.size > 5 * 1024 * 1024) return toast.error("Image too large (Max 5MB).");
+    const formData = new FormData();
+    formData.append("image", file);
+    setUploading(true);
+    const toastId = toast.loading("Uploading banner...");
+    try {
+      const res = await axios.post("/api/upload", formData, { headers: { "Content-Type": "multipart/form-data" }, withCredentials: true });
+      const imageUrl = res.data.file || res.data.url;
+      await axios.put("/api/admin/enterprise/settings", { banner: { ...settings.banner, imageUrl } }, { withCredentials: true });
+      setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl } }));
+      toast.success("Banner uploaded!", { id: toastId });
+    } catch {
+      toast.error("Upload failed.", { id: toastId });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        borderRadius: 16,
+        border: `1px solid ${settings.banner?.active ? T.sky + "40" : T.border}`,
+        background: settings.banner?.active ? T.skyLight : hovered ? T.surfaceAlt : T.surface,
+        padding: "16px 20px",
+        transition: "all 0.25s ease",
+        boxShadow: settings.banner?.active ? `0 2px 12px ${T.sky}18` : T.shadowSm,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: settings.banner?.active ? T.sky : T.surfaceAlt, color: settings.banner?.active ? "#FFF" : T.textSoft, display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.25s ease" }}>
+            <FiSun size={16} />
+          </div>
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 700, color: settings.banner?.active ? T.sky : T.text, fontFamily: "Manrope, sans-serif" }}>Promo Banner</p>
+            <p style={{ fontSize: 10, color: T.textSoft, marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>{settings.banner?.active ? "Banner is live" : "Banner is hidden"}</p>
+          </div>
+        </div>
+        <button
+          onClick={async (e) => {
+            e.stopPropagation();
+            try {
+              const next = !settings.banner?.active;
+              await axios.put("/api/admin/enterprise/settings", { banner: { ...settings.banner, active: next } }, { withCredentials: true });
+              setSettings(prev => ({ ...prev, banner: { ...prev.banner, active: next } }));
+              toast.success(next ? "Banner published!" : "Banner hidden.");
+            } catch { toast.error("Error updating banner."); }
+          }}
+        >
+          <Toggle active={settings.banner?.active} color={T.sky} />
+        </button>
+      </div>
+
+      {/* Drop Zone */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFileUpload(e.dataTransfer.files[0]); }}
+        style={{
+          position: "relative",
+          borderRadius: 12,
+          border: `1.5px dashed ${isDragging ? T.primary : T.border}`,
+          background: isDragging ? T.primaryLight : T.surfaceAlt,
+          padding: "14px",
+          textAlign: "center",
+          transition: "all 0.2s ease",
+          cursor: "pointer",
+          overflow: "hidden",
+        }}
+      >
+        <input type="file" accept="image/*" style={{ position: "absolute", inset: 0, opacity: 0, cursor: "pointer" }} onChange={(e) => handleFileUpload(e.target.files[0])} />
+        {uploading ? (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "8px 0" }}>
+            <div style={{ width: 14, height: 14, border: `2px solid ${T.primary}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, fontFamily: "Manrope, sans-serif", letterSpacing: "0.05em", textTransform: "uppercase" }}>Uploading…</span>
+          </div>
+        ) : settings.banner?.imageUrl ? (
+          <div style={{ position: "relative" }}>
+            <img src={settings.banner.imageUrl} alt="Banner" style={{ height: 56, width: "100%", objectFit: "cover", borderRadius: 8 }} />
+            <div style={{ position: "absolute", inset: 0, background: "rgba(24,40,61,0.45)", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: 8, opacity: 0, transition: "opacity 0.2s ease" }}
+              className="group-hover-overlay"
+            >
+              <span style={{ color: "#FFF", fontSize: 10, fontWeight: 700 }}>Replace</span>
+            </div>
+          </div>
+        ) : (
+          <div style={{ padding: "10px 0" }}>
+            <FiDroplet size={18} style={{ color: T.textGhost, margin: "0 auto 6px" }} />
+            <p style={{ fontSize: 10, fontWeight: 700, color: T.textSoft, textTransform: "uppercase", letterSpacing: "0.05em", fontFamily: "Manrope, sans-serif" }}>Drop image here</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// OTP MODAL
+// ─────────────────────────────────────────────
+function OtpModal({ visible, otp, setOtp, onSubmit, onClose, verifying, pending }) {
+  return (
+    <AnimatePresence>
+      {visible && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            style={{ position: "absolute", inset: 0, background: "rgba(24,40,61,0.35)", backdropFilter: "blur(8px)" }}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            transition={{ duration: 0.35, ease }}
+            style={{ position: "relative", width: "100%", maxWidth: 420, background: T.surface, borderRadius: 24, boxShadow: T.shadowLg, border: `1px solid ${T.border}`, padding: 36, overflow: "hidden" }}
+          >
+            {/* Decorative top wash */}
+            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 100, background: `linear-gradient(180deg, ${T.primaryLight} 0%, transparent 100%)`, pointerEvents: "none" }} />
+
+            <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, background: T.surfaceAlt, border: "none", borderRadius: 8, padding: 6, color: T.textSoft, cursor: "pointer", display: "flex", zIndex: 2 }}>
+              <FiX size={16} />
+            </button>
+
+            <div style={{ textAlign: "center", marginBottom: 28, position: "relative", zIndex: 1 }}>
+              <div style={{ width: 64, height: 64, background: T.primaryLight, borderRadius: 18, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", color: T.primary }}>
+                <FiLock size={26} />
+              </div>
+              <h3 style={{ fontSize: 20, fontWeight: 800, color: T.text, fontFamily: "Manrope, sans-serif", marginBottom: 6 }}>Confirm Identity</h3>
+              <p style={{ fontSize: 13, color: T.textSoft, fontFamily: "DM Sans, sans-serif", lineHeight: 1.6, maxWidth: 280, margin: "0 auto" }}>
+                Enter the 6-digit code sent to your admin email to {pending ? "enable" : "disable"} maintenance mode.
+              </p>
+            </div>
+
+            <form onSubmit={onSubmit} style={{ position: "relative", zIndex: 1 }}>
+              <input
+                type="text"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="000000"
+                autoFocus
+                style={{
+                  width: "100%",
+                  padding: "18px",
+                  textAlign: "center",
+                  fontSize: 28,
+                  fontWeight: 800,
+                  letterSpacing: "0.5em",
+                  fontFamily: "JetBrains Mono, monospace",
+                  color: T.text,
+                  background: T.surfaceAlt,
+                  border: `2px solid ${otp.length === 6 ? T.primary : T.border}`,
+                  borderRadius: 16,
+                  outline: "none",
+                  transition: "border-color 0.2s ease",
+                  marginBottom: 16,
+                  boxSizing: "border-box",
+                }}
+              />
+              <button
+                type="submit"
+                disabled={verifying || otp.length !== 6}
+                style={{
+                  width: "100%",
+                  padding: "14px",
+                  background: otp.length === 6 ? T.primary : T.surfaceAlt,
+                  color: otp.length === 6 ? "#FFF" : T.textGhost,
+                  border: "none",
+                  borderRadius: 14,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  fontFamily: "Manrope, sans-serif",
+                  cursor: otp.length === 6 && !verifying ? "pointer" : "not-allowed",
+                  transition: "all 0.25s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  boxShadow: otp.length === 6 ? `0 4px 16px rgba(11,143,127,0.25)` : "none",
+                }}
+              >
+                {verifying ? <><FiRefreshCw size={14} style={{ animation: "spin 0.7s linear infinite" }} /> Verifying…</> : "Verify & Confirm"}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+// ─────────────────────────────────────────────
+// SECTION HEADER
+// ─────────────────────────────────────────────
+function SectionHeader({ title, sub, action, actionLabel }) {
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
+      <div>
+        <p style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "Manrope, sans-serif", marginBottom: 4 }}>
+          {sub}
+        </p>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: T.text, fontFamily: "Manrope, sans-serif", lineHeight: 1.1 }}>{title}</h2>
+      </div>
+      {action && (
+        <Btn variant="ghost" size="sm" onClick={action} icon={<FiArrowUpRight size={13} />}>
+          {actionLabel}
+        </Btn>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// EXPORT CARD
+// ─────────────────────────────────────────────
+function ExportCard({ icon, title, sub, iconColor, iconBg, onExport }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: T.surface,
+        border: `1px solid ${hovered ? "#CBD8EC" : T.border}`,
+        borderRadius: 16,
+        padding: "16px 20px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        boxShadow: hovered ? T.shadowMd : T.shadowSm,
+        transition: "all 0.25s ease",
+        transform: hovered ? "translateY(-1px)" : "none",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 11, background: iconBg, color: iconColor, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {icon}
+        </div>
+        <div>
+          <p style={{ fontSize: 13, fontWeight: 700, color: T.text, fontFamily: "Manrope, sans-serif" }}>{title}</p>
+          <p style={{ fontSize: 11, color: T.textSoft, marginTop: 2, fontFamily: "DM Sans, sans-serif" }}>{sub}</p>
+        </div>
+      </div>
+      <button
+        onClick={onExport}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 10,
+          background: iconBg,
+          color: iconColor,
+          border: "none",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          transition: "all 0.2s ease",
+        }}
+      >
+        <FiDownload size={15} />
+      </button>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
+// MAIN DASHBOARD
+// ─────────────────────────────────────────────
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [timeFilter, setTimeFilter] = useState("6months");
@@ -61,51 +784,39 @@ export default function AdminDashboard() {
   const [recentMessages, setRecentMessages] = useState([]);
   const [allReviews, setAllReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [pendingMaintenanceState, setPendingMaintenanceState] = useState(null);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
 
   const fetchDashboardData = useCallback(async (isManual = false) => {
-    if (isManual) {
-      setIsRefreshing(true);
-      toast.loading("Refreshing...", { id: "refresh" });
-    }
-
+    if (isManual) { setIsRefreshing(true); toast.loading("Refreshing…", { id: "refresh" }); }
     try {
-      const [dashboardRes, messagesRes, reviewsRes, lowStockRes, settingsRes, insightsRes] = await Promise.all([
+      const [dashboardRes, messagesRes, reviewsRes] = await Promise.all([
         axios.get("/api/admin", { params: { range: timeFilter }, withCredentials: true }),
         axios.get("/api/contact", { withCredentials: true }),
         axios.get("/api/admin/reviews/all", { withCredentials: true }),
-        axios.get("/api/admin/inventory/low-stock", { withCredentials: true }),
-        axios.get("/api/admin/enterprise/settings", { withCredentials: true }),
-        axios.get("/api/admin/insights/search", { withCredentials: true }),
       ]);
-
       setStats(dashboardRes.data.stats);
       setGraph(dashboardRes.data.graph);
       setRecentOrders(dashboardRes.data.recentOrders);
       setRecentMessages(messagesRes.data.slice(0, 5));
       setAllReviews(reviewsRes.data?.slice(0, 6) || []);
-
       setLoading(false);
-      setError(null);
       setLastUpdated(new Date());
-
-      if (isManual) toast.success("Updated", { id: "refresh" });
+      if (isManual) toast.success("Dashboard updated", { id: "refresh" });
     } catch (err) {
       setLoading(false);
       if (err.response?.status === 401) navigate("/login");
-      setError(err.response?.data?.message || "Failed to load data");
-      if (isManual) toast.error("Update failed", { id: "refresh" });
+      if (isManual) toast.error("Refresh failed", { id: "refresh" });
     } finally {
       if (isManual) setIsRefreshing(false);
     }
   }, [timeFilter, navigate]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, [fetchDashboardData]);
-
+  useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
   useEffect(() => {
     const interval = setInterval(() => fetchDashboardData(), 30000);
     return () => clearInterval(interval);
@@ -116,645 +827,497 @@ export default function AdminDashboard() {
     try {
       await axios.delete(`/api/admin/products/${productId}/reviews/${reviewId}`, { withCredentials: true });
       fetchDashboardData();
-      toast.success("Review deleted");
-    } catch {
-      toast.error("Failed to delete");
-    }
+    } catch { alert("Failed to delete."); }
   };
 
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [pendingMaintenanceState, setPendingMaintenanceState] = useState(null);
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
-
   const toggleMaintenanceClick = async () => {
-    const nextState = !settings.isMaintenanceMode;
-    setPendingMaintenanceState(nextState);
-
-    const toastId = toast.loading("Requesting OTP...");
+    setPendingMaintenanceState(!settings.isMaintenanceMode);
+    const toastId = toast.loading("Sending OTP…");
     try {
       await axios.post("/api/admin/maintenance/request-otp", {}, { withCredentials: true });
-      toast.success("OTP sent!", { id: toastId });
+      toast.success("OTP sent to email", { id: toastId });
       setShowOtpModal(true);
       setOtp("");
-    } catch (err) {
-      toast.error("Failed to send OTP", { id: toastId });
-    }
+    } catch { toast.error("Failed to send OTP", { id: toastId }); }
   };
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
-    if (!otp || otp.length !== 6) return toast.error("Enter 6-digit OTP");
-
+    if (otp.length !== 6) return toast.error("Enter a valid 6-digit code");
     setVerifyingOtp(true);
-    const toastId = toast.loading("Verifying...");
-
+    const toastId = toast.loading("Verifying…");
     try {
-      const res = await axios.post("/api/admin/maintenance/verify", {
-        otp,
-        desiredState: pendingMaintenanceState
-      }, { withCredentials: true });
-
+      const res = await axios.post("/api/admin/maintenance/verify", { otp, desiredState: pendingMaintenanceState }, { withCredentials: true });
       setSettings(res.data.settings);
       setShowOtpModal(false);
       toast.success(res.data.message, { id: toastId });
     } catch (err) {
       toast.error(err.response?.data?.message || "Invalid OTP", { id: toastId });
-    } finally {
-      setVerifyingOtp(false);
-    }
+    } finally { setVerifyingOtp(false); }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return PLACEHOLDER_IMG;
-    const filename = imagePath.split(/[/\\]/).pop();
-    return `/uploads/${filename}`;
-  };
+  const revenueSparkline = graph.slice(-7).map((g, i) => ({ v: g.revenue ?? g.orders * 150 + i * 20 }));
+  const ordersSparkline  = graph.slice(-7).map((g)    => ({ v: g.orders }));
 
-  if (loading) return <DashboardSkeleton />;
+  if (loading) return <Skeleton />;
 
   return (
-    <motion.div
-      initial="hidden" animate="visible" variants={staggerContainer}
-      className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white p-6 md:p-10 font-sans"
-    >
-      <div className="max-w-[1600px] mx-auto space-y-10">
+    <>
+      {/* Global Styles */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;700&display=swap');
+        @keyframes spin { to { transform: rotate(360deg); } }
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #CBD8EC; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #9FB4CF; }
+      `}</style>
 
-        {/* OTP Modal */}
-        <AnimatePresence>
-          {showOtpModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <motion.div
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/20 backdrop-blur-sm"
-                onClick={() => setShowOtpModal(false)}
-              />
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="relative w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-stone-200"
-              >
-                <button
-                  onClick={() => setShowOtpModal(false)}
-                  className="absolute top-5 right-5 text-stone-300 hover:text-stone-600 p-2 rounded-full hover:bg-stone-50 transition-all"
-                >
-                  <FiX size={20} />
-                </button>
+      <OtpModal
+        visible={showOtpModal}
+        otp={otp}
+        setOtp={setOtp}
+        onSubmit={handleVerifyOtp}
+        onClose={() => setShowOtpModal(false)}
+        verifying={verifyingOtp}
+        pending={pendingMaintenanceState}
+      />
 
-                <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-gradient-to-br from-stone-100 to-stone-50 text-stone-400 rounded-3xl flex items-center justify-center mx-auto mb-5 border border-stone-200">
-                    <FiLock size={28} />
-                  </div>
-                  <h3 className="text-2xl font-light text-stone-900 mb-2 tracking-tight">Verify Identity</h3>
-                  <p className="text-sm text-stone-500">Enter the code sent to your email</p>
-                </div>
+      <motion.div
+        initial="hidden"
+        animate="visible"
+        variants={stagger}
+        style={{
+          minHeight: "100vh",
+          background: T.bg,
+          padding: "28px",
+          fontFamily: "DM Sans, sans-serif",
+          color: T.text,
+          maxWidth: 1440,
+          margin: "0 auto",
+        }}
+      >
 
-                <form onSubmit={handleVerifyOtp} className="space-y-6">
-                  <input
-                    type="text"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="w-full px-5 py-5 bg-stone-50 border border-stone-200 rounded-2xl font-mono text-3xl text-center tracking-[0.5em] focus:bg-white focus:border-stone-400 focus:ring-2 focus:ring-stone-300/50 transition-all outline-none text-stone-800 placeholder:text-stone-300"
-                    placeholder="000000"
-                    autoFocus
-                  />
-
-                  <button
-                    type="submit"
-                    disabled={verifyingOtp || otp.length !== 6}
-                    className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white font-medium rounded-2xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-95"
-                  >
-                    {verifyingOtp ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Verifying...
-                      </>
-                    ) : (
-                      "Verify"
-                    )}
-                  </button>
-                </form>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Header */}
-        <motion.div variants={fadeUp} className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-stone-200/50 pb-8">
+        {/* ── PAGE HEADER ─────────────────────────────── */}
+        <motion.div variants={fadeUp} custom={0} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 32 }}>
           <div>
-            <h1 className="text-4xl md:text-5xl font-light text-stone-900 tracking-tight mb-2">
-              Dashboard
+            <p style={{ fontSize: 11, fontWeight: 700, color: T.primary, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "Manrope, sans-serif", marginBottom: 6 }}>
+              SeaBite Admin
+            </p>
+            <h1 style={{ fontSize: 28, fontWeight: 800, color: T.text, fontFamily: "Manrope, sans-serif", lineHeight: 1.1 }}>
+              Good morning ☀️
             </h1>
-            <p className="text-sm text-stone-500 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-stone-300" />
-              Last updated {lastUpdated?.toLocaleTimeString()}
+            <p style={{ fontSize: 13, color: T.textSoft, marginTop: 4, fontFamily: "DM Sans, sans-serif" }}>
+              Here's what's happening with your store today.
             </p>
           </div>
-          <button
-            onClick={() => fetchDashboardData(true)}
-            disabled={isRefreshing}
-            className="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl font-medium flex items-center gap-2 transition-all disabled:opacity-50"
-          >
-            <FiRefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
-            Refresh
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {lastUpdated && (
+              <span style={{ fontSize: 10, color: T.textGhost, fontFamily: "Manrope, sans-serif", fontWeight: 600, letterSpacing: "0.04em" }}>
+                Updated {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              </span>
+            )}
+            <Btn
+              variant="ghost"
+              size="sm"
+              onClick={() => fetchDashboardData(true)}
+              icon={<FiRefreshCw size={13} style={{ animation: isRefreshing ? "spin 0.7s linear infinite" : "none" }} />}
+            >
+              Refresh
+            </Btn>
+          </div>
         </motion.div>
 
-        {/* Stats Grid */}
+        {/* ── STAT CARDS ──────────────────────────────── */}
         <motion.div
-          variants={staggerContainer}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
+          variants={stagger}
+          initial="hidden"
+          animate="visible"
+          style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 18, marginBottom: 24 }}
+          className="responsive-grid-4"
         >
-          <StatCard
-            title="Revenue"
-            value={`₹${stats.totalRevenue?.toLocaleString() || 0}`}
-            icon={<FiDollarSign size={20} />}
-            color="from-amber-50 to-orange-50"
-            index={0}
-          />
-          <StatCard
-            title="Orders"
-            value={stats.totalOrders || 0}
-            icon={<FiShoppingBag size={20} />}
-            color="from-blue-50 to-cyan-50"
-            index={1}
-          />
-          <StatCard
-            title="Customers"
-            value={stats.activeUsers || 0}
-            icon={<FiUsers size={20} />}
-            color="from-teal-50 to-emerald-50"
-            index={2}
-          />
-          <StatCard
-            title="Pending"
-            value={stats.pendingOrders || 0}
-            icon={<FiClock size={20} />}
-            color="from-rose-50 to-pink-50"
-            index={3}
-          />
+          <StatCard title="Total Revenue" value={`₹${(stats.totalRevenue || 0).toLocaleString()}`} icon={<FiDollarSign size={18} />} trend="12.5%" trendUp={true}  accentColor={T.success}  accentLight={T.successLight} sparkData={revenueSparkline} index={0} />
+          <StatCard title="Total Orders"  value={stats.totalOrders  || 0} icon={<FiShoppingBag size={18} />} trend="8.2%"  trendUp={true}  accentColor={T.primary}  accentLight={T.primaryLight} sparkData={ordersSparkline}  index={1} />
+          <StatCard title="Active Customers" value={stats.activeUsers || 0} icon={<FiUsers size={18} />} trend="2.4%"  trendUp={true}  accentColor={T.sky}     accentLight={T.skyLight}    sparkData={[{v:5},{v:12},{v:10},{v:20},{v:18},{v:25},{v:30}]} index={2} />
+          <StatCard title="Pending Orders" value={stats.pendingOrders || 0} icon={<FiClock size={18} />} trend={stats.pendingOrders > 5 ? "High" : "Stable"} trendUp={stats.pendingOrders < 5} accentColor={T.warning} accentLight={T.warningLight} sparkData={[]} index={3} />
         </motion.div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Revenue Chart */}
-          <motion.div
-            variants={fadeUp}
-            custom={4}
-            className="lg:col-span-8 bg-white rounded-3xl border border-stone-200/50 shadow-sm p-8 hover:shadow-md transition-shadow"
-          >
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-              <div>
-                <h3 className="text-xl font-light text-stone-900 mb-1">Revenue Trend</h3>
-                <p className="text-xs text-stone-400 uppercase tracking-wide">Last {timeFilter === "6months" ? "6 months" : "year"}</p>
-              </div>
-              <div className="flex bg-stone-100/60 p-1 rounded-2xl gap-1">
-                {["6months", "1year"].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setTimeFilter(f)}
-                    className={`px-5 py-2 rounded-xl text-xs font-medium transition-all ${timeFilter === f ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
-                  >
-                    {f === "6months" ? "6M" : "1Y"}
-                  </button>
-                ))}
-              </div>
-            </div>
+        {/* ── ANALYTICS + CONTROLS ────────────────────── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, marginBottom: 24 }}>
 
-            <div className="h-[320px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={graph} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#f97316" stopOpacity={0.15} />
-                      <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#a8a29e" }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#a8a29e" }} tickFormatter={(v) => `₹${v / 1000}k`} />
-                  <Tooltip content={<ChartTooltip />} />
-                  <Area type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={2.5} fill="url(#revenueGrad)" animationDuration={1200} />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+          {/* Revenue Chart */}
+          <motion.div variants={fadeUp} custom={4}>
+            <Card style={{ height: "100%" }}>
+              <div style={{ padding: "22px 24px 0" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 700, color: T.textSoft, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "Manrope, sans-serif", marginBottom: 4 }}>Revenue</p>
+                    <h3 style={{ fontSize: 16, fontWeight: 800, color: T.text, fontFamily: "Manrope, sans-serif" }}>Analytics Overview</h3>
+                  </div>
+                  {/* Time Filter */}
+                  <div style={{ display: "flex", background: T.surfaceAlt, borderRadius: 10, padding: 3, border: `1px solid ${T.border}` }}>
+                    {["6months", "1year"].map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setTimeFilter(f)}
+                        style={{
+                          padding: "6px 14px",
+                          borderRadius: 8,
+                          fontSize: 10,
+                          fontWeight: 700,
+                          fontFamily: "Manrope, sans-serif",
+                          letterSpacing: "0.05em",
+                          textTransform: "uppercase",
+                          border: "none",
+                          cursor: "pointer",
+                          background: timeFilter === f ? T.surface : "transparent",
+                          color: timeFilter === f ? T.primary : T.textSoft,
+                          boxShadow: timeFilter === f ? T.shadowSm : "none",
+                          transition: "all 0.2s ease",
+                        }}
+                      >
+                        {f === "6months" ? "6M" : "1Y"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ height: 280, padding: "0 12px 20px" }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={graph} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stopColor={T.primary} stopOpacity={0.15} />
+                        <stop offset="100%" stopColor={T.primary} stopOpacity={0}    />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="0" horizontal={true} vertical={false} stroke={T.borderSubtle} />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fontWeight: 600, fill: T.textGhost, fontFamily: "Manrope, sans-serif" }}
+                      dy={12}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 10, fontWeight: 600, fill: T.textGhost, fontFamily: "Manrope, sans-serif" }}
+                      tickFormatter={(v) => `₹${v / 1000}k`}
+                      width={50}
+                    />
+                    <Tooltip content={<ChartTooltip />} cursor={{ stroke: T.border, strokeWidth: 1.5, strokeDasharray: "4 4" }} />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke={T.primary}
+                      strokeWidth={2.5}
+                      fill="url(#revGrad)"
+                      dot={false}
+                      activeDot={{ r: 5, fill: T.primary, strokeWidth: 0 }}
+                      animationDuration={1500}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
           </motion.div>
 
-          {/* Controls */}
-          <motion.div
-            variants={fadeUp}
-            custom={5}
-            className="lg:col-span-4 space-y-4"
-          >
-            {/* Maintenance */}
-            <div
+          {/* Control Stack */}
+          <motion.div variants={fadeUp} custom={5} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <ControlRow
+              icon={settings.isMaintenanceMode ? <FiLock size={16} /> : <FiUnlock size={16} />}
+              label={settings.isMaintenanceMode ? "Maintenance On" : "Maintenance Off"}
+              sublabel={settings.isMaintenanceMode ? "Store is locked." : "Store is live."}
+              active={settings.isMaintenanceMode}
               onClick={toggleMaintenanceClick}
-              className={`rounded-3xl p-5 border cursor-pointer transition-all ${settings.isMaintenanceMode ? "bg-rose-50/40 border-rose-200/50 hover:border-rose-300" : "bg-stone-50/30 border-stone-200/40 hover:border-stone-300"}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-2xl ${settings.isMaintenanceMode ? "bg-rose-100 text-rose-600" : "bg-stone-200 text-stone-600"}`}>
-                    {settings.isMaintenanceMode ? <FiLock size={18} /> : <FiUnlock size={18} />}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-stone-900">Maintenance</h3>
-                    <p className="text-xs text-stone-500 mt-0.5">{settings.isMaintenanceMode ? "Store locked" : "Store live"}</p>
-                  </div>
-                </div>
-                <div className={`w-12 h-7 rounded-full p-1 transition-all ${settings.isMaintenanceMode ? "bg-rose-400" : "bg-stone-300"}`}>
-                  <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.isMaintenanceMode ? "translate-x-5" : "translate-x-0"}`} />
-                </div>
-              </div>
-            </div>
+              accentColor={T.danger}
+              accentLight={T.dangerLight}
+            />
 
-            {/* Happy Hour */}
-            <div
+            <ControlRow
+              icon={settings.globalDiscount > 0 ? <FiZap size={16} /> : <FiWind size={16} />}
+              label={settings.globalDiscount > 0 ? "Happy Hour On" : "Happy Hour Off"}
+              sublabel={settings.globalDiscount > 0 ? "−10% global discount active." : "Normal pricing."}
+              active={settings.globalDiscount > 0}
               onClick={async () => {
                 try {
                   const newDiscount = settings.globalDiscount > 0 ? 0 : 10;
                   await axios.put("/api/admin/enterprise/settings", { globalDiscount: newDiscount }, { withCredentials: true });
                   setSettings(prev => ({ ...prev, globalDiscount: newDiscount }));
-                  toast.success(newDiscount > 0 ? "Happy Hour On!" : "Happy Hour Off");
-                } catch (err) { toast.error("Update failed"); }
+                  toast.success(newDiscount > 0 ? "Happy Hour activated! ⚡" : "Happy Hour ended.");
+                } catch { toast.error("Failed to update."); }
               }}
-              className={`rounded-3xl p-5 border cursor-pointer transition-all ${settings.globalDiscount > 0 ? "bg-amber-50/40 border-amber-200/50 hover:border-amber-300" : "bg-stone-50/30 border-stone-200/40 hover:border-stone-300"}`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-2xl ${settings.globalDiscount > 0 ? "bg-amber-100 text-amber-600" : "bg-stone-200 text-stone-600"}`}>
-                    {settings.globalDiscount > 0 ? <FiZap size={18} /> : <FiClock size={18} />}
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-stone-900">Happy Hour</h3>
-                    <p className="text-xs text-stone-500 mt-0.5">{settings.globalDiscount > 0 ? "10% off" : "Normal pricing"}</p>
-                  </div>
-                </div>
-                <div className={`w-12 h-7 rounded-full p-1 transition-all ${settings.globalDiscount > 0 ? "bg-amber-400" : "bg-stone-300"}`}>
-                  <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.globalDiscount > 0 ? "translate-x-5" : "translate-x-0"}`} />
-                </div>
-              </div>
-            </div>
+              accentColor="#7C4FE0"
+              accentLight="#F3EEFF"
+            />
 
-            {/* Banner */}
             <BannerControl settings={settings} setSettings={setSettings} />
           </motion.div>
         </div>
 
-        {/* Exports */}
-        <motion.div
-          variants={fadeUp}
-          custom={6}
-          className="grid grid-cols-1 md:grid-cols-2 gap-5"
-        >
-          <ExportCard
-            title="Sales Report"
-            desc="Export all orders"
-            icon={<FiDollarSign size={18} />}
-            onClick={async () => {
-              const toastId = toast.loading("Generating...");
-              try {
-                const { data } = await axios.get("/api/orders", { withCredentials: true });
-                const csv = [
-                  ["Order ID", "Date", "Customer", "Email", "Total", "Status"],
-                  ...data.map(o => [o.orderId || o._id, new Date(o.createdAt).toLocaleDateString(), o.user?.name || "Guest", o.user?.email || "N/A", o.totalAmount, o.status])
-                ].map(e => e.join(",")).join("\n");
-                const blob = new Blob([csv], { type: "text/csv" });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = `sales_${new Date().toISOString().split('T')[0]}.csv`;
-                link.click();
-                toast.success("Downloaded!", { id: toastId });
-              } catch (e) {
-                toast.error("Export failed", { id: toastId });
-              }
-            }}
-          />
+        {/* ── ORDERS + MESSAGES/REVIEWS ───────────────── */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 20, marginBottom: 24 }}>
 
-          <ExportCard
-            title="Customer Data"
-            desc="Export user list"
-            icon={<FiUsers size={18} />}
-            onClick={async () => {
-              const toastId = toast.loading("Generating...");
-              try {
-                const { data } = await axios.get("/api/admin/users/intelligence", { withCredentials: true });
-                const csv = [
-                  ["User ID", "Name", "Email", "Joined", "Total Spent"],
-                  ...data.map(u => [u._id, u.name, u.email, new Date(u.createdAt).toLocaleDateString(), u.intelligence?.totalSpent || 0])
-                ].map(e => e.join(",")).join("\n");
-                const blob = new Blob([csv], { type: "text/csv" });
-                const link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = `customers_${new Date().toISOString().split('T')[0]}.csv`;
-                link.click();
-                toast.success("Downloaded!", { id: toastId });
-              } catch (e) {
-                toast.error("Export failed", { id: toastId });
-              }
-            }}
-          />
-        </motion.div>
+          {/* Recent Orders */}
+          <motion.div variants={fadeUp} custom={6}>
+            <Card style={{ height: "100%" }} hover={false}>
+              <div style={{ padding: "20px 24px 14px", borderBottom: `1px solid ${T.borderSubtle}` }}>
+                <SectionHeader
+                  sub="Live traffic"
+                  title="Recent Orders"
+                  action={() => navigate("/admin/orders")}
+                  actionLabel="View all"
+                />
+              </div>
 
-        {/* Orders & Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Orders */}
-          <motion.div
-            variants={fadeUp}
-            custom={7}
-            className="lg:col-span-8 bg-white rounded-3xl border border-stone-200/50 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
-          >
-            <div className="p-6 border-b border-stone-100/50 flex justify-between items-center">
-              <h3 className="text-lg font-light text-stone-900">Recent Orders</h3>
-              <button
-                onClick={() => navigate("/admin/orders")}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-xs font-medium transition-all"
-              >
-                View All
-              </button>
-            </div>
-
-            <div className="p-4 max-h-[500px] overflow-y-auto">
-              {recentOrders.length === 0 ? (
-                <div className="py-16 text-center">
-                  <FiShoppingBag className="mx-auto text-stone-300 mb-3" size={40} />
-                  <p className="text-stone-400 text-sm">No recent orders</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {recentOrders.map((order) => (
-                    <div
-                      key={order._id}
-                      onClick={() => navigate(`/admin/orders`)}
-                      className="flex items-center justify-between p-4 bg-stone-50/30 hover:bg-stone-100/50 rounded-2xl border border-transparent hover:border-stone-200 transition-all cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 rounded-xl bg-stone-200 flex items-center justify-center text-stone-600 font-medium text-xs">
-                          #{order._id.slice(-4)}
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-medium text-stone-900">{order.user?.name || "Customer"}</h4>
-                          <p className="text-xs text-stone-400">{new Date(order.createdAt).toLocaleDateString()}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <p className="font-medium text-stone-900">₹{(order.totalAmount || 0).toLocaleString()}</p>
-                        <StatusPill status={order.status} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+              <div style={{ padding: "12px 16px" }}>
+                {recentOrders.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "40px 0" }}>
+                    <FiDroplet size={28} style={{ color: T.textGhost, margin: "0 auto 10px", display: "block" }} />
+                    <p style={{ fontSize: 12, color: T.textGhost, fontFamily: "Manrope, sans-serif", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em" }}>No orders yet</p>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {recentOrders.map((order, idx) => (
+                      <OrderRow key={order._id} order={order} idx={idx} onClick={() => navigate("/admin/orders")} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </Card>
           </motion.div>
 
-          {/* Activity */}
-          <motion.div variants={fadeUp} custom={8} className="lg:col-span-4 space-y-5">
-            {/* Messages */}
-            <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 h-[280px] flex flex-col hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-center mb-4 shrink-0">
-                <h3 className="text-lg font-light text-stone-900">Messages</h3>
-                <button onClick={() => navigate("/admin/messages")} className="text-stone-400 hover:text-stone-600 transition-colors">
-                  <FiMail size={16} />
+          {/* Messages + Reviews */}
+          <motion.div variants={fadeUp} custom={7} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+            {/* Inquiries */}
+            <Card style={{ flex: 1, display: "flex", flexDirection: "column", maxHeight: 280 }} hover={false}>
+              <div style={{ padding: "18px 20px 12px", borderBottom: `1px solid ${T.borderSubtle}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+                <div>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "Manrope, sans-serif", marginBottom: 2 }}>Inbox</p>
+                  <h3 style={{ fontSize: 14, fontWeight: 800, color: T.text, fontFamily: "Manrope, sans-serif" }}>Recent Inquiries</h3>
+                </div>
+                <button onClick={() => navigate("/admin/messages")} style={{ background: T.surfaceAlt, border: `1px solid ${T.border}`, borderRadius: 8, padding: 7, color: T.textSoft, cursor: "pointer", display: "flex" }}>
+                  <FiMail size={13} />
                 </button>
               </div>
-
-              <div className="flex-1 overflow-y-auto space-y-2">
-                {recentMessages?.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <FiMail className="text-stone-300 mb-2" size={28} />
-                    <p className="text-xs text-stone-400">No messages</p>
-                  </div>
-                ) : (
-                  recentMessages?.map((msg) => (
-                    <div
-                      key={msg._id}
-                      onClick={() => navigate("/admin/messages")}
-                      className="p-3 bg-stone-50/40 hover:bg-stone-100/50 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-stone-200 group"
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <h4 className="text-xs font-medium text-stone-900 truncate max-w-[120px]">{msg.email}</h4>
-                        <span className="text-[10px] text-stone-400">{new Date(msg.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      <p className="text-xs text-stone-600 line-clamp-1">{msg.message}</p>
-                    </div>
-                  ))
-                )}
+              <div style={{ overflowY: "auto", padding: "10px 16px", flex: 1 }}>
+                {recentMessages.length === 0 ? (
+                  <p style={{ textAlign: "center", padding: "24px 0", fontSize: 11, color: T.textGhost, fontFamily: "Manrope, sans-serif", fontWeight: 600 }}>Inbox empty</p>
+                ) : recentMessages.map((msg) => (
+                  <MessageRow key={msg._id} msg={msg} onClick={() => navigate("/admin/messages")} />
+                ))}
               </div>
-            </div>
+            </Card>
 
             {/* Reviews */}
-            <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 h-[280px] flex flex-col hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-center mb-4 shrink-0">
-                <h3 className="text-lg font-light text-stone-900">Reviews</h3>
-                <span className="text-xs font-medium text-stone-500 bg-stone-100/50 px-2.5 py-1 rounded-full">{allReviews.length}</span>
+            <Card style={{ flex: 1, display: "flex", flexDirection: "column", maxHeight: 280 }} hover={false}>
+              <div style={{ padding: "18px 20px 12px", borderBottom: `1px solid ${T.borderSubtle}`, display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0 }}>
+                <div>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "Manrope, sans-serif", marginBottom: 2 }}>Feedback</p>
+                  <h3 style={{ fontSize: 14, fontWeight: 800, color: T.text, fontFamily: "Manrope, sans-serif" }}>Customer Reviews</h3>
+                </div>
+                <span style={{ background: T.primaryLight, color: T.primary, fontSize: 10, fontWeight: 800, fontFamily: "Manrope, sans-serif", borderRadius: 8, padding: "3px 10px" }}>
+                  {allReviews.length}
+                </span>
               </div>
-
-              <div className="flex-1 overflow-y-auto space-y-2">
-                {allReviews?.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-full">
-                    <FiStar className="text-stone-300 mb-2" size={28} />
-                    <p className="text-xs text-stone-400">No reviews yet</p>
-                  </div>
-                ) : (
-                  allReviews?.map((rev) => (
-                    <div key={rev._id} className="p-3 bg-stone-50/40 rounded-2xl group relative border border-transparent hover:border-stone-200 transition-all hover:bg-stone-100/50">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteReviewHandler(rev.productId, rev._id); }}
-                        className="absolute top-2 right-2 text-stone-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all p-1 hover:scale-110"
-                      >
-                        <FiTrash2 size={12} />
-                      </button>
-                      <div className="flex gap-0.5 mb-2">
-                        {[...Array(5)].map((_, i) => (
-                          <FiStar key={i} size={10} className={i < rev.rating ? "text-amber-400 fill-amber-400" : "text-stone-200"} />
-                        ))}
-                      </div>
-                      <p className="text-xs text-stone-700 line-clamp-1">"{rev.comment}"</p>
-                      <div className="flex justify-between items-center text-[10px] mt-2 text-stone-500">
-                        <span>{rev.userName}</span>
-                        <span className="text-stone-400">{rev.productName}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
+              <div style={{ overflowY: "auto", padding: "10px 16px", flex: 1 }}>
+                {allReviews.length === 0 ? (
+                  <p style={{ textAlign: "center", padding: "24px 0", fontSize: 11, color: T.textGhost, fontFamily: "Manrope, sans-serif", fontWeight: 600 }}>No reviews yet</p>
+                ) : allReviews.map((rev) => (
+                  <ReviewRow key={rev._id} rev={rev} onDelete={() => deleteReviewHandler(rev.productId, rev._id)} />
+                ))}
               </div>
-            </div>
+            </Card>
           </motion.div>
         </div>
 
-      </div>
-    </motion.div>
+        {/* ── DATA EXPORTS ────────────────────────────── */}
+        <motion.div variants={fadeUp} custom={8}>
+          <div style={{ marginBottom: 16 }}>
+            <p style={{ fontSize: 10, fontWeight: 700, color: T.primary, letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "Manrope, sans-serif", marginBottom: 4 }}>Data</p>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: T.text, fontFamily: "Manrope, sans-serif" }}>Export Reports</h3>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <ExportCard
+              icon={<FiDollarSign size={16} />}
+              title="Sales Report"
+              sub="Export all orders to CSV"
+              iconColor={T.success}
+              iconBg={T.successLight}
+              onExport={async () => {
+                const toastId = toast.loading("Exporting sales…");
+                try {
+                  const { data } = await axios.get("/api/orders", { withCredentials: true });
+                  const rows = [
+                    ["Order ID","Date","Customer","Email","Items","Total","Status","Payment"],
+                    ...data.map(o => [o.orderId || o._id, new Date(o.createdAt).toLocaleDateString(), o.user?.name || "Guest", o.user?.email || "N/A", o.items.map(i => `${i.name} (x${i.qty})`).join("; "), o.totalAmount, o.status, o.paymentMethod])
+                  ].map(e => e.join(",")).join("\n");
+                  const blob = new Blob([rows], { type: "text/csv;charset=utf-8;" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `sales_${new Date().toISOString().split("T")[0]}.csv`;
+                  link.click();
+                  toast.success("Downloaded!", { id: toastId });
+                } catch { toast.error("Export failed", { id: toastId }); }
+              }}
+            />
+            <ExportCard
+              icon={<FiUsers size={16} />}
+              title="Customer Data"
+              sub="Export user list & CLV"
+              iconColor={T.sky}
+              iconBg={T.skyLight}
+              onExport={async () => {
+                const toastId = toast.loading("Exporting customers…");
+                try {
+                  const { data } = await axios.get("/api/admin/users/intelligence", { withCredentials: true });
+                  const rows = [
+                    ["ID","Name","Email","Role","Joined","Spent","Orders"],
+                    ...data.map(u => [u._id, u.name, u.email, u.role, new Date(u.createdAt).toLocaleDateString(), u.intelligence?.totalSpent || 0, u.intelligence?.orderCount || 0])
+                  ].map(e => e.join(",")).join("\n");
+                  const blob = new Blob([rows], { type: "text/csv;charset=utf-8;" });
+                  const link = document.createElement("a");
+                  link.href = URL.createObjectURL(blob);
+                  link.download = `customers_${new Date().toISOString().split("T")[0]}.csv`;
+                  link.click();
+                  toast.success("Downloaded!", { id: toastId });
+                } catch { toast.error("Export failed", { id: toastId }); }
+              }}
+            />
+          </div>
+        </motion.div>
+
+      </motion.div>
+
+      {/* Responsive media queries inline */}
+      <style>{`
+        @media (max-width: 1024px) {
+          .responsive-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @media (max-width: 640px) {
+          .responsive-grid-4 { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
+    </>
   );
 }
 
-// --- Components ---
-
-function StatCard({ title, value, icon, color, index }) {
+// ─────────────────────────────────────────────
+// ORDER ROW
+// ─────────────────────────────────────────────
+function OrderRow({ order, idx, onClick }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <motion.div
-      variants={fadeUp}
-      custom={index}
-      className={`bg-gradient-to-br ${color} rounded-3xl p-6 border border-stone-200/30 shadow-sm hover:shadow-md transition-all group relative overflow-hidden`}
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "11px 14px",
+        borderRadius: 12,
+        background: hovered ? T.surfaceAlt : idx % 2 === 0 ? T.surface : T.bg,
+        border: `1px solid ${hovered ? T.border : "transparent"}`,
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+      }}
     >
-      <div className="absolute top-0 right-0 w-24 h-24 bg-white/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="relative z-10">
-        <div className="text-stone-600 mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
-          {icon}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: T.primaryLight, color: T.primary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 800, fontFamily: "JetBrains Mono, monospace", flexShrink: 0 }}>
+          #{order._id.slice(-4)}
         </div>
-        <p className="text-xs font-medium uppercase tracking-wide text-stone-500 mb-2">{title}</p>
-        <h4 className="text-2xl font-light text-stone-900">{value}</h4>
+        <div>
+          <p style={{ fontSize: 12, fontWeight: 700, color: T.text, fontFamily: "Manrope, sans-serif", marginBottom: 2 }}>{order.user?.name || "Customer"}</p>
+          <p style={{ fontSize: 10, color: T.textGhost, fontFamily: "DM Sans, sans-serif" }}>{new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</p>
+        </div>
       </div>
-    </motion.div>
-  );
-}
-
-function StatusPill({ status }) {
-  const map = {
-    "Pending": "bg-amber-100/60 text-amber-700 border-amber-200/50",
-    "Cooking": "bg-blue-100/60 text-blue-700 border-blue-200/50",
-    "Ready": "bg-teal-100/60 text-teal-700 border-teal-200/50",
-    "Completed": "bg-emerald-100/60 text-emerald-700 border-emerald-200/50",
-    "Cancelled": "bg-rose-100/60 text-rose-700 border-rose-200/50"
-  };
-  const s = map[status] || "bg-stone-100/60 text-stone-600 border-stone-200/50";
-  
-  return (
-    <span className={`px-3 py-1.5 rounded-full text-xs font-medium border ${s}`}>
-      {status}
-    </span>
-  );
-}
-
-function ExportCard({ title, desc, icon, onClick }) {
-  return (
-    <div onClick={onClick} className="bg-gradient-to-br from-stone-50 to-white rounded-3xl p-6 border border-stone-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="text-stone-600 opacity-60 group-hover:opacity-100 transition-opacity">{icon}</div>
-          <div>
-            <h3 className="font-medium text-stone-900 text-sm">{title}</h3>
-            <p className="text-xs text-stone-500 mt-0.5">{desc}</p>
-          </div>
-        </div>
-        <FiDownload className="text-stone-400 group-hover:text-stone-600 transition-colors" size={18} />
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <p style={{ fontSize: 13, fontWeight: 800, color: T.text, fontFamily: "Manrope, sans-serif", minWidth: 70, textAlign: "right" }}>
+          ₹{(order.totalAmount || order.totalPrice || 0).toLocaleString()}
+        </p>
+        <StatusPill status={order.status} />
       </div>
     </div>
   );
 }
 
-function BannerControl({ settings, setSettings }) {
-  const [isDragging, setIsDragging] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
-  const handleFileUpload = async (file) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) return toast.error("Upload an image");
-    if (file.size > 5 * 1024 * 1024) return toast.error("Image too large (Max 5MB)");
-
-    const formData = new FormData();
-    formData.append("image", file);
-
-    setUploading(true);
-    const toastId = toast.loading("Uploading...");
-
-    try {
-      const res = await axios.post("/api/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true
-      });
-
-      const imageUrl = res.data.file || res.data.url;
-
-      await axios.put("/api/admin/enterprise/settings", {
-        banner: { ...settings.banner, imageUrl }
-      }, { withCredentials: true });
-
-      setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl } }));
-      toast.success("Banner uploaded!", { id: toastId });
-    } catch (err) {
-      toast.error("Upload failed", { id: toastId });
-    } finally {
-      setUploading(false);
-    }
-  };
-
+// ─────────────────────────────────────────────
+// MESSAGE ROW
+// ─────────────────────────────────────────────
+function MessageRow({ msg, onClick }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div className={`rounded-3xl p-5 border transition-all ${settings.banner?.active ? "bg-teal-50/40 border-teal-200/50 hover:border-teal-300" : "bg-stone-50/30 border-stone-200/40 hover:border-stone-300"}`}>
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-3">
-          <div className={`p-3 rounded-2xl ${settings.banner?.active ? "bg-teal-100 text-teal-600" : "bg-stone-200 text-stone-600"}`}>
-            <FiStar size={18} />
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-stone-900">Promo Banner</h3>
-            <p className="text-xs text-stone-500 mt-0.5">{settings.banner?.active ? "Visible" : "Hidden"}</p>
-          </div>
-        </div>
-
-        <button
-          onClick={async (e) => {
-            e.stopPropagation();
-            try {
-              const next = !settings.banner?.active;
-              await axios.put("/api/admin/enterprise/settings", { banner: { ...settings.banner, active: next } }, { withCredentials: true });
-              setSettings(prev => ({ ...prev, banner: { ...prev.banner, active: next } }));
-              toast.success(next ? "Published!" : "Hidden");
-            } catch (err) { toast.error("Update failed"); }
-          }}
-          className={`w-12 h-7 rounded-full p-1 transition-all ${settings.banner?.active ? "bg-teal-400" : "bg-stone-300"}`}
-        >
-          <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.banner?.active ? "translate-x-5" : "translate-x-0"}`} />
-        </button>
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: "10px 12px",
+        borderRadius: 10,
+        background: hovered ? T.surfaceAlt : "transparent",
+        border: `1px solid ${hovered ? T.border : "transparent"}`,
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        marginBottom: 4,
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+        <p style={{ fontSize: 11, fontWeight: 700, color: T.text, fontFamily: "Manrope, sans-serif", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{msg.email}</p>
+        <span style={{ fontSize: 9, color: T.textGhost, fontFamily: "DM Sans, sans-serif" }}>{new Date(msg.createdAt).toLocaleDateString()}</span>
       </div>
-
-      <div
-        className={`border-2 border-dashed rounded-2xl p-3 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${isDragging ? "border-teal-400 bg-teal-50/50" : "border-stone-200 hover:border-stone-300 bg-stone-50/30"}`}
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsDragging(false);
-          handleFileUpload(e.dataTransfer.files[0]);
-        }}
-      >
-        <input
-          type="file"
-          accept="image/*"
-          className="absolute inset-0 opacity-0 cursor-pointer"
-          onChange={(e) => handleFileUpload(e.target.files[0])}
-        />
-
-        {uploading ? (
-          <div className="py-2">
-            <div className="w-5 h-5 border-2 border-stone-300 border-t-stone-700 rounded-full animate-spin mx-auto mb-1" />
-            <span className="text-xs text-stone-600">Uploading...</span>
-          </div>
-        ) : settings.banner?.imageUrl ? (
-          <div className="w-full group">
-            <img src={settings.banner.imageUrl} alt="Banner" className="h-16 w-full object-cover rounded-lg" />
-            <p className="text-xs text-stone-500 mt-2 group-hover:text-stone-700 transition-colors">Click to change</p>
-          </div>
-        ) : (
-          <div className="py-4">
-            <FiCheckCircle className="mx-auto text-stone-300 mb-2" size={20} />
-            <p className="text-xs font-medium text-stone-600">Drop image here</p>
-          </div>
-        )}
-      </div>
+      <p style={{ fontSize: 11, color: T.textSoft, fontFamily: "DM Sans, sans-serif", lineHeight: 1.4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>"{msg.message}"</p>
     </div>
   );
 }
 
-function ChartTooltip({ active, payload, label }) {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white border border-stone-200 px-4 py-3 rounded-2xl shadow-lg text-xs">
-        <p className="font-medium text-stone-600 mb-2 uppercase tracking-wide text-[10px]">{label}</p>
-        <p className="font-semibold text-stone-900">₹{Number(payload[0].value).toLocaleString()}</p>
+// ─────────────────────────────────────────────
+// REVIEW ROW
+// ─────────────────────────────────────────────
+function ReviewRow({ rev, onDelete }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: "12px 14px",
+        borderRadius: 12,
+        background: hovered ? T.surfaceAlt : T.surface,
+        border: `1px solid ${hovered ? T.border : T.borderSubtle}`,
+        transition: "all 0.2s ease",
+        marginBottom: 6,
+        position: "relative",
+      }}
+    >
+      {/* Stars */}
+      <div style={{ display: "flex", gap: 2, marginBottom: 6 }}>
+        {[...Array(5)].map((_, i) => (
+          <FiStar key={i} size={9} style={{ color: i < rev.rating ? "#F59E0B" : T.textGhost, fill: i < rev.rating ? "#F59E0B" : "none" }} />
+        ))}
       </div>
-    );
-  }
-  return null;
+      <p style={{ fontSize: 11, color: T.textMid, fontFamily: "DM Sans, sans-serif", lineHeight: 1.5, marginBottom: 8, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        "{rev.comment}"
+      </p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 10, fontWeight: 600, color: T.textSoft, fontFamily: "Manrope, sans-serif" }}>{rev.userName}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 9, fontWeight: 700, color: T.primary, fontFamily: "Manrope, sans-serif", letterSpacing: "0.04em" }}>{rev.productName}</span>
+          {hovered && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              style={{ background: T.dangerLight, border: "none", borderRadius: 6, padding: "3px 6px", color: T.danger, cursor: "pointer", display: "flex", alignItems: "center" }}
+            >
+              <FiTrash2 size={10} />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 }
