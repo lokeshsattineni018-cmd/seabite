@@ -131,11 +131,11 @@ const connectDB = async () => {
 
   if (!cached.promise) {
     const opts = {
-      serverSelectionTimeoutMS: 30000, // Reduced to 30s to fail faster than Vercel timeout
-      connectTimeoutMS: 30000,
+      serverSelectionTimeoutMS: 5000, // Fail fast (5s)
+      connectTimeoutMS: 10000, // 10s
       socketTimeoutMS: 45000,
-      maxPoolSize: 1, // 🟢 Strict limit for Serverless/Vercel
-      minPoolSize: 0, // Allow connection to drop when idle
+      maxPoolSize: 5, // 🟢 Increased from 1 to 5 for better concurrency
+      minPoolSize: 0,
       retryWrites: true,
       retryReads: true,
       ssl: true,
