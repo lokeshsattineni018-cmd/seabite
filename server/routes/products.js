@@ -4,7 +4,8 @@ import Order from "../models/Order.js";
 import upload from "../config/multerConfig.js";
 import { protect } from "../middleware/authMiddleware.js";
 import SearchInsight from "../models/SearchInsight.js";
-import { getSettings } from "../models/Settings.js"; // 🟢 Import
+import { getSettings } from "../models/Settings.js";
+import { logActivity } from "../utils/activityLogger.js"; // 🟢 Added import
 
 const router = express.Router();
 
@@ -88,6 +89,11 @@ router.get("/", async (req, res) => {
           },
           { upsert: true, new: true }
         );
+
+        // 🟢 WATCHTOWER LOGGING
+        import { logActivity } from "../utils/activityLogger.js";
+        logActivity("SEARCH", `Searched for "${search}"`, req, { results: products.length });
+
       } catch (err) {
         console.error("Search Insight Error:", err);
       }
