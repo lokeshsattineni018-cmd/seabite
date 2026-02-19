@@ -2,7 +2,7 @@
 import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
-// import { Server } from "socket.io";
+import { Server } from "socket.io";
 import mongoose from "mongoose";
 import fs from "fs";
 import path from "path";
@@ -22,12 +22,12 @@ import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
 import spinRoutes from "./routes/spinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import settingsRoutes from "./routes/settingsRoutes.js"; // 🟢 NEW
-import watchtowerRoutes from "./routes/watchtowerRoutes.js"; // 🟢 WATCHTOWER
+import settingsRoutes from "./routes/settingsRoutes.js";
+import watchtowerRoutes from "./routes/watchtowerRoutes.js";
 import checkMaintenance from "./middleware/checkMaintenance.js";
 
 const app = express();
-const httpServer = createServer(app); // ✅ Restore httpServer definition
+const httpServer = createServer(app);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -60,9 +60,34 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-// ✅ Attach IO to request for controllers
+/* --- SOCKET.IO SETUP --- */
+const io = new Server(httpServer, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
+  },
+  transports: ['websocket', 'polling'] // Force websocket/polling
+});
+
+// Track connected users
+let connectedUsers = 0;
+
+io.on("connection", (socket) => {
+  connectedUsers++;
+  io.emit("USER_COUNT_UPDATE", connectedUsers);
+  // console.log(`🔌 New client connected. Total: ${connectedUsers}`);
+
+  socket.on("disconnect", () => {
+    connectedUsers = Math.max(0, connectedUsers - 1);
+    io.emit("USER_COUNT_UPDATE", connectedUsers);
+    // console.log(`🔌 Client disconnected. Total: ${connectedUsers}`);
+  });
+});
+
+// ✅ Attach Real IO to request
 app.use((req, res, next) => {
-  req.io = { emit: () => { } }; // Mock for Vercel
+  req.io = io;
   next();
 });
 
@@ -138,7 +163,7 @@ const connectDB = async () => {
       serverSelectionTimeoutMS: 5000, // Fail fast (5s)
       connectTimeoutMS: 10000, // 10s
       socketTimeoutMS: 45000,
-      maxPoolSize: 5, // 🟢 Increased from 1 to 5 for better concurrency
+      maxPoolSize: 5,
       minPoolSize: 0,
       retryWrites: true,
       retryReads: true,
@@ -174,19 +199,18 @@ const sessionMiddleware = session({
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    client: mongoose.connection.getClient(), // 🟢 Reuse existing connection
-    // mongoUrl removed to prevent duplicate connection
+    client: mongoose.connection.getClient(),
     collectionName: "sessions",
     ttl: 14 * 24 * 60 * 60,
-    autoRemove: 'native', // Enable MongoDB TTL expiry
+    autoRemove: 'native',
   }),
   name: "seabite.sid",
   proxy: true,
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // 🟢 Auto-detect
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // 🟢 Lax for local
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     path: "/",
   },
 });
@@ -222,8 +246,8 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 app.use("/api/user", userRoutes);
-app.use("/api/settings", settingsRoutes); // 🟢 NEW
-app.use("/api/admin/watchtower", watchtowerRoutes); // 🟢 WATCHTOWER
+app.use("/api/settings", settingsRoutes);
+app.use("/api/admin/watchtower", watchtowerRoutes);
 
 app.get("/health", (req, res) => {
   const state = mongoose.connection.readyState;
@@ -240,13 +264,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" });
 });
 
-const io = { emit: () => { } }; // Mock IO for Vercel
-export { io };
+export { io }; // Export real IO
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
 
-// ✅ FIXED FOR VERCEL: Default export for serverless functions
 export default app;
