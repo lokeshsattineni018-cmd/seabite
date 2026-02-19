@@ -443,11 +443,11 @@ export default function Navbar({ openCart }) {
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.22)", backdropFilter: "blur(4px)", zIndex: 90 }} />
+              style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.22)", backdropFilter: "blur(4px)", zIndex: 190 }} />
             <motion.div
               initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 240 }}
-              style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(320px,90vw)", background: "#fff", zIndex: 95, overflowY: "auto", padding: "80px 24px 40px", boxShadow: "-16px 0 48px rgba(26,46,44,0.10)", fontFamily: "'Manrope', sans-serif" }}>
+              style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(320px,90vw)", background: "#fff", zIndex: 195, overflowY: "auto", padding: "80px 24px 40px", boxShadow: "-16px 0 48px rgba(26,46,44,0.10)", fontFamily: "'Manrope', sans-serif" }}>
 
               <button onClick={() => setMobileOpen(false)}
                 style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "1.5px solid #E2EEEC", borderRadius: "8px", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6B8F8A" }}>

@@ -53,7 +53,7 @@ export default function Cart({ open, onClose }) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
               onClick={onClose}
-              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[105]"
             />
 
             {/* SLIDING DRAWER */}
@@ -62,7 +62,7 @@ export default function Cart({ open, onClose }) {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 220 }}
-              className="fixed top-0 right-0 h-full w-full md:w-[450px] bg-white dark:bg-[#0f172a] z-[70] shadow-2xl flex flex-col border-l border-slate-100 dark:border-white/5 font-sans"
+              className="fixed top-0 right-0 h-full w-full md:w-[450px] bg-white dark:bg-[#0f172a] z-[110] shadow-2xl flex flex-col border-l border-slate-100 dark:border-white/5 font-sans"
             >
 
               {/* HEADER */}
