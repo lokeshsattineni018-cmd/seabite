@@ -1,10 +1,10 @@
 import { useEffect, useState, useContext } from "react";
-import { getCart, saveCart } from "../utils/cartStorage";
+import { getCart, saveCart } from "../../utils/cartStorage";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiMinus, FiPlus, FiTrash2, FiShoppingBag, FiArrowRight, FiLock, FiPackage } from "react-icons/fi";
-import PopupModal from "../components/PopupModal";
-import { ThemeContext } from "../context/ThemeContext";
+import PopupModal from "../../components/common/PopupModal";
+import { ThemeContext } from "../../context/ThemeContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 

@@ -1,6 +1,6 @@
 // src/pages/Checkout.jsx
 import { useEffect, useState, useRef, useContext, useMemo } from "react";
-import { getCart, saveCart, clearCart } from "../utils/cartStorage";
+import { getCart, saveCart, clearCart } from "../../utils/cartStorage";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,10 +28,10 @@ import {
   FiClock,
   FiPercent,
 } from "react-icons/fi";
-import AddressForm from "../components/AddressForm"; // Added import
-import PopupModal from "../components/PopupModal";
-import { CartContext } from "../context/CartContext";
-import { ThemeContext } from "../context/ThemeContext";
+import AddressForm from "../../components/forms/AddressForm"; // Added import
+import PopupModal from "../../components/common/PopupModal";
+import { CartContext } from "../../context/CartContext";
+import { ThemeContext } from "../../context/ThemeContext";
 import toast from "react-hot-toast"; // Added toast import
 
 import "leaflet/dist/leaflet.css";

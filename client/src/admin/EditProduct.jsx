@@ -7,7 +7,7 @@ import {
   FiType, FiDollarSign, FiTag, FiImage,
   FiTrendingUp, FiCheck, FiArrowLeft, FiSave, FiBox,
 } from "react-icons/fi";
-import PopupModal from "../components/PopupModal";
+import PopupModal from "../components/common/PopupModal";
 
 const ease = [0.22, 1, 0.36, 1];
 const fadeUp = {

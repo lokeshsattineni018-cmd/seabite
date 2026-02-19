@@ -2,9 +2,9 @@ import { useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import PopupModal from "../components/PopupModal";
+import PopupModal from "../../components/common/PopupModal";
 import { useGoogleLogin } from "@react-oauth/google";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 

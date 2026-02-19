@@ -19,9 +19,9 @@ import {
   FiChevronDown,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { ThemeContext } from "../context/ThemeContext";
-import ReviewModal from "../components/ReviewModal";
-import PopupModal from "../components/PopupModal";
+import { ThemeContext } from "../../context/ThemeContext";
+import ReviewModal from "../../components/common/ReviewModal";
+import PopupModal from "../../components/common/PopupModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -165,14 +165,14 @@ export default function Order() {
       result = result.filter(
         (o) =>
           String(o.orderId || o._id || "")
-  .toLowerCase()
-  .includes(q)
- ||
-         (o.items || []).some((i) =>
-  String(i.name || "")
-    .toLowerCase()
-    .includes(q)
-)
+            .toLowerCase()
+            .includes(q)
+          ||
+          (o.items || []).some((i) =>
+            String(i.name || "")
+              .toLowerCase()
+              .includes(q)
+          )
 
       );
     }
@@ -445,21 +445,19 @@ export default function Order() {
                       onClick={() => setActiveTab(tab.id)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.97 }}
-                      className={`relative flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all whitespace-nowrap ${
-                        isActive
-                          ? "bg-slate-900 dark:bg-blue-600 text-white shadow-lg shadow-slate-900/15 dark:shadow-blue-600/20"
-                          : "bg-white dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/40"
-                      }`}
+                      className={`relative flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold transition-all whitespace-nowrap ${isActive
+                        ? "bg-slate-900 dark:bg-blue-600 text-white shadow-lg shadow-slate-900/15 dark:shadow-blue-600/20"
+                        : "bg-white dark:bg-slate-800/40 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/40"
+                        }`}
                     >
                       {tab.icon}
                       {tab.label}
                       {count > 0 && (
                         <span
-                          className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${
-                            isActive
-                              ? "bg-white/20 text-white"
-                              : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
-                          }`}
+                          className={`ml-1 px-1.5 py-0.5 rounded-full text-[9px] font-black ${isActive
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
+                            }`}
                         >
                           {count}
                         </span>
@@ -561,11 +559,10 @@ export default function Order() {
                           <div className="flex items-center gap-3 sm:gap-4">
                             {/* Payment badge */}
                             <span
-                              className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${
-                                order.paymentMethod === "Prepaid"
-                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                              }`}
+                              className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${order.paymentMethod === "Prepaid"
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                }`}
                             >
                               {order.paymentMethod || "COD"}
                             </span>
@@ -726,11 +723,10 @@ export default function Order() {
                                                 myReview || null
                                               );
                                             }}
-                                            className={`flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-bold rounded-lg transition-colors ${
-                                              myReview
-                                                ? "text-blue-600 bg-blue-500/10 hover:bg-blue-500/20"
-                                                : "text-amber-600 bg-amber-500/10 hover:bg-amber-500/20"
-                                            }`}
+                                            className={`flex items-center gap-1.5 px-2.5 py-1 text-[9px] font-bold rounded-lg transition-colors ${myReview
+                                              ? "text-blue-600 bg-blue-500/10 hover:bg-blue-500/20"
+                                              : "text-amber-600 bg-amber-500/10 hover:bg-amber-500/20"
+                                              }`}
                                           >
                                             {myReview ? (
                                               <>

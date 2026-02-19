@@ -6,8 +6,8 @@ import {
   FiSearch, FiRefreshCw, FiTruck, FiPrinter,
   FiXCircle, FiPackage, FiArrowUpRight, FiFilter
 } from "react-icons/fi";
-import PopupModal from "../components/PopupModal";
-import Invoice from "../components/Invoice";
+import PopupModal from "../components/common/PopupModal";
+import Invoice from "../components/content/Invoice";
 import { generateInvoicePDF } from "../utils/pdfGenerator";
 import toast from "react-hot-toast";
 
@@ -173,8 +173,8 @@ export default function AdminOrders() {
                 key={status}
                 onClick={() => setFilter(status)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border whitespace-nowrap flex items-center gap-2 ${filter === status
-                    ? "bg-stone-900 text-white border-stone-900 shadow-md"
-                    : "bg-white text-stone-500 border-stone-200 hover:bg-stone-50 hover:text-stone-700"
+                  ? "bg-stone-900 text-white border-stone-900 shadow-md"
+                  : "bg-white text-stone-500 border-stone-200 hover:bg-stone-50 hover:text-stone-700"
                   }`}
               >
                 {status}

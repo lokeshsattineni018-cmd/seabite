@@ -7,7 +7,7 @@ import {
   FiPlus, FiImage, FiAlertCircle,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import PopupModal from "../components/PopupModal";
+import PopupModal from "../components/common/PopupModal";
 
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {

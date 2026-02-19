@@ -1,5 +1,5 @@
-import SeaCreature from "../components/SeaCreature";
-import Bubbles from "../components/Bubbles";
+import SeaCreature from "../../components/content/SeaCreature";
+import Bubbles from "../../components/content/Bubbles";
 
 const Maintenance = ({ message }) => {
     return (
