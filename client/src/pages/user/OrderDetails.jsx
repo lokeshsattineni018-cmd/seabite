@@ -23,14 +23,14 @@ const STEPS = [
 ];
 
 export default function OrderDetails() {
-  const { id } = useParams();
+  const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const { data } = await axios.get(`${API_URL}/api/orders/${id}`, { withCredentials: true });
+        const { data } = await axios.get(`${API_URL}/api/orders/${orderId}`, { withCredentials: true });
         setOrder(data);
       } catch (err) {
         console.error("Failed to load order", err);
@@ -39,7 +39,7 @@ export default function OrderDetails() {
       }
     };
     fetchOrder();
-  }, [id]);
+  }, [orderId]);
 
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: T.bg }}>
