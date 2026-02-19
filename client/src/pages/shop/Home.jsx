@@ -91,10 +91,10 @@ const Counter = ({ value, suffix = "" }) => {
 
 const Chip = ({ children, color = "teal" }) => {
   const p = {
-    teal:  "bg-[#EAF6F5] text-[#3D8C85] border-[#C5E6E4]",
+    teal: "bg-[#EAF6F5] text-[#3D8C85] border-[#C5E6E4]",
     coral: "bg-[#FEF0EC] text-[#C05A45] border-[#F5C4BB]",
-    sand:  "bg-[#FAF4EC] text-[#8B6D45] border-[#EAD9C0]",
-    sky:   "bg-[#EDF5FB] text-[#3A7DA0] border-[#BDD9EE]",
+    sand: "bg-[#FAF4EC] text-[#8B6D45] border-[#EAD9C0]",
+    sky: "bg-[#EDF5FB] text-[#3A7DA0] border-[#BDD9EE]",
   };
   return <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase border ${p[color]}`}>{children}</span>;
 };
@@ -111,7 +111,7 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
   const styles = {
     primary: "px-7 py-3.5 bg-[#1A2B35] text-white hover:bg-[#5BA8A0] shadow-sm hover:shadow-[0_4px_20px_rgba(91,168,160,0.35)]",
     outline: "px-7 py-3.5 border border-[#CBD8DF] text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] bg-white",
-    coral:   "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
+    coral: "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
   };
   return (
     <Link to={to}>
@@ -149,7 +149,7 @@ const Hero = () => {
             <motion.h1
               initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.85, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
+              className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
               style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
             >
               Ocean-Fresh<br /><span className="text-[#5BA8A0]">Seafood</span><br />Delivered.
@@ -280,9 +280,9 @@ const WaveTicker = () => {
 //  CATEGORIES
 // ══════════════════════════════════════════════
 const categories = [
-  { title: "Premium Fish",  sub: "20+ varieties",      img: "/fish.png",  tag: "Fish",  bg: "from-[#EAF6F5] to-[#F8FAFB]", accent: "#5BA8A0" },
-  { title: "Jumbo Prawns",  sub: "Wild-caught daily",  img: "/prawn.png", tag: "Prawn", bg: "from-[#EDF5FB] to-[#F8FAFB]", accent: "#89C2D9" },
-  { title: "Live Crabs",    sub: "Ships in tank water", img: "/crab.png",  tag: "Crab",  bg: "from-[#FEF0EC] to-[#F8FAFB]", accent: "#E8816A" },
+  { title: "Premium Fish", sub: "20+ varieties", img: "/fish.png", tag: "Fish", bg: "from-[#EAF6F5] to-[#F8FAFB]", accent: "#5BA8A0" },
+  { title: "Jumbo Prawns", sub: "Wild-caught daily", img: "/prawn.png", tag: "Prawn", bg: "from-[#EDF5FB] to-[#F8FAFB]", accent: "#89C2D9" },
+  { title: "Live Crabs", sub: "Ships in tank water", img: "/crab.png", tag: "Crab", bg: "from-[#FEF0EC] to-[#F8FAFB]", accent: "#E8816A" },
 ];
 
 const CategorySection = () => {
@@ -441,16 +441,16 @@ const CategoryRow = ({ title, filterType }) => {
 // ══════════════════════════════════════════════
 const WhySeaBite = () => {
   const features = [
-    { icon: <ShieldCheck size={20} />, title: "Quality Guaranteed",   desc: "Every batch lab-tested for freshness and safety before dispatch.",             color: "text-[#3D8C85]", bg: "bg-[#EAF6F5]" },
-    { icon: <Thermometer size={20} />, title: "Cold Chain Delivery",  desc: "Temperature-controlled packaging from ocean to your doorstep.",                color: "text-[#3A7DA0]", bg: "bg-[#EDF5FB]" },
-    { icon: <Truck size={20} />,       title: "Same Day Dispatch",    desc: "Order before 2 PM and it ships today — freshness guaranteed.",                 color: "text-[#8B6D45]", bg: "bg-[#FAF4EC]" },
-    { icon: <Utensils size={20} />,    title: "Chef Approved",        desc: "Trusted by restaurants and home cooks across the coastline.",                  color: "text-[#C05A45]", bg: "bg-[#FEF0EC]" },
+    { icon: <ShieldCheck size={20} />, title: "Quality Guaranteed", desc: "Every batch lab-tested for freshness and safety before dispatch.", color: "text-[#3D8C85]", bg: "bg-[#EAF6F5]" },
+    { icon: <Thermometer size={20} />, title: "Cold Chain Delivery", desc: "Temperature-controlled packaging from ocean to your doorstep.", color: "text-[#3A7DA0]", bg: "bg-[#EDF5FB]" },
+    { icon: <Truck size={20} />, title: "Same Day Dispatch", desc: "Order before 2 PM and it ships today — freshness guaranteed.", color: "text-[#8B6D45]", bg: "bg-[#FAF4EC]" },
+    { icon: <Utensils size={20} />, title: "Chef Approved", desc: "Trusted by restaurants and home cooks across the coastline.", color: "text-[#C05A45]", bg: "bg-[#FEF0EC]" },
   ];
   const stats = [
-    { value: 500, suffix: "+",  label: "Happy Customers" },
-    { value: 20,  suffix: "+",  label: "Varieties Available" },
-    { value: 98,  suffix: "%",  label: "Freshness Score" },
-    { value: 4,   suffix: ".8★", label: "Average Rating" },
+    { value: 500, suffix: "+", label: "Happy Customers" },
+    { value: 20, suffix: "+", label: "Varieties Available" },
+    { value: 98, suffix: "%", label: "Freshness Score" },
+    { value: 4, suffix: ".8★", label: "Average Rating" },
   ];
   return (
     <section className="py-20 px-6 md:px-12 bg-white">

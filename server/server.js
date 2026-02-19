@@ -72,6 +72,10 @@ import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import xss from "xss-clean";
 import hpp from "hpp";
+import compression from "compression";
+
+// 0. Compress all responses
+app.use(compression());
 
 // 1. Set Security Headers
 app.use(helmet());

@@ -3,9 +3,13 @@ import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import {
   FiArrowLeft, FiPackage, FiMapPin, FiCalendar, FiCreditCard,
-  FiShoppingBag, FiTruck, FiCheckCircle, FiClock, FiXCircle
+  FiShoppingBag, FiTruck, FiCheckCircle, FiClock, FiXCircle,
+  FiDownload, FiAlertCircle
 } from "react-icons/fi";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import PopupModal from "../../components/common/PopupModal";
+import toast from "react-hot-toast";
+import { generateInvoicePDF } from "../../utils/pdfGenerator";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -26,6 +30,9 @@ export default function OrderDetails() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [isCancelling, setIsCancelling] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -40,6 +47,25 @@ export default function OrderDetails() {
     };
     fetchOrder();
   }, [orderId]);
+
+  const handleCancelOrder = async () => {
+    if (!cancelReason.trim()) {
+      toast.error("Please provide a reason for cancellation");
+      return;
+    }
+    setIsCancelling(true);
+    try {
+      const { data } = await axios.put(`${API_URL}/api/orders/${order._id}/cancel`, { reason: cancelReason }, { withCredentials: true });
+      setOrder(data);
+      setCancelModalOpen(false);
+      toast.success("Order cancelled successfully");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to cancel order");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
 
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: T.bg }}>
@@ -57,6 +83,7 @@ export default function OrderDetails() {
 
   const currentStepIndex = STEPS.findIndex(s => s.status === order.status);
   const isCancelled = order.status.includes("Cancelled");
+  const canCancel = !isCancelled && (order.status === "Pending" || order.status === "Processing" || order.status === "Placed");
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, padding: "100px 20px 60px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -74,11 +101,33 @@ export default function OrderDetails() {
                 Placed on {new Date(order.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
               </p>
             </div>
-            <div style={{ textAlign: "right" }}>
+            <div style={{ textAlign: "right", display: "flex", gap: 10 }}>
+              {/* Invoice Button */}
+              <motion.button onClick={() => order && generateInvoicePDF(order)} whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6, padding: "8px 16px",
+                  background: "white", border: `1px solid ${T.border}`, borderRadius: 8,
+                  fontSize: 12, fontWeight: 700, color: T.textMid, cursor: "pointer"
+                }}>
+                <FiDownload size={14} /> Invoice
+              </motion.button>
+
+              {/* Cancel Button */}
+              {canCancel && (
+                <motion.button onClick={() => setCancelModalOpen(true)} whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6, padding: "8px 16px",
+                    background: "rgba(232,129,106,0.1)", border: "1px solid rgba(232,129,106,0.2)", borderRadius: 8,
+                    fontSize: 12, fontWeight: 700, color: T.coral, cursor: "pointer"
+                  }}>
+                  <FiXCircle size={14} /> Cancel Order
+                </motion.button>
+              )}
+
               <span style={{
-                padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em",
+                padding: "8px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em",
                 background: isCancelled ? "rgba(232,129,106,0.1)" : "rgba(91,168,160,0.1)",
-                color: isCancelled ? T.coral : T.primary
+                color: isCancelled ? T.coral : T.primary, display: "flex", alignItems: "center"
               }}>
                 {order.status}
               </span>
@@ -196,11 +245,69 @@ export default function OrderDetails() {
                 <span style={{ fontWeight: 700, color: order.isPaid ? T.primary : "#C9941A" }}>{order.isPaid ? "Paid" : "Pending"}</span>
               </div>
             </div>
+
+            {/* Cancelled Info */}
+            {isCancelled && (
+              <div style={{ background: "rgba(232,129,106,0.05)", padding: 24, borderRadius: 20, border: "1px solid rgba(232,129,106,0.2)" }}>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: T.coral, marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
+                  <FiAlertCircle /> Order Cancelled
+                </h3>
+                <p style={{ fontSize: 13, color: T.textMid, lineHeight: 1.5, margin: 0 }}>
+                  Reason: {order.cancelReason || "No reason provided."}
+                </p>
+              </div>
+            )}
           </div>
 
         </div>
 
       </div>
+
+      {/* Cancellation Modal */}
+      <AnimatePresence>
+        {cancelModalOpen && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCancelModalOpen(false)}
+              style={{ position: "absolute", inset: 0, background: "rgba(26,43,53,0.4)", backdropFilter: "blur(4px)" }} />
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              style={{ position: "relative", width: "100%", maxWidth: 400, background: "white", borderRadius: 20, padding: 24, boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}>
+              <h3 style={{ marginTop: 0, color: T.textDark }}>Cancel Order?</h3>
+              <p style={{ color: T.textMid, fontSize: 14 }}>Are you sure you want to cancel this order? This action cannot be undone.</p>
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 700, color: T.textLite, marginBottom: 8, textTransform: "uppercase" }}>Reason for cancellation</label>
+                <select
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  style={{ width: "100%", padding: "10px", borderRadius: 8, border: `1px solid ${T.border}`, fontSize: 14, outline: "none" }}
+                >
+                  <option value="">Select a reason...</option>
+                  <option value="Changed my mind">Changed my mind</option>
+                  <option value="Found a better price">Found a better price</option>
+                  <option value="Ordered by mistake">Ordered by mistake</option>
+                  <option value="Delivery time too long">Delivery time too long</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <button onClick={() => setCancelModalOpen(false)} style={{ padding: "10px 16px", borderRadius: 10, border: "none", background: "#f0f0f0", cursor: "pointer", fontWeight: 600 }}>Close</button>
+                <button
+                  onClick={handleCancelOrder}
+                  disabled={isCancelling || !cancelReason}
+                  style={{
+                    padding: "10px 16px", borderRadius: 10, border: "none",
+                    background: (!cancelReason || isCancelling) ? "#ffccc7" : T.coral,
+                    color: "white", cursor: (!cancelReason || isCancelling) ? "not-allowed" : "pointer", fontWeight: 600
+                  }}
+                >
+                  {isCancelling ? "Cancelling..." : "Confirm Cancel"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

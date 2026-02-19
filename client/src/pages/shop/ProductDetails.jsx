@@ -333,6 +333,10 @@ export default function ProductDetails() {
         .wishlist-btn:hover { border-color: #F07468 !important; color: #F07468 !important; }
         .add-btn:hover:not(:disabled) { background: #2D4A47 !important; }
         .review-card:hover { border-color: #B8DDD9 !important; }
+        .product-grid { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start; }
+        @media (min-width: 768px) {
+          .product-grid { grid-template-columns: 1fr 1fr; gap: 48px; }
+        }
       `}</style>
 
       {/* Flying item animation */}
@@ -368,7 +372,7 @@ export default function ProductDetails() {
           </motion.div>
 
           {/* ── Main 2-col layout ─────────────────────────── */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "start" }}>
+          <div className="product-grid">
 
             {/* ── LEFT: Image ─────────────────────────────── */}
             <motion.div

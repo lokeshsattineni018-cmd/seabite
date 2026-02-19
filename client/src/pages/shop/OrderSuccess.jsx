@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import {
   FiCheck, FiShoppingBag, FiArrowRight, FiPackage,
-  FiTag, FiCopy, FiTruck, FiClock,
+  FiTag, FiCopy, FiTruck, FiClock, FiDownload
 } from "react-icons/fi";
+import { generateInvoicePDF } from "../../utils/pdfGenerator";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -88,7 +89,7 @@ export default function OrderSuccess() {
       try {
         const { data } = await axios.get(`${API_URL}/api/orders/${dbId}`, { withCredentials: true });
         setOrderDetails(data);
-      } catch {}
+      } catch { }
       finally { setLoading(false); }
     };
     fetchOrder();
@@ -298,6 +299,22 @@ export default function OrderSuccess() {
               <FiShoppingBag size={14} /> Continue Shopping
             </motion.button>
           </Link>
+
+          {/* Invoice Button (New) */}
+          <motion.button
+            onClick={() => orderDetails && generateInvoicePDF(orderDetails)}
+            whileHover={{ y: -1, background: T.bg }}
+            whileTap={{ scale: 0.97 }}
+            style={{
+              width: "100%", padding: "13px 20px", borderRadius: 14,
+              background: "transparent", color: T.textMid, border: `1px solid ${T.border}`,
+              fontSize: 13, fontWeight: 600, cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+              fontFamily: font, transition: "all 0.2s",
+            }}
+          >
+            <FiDownload size={14} /> Download Invoice
+          </motion.button>
         </motion.div>
 
         {/* ── MINI TIMELINE ── */}
