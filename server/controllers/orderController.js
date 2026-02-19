@@ -45,7 +45,7 @@ export const createOrder = async (req, res) => {
 
         // 🟢 REAL-TIME ALERT: Notify Admin Dashboard
         if (req.io) {
-            req.io.emit("newOrder", {
+            req.io.emit("ORDER_PLACED", {
                 ...createdOrder._doc,
                 user: { name: req.user.name } // Ensure user name is available for the toast
             });

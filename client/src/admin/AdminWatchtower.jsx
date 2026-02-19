@@ -68,33 +68,36 @@ function Card({ children, style = {}, hover = true }) {
 }
 
 export default function AdminWatchtower() {
+    const { socket, isConnected, activeUsers } = useSocket();
     const [logs, setLogs] = useState([]);
-    const [activeCount, setActiveCount] = useState(0);
-    const [isLive, setIsLive] = useState(true);
 
-    // Polling Effect
+    // Initial Fetch
     useEffect(() => {
-        if (!isLive) return;
-
-        const fetchData = async () => {
+        const fetchInitialLogs = async () => {
             try {
-                // Determine URL: If localhost, force relative path to use proxy (to be configured). 
-                // Otherwise use API_URL.
-                const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-                const baseUrl = isLocal ? "" : API_URL;
-
-                const { data } = await axios.get(`${baseUrl}/api/admin/watchtower/live`, { withCredentials: true });
+                const { data } = await axios.get(`${API_URL}/api/admin/watchtower/live`, { withCredentials: true });
                 setLogs(data.logs);
-                setActiveCount(data.activeCount);
             } catch (err) {
-                // console.error("Watchtower signal lost", err);
+                // console.error("Initial log fetch failed", err);
             }
         };
+        fetchInitialLogs();
+    }, []);
 
-        fetchData();
-        const interval = setInterval(fetchData, 2500); // 2.5s poll
-        return () => clearInterval(interval);
-    }, [isLive]);
+    // Real-time Listener
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleLog = (newLog) => {
+            setLogs(prev => [newLog, ...prev].slice(0, 50)); // Keep last 50
+        };
+
+        socket.on('WATCHTOWER_LOG', handleLog);
+
+        return () => {
+            socket.off('WATCHTOWER_LOG', handleLog);
+        };
+    }, [socket]);
 
     const getActionStyle = (action) => {
         switch (action) {
@@ -120,9 +123,9 @@ export default function AdminWatchtower() {
                 <motion.div variants={fadeUp} style={{ marginBottom: 28, borderBottom: `1px solid ${T.borderSoft}`, paddingBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "end" }}>
                     <div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                            <FiRadio size={14} style={{ color: isLive ? T.teal : T.textGhost }} className={isLive ? "animate-pulse" : ""} />
-                            <span style={{ fontSize: 10, fontWeight: 500, color: isLive ? T.teal : T.textGhost, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                                {isLive ? "Live Connection Established" : "Connection Paused"}
+                            <FiRadio size={14} style={{ color: isConnected ? T.teal : T.textGhost }} className={isConnected ? "animate-pulse" : ""} />
+                            <span style={{ fontSize: 10, fontWeight: 500, color: isConnected ? T.teal : T.textGhost, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                                {isConnected ? "Live Connection Established" : "Connecting to Matrix..."}
                             </span>
                         </div>
                         <h1 style={{ fontSize: 24, fontWeight: 600, color: T.text, letterSpacing: "-0.02em", marginBottom: 6 }}>Live Operations</h1>
@@ -134,19 +137,9 @@ export default function AdminWatchtower() {
                             <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Active Users</div>
                             <div style={{ fontSize: 24, fontWeight: 600, color: T.teal, display: "flex", alignItems: "center", gap: 8 }}>
                                 <FiGlobe size={20} className="opacity-50" />
-                                {activeCount}
+                                {activeUsers}
                             </div>
                         </Card>
-                        <button
-                            onClick={() => setIsLive(!isLive)}
-                            style={{
-                                padding: "0 24px", borderRadius: 16, border: `1px solid ${T.border}`,
-                                background: T.surface, color: T.textMid, fontSize: 12, fontWeight: 500,
-                                cursor: "pointer", height: "auto"
-                            }}
-                        >
-                            {isLive ? "Pause Feed" : "Resume"}
-                        </button>
                     </div>
                 </motion.div>
 

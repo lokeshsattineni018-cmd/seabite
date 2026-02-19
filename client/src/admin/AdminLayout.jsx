@@ -6,6 +6,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { FiMenu, FiX, FiSearch, FiBell } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSocket } from "../context/SocketContext";
 
 const AdminPageLoader = () => (
   <div className="w-full animate-pulse space-y-8 p-6">
@@ -42,6 +43,29 @@ export default function AdminLayout() {
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
+
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewOrder = (data) => {
+      // Play sound
+      const audio = new Audio("https://cdn.freesound.org/previews/536/536108_1415754-lq.mp3"); // Simple ding sound
+      audio.play().catch(e => console.log("Audio play failed (user interaction needed)", e));
+
+      toast.success(
+        <div className="flex flex-col gap-1">
+          <span className="font-bold">New Order Received!</span>
+          <span className="text-xs">{(data.items || []).length} items • ₹{data.amount}</span>
+        </div>,
+        { duration: 5000, icon: '🔔' }
+      );
+    };
+
+    socket.on('ORDER_PLACED', handleNewOrder);
+    return () => socket.off('ORDER_PLACED', handleNewOrder);
+  }, [socket]);
 
   const updateBanner = async (newBanner) => {
     try {
