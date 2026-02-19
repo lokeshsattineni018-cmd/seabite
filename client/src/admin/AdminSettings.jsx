@@ -174,8 +174,64 @@ export default function AdminSettings() {
                         </div>
                     </div>
 
-                </form>
-            </div>
-        </motion.div>
+
+                    {/* 🟢 Announcement Bar */}
+                    <div className="md:col-span-2 bg-white p-8 rounded-3xl border border-stone-200/60 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl"><FiBriefcase size={20} /></div>
+                            <h2 className="text-lg font-bold text-stone-900">Announcement Bar</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 ml-1">Announcement Text</label>
+                                    <input
+                                        name="announcement.text"
+                                        value={formData.announcement?.text || ""}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...prev.announcement, text: e.target.value } }))}
+                                        className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl font-medium text-stone-900 focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-50 outline-none transition-all placeholder:text-stone-300"
+                                        placeholder="🎉 Flash Sale! Flat 50% OFF on all Prawns"
+                                    />
+                                </div>
+                                <div className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                                    <div className={`p-3 rounded-full shrink-0 transition-colors ${formData.announcement?.active ? "bg-purple-100 text-purple-600" : "bg-stone-200 text-stone-400"}`}>
+                                        <FiBriefcase />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-sm font-bold text-stone-900">Active Status</h3>
+                                        <p className="text-xs text-stone-500 truncate">{formData.announcement?.active ? "Visible on top of site" : "Hidden from users"}</p>
+                                    </div>
+                                    <label className="relative inline-flex items-center cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={formData.announcement?.active || false}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...prev.announcement, active: e.target.checked } }))}
+                                            className="sr-only peer"
+                                        />
+                                        <div className="w-12 h-7 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-stone-900 shadow-inner"></div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {/* Preview */}
+                            <div className="bg-stone-100 p-6 rounded-2xl border border-stone-200 border-dashed text-center">
+                                <p className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-3">Live Preview</p>
+                                <div
+                                    className="w-full py-3 px-4 rounded-lg shadow-sm text-sm font-bold truncate"
+                                    style={{
+                                        backgroundColor: "#1c1917",
+                                        color: "#ffffff"
+                                    }}
+                                >
+                                    {formData.announcement?.text || "Your text here..."}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </form >
+            </div >
+        </motion.div >
     );
 }

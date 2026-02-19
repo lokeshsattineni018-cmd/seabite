@@ -18,6 +18,7 @@ router.get("/", async (req, res) => {
             isMaintenanceMode: settings.isMaintenanceMode,
             maintenanceMessage: settings.maintenanceMessage,
             banner: settings.banner,
+            announcement: settings.announcement, // 🟢 Added
             contactPhone: settings.contactPhone,
             contactEmail: settings.contactEmail,
             logoUrl: settings.logoUrl,
