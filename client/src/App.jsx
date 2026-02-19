@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -14,47 +14,48 @@ import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import SupportWidget from "./components/common/SupportWidget";
 import BannerPopup from "./components/layout/BannerPopup";
-import AnnouncementBar from "./components/layout/AnnouncementBar"; // 🟢 Added
+import AnnouncementBar from "./components/layout/AnnouncementBar";
+import PageSkeleton from "./components/common/PageSkeleton"; // 🟢 Added Skeleton
 
-// Direct Imports for Critical Pages
-import Home from "./pages/shop/Home";
-import Products from "./pages/shop/Products";
-import ProductDetails from "./pages/shop/ProductDetails";
-import Wishlist from "./pages/shop/Wishlist";
-import Cart from "./pages/shop/Cart";
-import Profile from "./pages/user/Profile";
-import Checkout from "./pages/shop/Checkout";
-import Login from "./pages/auth/Login";
-import OrderSuccess from "./pages/shop/OrderSuccess";
-import Orders from "./pages/user/Orders";
-import OrderDetails from "./pages/user/OrderDetails";
-import Notifications from "./pages/user/Notifications";
-import Spin from "./pages/general/Spin";
-import About from "./pages/general/About";
-import FAQ from "./pages/legal/FAQ";
-import Terms from "./pages/legal/Terms";
-import Privacy from "./pages/legal/Privacy";
-import Cancellation from "./pages/legal/Cancellation";
-import Maintenance from "./pages/general/Maintenance";
+// Lazy Imports for Critical Pages
+const Home = lazy(() => import("./pages/shop/Home"));
+const Products = lazy(() => import("./pages/shop/Products"));
+const ProductDetails = lazy(() => import("./pages/shop/ProductDetails"));
+const Wishlist = lazy(() => import("./pages/shop/Wishlist"));
+const Cart = lazy(() => import("./pages/shop/Cart"));
+const Profile = lazy(() => import("./pages/user/Profile"));
+const Checkout = lazy(() => import("./pages/shop/Checkout"));
+const Login = lazy(() => import("./pages/auth/Login"));
+const OrderSuccess = lazy(() => import("./pages/shop/OrderSuccess"));
+const Orders = lazy(() => import("./pages/user/Orders"));
+const OrderDetails = lazy(() => import("./pages/user/OrderDetails"));
+const Notifications = lazy(() => import("./pages/user/Notifications"));
+const Spin = lazy(() => import("./pages/general/Spin"));
+const About = lazy(() => import("./pages/general/About"));
+const FAQ = lazy(() => import("./pages/legal/FAQ"));
+const Terms = lazy(() => import("./pages/legal/Terms"));
+const Privacy = lazy(() => import("./pages/legal/Privacy"));
+const Cancellation = lazy(() => import("./pages/legal/Cancellation"));
+const Maintenance = lazy(() => import("./pages/general/Maintenance"));
 
-// Admin Imports
-import AdminLayout from "./admin/AdminLayout";
-import AdminDashboard from "./admin/AdminDashboard";
-import AdminProducts from "./admin/AdminProducts";
-import AddProduct from "./admin/AddProduct";
-import EditProduct from "./admin/EditProduct";
-import AdminOrders from "./admin/AdminOrders";
-import AdminUsers from "./admin/AdminUsers";
-import AdminMessages from "./admin/AdminMessages";
-import AdminReviews from "./admin/AdminReviews";
-import AdminCoupons from "./admin/AdminCoupons";
-import AdminPOS from "./admin/AdminPOS";
-import AdminFlashSale from "./admin/AdminFlashSale";
-import AdminMarketing from "./admin/AdminMarketing";
-import AdminWatchtower from "./admin/AdminWatchtower";
-import AdminAbandonedCarts from "./admin/AdminAbandonedCarts";
-import AdminSettings from "./admin/AdminSettings";
-import AdminAnalytics from "./admin/AdminAnalytics";
+// Admin Lazy Imports
+const AdminLayout = lazy(() => import("./admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./admin/AdminDashboard"));
+const AdminProducts = lazy(() => import("./admin/AdminProducts"));
+const AddProduct = lazy(() => import("./admin/AddProduct"));
+const EditProduct = lazy(() => import("./admin/EditProduct"));
+const AdminOrders = lazy(() => import("./admin/AdminOrders"));
+const AdminUsers = lazy(() => import("./admin/AdminUsers"));
+const AdminMessages = lazy(() => import("./admin/AdminMessages"));
+const AdminReviews = lazy(() => import("./admin/AdminReviews"));
+const AdminCoupons = lazy(() => import("./admin/AdminCoupons"));
+const AdminPOS = lazy(() => import("./admin/AdminPOS"));
+const AdminFlashSale = lazy(() => import("./admin/AdminFlashSale"));
+const AdminMarketing = lazy(() => import("./admin/AdminMarketing"));
+const AdminWatchtower = lazy(() => import("./admin/AdminWatchtower"));
+const AdminAbandonedCarts = lazy(() => import("./admin/AdminAbandonedCarts"));
+const AdminSettings = lazy(() => import("./admin/AdminSettings"));
+const AdminAnalytics = lazy(() => import("./admin/AdminAnalytics"));
 
 // Context
 import { CartProvider } from "./context/CartContext";
@@ -173,60 +174,63 @@ function MainLayout() {
           )}
 
           <div className="flex-grow">
-            {isAdminRoute ? (
-              <Routes>
-                <Route path="/admin" element={adminLayoutElement}>
-                  <Route index element={<AdminDashboard />} />
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="products" element={<AdminProducts />} />
-                  <Route path="add-product" element={<AddProduct />} />
-                  <Route path="edit-product/:id" element={<EditProduct />} />
-                  <Route path="orders" element={<AdminOrders />} />
-                  <Route path="users" element={<AdminUsers />} />
-                  <Route path="messages" element={<AdminMessages />} />
-                  <Route path="reviews" element={<AdminReviews />} />
-                  <Route path="pos" element={<AdminPOS />} />
-                  <Route path="coupons" element={<AdminCoupons />} />
-                  <Route path="flash-sale" element={<AdminFlashSale />} />
-                  <Route path="marketing" element={<AdminMarketing />} />
-                  <Route path="watchtower" element={<AdminWatchtower />} />
-                  <Route path="carts" element={<AdminAbandonedCarts />} />
-                  <Route path="settings" element={<AdminSettings />} />
-                  <Route path="analytics" element={<AdminAnalytics />} />
-                </Route>
-              </Routes>
-            ) : (
-              <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
-                <Routes location={location} key={location.pathname}>
-                  <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-                  <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
-                  <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
-                  <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
-                  <Route path="/wishlist" element={<PageTransition><PrivateRoute><Wishlist /></PrivateRoute></PageTransition>} />
-                  <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
-                  <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
-                  <Route path="/notifications" element={<PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition>} />
-                  <Route path="/checkout" element={<PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition>} />
-                  <Route path="/success" element={<PageTransition><PrivateRoute><OrderSuccess /></PrivateRoute></PageTransition>} />
-                  <Route path="/orders" element={<PageTransition><PrivateRoute><Orders /></PrivateRoute></PageTransition>} />
-                  <Route path="/orders/:orderId" element={<PageTransition><PrivateRoute><OrderDetails /></PrivateRoute></PageTransition>} />
-                  <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-                  <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-                  <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
-                  <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
-                  <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
-                  <Route path="/cancellation" element={<PageTransition><Cancellation /></PageTransition>} />
-                  <Route path="/maintenance" element={<Maintenance />} />
+            <Suspense fallback={<PageSkeleton />}>
+              {isAdminRoute ? (
+                <Routes>
+                  <Route path="/admin" element={adminLayoutElement}>
+                    <Route index element={<AdminDashboard />} />
+                    <Route path="dashboard" element={<AdminDashboard />} />
+                    <Route path="products" element={<AdminProducts />} />
+                    <Route path="add-product" element={<AddProduct />} />
+                    <Route path="edit-product/:id" element={<EditProduct />} />
+                    <Route path="orders" element={<AdminOrders />} />
+                    <Route path="users" element={<AdminUsers />} />
+                    <Route path="messages" element={<AdminMessages />} />
+                    <Route path="reviews" element={<AdminReviews />} />
+                    <Route path="pos" element={<AdminPOS />} />
+                    <Route path="coupons" element={<AdminCoupons />} />
+                    <Route path="flash-sale" element={<AdminFlashSale />} />
+                    <Route path="marketing" element={<AdminMarketing />} />
+                    <Route path="watchtower" element={<AdminWatchtower />} />
+                    <Route path="carts" element={<AdminAbandonedCarts />} />
+                    <Route path="settings" element={<AdminSettings />} />
+                    <Route path="analytics" element={<AdminAnalytics />} />
+                  </Route>
                 </Routes>
-              </AnimatePresence>
-            )}
+              ) : (
+                <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
+                  <Routes location={location} key={location.pathname}>
+                    <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+                    <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
+                    <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
+                    <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
+                    <Route path="/wishlist" element={<PageTransition><PrivateRoute><Wishlist /></PrivateRoute></PageTransition>} />
+                    <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
+                    <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
+                    <Route path="/notifications" element={<PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition>} />
+                    <Route path="/checkout" element={<PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition>} />
+                    <Route path="/success" element={<PageTransition><PrivateRoute><OrderSuccess /></PrivateRoute></PageTransition>} />
+                    <Route path="/orders" element={<PageTransition><PrivateRoute><Orders /></PrivateRoute></PageTransition>} />
+                    <Route path="/orders/:orderId" element={<PageTransition><PrivateRoute><OrderDetails /></PrivateRoute></PageTransition>} />
+                    <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+                    <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+                    <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
+                    <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
+                    <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
+                    <Route path="/cancellation" element={<PageTransition><Cancellation /></PageTransition>} />
+                    <Route path="/maintenance" element={<Maintenance />} />
+                  </Routes>
+                </AnimatePresence>
+              )}
+            </Suspense>
           </div>
 
           {!isAdminRoute && <Footer />}
           {!isAdminRoute && <SupportWidget />}
         </>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
 
