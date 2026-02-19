@@ -11,7 +11,7 @@ import { CartContext } from "../../context/CartContext";
 import axios from "axios";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../../context/AuthContext";
-import Spin from "../../pages/Spin";
+import Spin from "../../pages/general/Spin";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
