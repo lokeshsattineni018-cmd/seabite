@@ -28,9 +28,9 @@ import {
   LeafyGreen,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import Categories from "../../components/products/Categories";
-import EnhancedProductCard from "../../components/products/EnhancedProductCard";
-import TrendingProducts from "../../components/products/TrendingProducts";
+import Categories from "../components/products/Categories";
+import EnhancedProductCard from "../components/products/EnhancedProductCard";
+import TrendingProducts from "../components/products/TrendingProducts";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
