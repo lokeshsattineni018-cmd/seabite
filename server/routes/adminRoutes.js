@@ -5,6 +5,7 @@ import Order from "../models/Order.js";
 import User from "../models/User.js";
 import Settings, { getSettings } from "../models/Settings.js";
 import SearchInsight from "../models/SearchInsight.js";
+import ActivityLog from "../models/ActivityLog.js"; // 🟢 Added
 import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail, sendEmail } from "../utils/emailService.js";
 
 const router = express.Router();
@@ -456,32 +457,105 @@ router.put("/orders/:id/status", adminAuth, async (req, res) => {
   }
 });
 
-// 3. USER INTELLIGENCE (Enriched for Sessions)
+// 3. USER INTELLIGENCE (Deep Tech: RFM & Behavioral)
 router.get("/users/intelligence", adminAuth, async (req, res) => {
   try {
     const users = await User.find({}).select("-password").sort({ createdAt: -1 });
+
+    // Global stats for RFM normalization (optional, but good for relative scoring)
+    // For now, we'll use absolute thresholds for simplicity and speed.
+
     const enrichedUsers = await Promise.all(
       users.map(async (u) => {
-        const orders = await Order.find({ user: u._id });
+        const orders = await Order.find({ user: u._id }).sort({ createdAt: -1 });
         const reviewsCount = await Product.countDocuments({ "reviews.user": u._id });
+
+        // 1. Basic Metrics
         const totalSpent = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        const orderCount = orders.length;
+        const lastOrderDate = orders.length > 0 ? orders[0].createdAt : null;
+
+        // 2. Deep Tech: RFM Analysis
+        // Recency: Days since last order
+        const recencyDays = lastOrderDate
+          ? Math.floor((Date.now() - new Date(lastOrderDate)) / (1000 * 60 * 60 * 24))
+          : 999;
+
+        // Frequency: Orders per month (approx) or just raw count
+        // Monetary: Total Spent
+
+        // 3. Segmentation Logic
+        let segment = "New";
+        let churnRisk = "Low";
+
+        if (orderCount === 0) {
+          segment = "New Lead";
+          churnRisk = "High"; // Hasn't converted yet
+        } else {
+          if (recencyDays > 90) { // Hosting ghost
+            segment = "Hibernating";
+            churnRisk = "High"; // Potential Churn
+          } else if (recencyDays > 30) {
+            segment = "At Risk";
+            churnRisk = "Medium";
+          } else {
+            if (totalSpent > 10000 || orderCount > 10) {
+              segment = "Champion"; // High value, active
+            } else if (orderCount > 3) {
+              segment = "Loyal";
+            } else {
+              segment = "Active";
+            }
+          }
+        }
+
+        // 4. Behavioral: Preferred Category
+        const categories = {};
+        orders.forEach(order => {
+          order.items.forEach(item => {
+            // If item has category populated (it might not be if it's just a snapshot)
+            // We might need to rely on item name or fetch product. 
+            // For speed, let's assume we can infer or it's not critical.
+            // Actually, Order schema items don't strictly save category unless we added it.
+            // Let's try to infer from name if possible, or just skip if too complex for loop.
+            // Wait, we can use the `ActivityLog` for recent searches/views to guess interest!
+          });
+        });
+
+        // 5. Activity Intelligence
+        const recentLogs = await ActivityLog.find({
+          $or: [{ user: u._id }, { "meta.email": u.email }] // Match by ID or Email
+        }).sort({ timestamp: -1 }).limit(5);
+
+        const lastActive = recentLogs.length > 0 ? recentLogs[0].timestamp : u.updatedAt;
+
         return {
           _id: u._id,
           name: u.name,
-          email: u.email.toLowerCase(), // ✅ Case-insensitive mapping for sessions
+          email: u.email.toLowerCase(),
           role: u.role,
           createdAt: u.createdAt,
+          isBanned: u.isBanned, // Ensure this is sent
           intelligence: {
             totalSpent: Math.round(totalSpent),
-            orderCount: orders.length,
-            reviewCount: reviewsCount,
-            isVIP: totalSpent > 10000
+            orderCount,
+            reviewCount,
+            avgOrderValue: orderCount > 0 ? Math.round(totalSpent / orderCount) : 0,
+            lastOrderDate,
+            recencyDays,
+            segment,
+            churnRisk,
+            lastActive,
+            recentActivity: recentLogs.map(l => ({ action: l.action, details: l.details, time: l.timestamp }))
           }
         };
       })
     );
     res.json(enrichedUsers);
-  } catch (err) { res.status(500).json({ message: "Failed intelligence fetch" }); }
+  } catch (err) {
+    console.error("Deep Intelligence Error:", err);
+    res.status(500).json({ message: "Failed intelligence fetch" });
+  }
 });
 
 // 4. FETCH ALL USERS
