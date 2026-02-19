@@ -9,12 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Login() {
-  const [modal, setModal] = useState({
-    show: false,
-    message: "",
-    type: "info",
-  });
-
+  const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const { setUser, refreshMe } = useAuth();
 
   const login = useGoogleLogin({
@@ -27,7 +22,6 @@ export default function Login() {
         );
         setUser(res.data.user);
         setModal({ show: true, message: "Login Successful! Redirecting...", type: "success" });
-
         setTimeout(async () => {
           await refreshMe?.();
           const redirectPath = localStorage.getItem("postLoginRedirect");
@@ -36,41 +30,43 @@ export default function Login() {
           window.location.href = targetPath;
         }, 1500);
       } catch (err) {
-        setModal({
-          show: true,
-          message: err?.response?.data?.message || "Verification failed. Please try again.",
-          type: "error",
-        });
+        setModal({ show: true, message: err?.response?.data?.message || "Verification failed. Please try again.", type: "error" });
       }
     },
-    onError: (error) => {
-      setModal({ show: true, message: "Google login was unsuccessful.", type: "error" });
-    },
+    onError: () => setModal({ show: true, message: "Google login was unsuccessful.", type: "error" }),
     flow: window.innerWidth < 768 ? "redirect" : "implicit",
   });
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-[#0a1625] relative overflow-hidden transition-colors duration-500">
-      {/* Animated ambient background */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none">
+    <div
+      className="min-h-screen w-full flex items-center justify-center relative overflow-hidden"
+      style={{ background: "#F4F9F8", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+    >
+      {/* Ambient ocean rings */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 30, 0],
-            y: [0, -20, 0],
+          animate={{ scale: [1, 1.08, 1], opacity: [0.4, 0.7, 0.4] }}
+          transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
+          style={{
+            position: "absolute", top: "-15%", left: "-15%",
+            width: 600, height: 600, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(91,168,160,0.12) 0%, transparent 70%)",
           }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-100/60 dark:bg-blue-900/20 rounded-full blur-[100px]"
         />
         <motion.div
-          animate={{
-            scale: [1, 1.15, 1],
-            x: [0, -20, 0],
-            y: [0, 30, 0],
+          animate={{ scale: [1, 1.1, 1], opacity: [0.3, 0.6, 0.3] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          style={{
+            position: "absolute", bottom: "-20%", right: "-10%",
+            width: 700, height: 700, borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(137,194,217,0.15) 0%, transparent 70%)",
           }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-cyan-100/50 dark:bg-cyan-900/15 rounded-full blur-[120px]"
         />
+        {/* Decorative wave lines */}
+        <svg className="absolute bottom-0 left-0 w-full opacity-30" viewBox="0 0 1440 120" preserveAspectRatio="none">
+          <path d="M0,60 C240,100 480,20 720,60 C960,100 1200,20 1440,60 L1440,120 L0,120 Z" fill="rgba(91,168,160,0.08)" />
+          <path d="M0,80 C240,40 480,100 720,80 C960,60 1200,100 1440,80 L1440,120 L0,120 Z" fill="rgba(91,168,160,0.06)" />
+        </svg>
       </div>
 
       <PopupModal
@@ -81,77 +77,126 @@ export default function Login() {
       />
 
       <motion.div
-        initial={{ opacity: 0, y: 40, scale: 0.95, filter: "blur(10px)" }}
-        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-        transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-        className="relative z-10 w-full max-w-sm px-6"
+        initial={{ opacity: 0, y: 32, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="relative z-10 w-full max-w-[400px] px-5"
       >
-        <motion.div
-          whileHover={{ y: -4, boxShadow: "0 30px 60px rgba(0,0,0,0.12)" }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-[2.5rem] p-10 text-center shadow-2xl border border-white/80 dark:border-white/10 transition-colors duration-500"
+        {/* Card */}
+        <div
+          style={{
+            background: "#ffffff",
+            borderRadius: 24,
+            border: "1px solid #E2EEEC",
+            boxShadow: "0 4px 40px rgba(91,168,160,0.10), 0 1px 4px rgba(26,43,53,0.04)",
+            padding: "48px 40px",
+            textAlign: "center",
+          }}
         >
-          <div className="mb-8">
-            <Link to="/" className="inline-block mb-6 hover:scale-105 transition-transform">
+          {/* Logo + Brand */}
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            style={{ marginBottom: 32 }}
+          >
+            <Link to="/" style={{ display: "inline-block", marginBottom: 20 }}>
               <motion.img
                 src="/logo.png"
-                className="h-14 mx-auto object-contain"
+                style={{ height: 52, margin: "0 auto", objectFit: "contain" }}
                 alt="SeaBite"
-                initial={{ opacity: 0, rotate: -10 }}
-                animate={{ opacity: 1, rotate: 0 }}
-                transition={{ delay: 0.3, duration: 0.6, type: "spring", stiffness: 200 }}
+                whileHover={{ scale: 1.04 }}
               />
             </Link>
 
-            <motion.h2
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="text-2xl font-bold text-slate-900 dark:text-white mb-2 tracking-tight"
-            >
-              Welcome Back
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-              className="text-slate-500 dark:text-slate-400 text-sm"
-            >
-              Sign in with Google to access your account.
-            </motion.p>
-          </div>
+            {/* Subtle divider */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+              <div style={{ flex: 1, height: 1, background: "#E8EEF2" }} />
+              <span style={{ fontSize: 11, color: "#8BA5B3", fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                Welcome Back
+              </span>
+              <div style={{ flex: 1, height: 1, background: "#E8EEF2" }} />
+            </div>
 
+            <h2
+              style={{ fontSize: 26, fontWeight: 700, color: "#1A2B35", letterSpacing: "-0.02em", marginBottom: 8 }}
+            >
+              Sign in to SeaBite
+            </h2>
+            <p style={{ fontSize: 13.5, color: "#6B8A97", lineHeight: 1.6, maxWidth: 260, margin: "0 auto" }}>
+              Fresh seafood, delivered to your door. Sign in to continue.
+            </p>
+          </motion.div>
+
+          {/* Google Button */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-            className="flex justify-center mb-6"
+            transition={{ delay: 0.4, duration: 0.5 }}
+            style={{ marginBottom: 24 }}
           >
             <motion.button
               onClick={() => login()}
-              whileHover={{ scale: 1.03, boxShadow: "0 12px 30px rgba(66,133,244,0.35)" }}
-              whileTap={{ scale: 0.96 }}
-              className="flex items-center justify-center gap-3 bg-[#4285F4] text-white font-semibold py-3.5 px-6 rounded-full shadow-lg hover:bg-[#357ae8] transition-all w-full"
+              whileHover={{ y: -2, boxShadow: "0 8px 28px rgba(91,168,160,0.22)" }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                width: "100%", padding: "14px 24px", borderRadius: 14,
+                background: "#1A2B35", color: "#ffffff",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer",
+                boxShadow: "0 2px 16px rgba(26,43,53,0.18)",
+                transition: "all 0.2s ease",
+              }}
             >
               <img
                 src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
-                className="w-6 h-6 bg-white rounded-full p-1"
+                style={{ width: 20, height: 20, borderRadius: "50%", background: "#fff", padding: 2 }}
                 alt="google"
               />
-              Sign in with Google
+              Continue with Google
             </motion.button>
           </motion.div>
 
-          <motion.p
+          {/* Secondary option hint */}
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
-            className="text-[10px] text-slate-400 dark:text-slate-500 mt-4 leading-relaxed uppercase tracking-wider"
+            transition={{ delay: 0.6, duration: 0.5 }}
           >
-            Your identity is secured by Google OAuth 2.0. We do not store your
-            password.
-          </motion.p>
-        </motion.div>
+            {/* Seafoam accent bar */}
+            <div
+              style={{
+                display: "flex", alignItems: "center", gap: 10,
+                padding: "12px 16px", borderRadius: 12,
+                background: "rgba(91,168,160,0.06)", border: "1px solid rgba(91,168,160,0.15)",
+                marginBottom: 20,
+              }}
+            >
+              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#5BA8A0", flexShrink: 0 }} />
+              <p style={{ fontSize: 11.5, color: "#5BA8A0", fontWeight: 600, textAlign: "left", lineHeight: 1.5 }}>
+                Secured by Google OAuth 2.0 — we never store your password.
+              </p>
+            </div>
+
+            <p style={{ fontSize: 11, color: "#9BB5BF", lineHeight: 1.7 }}>
+              By continuing, you agree to SeaBite's{" "}
+              <Link to="/terms" style={{ color: "#5BA8A0", fontWeight: 600, textDecoration: "none" }}>Terms</Link>
+              {" "}and{" "}
+              <Link to="/privacy" style={{ color: "#5BA8A0", fontWeight: 600, textDecoration: "none" }}>Privacy Policy</Link>
+            </p>
+          </motion.div>
+        </div>
+
+        {/* Bottom brand note */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          style={{ textAlign: "center", marginTop: 20, fontSize: 11, color: "#9BB5BF", fontWeight: 500 }}
+        >
+          🌊 SeaBite · Fresh from the sea
+        </motion.p>
       </motion.div>
     </div>
   );

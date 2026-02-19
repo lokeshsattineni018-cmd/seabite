@@ -1,714 +1,412 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useMemo } from "react";
 import axios from "axios";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
-  FiPackage,
-  FiMapPin,
-  FiClock,
-  FiShoppingBag,
-  FiArrowLeft,
-  FiCheck,
-  FiHome,
-  FiTruck,
-  FiFileText,
-  FiXCircle,
-  FiDollarSign,
-  FiCopy,
-  FiPhone,
-  FiCreditCard,
+  FiClock, FiPackage, FiMapPin, FiCheck, FiX, FiRefreshCcw, FiChevronRight,
+  FiShoppingBag, FiStar, FiEdit2, FiTag, FiSearch, FiFilter, FiTruck, FiChevronDown,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { ThemeContext } from "../../context/ThemeContext";
+import ReviewModal from "../../components/common/ReviewModal";
 import PopupModal from "../../components/common/PopupModal";
-import Invoice from "../../components/content/Invoice";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// --- HELPERS ---
-const getStatusClasses = (status) => {
+// ── Design tokens ──
+const T = {
+  bg: "#F4F9F8", surface: "#ffffff", border: "#E2EEEC",
+  textDark: "#1A2B35", textMid: "#4A6572", textLite: "#8BA5B3",
+  primary: "#5BA8A0", sky: "#89C2D9", coral: "#E8816A",
+  radius: 16, radiusSm: 10,
+};
+
+const getStatusConfig = (status) => {
   switch (status) {
-    case "Delivered":
-      return {
-        bg: "bg-emerald-500/10",
-        text: "text-emerald-600 dark:text-emerald-400",
-        border: "border-emerald-500/20",
-        icon: <FiCheck size={14} />,
-        label: "Delivered",
-        gradient: "from-emerald-500 to-emerald-600",
-      };
+    case "Delivered":   return { bg: "rgba(91,168,160,0.10)", text: T.primary, icon: <FiCheck size={12} />, dot: T.primary };
     case "Cancelled":
-    case "Cancelled by User":
-      return {
-        bg: "bg-red-500/10",
-        text: "text-red-600 dark:text-red-400",
-        border: "border-red-500/20",
-        icon: <FiXCircle size={14} />,
-        label: "Cancelled",
-        gradient: "from-red-500 to-red-600",
-      };
-    case "Shipped":
-      return {
-        bg: "bg-blue-500/10",
-        text: "text-blue-600 dark:text-blue-400",
-        border: "border-blue-500/20",
-        icon: <FiTruck size={14} />,
-        label: "Shipped",
-        gradient: "from-blue-500 to-blue-600",
-      };
-    default:
-      return {
-        bg: "bg-amber-500/10",
-        text: "text-amber-600 dark:text-amber-400",
-        border: "border-amber-500/20",
-        icon: <FiClock size={14} />,
-        label: status || "Pending",
-        gradient: "from-amber-500 to-amber-600",
-      };
+    case "Cancelled by User": return { bg: "rgba(232,129,106,0.10)", text: T.coral, icon: <FiX size={12} />, dot: T.coral };
+    case "Shipped":     return { bg: "rgba(137,194,217,0.12)", text: T.sky, icon: <FiTruck size={12} />, dot: T.sky };
+    default:            return { bg: "rgba(251,191,36,0.10)", text: "#C9941A", icon: <FiRefreshCcw size={12} />, dot: "#F59E0B" };
   }
 };
 
-const formatCurrency = (amount) => {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    minimumFractionDigits: 2,
-  }).format(amount || 0);
+const formatCurrency = (amount) => new Intl.NumberFormat("en-IN", {
+  style: "currency", currency: "INR", minimumFractionDigits: 0, maximumFractionDigits: 2,
+}).format(amount || 0);
+
+const TABS = [
+  { id: "all", label: "All Orders", icon: <FiPackage size={13} /> },
+  { id: "active", label: "Active", icon: <FiTruck size={13} /> },
+  { id: "delivered", label: "Delivered", icon: <FiCheck size={13} /> },
+  { id: "cancelled", label: "Cancelled", icon: <FiX size={13} /> },
+];
+
+const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.07 } } };
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
 };
 
-// --- TIMELINE STEP COMPONENT ---
-function TimelineStep({ step, index, totalSteps, isActive, isCompleted, isCancelledFlow }) {
-  const icons = {
-    Pending: <FiClock size={16} />,
-    Processing: <FiPackage size={16} />,
-    Shipped: <FiTruck size={16} />,
-    Delivered: <FiCheck size={16} />,
-    Cancelled: <FiXCircle size={16} />,
-    Refund: <FiDollarSign size={16} />,
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 + index * 0.1 }}
-      className="flex flex-col items-center relative z-10"
-    >
-      <motion.div
-        animate={
-          isActive && !isCompleted
-            ? { scale: [1, 1.1, 1], boxShadow: ["0 0 0 0 rgba(59,130,246,0)", "0 0 0 8px rgba(59,130,246,0.15)", "0 0 0 0 rgba(59,130,246,0)"] }
-            : {}
-        }
-        transition={isActive && !isCompleted ? { duration: 2, repeat: Infinity } : {}}
-        className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${isCompleted
-          ? isCancelledFlow
-            ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20"
-            : "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-          : isActive
-            ? "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
-            : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400"
-          }`}
-      >
-        {isCompleted ? <FiCheck size={16} /> : icons[step] || <FiClock size={16} />}
-      </motion.div>
-      <span
-        className={`mt-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${isCompleted || isActive
-          ? "text-slate-900 dark:text-white"
-          : "text-slate-400"
-          }`}
-      >
-        {step}
-      </span>
-    </motion.div>
-  );
-}
-
-export default function OrderDetails() {
-  const { orderId } = useParams();
-  const navigate = useNavigate();
-  const { isDarkMode } = useContext(ThemeContext);
-  const [order, setOrder] = useState(null);
+export default function Order() {
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [cancelling, setCancelling] = useState(false);
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [cancelReason, setCancelReason] = useState("");
-  const [customReason, setCustomReason] = useState("");
-  const [copiedOrderId, setCopiedOrderId] = useState(false);
-  const [modalConfig, setModalConfig] = useState({
-    show: false,
-    message: "",
-    type: "info",
-  });
+  const [activeTab, setActiveTab] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [modalConfig, setModalConfig] = useState({ show: false, message: "", type: "info" });
+  const navigate = useNavigate();
 
-  const statusSteps = ["Pending", "Processing", "Shipped", "Delivered"];
-  const currentStepIndex = statusSteps.indexOf(order?.status || "Pending");
-  const isCancelled = order?.status?.includes("Cancelled");
-  const isPrepaid = order?.paymentMethod === "Prepaid";
-  const isRefundSuccessful =
-    isCancelled && isPrepaid && order?.refundStatus === "Success";
-
-  const fetchOrder = async () => {
+  const fetchOrders = async () => {
     try {
-      const response = await axios.get(`${API_URL}/api/orders/${orderId}`, {
-        withCredentials: true,
-      });
-      setOrder(response.data);
+      const response = await axios.get(`${API_URL}/api/orders/myorders`, { withCredentials: true });
+      setOrders(response.data);
     } catch (err) {
-      setError(err.response?.data?.message || "Unable to fetch order.");
-    } finally {
-      setLoading(false);
-    }
+      if (err.response?.status === 401) setTimeout(() => navigate("/login"), 1000);
+    } finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    if (!orderId || orderId === "N/A") {
-      setError("Invalid Order ID.");
-      setLoading(false);
-      return;
+  useEffect(() => { fetchOrders(); }, [navigate]);
+
+  const filteredOrders = useMemo(() => {
+    let result = [...orders];
+    if (activeTab === "active") result = result.filter(o => ["Pending","Processing","Shipped"].includes(o.status));
+    else if (activeTab === "delivered") result = result.filter(o => o.status === "Delivered");
+    else if (activeTab === "cancelled") result = result.filter(o => o.status?.includes("Cancelled"));
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(o => String(o.orderId || o._id || "").toLowerCase().includes(q) ||
+        (o.items || []).some(i => String(i.name || "").toLowerCase().includes(q)));
     }
-    fetchOrder();
-    const interval = setInterval(fetchOrder, 5000);
-    return () => clearInterval(interval);
-  }, [orderId]);
+    if (sortBy === "newest") result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    else if (sortBy === "oldest") result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    else if (sortBy === "highest") result.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+    else if (sortBy === "lowest") result.sort((a, b) => (a.totalAmount || 0) - (b.totalAmount || 0));
+    return result;
+  }, [orders, activeTab, searchQuery, sortBy]);
 
-  const handlePrintInvoice = () => window.print();
+  const tabCounts = useMemo(() => ({
+    all: orders.length,
+    active: orders.filter(o => ["Pending","Processing","Shipped"].includes(o.status)).length,
+    delivered: orders.filter(o => o.status === "Delivered").length,
+    cancelled: orders.filter(o => o.status?.includes("Cancelled")).length,
+  }), [orders]);
 
-  const copyOrderId = () => {
-    navigator.clipboard.writeText(order?.orderId || orderId);
-    setCopiedOrderId(true);
-    setTimeout(() => setCopiedOrderId(false), 2000);
+  const getUserReview = (item, orderUserId) => {
+    const productData = item.productId || item.product;
+    if (!productData?.reviews) return null;
+    return productData.reviews.find(r => {
+      const rid = typeof r.user === "object" ? r.user._id : r.user;
+      const uid = typeof orderUserId === "object" ? orderUserId._id : orderUserId;
+      return rid?.toString() === uid?.toString();
+    });
   };
 
-  const handleCancelOrder = async () => {
-    const finalReason = cancelReason === "Other" ? customReason : cancelReason;
-    if (!finalReason) return;
-
-    setShowCancelConfirm(false);
-    setCancelling(true);
-
-    try {
-      if (isPrepaid && order.isPaid) {
-        await axios.put(
-          `${API_URL}/api/payment/refund`,
-          { orderId: order._id },
-          { withCredentials: true }
-        );
-        setModalConfig({
-          show: true,
-          message: "Refund initiated! Money will return shortly.",
-          type: "success",
-        });
-      } else {
-        await axios.put(
-          `${API_URL}/api/orders/${order._id}/cancel`,
-          { reason: finalReason },
-          { withCredentials: true }
-        );
-        setModalConfig({
-          show: true,
-          message: "Order cancelled successfully.",
-          type: "success",
-        });
-      }
-      fetchOrder();
-    } catch (err) {
-      setModalConfig({
-        show: true,
-        message: err.response?.data?.message || "Action failed.",
-        type: "error",
-      });
-    } finally {
-      setCancelling(false);
-      setCancelReason("");
-      setCustomReason("");
-    }
+  const openReviewModal = (item, existingReview) => {
+    const realId = item.productId ? (typeof item.productId === "object" ? item.productId._id : item.productId)
+      : item.product ? (typeof item.product === "object" ? item.product._id : item.product) : item._id;
+    setSelectedProduct({ _id: realId, name: item.name });
+    setSelectedReview(existingReview);
+    setIsReviewOpen(true);
   };
 
-  if (loading)
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#060e1a] flex flex-col items-center justify-center">
-        <div className="relative">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
-            className="w-14 h-14 border-[3px] border-slate-200 dark:border-slate-700 border-t-blue-600 rounded-full"
-          />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <FiPackage className="text-blue-600" size={18} />
-          </div>
-        </div>
-      </div>
-    );
-
-  if (error)
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#060e1a] flex flex-col items-center justify-center gap-4">
-        <FiXCircle className="text-red-400" size={40} />
-        <p className="text-slate-500 font-medium text-sm">{error}</p>
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => navigate(-1)}
-          className="px-6 py-2.5 bg-slate-900 dark:bg-blue-600 text-white rounded-xl font-bold text-xs"
-        >
-          Go Back
-        </motion.button>
-      </div>
-    );
-
-  const statusClasses = getStatusClasses(order.status);
-  const canCancel =
-    !isCancelled &&
-    (order.status === "Pending" || order.status === "Processing");
+  if (loading) return (
+    <div style={{ minHeight: "100vh", background: T.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        style={{ width: 44, height: 44, border: `3px solid ${T.border}`, borderTopColor: T.primary, borderRadius: "50%", marginBottom: 16 }} />
+      <p style={{ color: T.textLite, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Loading your orders...</p>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#060e1a] text-slate-900 dark:text-slate-200 font-sans transition-colors duration-500 overflow-x-hidden">
-      <PopupModal
-        show={modalConfig.show}
-        message={modalConfig.message}
-        type={modalConfig.type}
-        onClose={() => setModalConfig({ ...modalConfig, show: false })}
-      />
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'Plus Jakarta Sans', sans-serif", overflowX: "hidden" }}>
+      <PopupModal show={modalConfig.show} message={modalConfig.message} type={modalConfig.type} onClose={() => setModalConfig({ ...modalConfig, show: false })} />
+      <ReviewModal isOpen={isReviewOpen} onClose={() => setIsReviewOpen(false)} product={selectedProduct} existingReview={selectedReview} token={null} API_URL={API_URL} onSuccess={() => { setModalConfig({ show: true, message: "Review saved!", type: "success" }); fetchOrders(); }} />
 
-      {/* Cancel Confirm Modal */}
-      <AnimatePresence>
-        {showCancelConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
-          >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ type: "spring", damping: 25, stiffness: 250 }}
-              className="bg-white dark:bg-slate-800 p-6 md:p-8 rounded-3xl max-w-sm w-full shadow-2xl border border-slate-100 dark:border-white/5"
-            >
-              <div className="w-12 h-12 bg-red-500/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <FiXCircle className="text-red-500" size={20} />
-              </div>
-              <h3 className="text-lg font-bold mb-1 text-center text-slate-900 dark:text-white">
-                Cancel Order
-              </h3>
-              <p className="text-xs text-slate-500 text-center mb-5">
-                Please tell us why you want to cancel
-              </p>
-              <select
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-                className="w-full p-3 mb-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none transition-all text-slate-900 dark:text-white focus:border-blue-500"
-              >
-                <option value="" disabled>
-                  Select a reason...
-                </option>
-                <option value="Changed my mind">Changed my mind</option>
-                <option value="Order taking too long">
-                  Order taking too long
-                </option>
-                <option value="Found better price elsewhere">
-                  Found better price elsewhere
-                </option>
-                <option value="Other">Other</option>
-              </select>
-
-              <AnimatePresence>
-                {cancelReason === "Other" && (
-                  <motion.textarea
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 96, opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    placeholder="Please describe the reason..."
-                    value={customReason}
-                    onChange={(e) => setCustomReason(e.target.value)}
-                    className="w-full p-3 mb-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-blue-500 transition-all resize-none text-slate-900 dark:text-white"
-                  />
-                )}
-              </AnimatePresence>
-
-              <div className="flex gap-3 mt-2">
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => {
-                    setShowCancelConfirm(false);
-                    setCancelReason("");
-                  }}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-white transition-colors hover:bg-slate-200 dark:hover:bg-slate-600"
-                >
-                  Go Back
-                </motion.button>
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  disabled={
-                    !cancelReason ||
-                    (cancelReason === "Other" && !customReason) ||
-                    cancelling
-                  }
-                  onClick={handleCancelOrder}
-                  className="flex-1 py-3 rounded-xl font-bold text-sm bg-red-600 text-white disabled:opacity-50 transition-all hover:bg-red-700"
-                >
-                  {cancelling ? "Cancelling..." : "Confirm Cancel"}
-                </motion.button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Ambient background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-blue-50/80 via-transparent to-transparent dark:from-blue-950/20 dark:via-transparent" />
-        <div className="absolute top-40 right-0 w-[500px] h-[500px] bg-blue-100/20 dark:bg-blue-900/5 rounded-full blur-[120px]" />
+      {/* Ambient */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 400, background: "linear-gradient(180deg, rgba(91,168,160,0.06) 0%, transparent 100%)" }} />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-8 pt-24 pb-12">
-        {/* Back Button */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-6"
-        >
-          <button
-            onClick={() => navigate(-1)}
-            className="group flex items-center gap-2 text-slate-500 font-bold text-xs hover:text-blue-600 transition-all"
-          >
-            <div className="w-8 h-8 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white dark:group-hover:bg-blue-600 transition-all">
-              <FiArrowLeft size={14} />
-            </div>
-            <span className="uppercase tracking-wider">Back to Orders</span>
-          </button>
-        </motion.div>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 900, margin: "0 auto", padding: "112px 20px 60px" }}>
 
-        {/* ============ ORDER HEADER CARD ============ */}
-        <motion.div
-          initial={{ opacity: 0, y: 30, filter: "blur(10px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-white dark:bg-slate-800/60 backdrop-blur-xl rounded-3xl shadow-xl shadow-slate-200/40 dark:shadow-none overflow-hidden border border-slate-200/60 dark:border-white/5 mb-6"
-        >
-          {/* Header bar */}
-          <div className="p-5 md:p-7 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 dark:border-white/5">
-            <div>
-              <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">
-                  #{order.orderId || order._id.slice(-6).toUpperCase()}
-                </h1>
-                <motion.button
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={copyOrderId}
-                  className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-blue-600 transition-colors"
-                >
-                  {copiedOrderId ? (
-                    <FiCheck size={12} />
-                  ) : (
-                    <FiCopy size={12} />
-                  )}
-                </motion.button>
-              </div>
-              <p className="text-xs text-slate-500 flex items-center gap-2">
-                <FiClock size={11} />
-                Placed on{" "}
-                {new Date(order.createdAt).toLocaleDateString("en-GB", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </p>
-            </div>
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-              className={`px-4 py-2 rounded-xl border flex items-center gap-2 ${statusClasses.bg} ${statusClasses.text} ${statusClasses.border}`}
-            >
-              {statusClasses.icon}
-              <span className="font-bold text-xs uppercase tracking-wider">
-                {statusClasses.label}
+        {/* ── HEADER ── */}
+        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: [0.22,1,0.36,1] }} style={{ marginBottom: 32 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <div style={{ width: 4, height: 16, borderRadius: 2, background: `linear-gradient(180deg, ${T.primary}, ${T.sky})` }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.16em" }}>My Account</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 12 }}>
+            <h1 style={{ fontSize: 38, fontWeight: 800, color: T.textDark, letterSpacing: "-0.03em", margin: 0 }}>Orders</h1>
+            {orders.length > 0 && (
+              <span style={{ fontSize: 13, color: T.textLite, fontWeight: 500 }}>
+                <strong style={{ color: T.textDark }}>{orders.length}</strong> total orders
               </span>
-            </motion.div>
-          </div>
-
-          {/* ============ PROGRESS TIMELINE ============ */}
-          <div className="p-6 md:p-8 bg-slate-50/50 dark:bg-slate-900/20 border-b border-slate-100 dark:border-slate-700/30">
-            <div className="relative w-full max-w-2xl mx-auto">
-              {/* Track line */}
-              <div
-                className={`absolute top-5 md:top-6 left-[24px] md:left-[28px] right-[24px] md:right-[28px] h-[3px] rounded-full z-0 ${isCancelled
-                  ? "bg-red-100 dark:bg-red-900/20"
-                  : "bg-slate-200 dark:bg-slate-700"
-                  }`}
-              />
-              {/* Active line */}
-              <motion.div
-                className={`absolute top-5 md:top-6 left-[24px] md:left-[28px] h-[3px] rounded-full z-0 ${isCancelled ? "bg-red-500" : "bg-emerald-500"
-                  }`}
-                initial={{ width: 0 }}
-                animate={{
-                  width: isCancelled
-                    ? `calc(100% - 48px)`
-                    : `calc(${(currentStepIndex / (statusSteps.length - 1)) * 100
-                    }% - ${currentStepIndex === 0 ? 0 : 48}px)`,
-                }}
-                transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-              />
-
-              <div className="relative z-10 flex justify-between">
-                {isCancelled ? (
-                  <>
-                    <TimelineStep
-                      step="Pending"
-                      index={0}
-                      totalSteps={3}
-                      isActive={false}
-                      isCompleted={true}
-                      isCancelledFlow={false}
-                    />
-                    <TimelineStep
-                      step="Cancelled"
-                      index={1}
-                      totalSteps={3}
-                      isActive={true}
-                      isCompleted={true}
-                      isCancelledFlow={true}
-                    />
-                    {isPrepaid && (
-                      <div className="flex flex-col items-center relative z-10">
-                        <motion.div
-                          initial={{ opacity: 0, y: 15 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.5 }}
-                          className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${isRefundSuccessful
-                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                            : "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
-                            }`}
-                        >
-                          <FiDollarSign
-                            size={16}
-                            className={!isRefundSuccessful ? "animate-bounce" : ""}
-                          />
-                        </motion.div>
-                        <span
-                          className={`mt-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${isRefundSuccessful
-                            ? "text-emerald-500"
-                            : "text-blue-500"
-                            }`}
-                        >
-                          {isRefundSuccessful ? "Refunded" : "Refund Pending"}
-                        </span>
-                        <p className="text-[8px] text-slate-400 mt-0.5 font-bold uppercase tracking-widest">
-                          {isRefundSuccessful ? "to your account" : "(6-7 Days)"}
-                        </p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  statusSteps.map((step, index) => (
-                    <TimelineStep
-                      key={step}
-                      step={step}
-                      index={index}
-                      totalSteps={statusSteps.length}
-                      isActive={index === currentStepIndex}
-                      isCompleted={index < currentStepIndex}
-                      isCancelledFlow={false}
-                    />
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* ============ ADDRESS & PAYMENT GRID ============ */}
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-700/30">
-            {/* Address */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="p-5 md:p-7"
-            >
-              <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
-                <FiMapPin size={12} /> Delivery Address
-              </h2>
-              <div className="bg-slate-50 dark:bg-slate-900/40 rounded-2xl p-4 border border-slate-100 dark:border-slate-700/30">
-                <p className="font-bold text-sm text-slate-900 dark:text-white mb-1">
-                  {order.shippingAddress?.fullName}
-                </p>
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  {order.shippingAddress?.street},{" "}
-                  {order.shippingAddress?.city} -- {order.shippingAddress?.zip}
-                </p>
-                <div className="mt-3 flex items-center gap-2">
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold rounded-lg">
-                    <FiPhone size={10} />
-                    +91 {order.shippingAddress?.phone}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Payment */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-              className="p-5 md:p-7"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] flex items-center gap-2">
-                  <FiCreditCard size={12} /> Payment Summary
-                </h2>
-                <span
-                  className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${isPrepaid
-                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                    }`}
-                >
-                  {order.paymentMethod}
-                </span>
-              </div>
-              <div className="space-y-2.5">
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Subtotal</span>
-                  <span className="font-bold text-slate-900 dark:text-white tabular-nums">
-                    {formatCurrency(order.itemsPrice)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Shipping</span>
-                  <span className="font-bold text-slate-900 dark:text-white tabular-nums">
-                    {order.shippingPrice === 0
-                      ? "Free"
-                      : formatCurrency(order.shippingPrice)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs text-slate-500">
-                  <span>Tax (GST 5%)</span>
-                  <span className="font-bold text-slate-900 dark:text-white tabular-nums">
-                    {formatCurrency(order.taxPrice)}
-                  </span>
-                </div>
-                <div className="h-px bg-slate-100 dark:bg-slate-700 w-full" />
-                <div className="flex justify-between items-center pt-1">
-                  <span className="font-black text-xs uppercase text-slate-900 dark:text-white">
-                    {order.isPaid ? "Total Paid" : "Total Payable"}
-                  </span>
-                  <span className="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
-                    {formatCurrency(order.totalAmount)}
-                  </span>
-                </div>
-                {isCancelled && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.6 }}
-                    className="mt-3 p-3 bg-red-500/5 border border-red-500/10 rounded-xl"
-                  >
-                    <p className="text-[10px] text-red-500 font-bold uppercase tracking-wider">
-                      Cancellation Reason
-                    </p>
-                    <p className="text-xs text-red-400 font-medium mt-1 leading-relaxed italic">
-                      "{order.cancelReason || "Not specified"}"
-                    </p>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-
-          {/* ============ ITEMS ============ */}
-          <div className="p-5 md:p-7 border-t border-slate-100 dark:border-white/5">
-            <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
-              <FiShoppingBag size={12} /> Items ({order.items.length})
-            </h2>
-            <div className="space-y-2">
-              {order.items.map((item, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ opacity: 0, x: 20, filter: "blur(4px)" }}
-                  animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
-                  transition={{
-                    delay: 0.5 + idx * 0.06,
-                    duration: 0.5,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
-                  className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/40 border border-slate-100 dark:border-slate-700/30 hover:border-blue-200 dark:hover:border-blue-900/40 transition-colors"
-                >
-                  <img
-                    src={`${API_URL}/uploads/${item.image.split("/").pop()}`}
-                    alt={item.name}
-                    className="w-14 h-14 object-cover rounded-xl bg-white dark:bg-slate-800 p-1 border border-slate-100 dark:border-slate-700"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-xs truncate text-slate-900 dark:text-white">
-                      {item.name}
-                    </h3>
-                    <p className="text-[10px] text-slate-400 font-medium mt-0.5">
-                      {"\u20B9"}
-                      {item.price.toFixed(2)} x {item.qty}
-                    </p>
-                  </div>
-                  <div className="text-right font-bold text-sm text-slate-900 dark:text-white tabular-nums">
-                    {formatCurrency(item.price * item.qty)}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+            )}
           </div>
         </motion.div>
 
-        {/* ============ ACTION BUTTONS ============ */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.5 }}
-          className="flex flex-wrap gap-3 justify-center"
-        >
-          <motion.button
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/")}
-            className="px-6 py-3 bg-white dark:bg-slate-800/60 backdrop-blur-xl border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-slate-900 dark:text-white"
-          >
-            <FiHome size={14} /> Home
-          </motion.button>
-          <motion.button
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={handlePrintInvoice}
-            className="px-6 py-3 bg-white dark:bg-slate-800/60 backdrop-blur-xl border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-xs flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-slate-900 dark:text-white"
-          >
-            <FiFileText size={14} /> Invoice
-          </motion.button>
-          {canCancel && (
-            <motion.button
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              disabled={cancelling}
-              onClick={() => setShowCancelConfirm(true)}
-              className="px-6 py-3 bg-red-500/5 text-red-600 dark:text-red-400 border border-red-500/15 rounded-2xl font-black text-xs hover:bg-red-500/10 transition-all"
-            >
-              Cancel Order
+        {orders.length === 0 ? (
+          /* ── EMPTY STATE ── */
+          <motion.div initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
+            style={{ background: T.surface, borderRadius: 20, border: `1px solid ${T.border}`, boxShadow: "0 2px 24px rgba(91,168,160,0.08)", padding: "72px 40px", textAlign: "center" }}>
+            <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(91,168,160,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", color: T.primary }}>
+              <FiShoppingBag size={30} />
+            </motion.div>
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: T.textDark, marginBottom: 10 }}>No orders yet</h3>
+            <p style={{ fontSize: 13.5, color: T.textLite, marginBottom: 32, maxWidth: 320, margin: "0 auto 32px", lineHeight: 1.7 }}>
+              Your order history will appear here once you make your first purchase from our fresh catch collection.
+            </p>
+            <motion.button whileHover={{ y: -2, boxShadow: "0 8px 28px rgba(91,168,160,0.25)" }} whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/products")}
+              style={{ padding: "13px 28px", borderRadius: 14, background: T.primary, color: "#fff", fontWeight: 700, fontSize: 14, border: "none", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              Browse Products
             </motion.button>
-          )}
-          <motion.button
-            whileHover={{ y: -2, boxShadow: "0 10px 30px rgba(0,0,0,0.12)" }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => navigate("/products")}
-            className="px-8 py-3 bg-slate-900 dark:bg-blue-600 text-white rounded-2xl font-bold text-xs flex items-center gap-2 transition-all shadow-lg shadow-slate-900/20 dark:shadow-blue-600/20"
-          >
-            <FiShoppingBag size={14} /> Shop More
-          </motion.button>
-        </motion.div>
-      </div>
+          </motion.div>
+        ) : (
+          <>
+            {/* ── SEARCH + SORT ── */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.4 }} style={{ marginBottom: 16 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
+                  <FiSearch size={14} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: T.textLite }} />
+                  <input
+                    type="text" placeholder="Search by order ID or product name..."
+                    value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                    style={{
+                      width: "100%", paddingLeft: 40, paddingRight: 16, paddingTop: 12, paddingBottom: 12,
+                      borderRadius: 14, border: `1px solid ${T.border}`, background: T.surface,
+                      fontSize: 13, fontWeight: 500, color: T.textDark, outline: "none",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif", boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div style={{ position: "relative", flexShrink: 0 }}>
+                  <FiFilter size={13} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: T.textLite, pointerEvents: "none" }} />
+                  <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+                    style={{
+                      paddingLeft: 36, paddingRight: 36, paddingTop: 12, paddingBottom: 12,
+                      borderRadius: 14, border: `1px solid ${T.border}`, background: T.surface,
+                      fontSize: 13, fontWeight: 600, color: T.textDark, outline: "none", cursor: "pointer",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif", appearance: "none",
+                    }}>
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="highest">Highest Amount</option>
+                    <option value="lowest">Lowest Amount</option>
+                  </select>
+                  <FiChevronDown size={13} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: T.textLite, pointerEvents: "none" }} />
+                </div>
+              </div>
+            </motion.div>
 
-      <div>
-        <Invoice order={order} type="invoice" />
+            {/* ── TABS ── */}
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.4 }} style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, marginBottom: 24 }}>
+              {TABS.map(tab => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <motion.button key={tab.id} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }} onClick={() => setActiveTab(tab.id)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 10, cursor: "pointer", whiteSpace: "nowrap", fontSize: 12, fontWeight: 700,
+                      background: isActive ? T.primary : T.surface,
+                      color: isActive ? "#fff" : T.textMid,
+                      border: isActive ? `1px solid ${T.primary}` : `1px solid ${T.border}`,
+                      boxShadow: isActive ? "0 4px 16px rgba(91,168,160,0.22)" : "none",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
+                    }}>
+                    {tab.icon}{tab.label}
+                    {tabCounts[tab.id] > 0 && (
+                      <span style={{
+                        padding: "1px 7px", borderRadius: 8, fontSize: 10, fontWeight: 800,
+                        background: isActive ? "rgba(255,255,255,0.22)" : "rgba(91,168,160,0.1)",
+                        color: isActive ? "#fff" : T.primary,
+                      }}>{tabCounts[tab.id]}</span>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+
+            {filteredOrders.length === 0 ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                style={{ textAlign: "center", padding: "60px 20px", background: T.surface, borderRadius: 18, border: `1px solid ${T.border}` }}>
+                <FiSearch size={28} style={{ color: T.border, marginBottom: 12 }} />
+                <p style={{ color: T.textLite, fontSize: 13, fontWeight: 500 }}>No orders match your criteria</p>
+              </motion.div>
+            ) : (
+              <motion.div variants={containerVariants} initial="hidden" animate="visible" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {filteredOrders.map(order => {
+                  const statusInfo = getStatusConfig(order.status);
+                  const isDelivered = order.status === "Delivered";
+                  const isExpanded = expandedOrder === order._id;
+
+                  return (
+                    <motion.div key={order._id} variants={itemVariants} layout
+                      style={{
+                        background: T.surface, borderRadius: 18, border: `1px solid ${T.border}`,
+                        boxShadow: "0 1px 8px rgba(91,168,160,0.06)", overflow: "hidden",
+                        transition: "box-shadow 0.3s",
+                      }}
+                      whileHover={{ boxShadow: "0 6px 28px rgba(91,168,160,0.12)" }}
+                    >
+                      {/* Order Header */}
+                      <div style={{ padding: "20px 24px" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 14 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                            <div style={{ width: 38, height: 38, borderRadius: 10, background: statusInfo.bg, display: "flex", alignItems: "center", justifyContent: "center", color: statusInfo.text, flexShrink: 0 }}>
+                              {statusInfo.icon}
+                            </div>
+                            <div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                <span style={{ fontFamily: "monospace", fontWeight: 700, fontSize: 14, color: T.textDark }}>
+                                  #{order.orderId || order._id.slice(-6).toUpperCase()}
+                                </span>
+                                <span style={{
+                                  padding: "2px 8px", borderRadius: 6, fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em",
+                                  background: statusInfo.bg, color: statusInfo.text,
+                                }}>
+                                  {order.status}
+                                </span>
+                              </div>
+                              <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 11, color: T.textLite }}>
+                                <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                                  <FiClock size={10} />
+                                  {new Date(order.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                                </span>
+                                <span>·</span>
+                                <span>{order.items?.length || 0} items</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                            <span style={{
+                              fontSize: 9, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.1em",
+                              padding: "4px 10px", borderRadius: 7,
+                              background: order.paymentMethod === "Prepaid" ? "rgba(91,168,160,0.1)" : "rgba(201,148,26,0.1)",
+                              color: order.paymentMethod === "Prepaid" ? T.primary : "#C9941A",
+                            }}>{order.paymentMethod || "COD"}</span>
+                            <div style={{ textAlign: "right" }}>
+                              <p style={{ fontSize: 9, fontWeight: 700, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 2px" }}>Total</p>
+                              <p style={{ fontSize: 18, fontWeight: 800, color: T.textDark, margin: 0, letterSpacing: "-0.02em" }}>{formatCurrency(order.totalAmount)}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bill summary strip */}
+                        <div style={{
+                          display: "flex", flexWrap: "wrap", gap: "6px 20px",
+                          padding: "10px 14px", borderRadius: 10,
+                          background: "#F7FAFA", border: "1px solid #EEF5F4",
+                          fontSize: 11, color: T.textLite, fontWeight: 500,
+                        }}>
+                          <span>Subtotal: <strong style={{ color: T.textDark }}>₹{(order.itemsPrice || 0).toFixed(2)}</strong></span>
+                          {order.discount > 0 && <span style={{ color: T.primary, display: "flex", alignItems: "center", gap: 3 }}><FiTag size={9} /> Saved ₹{(order.discount || 0).toFixed(2)}</span>}
+                          <span>Shipping: <strong style={{ color: order.shippingPrice === 0 ? T.primary : T.textDark }}>{order.shippingPrice === 0 ? "FREE" : `₹${order.shippingPrice?.toFixed(2)}`}</strong></span>
+                          <span>Tax: <strong style={{ color: T.textDark }}>₹{(order.taxPrice || 0).toFixed(2)}</strong></span>
+                          <span>·</span>
+                          <span style={{ display: "flex", alignItems: "center", gap: 4 }}><FiMapPin size={9} />{order.shippingAddress?.city}, {order.shippingAddress?.zip}</span>
+                        </div>
+                      </div>
+
+                      {/* Expand toggle */}
+                      <div style={{ borderTop: `1px solid ${T.border}` }}>
+                        <button onClick={() => setExpandedOrder(isExpanded ? null : order._id)}
+                          style={{
+                            width: "100%", padding: "12px 24px", display: "flex", justifyContent: "space-between", alignItems: "center",
+                            fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
+                            color: T.textLite, background: "transparent", border: "none", cursor: "pointer",
+                            fontFamily: "'Plus Jakarta Sans', sans-serif",
+                          }}>
+                          <span style={{ display: "flex", alignItems: "center", gap: 6 }}><FiShoppingBag size={11} />{order.items.length} Item{order.items.length !== 1 ? "s" : ""} in this order</span>
+                          <motion.div animate={{ rotate: isExpanded ? 180 : 0 }} transition={{ duration: 0.25 }}>
+                            <FiChevronDown size={15} style={{ color: T.textLite }} />
+                          </motion.div>
+                        </button>
+
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                              transition={{ height: { duration: 0.35, ease: [0.22,1,0.36,1] }, opacity: { duration: 0.25 } }}
+                              style={{ overflow: "hidden" }}>
+                              <div style={{ padding: "4px 20px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+                                {order.items.map((item, idx) => {
+                                  const myReview = getUserReview(item, order.user);
+                                  return (
+                                    <motion.div key={idx} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
+                                      style={{
+                                        display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
+                                        borderRadius: 12, background: "#F7FAFA", border: "1px solid #EEF5F4",
+                                      }}>
+                                      <div style={{ position: "relative", flexShrink: 0 }}>
+                                        <img
+                                          src={`${API_URL}/uploads/${item.image?.replace(/^\/|\\/g, "").replace("uploads/", "")}`}
+                                          alt={item.name} onError={e => { e.target.src = "https://via.placeholder.com/100?text=SeaBite"; }}
+                                          style={{ width: 44, height: 44, objectFit: "contain", borderRadius: 10, background: "#fff", border: `1px solid ${T.border}`, padding: 4 }}
+                                        />
+                                        <span style={{
+                                          position: "absolute", top: -4, right: -4,
+                                          background: T.primary, color: "#fff", fontSize: 8, fontWeight: 800,
+                                          width: 16, height: 16, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center",
+                                          border: "2px solid #fff",
+                                        }}>{item.qty}</span>
+                                      </div>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <p style={{ fontWeight: 700, fontSize: 13, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
+                                        <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0" }}>{formatCurrency(item.price)} × {item.qty}</p>
+                                      </div>
+                                      <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+                                        {isDelivered && myReview && (
+                                          <div style={{ display: "flex", color: "#F59E0B" }}>
+                                            {[...Array(5)].map((_, i) => <FiStar key={i} size={10} fill={i < myReview.rating ? "currentColor" : "none"} />)}
+                                          </div>
+                                        )}
+                                        {isDelivered && (
+                                          <button onClick={e => { e.stopPropagation(); openReviewModal(item, myReview || null); }}
+                                            style={{
+                                              display: "flex", alignItems: "center", gap: 5, padding: "5px 10px", borderRadius: 8, cursor: "pointer",
+                                              fontSize: 10, fontWeight: 700, border: "none",
+                                              background: myReview ? "rgba(137,194,217,0.12)" : "rgba(245,158,11,0.1)",
+                                              color: myReview ? T.sky : "#C9941A",
+                                              fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                            }}>
+                                            {myReview ? <><FiEdit2 size={10} /> Edit</> : <><FiStar size={10} /> Review</>}
+                                          </button>
+                                        )}
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: T.textDark }}>{formatCurrency(item.price * item.qty)}</span>
+                                      </div>
+                                    </motion.div>
+                                  );
+                                })}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Footer */}
+                      <div style={{ padding: "12px 24px", borderTop: `1px solid ${T.border}`, background: "#FAFCFC", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: 11, color: T.textLite, display: "flex", alignItems: "center", gap: 5 }}>
+                          <FiMapPin size={10} />{order.shippingAddress?.fullName} – {order.shippingAddress?.city}
+                        </span>
+                        <motion.button whileHover={{ x: 3 }} whileTap={{ scale: 0.97 }} onClick={() => navigate(`/orders/${order._id}`)}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em",
+                            color: T.primary, background: "none", border: "none", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif",
+                          }}>
+                          Details & Tracking <FiChevronRight size={14} />
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </motion.div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

@@ -60,6 +60,7 @@ export default function AdminDashboard() {
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentMessages, setRecentMessages] = useState([]);
   const [allReviews, setAllReviews] = useState([]);
+  const [searchInsights, setSearchInsights] = useState([]); // 🟢 Added
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -86,6 +87,7 @@ export default function AdminDashboard() {
       setRecentOrders(dashboardRes.data.recentOrders);
       setRecentMessages(messagesRes.data.slice(0, 5));
       setAllReviews(reviewsRes.data?.slice(0, 6) || []);
+      setSearchInsights(insightsRes.data || []); // 🟢 Added
 
       setLoading(false);
       setError(null);
@@ -402,11 +404,11 @@ export default function AdminDashboard() {
           </motion.div>
         </div>
 
-        {/* Exports */}
+        {/* Exports & Insights */}
         <motion.div
           variants={fadeUp}
           custom={6}
-          className="grid grid-cols-1 md:grid-cols-2 gap-5"
+          className="grid grid-cols-1 md:grid-cols-3 gap-5"
         >
           <ExportCard
             title="Sales Report"
@@ -455,6 +457,8 @@ export default function AdminDashboard() {
               }
             }}
           />
+
+          <SearchInsightsCard insights={searchInsights} />
         </motion.div>
 
         {/* Orders & Activity */}
@@ -619,7 +623,7 @@ function StatusPill({ status }) {
     "Cancelled": "bg-rose-100/60 text-rose-700 border-rose-200/50"
   };
   const s = map[status] || "bg-stone-100/60 text-stone-600 border-stone-200/50";
-  
+
   return (
     <span className={`px-3 py-1.5 rounded-full text-xs font-medium border ${s}`}>
       {status}
@@ -639,6 +643,33 @@ function ExportCard({ title, desc, icon, onClick }) {
           </div>
         </div>
         <FiDownload className="text-stone-400 group-hover:text-stone-600 transition-colors" size={18} />
+      </div>
+    </div>
+  );
+}
+
+function SearchInsightsCard({ insights }) {
+  return (
+    <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 max-h-[200px] flex flex-col hover:shadow-md transition-shadow">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-sm font-medium text-stone-900">Top Searches</h3>
+        <FiSearch className="text-stone-400" size={16} />
+      </div>
+      <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+        {insights?.length === 0 ? (
+          <p className="text-xs text-stone-400 text-center py-4">No searches yet</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {insights.map((item, i) => (
+              <div key={i} className="flex items-center gap-1.5 bg-stone-50 border border-stone-100 px-2.5 py-1 rounded-lg">
+                <span className="text-xs font-medium text-stone-700">{item.query}</span>
+                <span className={`text-[9px] font-bold px-1 rounded ${item.found ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"}`}>
+                  {item.count}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

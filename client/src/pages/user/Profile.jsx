@@ -1,26 +1,21 @@
 import { useEffect, useState, useContext, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiHome, FiArrowLeft } from "react-icons/fi";
+import { FiLogOut, FiHome, FiArrowLeft, FiEdit2 } from "react-icons/fi";
 import { motion, useInView } from "framer-motion";
 import UserInfo from "./UserInfo";
-import { ThemeContext } from "../../context/ThemeContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 const FadeUp = ({ children, delay = 0, className = "" }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const isInView = useInView(ref, { once: true, margin: "-5% 0px" });
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-      animate={
-        isInView
-          ? { opacity: 1, y: 0, filter: "blur(0px)" }
-          : { opacity: 0, y: 30, filter: "blur(8px)" }
-      }
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0, y: 24 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
       {children}
@@ -31,17 +26,13 @@ const FadeUp = ({ children, delay = 0, className = "" }) => {
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/me`, {
-        withCredentials: true,
-      });
+      const res = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
       setUser(res.data);
-    } catch (err) {
-     // console.error("User fetch failed:", err);
+    } catch {
       navigate("/login");
     } finally {
       setLoading(false);
@@ -50,118 +41,217 @@ export default function Profile() {
 
   const handleLogout = async () => {
     try {
-      await axios.post(
-        `${API_URL}/api/auth/logout`,
-        {},
-        { withCredentials: true }
-      );
-    } catch (err) {
-      //console.error("Logout failed", err);
-    } finally {
+      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+    } catch {}
+    finally {
       navigate("/login");
       window.location.reload();
     }
   };
 
-  useEffect(() => {
-    fetchUser();
-  }, []);
+  useEffect(() => { fetchUser(); }, []);
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col items-center justify-center transition-colors duration-500">
+      <div style={{
+        minHeight: "100vh", background: "#F4F9F8",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+      }}>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full mb-4"
+          style={{
+            width: 44, height: 44,
+            border: "3px solid #E2EEEC",
+            borderTopColor: "#5BA8A0",
+            borderRadius: "50%", marginBottom: 16,
+          }}
         />
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-slate-400 text-sm font-semibold tracking-wide"
-        >
+        <p style={{ color: "#8BA5B3", fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>
           Loading Profile...
-        </motion.p>
+        </p>
       </div>
     );
   }
 
   if (!user) return null;
 
+  const avatarLetter = user.name?.charAt(0).toUpperCase() || "S";
+  const avatarUrl = user.picture || user.avatar || null;
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] font-sans relative pb-12 md:pb-20 transition-colors duration-500 overflow-x-hidden">
-      {/* 1. HEADER BANNER */}
-      <div className="relative h-56 md:h-80 w-full overflow-hidden">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2 }}
-          className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-slate-50 dark:to-[#0f172a] z-10"
-        />
-
+    <div style={{
+      minHeight: "100vh", background: "#F4F9F8",
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      overflowX: "hidden",
+    }}>
+      {/* ── HERO BANNER ── */}
+      <div style={{ position: "relative", height: 240, overflow: "hidden" }}>
+        {/* Ocean photo */}
         <motion.img
-          initial={{ scale: 1.1 }}
+          initial={{ scale: 1.06 }}
           animate={{ scale: 1 }}
-          transition={{ duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
+          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
           src="https://images.unsplash.com/photo-1468581264429-2548ef9eb732?q=80&w=2000&auto=format&fit=crop"
-          alt="Ocean Background"
-          className="w-full h-full object-cover opacity-90 dark:opacity-40"
+          alt="Ocean"
+          style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.75 }}
         />
+        {/* Light overlay — not dark! */}
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "linear-gradient(180deg, rgba(244,249,248,0.1) 0%, rgba(244,249,248,0.85) 100%)",
+        }} />
 
-        <div className="absolute top-0 left-0 w-full pt-24 md:pt-28 px-6 md:px-10 z-20">
-          <motion.button
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/")}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 dark:bg-black/30 backdrop-blur-xl border border-white/20 rounded-full text-white hover:bg-white hover:text-blue-900 transition-all duration-300 shadow-xl group"
-          >
-            <FiArrowLeft
-              size={18}
-              className="group-hover:-translate-x-1 transition-transform"
-            />
-            <span className="text-sm font-bold tracking-wide">
-              Back to Home
-            </span>
-          </motion.button>
-        </div>
+        {/* Back button */}
+        <motion.button
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3, duration: 0.4 }}
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.96 }}
+          onClick={() => navigate("/")}
+          style={{
+            position: "absolute", top: 24, left: 24,
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 16px", borderRadius: 12,
+            background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)",
+            border: "1px solid rgba(226,238,236,0.8)",
+            color: "#1A2B35", fontSize: 12, fontWeight: 600,
+            cursor: "pointer", boxShadow: "0 2px 12px rgba(91,168,160,0.12)",
+          }}
+        >
+          <FiArrowLeft size={14} />
+          Back to Home
+        </motion.button>
       </div>
 
-      {/* 2. MAIN CONTENT AREA */}
-      <div className="max-w-3xl mx-auto px-4 relative z-20">
+      {/* ── AVATAR CARD (overlapping banner) ── */}
+      <div style={{ maxWidth: 760, margin: "0 auto", padding: "0 20px" }}>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          style={{
+            background: "#ffffff",
+            borderRadius: 20, border: "1px solid #E2EEEC",
+            boxShadow: "0 4px 32px rgba(91,168,160,0.10), 0 1px 4px rgba(26,43,53,0.04)",
+            padding: "24px 28px",
+            marginTop: -56, marginBottom: 20,
+            display: "flex", alignItems: "center", gap: 20,
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Avatar */}
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={user.name}
+                style={{
+                  width: 80, height: 80, borderRadius: "50%",
+                  border: "3px solid #E2EEEC", objectFit: "cover",
+                  boxShadow: "0 4px 20px rgba(91,168,160,0.18)",
+                }}
+              />
+            ) : (
+              <div style={{
+                width: 80, height: 80, borderRadius: "50%",
+                background: "linear-gradient(135deg, #5BA8A0, #89C2D9)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 28, fontWeight: 700, color: "#ffffff",
+                border: "3px solid #E2EEEC",
+                boxShadow: "0 4px 20px rgba(91,168,160,0.20)",
+              }}>
+                {avatarLetter}
+              </div>
+            )}
+            {/* Online dot */}
+            <div style={{
+              position: "absolute", bottom: 2, right: 2,
+              width: 14, height: 14, borderRadius: "50%",
+              background: "#5BA8A0", border: "2px solid #ffffff",
+            }} />
+          </div>
+
+          {/* Name + meta */}
+          <div style={{ flex: 1, minWidth: 160 }}>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1A2B35", margin: 0, marginBottom: 4, letterSpacing: "-0.02em" }}>
+              {user.name}
+            </h1>
+            <p style={{ fontSize: 13, color: "#8BA5B3", margin: 0 }}>{user.email}</p>
+            {user.role === "admin" && (
+              <span style={{
+                display: "inline-block", marginTop: 6, padding: "3px 10px",
+                borderRadius: 6, background: "rgba(232,129,106,0.1)",
+                color: "#E8816A", fontSize: 10, fontWeight: 700,
+                letterSpacing: "0.1em", textTransform: "uppercase",
+              }}>
+                Administrator
+              </span>
+            )}
+          </div>
+
+          {/* Stats */}
+          <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+            {[
+              { label: "Member Since", value: user.createdAt ? new Date(user.createdAt).getFullYear() : "—" },
+              { label: "Account", value: user.role === "admin" ? "Admin" : "Customer" },
+            ].map((stat, i) => (
+              <div key={i} style={{ textAlign: "center" }}>
+                <p style={{ fontSize: 18, fontWeight: 700, color: "#1A2B35", margin: 0 }}>{stat.value}</p>
+                <p style={{ fontSize: 10, color: "#8BA5B3", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* ── USER INFO ── */}
         <FadeUp delay={0.1}>
           <UserInfo user={user} />
         </FadeUp>
 
-        {/* 3. ACTION BUTTONS */}
-        <FadeUp delay={0.3}>
-          <div className="flex flex-col sm:flex-row justify-center gap-3 md:gap-4 mt-6 md:mt-8">
+        {/* ── ACTION BUTTONS ── */}
+        <FadeUp delay={0.25}>
+          <div style={{
+            display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center",
+            marginTop: 24, marginBottom: 48, paddingBottom: 8,
+          }}>
+            {/* Home */}
             <motion.button
-              whileHover={{ y: -2, boxShadow: "0 10px 30px rgba(0,0,0,0.08)" }}
+              whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(26,43,53,0.10)" }}
               whileTap={{ scale: 0.97 }}
               onClick={() => navigate("/")}
-              className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-3.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-white font-bold text-sm rounded-full shadow-sm transition-all duration-300 border border-slate-200 dark:border-slate-700"
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "12px 24px", borderRadius: 14,
+                background: "#ffffff", border: "1px solid #E2EEEC",
+                color: "#1A2B35", fontSize: 13, fontWeight: 600,
+                cursor: "pointer", boxShadow: "0 1px 4px rgba(26,43,53,0.06)",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
             >
-              <FiHome size={18} />
-              <span>Back To Home</span>
+              <FiHome size={15} /> Back to Home
             </motion.button>
 
+            {/* Sign Out */}
             <motion.button
-              whileHover={{ y: -2 }}
+              whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(232,129,106,0.15)" }}
               whileTap={{ scale: 0.97 }}
               onClick={handleLogout}
-              className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-3.5 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 font-bold text-sm rounded-full border border-red-100 dark:border-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-300"
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "12px 24px", borderRadius: 14,
+                background: "rgba(232,129,106,0.07)", border: "1px solid rgba(232,129,106,0.2)",
+                color: "#E8816A", fontSize: 13, fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
             >
-              <FiLogOut size={18} />
-              <span>Sign Out</span>
+              <FiLogOut size={15} /> Sign Out
             </motion.button>
           </div>
         </FadeUp>
-
-        <div className="text-center mt-12 md:mt-16 pb-8" />
       </div>
     </div>
   );
