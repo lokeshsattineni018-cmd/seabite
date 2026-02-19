@@ -1,936 +1,1003 @@
-// src/pages/Home.jsx
-import { useState, useEffect, useRef, useContext, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
 import {
-  motion, useScroll, useTransform, useInView,
-  useSpring, AnimatePresence,
+  motion,
+  useScroll,
+  useTransform,
+  useInView,
+  useSpring,
+  AnimatePresence,
 } from "framer-motion";
 import axios from "axios";
 import {
-  ArrowRight, Star, ShieldCheck, Truck,
-  Thermometer, Utensils, Fish, Anchor, ChevronDown, Zap,
+  ArrowRight,
+  Star,
+  ShieldCheck,
+  Truck,
+  Fish,
+  User,
+  Anchor,
+  Thermometer,
+  Utensils,
+  ChevronDown,
+  Flame,
+  ChevronRight,
+  Zap,
+  ArrowUpRight,
+  Waves,
+  LeafyGreen,
 } from "lucide-react";
-import { FiChevronRight, FiShoppingCart } from "react-icons/fi";
 import toast from "react-hot-toast";
-import { CartContext } from "../context/CartContext";
 import EnhancedProductCard from "../components/EnhancedProductCard";
 import TrendingProducts from "../components/TrendingProducts";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// ─── Palette ────────────────────────────────────────────
-// #5BBFB5  Seafoam
-// #7EB8D4  Sky
-// #F07468  Coral accent
-// #1A2E2C  Deep tide
-// #6B8F8A  Drift
-// #B8CFCC  Foam
-// #E2EEEC  Mist
-// #F4F9F8  Off-white
-// ────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────
+// 🎨  DESIGN TOKENS  (unchanged from doc 8)
+// Primary:    #5BA8A0  (seafoam teal)
+// Secondary:  #89C2D9  (sky-water blue)
+// Accent:     #E8816A  (soft coral)
+// Sand:       #F5EFE6  (warm sand)
+// Background: #F8FAFB  (off-white)
+// Card:       #FFFFFF
+// Border:     #E8EEF2
+// Text-dark:  #1A2B35
+// Text-mid:   #4A6572
+// Text-light: #8BA5B3
+// ─────────────────────────────────────────────
 
-// ─── Global styles ───────────────────────────────────────
-const GlobalStyles = () => (
-  <style>{`
-    @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap');
-    .home-root * { box-sizing: border-box; }
-    .home-root { font-family: 'Manrope', sans-serif; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .category-panel { transition: flex 0.7s cubic-bezier(0.25, 1, 0.5, 1); }
-    .feature-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(91,191,181,0.12); }
-    .review-card:hover { transform: translateY(-3px); border-color: #B8DDD9; }
-    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(91,191,181,0.10); }
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-    @keyframes drift { 0%{transform:translateX(-100px) rotate(0deg)} 100%{transform:translateX(calc(100vw + 100px)) rotate(5deg)} }
-    @keyframes counter-count { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-    @keyframes spin { to { transform: rotate(360deg); } }
-  `}</style>
-);
+// ══════════════════════════════════════════════
+//  ANIMATION PRIMITIVES
+// ══════════════════════════════════════════════
 
-// ─── Section reveal wrapper ──────────────────────────────
-const Reveal = ({ children, delay = 0, direction = "up", style = {} }) => {
+// Basic scroll-triggered fade + slide up
+const Reveal = ({ children, delay = 0, y = 28, x = 0, duration = 0.65 }) => {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-8% 0px" });
-  const from = {
-    up:    { y: 32, x: 0 },
-    left:  { y: 0,  x: -32 },
-    right: { y: 0,  x: 32 },
-    scale: { y: 0,  x: 0, scale: 0.96 },
-  }[direction] ?? { y: 32, x: 0 };
+  const isInView = useInView(ref, { once: true, margin: "-6% 0px" });
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, ...from }}
-      animate={inView ? { opacity: 1, y: 0, x: 0, scale: 1 } : {}}
-      transition={{ duration: 0.6, delay, ease: [0.4, 0, 0.2, 1] }}
-      style={style}
+      initial={{ opacity: 0, y, x }}
+      animate={isInView ? { opacity: 1, y: 0, x: 0 } : {}}
+      transition={{ duration, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
   );
 };
 
-// ─── Stagger grid ────────────────────────────────────────
-const StaggerGrid = ({ children, cols = "repeat(auto-fill, minmax(240px,1fr))", gap = "20px" }) => {
+// Fade-in only (for images, backgrounds)
+const FadeIn = ({ children, delay = 0, duration = 0.7 }) => {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true, margin: "-6% 0px" });
+  const isInView = useInView(ref, { once: true, margin: "-4% 0px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0 }}
+      animate={isInView ? { opacity: 1 } : {}}
+      transition={{ duration, delay, ease: "easeOut" }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// Reveal from left
+const RevealLeft = ({ children, delay = 0 }) => (
+  <Reveal delay={delay} y={0} x={-32}>{children}</Reveal>
+);
+
+// Reveal from right
+const RevealRight = ({ children, delay = 0 }) => (
+  <Reveal delay={delay} y={0} x={32}>{children}</Reveal>
+);
+
+// Scale reveal (for cards/banners)
+const ScaleReveal = ({ children, delay = 0 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-4% 0px" });
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={isInView ? { opacity: 1, scale: 1 } : {}}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
+  );
+};
+
+// Staggered children container
+const Stagger = ({ children, className = "", staggerDelay = 0.09 }) => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-6% 0px" });
   return (
     <motion.div
       ref={ref}
       initial="hidden"
-      animate={inView ? "visible" : "hidden"}
-      variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } } }}
-      style={{ display: "grid", gridTemplateColumns: cols, gap }}
+      animate={isInView ? "visible" : "hidden"}
+      variants={{
+        hidden: {},
+        visible: {
+          transition: { staggerChildren: staggerDelay, delayChildren: 0.08 },
+        },
+      }}
+      className={className}
     >
       {children}
     </motion.div>
   );
 };
 
-const StaggerItem = ({ children }) => (
+// Stagger item
+const SI = ({ children, className = "" }) => (
   <motion.div
     variants={{
-      hidden: { opacity: 0, y: 24 },
-      visible: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.4, 0, 0.2, 1] } },
+      hidden: { opacity: 0, y: 22 },
+      visible: {
+        opacity: 1,
+        y: 0,
+        transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+      },
     }}
-    style={{ height: "100%" }}
+    className={className}
   >
     {children}
   </motion.div>
 );
 
-// ─── Animated counter ────────────────────────────────────
-const Counter = ({ to, suffix = "" }) => {
+// Animated counter
+const Counter = ({ value, suffix = "" }) => {
   const ref = useRef(null);
-  const inView = useInView(ref, { once: true });
-  const spring = useSpring(0, { stiffness: 55, damping: 22 });
-  const [val, setVal] = useState(0);
-  useEffect(() => { if (inView) spring.set(to); }, [inView, to, spring]);
-  useEffect(() => spring.on("change", v => setVal(Math.round(v))), [spring]);
-  return <span ref={ref}>{val}{suffix}</span>;
+  const isInView = useInView(ref, { once: true });
+  const spring = useSpring(0, { stiffness: 60, damping: 22 });
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (isInView) spring.set(value);
+  }, [isInView, value]);
+  useEffect(() => spring.on("change", (v) => setDisplay(Math.round(v))), [spring]);
+  return <span ref={ref}>{display}{suffix}</span>;
 };
 
-// ─── Section header ──────────────────────────────────────
-const SectionHeader = ({ eyebrow, title, subtitle, center = true }) => (
-  <div style={{ textAlign: center ? "center" : "left", marginBottom: "48px" }}>
-    {eyebrow && (
-      <p style={{ fontSize: "11px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "10px" }}>
-        {eyebrow}
-      </p>
-    )}
-    <h2 style={{ fontFamily: "'Lora', serif", fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "600", color: "#1A2E2C", letterSpacing: "-0.025em", lineHeight: 1.2, marginBottom: subtitle ? "12px" : 0 }}>
-      {title}
-    </h2>
-    {subtitle && (
-      <p style={{ fontSize: "15px", color: "#6B8F8A", maxWidth: "480px", margin: center ? "0 auto" : 0, lineHeight: "1.7" }}>
-        {subtitle}
-      </p>
-    )}
+// ── SHARED UI COMPONENTS ──────────────────────
+
+const Chip = ({ children, color = "teal" }) => {
+  const palettes = {
+    teal:  "bg-[#EAF6F5] text-[#3D8C85] border-[#C5E6E4]",
+    coral: "bg-[#FEF0EC] text-[#C05A45] border-[#F5C4BB]",
+    sand:  "bg-[#FAF4EC] text-[#8B6D45] border-[#EAD9C0]",
+    sky:   "bg-[#EDF5FB] text-[#3A7DA0] border-[#BDD9EE]",
+  };
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase border ${palettes[color]}`}>
+      {children}
+    </span>
+  );
+};
+
+const SectionLabel = ({ children }) => (
+  <div className="flex items-center gap-3 mb-4">
+    <div className="w-6 h-px bg-[#5BA8A0]" />
+    <span className="text-[11px] font-bold tracking-[0.18em] uppercase text-[#5BA8A0]">
+      {children}
+    </span>
   </div>
 );
 
-// ═══════════════════════════════════════════════════════════
-//  HERO SECTION
-// ═══════════════════════════════════════════════════════════
+const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
+  const base = "inline-flex items-center gap-2.5 font-semibold text-sm transition-all duration-300 rounded-full";
+  const styles = {
+    primary: "px-7 py-3.5 bg-[#1A2B35] text-white hover:bg-[#5BA8A0] shadow-sm hover:shadow-[0_4px_20px_rgba(91,168,160,0.35)]",
+    outline: "px-7 py-3.5 border border-[#CBD8DF] text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] bg-white",
+    coral:   "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
+  };
+  return (
+    <Link to={to}>
+      <motion.button
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.97 }}
+        className={`${base} ${styles[variant]} ${className}`}
+      >
+        {children}
+      </motion.button>
+    </Link>
+  );
+};
+
+// ══════════════════════════════════════════════
+//  HERO — Video clearer, animations intact
+// ══════════════════════════════════════════════
 const Hero = () => {
   const { scrollY } = useScroll();
-  const y     = useTransform(scrollY, [0, 600], [0, 80]);
-  const opacity = useTransform(scrollY, [0, 400], [1, 0]);
+  const videoY       = useTransform(scrollY, [0, 700], [0, 140]);
+  const videoOpacity = useTransform(scrollY, [0, 500], [1, 0.2]);
 
   return (
-    <section style={{
-      minHeight: "100vh",
-      background: "#F4F9F8",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "120px 24px 80px",
-      position: "relative",
-      overflow: "hidden",
-    }}>
-      {/* Background: soft radial ocean wash */}
-      <div style={{
-        position: "absolute", inset: 0, pointerEvents: "none",
-        background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(91,191,181,0.10) 0%, transparent 70%)",
-      }} />
+    <section className="relative h-screen min-h-[680px] max-h-[960px] bg-[#0e1c24] overflow-hidden">
 
-      {/* Floating sand-beige ring decorations */}
+      {/* ── VIDEO — much lighter overlay so the footage shows clearly ── */}
       <motion.div
-        animate={{ y: [-8, 8, -8] }}
-        transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
-        style={{
-          position: "absolute", top: "15%", right: "8%",
-          width: "200px", height: "200px",
-          border: "40px solid rgba(91,191,181,0.07)",
-          borderRadius: "50%", pointerEvents: "none",
-        }}
-      />
-      <motion.div
-        animate={{ y: [8, -8, 8] }}
-        transition={{ repeat: Infinity, duration: 8, ease: "easeInOut", delay: 2 }}
-        style={{
-          position: "absolute", bottom: "20%", left: "6%",
-          width: "140px", height: "140px",
-          border: "28px solid rgba(126,184,212,0.08)",
-          borderRadius: "50%", pointerEvents: "none",
-        }}
-      />
-
-      {/* Gentle drifting fish */}
-      {[0.8, 0.5, 0.65].map((opacity, i) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            top: `${20 + i * 28}%`,
-            left: "-80px",
-            animation: `drift ${18 + i * 6}s linear infinite`,
-            animationDelay: `${i * 5}s`,
-            opacity,
-            color: "rgba(91,191,181,0.18)",
-            pointerEvents: "none",
-          }}
-        >
-          <Fish size={32 + i * 12} strokeWidth={1} />
-        </div>
-      ))}
-
-      {/* Hero content */}
-      <motion.div
-        style={{ y, opacity, textAlign: "center", position: "relative", zIndex: 1, maxWidth: "760px" }}
+        style={{ y: videoY, opacity: videoOpacity }}
+        className="absolute inset-0 z-0"
       >
-        {/* Eyebrow */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ fontSize: "11px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "20px" }}
-        >
-          The Ocean's Finest · Fresh Daily
-        </motion.p>
-
-        {/* Main heading */}
-        <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-          style={{
-            fontFamily: "'Lora', serif",
-            fontSize: "clamp(48px, 9vw, 96px)",
-            fontWeight: "700",
-            color: "#1A2E2C",
-            letterSpacing: "-0.04em",
-            lineHeight: 1.05,
-            marginBottom: "24px",
-          }}
-        >
-          Fresh from<br />
-          <em style={{ color: "#5BBFB5", fontStyle: "italic" }}>the sea</em>
-        </motion.h1>
-
-        {/* Subtitle */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          style={{ fontSize: "17px", color: "#6B8F8A", lineHeight: "1.8", marginBottom: "40px", maxWidth: "520px", margin: "0 auto 40px" }}
-        >
-          Premium seafood sourced sustainably from the Andhra Pradesh coastline,<br />
-          delivered fresh to your kitchen.
-        </motion.p>
-
-        {/* CTA row */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.65 }}
-          style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}
-        >
-          <Link to="/products" style={{ textDecoration: "none" }}>
-            <motion.button
-              whileHover={{ scale: 1.04, boxShadow: "0 12px 32px rgba(91,191,181,0.20)" }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                padding: "14px 32px",
-                background: "#1A2E2C", color: "#fff",
-                border: "none", borderRadius: "12px",
-                fontSize: "14px", fontWeight: "700",
-                cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                transition: "background 0.2s",
-              }}
-            >
-              Shop Fresh Catch
-              <motion.span animate={{ x: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}>
-                <ArrowRight size={14} />
-              </motion.span>
-            </motion.button>
-          </Link>
-          <Link to="/products?category=Fish" style={{ textDecoration: "none" }}>
-            <motion.button
-              whileHover={{ scale: 1.04, borderColor: "#5BBFB5" }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                display: "flex", alignItems: "center", gap: "8px",
-                padding: "14px 28px",
-                background: "transparent", color: "#1A2E2C",
-                border: "1.5px solid #E2EEEC", borderRadius: "12px",
-                fontSize: "14px", fontWeight: "600",
-                cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                transition: "all 0.2s",
-              }}
-            >
-              View Categories
-            </motion.button>
-          </Link>
-        </motion.div>
-
-        {/* Trust strip */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.6 }}
-          style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "24px", marginTop: "48px", flexWrap: "wrap" }}
-        >
-          {[
-            { icon: "⭐", label: "4.8/5 Rating" },
-            { icon: "🚚", label: "Same-day dispatch" },
-            { icon: "🧊", label: "Cold-chain delivery" },
-            { icon: "✅", label: "Quality guaranteed" },
-          ].map((item, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <span style={{ fontSize: "14px" }}>{item.icon}</span>
-              <span style={{ fontSize: "12px", fontWeight: "600", color: "#6B8F8A" }}>{item.label}</span>
-              {i < 3 && <span style={{ width: "1px", height: "12px", background: "#E2EEEC", marginLeft: "12px" }} />}
-            </div>
-          ))}
-        </motion.div>
+        {/*
+          BEFORE: from-white/60 via-[#F8FAFB]/40 to-[#F8FAFB]  ← washed out
+          AFTER:  from-black/15 via-black/5  to-black/20       ← video is clear
+          The right-side fade is removed entirely.
+          Video filter: was saturate(0.7) brightness(1.1) — now full colour.
+        */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/30 z-10" />
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          src="1.mp4"
+          className="w-full h-full object-cover scale-105"
+        />
       </motion.div>
 
-      {/* Scroll hint */}
+      {/* Subtle dot grid — very light so video still reads */}
+      <div
+        className="absolute inset-0 z-10 opacity-[0.015]"
+        style={{
+          backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
+
+      {/* Bottom wave blends into page bg */}
+      <div className="absolute bottom-0 left-0 right-0 z-20">
+        <svg viewBox="0 0 1440 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+          <path d="M0 40C240 80 480 0 720 40C960 80 1200 0 1440 40V80H0V40Z" fill="#F8FAFB" />
+        </svg>
+      </div>
+
+      {/* Content */}
+      <div className="relative z-30 h-full flex items-center">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid md:grid-cols-2 gap-12 items-center">
+
+          {/* ── LEFT copy ── */}
+          <div className="space-y-8">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Chip color="teal"><Waves size={11} /> Fresh Catch Daily</Chip>
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.85, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
+              style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
+            >
+              Ocean-Fresh
+              <br />
+              <span className="text-[#5BA8A0]">Seafood</span>
+              <br />
+              Delivered.
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.55 }}
+              className="text-white/75 text-lg leading-relaxed max-w-md"
+            >
+              Premium fish, prawns & crabs — sourced daily from the coast,
+              cold-chain delivered straight to your kitchen.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.7 }}
+              className="flex flex-wrap gap-3"
+            >
+              <CTAButton to="/products" variant="primary">
+                Shop Now <ArrowRight size={15} />
+              </CTAButton>
+              {/* Outline button adapted for dark background */}
+              <Link to="/products">
+                <motion.button
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full border border-white/25 text-white/80 hover:border-white/60 hover:text-white bg-white/10 backdrop-blur-sm transition-all duration-300"
+                >
+                  View All Catch
+                </motion.button>
+              </Link>
+            </motion.div>
+
+            {/* Trust badges */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+              className="flex items-center gap-5 pt-2"
+            >
+              {[
+                { n: "500+", label: "Happy Customers" },
+                { n: "98%",  label: "Fresh Score" },
+                { n: "4.8★", label: "Avg Rating" },
+              ].map((s, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  {i > 0 && <div className="w-px h-8 bg-white/15" />}
+                  <div>
+                    <p className="text-sm font-bold text-white">{s.n}</p>
+                    <p className="text-[11px] text-white/50">{s.label}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* ── RIGHT — floating cards ── */}
+          <motion.div
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="hidden md:flex justify-center items-center relative h-[420px]"
+          >
+            {/* Main badge */}
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.18)] border border-white/60 p-8 text-center w-52"
+            >
+              <div className="text-6xl mb-3">🦐</div>
+              <p className="text-sm font-semibold text-[#1A2B35]">Jumbo Prawns</p>
+              <p className="text-xs text-[#8BA5B3] mt-1">Just arrived today</p>
+            </motion.div>
+
+            {/* Top-left tag */}
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut", delay: 0.5 }}
+              className="absolute top-8 left-4 bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.14)] border border-white/60 px-4 py-3"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#EAF6F5] flex items-center justify-center text-sm">🐟</div>
+                <div>
+                  <p className="text-xs font-semibold text-[#1A2B35]">Fresh Fish</p>
+                  <p className="text-[10px] text-[#5BA8A0] font-medium">Caught this morning</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Bottom-right tag */}
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 1 }}
+              className="absolute bottom-12 right-2 bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.14)] border border-white/60 px-4 py-3"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-[#FEF0EC] flex items-center justify-center text-sm">🦀</div>
+                <div>
+                  <p className="text-xs font-semibold text-[#1A2B35]">Live Crabs</p>
+                  <p className="text-[10px] text-[#E8816A] font-medium">Limited stock</p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Rating pill */}
+            <motion.div
+              animate={{ y: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.2 }}
+              className="absolute bottom-8 left-8 bg-[#1A2B35] text-white rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-xl"
+            >
+              <Star size={13} className="text-amber-400 fill-amber-400" />
+              <span className="text-sm font-semibold">4.9</span>
+              <span className="text-[10px] text-white/50">· 200+ reviews</span>
+            </motion.div>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Scroll cue */}
       <motion.div
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1.5 }}
-        style={{ position: "absolute", bottom: "32px", left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}
+        transition={{ delay: 1.4 }}
       >
-        <span style={{ fontSize: "10px", fontWeight: "600", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.12em" }}>Scroll</span>
-        <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 1.5 }}>
-          <ChevronDown size={16} style={{ color: "#B8CFCC" }} />
+        <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Scroll</span>
+        <motion.div animate={{ y: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>
+          <ChevronDown size={16} className="text-white/40" />
         </motion.div>
       </motion.div>
     </section>
   );
 };
 
-// ═══════════════════════════════════════════════════════════
-//  MARQUEE STRIP
-// ═══════════════════════════════════════════════════════════
-const MarqueeStrip = () => {
+// ══════════════════════════════════════════════
+//  TICKER  — slide-in reveal
+// ══════════════════════════════════════════════
+const Ticker = () => {
   const items = [
-    "Fresh Catch Daily", "🌊", "Sustainable Seafood",
-    "Ocean to Table", "🐟", "Cold-Chain Delivery",
-    "Premium Quality", "🦐", "Chef Approved",
+    "Fresh Catch Daily","Ocean to Table","Sustainable Sourcing",
+    "Cold Chain Delivery","Chef Approved","Lab Tested Quality",
   ];
-
   return (
-    <div style={{
-      background: "#1A2E2C", overflow: "hidden", padding: "14px 0",
-      position: "relative",
-    }}>
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.1 }}
+      className="bg-[#1A2B35] py-3.5 overflow-hidden relative"
+    >
       <motion.div
-        animate={{ x: "-50%" }}
-        transition={{ duration: 20, ease: "linear", repeat: Infinity }}
-        style={{ display: "flex", gap: "48px", whiteSpace: "nowrap", width: "max-content" }}
+        className="flex whitespace-nowrap"
+        animate={{ x: ["0%", "-50%"] }}
+        transition={{ duration: 22, ease: "linear", repeat: Infinity }}
       >
         {[...items, ...items].map((item, i) => (
-          <span key={i} style={{ fontSize: "11px", fontWeight: "700", color: "rgba(91,191,181,0.8)", textTransform: "uppercase", letterSpacing: "0.12em" }}>
-            {item}
-          </span>
+          <div key={i} className="flex items-center">
+            <span className="text-xs font-semibold tracking-[0.15em] uppercase text-white/70 mx-8">
+              {item}
+            </span>
+            <div className="w-1 h-1 rounded-full bg-[#5BA8A0] mx-2" />
+          </div>
         ))}
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 
-// ═══════════════════════════════════════════════════════════
-//  CATEGORY PANEL
-// ═══════════════════════════════════════════════════════════
-const CATEGORIES = [
-  { label: "Premium Fish",  img: "/fish.png",  path: "/products?category=Fish",  emoji: "🐟", color: "#7EB8D4", tagline: "Wild-caught daily" },
-  { label: "Jumbo Prawns",  img: "/prawn.png", path: "/products?category=Prawn", emoji: "🦐", color: "#5BBFB5", tagline: "Perfect for grilling" },
-  { label: "Live Crabs",    img: "/crab.png",  path: "/products?category=Crab",  emoji: "🦀", color: "#F07468", tagline: "Soft-shell delicacies" },
+// ══════════════════════════════════════════════
+//  CATEGORIES  — stagger + left/right reveals
+// ══════════════════════════════════════════════
+const categories = [
+  { title:"Premium Fish",  sub:"20+ varieties",        img:"/fish.png",  tag:"Fish",  bg:"from-[#EAF6F5] to-[#F8FAFB]", accent:"#5BA8A0",  emoji:"🐟" },
+  { title:"Jumbo Prawns",  sub:"Wild-caught daily",    img:"/prawn.png", tag:"Prawn", bg:"from-[#EDF5FB] to-[#F8FAFB]", accent:"#89C2D9",  emoji:"🦐" },
+  { title:"Live Crabs",    sub:"Ships in tank water",  img:"/crab.png",  tag:"Crab",  bg:"from-[#FEF0EC] to-[#F8FAFB]", accent:"#E8816A",  emoji:"🦀" },
 ];
 
-const CategoryPanel = () => {
-  const [hovered, setHovered] = useState(1);
-
+const CategorySection = () => {
+  const [hovered, setHovered] = useState(null);
   return (
-    <section style={{ padding: "80px 24px", background: "#F4F9F8" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-        <Reveal>
-          <SectionHeader eyebrow="Browse" title="Shop by Category" subtitle="Select your favourite fresh catch from our daily sourced collection." />
-        </Reveal>
+    <section className="py-20 px-6 md:px-12 bg-[#F8FAFB]">
+      <div className="max-w-7xl mx-auto">
 
-        <div style={{ display: "flex", gap: "12px", height: "440px" }}>
-          {CATEGORIES.map((cat, i) => (
-            <Link
-              key={i}
-              to={cat.path}
-              className="category-panel"
-              onMouseEnter={() => setHovered(i)}
-              onMouseLeave={() => setHovered(1)}
-              style={{
-                flex: hovered === i ? "4" : "1",
-                textDecoration: "none",
-                borderRadius: "20px",
-                overflow: "hidden",
-                position: "relative",
-                background: "#fff",
-                border: `1.5px solid ${hovered === i ? cat.color + "40" : "#E2EEEC"}`,
-                boxShadow: hovered === i ? `0 16px 48px ${cat.color}20` : "0 2px 8px rgba(26,46,44,0.04)",
-                transition: "flex 0.7s cubic-bezier(0.25,1,0.5,1), box-shadow 0.3s, border-color 0.3s",
-                cursor: "pointer",
-              }}
-            >
-              {/* Color bar at top */}
-              <div style={{ height: "4px", background: cat.color, opacity: hovered === i ? 1 : 0.3, transition: "opacity 0.3s" }} />
-
-              {/* Image area */}
-              <div style={{
-                height: "55%",
-                background: "#F4F9F8",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                padding: "24px",
-                position: "relative", overflow: "hidden",
-              }}>
-                <div style={{ position: "absolute", inset: 0, background: `radial-gradient(circle, ${cat.color}10 0%, transparent 70%)`, transition: "opacity 0.4s", opacity: hovered === i ? 1 : 0 }} />
-                <motion.img
-                  src={cat.img}
-                  alt={cat.label}
-                  animate={{ scale: hovered === i ? 1.08 : 0.85, filter: hovered === i ? "grayscale(0)" : "grayscale(0.5) opacity(0.7)" }}
-                  transition={{ duration: 0.6, ease: [0.25, 1, 0.5, 1] }}
-                  style={{ width: "100%", height: "100%", objectFit: "contain", maxHeight: "160px" }}
-                />
-              </div>
-
-              {/* Content */}
-              <div style={{ padding: "20px 24px" }}>
-                <span style={{ fontSize: "20px", display: "block", marginBottom: "6px" }}>{cat.emoji}</span>
-                <h3 style={{
-                  fontFamily: "'Lora', serif", fontSize: hovered === i ? "22px" : "16px",
-                  fontWeight: "600", color: "#1A2E2C", marginBottom: "4px",
-                  transition: "font-size 0.5s ease",
-                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                }}>
-                  {cat.label}
-                </h3>
-                <motion.div
-                  animate={{ opacity: hovered === i ? 1 : 0, y: hovered === i ? 0 : 8 }}
-                  transition={{ duration: 0.3 }}
-                  style={{ display: "flex", alignItems: "center", gap: "6px", color: cat.color, fontSize: "12px", fontWeight: "700" }}
-                >
-                  {cat.tagline} <ArrowRight size={12} />
-                </motion.div>
-              </div>
-            </Link>
-          ))}
+        {/* Header — left side slides from left, CTA from right */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+          <RevealLeft>
+            <div>
+              <SectionLabel>Browse Categories</SectionLabel>
+              <h2
+                className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight"
+                style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
+              >
+                What are you<br />craving today?
+              </h2>
+            </div>
+          </RevealLeft>
+          <RevealRight delay={0.1}>
+            <CTAButton to="/products" variant="outline">
+              All Products <ArrowRight size={14} />
+            </CTAButton>
+          </RevealRight>
         </div>
+
+        {/* Cards stagger in */}
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {categories.map((cat, i) => (
+            <SI key={i}>
+              <Link to={`/products?category=${cat.tag}`}>
+                <motion.div
+                  onMouseEnter={() => setHovered(i)}
+                  onMouseLeave={() => setHovered(null)}
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.3 }}
+                  className={`relative rounded-2xl overflow-hidden border border-[#E8EEF2] bg-gradient-to-br ${cat.bg} p-6 h-64 cursor-pointer group shadow-sm hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-shadow duration-300`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-[#1A2B35]">{cat.title}</h3>
+                      <p className="text-sm text-[#8BA5B3] mt-0.5">{cat.sub}</p>
+                    </div>
+                    <motion.div
+                      animate={{ rotate: hovered === i ? 45 : 0 }}
+                      transition={{ duration: 0.25 }}
+                      className="w-8 h-8 rounded-full border border-[#E8EEF2] bg-white flex items-center justify-center"
+                    >
+                      <ArrowRight size={14} className="text-[#8BA5B3]" />
+                    </motion.div>
+                  </div>
+
+                  <motion.img
+                    src={cat.img}
+                    alt={cat.title}
+                    animate={{
+                      scale: hovered === i ? 1.06 : 1,
+                      rotate: hovered === i ? 3 : 0,
+                    }}
+                    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                    className="absolute bottom-4 right-4 w-36 h-36 object-contain drop-shadow-lg"
+                  />
+
+                  <div className="absolute bottom-5 left-6">
+                    <motion.div
+                      animate={{
+                        opacity: hovered === i ? 1 : 0,
+                        y: hovered === i ? 0 : 6,
+                      }}
+                      transition={{ duration: 0.25 }}
+                      className="text-xs font-bold text-white px-3 py-1.5 rounded-full"
+                      style={{ backgroundColor: cat.accent }}
+                    >
+                      Explore →
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </Link>
+            </SI>
+          ))}
+        </Stagger>
       </div>
     </section>
   );
 };
 
-// ═══════════════════════════════════════════════════════════
-//  HAPPY HOUR / PROMO BANNER
-// ═══════════════════════════════════════════════════════════
-const PromoBanner = () => {
-  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 });
+// ══════════════════════════════════════════════
+//  FLASH SALE BANNER  — scale reveal
+// ══════════════════════════════════════════════
+const FlashSale = () => {
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    const tick = () => {
-      const now = new Date();
-      const midnight = new Date(); midnight.setHours(24, 0, 0, 0);
-      const diff = midnight - now;
-      if (diff > 0) {
+    const calc = () => {
+      const diff = new Date().setHours(24, 0, 0, 0) - Date.now();
+      if (diff > 0)
         setTimeLeft({
-          h: Math.floor(diff / 3600000),
-          m: Math.floor((diff % 3600000) / 60000),
-          s: Math.floor((diff % 60000) / 1000),
+          hours:   Math.floor((diff / 36e5) % 24),
+          minutes: Math.floor((diff / 6e4) % 60),
+          seconds: Math.floor((diff / 1e3) % 60),
         });
-      }
     };
-    tick();
-    const t = setInterval(tick, 1000);
+    calc();
+    const t = setInterval(calc, 1000);
     return () => clearInterval(t);
   }, []);
 
-  const pad = v => String(v).padStart(2, "0");
+  const pad = (v) => String(v).padStart(2, "0");
 
   return (
-    <section style={{ padding: "0 24px 80px", background: "#F4F9F8" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-        <Reveal>
-          <div style={{
-            background: "#fff",
-            border: "1.5px solid #E2EEEC",
-            borderRadius: "20px",
-            padding: "48px",
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "32px",
-            position: "relative",
-            overflow: "hidden",
-          }}>
-            {/* Soft seafoam glow */}
-            <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "200px", height: "200px", borderRadius: "50%", background: "radial-gradient(circle, rgba(91,191,181,0.12) 0%, transparent 70%)", pointerEvents: "none" }} />
+    <section className="px-6 md:px-12 py-6 bg-[#F8FAFB]">
+      <div className="max-w-7xl mx-auto">
+        <ScaleReveal>
+          <div className="relative rounded-2xl overflow-hidden border border-[#E8EEF2] bg-white shadow-sm">
+            {/* Rainbow top stripe */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#5BA8A0] via-[#89C2D9] to-[#E8816A]" />
 
-            {/* Left: copy */}
-            <div style={{ position: "relative", zIndex: 1 }}>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "#FEE2E2", borderRadius: "20px", padding: "4px 12px", marginBottom: "16px" }}>
-                <Zap size={11} style={{ color: "#DC2626" }} />
-                <span style={{ fontSize: "10px", fontWeight: "800", color: "#DC2626", textTransform: "uppercase", letterSpacing: "0.08em" }}>Today's Deal</span>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 md:p-10">
+              {/* Left */}
+              <div className="flex items-center gap-5">
+                <div className="w-12 h-12 rounded-2xl bg-[#FEF0EC] flex items-center justify-center flex-shrink-0">
+                  <Flame size={22} className="text-[#E8816A]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Chip color="coral"><Zap size={10} /> Flash Deal</Chip>
+                  </div>
+                  <p className="text-[#1A2B35] font-bold text-lg md:text-xl leading-snug">
+                    Order above <span className="text-[#5BA8A0]">₹1,699</span> — get{" "}
+                    <span className="text-[#E8816A]">10% OFF</span>
+                  </p>
+                  <p className="text-[#8BA5B3] text-sm mt-1">
+                    Use coupon{" "}
+                    <span className="font-mono font-bold text-[#1A2B35] bg-[#F5EFE6] px-2 py-0.5 rounded-md text-xs border border-[#E8D9C4]">
+                      SEABITE10
+                    </span>{" "}
+                    at checkout
+                  </p>
+                </div>
               </div>
-              <h2 style={{ fontFamily: "'Lora', serif", fontSize: "clamp(26px, 4vw, 38px)", fontWeight: "700", color: "#1A2E2C", letterSpacing: "-0.025em", marginBottom: "12px", lineHeight: 1.2 }}>
-                Order above <span style={{ color: "#5BBFB5" }}>₹1,699</span> &<br />save 10% today
-              </h2>
-              <p style={{ fontSize: "14px", color: "#6B8F8A", marginBottom: "20px", lineHeight: 1.6 }}>
-                Use coupon code at checkout. Limited time offer.
-              </p>
-              {/* Coupon */}
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "12px", background: "#F4F9F8", border: "1.5px dashed #5BBFB5", borderRadius: "10px", padding: "10px 20px" }}>
-                <span style={{ fontFamily: "monospace", fontSize: "18px", fontWeight: "800", color: "#5BBFB5", letterSpacing: "0.06em" }}>SEABITE10</span>
-                <button
-                  onClick={() => { navigator.clipboard.writeText("SEABITE10"); toast.success("Copied!", { style: { borderRadius: "10px", fontSize: "13px" } }); }}
-                  style={{ fontSize: "11px", fontWeight: "700", color: "#6B8F8A", background: "none", border: "none", cursor: "pointer", fontFamily: "'Manrope', sans-serif", textDecoration: "underline" }}
-                >
-                  Copy
-                </button>
-              </div>
-            </div>
 
-            {/* Right: countdown + CTA */}
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", position: "relative", zIndex: 1 }}>
-              {/* Countdown */}
-              <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: "10px", fontWeight: "700", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>Offer ends in</p>
-                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                  {[{ val: timeLeft.h, label: "HR" }, { val: timeLeft.m, label: "MIN" }, { val: timeLeft.s, label: "SEC" }].map((unit, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      {i > 0 && <span style={{ fontSize: "24px", fontWeight: "800", color: "#E2EEEC" }}>:</span>}
-                      <div style={{ textAlign: "center" }}>
+              {/* Right — countdown + CTA */}
+              <div className="flex items-center gap-5 flex-shrink-0">
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { v: timeLeft.hours,   label: "HRS" },
+                    { v: timeLeft.minutes, label: "MIN" },
+                    { v: timeLeft.seconds, label: "SEC" },
+                  ].map((t, i) => (
+                    <div key={i} className="flex items-center gap-1.5">
+                      {i > 0 && <span className="text-[#CBD8DF] font-bold text-lg mb-2">:</span>}
+                      <div className="text-center">
                         <AnimatePresence mode="popLayout">
                           <motion.div
-                            key={unit.val}
-                            initial={{ y: -16, opacity: 0 }}
+                            key={t.v}
+                            initial={{ y: -10, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
-                            exit={{ y: 16, opacity: 0 }}
-                            transition={{ duration: 0.25 }}
-                            style={{
-                              background: "#F4F9F8", border: "1.5px solid #E2EEEC",
-                              borderRadius: "10px", padding: "10px 14px",
-                              fontSize: "28px", fontWeight: "800", color: "#1A2E2C",
-                              minWidth: "56px", textAlign: "center",
-                              fontFamily: "'Manrope', sans-serif",
-                            }}
+                            exit={{ y: 10, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="w-11 h-11 bg-[#F8FAFB] border border-[#E8EEF2] rounded-xl flex items-center justify-center font-bold text-[#1A2B35] text-base tabular-nums"
                           >
-                            {pad(unit.val)}
+                            {pad(t.v)}
                           </motion.div>
                         </AnimatePresence>
-                        <p style={{ fontSize: "9px", fontWeight: "700", color: "#B8CFCC", marginTop: "5px", textTransform: "uppercase", letterSpacing: "0.08em" }}>{unit.label}</p>
+                        <p className="text-[9px] text-[#8BA5B3] mt-1 font-medium tracking-wider">
+                          {t.label}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
 
-              <Link to="/products" style={{ textDecoration: "none" }}>
-                <motion.button
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.97 }}
-                  style={{
-                    padding: "12px 28px", background: "#1A2E2C", color: "#fff",
-                    border: "none", borderRadius: "10px",
-                    fontSize: "14px", fontWeight: "700", cursor: "pointer",
-                    fontFamily: "'Manrope', sans-serif", transition: "background 0.2s",
-                    display: "flex", alignItems: "center", gap: "8px",
-                  }}
-                >
-                  Grab the Deal <ArrowRight size={14} />
-                </motion.button>
-              </Link>
+                <CTAButton to="/products" variant="coral">
+                  Grab Deal <ArrowRight size={14} />
+                </CTAButton>
+              </div>
             </div>
           </div>
-        </Reveal>
+        </ScaleReveal>
       </div>
     </section>
   );
 };
 
-// ═══════════════════════════════════════════════════════════
-//  PRODUCT ROW
-// ═══════════════════════════════════════════════════════════
-const ProductRow = ({ title, filterType, eyebrow }) => {
-  const [products, setProducts] = useState([]);
+// ══════════════════════════════════════════════
+//  PRODUCT ROWS  — header reveals, cards stagger
+// ══════════════════════════════════════════════
+const CategoryRow = ({ title, filterType }) => {
+  const [products, setProducts]           = useState([]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/products`).then(res => {
+    axios.get(`${API_URL}/api/products`).then((res) => {
       const all = res.data.products || [];
       setGlobalDiscount(res.data.globalDiscount || 0);
-      const filtered = filterType === "Fish"
-        ? all.filter(p => p.category === "Fish").slice(0, 4)
-        : all.filter(p => p.category === "Prawn" || p.category === "Crab").slice(0, 4);
+      const filtered =
+        filterType === "Fish"
+          ? all.filter((p) => p.category === "Fish").slice(0, 4)
+          : all.filter((p) => p.category === "Prawn" || p.category === "Crab").slice(0, 4);
       setProducts(filtered);
-    }).catch(() => {});
+    });
   }, [filterType]);
 
   if (!products.length) return null;
 
   return (
-    <section style={{ padding: "0 24px 80px", background: "#fff" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-        <Reveal>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: "40px" }}>
-            <SectionHeader
-              eyebrow={eyebrow}
-              title={title}
-              center={false}
-            />
+    <section className="py-16 px-6 md:px-12 bg-[#F8FAFB]">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <RevealLeft>
+            <div>
+              <SectionLabel>{filterType === "Fish" ? "Fish" : "Shellfish"}</SectionLabel>
+              <h2
+                className="text-2xl md:text-3xl font-bold text-[#1A2B35]"
+                style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
+              >
+                {title}
+              </h2>
+            </div>
+          </RevealLeft>
+          <RevealRight delay={0.1}>
             <Link
               to="/products"
-              style={{
-                display: "flex", alignItems: "center", gap: "4px",
-                fontSize: "13px", fontWeight: "700", color: "#5BBFB5",
-                textDecoration: "none", marginBottom: "48px", flexShrink: 0,
-              }}
+              className="flex items-center gap-1.5 text-sm font-semibold text-[#5BA8A0] hover:text-[#3D8C85] transition-colors"
             >
-              See all <FiChevronRight size={14} />
+              See all
+              <motion.span whileHover={{ x: 3 }} className="inline-block">
+                <ChevronRight size={15} />
+              </motion.span>
             </Link>
-          </div>
-        </Reveal>
+          </RevealRight>
+        </div>
 
-        <StaggerGrid>
-          {products.map(p => (
-            <StaggerItem key={p._id}>
-              <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
-            </StaggerItem>
+        <Stagger className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {products.map((p) => (
+            <SI key={p._id}>
+              <div className="bg-white rounded-2xl border border-[#E8EEF2] overflow-hidden hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1">
+                <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
+              </div>
+            </SI>
           ))}
-        </StaggerGrid>
+        </Stagger>
       </div>
     </section>
   );
 };
 
-// ═══════════════════════════════════════════════════════════
-//  WHY SEABITE
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  WHY SEABITE — alternating reveals
+// ══════════════════════════════════════════════
 const WhySeaBite = () => {
   const features = [
-    { icon: <ShieldCheck size={20} />, title: "Quality Guaranteed",     desc: "Every batch is lab-tested and certified for freshness and safety.", color: "#5BBFB5", bg: "#F0FBF9" },
-    { icon: <Thermometer  size={20} />, title: "Cold Chain Delivery",    desc: "Temperature-controlled packaging from ocean to your doorstep.",    color: "#7EB8D4", bg: "#EBF6FC" },
-    { icon: <Truck        size={20} />, title: "Same Day Dispatch",      desc: "Orders before 2 PM ship same day for maximum freshness.",           color: "#F59E0B", bg: "#FEF3C7" },
-    { icon: <Utensils     size={20} />, title: "Chef Approved",          desc: "Trusted by 500+ restaurants and home cooks across the coast.",     color: "#F07468", bg: "#FFF5F4" },
+    { icon: <ShieldCheck size={20} />, title: "Quality Guaranteed",  desc: "Every batch lab-tested for freshness and safety before dispatch.",       color: "text-[#3D8C85]", bg: "bg-[#EAF6F5]" },
+    { icon: <Thermometer  size={20} />, title: "Cold Chain Delivery", desc: "Temperature-controlled packaging from ocean to your doorstep.",           color: "text-[#3A7DA0]", bg: "bg-[#EDF5FB]" },
+    { icon: <Truck        size={20} />, title: "Same Day Dispatch",   desc: "Order before 2 PM and it ships today — freshness guaranteed.",            color: "text-[#8B6D45]", bg: "bg-[#FAF4EC]" },
+    { icon: <Utensils     size={20} />, title: "Chef Approved",       desc: "Trusted by restaurants and home cooks across the coastline.",             color: "text-[#C05A45]", bg: "bg-[#FEF0EC]" },
   ];
 
   const stats = [
-    { val: 100, suffix: "+", label: "Happy Customers" },
-    { val: 20,  suffix: "+", label: "Varieties" },
-    { val: 98,  suffix: "%", label: "Freshness Score" },
-    { val: 4,   suffix: ".8★", label: "Average Rating" },
+    { value: 500, suffix: "+",   label: "Happy Customers" },
+    { value: 20,  suffix: "+",   label: "Varieties Available" },
+    { value: 98,  suffix: "%",   label: "Freshness Score" },
+    { value: 4,   suffix: ".8★", label: "Average Rating" },
   ];
 
   return (
-    <section style={{ padding: "80px 24px", background: "#F4F9F8" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-        <Reveal>
-          <SectionHeader
-            eyebrow="Our Promise"
-            title="Why SeaBite?"
-            subtitle="We set the standard so you can taste the difference with every bite."
-          />
-        </Reveal>
+    <section className="py-20 px-6 md:px-12 bg-white">
+      <div className="max-w-7xl mx-auto">
 
-        {/* Stats row */}
-        <Reveal direction="scale" style={{ marginBottom: "48px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "16px" }}>
-            {stats.map((s, i) => (
-              <div
-                key={i}
-                className="stat-card"
-                style={{
-                  background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px",
-                  padding: "28px 20px", textAlign: "center",
-                  transition: "all 0.25s ease",
-                  boxShadow: "0 2px 8px rgba(91,191,181,0.05)",
-                }}
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+          <RevealLeft>
+            <div>
+              <SectionLabel>Why Choose Us</SectionLabel>
+              <h2
+                className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight"
+                style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
               >
-                <p style={{ fontFamily: "'Manrope', sans-serif", fontSize: "36px", fontWeight: "800", color: "#1A2E2C", letterSpacing: "-0.04em", lineHeight: 1, marginBottom: "8px" }}>
-                  <Counter to={s.val} suffix={s.suffix} />
+                The SeaBite<br />difference.
+              </h2>
+            </div>
+          </RevealLeft>
+          <RevealRight delay={0.1}>
+            <p className="text-[#4A6572] max-w-sm text-[15px] leading-relaxed">
+              We set the bar higher so every meal you cook starts with the finest, freshest ingredient possible.
+            </p>
+          </RevealRight>
+        </div>
+
+        {/* Stats — scale reveal */}
+        <ScaleReveal delay={0.05}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            {stats.map((s, i) => (
+              <motion.div
+                key={i}
+                whileHover={{ y: -3, borderColor: "#C5E6E4" }}
+                transition={{ duration: 0.25 }}
+                className="bg-[#F8FAFB] border border-[#E8EEF2] rounded-2xl p-6 text-center transition-colors duration-300"
+              >
+                <p className="text-3xl font-black text-[#1A2B35] mb-1">
+                  <Counter value={s.value} suffix={s.suffix} />
                 </p>
-                <p style={{ fontSize: "11px", fontWeight: "600", color: "#6B8F8A", textTransform: "uppercase", letterSpacing: "0.08em" }}>{s.label}</p>
-              </div>
+                <p className="text-[11px] text-[#8BA5B3] font-medium uppercase tracking-wider">
+                  {s.label}
+                </p>
+              </motion.div>
             ))}
           </div>
-        </Reveal>
+        </ScaleReveal>
 
-        {/* Feature cards */}
-        <StaggerGrid cols="repeat(4,1fr)" gap="16px">
+        {/* Feature cards — stagger */}
+        <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {features.map((f, i) => (
-            <StaggerItem key={i}>
-              <div
-                className="feature-card"
-                style={{
-                  background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px",
-                  padding: "28px 24px", height: "100%",
-                  transition: "all 0.3s ease",
-                }}
+            <SI key={i}>
+              <motion.div
+                whileHover={{ y: -4 }}
+                transition={{ duration: 0.3 }}
+                className="bg-[#F8FAFB] border border-[#E8EEF2] rounded-2xl p-6 h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-shadow duration-300"
               >
-                <div style={{ width: "44px", height: "44px", background: f.bg, borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", color: f.color, marginBottom: "18px" }}>
+                <div className={`w-10 h-10 rounded-xl ${f.bg} ${f.color} flex items-center justify-center mb-5`}>
                   {f.icon}
                 </div>
-                <h3 style={{ fontSize: "15px", fontWeight: "700", color: "#1A2E2C", marginBottom: "8px" }}>{f.title}</h3>
-                <p style={{ fontSize: "13px", color: "#6B8F8A", lineHeight: "1.7" }}>{f.desc}</p>
-              </div>
-            </StaggerItem>
+                <h3 className="font-bold text-[#1A2B35] mb-2 text-[15px]">{f.title}</h3>
+                <p className="text-sm text-[#8BA5B3] leading-relaxed">{f.desc}</p>
+              </motion.div>
+            </SI>
           ))}
-        </StaggerGrid>
+        </Stagger>
       </div>
     </section>
   );
 };
 
-// ═══════════════════════════════════════════════════════════
-//  REVIEWS
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  REVIEWS  — stagger reveal
+// ══════════════════════════════════════════════
 const Reviews = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     axios.get(`${API_URL}/api/products/top-reviews`)
-      .then(res => { setReviews(res.data); setLoading(false); })
+      .then((res) => { setReviews(res.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
   return (
-    <section style={{ padding: "80px 24px", background: "#fff" }}>
-      <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
+    <section className="py-20 px-6 md:px-12 bg-[#F8FAFB]">
+      <div className="max-w-7xl mx-auto">
         <Reveal>
-          <SectionHeader
-            eyebrow="Customer Reviews"
-            title="Loved by seafood lovers"
-            subtitle="Real words from real customers across the coast."
-          />
+          <SectionLabel>Customer Reviews</SectionLabel>
+          <h2
+            className="text-3xl md:text-4xl font-bold text-[#1A2B35] mb-12"
+            style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
+          >
+            Loved by seafood lovers.
+          </h2>
         </Reveal>
 
-        {loading ? (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "20px" }}>
-            {[...Array(3)].map((_, i) => (
-              <div key={i} style={{ height: "200px", borderRadius: "16px", background: "linear-gradient(90deg, #E2EEEC 25%, #EDF5F3 50%, #E2EEEC 75%)", backgroundSize: "200% 100%", animation: `shimmer 1.6s infinite ${i * 0.15}s` }} />
-            ))}
-          </div>
-        ) : reviews.length > 0 ? (
-          <StaggerGrid cols="repeat(3,1fr)" gap="20px">
-            {reviews.map((r, i) => (
-              <StaggerItem key={i}>
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {loading ? (
+            // Shimmer skeletons
+            [...Array(3)].map((_, i) => (
+              <SI key={i}>
                 <div
-                  className="review-card"
+                  className="h-48 rounded-2xl"
                   style={{
-                    background: "#F4F9F8", border: "1.5px solid #E2EEEC", borderRadius: "16px",
-                    padding: "28px", height: "100%",
-                    transition: "all 0.25s ease",
+                    background: "linear-gradient(90deg, #E8EEF2 25%, #F0F5F8 50%, #E8EEF2 75%)",
+                    backgroundSize: "200% 100%",
+                    animation: `shimmer 1.6s infinite ${i * 0.15}s`,
                   }}
+                />
+              </SI>
+            ))
+          ) : reviews.length > 0 ? (
+            reviews.map((r, i) => (
+              <SI key={i}>
+                <motion.div
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.3 }}
+                  className="bg-white border border-[#E8EEF2] rounded-2xl p-6 h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-shadow duration-300"
                 >
-                  {/* Stars */}
-                  <div style={{ display: "flex", gap: "3px", marginBottom: "16px" }}>
-                    {[...Array(5)].map((_, s) => (
-                      <Star key={s} size={14} style={{ color: s < r.rating ? "#F59E0B" : "#E2EEEC" }} fill={s < r.rating ? "#F59E0B" : "none"} />
+                  <div className="flex gap-0.5 mb-5">
+                    {[...Array(5)].map((_, j) => (
+                      <Star
+                        key={j}
+                        size={13}
+                        className={j < r.rating ? "text-amber-400 fill-amber-400" : "text-[#E8EEF2] fill-[#E8EEF2]"}
+                      />
                     ))}
                   </div>
-                  <p style={{ fontSize: "14px", color: "#6B8F8A", lineHeight: "1.8", fontStyle: "italic", marginBottom: "20px" }}>
-                    "{r.comment}"
+                  <p className="text-[#4A6572] text-sm leading-relaxed mb-6">
+                    &ldquo;{r.comment}&rdquo;
                   </p>
-                  {/* Reviewer */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <div style={{
-                      width: "36px", height: "36px", borderRadius: "50%",
-                      background: "linear-gradient(135deg, #5BBFB5, #7EB8D4)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#fff", fontWeight: "800", fontSize: "13px", flexShrink: 0,
-                    }}>
-                      {r.userName?.charAt(0) || "U"}
+                  <div className="flex items-center gap-3 pt-4 border-t border-[#F5F7F9]">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#5BA8A0] to-[#89C2D9] flex items-center justify-center text-white">
+                      <User size={14} />
                     </div>
                     <div>
-                      <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{r.userName}</p>
-                      <p style={{ fontSize: "11px", color: "#5BBFB5", fontWeight: "600", margin: 0, marginTop: "2px" }}>{r.productName}</p>
+                      <p className="text-sm font-semibold text-[#1A2B35]">{r.userName}</p>
+                      <p className="text-[11px] text-[#5BA8A0] font-medium">{r.productName}</p>
                     </div>
                   </div>
-                </div>
-              </StaggerItem>
-            ))}
-          </StaggerGrid>
-        ) : (
-          <div style={{ textAlign: "center", padding: "48px", border: "1.5px dashed #E2EEEC", borderRadius: "16px" }}>
-            <p style={{ color: "#B8CFCC", fontSize: "14px" }}>🎣 Reviews coming soon!</p>
-          </div>
-        )}
+                </motion.div>
+              </SI>
+            ))
+          ) : (
+            <p className="col-span-3 text-center text-[#8BA5B3]">No reviews yet.</p>
+          )}
+        </Stagger>
+
+        <style>{`
+          @keyframes shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+          }
+        `}</style>
       </div>
     </section>
   );
 };
 
-// ═══════════════════════════════════════════════════════════
-//  FINAL CTA
-// ═══════════════════════════════════════════════════════════
-const FinalCTA = () => (
-  <section style={{ padding: "80px 24px", background: "#F4F9F8" }}>
-    <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
-      <Reveal>
-        <div style={{
-          background: "#1A2E2C",
-          borderRadius: "24px",
-          padding: "80px 48px",
-          textAlign: "center",
-          position: "relative", overflow: "hidden",
-        }}>
-          {/* Ambient rings */}
-          <div style={{ position: "absolute", top: "-60px", right: "-60px", width: "240px", height: "240px", border: "40px solid rgba(91,191,181,0.08)", borderRadius: "50%", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", bottom: "-80px", left: "-80px", width: "320px", height: "320px", border: "60px solid rgba(126,184,212,0.05)", borderRadius: "50%", pointerEvents: "none" }} />
+// ══════════════════════════════════════════════
+//  CTA BANNER  — scale reveal from slight scale
+// ══════════════════════════════════════════════
+const CTABanner = () => (
+  <section className="px-6 md:px-12 py-6 bg-[#F8FAFB]">
+    <div className="max-w-7xl mx-auto">
+      <ScaleReveal>
+        <div className="relative rounded-2xl overflow-hidden bg-[#1A2B35] p-10 md:p-14 text-center">
+          <div
+            className="absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-96 h-96 rounded-full bg-[#5BA8A0] opacity-10 blur-3xl" />
+          </div>
 
-          <p style={{ fontSize: "11px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "16px", position: "relative", zIndex: 1 }}>
-            Fresh Every Morning
-          </p>
-          <h2 style={{ fontFamily: "'Lora', serif", fontSize: "clamp(32px, 5vw, 56px)", fontWeight: "700", color: "#fff", letterSpacing: "-0.03em", lineHeight: 1.15, marginBottom: "20px", position: "relative", zIndex: 1 }}>
-            Experience the true taste<br />
-            <em style={{ color: "#5BBFB5" }}>of the ocean.</em>
-          </h2>
-          <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.55)", maxWidth: "480px", margin: "0 auto 36px", lineHeight: "1.8", position: "relative", zIndex: 1 }}>
-            From the Andhra coastline to your kitchen — premium quality, responsibly sourced, delivered fresh.
-          </p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", position: "relative", zIndex: 1 }}
-          >
-            <Link to="/products" style={{ textDecoration: "none" }}>
-              <motion.button
-                whileHover={{ scale: 1.04, boxShadow: "0 16px 48px rgba(91,191,181,0.25)" }}
-                whileTap={{ scale: 0.97 }}
-                style={{
-                  padding: "14px 36px", background: "#5BBFB5", color: "#fff",
-                  border: "none", borderRadius: "12px",
-                  fontSize: "14px", fontWeight: "700", cursor: "pointer",
-                  fontFamily: "'Manrope', sans-serif", transition: "background 0.2s",
-                  display: "flex", alignItems: "center", gap: "8px",
-                }}
+          <div className="relative z-10 space-y-5">
+            <Reveal>
+              <Chip color="teal"><Waves size={11} /> Ocean Fresh</Chip>
+            </Reveal>
+            <Reveal delay={0.08}>
+              <h2
+                className="text-3xl md:text-5xl font-bold text-white leading-tight"
+                style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
               >
-                Start Your Order <ArrowRight size={14} />
-              </motion.button>
-            </Link>
-            <Link to="/about" style={{ textDecoration: "none" }}>
-              <motion.button
-                whileHover={{ scale: 1.04, borderColor: "rgba(255,255,255,0.4)" }}
-                whileTap={{ scale: 0.97 }}
-                style={{
-                  padding: "14px 28px",
-                  background: "transparent", color: "rgba(255,255,255,0.7)",
-                  border: "1.5px solid rgba(255,255,255,0.15)",
-                  borderRadius: "12px", fontSize: "14px", fontWeight: "600",
-                  cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                  transition: "all 0.2s",
-                }}
-              >
-                Our Story
-              </motion.button>
-            </Link>
-          </motion.div>
+                Taste the ocean,<br />delivered today.
+              </h2>
+            </Reveal>
+            <Reveal delay={0.16}>
+              <p className="text-white/50 max-w-md mx-auto text-[15px]">
+                Premium seafood, cold-chain delivered. From the coast to your plate in hours.
+              </p>
+            </Reveal>
+            <Reveal delay={0.24}>
+              <div className="pt-2">
+                <Link to="/products">
+                  <motion.button
+                    whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(91,168,160,0.4)" }}
+                    whileTap={{ scale: 0.97 }}
+                    className="inline-flex items-center gap-2.5 px-8 py-4 bg-[#5BA8A0] text-white font-semibold rounded-full text-sm transition-all"
+                  >
+                    Start Your Order <ArrowRight size={15} />
+                  </motion.button>
+                </Link>
+              </div>
+            </Reveal>
+          </div>
         </div>
-      </Reveal>
+      </ScaleReveal>
     </div>
   </section>
 );
 
-// ═══════════════════════════════════════════════════════════
-//  SCROLL TO TOP
-// ═══════════════════════════════════════════════════════════
-const ScrollToTop = () => {
-  const [visible, setVisible] = useState(false);
+// ══════════════════════════════════════════════
+//  SCROLL-TO-TOP
+// ══════════════════════════════════════════════
+const ScrollTop = () => {
+  const [show, setShow] = useState(false);
   useEffect(() => {
-    const fn = () => setVisible(window.scrollY > 600);
-    window.addEventListener("scroll", fn, { passive: true });
-    return () => window.removeEventListener("scroll", fn);
+    const h = () => setShow(window.scrollY > 500);
+    window.addEventListener("scroll", h);
+    return () => window.removeEventListener("scroll", h);
   }, []);
   return (
     <AnimatePresence>
-      {visible && (
+      {show && (
         <motion.button
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0, opacity: 0 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          whileHover={{ y: -2 }}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          style={{
-            position: "fixed", bottom: "28px", right: "28px", zIndex: 50,
-            width: "44px", height: "44px",
-            background: "#1A2E2C", color: "#fff",
-            border: "none", borderRadius: "12px",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            cursor: "pointer", boxShadow: "0 8px 24px rgba(26,46,44,0.20)",
-          }}
+          className="fixed bottom-8 right-8 z-50 w-11 h-11 bg-white border border-[#E8EEF2] rounded-full shadow-md flex items-center justify-center text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] transition-colors"
         >
-          <ChevronDown size={18} style={{ transform: "rotate(180deg)" }} />
+          <ChevronDown size={18} className="rotate-180" />
         </motion.button>
       )}
     </AnimatePresence>
   );
 };
 
-// ═══════════════════════════════════════════════════════════
-//  MAIN EXPORT
-// ═══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  PAGE EXPORT
+// ══════════════════════════════════════════════
 export default function Home() {
   return (
-    <>
-      <GlobalStyles />
-      <div
-        className="home-root"
-        style={{ background: "#F4F9F8", minHeight: "100vh", color: "#1A2E2C" }}
-      >
-        <Hero />
-        <MarqueeStrip />
-        <CategoryPanel />
-        <PromoBanner />
+    <div
+      className="bg-[#F8FAFB] min-h-screen text-[#1A2B35] selection:bg-[#C5E6E4] selection:text-[#1A2B35] antialiased"
+      style={{ fontFamily: "'Plus Jakarta Sans', 'Manrope', sans-serif" }}
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        * { -webkit-font-smoothing: antialiased; }
+      `}</style>
 
-        {/* White section wrapper for product rows */}
-        <div style={{ background: "#fff", paddingTop: "80px" }}>
-          <ProductRow
-            title="Fresh From The Nets"
-            filterType="Fish"
-            eyebrow="Daily Catch"
-          />
-          <ProductRow
-            title="Shellfish Specials"
-            filterType="Shellfish"
-            eyebrow="Hand-Picked"
-          />
+      <Hero />
+      <Ticker />
+      <CategorySection />
+      <FlashSale />
+      <CategoryRow title="Fresh From The Nets"  filterType="Fish" />
+      <CategoryRow title="Shellfish Specials"    filterType="Shellfish" />
+
+      {/* Trending — wrapped in clean white surface */}
+      <section className="py-4 px-6 md:px-12 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <Reveal>
+            <SectionLabel>Trending</SectionLabel>
+          </Reveal>
+          <TrendingProducts />
         </div>
+      </section>
 
-        <TrendingProducts />
-        <Reviews />
-        <WhySeaBite />
-        <FinalCTA />
-        <ScrollToTop />
-      </div>
-    </>
+      <Reviews />
+      <WhySeaBite />
+      <CTABanner />
+      <ScrollTop />
+    </div>
   );
 }

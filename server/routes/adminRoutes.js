@@ -6,7 +6,8 @@ import User from "../models/User.js";
 import Settings, { getSettings } from "../models/Settings.js";
 import SearchInsight from "../models/SearchInsight.js";
 import ActivityLog from "../models/ActivityLog.js"; // 🟢 Added
-import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail, sendEmail } from "../utils/emailService.js";
+import Coupon from "../models/Coupon.js"; // 🟢 Added
+import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail, sendEmail, sendWinBackEmail } from "../utils/emailService.js";
 
 const router = express.Router();
 
@@ -426,6 +427,79 @@ router.post("/marketing/email-blast", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("Marketing Blast Critical Fail:", err);
     res.status(500).json({ message: "Marketing blast failed to start." });
+  }
+});
+
+// 1.9.1 AUTOMATED WIN-BACK CAMPAIGN (POST /api/admin/marketing/win-back)
+router.post("/marketing/win-back", adminAuth, async (req, res) => {
+  try {
+    // 1. Criteria: Inactive for > 30 days
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Find users whose lastOrderCompletionTime is older than 30 days OR null (if they registered long ago but never bought - optional)
+    // Let's target strictly "Churned/At Risk" customers who HAVE bought before.
+    const atRiskUsers = await User.find({
+      lastOrderCompletionTime: { $lt: thirtyDaysAgo },
+      email: { $exists: true }
+    });
+
+    let sentCount = 0;
+    let skippedCount = 0;
+
+    for (const user of atRiskUsers) {
+      // 2. Check if we already sent a Win-Back recently (Check ActivityLog or specific Coupon existence)
+      // Check for an active coupon starting with "WB-" linked to this user
+      const existingCoupon = await Coupon.findOne({
+        code: { $regex: `^WB-${user._id.toString().slice(-4)}` },
+        isActive: true,
+        expiresAt: { $gt: new Date() } // Still valid
+      });
+
+      if (existingCoupon) {
+        skippedCount++;
+        continue;
+      }
+
+      // 3. Generate Unique Coupon
+      // Pattern: WB-{USER_LAST_4}-{RANDOM_4}
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      const code = `WB-${user._id.toString().slice(-4)}-${randomSuffix}`.toUpperCase();
+
+      await Coupon.create({
+        code,
+        discountType: "percent",
+        value: 15,
+        minOrderAmount: 500, // Min order to use it
+        maxUses: 1,
+        userEmail: user.email, // Locked to this user
+        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 Hours validity
+        isActive: true
+      });
+
+      // 4. Send Email
+      await sendWinBackEmail(user.email, user.name, code);
+
+      // 5. Log it
+      await ActivityLog.create({
+        action: "MARKETING_WINBACK",
+        details: `Sent Win-Back Code ${code} to ${user.email}`,
+        meta: { email: user.email, code }
+      });
+
+      sentCount++;
+      // Rate limit safety
+      await new Promise(r => setTimeout(r, 200));
+    }
+
+    res.json({
+      message: "Win-Back campaign executed",
+      stats: { sent: sentCount, skipped: skippedCount, totalCandidates: atRiskUsers.length }
+    });
+
+  } catch (err) {
+    console.error("Win-Back Error:", err);
+    res.status(500).json({ message: "Failed to run win-back campaign" });
   }
 });
 

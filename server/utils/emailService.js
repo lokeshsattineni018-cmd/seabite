@@ -279,4 +279,40 @@ export const sendEmail = async (to, subject, content) => {
     subject,
     html
   });
-};
+  /**
+   * 🟢 8. AUTOMATION: WIN-BACK COUPON
+   */
+  export const sendWinBackEmail = async (email, name, couponCode) => {
+    if (!resend) return;
+
+    const content = `
+    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
+      We Miss <span style="color: #38bdf8;">You!</span>
+    </h1>
+    <p style="margin-bottom: 25px;">
+      Hello <b>${name}</b>, it's been a while since we've seen you. 
+      The ocean has brought in some incredible catches lately, and we'd love for you to taste them.
+    </p>
+
+    <div style="background: rgba(56, 189, 248, 0.1); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(56, 189, 248, 0.3);">
+      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">YOUR EXCLUSIVE GIFT</div>
+      <div style="font-size: 32px; font-weight: 700; color: #38bdf8; letter-spacing: 2px;">${couponCode}</div>
+      <div style="font-size: 12px; color: #cbd5e1; margin-top: 10px;">15% OFF • Valid for 48 Hours</div>
+    </div>
+
+    <p style="font-size: 14px; text-align: center; color: #94a3b8; margin-bottom: 30px;">
+      This code is linked to your account and cannot be transferred.
+    </p>
+
+    <div style="text-align: center;">
+      <a href="https://seabite.co.in" style="background: #38bdf8; color: #020617; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; letter-spacing: 1px;">CLAIM OFFER</a>
+    </div>
+  `;
+
+    return await resend.emails.send({
+      from: OFFICIAL_SENDER,
+      to: email,
+      subject: `We miss you, ${name} (Gift Inside)`,
+      html: aestheticWrapper(content, "VIP RETURN PASS")
+    });
+  };
