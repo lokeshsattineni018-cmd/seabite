@@ -1,6 +1,6 @@
 import { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { FiHeart, FiX, FiZap } from "react-icons/fi";
+import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck } from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -8,249 +8,325 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-const EnhancedProductCard = ({ product, onWishlistChange, isWishlistMode = false, globalDiscount = 0 }) => {
-    const { addToCart } = useContext(CartContext);
-    const { user, refreshMe } = useContext(AuthContext);
-    const navigate = useNavigate();
+// ─── Design Tokens ───────────────────────────────────────────────────────────
+// Primary:    Seafoam   #5BBFB5
+// Secondary:  Sky       #7EB8D4
+// Accent:     Coral     #F07468
+// Surface:    White     #FFFFFF
+// Background: Off-white #F4F9F8
+// Border:     Mist      #E2EEEC
+// Text-1:     Slate     #1A2E2C
+// Text-2:     Drift     #6B8F8A
+// ─────────────────────────────────────────────────────────────────────────────
 
-    const [isAdding, setIsAdding] = useState(false);
-    const [loadingWishlist, setLoadingWishlist] = useState(false);
+const EnhancedProductCard = ({
+  product,
+  onWishlistChange,
+  isWishlistMode = false,
+  globalDiscount = 0,
+}) => {
+  const { addToCart } = useContext(CartContext);
+  const { user, refreshMe } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-    // Optimistic Wishlist State
-    const [isWishlisted, setIsWishlisted] = useState(false);
-    const [timeLeft, setTimeLeft] = useState("");
+  const [isAdding, setIsAdding] = useState(false);
+  const [loadingWishlist, setLoadingWishlist] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState("");
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-    const isActiveFlashSale = product.flashSale?.isFlashSale &&
-        new Date(product.flashSale.saleEndDate) > new Date();
+  const isActiveFlashSale =
+    product.flashSale?.isFlashSale &&
+    new Date(product.flashSale.saleEndDate) > new Date();
 
-    // 🟢 DYNAMIC PRICING LOGIC
-    let displayPrice = isActiveFlashSale ? product.flashSale.discountPrice : product.basePrice;
-    const globalDiscountApplied = !isActiveFlashSale && globalDiscount > 0;
+  let displayPrice = isActiveFlashSale
+    ? product.flashSale.discountPrice
+    : product.basePrice;
+  const globalDiscountApplied = !isActiveFlashSale && globalDiscount > 0;
 
-    if (globalDiscountApplied) {
-        displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
+  if (globalDiscountApplied) {
+    displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
+  }
+
+  const discountPct = isActiveFlashSale
+    ? Math.round((1 - product.flashSale.discountPrice / product.basePrice) * 100)
+    : globalDiscountApplied
+    ? globalDiscount
+    : 0;
+
+  useEffect(() => {
+    if (!isActiveFlashSale) return;
+    const timer = setInterval(() => {
+      const diff = new Date(product.flashSale.saleEndDate) - new Date();
+      if (diff <= 0) { setTimeLeft("EXPIRED"); clearInterval(timer); return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setTimeLeft(`${h}h ${m}m ${s}s`);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [product.flashSale, isActiveFlashSale]);
+
+  useEffect(() => {
+    if (user?.wishlist) {
+      setIsWishlisted(
+        user.wishlist.some(
+          (item) => (typeof item === "string" ? item : item._id) === product._id
+        )
+      );
+    } else {
+      setIsWishlisted(false);
     }
+  }, [user, product._id]);
 
-    useEffect(() => {
-        if (!isActiveFlashSale) return;
+  const getImageUrl = (path) => {
+    if (!path) return "https://placehold.co/400?text=No+Image";
+    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+  };
 
-        const timer = setInterval(() => {
-            const end = new Date(product.flashSale.saleEndDate);
-            const now = new Date();
-            const diff = end - now;
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsAdding(true);
+    setTimeout(() => {
+      addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
+      toast.success(`${product.name} added`, {
+        style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
+        icon: "🛒",
+      });
+      setIsAdding(false);
+    }, 500);
+  };
 
-            if (diff <= 0) {
-                setTimeLeft("EXPIRED");
-                clearInterval(timer);
-                return;
-            }
+  const handleWishlistToggle = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) { toast.error("Login to save items"); return navigate("/login"); }
+    const prev = isWishlisted;
+    setIsWishlisted(!prev);
+    setLoadingWishlist(true);
+    try {
+      await axios.post(`${API_URL}/api/user/wishlist/${product._id}`, {}, { withCredentials: true });
+      await refreshMe();
+      toast.success(prev ? "Removed from wishlist" : "Saved to wishlist", {
+        style: { borderRadius: "12px", fontSize: "13px" },
+        icon: prev ? "💔" : "❤️",
+      });
+      if (onWishlistChange && prev) onWishlistChange(product._id);
+    } catch {
+      setIsWishlisted(prev);
+      toast.error("Failed to update wishlist");
+    } finally {
+      setLoadingWishlist(false);
+    }
+  };
 
-            const h = Math.floor(diff / (1000 * 60 * 60));
-            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-            const s = Math.floor((diff % (1000 * 60)) / 1000);
-            setTimeLeft(`${h}h ${m}m ${s}s`);
-        }, 1000);
+  const isOutOfStock = product.stock === "out" || !product.stock;
+  const isNew =
+    product.createdAt &&
+    new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-        return () => clearInterval(timer);
-    }, [product.flashSale, isActiveFlashSale]);
-
-    useEffect(() => {
-        if (user && user.wishlist) {
-            const exists = user.wishlist.some(
-                (item) => (typeof item === "string" ? item : item._id) === product._id
-            );
-            setIsWishlisted(exists);
-        } else {
-            setIsWishlisted(false);
+  return (
+    <div
+      style={{
+        background: "#FFFFFF",
+        border: "1px solid #E2EEEC",
+        borderRadius: "16px",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        position: "relative",
+        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+        boxShadow: "0 1px 4px rgba(91,191,181,0.06)",
+        fontFamily: "'Manrope', sans-serif",
+      }}
+      className="product-card-hover group"
+    >
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+        .product-card-hover:hover {
+          box-shadow: 0 8px 32px rgba(91,191,181,0.14);
+          transform: translateY(-2px);
+          border-color: #B8DDD9;
         }
-    }, [user, product._id]);
-
-    const getImageUrl = (path) => {
-        if (!path) return "https://placehold.co/400?text=No+Image";
-        return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
-    };
-
-    const handleAddToCart = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        setIsAdding(true);
-
-        setTimeout(() => {
-            addToCart({
-                ...product,
-                quantity: 1,
-                price: parseFloat(displayPrice)
-            });
-            toast.success(`Added ${product.name}`, {
-                style: { background: '#10b981', color: '#fff', fontSize: '12px' },
-                icon: '🛒'
-            });
-            setIsAdding(false);
-        }, 600);
-    };
-
-    const handleWishlistToggle = async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!user) {
-            toast.error("Login to save items");
-            return navigate("/login");
+        .cart-btn-wave:hover {
+          background: #5BBFB5 !important;
+          color: white !important;
+          border-color: #5BBFB5 !important;
         }
+      `}</style>
 
-        const previousState = isWishlisted;
-        setIsWishlisted(!previousState); // Optimistic update
-        setLoadingWishlist(true);
+      {/* Badge Row */}
+      <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "4px", zIndex: 10 }}>
+        {product.trending && (
+          <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            HOT
+          </span>
+        )}
+        {isNew && !product.trending && (
+          <span style={{ background: "#DBEAFE", color: "#1E40AF", fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            NEW
+          </span>
+        )}
+        {discountPct > 0 && (
+          <span style={{
+            background: isActiveFlashSale ? "#FEE2E2" : "#EDE9FE",
+            color: isActiveFlashSale ? "#B91C1C" : "#6D28D9",
+            fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.06em", textTransform: "uppercase",
+            display: "flex", alignItems: "center", gap: "3px"
+          }}>
+            {isActiveFlashSale && <FiZap size={7} />} -{discountPct}%
+          </span>
+        )}
+      </div>
 
-        try {
-            await axios.post(
-                `${API_URL}/api/user/wishlist/${product._id}`,
-                {},
-                { withCredentials: true }
-            );
+      {/* Wishlist */}
+      <button
+        onClick={handleWishlistToggle}
+        disabled={loadingWishlist}
+        style={{
+          position: "absolute", top: "12px", right: "12px", zIndex: 20,
+          width: "34px", height: "34px",
+          background: "rgba(255,255,255,0.92)",
+          border: "1px solid #E2EEEC",
+          borderRadius: "50%",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer",
+          color: isWishlisted ? "#F07468" : "#A0B8B5",
+          transition: "all 0.2s ease",
+          backdropFilter: "blur(4px)",
+        }}
+      >
+        {loadingWishlist ? (
+          <div style={{ width: "14px", height: "14px", border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
+        ) : isWishlistMode ? (
+          <FiX size={15} />
+        ) : (
+          <FiHeart size={15} fill={isWishlisted ? "currentColor" : "none"} />
+        )}
+      </button>
 
-            await refreshMe();
+      {/* Image */}
+      <Link
+        to={`/products/${product._id}`}
+        style={{
+          height: "200px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#F4F9F8",
+          overflow: "hidden",
+          padding: "24px",
+          position: "relative",
+        }}
+      >
+        {isOutOfStock && (
+          <div style={{
+            position: "absolute", inset: 0, background: "rgba(244,249,248,0.6)",
+            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5,
+          }}>
+            <span style={{ background: "#F4F9F8", border: "1px solid #E2EEEC", color: "#9AB5B1", fontSize: "10px", fontWeight: "700", padding: "4px 12px", borderRadius: "20px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              SOLD OUT
+            </span>
+          </div>
+        )}
+        <img
+          src={getImageUrl(product.image)}
+          alt={product.name}
+          style={{
+            width: "100%", height: "100%", objectFit: "contain",
+            transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+            filter: isOutOfStock ? "grayscale(0.4) opacity(0.6)" : "none",
+            opacity: imageLoaded ? 1 : 0,
+          }}
+          onLoad={() => setImageLoaded(true)}
+          className="group-hover:scale-105"
+          loading="lazy"
+        />
+      </Link>
 
-            if (!previousState && !isWishlistMode) {
-                toast.success("Added to Wishlist", {
-                    style: { background: '#ef4444', color: '#fff', fontSize: '12px' },
-                    icon: '❤️'
-                });
-            } else {
-                toast.success("Removed from Wishlist", {
-                    style: { fontSize: '12px' },
-                    icon: '💔'
-                });
-            }
+      {/* Content */}
+      <div style={{ padding: "16px 18px 18px", display: "flex", flexDirection: "column", flex: 1 }}>
+        {/* Category */}
+        <span style={{ fontSize: "10px", fontWeight: "700", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px", display: "block" }}>
+          {product.category || "Fresh Catch"}
+        </span>
 
-            if (onWishlistChange && previousState) {
-                // If it was wishlisted and we toggled it (removed), notify parent instantly
-                onWishlistChange(product._id);
-            }
-        } catch (err) {
-            setIsWishlisted(previousState); // Revert on error
-            toast.error("Failed to update wishlist");
-        } finally {
-            setLoadingWishlist(false);
-        }
-    };
+        {/* Name */}
+        <h3 style={{ fontSize: "15px", fontWeight: "700", color: "#1A2E2C", lineHeight: "1.35", marginBottom: "10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {product.name}
+        </h3>
 
-    const isOutOfStock = product.stock === "out" || !product.stock;
-
-    const isNew = product.createdAt && new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-    return (
-        <div className="bg-white dark:bg-[#1e293b] rounded-xl overflow-hidden h-full flex flex-col shadow-sm border border-slate-100 dark:border-slate-800 transition-all duration-300 hover:shadow-lg relative group">
-
-            {/* Badges */}
-            <div className="absolute top-3 left-3 flex flex-col gap-1 z-10 pointers-events-none">
-                {product.trending && (
-                    <span className="bg-amber-400 text-amber-950 text-[10px] font-bold px-2 py-0.5 rounded shadow-sm uppercase">
-                        HOT
-                    </span>
-                )}
-                {isNew && (
-                    <span className="bg-blue-500 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-sm uppercase">
-                        NEW
-                    </span>
-                )}
-                {isActiveFlashSale && (
-                    <span className="bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-md uppercase animate-pulse flex items-center gap-1">
-                        <FiZap size={8} /> FLASH DEAL
-                    </span>
-                )}
-                {globalDiscountApplied && (
-                    <span className="bg-purple-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow-md uppercase flex items-center gap-1">
-                        HAPPY HOUR -{globalDiscount}%
-                    </span>
-                )}
-            </div>
-
-            {/* Wishlist/Remove Button */}
-            <button
-                onClick={handleWishlistToggle}
-                disabled={loadingWishlist}
-                className={`absolute top-3 right-3 z-20 w-8 h-8 flex items-center justify-center rounded-full transition-colors shadow-sm ${isWishlistMode
-                    ? "bg-white text-slate-400 hover:bg-red-50 hover:text-red-500"
-                    : isWishlisted
-                        ? "text-red-600 bg-red-50"
-                        : "text-slate-900 bg-white/80 hover:text-red-600 hover:bg-white"
-                    }`}
-                title={isWishlistMode ? "Remove from Wishlist" : isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
-            >
-                {loadingWishlist ? (
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                ) : isWishlistMode ? (
-                    <FiX size={18} />
-                ) : (
-                    <FiHeart size={20} fill={isWishlisted ? "currentColor" : "none"} />
-                )}
-            </button>
-
-            {/* Image Area */}
-            <Link to={`/products/${product._id}`} className="h-48 p-4 flex items-center justify-center bg-white dark:bg-[#0f172a] overflow-hidden">
-                <img
-                    src={getImageUrl(product.image)}
-                    alt={product.name}
-                    className={`w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 ${isOutOfStock ? 'grayscale opacity-60' : ''}`}
-                    loading="lazy"
-                />
-            </Link>
-
-            {/* Content Area */}
-            <div className="p-4 flex flex-col flex-grow">
-                <div className="mb-2">
-                    <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug line-clamp-2">
-                        {product.name}
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-1">
-                        {product.category || "Fresh Catch"}
-                    </p>
-                </div>
-
-                {/* Stock Indicator */}
-                <div className="flex items-center gap-2 mb-4">
-                    <div className={`w-2 h-2 rounded-full ${!isOutOfStock ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                    <span className={`text-[10px] font-bold uppercase tracking-wide ${!isOutOfStock ? 'text-slate-500' : 'text-red-500'}`}>
-                        {!isOutOfStock ? 'In Stock' : 'Out of Stock'}
-                    </span>
-                </div>
-
-                <div className="mt-auto">
-                    <div className="flex items-baseline gap-2 mb-3">
-                        {(isActiveFlashSale || globalDiscountApplied) && (
-                            <span className="text-sm text-slate-400 line-through font-medium">
-                                ₹{product.basePrice}
-                            </span>
-                        )}
-                        <span className="font-bold text-slate-900 dark:text-white text-xl">
-                            ₹{displayPrice}
-                        </span>
-                        {isActiveFlashSale && timeLeft && (
-                            <span className="ml-auto text-[9px] font-black text-red-500 bg-red-50 px-2 py-1 rounded-full border border-red-100 uppercase tracking-tighter">
-                                {timeLeft}
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Outlined Button */}
-                    <button
-                        onClick={handleAddToCart}
-                        disabled={isOutOfStock || isAdding}
-                        className={`w-full py-2.5 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-all border ${isOutOfStock
-                            ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
-                            : isAdding
-                                ? "bg-emerald-50 border-emerald-500 text-emerald-600"
-                                : "bg-white dark:bg-transparent border-blue-600 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                            }`}
-                    >
-                        {isAdding ? "Added" : isOutOfStock ? "Sold Out" : "Add to Cart"}
-                    </button>
-                </div>
-            </div>
+        {/* Stock dot */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "14px" }}>
+          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: !isOutOfStock ? "#5BBFB5" : "#FDA29B", flexShrink: 0 }} />
+          <span style={{ fontSize: "10px", fontWeight: "600", color: !isOutOfStock ? "#5BBFB5" : "#F04438", textTransform: "uppercase", letterSpacing: "0.07em" }}>
+            {!isOutOfStock ? "In Stock" : "Out of Stock"}
+          </span>
+          {isActiveFlashSale && timeLeft && (
+            <span style={{ marginLeft: "auto", fontSize: "9px", fontWeight: "800", color: "#DC2626", background: "#FEF2F2", padding: "2px 6px", borderRadius: "6px" }}>
+              ⏱ {timeLeft}
+            </span>
+          )}
         </div>
-    );
+
+        {/* Price + CTA */}
+        <div style={{ marginTop: "auto" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "12px" }}>
+            {(isActiveFlashSale || globalDiscountApplied) && (
+              <span style={{ fontSize: "13px", color: "#B8CFCC", textDecoration: "line-through", fontWeight: "500" }}>
+                ₹{product.basePrice}
+              </span>
+            )}
+            <span style={{ fontSize: "22px", fontWeight: "800", color: "#1A2E2C", letterSpacing: "-0.02em" }}>
+              ₹{displayPrice}
+            </span>
+            <span style={{ fontSize: "11px", color: "#9AB5B1", fontWeight: "500" }}>
+              /{product.unit || "kg"}
+            </span>
+          </div>
+
+          <button
+            onClick={handleAddToCart}
+            disabled={isOutOfStock || isAdding}
+            className="cart-btn-wave"
+            style={{
+              width: "100%",
+              padding: "10px 0",
+              borderRadius: "10px",
+              border: "1.5px solid",
+              borderColor: isOutOfStock ? "#E2EEEC" : isAdding ? "#5BBFB5" : "#5BBFB5",
+              background: isAdding ? "#5BBFB5" : "transparent",
+              color: isOutOfStock ? "#B8CFCC" : isAdding ? "#fff" : "#5BBFB5",
+              fontSize: "13px",
+              fontWeight: "700",
+              letterSpacing: "0.02em",
+              cursor: isOutOfStock ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              transition: "all 0.2s ease",
+              fontFamily: "'Manrope', sans-serif",
+            }}
+          >
+            {isAdding ? (
+              <><FiCheck size={14} /> Added</>
+            ) : isOutOfStock ? (
+              "Sold Out"
+            ) : (
+              <><FiShoppingCart size={14} /> Add to Cart</>
+            )}
+          </button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
+  );
 };
 
 export default EnhancedProductCard;
