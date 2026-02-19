@@ -16,32 +16,32 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 
 const NAV_LINKS = [
   { label: "Shop All", path: "/products" },
-  { label: "Fish",     path: "/products?category=Fish" },
-  { label: "Prawns",   path: "/products?category=Prawn" },
-  { label: "Crabs",    path: "/products?category=Crab" },
+  { label: "Fish", path: "/products?category=Fish" },
+  { label: "Prawns", path: "/products?category=Prawn" },
+  { label: "Crabs", path: "/products?category=Crab" },
 ];
 
 export default function Navbar({ openCart }) {
   const { cartCount } = useContext(CartContext);
   const { user, setUser, refreshMe } = useAuth();
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [showProfile,   setShowProfile]   = useState(false);
-  const [showShop,      setShowShop]      = useState(false);
-  const [scrolled,      setScrolled]      = useState(false);
-  const [hidden,        setHidden]        = useState(false);
-  const [mobileOpen,    setMobileOpen]    = useState(false);
-  const [searchTerm,    setSearchTerm]    = useState("");
-  const [suggestions,   setSuggestions]   = useState([]);
-  const [searchExpanded,setSearchExpanded]= useState(false);
-  const [unreadCount,   setUnreadCount]   = useState(0);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showShop, setShowShop] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [showSpinWheel, setShowSpinWheel] = useState(false);
   const lastScrollY = useRef(0);
-  const searchRef   = useRef(null);
+  const searchRef = useRef(null);
 
   // Only the home page has the dark video hero
-  const isHome        = location.pathname === "/";
+  const isHome = location.pathname === "/";
   const isTransparent = isHome && !scrolled;
 
   useEffect(() => {
@@ -61,21 +61,21 @@ export default function Navbar({ openCart }) {
     if (!user) return setUnreadCount(0);
     axios.get(`${API_URL}/api/notifications`, { withCredentials: true })
       .then(res => setUnreadCount(res.data.filter(n => !n.read).length))
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   useEffect(() => {
     if (!user) return;
     axios.get(`${API_URL}/api/spin/can-spin`, { withCredentials: true })
       .then(res => { if (res.data.canSpin) setTimeout(() => setShowSpinWheel(true), 2000); })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   const handleSearchInput = (val) => {
     setSearchTerm(val);
     if (val.length < 2) return setSuggestions([]);
     const t = setTimeout(async () => {
-      try { const r = await axios.get(`${API_URL}/api/products/search/suggest?q=${val}`); setSuggestions(r.data); } catch {}
+      try { const r = await axios.get(`${API_URL}/api/products/search/suggest?q=${val}`); setSuggestions(r.data); } catch { }
     }, 280);
     return () => clearTimeout(t);
   };
@@ -89,7 +89,7 @@ export default function Navbar({ openCart }) {
   };
 
   const handleLogout = async () => {
-    try { await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true }); setUser(null); navigate("/"); } catch {}
+    try { await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true }); setUser(null); navigate("/"); } catch { }
   };
 
   const googleLogin = useGoogleLogin({
@@ -99,7 +99,7 @@ export default function Navbar({ openCart }) {
         setUser(r.data.user);
         if (r.data.user.role === "admin") navigate("/admin/dashboard");
         refreshMe();
-      } catch {}
+      } catch { }
     },
   });
 
@@ -111,39 +111,39 @@ export default function Navbar({ openCart }) {
   // ─────────────────────────────────────────────────────────────────────────
   const T = {
     // Navbar shell
-    navBg:       isTransparent ? "transparent"              : "rgba(255,255,255,0.97)",
-    navBlur:     isTransparent ? "none"                     : "blur(24px) saturate(1.6)",
-    navBorder:   isTransparent ? "transparent"              : "rgba(226,238,236,0.85)",
-    navShadow:   isTransparent ? "none"                     : "0 2px 24px rgba(26,46,44,0.07)",
-    navPy:       isTransparent ? "14px 0"                   : "9px 0",
+    navBg: isTransparent ? "transparent" : "rgba(255,255,255,0.97)",
+    navBlur: isTransparent ? "none" : "blur(24px) saturate(1.6)",
+    navBorder: isTransparent ? "transparent" : "rgba(226,238,236,0.85)",
+    navShadow: isTransparent ? "none" : "0 2px 24px rgba(26,46,44,0.07)",
+    navPy: isTransparent ? "14px 0" : "9px 0",
 
     // Nav links
-    link:        isTransparent ? "rgba(255,255,255,0.88)"   : "#2C4A46",
-    linkActive:  isTransparent ? "#fff"                     : "#5BBFB5",
-    underline:   isTransparent ? "rgba(255,255,255,0.9)"    : "#5BBFB5",
+    link: isTransparent ? "rgba(255,255,255,0.88)" : "#2C4A46",
+    linkActive: isTransparent ? "#fff" : "#5BBFB5",
+    underline: isTransparent ? "rgba(255,255,255,0.9)" : "#5BBFB5",
 
     // ── ICON BUTTONS ─────────────────────────────────────────────────────
     // Hero: TRANSPARENT bg/border — icons float as bare glyphs over the video
     // Page: light seafoam tint with subtle border
-    iconBg:      isTransparent ? "transparent"              : "#F4F9F8",
-    iconBorder:  isTransparent ? "none"                     : "1px solid #E2EEEC",
-    iconColor:   isTransparent ? "rgba(255,255,255,0.90)"   : "#4A7570",
+    iconBg: isTransparent ? "transparent" : "#F4F9F8",
+    iconBorder: isTransparent ? "none" : "1px solid #E2EEEC",
+    iconColor: isTransparent ? "rgba(255,255,255,0.90)" : "#4A7570",
 
     // Hover overlay for icon buttons
-    iconHoverBg: isTransparent ? "rgba(255,255,255,0.15)"   : "#E8F4F2",
-    iconHoverColor: isTransparent ? "#fff"                  : "#5BBFB5",
+    iconHoverBg: isTransparent ? "rgba(255,255,255,0.15)" : "#E8F4F2",
+    iconHoverColor: isTransparent ? "#fff" : "#5BBFB5",
 
     // Login CTA
-    loginBg:     isTransparent ? "#5BBFB5"                  : "#1A2E2C",
+    loginBg: isTransparent ? "#5BBFB5" : "#1A2E2C",
     loginShadow: isTransparent ? "0 2px 14px rgba(0,0,0,0.20)" : "none",
 
     // Profile pill
-    pillBg:      isTransparent ? "rgba(255,255,255,0.12)"   : "#fff",
-    pillBorder:  isTransparent ? "rgba(255,255,255,0.35)"   : "#DDE9E7",
-    pillShadow:  isTransparent ? "0 2px 14px rgba(0,0,0,0.18)" : "none",
-    pillBlur:    isTransparent ? "blur(8px)"                : "none",
-    pillName:    isTransparent ? "rgba(255,255,255,0.92)"   : "#1A2E2C",
-    pillChevron: isTransparent ? "rgba(255,255,255,0.50)"   : "#A8C5C0",
+    pillBg: isTransparent ? "rgba(255,255,255,0.12)" : "#fff",
+    pillBorder: isTransparent ? "rgba(255,255,255,0.35)" : "#DDE9E7",
+    pillShadow: isTransparent ? "0 2px 14px rgba(0,0,0,0.18)" : "none",
+    pillBlur: isTransparent ? "blur(8px)" : "none",
+    pillName: isTransparent ? "rgba(255,255,255,0.92)" : "#1A2E2C",
+    pillChevron: isTransparent ? "rgba(255,255,255,0.50)" : "#A8C5C0",
   };
 
   const iconBtn = {
@@ -160,7 +160,7 @@ export default function Navbar({ openCart }) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@600;700&display=swap');
         .nav-root * { box-sizing: border-box; }
 
         /* Animated underline on nav links */
@@ -204,17 +204,23 @@ export default function Navbar({ openCart }) {
       >
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 28px", display: "flex", alignItems: "center" }}>
 
-          {/* ── Logo ── */}
-          <Link to="/" style={{ textDecoration: "none", marginRight: "36px", flexShrink: 0 }}>
-            <motion.img src="/logo.png" alt="SeaBite"
-              whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }}
-              style={{
-                height: "42px", width: "auto", objectFit: "contain", display: "block",
-                filter: isTransparent ? "drop-shadow(0 2px 8px rgba(0,0,0,0.25)) brightness(1.08)" : "none",
-                transition: "filter 0.35s",
-              }}
-            />
-          </Link>
+          <div style={{ marginRight: "36px", flexShrink: 0 }}>
+            <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
+              {/* Fallback Round Logo if desired, or just Text */}
+              {/* <img src="/round-logo.png" alt="Logo" style={{ width: 32, height: 32 }} /> */}
+              <span style={{
+                fontFamily: "'Lora', serif",
+                fontSize: "26px",
+                fontWeight: "700",
+                letterSpacing: "-0.03em",
+                color: isTransparent ? "#fff" : "#1A2E2C",
+                textShadow: isTransparent ? "0 2px 10px rgba(0,0,0,0.2)" : "none",
+                transition: "color 0.35s"
+              }}>
+                SeaBite<span style={{ color: "#5BBFB5" }}>.</span>
+              </span>
+            </Link>
+          </div>
 
           {/* ── Desktop nav links ── */}
           <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "2px", flex: 1 }}>
@@ -390,10 +396,10 @@ export default function Navbar({ openCart }) {
                         </div>
                         <div style={{ padding: "6px" }}>
                           {[
-                            { icon: <FiUser size={14} />,    label: "My Profile",       path: "/profile" },
-                            { icon: <FiHeart size={14} />,   label: "Wishlist",         path: "/wishlist" },
-                            { icon: <FiPackage size={14} />, label: "My Orders",        path: "/orders" },
-                            { icon: <FiBell size={14} />,    label: "Notifications",    path: "/notifications", badge: unreadCount },
+                            { icon: <FiUser size={14} />, label: "My Profile", path: "/profile" },
+                            { icon: <FiHeart size={14} />, label: "Wishlist", path: "/wishlist" },
+                            { icon: <FiPackage size={14} />, label: "My Orders", path: "/orders" },
+                            { icon: <FiBell size={14} />, label: "Notifications", path: "/notifications", badge: unreadCount },
                             ...(user.role === "admin" ? [{ icon: <FiGrid size={14} />, label: "Admin Dashboard", path: "/admin/dashboard" }] : []),
                           ].map(item => (
                             <button key={item.path} className="prof-item"
@@ -486,10 +492,10 @@ export default function Navbar({ openCart }) {
                 <div>
                   <p style={{ fontSize: "10px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "10px" }}>Account</p>
                   {[
-                    { icon: <FiUser size={14} />,    label: "My Profile",    path: "/profile" },
-                    { icon: <FiHeart size={14} />,   label: "Wishlist",      path: "/wishlist" },
-                    { icon: <FiPackage size={14} />, label: "Orders",        path: "/orders" },
-                    { icon: <FiBell size={14} />,    label: "Notifications", path: "/notifications", badge: unreadCount },
+                    { icon: <FiUser size={14} />, label: "My Profile", path: "/profile" },
+                    { icon: <FiHeart size={14} />, label: "Wishlist", path: "/wishlist" },
+                    { icon: <FiPackage size={14} />, label: "Orders", path: "/orders" },
+                    { icon: <FiBell size={14} />, label: "Notifications", path: "/notifications", badge: unreadCount },
                     ...(user.role === "admin" ? [{ icon: <FiGrid size={14} />, label: "Admin", path: "/admin/dashboard" }] : []),
                   ].map((item, i) => (
                     <motion.button key={item.path} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 + 0.18 }}

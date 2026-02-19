@@ -18,7 +18,7 @@ export default function Invoice({ order, type = "invoice" }) {
         {/* TOP HEADER SECTION */}
         <div className="invoice-header">
           <div className="brand-branding">
-            <img src="/logo.png" alt="SeaBite Logo" className="invoice-logo" />
+            <img src="/round-logo.png" alt="SeaBite Logo" className="invoice-logo" />
             <div className="brand-text"></div>
           </div>
           <div className="header-meta">
@@ -28,8 +28,8 @@ export default function Invoice({ order, type = "invoice" }) {
               <span className={type === "invoice" ? "active" : ""}>TAX INVOICE</span>
             </div>
             <div className="qr-container">
-               <img src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${order.orderId}`} alt="QR Code" />
-               <p className="qr-text">SCAN FOR TRACKING</p>
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${order.orderId}`} alt="QR Code" />
+              <p className="qr-text">SCAN FOR TRACKING</p>
             </div>
           </div>
         </div>
@@ -56,16 +56,16 @@ export default function Invoice({ order, type = "invoice" }) {
               <label>ORDER DATE</label>
               <p>{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })} / {order.paymentMethod || 'COD'}</p>
             </div>
-            
+
             <div className="meta-row mt-4">
               <label>PAYMENT MODE</label>
               <p className={order.isPaid ? "blue-text" : "orange-text"}>
                 {order.paymentMethod === 'Prepaid' ? 'PREPAID (ONLINE)' : 'CASH ON DELIVERY'}
               </p>
-              
+
               {isCancelled && isPrepaid && (
                 <div className={`refund-badge ${isRefunded ? 'refund-success' : 'refund-init'}`}>
-                    {isRefunded ? "REFUND SUCCESSFUL" : "REFUND INITIATED (6-7 DAYS)"}
+                  {isRefunded ? "REFUND SUCCESSFUL" : "REFUND INITIATED (6-7 DAYS)"}
                 </div>
               )}
 
@@ -92,12 +92,12 @@ export default function Invoice({ order, type = "invoice" }) {
             </thead>
             <tbody>
               {order.items?.map((item, i) => (
-                 <tr key={i}>
-                    <td className="left font-bold">{item.name}</td>
-                    <td className="center">{item.qty}</td>
-                    <td className="right">{"\u20B9"}{item.price?.toFixed(2)}</td>
-                    <td className="right">{"\u20B9"}{(item.price * item.qty).toFixed(2)}</td>
-                 </tr>
+                <tr key={i}>
+                  <td className="left font-bold">{item.name}</td>
+                  <td className="center">{item.qty}</td>
+                  <td className="right">{"\u20B9"}{item.price?.toFixed(2)}</td>
+                  <td className="right">{"\u20B9"}{(item.price * item.qty).toFixed(2)}</td>
+                </tr>
               ))}
 
               <tr className="summary-row">
@@ -113,7 +113,7 @@ export default function Invoice({ order, type = "invoice" }) {
                   <td className="right font-bold green-text">- {"\u20B9"}{order.discount?.toFixed(2)}</td>
                 </tr>
               )}
-              
+
               <tr>
                 <td className="left border-none" colSpan="2"></td>
                 <td className="right font-semibold">Shipping:</td>
@@ -134,9 +134,9 @@ export default function Invoice({ order, type = "invoice" }) {
               </tr>
             </tbody>
           </table>
-          
+
           {isCancelled && order.cancelReason && (
-              <p className="cancel-note">Cancellation Reason: "{order.cancelReason}"</p>
+            <p className="cancel-note">Cancellation Reason: "{order.cancelReason}"</p>
           )}
         </div>
 
@@ -146,8 +146,8 @@ export default function Invoice({ order, type = "invoice" }) {
           <div className="footer-divider"></div>
           <div className="barcode-row">
             <div className="barcode-container">
-                <div className="barcode-placeholder">|||| ||| || |||| ||| ||</div>
-                <p className="barcode-text">Order ID: {order.orderId}</p>
+              <div className="barcode-placeholder">|||| ||| || |||| ||| ||</div>
+              <p className="barcode-text">Order ID: {order.orderId}</p>
             </div>
           </div>
         </div>
