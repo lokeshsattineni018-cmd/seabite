@@ -3,7 +3,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     FiMail, FiSend, FiUsers, FiCheck, FiX, FiSearch,
-    FiTarget, FiZap, FiLayout, FiType
+    FiTarget, FiZap, FiLayout, FiType, FiRefreshCw
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 
@@ -194,8 +194,43 @@ export default function AdminMarketing() {
                         </div>
                     </div>
 
-                    {/* Tips */}
-                    <div className="lg:col-span-4">
+                    {/* Tips & Autopilot */}
+                    <div className="lg:col-span-4 space-y-6">
+
+                        {/* Win-Back Autopilot */}
+                        <div className="bg-gradient-to-br from-stone-900 to-stone-800 rounded-3xl p-8 border border-stone-800 text-white shadow-xl relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                                <FiTarget size={80} />
+                            </div>
+
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                                    <FiRefreshCw className="text-emerald-400" size={20} />
+                                </div>
+                                <h3 className="text-lg font-bold tracking-tight">Win-Back Autopilot</h3>
+                            </div>
+
+                            <p className="text-stone-400 text-xs leading-relaxed mb-6">
+                                Automatically detect users inactive for 30+ days and send a personalized <span className="text-white font-bold">15% OFF</span> coupon to bring them back.
+                            </p>
+
+                            <button
+                                onClick={async () => {
+                                    if (!window.confirm("Run Win-Back Campaign? This will email all eligible inactive users.")) return;
+                                    const toastId = toast.loading("Running Autopilot...");
+                                    try {
+                                        const { data } = await axios.post(`${API_URL}/api/admin/marketing/win-back`, {}, { withCredentials: true });
+                                        toast.success(`Sent ${data.stats.sent} emails`, { id: toastId });
+                                    } catch (err) {
+                                        toast.error("Failed to run campaign", { id: toastId });
+                                    }
+                                }}
+                                className="w-full py-3 bg-white text-stone-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-stone-200 transition-colors shadow-lg"
+                            >
+                                Run Autopilot Now
+                            </button>
+                        </div>
+
                         <div className="bg-gradient-to-br from-stone-100 to-stone-50 rounded-3xl p-8 border border-stone-200/50">
                             <FiZap className="w-6 h-6 text-stone-600 mb-4" />
                             <h3 className="text-lg font-light text-stone-900 mb-4">Pro Tips</h3>
