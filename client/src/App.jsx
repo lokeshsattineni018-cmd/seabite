@@ -16,6 +16,7 @@ import SupportWidget from "./components/common/SupportWidget";
 import BannerPopup from "./components/layout/BannerPopup";
 import AnnouncementBar from "./components/layout/AnnouncementBar";
 import PageSkeleton from "./components/common/PageSkeleton"; // 🟢 Added Skeleton
+import CookieConsent from "./components/common/CookieConsent"; // 🟢 Cookie Consent
 
 // Lazy Imports for Critical Pages
 const Home = lazy(() => import("./pages/shop/Home"));
@@ -160,6 +161,9 @@ function MainLayout() {
 
       {/* 🟢 Global Popup Banner */}
       <BannerPopup bannerSettings={maintenance.banner} />
+
+      {/* 🟢 Cookie Consent */}
+      <CookieConsent />
 
       {maintenance.active && !isAdminRoute && location.pathname !== "/login" ? (
         <Maintenance message={maintenance.message} />
