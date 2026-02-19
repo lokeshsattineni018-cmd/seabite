@@ -4,7 +4,8 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiUsers, FiRefreshCw,
-  FiShield, FiUser, FiArrowUpRight, FiEdit2, FiX, FiCheck
+  FiShield, FiUser, FiArrowUpRight, FiEdit2, FiX, FiCheck,
+  FiActivity, FiClock, FiShoppingBag, FiTrendUp, FiAlertTriangle, FiTarget
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 
@@ -131,8 +132,9 @@ export default function AdminUsers() {
               <thead className="bg-stone-50/50 border-b border-stone-100 text-[10px] font-bold uppercase tracking-wider text-stone-400">
                 <tr>
                   <th className="px-6 py-4">User</th>
-                  <th className="px-6 py-4">Role / Status</th>
-                  <th className="px-6 py-4 text-right">Spend</th>
+                  <th className="px-6 py-4">Role</th>
+                  <th className="px-6 py-4">Segment</th>
+                  <th className="px-6 py-4 text-right">Spend ({users.length > 0 ? "₹" : ""})</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -142,6 +144,7 @@ export default function AdminUsers() {
                     <tr key={i} className="animate-pulse">
                       <td className="px-6 py-4"><div className="h-10 w-48 bg-stone-100 rounded-xl" /></td>
                       <td className="px-6 py-4"><div className="h-6 w-24 bg-stone-100 rounded-lg" /></td>
+                      <td className="px-6 py-4"><div className="h-6 w-16 bg-stone-100 rounded-lg" /></td> {/* New */}
                       <td className="px-6 py-4"><div className="h-6 w-16 bg-stone-100 rounded-lg ml-auto" /></td>
                       <td className="px-6 py-4"><div className="h-8 w-20 bg-stone-100 rounded-lg ml-auto" /></td>
                     </tr>
@@ -169,12 +172,14 @@ export default function AdminUsers() {
                           <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide border ${u.role === "admin" ? "bg-stone-100 text-stone-600 border-stone-200" : "bg-blue-50 text-blue-600 border-blue-100"}`}>
                             {u.role}
                           </span>
-                          {u.isBanned && (
-                            <span className="px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide bg-rose-50 text-rose-600 border border-rose-100">
-                              Banned
-                            </span>
-                          )}
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wide 
+                                ${u.intelligence?.segment === "Champion" ? "bg-amber-100 text-amber-700" :
+                            u.intelligence?.segment === "At Risk" ? "bg-rose-50 text-rose-600" : "bg-stone-100 text-stone-500"}`}>
+                          {u.intelligence?.segment || "New"}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="font-medium text-stone-900 text-sm">₹{u.intelligence?.totalSpent?.toLocaleString() || 0}</div>
@@ -200,58 +205,134 @@ export default function AdminUsers() {
           </div>
         </motion.div>
 
-        {/* Modal */}
+        {/* Deep Dive User Modal */}
         <AnimatePresence>
           {editingUser && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={() => setEditingUser(null)}
-                className="absolute inset-0 bg-stone-900/20 backdrop-blur-sm"
+                className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-xl border border-stone-100"
+                className="relative w-full max-w-4xl bg-[#fafaf9] rounded-3xl overflow-hidden shadow-2xl border border-stone-200 flex flex-col md:flex-row max-h-[90vh]"
               >
-                <div className="text-center mb-6">
-                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-bold text-white shadow-lg mx-auto mb-4 ${editingUser.isBanned ? "bg-stone-400 grayscale" : "bg-gradient-to-br from-blue-500 to-blue-600"}`}>
-                    {editingUser.name.charAt(0).toUpperCase()}
+                {/* Close Button */}
+                <button
+                  onClick={() => setEditingUser(null)}
+                  className="absolute top-4 right-4 z-10 p-2 bg-white/50 hover:bg-white rounded-full transition-colors"
+                >
+                  <FiX />
+                </button>
+
+                {/* Left Panel: Identity & Actions */}
+                <div className="w-full md:w-1/3 bg-white p-8 border-r border-stone-200 flex flex-col items-center text-center">
+                  <div className={`w-24 h-24 rounded-3xl flex items-center justify-center text-3xl font-bold text-white shadow-xl mb-6 ${editingUser.isBanned ? "bg-stone-400 grayscale" : "bg-gradient-to-br from-blue-600 to-indigo-600"}`}>
+                    {editingUser.name?.charAt(0).toUpperCase()}
                   </div>
-                  <h2 className="text-lg font-bold text-stone-900">{editingUser.name}</h2>
-                  <p className="text-sm text-stone-500">{editingUser.email}</p>
-                </div>
 
-                <div className="space-y-3">
-                  <button
-                    onClick={() => setEditingUser({ ...editingUser, isBanned: !editingUser.isBanned })}
-                    className={`w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all border-2 ${editingUser.isBanned
-                        ? "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100"
-                        : "bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100"
-                      }`}
-                  >
-                    {editingUser.isBanned ? (
-                      <><FiShield /> Account Banned</>
-                    ) : (
-                      <><FiCheck /> Active Account</>
-                    )}
-                  </button>
+                  <h2 className="text-2xl font-bold text-stone-900 mb-1">{editingUser.name}</h2>
+                  <p className="text-sm text-stone-500 font-medium mb-6">{editingUser.email}</p>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="w-full space-y-4">
+                    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-100 w-full">
+                      <div className="text-[10px] uppercase font-bold text-stone-400 tracking-wider mb-2">Customer Segment</div>
+                      <div className={`text-lg font-bold flex items-center justify-center gap-2 
+                            ${editingUser.intelligence?.segment === "Champion" ? "text-amber-500" :
+                          editingUser.intelligence?.segment === "At Risk" ? "text-rose-500" : "text-stone-700"}`}>
+                        {editingUser.intelligence?.segment === "Champion" && <FiTarget />}
+                        {editingUser.intelligence?.segment || "New"}
+                      </div>
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-100 w-full">
+                      <div className="text-[10px] uppercase font-bold text-stone-400 tracking-wider mb-2">Churn Probability</div>
+                      <div className={`text-lg font-bold flex items-center justify-center gap-2 
+                            ${editingUser.intelligence?.churnRisk === "High" ? "text-rose-600" :
+                          editingUser.intelligence?.churnRisk === "Medium" ? "text-amber-500" : "text-emerald-600"}`}>
+                        {editingUser.intelligence?.churnRisk === "High" && <FiAlertTriangle />}
+                        {editingUser.intelligence?.churnRisk || "Low"}
+                      </div>
+                    </div>
+
                     <button
-                      onClick={() => setEditingUser(null)}
-                      className="py-3 rounded-xl border border-stone-200 text-stone-600 font-bold text-xs hover:bg-stone-50"
+                      onClick={() => setEditingUser({ ...editingUser, isBanned: !editingUser.isBanned })}
+                      className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all border ${editingUser.isBanned
+                        ? "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100"
+                        : "bg-white text-stone-600 border-stone-200 hover:border-stone-300"
+                        }`}
                     >
-                      Cancel
+                      {editingUser.isBanned ? (
+                        <><FiShield /> Lift Ban</>
+                      ) : (
+                        <><FiShield /> Ban Account</>
+                      )}
                     </button>
+
                     <button
                       onClick={handleUpdate}
-                      className="py-3 rounded-xl bg-stone-900 text-white font-bold text-xs hover:bg-stone-800 shadow-lg active:scale-95 transition-all"
+                      className="w-full py-3 rounded-xl bg-stone-900 text-white font-bold text-xs hover:bg-stone-800 shadow-lg active:scale-95 transition-all"
                     >
                       Save Changes
                     </button>
                   </div>
+                </div>
+
+                {/* Right Panel: Intelligence & Activity */}
+                <div className="w-full md:w-2/3 p-8 overflow-y-auto">
+                  <h3 className="text-lg font-bold text-stone-800 mb-6 flex items-center gap-2">
+                    <FiActivity className="text-blue-500" /> Intelligence Profile
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm">
+                      <div className="text-stone-400 text-xs font-bold uppercase mb-1">Lifetime Value</div>
+                      <div className="text-2xl font-light text-stone-900">₹{editingUser.intelligence?.totalSpent?.toLocaleString()}</div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm">
+                      <div className="text-stone-400 text-xs font-bold uppercase mb-1">Avg Order Value</div>
+                      <div className="text-2xl font-light text-stone-900">₹{editingUser.intelligence?.avgOrderValue?.toLocaleString()}</div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm">
+                      <div className="text-stone-400 text-xs font-bold uppercase mb-1">Total Orders</div>
+                      <div className="text-2xl font-light text-stone-900">{editingUser.intelligence?.orderCount}</div>
+                    </div>
+                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm">
+                      <div className="text-stone-400 text-xs font-bold uppercase mb-1">Last Active</div>
+                      <div className="text-sm font-medium text-stone-700">
+                        {editingUser.intelligence?.lastActive ? new Date(editingUser.intelligence.lastActive).toLocaleDateString() : "Never"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <h3 className="text-lg font-bold text-stone-800 mb-4 flex items-center gap-2">
+                    <FiClock className="text-stone-400" /> Recent Activity
+                  </h3>
+
+                  <div className="space-y-3">
+                    {editingUser.intelligence?.recentActivity?.length > 0 ? (
+                      editingUser.intelligence.recentActivity.map((act, i) => (
+                        <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-white border border-stone-100">
+                          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                          <div className="flex-1">
+                            <div className="text-xs font-bold text-stone-700">{act.details}</div>
+                            <div className="text-[10px] text-stone-400">{act.action}</div>
+                          </div>
+                          <div className="text-[10px] text-stone-400 font-mono">
+                            {new Date(act.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-stone-400 text-sm italic">
+                        No recent activity logs found.
+                      </div>
+                    )}
+                  </div>
+
                 </div>
               </motion.div>
             </div>

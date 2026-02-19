@@ -1,24 +1,13 @@
 // src/components/Navbar.jsx
 import { useState, useContext, useEffect, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { motion, AnimatePresence, useMotionValue, useSpring } from "framer-motion";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiUser,
-  FiShoppingBag,
-  FiSearch,
-  FiLogOut,
-  FiPackage,
-  FiGrid,
-  FiBell,
-  FiMenu,
-  FiX,
-  FiSun,
-  FiMoon,
-  FiChevronDown,
-  FiHeart,
+  FiUser, FiShoppingBag, FiSearch, FiLogOut, FiPackage,
+  FiGrid, FiBell, FiMenu, FiX, FiChevronDown, FiHeart,
+  FiChevronRight,
 } from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
-import { ThemeContext } from "../context/ThemeContext";
 import axios from "axios";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../context/AuthContext";
@@ -26,515 +15,549 @@ import Spin from "../pages/Spin";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// --- Magnetic wrapper for icon buttons ---
-function MagneticButton({ children, className = "", ...props }) {
-  const ref = useRef(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  const springX = useSpring(x, { stiffness: 300, damping: 20 });
-  const springY = useSpring(y, { stiffness: 300, damping: 20 });
+// ─── Palette (matches design system) ─────────────────────
+// #5BBFB5  Seafoam primary
+// #1A2E2C  Deep tide
+// #6B8F8A  Drift
+// #B8CFCC  Foam
+// #E2EEEC  Mist border
+// #F4F9F8  Off-white bg
+// #F07468  Coral accent
+// ─────────────────────────────────────────────────────────
 
-  const handleMouse = (e) => {
-    const rect = ref.current?.getBoundingClientRect();
-    if (!rect) return;
-    x.set((e.clientX - rect.left - rect.width / 2) * 0.3);
-    y.set((e.clientY - rect.top - rect.height / 2) * 0.3);
-  };
-
-  const reset = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  return (
-    <motion.div
-      ref={ref}
-      style={{ x: springX, y: springY }}
-      onMouseMove={handleMouse}
-      onMouseLeave={reset}
-      className={className}
-      {...props}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
-// --- Animated underline link ---
-function NavLink({ children, ...props }) {
-  return (
-    <motion.span className="relative cursor-pointer group" {...props}>
-      {children}
-      <motion.span
-        className="absolute -bottom-1 left-0 h-[2px] bg-blue-500 origin-left"
-        initial={{ scaleX: 0 }}
-        whileHover={{ scaleX: 1 }}
-        transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        style={{ width: "100%" }}
-      />
-    </motion.span>
-  );
-}
+const NAV_LINKS = [
+  { label: "Shop All", path: "/products" },
+  { label: "Fish",     path: "/products?category=Fish" },
+  { label: "Prawns",   path: "/products?category=Prawn" },
+  { label: "Crabs",    path: "/products?category=Crab" },
+];
 
 export default function Navbar({ openCart }) {
   const { cartCount } = useContext(CartContext);
-  const { isDarkMode, toggleTheme } = useContext(ThemeContext);
   const { user, setUser, refreshMe } = useAuth();
-
-  const [showProfile, setShowProfile] = useState(false);
-  const [showShop, setShowShop] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [hidden, setHidden] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [suggestions, setSuggestions] = useState([]); // 🟢 NEW
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [showSpinWheel, setShowSpinWheel] = useState(false);
-  const lastScrollY = useRef(0);
-
   const navigate = useNavigate();
+  const location = useLocation();
 
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    } else {
-      setUnreadCount(0);
-    }
-  }, [user]);
+  const [showProfile,     setShowProfile]     = useState(false);
+  const [showShop,        setShowShop]        = useState(false);
+  const [scrolled,        setScrolled]        = useState(false);
+  const [hidden,          setHidden]          = useState(false);
+  const [mobileOpen,      setMobileOpen]      = useState(false);
+  const [searchTerm,      setSearchTerm]      = useState("");
+  const [suggestions,     setSuggestions]     = useState([]);
+  const [searchFocused,   setSearchFocused]   = useState(false);
+  const [searchExpanded,  setSearchExpanded]  = useState(false);
+  const [unreadCount,     setUnreadCount]     = useState(0);
+  const [showSpinWheel,   setShowSpinWheel]   = useState(false);
+  const lastScrollY = useRef(0);
+  const searchRef   = useRef(null);
 
-  const fetchNotifications = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/notifications`, {
-        withCredentials: true,
-      });
-      setUnreadCount(res.data.filter((n) => !n.read).length);
-    } catch (err) {
-      // console.error("Notification fetch failed");
-    }
-  };
-
-  // Scroll: blur in + auto-hide on scroll down, show on scroll up
+  // ── Scroll behaviour ──────────────────────────────────
   useEffect(() => {
     const onScroll = () => {
-      const currentY = window.scrollY;
-      setScrolled(currentY > 20);
-      if (currentY > lastScrollY.current && currentY > 100) {
-        setHidden(true);
-      } else {
-        setHidden(false);
-      }
-      lastScrollY.current = currentY;
+      const y = window.scrollY;
+      setScrolled(y > 24);
+      setHidden(y > lastScrollY.current && y > 120);
+      lastScrollY.current = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // ✅ CHECK IF USER CAN SPIN - Only show popup if eligible
-  // ✅ CHECK IF USER CAN SPIN - Only show popup if eligible
+  // ── Notifications ────────────────────────────────────
   useEffect(() => {
-    const checkCanSpin = async () => {
-      if (!user) return;
-
-      try {
-        const res = await axios.get(`${API_URL}/api/spin/can-spin`, {
-          withCredentials: true,
-        });
-
-        if (res.data.canSpin) {
-          const timer = setTimeout(() => setShowSpinWheel(true), 2000);
-          return () => clearTimeout(timer);
-        }
-      } catch (err) {
-        // Silent fail
-      }
-    };
-
-    checkCanSpin();
+    if (!user) return setUnreadCount(0);
+    axios.get(`${API_URL}/api/notifications`, { withCredentials: true })
+      .then(res => setUnreadCount(res.data.filter(n => !n.read).length))
+      .catch(() => {});
   }, [user]);
 
+  // ── Spin wheel eligibility ────────────────────────────
+  useEffect(() => {
+    if (!user) return;
+    axios.get(`${API_URL}/api/spin/can-spin`, { withCredentials: true })
+      .then(res => { if (res.data.canSpin) setTimeout(() => setShowSpinWheel(true), 2000); })
+      .catch(() => {});
+  }, [user]);
 
-  const handleLogout = async () => {
-    try {
-      await axios.post(
-        `${API_URL}/api/auth/logout`,
-        {},
-        { withCredentials: true }
-      );
-      setUser(null);
-      navigate("/");
-    } catch (err) {
-      console.error("Logout failed", err);
+  // ── Search suggestions ────────────────────────────────
+  const handleSearchInput = (val) => {
+    setSearchTerm(val);
+    if (val.length < 2) return setSuggestions([]);
+    const t = setTimeout(async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/products/search/suggest?q=${val}`);
+        setSuggestions(res.data);
+      } catch {}
+    }, 280);
+    return () => clearTimeout(t);
+  };
+
+  const handleSearchSubmit = (e) => {
+    if (e.key === "Enter" && searchTerm.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchTerm)}`);
+      setSearchTerm(""); setSuggestions([]); setSearchFocused(false); setSearchExpanded(false);
+      if (mobileOpen) setMobileOpen(false);
     }
   };
 
-  const handleSearch = (e) => {
-    if (e.key === "Enter" && searchTerm.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchTerm)}`);
-      setSearchTerm("");
-      if (mobileMenuOpen) setMobileMenuOpen(false);
-    }
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+      setUser(null); navigate("/");
+    } catch {}
   };
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       try {
-        const res = await axios.post(
-          `${API_URL}/api/auth/google`,
-          { token: tokenResponse.access_token },
-          { withCredentials: true }
-        );
+        const res = await axios.post(`${API_URL}/api/auth/google`, { token: tokenResponse.access_token }, { withCredentials: true });
         setUser(res.data.user);
         if (res.data.user.role === "admin") navigate("/admin/dashboard");
         refreshMe();
-        fetchNotifications();
-      } catch (err) {
-        console.error("Google Login Failed", err);
-      }
+      } catch {}
     },
   });
 
-  const handleSpinClose = () => {
-    setShowSpinWheel(false);
-  };
-
-  // Staggered children for mobile menu
-  const staggerContainer = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.06, delayChildren: 0.15 },
-    },
-    exit: { opacity: 0, transition: { staggerChildren: 0.03, staggerDirection: -1 } },
-  };
-
-  const staggerItem = {
-    hidden: { opacity: 0, x: 40 },
-    show: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
-    exit: { opacity: 0, x: 40 },
-  };
+  const isActive = (path) => location.pathname + location.search === path;
 
   return (
     <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@500;600&display=swap');
+        .nav-root * { box-sizing: border-box; }
+        .nav-link-underline::after { content:''; display:block; height:1.5px; background:#5BBFB5; transform:scaleX(0); transform-origin:left; transition:transform 0.25s cubic-bezier(.4,0,.2,1); border-radius:2px; margin-top:2px; }
+        .nav-link-underline:hover::after, .nav-link-active::after { transform:scaleX(1); }
+        .search-input-inner:focus { outline:none; }
+        .no-scrollbar::-webkit-scrollbar { display:none; }
+        .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+        .nav-icon-btn:hover { background:#EDF5F3 !important; color:#5BBFB5 !important; }
+        .profile-item:hover { background:#F4F9F8 !important; }
+        .shop-item:hover { background:#F4F9F8 !important; color:#5BBFB5 !important; }
+        .mobile-link:active { background:#F4F9F8; }
+      `}</style>
+
       <motion.nav
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: hidden ? -100 : 0, opacity: hidden ? 0 : 1 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-0 w-full z-50 transition-all duration-500 ease-in-out border-b ${scrolled
-          ? "bg-white/80 dark:bg-slate-900/70 backdrop-blur-2xl border-slate-200/50 dark:border-white/5 py-3 shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)]"
-          : "bg-transparent border-transparent py-4 md:py-6"
-          }`}
+        className="nav-root"
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: hidden ? -80 : 0, opacity: hidden ? 0 : 1 }}
+        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+        style={{
+          position: "fixed", top: 0, width: "100%", zIndex: 100,
+          fontFamily: "'Manrope', sans-serif",
+          transition: "background 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease",
+          background: scrolled ? "rgba(255,255,255,0.92)" : "rgba(244,249,248,0.6)",
+          backdropFilter: "blur(16px)",
+          borderBottom: scrolled ? "1px solid #E2EEEC" : "1px solid transparent",
+          boxShadow: scrolled ? "0 2px 20px rgba(91,191,181,0.08)" : "none",
+          padding: scrolled ? "10px 0" : "16px 0",
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 md:px-12 flex items-center justify-between">
-          {/* Logo with magnetic effect */}
-          <Link to="/">
-            <MagneticButton>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95, rotate: -2 }}
-                className="flex items-center gap-3"
-              >
-                <img
-                  src="/logo.png"
-                  alt="SeaBite Logo"
-                  className={`h-12 md:h-16 w-auto object-contain transition-all duration-300 drop-shadow-lg ${isDarkMode ? "filter brightness-0 invert" : ""
-                    }`}
-                />
-              </motion.div>
-            </MagneticButton>
+        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", gap: "0" }}>
+
+          {/* ── Logo ──────────────────────────────────────── */}
+          <Link to="/" style={{ textDecoration: "none", marginRight: "40px", flexShrink: 0 }}>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <img
+                src="/logo.png"
+                alt="SeaBite"
+                style={{ height: "44px", width: "auto", objectFit: "contain" }}
+              />
+            </motion.div>
           </Link>
 
-          {/* Desktop Search Bar with animated expand on focus */}
-          <div className="hidden lg:flex flex-1 justify-center px-12">
-            <div className="relative w-full">
-              <motion.div
-                animate={{
-                  width: searchFocused ? "100%" : "85%",
-                  boxShadow: searchFocused
-                    ? "0 8px 30px rgba(59,130,246,0.15)"
-                    : "0 0 0 rgba(0,0,0,0)",
-                }}
-                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                className={`flex items-center rounded-full px-5 py-2.5 w-full border transition-all duration-300 group ${scrolled
-                  ? "bg-slate-100 dark:bg-slate-800/50 border-slate-200 dark:border-white/10"
-                  : "bg-white/20 dark:bg-white/10 backdrop-blur-md border-slate-300 dark:border-white/20"
-                  }`}
-              >
-                <motion.div animate={{ rotate: searchFocused ? 90 : 0 }} transition={{ duration: 0.3 }}>
-                  <FiSearch className="text-blue-500 dark:text-blue-200 mr-3 text-lg" />
-                </motion.div>
-                <input
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    if (e.target.value.length > 1) {
-                      // Simple debounce logic inline or use a library, here simple timeout
-                      const timer = setTimeout(async () => {
-                        try {
-                          const res = await axios.get(`${API_URL}/api/products/search/suggest?q=${e.target.value}`);
-                          setSuggestions(res.data);
-                        } catch (err) { }
-                      }, 300);
-                      return () => clearTimeout(timer);
-                    } else {
-                      setSuggestions([]);
-                    }
-                  }}
-                  onKeyDown={handleSearch}
-                  onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                  placeholder="Search for fresh catch..."
-                  className="bg-transparent outline-none w-full text-sm text-slate-900 dark:text-blue-100 placeholder:text-slate-400 dark:placeholder:text-blue-200/50 font-medium"
-                />
-              </motion.div>
+          {/* ── Desktop Nav Links ──────────────────────────── */}
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", flex: 1 }} className="hidden-mobile">
 
-              {/* 🟢 SEARCH SUGGESTIONS DROPDOWN */}
+            {/* Shop dropdown */}
+            <div
+              style={{ position: "relative" }}
+              onMouseEnter={() => setShowShop(true)}
+              onMouseLeave={() => setShowShop(false)}
+            >
+              <button
+                className="nav-link-underline"
+                style={{
+                  display: "flex", alignItems: "center", gap: "4px",
+                  padding: "6px 12px", border: "none", background: "none",
+                  fontSize: "13px", fontWeight: "600", color: "#1A2E2C",
+                  cursor: "pointer", fontFamily: "'Manrope', sans-serif",
+                  borderRadius: "8px", transition: "color 0.2s",
+                }}
+              >
+                Shop
+                <motion.span
+                  animate={{ rotate: showShop ? 180 : 0 }}
+                  transition={{ duration: 0.25 }}
+                  style={{ display: "flex", alignItems: "center" }}
+                >
+                  <FiChevronDown size={13} />
+                </motion.span>
+              </button>
+
+              <AnimatePresence>
+                {showShop && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.97 }}
+                    transition={{ duration: 0.18, ease: [0.4, 0, 0.2, 1] }}
+                    style={{
+                      position: "absolute", top: "calc(100% + 10px)", left: "0",
+                      background: "#fff", border: "1.5px solid #E2EEEC",
+                      borderRadius: "14px", padding: "6px",
+                      minWidth: "180px", zIndex: 200,
+                      boxShadow: "0 12px 40px rgba(26,46,44,0.10)",
+                    }}
+                  >
+                    {NAV_LINKS.map((link) => (
+                      <button
+                        key={link.path}
+                        className="shop-item"
+                        onClick={() => { navigate(link.path); setShowShop(false); }}
+                        style={{
+                          display: "block", width: "100%", textAlign: "left",
+                          padding: "9px 14px", border: "none", background: "none",
+                          borderRadius: "8px", fontSize: "13px", fontWeight: "600",
+                          color: "#1A2E2C", cursor: "pointer",
+                          fontFamily: "'Manrope', sans-serif", transition: "all 0.15s",
+                        }}
+                      >
+                        {link.label}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Direct links */}
+            {[{ label: "About", path: "/about" }, { label: "Orders", path: "/orders" }].map(link => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`nav-link-underline ${isActive(link.path) ? "nav-link-active" : ""}`}
+                style={{
+                  padding: "6px 12px", borderRadius: "8px",
+                  fontSize: "13px", fontWeight: "600",
+                  color: isActive(link.path) ? "#5BBFB5" : "#1A2E2C",
+                  textDecoration: "none", transition: "color 0.2s",
+                }}
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+
+          {/* ── Right Controls ─────────────────────────────── */}
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
+
+            {/* Desktop search */}
+            <div style={{ position: "relative" }} className="hidden-mobile">
+              <AnimatePresence>
+                {searchExpanded ? (
+                  <motion.div
+                    initial={{ width: 36, opacity: 0.5 }}
+                    animate={{ width: 220, opacity: 1 }}
+                    exit={{ width: 36, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                    style={{
+                      display: "flex", alignItems: "center",
+                      background: "#fff", border: "1.5px solid #5BBFB5",
+                      borderRadius: "10px", padding: "7px 12px", gap: "8px",
+                      boxShadow: "0 0 0 3px rgba(91,191,181,0.12)",
+                    }}
+                  >
+                    <FiSearch size={14} style={{ color: "#5BBFB5", flexShrink: 0 }} />
+                    <input
+                      ref={searchRef}
+                      autoFocus
+                      value={searchTerm}
+                      onChange={e => handleSearchInput(e.target.value)}
+                      onKeyDown={handleSearchSubmit}
+                      onBlur={() => { setTimeout(() => { setSearchExpanded(false); setSuggestions([]); }, 200); }}
+                      placeholder="Search fresh catch…"
+                      className="search-input-inner"
+                      style={{ border: "none", background: "none", fontSize: "13px", color: "#1A2E2C", width: "100%", fontFamily: "'Manrope', sans-serif" }}
+                    />
+                    {searchTerm && (
+                      <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", padding: 0 }}>
+                        <FiX size={12} />
+                      </button>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setSearchExpanded(true)}
+                    className="nav-icon-btn"
+                    style={{ width: "36px", height: "36px", border: "1.5px solid #E2EEEC", borderRadius: "10px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6B8F8A", transition: "all 0.2s" }}
+                  >
+                    <FiSearch size={15} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+
+              {/* Suggestions */}
               <AnimatePresence>
                 {searchFocused && suggestions.length > 0 && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-white/10 overflow-hidden z-[100]"
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.18 }}
+                    style={{
+                      position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0,
+                      background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px",
+                      overflow: "hidden", zIndex: 300, minWidth: "240px",
+                      boxShadow: "0 12px 40px rgba(26,46,44,0.10)",
+                    }}
                   >
-                    {suggestions[0]?.isDidYouMean && (
-                      <div className="px-3 py-2 bg-amber-50 dark:bg-amber-900/20 text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest border-b border-amber-100 dark:border-amber-900/30">
-                        Did you mean?
-                      </div>
-                    )}
-                    {suggestions.map((product) => (
+                    {suggestions.map((item) => (
                       <div
-                        key={product._id}
-                        onClick={() => {
-                          navigate(`/products/${product._id}`);
-                          setSearchFocused(false);
+                        key={item._id}
+                        onClick={() => { navigate(`/products/${item._id}`); setSearchExpanded(false); setSuggestions([]); }}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "12px",
+                          padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #F4F9F8",
+                          transition: "background 0.15s",
                         }}
-                        className="flex items-center gap-3 p-3 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer border-b last:border-0 border-slate-100 dark:border-white/5"
+                        className="profile-item"
                       >
-                        <img src={`${API_URL}${product.image}`} alt={product.name} className="w-10 h-10 rounded-lg object-cover" />
-                        <div>
-                          <p className="text-sm font-bold text-slate-800 dark:text-white">{product.name}</p>
-                          <p className="text-xs text-slate-500 capitalize">{product.category}</p>
+                        <img src={`${API_URL}${item.image}`} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover", background: "#F4F9F8" }} />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{item.name}</p>
+                          <p style={{ fontSize: "11px", color: "#6B8F8A", margin: "1px 0 0", textTransform: "capitalize" }}>{item.category}</p>
                         </div>
-                        <span className="ml-auto text-sm font-bold text-blue-600">₹{product.basePrice}</span>
+                        <span style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.basePrice}</span>
                       </div>
                     ))}
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 md:gap-6">
-            {/* Shop dropdown with stagger reveal */}
-            <div
-              className="hidden md:block relative"
-              onMouseEnter={() => setShowShop(true)}
-              onMouseLeave={() => setShowShop(false)}
-            >
-              <NavLink>
-                <button className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-blue-100 hover:text-blue-600 dark:hover:text-white transition-colors py-2">
-                  Shop{" "}
-                  <motion.span
-                    animate={{ rotate: showShop ? 180 : 0 }}
-                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    <FiChevronDown />
-                  </motion.span>
-                </button>
-              </NavLink>
-              <AnimatePresence>
-                {showShop && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 15, scale: 0.95, filter: "blur(8px)" }}
-                    animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, y: 15, scale: 0.95, filter: "blur(8px)" }}
-                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                    className="absolute right-0 mt-2 w-52 bg-white dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden py-2"
-                  >
-                    <DropdownItem text="Shop All" onClick={() => navigate("/products")} />
-                    <div className="h-px bg-slate-100 dark:bg-white/5 my-1 mx-4" />
-                    <DropdownItem text="Premium Fish" onClick={() => navigate("/products?category=Fish")} />
-                    <DropdownItem text="Jumbo Prawns" onClick={() => navigate("/products?category=Prawn")} />
-                    <DropdownItem text="Live Crabs" onClick={() => navigate("/products?category=Crab")} />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Theme toggle with rotation */}
-            <MagneticButton>
-              <motion.button
-                onClick={toggleTheme}
-                whileTap={{ scale: 0.85, rotate: 180 }}
-                className="p-2 md:p-2.5 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-blue-300 hover:scale-110 transition-all shadow-sm"
-              >
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={isDarkMode ? "sun" : "moon"}
-                    initial={{ rotate: -90, opacity: 0, scale: 0 }}
-                    animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                    exit={{ rotate: 90, opacity: 0, scale: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {isDarkMode ? <FiSun size={18} /> : <FiMoon size={18} />}
-                  </motion.div>
-                </AnimatePresence>
-              </motion.button>
-            </MagneticButton>
-
-            {/* Wishlist Button */}
+            {/* Wishlist */}
             {user && (
-              <MagneticButton>
-                <motion.button
-                  onClick={() => navigate("/wishlist")}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.85 }}
-                  className="relative p-2 text-slate-700 dark:text-blue-100 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                >
-                  <FiHeart size={22} strokeWidth={1.5} />
-                  <AnimatePresence>
-                    {user?.wishlist?.length > 0 && (
-                      <motion.span
-                        key={user.wishlist.length}
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        exit={{ scale: 0 }}
-                        className="absolute top-0 right-0 bg-red-500 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-sm border-2 border-white dark:border-slate-900"
-                      >
-                        {user.wishlist.length}
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
-              </MagneticButton>
-            )}
-
-            {/* Cart button with bounce on count change */}
-            <MagneticButton>
-              <motion.div
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.85 }}
-                className="relative cursor-pointer text-slate-700 dark:text-blue-100 hover:text-blue-600 dark:hover:text-white transition-colors p-2"
-                onClick={openCart}
+              <motion.button
+                whileTap={{ scale: 0.9 }}
+                onClick={() => navigate("/wishlist")}
+                className="nav-icon-btn"
+                style={{
+                  position: "relative", width: "36px", height: "36px",
+                  border: "1.5px solid #E2EEEC", borderRadius: "10px", background: "#fff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  cursor: "pointer", color: "#6B8F8A", transition: "all 0.2s",
+                }}
               >
-                <FiShoppingBag size={22} strokeWidth={1.5} />
+                <FiHeart size={15} />
                 <AnimatePresence>
-                  {cartCount > 0 && (
+                  {user?.wishlist?.length > 0 && (
                     <motion.span
-                      key={cartCount}
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      exit={{ scale: 0, rotate: 180 }}
-                      transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                      className="absolute top-0 right-0 md:-top-1 md:-right-1 bg-blue-600 text-white text-[9px] w-4 h-4 flex items-center justify-center rounded-full font-bold shadow-lg border-2 border-white dark:border-slate-900"
+                      key={user.wishlist.length}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      style={{
+                        position: "absolute", top: "-6px", right: "-6px",
+                        background: "#F07468", color: "#fff",
+                        width: "16px", height: "16px", borderRadius: "50%",
+                        fontSize: "9px", fontWeight: "800",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        border: "2px solid #fff",
+                      }}
                     >
-                      {cartCount}
+                      {user.wishlist.length}
                     </motion.span>
                   )}
                 </AnimatePresence>
-              </motion.div>
-            </MagneticButton>
+              </motion.button>
+            )}
+
+            {/* Cart */}
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={openCart}
+              className="nav-icon-btn"
+              data-cart-icon
+              style={{
+                position: "relative", width: "36px", height: "36px",
+                border: "1.5px solid #E2EEEC", borderRadius: "10px", background: "#fff",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "#6B8F8A", transition: "all 0.2s",
+              }}
+            >
+              <FiShoppingBag size={15} />
+              <AnimatePresence>
+                {cartCount > 0 && (
+                  <motion.span
+                    key={cartCount}
+                    initial={{ scale: 0, rotate: -90 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    exit={{ scale: 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 18 }}
+                    style={{
+                      position: "absolute", top: "-6px", right: "-6px",
+                      background: "#5BBFB5", color: "#fff",
+                      width: "16px", height: "16px", borderRadius: "50%",
+                      fontSize: "9px", fontWeight: "800",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      border: "2px solid #fff",
+                    }}
+                  >
+                    {cartCount}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
 
             {/* Profile / Login */}
-            <div className="hidden md:flex items-center">
+            <div className="hidden-mobile">
               {user ? (
                 <div
-                  className="relative"
+                  style={{ position: "relative", marginLeft: "4px" }}
                   onMouseEnter={() => setShowProfile(true)}
                   onMouseLeave={() => setShowProfile(false)}
                 >
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    className="flex items-center gap-3 cursor-pointer group ml-4"
+                  <motion.button
+                    whileHover={{ scale: 1.04 }}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "8px",
+                      padding: "5px 12px 5px 5px",
+                      border: "1.5px solid #E2EEEC", borderRadius: "20px",
+                      background: "#fff", cursor: "pointer",
+                      transition: "border-color 0.2s",
+                    }}
                   >
-                    <div className="relative">
-                      <motion.div
-                        whileHover={{ rotate: [0, -5, 5, 0] }}
-                        transition={{ duration: 0.5 }}
-                        className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white font-bold text-sm shadow-lg ring-2 ring-transparent hover:ring-blue-400/50 transition-all"
-                      >
-                        {user.name?.charAt(0).toUpperCase()}
-                      </motion.div>
+                    <div style={{
+                      width: "28px", height: "28px", borderRadius: "50%",
+                      background: "linear-gradient(135deg, #5BBFB5, #7EB8D4)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", fontWeight: "800", fontSize: "12px",
+                      flexShrink: 0,
+                    }}>
+                      {user.name?.charAt(0).toUpperCase()}
                       {unreadCount > 0 && (
-                        <motion.span
-                          animate={{ scale: [1, 1.3, 1] }}
-                          transition={{ repeat: Infinity, duration: 1.5 }}
-                          className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-white dark:border-slate-900 rounded-full"
-                        />
+                        <span style={{
+                          position: "absolute", top: "-2px", right: "-2px",
+                          width: "8px", height: "8px", background: "#F07468",
+                          borderRadius: "50%", border: "2px solid #fff",
+                        }} />
                       )}
                     </div>
-                    <span className="text-sm font-medium text-slate-700 dark:text-blue-100 group-hover:text-blue-600 dark:group-hover:text-white transition-colors">
+                    <span style={{ fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}>
                       {user.name?.split(" ")[0]}
                     </span>
-                  </motion.div>
+                    <FiChevronDown size={12} style={{ color: "#B8CFCC" }} />
+                  </motion.button>
+
                   <AnimatePresence>
                     {showProfile && (
                       <motion.div
-                        initial={{ opacity: 0, y: 15, scale: 0.95, filter: "blur(8px)" }}
-                        animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-                        exit={{ opacity: 0, y: 15, scale: 0.95, filter: "blur(8px)" }}
-                        transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                        className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden"
+                        initial={{ opacity: 0, y: -10, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -10, scale: 0.97 }}
+                        transition={{ duration: 0.18 }}
+                        style={{
+                          position: "absolute", top: "calc(100% + 10px)", right: 0,
+                          background: "#fff", border: "1.5px solid #E2EEEC",
+                          borderRadius: "16px", overflow: "hidden",
+                          minWidth: "240px", zIndex: 200,
+                          boxShadow: "0 16px 48px rgba(26,46,44,0.10)",
+                        }}
                       >
-                        <div className="p-5 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-white/5">
-                          <p className="text-[10px] font-black text-blue-600 dark:text-blue-300 uppercase tracking-widest mb-1">
-                            Authenticated
-                          </p>
-                          <p className="font-bold text-slate-900 dark:text-white truncate text-sm">
-                            {user.email}
-                          </p>
+                        {/* User info header */}
+                        <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #F0F5F4", background: "#F4F9F8" }}>
+                          <p style={{ fontSize: "10px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "3px" }}>Signed in as</p>
+                          <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C" }}>{user.email}</p>
                         </div>
-                        <div className="py-2">
-                          <DropdownItem icon={<FiUser />} text="My Profile" onClick={() => navigate("/profile")} />
-                          <DropdownItem icon={<FiHeart />} text="Wishlist" onClick={() => navigate("/wishlist")} />
-                          <DropdownItem icon={<FiPackage />} text="My Orders" onClick={() => navigate("/orders")} />
-                          <DropdownItem
-                            icon={<FiBell />}
-                            text="Notifications"
-                            onClick={() => navigate("/notifications")}
-                            badge={unreadCount || 0}
-                          />
-                          {user.role === "admin" && (
-                            <DropdownItem icon={<FiGrid />} text="Admin Dashboard" onClick={() => navigate("/admin/dashboard")} />
-                          )}
+
+                        <div style={{ padding: "6px" }}>
+                          {[
+                            { icon: <FiUser size={14} />,    label: "My Profile",     path: "/profile" },
+                            { icon: <FiHeart size={14} />,   label: "Wishlist",       path: "/wishlist" },
+                            { icon: <FiPackage size={14} />, label: "My Orders",      path: "/orders" },
+                            { icon: <FiBell size={14} />,    label: "Notifications",  path: "/notifications", badge: unreadCount },
+                            ...(user.role === "admin" ? [{ icon: <FiGrid size={14} />, label: "Admin Dashboard", path: "/admin/dashboard" }] : []),
+                          ].map(item => (
+                            <button
+                              key={item.path}
+                              className="profile-item"
+                              onClick={() => { navigate(item.path); setShowProfile(false); }}
+                              style={{
+                                display: "flex", alignItems: "center", justifyContent: "space-between",
+                                width: "100%", padding: "9px 12px", border: "none",
+                                background: "none", borderRadius: "10px", cursor: "pointer",
+                                fontFamily: "'Manrope', sans-serif", transition: "background 0.15s",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#1A2E2C" }}>
+                                <span style={{ color: "#6B8F8A" }}>{item.icon}</span>
+                                <span style={{ fontSize: "13px", fontWeight: "600" }}>{item.label}</span>
+                              </div>
+                              {item.badge > 0 && (
+                                <span style={{ background: "#F07468", color: "#fff", fontSize: "10px", fontWeight: "800", padding: "1px 7px", borderRadius: "20px" }}>
+                                  {item.badge}
+                                </span>
+                              )}
+                            </button>
+                          ))}
                         </div>
-                        <div className="bg-red-50 dark:bg-red-500/10 py-2 border-t border-red-100 dark:border-red-500/20">
-                          <DropdownItem icon={<FiLogOut />} text="Logout" onClick={handleLogout} isDanger />
+
+                        <div style={{ borderTop: "1px solid #FEE2E2", padding: "6px" }}>
+                          <button
+                            onClick={handleLogout}
+                            style={{
+                              display: "flex", alignItems: "center", gap: "10px",
+                              width: "100%", padding: "9px 12px", border: "none",
+                              background: "none", borderRadius: "10px", cursor: "pointer",
+                              fontFamily: "'Manrope', sans-serif", color: "#DC2626",
+                              fontSize: "13px", fontWeight: "600", transition: "background 0.15s",
+                            }}
+                            className="profile-item"
+                          >
+                            <FiLogOut size={14} /> Logout
+                          </button>
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               ) : (
-                <MagneticButton>
-                  <motion.button
-                    onClick={() => googleLogin()}
-                    whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(59,130,246,0.3)" }}
-                    whileTap={{ scale: 0.92 }}
-                    className="flex items-center gap-3 font-medium text-slate-700 dark:text-blue-100 hover:text-blue-600 dark:hover:text-white transition-colors px-5 py-2 rounded-full border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 ml-4"
-                  >
-                    <FiUser size={18} /> <span className="text-sm">Login</span>
-                  </motion.button>
-                </MagneticButton>
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => googleLogin()}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "8px",
+                    padding: "8px 18px", marginLeft: "4px",
+                    background: "#1A2E2C", color: "#fff",
+                    border: "none", borderRadius: "10px",
+                    fontSize: "13px", fontWeight: "700",
+                    cursor: "pointer", fontFamily: "'Manrope', sans-serif",
+                    transition: "background 0.2s",
+                  }}
+                >
+                  <FiUser size={14} /> Login
+                </motion.button>
               )}
             </div>
 
-            {/* Mobile Hamburger with morph */}
+            {/* Mobile hamburger */}
             <motion.button
-              whileTap={{ scale: 0.85 }}
-              className="md:hidden text-slate-900 dark:text-white text-2xl p-2"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              whileTap={{ scale: 0.88 }}
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="show-mobile"
+              style={{
+                width: "36px", height: "36px", border: "1.5px solid #E2EEEC",
+                borderRadius: "10px", background: "#fff",
+                display: "none", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", color: "#1A2E2C",
+              }}
             >
               <AnimatePresence mode="wait">
-                <motion.div
-                  key={mobileMenuOpen ? "close" : "open"}
-                  initial={{ rotate: -90, opacity: 0 }}
-                  animate={{ rotate: 0, opacity: 1 }}
-                  exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {mobileMenuOpen ? <FiX /> : <FiMenu />}
+                <motion.div key={mobileOpen ? "x" : "menu"} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.18 }}>
+                  {mobileOpen ? <FiX size={18} /> : <FiMenu size={18} />}
                 </motion.div>
               </AnimatePresence>
             </motion.button>
@@ -542,186 +565,162 @@ export default function Navbar({ openCart }) {
         </div>
       </motion.nav>
 
-      {/* Mobile Menu -- full screen with staggered items */}
+      {/* ── Mobile Menu ──────────────────────────────────── */}
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {mobileOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[55] bg-black/40 backdrop-blur-sm md:hidden"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={() => setMobileOpen(false)}
+              style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.2)", backdropFilter: "blur(4px)", zIndex: 90 }}
             />
-            {/* Panel */}
             <motion.div
-              initial={{ x: "100%", borderRadius: "50% 0 0 50%" }}
-              animate={{ x: 0, borderRadius: "0% 0 0 0%" }}
-              exit={{ x: "100%", borderRadius: "50% 0 0 50%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 220 }}
-              className="fixed inset-0 z-[60] bg-white dark:bg-slate-900/98 backdrop-blur-xl md:hidden flex flex-col pt-24 px-8 overflow-y-auto"
+              initial={{ x: "100%", borderRadius: "20px 0 0 20px" }}
+              animate={{ x: 0, borderRadius: "0px 0 0 0px" }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 30, stiffness: 260 }}
+              style={{
+                position: "fixed", top: 0, right: 0, bottom: 0, width: "min(320px, 90vw)",
+                background: "#fff", zIndex: 95, overflowY: "auto", padding: "80px 24px 40px",
+                boxShadow: "-16px 0 48px rgba(26,46,44,0.10)",
+                fontFamily: "'Manrope', sans-serif",
+              }}
             >
-              <motion.button
-                whileTap={{ scale: 0.8, rotate: 90 }}
-                className="absolute top-6 right-6 text-slate-900 dark:text-white text-3xl"
-                onClick={() => setMobileMenuOpen(false)}
+              <button
+                onClick={() => setMobileOpen(false)}
+                style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "1.5px solid #E2EEEC", borderRadius: "8px", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6B8F8A" }}
               >
-                <FiX />
-              </motion.button>
+                <FiX size={16} />
+              </button>
 
-              <motion.div
-                variants={staggerContainer}
-                initial="hidden"
-                animate="show"
-                exit="exit"
-                className="space-y-6 pb-12"
-              >
-                <motion.div variants={staggerItem} className="bg-slate-100 dark:bg-white/10 rounded-xl p-4 flex items-center border border-slate-200 dark:border-white/10">
-                  <FiSearch className="text-blue-500 dark:text-blue-300 mr-3 text-xl" />
-                  <input
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={handleSearch}
-                    className="bg-transparent text-slate-900 dark:text-white w-full outline-none placeholder:text-slate-400"
-                    placeholder="Search for fresh catch..."
-                  />
-                </motion.div>
+              {/* Mobile search */}
+              <div style={{ position: "relative", marginBottom: "28px" }}>
+                <FiSearch size={14} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#B8CFCC" }} />
+                <input
+                  value={searchTerm}
+                  onChange={e => handleSearchInput(e.target.value)}
+                  onKeyDown={handleSearchSubmit}
+                  placeholder="Search fresh catch…"
+                  style={{
+                    width: "100%", padding: "10px 12px 10px 36px",
+                    border: "1.5px solid #E2EEEC", borderRadius: "10px",
+                    fontSize: "13px", color: "#1A2E2C", fontFamily: "'Manrope', sans-serif",
+                    background: "#F4F9F8", outline: "none",
+                  }}
+                />
+              </div>
 
-                <div className="space-y-4">
-                  <motion.div variants={staggerItem}>
+              {/* Mobile nav links */}
+              <div style={{ marginBottom: "28px" }}>
+                <p style={{ fontSize: "10px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>Shop</p>
+                {NAV_LINKS.map((link, i) => (
+                  <motion.div
+                    key={link.path}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.05 + 0.1 }}
+                  >
                     <Link
-                      to="/products"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="text-2xl font-serif text-slate-900 dark:text-white block py-2 border-b border-slate-100 dark:border-white/10"
+                      to={link.path}
+                      onClick={() => setMobileOpen(false)}
+                      className="mobile-link"
+                      style={{
+                        display: "block", padding: "12px 14px", borderRadius: "10px",
+                        fontSize: "15px", fontWeight: "600", color: "#1A2E2C",
+                        textDecoration: "none", marginBottom: "4px",
+                        transition: "background 0.15s",
+                      }}
                     >
-                      Shop All
+                      {link.label}
                     </Link>
                   </motion.div>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { to: "/products?category=Fish", label: "Fish" },
-                      { to: "/products?category=Prawn", label: "Prawns" },
-                      { to: "/products?category=Crab", label: "Crabs" },
-                    ].map((item) => (
-                      <motion.div key={item.label} variants={staggerItem}>
-                        <Link
-                          to={item.to}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="text-lg text-slate-600 dark:text-white/70 block px-4 py-3 bg-slate-50 dark:bg-white/5 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                        >
-                          {item.label}
-                        </Link>
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
+                ))}
+              </div>
 
-                {!user ? (
-                  <motion.div variants={staggerItem}>
-                    <button
-                      onClick={() => {
-                        googleLogin();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold mt-8 shadow-lg shadow-blue-600/20 active:scale-95 transition-transform"
-                    >
-                      Login / Signup
-                    </button>
-                  </motion.div>
-                ) : (
-                  <motion.div variants={staggerItem} className="mt-8 pt-8 border-t border-slate-100 dark:border-white/10 space-y-2">
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-4">
-                      Account Settings
-                    </p>
-                    {[
-                      { icon: <FiUser />, text: "My Profile", path: "/profile" },
-                      { icon: <FiHeart />, text: "Wishlist", path: "/wishlist" },
-                      { icon: <FiPackage />, text: "My Orders", path: "/orders" },
-                      { icon: <FiBell />, text: "Notifications", path: "/notifications", badge: unreadCount },
-                      ...(user.role === "admin"
-                        ? [{ icon: <FiGrid />, text: "Admin Dashboard", path: "/admin/dashboard" }]
-                        : []),
-                    ].map((item) => (
-                      <motion.button
-                        key={item.text}
-                        whileTap={{ scale: 0.97, x: 4 }}
-                        onClick={() => {
-                          navigate(item.path);
-                          setMobileMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-4 text-slate-700 dark:text-white/70 py-3 text-lg justify-between"
-                      >
-                        <div className="flex items-center gap-4">
-                          {item.icon} {item.text}
-                        </div>
-                        {item.badge > 0 && (
-                          <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
-                            {item.badge}
-                          </span>
-                        )}
-                      </motion.button>
-                    ))}
+              <div style={{ height: "1px", background: "#F0F5F4", marginBottom: "24px" }} />
+
+              {/* Mobile account */}
+              {user ? (
+                <div>
+                  <p style={{ fontSize: "10px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>Account</p>
+                  {[
+                    { icon: <FiUser size={14} />,    label: "My Profile",    path: "/profile" },
+                    { icon: <FiHeart size={14} />,   label: "Wishlist",      path: "/wishlist" },
+                    { icon: <FiPackage size={14} />, label: "Orders",        path: "/orders" },
+                    { icon: <FiBell size={14} />,    label: "Notifications", path: "/notifications", badge: unreadCount },
+                    ...(user.role === "admin" ? [{ icon: <FiGrid size={14} />, label: "Admin", path: "/admin/dashboard" }] : []),
+                  ].map((item, i) => (
                     <motion.button
-                      whileTap={{ scale: 0.97 }}
-                      onClick={() => {
-                        handleLogout();
-                        setMobileMenuOpen(false);
+                      key={item.path}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.04 + 0.2 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => { navigate(item.path); setMobileOpen(false); }}
+                      className="mobile-link"
+                      style={{
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                        width: "100%", padding: "12px 14px", borderRadius: "10px",
+                        border: "none", background: "none", cursor: "pointer",
+                        fontFamily: "'Manrope', sans-serif", marginBottom: "4px",
+                        transition: "background 0.15s",
                       }}
-                      className="w-full flex items-center gap-4 text-red-500 py-3 text-lg font-bold mt-4"
                     >
-                      <FiLogOut /> Logout
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#1A2E2C", fontSize: "15px", fontWeight: "600" }}>
+                        <span style={{ color: "#6B8F8A" }}>{item.icon}</span>
+                        {item.label}
+                      </div>
+                      {item.badge > 0 && (
+                        <span style={{ background: "#F07468", color: "#fff", fontSize: "10px", fontWeight: "800", padding: "1px 7px", borderRadius: "20px" }}>
+                          {item.badge}
+                        </span>
+                      )}
                     </motion.button>
-                  </motion.div>
-                )}
-              </motion.div>
+                  ))}
+                  <button
+                    onClick={handleLogout}
+                    style={{
+                      width: "100%", marginTop: "12px", padding: "12px 14px", borderRadius: "10px",
+                      border: "1.5px solid #FEE2E2", background: "#FFF5F4",
+                      color: "#DC2626", fontSize: "14px", fontWeight: "700",
+                      cursor: "pointer", display: "flex", alignItems: "center", gap: "8px",
+                      fontFamily: "'Manrope', sans-serif",
+                    }}
+                  >
+                    <FiLogOut size={14} /> Logout
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { googleLogin(); setMobileOpen(false); }}
+                  style={{
+                    width: "100%", padding: "12px", background: "#1A2E2C", color: "#fff",
+                    border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "700",
+                    cursor: "pointer", fontFamily: "'Manrope', sans-serif",
+                  }}
+                >
+                  Login / Sign Up
+                </button>
+              )}
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      <Spin isOpen={showSpinWheel} onClose={handleSpinClose} />
-    </>
-  );
-}
+      <Spin isOpen={showSpinWheel} onClose={() => setShowSpinWheel(false)} />
 
-function DropdownItem({ icon, text, onClick, isDanger, badge = 0 }) {
-  return (
-    <motion.div
-      whileHover={{
-        x: 6,
-        backgroundColor: isDanger
-          ? "rgba(239, 68, 68, 0.1)"
-          : "rgba(37, 99, 235, 0.05)",
-      }}
-      whileTap={{ scale: 0.97 }}
-      onClick={onClick}
-      className={`px-5 py-3 cursor-pointer flex items-center justify-between transition-colors ${isDanger
-        ? "text-red-500"
-        : "text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-white"
-        }`}
-    >
-      <div className="flex items-center gap-4">
-        {icon && (
-          <motion.span
-            className="text-lg"
-            whileHover={{ rotate: 15 }}
-            transition={{ type: "spring", stiffness: 300 }}
-          >
-            {icon}
-          </motion.span>
-        )}
-        <span className="text-sm font-semibold">{text}</span>
-      </div>
-      {badge > 0 && (
-        <motion.span
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="bg-red-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold"
-        >
-          {badge}
-        </motion.span>
-      )}
-    </motion.div>
+      <style>{`
+        @media (max-width: 768px) {
+          .hidden-mobile { display: none !important; }
+          .show-mobile { display: flex !important; }
+        }
+        @media (min-width: 769px) {
+          .show-mobile { display: none !important; }
+          .hidden-mobile { display: flex !important; }
+        }
+      `}</style>
+    </>
   );
 }
