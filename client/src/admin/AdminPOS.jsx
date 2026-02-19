@@ -6,7 +6,7 @@ import {
     FiUser, FiPhone, FiCheckCircle, FiTruck
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
-import PopupModal from "../components/PopupModal";
+import PopupModal from "../components/common/PopupModal";
 
 const ease = [0.22, 1, 0.36, 1];
 const fadeUp = {
@@ -227,14 +227,14 @@ export default function AdminPOS() {
                 <div className="border-t border-stone-200/50 bg-gradient-to-t from-stone-50 to-white p-5 space-y-4 shadow-2xl shadow-stone-900/5">
                     {/* Delivery Type */}
                     <div className="grid grid-cols-2 bg-stone-100/60 p-1 rounded-2xl gap-1">
-                        <button 
-                            onClick={() => setCustomer({ ...customer, deliveryType: "Walk-in" })} 
+                        <button
+                            onClick={() => setCustomer({ ...customer, deliveryType: "Walk-in" })}
                             className={`text-xs font-medium py-2.5 rounded-xl transition-all ${customer.deliveryType === "Walk-in" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
                         >
                             Walk-in
                         </button>
-                        <button 
-                            onClick={() => setCustomer({ ...customer, deliveryType: "Delivery" })} 
+                        <button
+                            onClick={() => setCustomer({ ...customer, deliveryType: "Delivery" })}
                             className={`text-xs font-medium py-2.5 rounded-xl transition-all flex items-center justify-center gap-2 ${customer.deliveryType === "Delivery" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
                         >
                             <FiTruck size={12} /> Delivery
@@ -259,10 +259,10 @@ export default function AdminPOS() {
                             </div>
                             <div className="relative">
                                 <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
-                                <input 
-                                    placeholder="Name" 
-                                    value={customer.name} 
-                                    onChange={e => setCustomer({ ...customer, name: e.target.value })} 
+                                <input
+                                    placeholder="Name"
+                                    value={customer.name}
+                                    onChange={e => setCustomer({ ...customer, name: e.target.value })}
                                     className="w-full pl-9 pr-3 py-2.5 text-xs border border-stone-200/50 rounded-lg bg-stone-50 focus:bg-white focus:border-stone-300 focus:ring-2 focus:ring-stone-300/50 outline-none transition-all"
                                 />
                             </div>

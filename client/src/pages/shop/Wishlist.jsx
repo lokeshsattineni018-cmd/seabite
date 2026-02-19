@@ -1,11 +1,11 @@
 import { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { AuthContext } from "../context/AuthContext";
-import { CartContext } from "../context/CartContext";
-import { ThemeContext } from "../context/ThemeContext";
+import { AuthContext } from "../../context/AuthContext";
+import { CartContext } from "../../context/CartContext";
+import { ThemeContext } from "../../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
-import EnhancedProductCard from "../components/EnhancedProductCard";
+import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import { FiHeart, FiArrowRight } from "react-icons/fi";
 
 const API_URL = import.meta.env.VITE_API_URL || "";

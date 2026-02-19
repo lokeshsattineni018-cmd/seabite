@@ -7,7 +7,7 @@ import {
   FiSearch, FiEdit2, FiTrash2, FiPlus, FiPackage,
   FiRefreshCw, FiGrid, FiList, FiFilter, FiMoreHorizontal
 } from "react-icons/fi";
-import PopupModal from "../components/PopupModal";
+import PopupModal from "../components/common/PopupModal";
 
 // --- Design Constants ---
 const ease = [0.16, 1, 0.3, 1];

@@ -5,37 +5,37 @@ import axios from "axios";
 import { Toaster } from "react-hot-toast";
 
 // Components
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
-import CartSidebar from "./components/CartSidebar";
-import PageTransition from "./components/PageTransition";
-import ScrollToTop from "./components/ScrollToTop";
+import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
+import CartSidebar from "./components/layout/CartSidebar";
+import PageTransition from "./components/common/PageTransition";
+import ScrollToTop from "./components/layout/ScrollToTop";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
-import SupportWidget from "./components/SupportWidget";
-import BannerPopup from "./components/BannerPopup";
-import AnnouncementBar from "./components/AnnouncementBar"; // 🟢 Added
+import SupportWidget from "./components/common/SupportWidget";
+import BannerPopup from "./components/layout/BannerPopup";
+import AnnouncementBar from "./components/layout/AnnouncementBar"; // 🟢 Added
 
 // Direct Imports for Critical Pages
-import Home from "./pages/Home";
-import Products from "./pages/Products";
-import ProductDetails from "./pages/ProductDetails";
-import Wishlist from "./pages/Wishlist";
-import Cart from "./pages/Cart";
-import Profile from "./pages/Profile";
-import Checkout from "./pages/Checkout";
-import Login from "./pages/Login";
-import OrderSuccess from "./pages/OrderSuccess";
-import Orders from "./pages/Orders";
-import OrderDetails from "./pages/OrderDetails";
-import Notifications from "./pages/Notifications";
-import Spin from "./pages/Spin";
-import About from "./pages/About";
-import FAQ from "./pages/FAQ";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import Cancellation from "./pages/Cancellation";
-import Maintenance from "./pages/Maintenance";
+import Home from "./pages/shop/Home";
+import Products from "./pages/shop/Products";
+import ProductDetails from "./pages/shop/ProductDetails";
+import Wishlist from "./pages/shop/Wishlist";
+import Cart from "./pages/shop/Cart";
+import Profile from "./pages/user/Profile";
+import Checkout from "./pages/shop/Checkout";
+import Login from "./pages/auth/Login";
+import OrderSuccess from "./pages/shop/OrderSuccess";
+import Orders from "./pages/user/Orders";
+import OrderDetails from "./pages/user/OrderDetails";
+import Notifications from "./pages/user/Notifications";
+import Spin from "./pages/general/Spin";
+import About from "./pages/general/About";
+import FAQ from "./pages/legal/FAQ";
+import Terms from "./pages/legal/Terms";
+import Privacy from "./pages/legal/Privacy";
+import Cancellation from "./pages/legal/Cancellation";
+import Maintenance from "./pages/general/Maintenance";
 
 // Admin Imports
 import AdminLayout from "./admin/AdminLayout";

@@ -12,7 +12,7 @@ import {
   FiTruck,
   FiClock,
 } from "react-icons/fi";
-import { ThemeContext } from "../context/ThemeContext";
+import { ThemeContext } from "../../context/ThemeContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 

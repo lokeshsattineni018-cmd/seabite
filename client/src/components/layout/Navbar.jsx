@@ -7,29 +7,19 @@ import {
   FiGrid, FiBell, FiMenu, FiX, FiChevronDown, FiHeart,
   FiChevronRight,
 } from "react-icons/fi";
-import { CartContext } from "../context/CartContext";
+import { CartContext } from "../../context/CartContext";
 import axios from "axios";
 import { useGoogleLogin } from "@react-oauth/google";
-import { useAuth } from "../context/AuthContext";
-import Spin from "../pages/Spin";
+import { useAuth } from "../../context/AuthContext";
+import Spin from "../../pages/Spin";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// ─── Palette (matches design system) ─────────────────────
-// #5BBFB5  Seafoam primary
-// #1A2E2C  Deep tide
-// #6B8F8A  Drift
-// #B8CFCC  Foam
-// #E2EEEC  Mist border
-// #F4F9F8  Off-white bg
-// #F07468  Coral accent
-// ─────────────────────────────────────────────────────────
-
 const NAV_LINKS = [
   { label: "Shop All", path: "/products" },
-  { label: "Fish",     path: "/products?category=Fish" },
-  { label: "Prawns",   path: "/products?category=Prawn" },
-  { label: "Crabs",    path: "/products?category=Crab" },
+  { label: "Fish", path: "/products?category=Fish" },
+  { label: "Prawns", path: "/products?category=Prawn" },
+  { label: "Crabs", path: "/products?category=Crab" },
 ];
 
 export default function Navbar({ openCart }) {
@@ -38,19 +28,19 @@ export default function Navbar({ openCart }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [showProfile,     setShowProfile]     = useState(false);
-  const [showShop,        setShowShop]        = useState(false);
-  const [scrolled,        setScrolled]        = useState(false);
-  const [hidden,          setHidden]          = useState(false);
-  const [mobileOpen,      setMobileOpen]      = useState(false);
-  const [searchTerm,      setSearchTerm]      = useState("");
-  const [suggestions,     setSuggestions]     = useState([]);
-  const [searchFocused,   setSearchFocused]   = useState(false);
-  const [searchExpanded,  setSearchExpanded]  = useState(false);
-  const [unreadCount,     setUnreadCount]     = useState(0);
-  const [showSpinWheel,   setShowSpinWheel]   = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+  const [showShop, setShowShop] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [searchExpanded, setSearchExpanded] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showSpinWheel, setShowSpinWheel] = useState(false);
   const lastScrollY = useRef(0);
-  const searchRef   = useRef(null);
+  const searchRef = useRef(null);
 
   // ── Scroll behaviour ──────────────────────────────────
   useEffect(() => {
@@ -69,7 +59,7 @@ export default function Navbar({ openCart }) {
     if (!user) return setUnreadCount(0);
     axios.get(`${API_URL}/api/notifications`, { withCredentials: true })
       .then(res => setUnreadCount(res.data.filter(n => !n.read).length))
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   // ── Spin wheel eligibility ────────────────────────────
@@ -77,7 +67,7 @@ export default function Navbar({ openCart }) {
     if (!user) return;
     axios.get(`${API_URL}/api/spin/can-spin`, { withCredentials: true })
       .then(res => { if (res.data.canSpin) setTimeout(() => setShowSpinWheel(true), 2000); })
-      .catch(() => {});
+      .catch(() => { });
   }, [user]);
 
   // ── Search suggestions ────────────────────────────────
@@ -88,7 +78,7 @@ export default function Navbar({ openCart }) {
       try {
         const res = await axios.get(`${API_URL}/api/products/search/suggest?q=${val}`);
         setSuggestions(res.data);
-      } catch {}
+      } catch { }
     }, 280);
     return () => clearTimeout(t);
   };
@@ -105,7 +95,7 @@ export default function Navbar({ openCart }) {
     try {
       await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
       setUser(null); navigate("/");
-    } catch {}
+    } catch { }
   };
 
   const googleLogin = useGoogleLogin({
@@ -115,26 +105,76 @@ export default function Navbar({ openCart }) {
         setUser(res.data.user);
         if (res.data.user.role === "admin") navigate("/admin/dashboard");
         refreshMe();
-      } catch {}
+      } catch { }
     },
   });
 
   const isActive = (path) => location.pathname + location.search === path;
+
+  // ── Style tokens that flip based on scroll state ──────
+  // When over the video (not scrolled): transparent bg, white text
+  // When scrolled: frosted glass, dark text
+  const T = {
+    navBg: scrolled ? "rgba(255,255,255,0.94)" : "transparent",
+    navBackdrop: scrolled ? "blur(20px)" : "none",
+    navBorder: scrolled ? "1px solid #E2EEEC" : "1px solid transparent",
+    navShadow: scrolled ? "0 2px 24px rgba(91,191,181,0.08)" : "none",
+    navPadding: scrolled ? "10px 0" : "16px 0",
+
+    linkColor: scrolled ? "#1A2E2C" : "rgba(255,255,255,0.90)",
+    linkHoverColor: scrolled ? "#5BBFB5" : "rgba(255,255,255,1)",
+
+    iconBg: scrolled ? "#fff" : "rgba(255,255,255,0.12)",
+    iconBorder: scrolled ? "1.5px solid #E2EEEC" : "1.5px solid rgba(255,255,255,0.22)",
+    iconColor: scrolled ? "#6B8F8A" : "rgba(255,255,255,0.85)",
+    iconHoverBg: scrolled ? "#EDF5F3" : "rgba(255,255,255,0.22)",
+    iconHoverColor: scrolled ? "#5BBFB5" : "#fff",
+
+    loginBg: scrolled ? "#1A2E2C" : "rgba(255,255,255,0.15)",
+    loginBorder: scrolled ? "none" : "1.5px solid rgba(255,255,255,0.35)",
+    loginColor: "#fff",
+
+    profileBorder: scrolled ? "#E2EEEC" : "rgba(255,255,255,0.30)",
+    profileNameColor: scrolled ? "#1A2E2C" : "rgba(255,255,255,0.92)",
+    chevronColor: scrolled ? "#B8CFCC" : "rgba(255,255,255,0.50)",
+  };
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@500;600&display=swap');
         .nav-root * { box-sizing: border-box; }
-        .nav-link-underline::after { content:''; display:block; height:1.5px; background:#5BBFB5; transform:scaleX(0); transform-origin:left; transition:transform 0.25s cubic-bezier(.4,0,.2,1); border-radius:2px; margin-top:2px; }
-        .nav-link-underline:hover::after, .nav-link-active::after { transform:scaleX(1); }
-        .search-input-inner:focus { outline:none; }
-        .no-scrollbar::-webkit-scrollbar { display:none; }
-        .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
-        .nav-icon-btn:hover { background:#EDF5F3 !important; color:#5BBFB5 !important; }
-        .profile-item:hover { background:#F4F9F8 !important; }
-        .shop-item:hover { background:#F4F9F8 !important; color:#5BBFB5 !important; }
-        .mobile-link:active { background:#F4F9F8; }
+
+        /* Underline that's visible on both dark and light nav */
+        .nav-link-underline::after {
+          content: '';
+          display: block;
+          height: 1.5px;
+          background: ${scrolled ? "#5BBFB5" : "rgba(255,255,255,0.8)"};
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform 0.25s cubic-bezier(.4,0,.2,1), background 0.3s;
+          border-radius: 2px;
+          margin-top: 2px;
+        }
+        .nav-link-underline:hover::after, .nav-link-active::after { transform: scaleX(1); }
+
+        .search-input-inner:focus { outline: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .nav-icon-btn {
+          transition: background 0.2s, color 0.2s, border-color 0.2s !important;
+        }
+        .nav-icon-btn:hover {
+          background: ${T.iconHoverBg} !important;
+          color: ${T.iconHoverColor} !important;
+          border-color: ${scrolled ? "#C5E6E4" : "rgba(255,255,255,0.5)"} !important;
+        }
+
+        .profile-item:hover { background: #F4F9F8 !important; }
+        .shop-item:hover { background: #F4F9F8 !important; color: #5BBFB5 !important; }
+        .mobile-link:active { background: #F4F9F8; }
       `}</style>
 
       <motion.nav
@@ -145,15 +185,16 @@ export default function Navbar({ openCart }) {
         style={{
           position: "fixed", top: 0, width: "100%", zIndex: 100,
           fontFamily: "'Manrope', sans-serif",
-          transition: "background 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease",
-          background: scrolled ? "rgba(255,255,255,0.92)" : "rgba(244,249,248,0.6)",
-          backdropFilter: "blur(16px)",
-          borderBottom: scrolled ? "1px solid #E2EEEC" : "1px solid transparent",
-          boxShadow: scrolled ? "0 2px 20px rgba(91,191,181,0.08)" : "none",
-          padding: scrolled ? "10px 0" : "16px 0",
+          background: T.navBg,
+          backdropFilter: T.navBackdrop,
+          WebkitBackdropFilter: T.navBackdrop,
+          borderBottom: T.navBorder,
+          boxShadow: T.navShadow,
+          padding: T.navPadding,
+          transition: "background 0.35s ease, box-shadow 0.35s ease, padding 0.3s ease, border-color 0.35s ease, backdrop-filter 0.35s ease",
         }}
       >
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", gap: "0" }}>
+        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center" }}>
 
           {/* ── Logo ──────────────────────────────────────── */}
           <Link to="/" style={{ textDecoration: "none", marginRight: "40px", flexShrink: 0 }}>
@@ -161,7 +202,12 @@ export default function Navbar({ openCart }) {
               <img
                 src="/logo.png"
                 alt="SeaBite"
-                style={{ height: "44px", width: "auto", objectFit: "contain" }}
+                style={{
+                  height: "44px", width: "auto", objectFit: "contain",
+                  // Add subtle drop shadow on logo when over dark video so it pops
+                  filter: scrolled ? "none" : "drop-shadow(0 2px 8px rgba(0,0,0,0.25))",
+                  transition: "filter 0.35s ease",
+                }}
               />
             </motion.div>
           </Link>
@@ -180,9 +226,11 @@ export default function Navbar({ openCart }) {
                 style={{
                   display: "flex", alignItems: "center", gap: "4px",
                   padding: "6px 12px", border: "none", background: "none",
-                  fontSize: "13px", fontWeight: "600", color: "#1A2E2C",
+                  fontSize: "13px", fontWeight: "600",
+                  color: T.linkColor,
                   cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                  borderRadius: "8px", transition: "color 0.2s",
+                  borderRadius: "8px",
+                  transition: "color 0.3s",
                 }}
               >
                 Shop
@@ -240,8 +288,9 @@ export default function Navbar({ openCart }) {
                 style={{
                   padding: "6px 12px", borderRadius: "8px",
                   fontSize: "13px", fontWeight: "600",
-                  color: isActive(link.path) ? "#5BBFB5" : "#1A2E2C",
-                  textDecoration: "none", transition: "color 0.2s",
+                  color: isActive(link.path) && scrolled ? "#5BBFB5" : T.linkColor,
+                  textDecoration: "none",
+                  transition: "color 0.3s",
                 }}
               >
                 {link.label}
@@ -291,7 +340,17 @@ export default function Navbar({ openCart }) {
                     whileTap={{ scale: 0.9 }}
                     onClick={() => setSearchExpanded(true)}
                     className="nav-icon-btn"
-                    style={{ width: "36px", height: "36px", border: "1.5px solid #E2EEEC", borderRadius: "10px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6B8F8A", transition: "all 0.2s" }}
+                    style={{
+                      width: "36px", height: "36px",
+                      border: T.iconBorder,
+                      borderRadius: "10px",
+                      background: T.iconBg,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      cursor: "pointer",
+                      color: T.iconColor,
+                      backdropFilter: scrolled ? "none" : "blur(8px)",
+                      transition: "all 0.3s",
+                    }}
                   >
                     <FiSearch size={15} />
                   </motion.button>
@@ -345,9 +404,14 @@ export default function Navbar({ openCart }) {
                 className="nav-icon-btn"
                 style={{
                   position: "relative", width: "36px", height: "36px",
-                  border: "1.5px solid #E2EEEC", borderRadius: "10px", background: "#fff",
+                  border: T.iconBorder,
+                  borderRadius: "10px",
+                  background: T.iconBg,
                   display: "flex", alignItems: "center", justifyContent: "center",
-                  cursor: "pointer", color: "#6B8F8A", transition: "all 0.2s",
+                  cursor: "pointer",
+                  color: T.iconColor,
+                  backdropFilter: scrolled ? "none" : "blur(8px)",
+                  transition: "all 0.3s",
                 }}
               >
                 <FiHeart size={15} />
@@ -382,9 +446,14 @@ export default function Navbar({ openCart }) {
               data-cart-icon
               style={{
                 position: "relative", width: "36px", height: "36px",
-                border: "1.5px solid #E2EEEC", borderRadius: "10px", background: "#fff",
+                border: T.iconBorder,
+                borderRadius: "10px",
+                background: T.iconBg,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#6B8F8A", transition: "all 0.2s",
+                cursor: "pointer",
+                color: T.iconColor,
+                backdropFilter: scrolled ? "none" : "blur(8px)",
+                transition: "all 0.3s",
               }}
             >
               <FiShoppingBag size={15} />
@@ -424,9 +493,12 @@ export default function Navbar({ openCart }) {
                     style={{
                       display: "flex", alignItems: "center", gap: "8px",
                       padding: "5px 12px 5px 5px",
-                      border: "1.5px solid #E2EEEC", borderRadius: "20px",
-                      background: "#fff", cursor: "pointer",
-                      transition: "border-color 0.2s",
+                      border: `1.5px solid ${T.profileBorder}`,
+                      borderRadius: "20px",
+                      background: scrolled ? "#fff" : "rgba(255,255,255,0.12)",
+                      backdropFilter: scrolled ? "none" : "blur(8px)",
+                      cursor: "pointer",
+                      transition: "all 0.3s",
                     }}
                   >
                     <div style={{
@@ -434,7 +506,7 @@ export default function Navbar({ openCart }) {
                       background: "linear-gradient(135deg, #5BBFB5, #7EB8D4)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       color: "#fff", fontWeight: "800", fontSize: "12px",
-                      flexShrink: 0,
+                      flexShrink: 0, position: "relative",
                     }}>
                       {user.name?.charAt(0).toUpperCase()}
                       {unreadCount > 0 && (
@@ -445,10 +517,14 @@ export default function Navbar({ openCart }) {
                         }} />
                       )}
                     </div>
-                    <span style={{ fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}>
+                    <span style={{
+                      fontSize: "13px", fontWeight: "600",
+                      color: T.profileNameColor,
+                      transition: "color 0.3s",
+                    }}>
                       {user.name?.split(" ")[0]}
                     </span>
-                    <FiChevronDown size={12} style={{ color: "#B8CFCC" }} />
+                    <FiChevronDown size={12} style={{ color: T.chevronColor, transition: "color 0.3s" }} />
                   </motion.button>
 
                   <AnimatePresence>
@@ -474,10 +550,10 @@ export default function Navbar({ openCart }) {
 
                         <div style={{ padding: "6px" }}>
                           {[
-                            { icon: <FiUser size={14} />,    label: "My Profile",     path: "/profile" },
-                            { icon: <FiHeart size={14} />,   label: "Wishlist",       path: "/wishlist" },
-                            { icon: <FiPackage size={14} />, label: "My Orders",      path: "/orders" },
-                            { icon: <FiBell size={14} />,    label: "Notifications",  path: "/notifications", badge: unreadCount },
+                            { icon: <FiUser size={14} />, label: "My Profile", path: "/profile" },
+                            { icon: <FiHeart size={14} />, label: "Wishlist", path: "/wishlist" },
+                            { icon: <FiPackage size={14} />, label: "My Orders", path: "/orders" },
+                            { icon: <FiBell size={14} />, label: "Notifications", path: "/notifications", badge: unreadCount },
                             ...(user.role === "admin" ? [{ icon: <FiGrid size={14} />, label: "Admin Dashboard", path: "/admin/dashboard" }] : []),
                           ].map(item => (
                             <button
@@ -531,11 +607,14 @@ export default function Navbar({ openCart }) {
                   style={{
                     display: "flex", alignItems: "center", gap: "8px",
                     padding: "8px 18px", marginLeft: "4px",
-                    background: "#1A2E2C", color: "#fff",
-                    border: "none", borderRadius: "10px",
+                    background: T.loginBg,
+                    color: T.loginColor,
+                    border: T.loginBorder,
+                    borderRadius: "10px",
                     fontSize: "13px", fontWeight: "700",
                     cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                    transition: "background 0.2s",
+                    backdropFilter: scrolled ? "none" : "blur(8px)",
+                    transition: "all 0.3s",
                   }}
                 >
                   <FiUser size={14} /> Login
@@ -549,10 +628,15 @@ export default function Navbar({ openCart }) {
               onClick={() => setMobileOpen(!mobileOpen)}
               className="show-mobile"
               style={{
-                width: "36px", height: "36px", border: "1.5px solid #E2EEEC",
-                borderRadius: "10px", background: "#fff",
+                width: "36px", height: "36px",
+                border: T.iconBorder,
+                borderRadius: "10px",
+                background: T.iconBg,
                 display: "none", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: "#1A2E2C",
+                cursor: "pointer",
+                color: T.iconColor,
+                backdropFilter: scrolled ? "none" : "blur(8px)",
+                transition: "all 0.3s",
               }}
             >
               <AnimatePresence mode="wait">
@@ -646,10 +730,10 @@ export default function Navbar({ openCart }) {
                 <div>
                   <p style={{ fontSize: "10px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "12px" }}>Account</p>
                   {[
-                    { icon: <FiUser size={14} />,    label: "My Profile",    path: "/profile" },
-                    { icon: <FiHeart size={14} />,   label: "Wishlist",      path: "/wishlist" },
-                    { icon: <FiPackage size={14} />, label: "Orders",        path: "/orders" },
-                    { icon: <FiBell size={14} />,    label: "Notifications", path: "/notifications", badge: unreadCount },
+                    { icon: <FiUser size={14} />, label: "My Profile", path: "/profile" },
+                    { icon: <FiHeart size={14} />, label: "Wishlist", path: "/wishlist" },
+                    { icon: <FiPackage size={14} />, label: "Orders", path: "/orders" },
+                    { icon: <FiBell size={14} />, label: "Notifications", path: "/notifications", badge: unreadCount },
                     ...(user.role === "admin" ? [{ icon: <FiGrid size={14} />, label: "Admin", path: "/admin/dashboard" }] : []),
                   ].map((item, i) => (
                     <motion.button

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FiLogOut, FiHome, FiArrowLeft } from "react-icons/fi";
 import { motion, useInView } from "framer-motion";
 import UserInfo from "./UserInfo";
-import { ThemeContext } from "../context/ThemeContext";
+import { ThemeContext } from "../../context/ThemeContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 

@@ -1,10 +1,10 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useContext, useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
-import { CartContext } from "../context/CartContext";
-import { ThemeContext } from "../context/ThemeContext";
-import { AuthContext } from "../context/AuthContext";
-import { addToCart } from "../utils/cartStorage";
+import { CartContext } from "../../context/CartContext";
+import { ThemeContext } from "../../context/ThemeContext";
+import { AuthContext } from "../../context/AuthContext";
+import { addToCart } from "../../utils/cartStorage";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowLeft, FiMinus, FiPlus, FiShoppingBag, FiTruck,
@@ -12,7 +12,7 @@ import {
   FiHeart, FiZap, FiChevronRight, FiBox,
 } from "react-icons/fi";
 import toast from "react-hot-toast";
-import ReviewModal from "../components/ReviewModal";
+import ReviewModal from "../../components/common/ReviewModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -168,17 +168,17 @@ export default function ProductDetails() {
   const { refreshCartCount } = useContext(CartContext);
   const { token, user, refreshMe } = useContext(AuthContext);
 
-  const [product, setProduct]         = useState(null);
-  const [loading, setLoading]         = useState(true);
-  const [qty, setQty]                 = useState(1);
-  const [activeTab, setActiveTab]     = useState("desc");
-  const [isAdded, setIsAdded]         = useState(false);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [qty, setQty] = useState(1);
+  const [activeTab, setActiveTab] = useState("desc");
+  const [isAdded, setIsAdded] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [loadingWishlist, setLoadingWishlist] = useState(false);
-  const [canReview, setCanReview]     = useState(false);
+  const [canReview, setCanReview] = useState(false);
   const [isWaitlisting, setIsWaitlisting] = useState(false);
   const [isJoinedWaitlist, setIsJoinedWaitlist] = useState(false);
-  const [flyItems, setFlyItems]       = useState([]);
+  const [flyItems, setFlyItems] = useState([]);
   const flyIdRef = useRef(0);
   const addBtnRef = useRef(null);
 
@@ -317,9 +317,9 @@ export default function ProductDetails() {
   }
 
   const TABS = [
-    { id: "desc",     label: "Description" },
+    { id: "desc", label: "Description" },
     { id: "shipping", label: "Delivery" },
-    { id: "reviews",  label: `Reviews ${product.numReviews ? `(${product.numReviews})` : ""}` },
+    { id: "reviews", label: `Reviews ${product.numReviews ? `(${product.numReviews})` : ""}` },
   ];
 
   return (

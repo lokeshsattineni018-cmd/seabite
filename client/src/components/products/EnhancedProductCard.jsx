@@ -1,8 +1,8 @@
 import { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck } from "react-icons/fi";
-import { CartContext } from "../context/CartContext";
-import { AuthContext } from "../context/AuthContext";
+import { CartContext } from "../../context/CartContext";
+import { AuthContext } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 import axios from "axios";
 
@@ -51,8 +51,8 @@ const EnhancedProductCard = ({
   const discountPct = isActiveFlashSale
     ? Math.round((1 - product.flashSale.discountPrice / product.basePrice) * 100)
     : globalDiscountApplied
-    ? globalDiscount
-    : 0;
+      ? globalDiscount
+      : 0;
 
   useEffect(() => {
     if (!isActiveFlashSale) return;

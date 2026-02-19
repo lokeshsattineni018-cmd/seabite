@@ -28,30 +28,16 @@ import {
   LeafyGreen,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import EnhancedProductCard from "../components/EnhancedProductCard";
-import TrendingProducts from "../components/TrendingProducts";
+import Categories from "../components/products/Categories";
+import EnhancedProductCard from "../components/products/EnhancedProductCard";
+import TrendingProducts from "../components/products/TrendingProducts";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
-
-// ─────────────────────────────────────────────
-// 🎨  DESIGN TOKENS  (unchanged from doc 8)
-// Primary:    #5BA8A0  (seafoam teal)
-// Secondary:  #89C2D9  (sky-water blue)
-// Accent:     #E8816A  (soft coral)
-// Sand:       #F5EFE6  (warm sand)
-// Background: #F8FAFB  (off-white)
-// Card:       #FFFFFF
-// Border:     #E8EEF2
-// Text-dark:  #1A2B35
-// Text-mid:   #4A6572
-// Text-light: #8BA5B3
-// ─────────────────────────────────────────────
 
 // ══════════════════════════════════════════════
 //  ANIMATION PRIMITIVES
 // ══════════════════════════════════════════════
 
-// Basic scroll-triggered fade + slide up
 const Reveal = ({ children, delay = 0, y = 28, x = 0, duration = 0.65 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-6% 0px" });
@@ -67,7 +53,6 @@ const Reveal = ({ children, delay = 0, y = 28, x = 0, duration = 0.65 }) => {
   );
 };
 
-// Fade-in only (for images, backgrounds)
 const FadeIn = ({ children, delay = 0, duration = 0.7 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-4% 0px" });
@@ -83,17 +68,14 @@ const FadeIn = ({ children, delay = 0, duration = 0.7 }) => {
   );
 };
 
-// Reveal from left
 const RevealLeft = ({ children, delay = 0 }) => (
   <Reveal delay={delay} y={0} x={-32}>{children}</Reveal>
 );
 
-// Reveal from right
 const RevealRight = ({ children, delay = 0 }) => (
   <Reveal delay={delay} y={0} x={32}>{children}</Reveal>
 );
 
-// Scale reveal (for cards/banners)
 const ScaleReveal = ({ children, delay = 0 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-4% 0px" });
@@ -109,7 +91,6 @@ const ScaleReveal = ({ children, delay = 0 }) => {
   );
 };
 
-// Staggered children container
 const Stagger = ({ children, className = "", staggerDelay = 0.09 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-6% 0px" });
@@ -131,7 +112,6 @@ const Stagger = ({ children, className = "", staggerDelay = 0.09 }) => {
   );
 };
 
-// Stagger item
 const SI = ({ children, className = "" }) => (
   <motion.div
     variants={{
@@ -148,7 +128,6 @@ const SI = ({ children, className = "" }) => (
   </motion.div>
 );
 
-// Animated counter
 const Counter = ({ value, suffix = "" }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true });
@@ -165,10 +144,10 @@ const Counter = ({ value, suffix = "" }) => {
 
 const Chip = ({ children, color = "teal" }) => {
   const palettes = {
-    teal:  "bg-[#EAF6F5] text-[#3D8C85] border-[#C5E6E4]",
+    teal: "bg-[#EAF6F5] text-[#3D8C85] border-[#C5E6E4]",
     coral: "bg-[#FEF0EC] text-[#C05A45] border-[#F5C4BB]",
-    sand:  "bg-[#FAF4EC] text-[#8B6D45] border-[#EAD9C0]",
-    sky:   "bg-[#EDF5FB] text-[#3A7DA0] border-[#BDD9EE]",
+    sand: "bg-[#FAF4EC] text-[#8B6D45] border-[#EAD9C0]",
+    sky: "bg-[#EDF5FB] text-[#3A7DA0] border-[#BDD9EE]",
   };
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase border ${palettes[color]}`}>
@@ -191,7 +170,7 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
   const styles = {
     primary: "px-7 py-3.5 bg-[#1A2B35] text-white hover:bg-[#5BA8A0] shadow-sm hover:shadow-[0_4px_20px_rgba(91,168,160,0.35)]",
     outline: "px-7 py-3.5 border border-[#CBD8DF] text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] bg-white",
-    coral:   "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
+    coral: "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
   };
   return (
     <Link to={to}>
@@ -207,27 +186,20 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
 };
 
 // ══════════════════════════════════════════════
-//  HERO — Video clearer, animations intact
+//  HERO
 // ══════════════════════════════════════════════
 const Hero = () => {
   const { scrollY } = useScroll();
-  const videoY       = useTransform(scrollY, [0, 700], [0, 140]);
+  const videoY = useTransform(scrollY, [0, 700], [0, 140]);
   const videoOpacity = useTransform(scrollY, [0, 500], [1, 0.2]);
 
   return (
     <section className="relative h-screen min-h-[680px] max-h-[960px] bg-[#0e1c24] overflow-hidden">
-
-      {/* ── VIDEO — much lighter overlay so the footage shows clearly ── */}
       <motion.div
         style={{ y: videoY, opacity: videoOpacity }}
         className="absolute inset-0 z-0"
       >
-        {/*
-          BEFORE: from-white/60 via-[#F8FAFB]/40 to-[#F8FAFB]  ← washed out
-          AFTER:  from-black/15 via-black/5  to-black/20       ← video is clear
-          The right-side fade is removed entirely.
-          Video filter: was saturate(0.7) brightness(1.1) — now full colour.
-        */}
+        {/* Minimal dark vignette — video shows clearly */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/15 via-transparent to-black/30 z-10" />
         <video
           autoPlay
@@ -239,7 +211,7 @@ const Hero = () => {
         />
       </motion.div>
 
-      {/* Subtle dot grid — very light so video still reads */}
+      {/* Subtle dot grid */}
       <div
         className="absolute inset-0 z-10 opacity-[0.015]"
         style={{
@@ -258,8 +230,6 @@ const Hero = () => {
       {/* Content */}
       <div className="relative z-30 h-full flex items-center">
         <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid md:grid-cols-2 gap-12 items-center">
-
-          {/* ── LEFT copy ── */}
           <div className="space-y-8">
             <motion.div
               initial={{ opacity: 0, y: 16 }}
@@ -302,7 +272,6 @@ const Hero = () => {
               <CTAButton to="/products" variant="primary">
                 Shop Now <ArrowRight size={15} />
               </CTAButton>
-              {/* Outline button adapted for dark background */}
               <Link to="/products">
                 <motion.button
                   whileHover={{ y: -2 }}
@@ -314,7 +283,6 @@ const Hero = () => {
               </Link>
             </motion.div>
 
-            {/* Trust badges */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -323,7 +291,7 @@ const Hero = () => {
             >
               {[
                 { n: "500+", label: "Happy Customers" },
-                { n: "98%",  label: "Fresh Score" },
+                { n: "98%", label: "Fresh Score" },
                 { n: "4.8★", label: "Avg Rating" },
               ].map((s, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -337,14 +305,12 @@ const Hero = () => {
             </motion.div>
           </div>
 
-          {/* ── RIGHT — floating cards ── */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="hidden md:flex justify-center items-center relative h-[420px]"
           >
-            {/* Main badge */}
             <motion.div
               animate={{ y: [0, -8, 0] }}
               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
@@ -355,7 +321,6 @@ const Hero = () => {
               <p className="text-xs text-[#8BA5B3] mt-1">Just arrived today</p>
             </motion.div>
 
-            {/* Top-left tag */}
             <motion.div
               animate={{ y: [0, 6, 0] }}
               transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut", delay: 0.5 }}
@@ -370,7 +335,6 @@ const Hero = () => {
               </div>
             </motion.div>
 
-            {/* Bottom-right tag */}
             <motion.div
               animate={{ y: [0, -6, 0] }}
               transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 1 }}
@@ -385,7 +349,6 @@ const Hero = () => {
               </div>
             </motion.div>
 
-            {/* Rating pill */}
             <motion.div
               animate={{ y: [0, 5, 0] }}
               transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.2 }}
@@ -399,7 +362,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Scroll cue */}
       <motion.div
         className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5"
         initial={{ opacity: 0 }}
@@ -416,45 +378,125 @@ const Hero = () => {
 };
 
 // ══════════════════════════════════════════════
-//  TICKER  — slide-in reveal
+//  TICKER — Real wave strip with sine-wave motion
 // ══════════════════════════════════════════════
-const Ticker = () => {
+const WaveTicker = () => {
   const items = [
-    "Fresh Catch Daily","Ocean to Table","Sustainable Sourcing",
-    "Cold Chain Delivery","Chef Approved","Lab Tested Quality",
+    "Fresh Catch Daily", "Ocean to Table", "Sustainable Sourcing",
+    "Cold Chain Delivery", "Chef Approved", "Lab Tested Quality",
   ];
+
+  // Each word ripples vertically using a sine wave
+  const WaveWord = ({ text, index, totalWords }) => {
+    const phase = (index / totalWords) * Math.PI * 2;
+    return (
+      <motion.span
+        className="inline-flex items-center"
+        animate={{ y: [Math.sin(phase) * 3, Math.sin(phase + Math.PI) * 3, Math.sin(phase) * 3] }}
+        transition={{
+          repeat: Infinity,
+          duration: 2.4,
+          delay: (index / totalWords) * 1.2,
+          ease: "easeInOut",
+        }}
+        style={{ display: "inline-flex", alignItems: "center" }}
+      >
+        <span className="text-xs font-semibold tracking-[0.15em] uppercase text-white/75 mx-8">
+          {text}
+        </span>
+        <span className="text-[#5BA8A0] text-sm mx-1">〰</span>
+      </motion.span>
+    );
+  };
+
+  const doubledItems = [...items, ...items];
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
-      className="bg-[#1A2B35] py-3.5 overflow-hidden relative"
+      className="relative overflow-hidden"
+      style={{ isolation: "isolate" }}
     >
-      <motion.div
-        className="flex whitespace-nowrap"
-        animate={{ x: ["0%", "-50%"] }}
-        transition={{ duration: 22, ease: "linear", repeat: Infinity }}
+      {/* ── Top wave SVG border ── */}
+      <div className="relative" style={{ marginBottom: "-2px", lineHeight: 0 }}>
+        <svg
+          viewBox="0 0 1440 28"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full"
+          preserveAspectRatio="none"
+          style={{ display: "block", height: "28px" }}
+        >
+          <path
+            d="M0 28 C120 8, 240 28, 360 14 C480 0, 600 28, 720 14 C840 0, 960 28, 1080 14 C1200 0, 1320 28, 1440 14 L1440 28 L0 28 Z"
+            fill="#1A2B35"
+          />
+        </svg>
+      </div>
+
+      {/* ── Ticker body ── */}
+      <div
+        className="bg-[#1A2B35] py-3 overflow-hidden"
+        style={{ position: "relative" }}
       >
-        {[...items, ...items].map((item, i) => (
-          <div key={i} className="flex items-center">
-            <span className="text-xs font-semibold tracking-[0.15em] uppercase text-white/70 mx-8">
-              {item}
-            </span>
-            <div className="w-1 h-1 rounded-full bg-[#5BA8A0] mx-2" />
-          </div>
-        ))}
-      </motion.div>
+        {/* Subtle seafoam shimmer line across the middle */}
+        <div
+          className="absolute left-0 right-0 pointer-events-none"
+          style={{
+            top: "50%",
+            transform: "translateY(-50%)",
+            height: "1px",
+            background: "linear-gradient(90deg, transparent, rgba(91,168,160,0.2), transparent)",
+          }}
+        />
+
+        {/* Scrolling track */}
+        <motion.div
+          className="flex whitespace-nowrap"
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 32, ease: "linear", repeat: Infinity }}
+          style={{ willChange: "transform" }}
+        >
+          {doubledItems.map((item, i) => (
+            <WaveWord
+              key={i}
+              text={item}
+              index={i % items.length}
+              totalWords={items.length}
+            />
+          ))}
+        </motion.div>
+      </div>
+
+      {/* ── Bottom wave SVG border ── */}
+      <div className="relative" style={{ marginTop: "-2px", lineHeight: 0 }}>
+        <svg
+          viewBox="0 0 1440 28"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full"
+          preserveAspectRatio="none"
+          style={{ display: "block", height: "28px" }}
+        >
+          <path
+            d="M0 0 C120 20, 240 0, 360 14 C480 28, 600 0, 720 14 C840 28, 960 0, 1080 14 C1200 28, 1320 0, 1440 14 L1440 0 L0 0 Z"
+            fill="#1A2B35"
+          />
+        </svg>
+      </div>
     </motion.div>
   );
 };
 
 // ══════════════════════════════════════════════
-//  CATEGORIES  — stagger + left/right reveals
+//  CATEGORIES
 // ══════════════════════════════════════════════
 const categories = [
-  { title:"Premium Fish",  sub:"20+ varieties",        img:"/fish.png",  tag:"Fish",  bg:"from-[#EAF6F5] to-[#F8FAFB]", accent:"#5BA8A0",  emoji:"🐟" },
-  { title:"Jumbo Prawns",  sub:"Wild-caught daily",    img:"/prawn.png", tag:"Prawn", bg:"from-[#EDF5FB] to-[#F8FAFB]", accent:"#89C2D9",  emoji:"🦐" },
-  { title:"Live Crabs",    sub:"Ships in tank water",  img:"/crab.png",  tag:"Crab",  bg:"from-[#FEF0EC] to-[#F8FAFB]", accent:"#E8816A",  emoji:"🦀" },
+  { title: "Premium Fish", sub: "20+ varieties", img: "/fish.png", tag: "Fish", bg: "from-[#EAF6F5] to-[#F8FAFB]", accent: "#5BA8A0", emoji: "🐟" },
+  { title: "Jumbo Prawns", sub: "Wild-caught daily", img: "/prawn.png", tag: "Prawn", bg: "from-[#EDF5FB] to-[#F8FAFB]", accent: "#89C2D9", emoji: "🦐" },
+  { title: "Live Crabs", sub: "Ships in tank water", img: "/crab.png", tag: "Crab", bg: "from-[#FEF0EC] to-[#F8FAFB]", accent: "#E8816A", emoji: "🦀" },
 ];
 
 const CategorySection = () => {
@@ -462,8 +504,6 @@ const CategorySection = () => {
   return (
     <section className="py-20 px-6 md:px-12 bg-[#F8FAFB]">
       <div className="max-w-7xl mx-auto">
-
-        {/* Header — left side slides from left, CTA from right */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <RevealLeft>
             <div>
@@ -483,7 +523,6 @@ const CategorySection = () => {
           </RevealRight>
         </div>
 
-        {/* Cards stagger in */}
         <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {categories.map((cat, i) => (
             <SI key={i}>
@@ -522,10 +561,7 @@ const CategorySection = () => {
 
                   <div className="absolute bottom-5 left-6">
                     <motion.div
-                      animate={{
-                        opacity: hovered === i ? 1 : 0,
-                        y: hovered === i ? 0 : 6,
-                      }}
+                      animate={{ opacity: hovered === i ? 1 : 0, y: hovered === i ? 0 : 6 }}
                       transition={{ duration: 0.25 }}
                       className="text-xs font-bold text-white px-3 py-1.5 rounded-full"
                       style={{ backgroundColor: cat.accent }}
@@ -544,7 +580,7 @@ const CategorySection = () => {
 };
 
 // ══════════════════════════════════════════════
-//  FLASH SALE BANNER  — scale reveal
+//  FLASH SALE BANNER
 // ══════════════════════════════════════════════
 const FlashSale = () => {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
@@ -554,7 +590,7 @@ const FlashSale = () => {
       const diff = new Date().setHours(24, 0, 0, 0) - Date.now();
       if (diff > 0)
         setTimeLeft({
-          hours:   Math.floor((diff / 36e5) % 24),
+          hours: Math.floor((diff / 36e5) % 24),
           minutes: Math.floor((diff / 6e4) % 60),
           seconds: Math.floor((diff / 1e3) % 60),
         });
@@ -571,11 +607,8 @@ const FlashSale = () => {
       <div className="max-w-7xl mx-auto">
         <ScaleReveal>
           <div className="relative rounded-2xl overflow-hidden border border-[#E8EEF2] bg-white shadow-sm">
-            {/* Rainbow top stripe */}
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#5BA8A0] via-[#89C2D9] to-[#E8816A]" />
-
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 md:p-10">
-              {/* Left */}
               <div className="flex items-center gap-5">
                 <div className="w-12 h-12 rounded-2xl bg-[#FEF0EC] flex items-center justify-center flex-shrink-0">
                   <Flame size={22} className="text-[#E8816A]" />
@@ -598,11 +631,10 @@ const FlashSale = () => {
                 </div>
               </div>
 
-              {/* Right — countdown + CTA */}
               <div className="flex items-center gap-5 flex-shrink-0">
                 <div className="flex items-center gap-1.5">
                   {[
-                    { v: timeLeft.hours,   label: "HRS" },
+                    { v: timeLeft.hours, label: "HRS" },
                     { v: timeLeft.minutes, label: "MIN" },
                     { v: timeLeft.seconds, label: "SEC" },
                   ].map((t, i) => (
@@ -628,7 +660,6 @@ const FlashSale = () => {
                     </div>
                   ))}
                 </div>
-
                 <CTAButton to="/products" variant="coral">
                   Grab Deal <ArrowRight size={14} />
                 </CTAButton>
@@ -642,10 +673,10 @@ const FlashSale = () => {
 };
 
 // ══════════════════════════════════════════════
-//  PRODUCT ROWS  — header reveals, cards stagger
+//  PRODUCT ROWS
 // ══════════════════════════════════════════════
 const CategoryRow = ({ title, filterType }) => {
-  const [products, setProducts]           = useState([]);
+  const [products, setProducts] = useState([]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
 
   useEffect(() => {
@@ -705,28 +736,26 @@ const CategoryRow = ({ title, filterType }) => {
 };
 
 // ══════════════════════════════════════════════
-//  WHY SEABITE — alternating reveals
+//  WHY SEABITE
 // ══════════════════════════════════════════════
 const WhySeaBite = () => {
   const features = [
-    { icon: <ShieldCheck size={20} />, title: "Quality Guaranteed",  desc: "Every batch lab-tested for freshness and safety before dispatch.",       color: "text-[#3D8C85]", bg: "bg-[#EAF6F5]" },
-    { icon: <Thermometer  size={20} />, title: "Cold Chain Delivery", desc: "Temperature-controlled packaging from ocean to your doorstep.",           color: "text-[#3A7DA0]", bg: "bg-[#EDF5FB]" },
-    { icon: <Truck        size={20} />, title: "Same Day Dispatch",   desc: "Order before 2 PM and it ships today — freshness guaranteed.",            color: "text-[#8B6D45]", bg: "bg-[#FAF4EC]" },
-    { icon: <Utensils     size={20} />, title: "Chef Approved",       desc: "Trusted by restaurants and home cooks across the coastline.",             color: "text-[#C05A45]", bg: "bg-[#FEF0EC]" },
+    { icon: <ShieldCheck size={20} />, title: "Quality Guaranteed", desc: "Every batch lab-tested for freshness and safety before dispatch.", color: "text-[#3D8C85]", bg: "bg-[#EAF6F5]" },
+    { icon: <Thermometer size={20} />, title: "Cold Chain Delivery", desc: "Temperature-controlled packaging from ocean to your doorstep.", color: "text-[#3A7DA0]", bg: "bg-[#EDF5FB]" },
+    { icon: <Truck size={20} />, title: "Same Day Dispatch", desc: "Order before 2 PM and it ships today — freshness guaranteed.", color: "text-[#8B6D45]", bg: "bg-[#FAF4EC]" },
+    { icon: <Utensils size={20} />, title: "Chef Approved", desc: "Trusted by restaurants and home cooks across the coastline.", color: "text-[#C05A45]", bg: "bg-[#FEF0EC]" },
   ];
 
   const stats = [
-    { value: 500, suffix: "+",   label: "Happy Customers" },
-    { value: 20,  suffix: "+",   label: "Varieties Available" },
-    { value: 98,  suffix: "%",   label: "Freshness Score" },
-    { value: 4,   suffix: ".8★", label: "Average Rating" },
+    { value: 500, suffix: "+", label: "Happy Customers" },
+    { value: 20, suffix: "+", label: "Varieties Available" },
+    { value: 98, suffix: "%", label: "Freshness Score" },
+    { value: 4, suffix: ".8★", label: "Average Rating" },
   ];
 
   return (
     <section className="py-20 px-6 md:px-12 bg-white">
       <div className="max-w-7xl mx-auto">
-
-        {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
           <RevealLeft>
             <div>
@@ -746,7 +775,6 @@ const WhySeaBite = () => {
           </RevealRight>
         </div>
 
-        {/* Stats — scale reveal */}
         <ScaleReveal delay={0.05}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
             {stats.map((s, i) => (
@@ -767,7 +795,6 @@ const WhySeaBite = () => {
           </div>
         </ScaleReveal>
 
-        {/* Feature cards — stagger */}
         <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {features.map((f, i) => (
             <SI key={i}>
@@ -791,7 +818,7 @@ const WhySeaBite = () => {
 };
 
 // ══════════════════════════════════════════════
-//  REVIEWS  — stagger reveal
+//  REVIEWS
 // ══════════════════════════════════════════════
 const Reviews = () => {
   const [reviews, setReviews] = useState([]);
@@ -818,7 +845,6 @@ const Reviews = () => {
 
         <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {loading ? (
-            // Shimmer skeletons
             [...Array(3)].map((_, i) => (
               <SI key={i}>
                 <div
@@ -880,7 +906,7 @@ const Reviews = () => {
 };
 
 // ══════════════════════════════════════════════
-//  CTA BANNER  — scale reveal from slight scale
+//  CTA BANNER
 // ══════════════════════════════════════════════
 const CTABanner = () => (
   <section className="px-6 md:px-12 py-6 bg-[#F8FAFB]">
@@ -978,13 +1004,12 @@ export default function Home() {
       `}</style>
 
       <Hero />
-      <Ticker />
+      <WaveTicker />
       <CategorySection />
       <FlashSale />
-      <CategoryRow title="Fresh From The Nets"  filterType="Fish" />
-      <CategoryRow title="Shellfish Specials"    filterType="Shellfish" />
+      <CategoryRow title="Fresh From The Nets" filterType="Fish" />
+      <CategoryRow title="Shellfish Specials" filterType="Shellfish" />
 
-      {/* Trending — wrapped in clean white surface */}
       <section className="py-4 px-6 md:px-12 bg-white">
         <div className="max-w-7xl mx-auto">
           <Reveal>

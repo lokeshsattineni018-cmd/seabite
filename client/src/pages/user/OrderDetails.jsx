@@ -18,9 +18,9 @@ import {
   FiCreditCard,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import { ThemeContext } from "../context/ThemeContext";
-import PopupModal from "../components/PopupModal";
-import Invoice from "../components/Invoice";
+import { ThemeContext } from "../../context/ThemeContext";
+import PopupModal from "../../components/common/PopupModal";
+import Invoice from "../../components/content/Invoice";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -100,24 +100,22 @@ function TimelineStep({ step, index, totalSteps, isActive, isCompleted, isCancel
             : {}
         }
         transition={isActive && !isCompleted ? { duration: 2, repeat: Infinity } : {}}
-        className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${
-          isCompleted
-            ? isCancelledFlow
-              ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20"
-              : "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-            : isActive
+        className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${isCompleted
+          ? isCancelledFlow
+            ? "bg-red-500 border-red-500 text-white shadow-lg shadow-red-500/20"
+            : "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+          : isActive
             ? "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
             : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400"
-        }`}
+          }`}
       >
         {isCompleted ? <FiCheck size={16} /> : icons[step] || <FiClock size={16} />}
       </motion.div>
       <span
-        className={`mt-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${
-          isCompleted || isActive
-            ? "text-slate-900 dark:text-white"
-            : "text-slate-400"
-        }`}
+        className={`mt-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${isCompleted || isActive
+          ? "text-slate-900 dark:text-white"
+          : "text-slate-400"
+          }`}
       >
         {step}
       </span>
@@ -440,24 +438,21 @@ export default function OrderDetails() {
             <div className="relative w-full max-w-2xl mx-auto">
               {/* Track line */}
               <div
-                className={`absolute top-5 md:top-6 left-[24px] md:left-[28px] right-[24px] md:right-[28px] h-[3px] rounded-full z-0 ${
-                  isCancelled
-                    ? "bg-red-100 dark:bg-red-900/20"
-                    : "bg-slate-200 dark:bg-slate-700"
-                }`}
+                className={`absolute top-5 md:top-6 left-[24px] md:left-[28px] right-[24px] md:right-[28px] h-[3px] rounded-full z-0 ${isCancelled
+                  ? "bg-red-100 dark:bg-red-900/20"
+                  : "bg-slate-200 dark:bg-slate-700"
+                  }`}
               />
               {/* Active line */}
               <motion.div
-                className={`absolute top-5 md:top-6 left-[24px] md:left-[28px] h-[3px] rounded-full z-0 ${
-                  isCancelled ? "bg-red-500" : "bg-emerald-500"
-                }`}
+                className={`absolute top-5 md:top-6 left-[24px] md:left-[28px] h-[3px] rounded-full z-0 ${isCancelled ? "bg-red-500" : "bg-emerald-500"
+                  }`}
                 initial={{ width: 0 }}
                 animate={{
                   width: isCancelled
                     ? `calc(100% - 48px)`
-                    : `calc(${
-                        (currentStepIndex / (statusSteps.length - 1)) * 100
-                      }% - ${currentStepIndex === 0 ? 0 : 48}px)`,
+                    : `calc(${(currentStepIndex / (statusSteps.length - 1)) * 100
+                    }% - ${currentStepIndex === 0 ? 0 : 48}px)`,
                 }}
                 transition={{ duration: 1, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
               />
@@ -487,11 +482,10 @@ export default function OrderDetails() {
                           initial={{ opacity: 0, y: 15 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0.5 }}
-                          className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${
-                            isRefundSuccessful
-                              ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
-                              : "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
-                          }`}
+                          className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${isRefundSuccessful
+                            ? "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                            : "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
+                            }`}
                         >
                           <FiDollarSign
                             size={16}
@@ -499,11 +493,10 @@ export default function OrderDetails() {
                           />
                         </motion.div>
                         <span
-                          className={`mt-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${
-                            isRefundSuccessful
-                              ? "text-emerald-500"
-                              : "text-blue-500"
-                          }`}
+                          className={`mt-2.5 text-[9px] md:text-[10px] font-bold uppercase tracking-wider ${isRefundSuccessful
+                            ? "text-emerald-500"
+                            : "text-blue-500"
+                            }`}
                         >
                           {isRefundSuccessful ? "Refunded" : "Refund Pending"}
                         </span>
@@ -571,11 +564,10 @@ export default function OrderDetails() {
                   <FiCreditCard size={12} /> Payment Summary
                 </h2>
                 <span
-                  className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${
-                    isPrepaid
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                  }`}
+                  className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${isPrepaid
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                    }`}
                 >
                   {order.paymentMethod}
                 </span>

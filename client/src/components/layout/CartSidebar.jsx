@@ -10,9 +10,9 @@ import {
   FiArrowRight,
   FiPackage,
 } from "react-icons/fi";
-import { CartContext } from "../context/CartContext";
-import { ThemeContext } from "../context/ThemeContext";
-import { removeFromCart, updateQty } from "../utils/cartStorage";
+import { CartContext } from "../../context/CartContext";
+import { ThemeContext } from "../../context/ThemeContext";
+import { removeFromCart, updateQty } from "../../utils/cartStorage";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
