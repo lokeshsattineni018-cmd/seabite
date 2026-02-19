@@ -138,12 +138,12 @@ export default function Navbar({ openCart }) {
     loginShadow: isTransparent ? "0 2px 14px rgba(0,0,0,0.20)" : "none",
 
     // Profile pill
-    pillBg: isTransparent ? "rgba(255,255,255,0.12)" : "#fff",
-    pillBorder: isTransparent ? "rgba(255,255,255,0.35)" : "#DDE9E7",
-    pillShadow: isTransparent ? "0 2px 14px rgba(0,0,0,0.18)" : "none",
-    pillBlur: isTransparent ? "blur(8px)" : "none",
-    pillName: isTransparent ? "rgba(255,255,255,0.92)" : "#1A2E2C",
-    pillChevron: isTransparent ? "rgba(255,255,255,0.50)" : "#A8C5C0",
+    pillBg: isTransparent ? "transparent" : "#fff",
+    pillBorder: isTransparent ? "transparent" : "#DDE9E7",
+    pillShadow: "none",
+    pillBlur: "none",
+    pillName: isTransparent ? "#ffffff" : "#1A2E2C",
+    pillChevron: isTransparent ? "#ffffff" : "#A8C5C0",
   };
 
   const iconBtn = {
@@ -206,19 +206,7 @@ export default function Navbar({ openCart }) {
 
           <div style={{ marginRight: "36px", flexShrink: 0 }}>
             <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
-              {/* Fallback Round Logo if desired, or just Text */}
-              {/* <img src="/round-logo.png" alt="Logo" style={{ width: 32, height: 32 }} /> */}
-              <span style={{
-                fontFamily: "'Lora', serif",
-                fontSize: "26px",
-                fontWeight: "700",
-                letterSpacing: "-0.03em",
-                color: isTransparent ? "#fff" : "#1A2E2C",
-                textShadow: isTransparent ? "0 2px 10px rgba(0,0,0,0.2)" : "none",
-                transition: "color 0.35s"
-              }}>
-                SeaBite<span style={{ color: "#5BBFB5" }}>.</span>
-              </span>
+              <img src="/round-logo.png" alt="SeaBite" style={{ height: "44px", width: "auto", objectFit: "contain" }} />
             </Link>
           </div>
 
