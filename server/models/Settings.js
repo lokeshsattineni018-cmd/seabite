@@ -9,6 +9,13 @@ const settingsSchema = new mongoose.Schema({
         imageUrl: { type: String, default: "" },
         link: { type: String, default: "" }
     },
+    // 🟢 Announcement Bar
+    announcement: {
+        active: { type: Boolean, default: false },
+        text: { type: String, default: "" },
+        bgColor: { type: String, default: "#1c1917" }, // stone-900
+        textColor: { type: String, default: "#ffffff" }
+    },
     // 🟢 General
     storeName: { type: String, default: "SeaBite" },
     contactPhone: { type: String, default: "+91 98765 43210" },

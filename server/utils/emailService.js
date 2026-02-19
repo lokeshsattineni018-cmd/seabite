@@ -279,13 +279,14 @@ export const sendEmail = async (to, subject, content) => {
     subject,
     html
   });
-  /**
-   * 🟢 8. AUTOMATION: WIN-BACK COUPON
-   */
-  export const sendWinBackEmail = async (email, name, couponCode) => {
-    if (!resend) return;
+};
+/**
+ * 🟢 8. AUTOMATION: WIN-BACK COUPON
+ */
+export const sendWinBackEmail = async (email, name, couponCode) => {
+  if (!resend) return;
 
-    const content = `
+  const content = `
     <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
       We Miss <span style="color: #38bdf8;">You!</span>
     </h1>
@@ -309,10 +310,10 @@ export const sendEmail = async (to, subject, content) => {
     </div>
   `;
 
-    return await resend.emails.send({
-      from: OFFICIAL_SENDER,
-      to: email,
-      subject: `We miss you, ${name} (Gift Inside)`,
-      html: aestheticWrapper(content, "VIP RETURN PASS")
-    });
-  };
+  return await resend.emails.send({
+    from: OFFICIAL_SENDER,
+    to: email,
+    subject: `We miss you, ${name} (Gift Inside)`,
+    html: aestheticWrapper(content, "VIP RETURN PASS")
+  });
+};

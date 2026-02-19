@@ -13,7 +13,8 @@ import ScrollToTop from "./components/ScrollToTop";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import SupportWidget from "./components/SupportWidget";
-import BannerPopup from "./components/BannerPopup"; // 🟢 Added
+import BannerPopup from "./components/BannerPopup";
+import AnnouncementBar from "./components/AnnouncementBar"; // 🟢 Added
 
 // Direct Imports for Critical Pages
 import Home from "./pages/Home";
@@ -45,16 +46,15 @@ import EditProduct from "./admin/EditProduct";
 import AdminOrders from "./admin/AdminOrders";
 import AdminUsers from "./admin/AdminUsers";
 import AdminMessages from "./admin/AdminMessages";
-import AdminReviews from "./admin/AdminReviews"; // 🟢 NEW IMPORT
+import AdminReviews from "./admin/AdminReviews";
 import AdminCoupons from "./admin/AdminCoupons";
-import AdminPOS from "./admin/AdminPOS"; // 🟢 NEW IMPORT
-
+import AdminPOS from "./admin/AdminPOS";
 import AdminFlashSale from "./admin/AdminFlashSale";
 import AdminMarketing from "./admin/AdminMarketing";
-import AdminWatchtower from "./admin/AdminWatchtower"; // 🟢 Added import
+import AdminWatchtower from "./admin/AdminWatchtower";
 import AdminAbandonedCarts from "./admin/AdminAbandonedCarts";
-import AdminSettings from "./admin/AdminSettings"; // 🟢 NEW IMPORT
-import AdminAnalytics from "./admin/AdminAnalytics"; // 🟢 NEW IMPORT
+import AdminSettings from "./admin/AdminSettings";
+import AdminAnalytics from "./admin/AdminAnalytics";
 
 // Context
 import { CartProvider } from "./context/CartContext";
@@ -77,6 +77,7 @@ function MainLayout() {
   const isAdminRoute = location.pathname.startsWith("/admin");
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [maintenance, setMaintenance] = useState({ active: false, message: "" });
+  const [announcement, setAnnouncement] = useState(null); // 🟢 Added
 
   const openCart = () => setIsCartOpen(true);
 
@@ -102,8 +103,9 @@ function MainLayout() {
         setMaintenance({
           active: data.isMaintenanceMode,
           message: data.maintenanceMessage,
-          banner: data.banner // 🟢 Capture Banner Settings
+          banner: data.banner
         });
+        setAnnouncement(data.announcement); // 🟢 Capture Announcement
       } catch (error) {
         // console.error("Failed to check maintenance mode:", error);
       }
@@ -113,7 +115,6 @@ function MainLayout() {
     return () => clearInterval(interval);
   }, []);
 
-  // In MainLayout body
   const adminLayoutElement = (
     <AdminRoute>
       <AdminLayout />
@@ -153,10 +154,13 @@ function MainLayout() {
         }}
       />
 
+      {/* 🟢 Global Announcement */}
+      <AnnouncementBar settings={announcement} />
+
       {/* 🟢 Global Popup Banner */}
       <BannerPopup bannerSettings={maintenance.banner} />
 
-      {maintenance.active && !isAdminRoute && location.pathname !== "/login" ? ( // 🟢 Exempt /login
+      {maintenance.active && !isAdminRoute && location.pathname !== "/login" ? (
         <Maintenance message={maintenance.message} />
       ) : (
         <>
@@ -180,15 +184,15 @@ function MainLayout() {
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="users" element={<AdminUsers />} />
                   <Route path="messages" element={<AdminMessages />} />
-                  <Route path="reviews" element={<AdminReviews />} /> {/* 🟢 NEW ROUTE */}
-                  <Route path="pos" element={<AdminPOS />} /> {/* 🟢 NEW ROUTE */}
+                  <Route path="reviews" element={<AdminReviews />} />
+                  <Route path="pos" element={<AdminPOS />} />
                   <Route path="coupons" element={<AdminCoupons />} />
                   <Route path="flash-sale" element={<AdminFlashSale />} />
                   <Route path="marketing" element={<AdminMarketing />} />
-                  <Route path="watchtower" element={<AdminWatchtower />} /> {/* 🟢 Added Route */}
+                  <Route path="watchtower" element={<AdminWatchtower />} />
                   <Route path="carts" element={<AdminAbandonedCarts />} />
-                  <Route path="settings" element={<AdminSettings />} /> {/* 🟢 NEW ROUTE */}
-                  <Route path="analytics" element={<AdminAnalytics />} /> {/* 🟢 NEW ROUTE */}
+                  <Route path="settings" element={<AdminSettings />} />
+                  <Route path="analytics" element={<AdminAnalytics />} />
                 </Route>
               </Routes>
             ) : (

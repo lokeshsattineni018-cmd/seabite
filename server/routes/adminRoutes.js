@@ -211,37 +211,39 @@ router.post("/maintenance/verify", adminAuth, async (req, res) => {
 router.put("/enterprise/settings", adminAuth, async (req, res) => {
   try {
     const {
-      maintenanceMessage, globalDiscount, banner,
+      maintenanceMessage, globalDiscount,
       storeName, contactPhone, contactEmail, logoUrl,
       taxRate, deliveryFee, minOrderValue, freeDeliveryThreshold,
-      openingTime, closingTime, isClosed
+      openingTime, closingTime, isClosed,
+      banner, announcement // 🟢 Added announcement
     } = req.body;
 
-    let settings = await getSettings();
+    const settings = await getSettings();
 
-    if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
-    if (globalDiscount !== undefined) settings.globalDiscount = globalDiscount;
-    if (banner) settings.banner = banner;
-
-    // 🟢 Batch Update New Fields
+    // General
     if (storeName) settings.storeName = storeName;
     if (contactPhone) settings.contactPhone = contactPhone;
     if (contactEmail) settings.contactEmail = contactEmail;
     if (logoUrl) settings.logoUrl = logoUrl;
 
+    // Finance
     if (taxRate !== undefined) settings.taxRate = taxRate;
     if (deliveryFee !== undefined) settings.deliveryFee = deliveryFee;
     if (minOrderValue !== undefined) settings.minOrderValue = minOrderValue;
     if (freeDeliveryThreshold !== undefined) settings.freeDeliveryThreshold = freeDeliveryThreshold;
 
+    // Operations
     if (openingTime) settings.openingTime = openingTime;
     if (closingTime) settings.closingTime = closingTime;
     if (isClosed !== undefined) settings.isClosed = isClosed;
 
-    // If they try to toggle maintenance here, we ignore it or block it. 
-    // For now, let's assume the frontend calls the new verify route for the toggle.
+    // Features
+    if (isMaintenanceMode !== undefined) settings.isMaintenanceMode = isMaintenanceMode;
+    if (maintenanceMessage) settings.maintenanceMessage = maintenanceMessage;
+    if (banner) settings.banner = banner;
+    if (announcement) settings.announcement = announcement; // 🟢 Added announcement
 
-    settings.lastUpdatedBy = req.session.userId;
+    settings.lastUpdatedBy = req.user._id;
     await settings.save();
     res.json({ message: "Settings updated", settings });
   } catch (err) {
