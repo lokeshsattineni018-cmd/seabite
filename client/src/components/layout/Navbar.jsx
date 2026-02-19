@@ -206,7 +206,7 @@ export default function Navbar({ openCart }) {
 
           <div style={{ marginRight: "36px", flexShrink: 0 }}>
             <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
-              <img src="/round-logo.png" alt="SeaBite" style={{ height: "44px", width: "auto", objectFit: "contain" }} />
+              <img src="/logo.png" alt="SeaBite" style={{ height: "44px", width: "auto", objectFit: "contain" }} />
             </Link>
           </div>
 
