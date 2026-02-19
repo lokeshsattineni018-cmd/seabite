@@ -1,158 +1,224 @@
 import { motion, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FiHome, FiArrowRight, FiShield } from "react-icons/fi";
 import { useRef } from "react";
+import { FiHome, FiArrowRight, FiShield } from "react-icons/fi";
 
-const FadeUp = ({ children, delay = 0, className = "" }) => {
+const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');`;
+
+const Reveal = ({ children, delay = 0 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const inView = useInView(ref, { once: true, margin: "-6% 0px" });
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-      animate={
-        isInView
-          ? { opacity: 1, y: 0, filter: "blur(0px)" }
-          : { opacity: 0, y: 30, filter: "blur(8px)" }
-      }
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
+      initial={{ opacity: 0, y: 24 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.62, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
   );
 };
 
-const sections = [
+const SECTIONS = [
   {
     title: "Ordering & Cancellation",
-    content: "Orders can be cancelled at any time before they are shipped. Once the order status is marked as 'Shipped' or 'Out for Delivery', cancellations are not permitted due to the perishable nature of seafood."
+    body: "Orders can be cancelled at any time before they are shipped. Once the order status is marked as 'Shipped' or 'Out for Delivery', cancellations are not permitted due to the perishable nature of seafood.",
   },
   {
     title: "Shipping & Delivery",
-    content: "We aim to deliver all orders within 2-3 days of sourcing. Delivery timelines provided at checkout are estimates. SeaBite is not liable for delays caused by extreme weather or incorrect address details provided by the user."
+    body: "We aim to deliver all orders within 2–3 days of sourcing. Delivery timelines provided at checkout are estimates. SeaBite is not liable for delays caused by extreme weather or incorrect address details provided by the user.",
   },
   {
     title: "Perishable Goods Policy",
-    content: "Fresh seafood is highly sensitive to temperature. Customers must ensure someone is available to receive the package. We are not responsible for quality degradation if the package is left unattended after delivery."
+    body: "Fresh seafood is highly sensitive to temperature. Customers must ensure someone is available to receive the package. We are not responsible for quality degradation if the package is left unattended after delivery.",
   },
   {
     title: "Pricing & Payments",
-    content: "Prices of seafood fluctuate daily based on market availability. The price at the time of order placement is final. All payments are processed through secure, encrypted payment gateways."
+    body: "Prices of seafood fluctuate daily based on market availability. The price at the time of order placement is final. All payments are processed through secure, encrypted payment gateways.",
   },
   {
     title: "User Responsibility",
-    content: "Users must provide accurate contact and location information. Account credentials should be kept confidential. SeaBite reserves the right to block users for fraudulent activity or repeated fake orders."
-  }
+    body: "Users must provide accurate contact and location information. Account credentials should be kept confidential. SeaBite reserves the right to block users for fraudulent activity or repeated fake orders.",
+  },
 ];
+
+// Accent colours cycling per section
+const ACCENTS = ["#5BA8A0","#89C2D9","#E8816A","#5BA8A0","#89C2D9"];
 
 export default function Terms() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#080d17] text-slate-900 dark:text-white transition-colors duration-500 pt-24 md:pt-32 pb-12">
-      
-      {/* HEADER */}
-      <section className="max-w-4xl mx-auto px-5 mb-16 md:mb-24">
-        <motion.div 
-          initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-4"
-        >
+    <>
+      <style>{FONTS}{`
+        .terms-root * { box-sizing: border-box; }
+        .terms-item { border-left: 3px solid transparent; transition: all 0.25s ease; }
+        .terms-item:hover { border-left-color: var(--item-accent); background: #fff !important; }
+        .cta-primary:hover { background:#3D8C85; transform:translateY(-2px); box-shadow:0 8px 24px rgba(91,168,160,0.25); }
+        .cta-ghost:hover { border-color:rgba(255,255,255,0.55); color:#fff; transform:translateY(-2px); }
+      `}</style>
+
+      <div
+        className="terms-root"
+        style={{
+          minHeight: "100vh",
+          background: "#F8FAFB",
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          color: "#1A2B35",
+          paddingTop: "96px",
+        }}
+      >
+        {/* ── HEADER ─────────────────────────────────────── */}
+        <header style={{ maxWidth: "820px", margin: "0 auto", padding: "48px 24px 80px" }}>
           <motion.div
-            initial={{ opacity: 0, x: -15 }}
+            initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest"
+            transition={{ delay: 0.18, duration: 0.5 }}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: "8px",
+              padding: "4px 14px", borderRadius: "999px",
+              background: "#FAF4EC", border: "1px solid #EAD9C0",
+              fontSize: "11px", fontWeight: "700", color: "#8B6D45",
+              textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "24px",
+            }}
           >
-            <FiShield /> <span>Legal Center</span>
+            <FiShield size={11} /> Legal Center
           </motion.div>
+
           <motion.h1
-            initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ delay: 0.15, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="text-4xl md:text-6xl font-serif font-black leading-tight tracking-tight"
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.78, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              fontFamily: "'Bricolage Grotesque', sans-serif",
+              fontSize: "clamp(38px, 5.5vw, 64px)",
+              fontWeight: "800",
+              letterSpacing: "-0.035em",
+              lineHeight: 1.08,
+              marginBottom: "20px",
+            }}
           >
-            Terms of <br/> <span className="text-blue-600">Service.</span>
+            Terms of <br />
+            <span style={{ color: "#5BA8A0" }}>Service.</span>
           </motion.h1>
+
           <motion.p
-            initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ delay: 0.35, duration: 0.7 }}
-            className="text-slate-500 dark:text-slate-400 text-sm md:text-lg leading-relaxed max-w-2xl"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.36 }}
+            style={{ fontSize: "16px", color: "#4A6572", lineHeight: "1.8", maxWidth: "520px" }}
           >
             Simple, transparent, and fair. Please review our standard terms for a smooth shopping experience at SeaBite.
           </motion.p>
-        </motion.div>
-      </section>
+        </header>
 
-      {/* CONTENT BLOCKS */}
-      <section className="max-w-4xl mx-auto px-5 space-y-12">
-        {sections.map((section, index) => (
-          <FadeUp key={index} delay={index * 0.06}>
-            <div className="group">
-              <div className="flex items-center gap-3 mb-4">
-                <motion.span
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ type: "spring", stiffness: 300, damping: 15 }}
-                  className="text-xs font-mono font-bold text-blue-600"
+        {/* ── TERMS ITEMS ────────────────────────────────── */}
+        <section style={{ maxWidth: "820px", margin: "0 auto", padding: "0 24px 96px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            {SECTIONS.map((s, i) => (
+              <Reveal key={i} delay={i * 0.06}>
+                <div
+                  className="terms-item"
+                  style={{
+                    "--item-accent": ACCENTS[i],
+                    background: i % 2 === 0 ? "#fff" : "#F8FAFB",
+                    borderRadius: "16px",
+                    padding: "32px 36px",
+                    border: "1.5px solid #E8EEF2",
+                    marginBottom: "8px",
+                  }}
                 >
-                  0{index + 1}.
-                </motion.span>
-                <h2 className="text-xl md:text-2xl font-bold tracking-tight">
-                  {section.title}
-                </h2>
-              </div>
-              <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base leading-relaxed pl-7">
-                {section.content}
-              </p>
-            </div>
-          </FadeUp>
-        ))}
-      </section>
-
-      {/* ACTION FOOTER */}
-      <section className="max-w-4xl mx-auto px-5 mt-20">
-        <FadeUp>
-          <div className="bg-slate-50 dark:bg-white/[0.03] rounded-[2rem] p-8 md:p-12 text-center space-y-6">
-            <h3 className="text-xl md:text-2xl font-bold">Have a specific question?</h3>
-            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm">
-              If you need more details about our policies, feel free to contact our support team.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-3">
-              <motion.button
-                whileHover={{ y: -2, boxShadow: "0 10px 30px rgba(0,0,0,0.06)" }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/')}
-                className="w-full sm:w-auto px-8 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-slate-50 transition-all shadow-sm"
-              >
-                <FiHome className="inline mr-2" /> Home
-              </motion.button>
-              <motion.button
-                whileHover={{ y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/products')}
-                className="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white rounded-full font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 transition-all group"
-              >
-                Go to Market <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-              </motion.button>
-            </div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: "16px", marginBottom: "12px" }}>
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true }}
+                      transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.08 }}
+                      style={{
+                        fontFamily: "'Bricolage Grotesque', monospace",
+                        fontSize: "11px", fontWeight: "800",
+                        color: ACCENTS[i],
+                        letterSpacing: "0.05em", flexShrink: 0,
+                      }}
+                    >
+                      0{i + 1}
+                    </motion.span>
+                    <h2 style={{
+                      fontFamily: "'Bricolage Grotesque', sans-serif",
+                      fontSize: "19px", fontWeight: "700",
+                      letterSpacing: "-0.02em", margin: 0, color: "#1A2B35",
+                    }}>
+                      {s.title}
+                    </h2>
+                  </div>
+                  <p style={{
+                    fontSize: "14px", color: "#4A6572",
+                    lineHeight: "1.85", margin: 0, paddingLeft: "27px",
+                  }}>
+                    {s.body}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
           </div>
-        </FadeUp>
-      </section>
+        </section>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="mt-16 text-center border-t border-slate-50 dark:border-white/5 pt-8"
-      >
-        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.4em]">SeaBite Standard Agreement • 2025</p>
-      </motion.div>
-    </div>
+        {/* ── CTA ────────────────────────────────────────── */}
+        <section style={{ maxWidth: "820px", margin: "0 auto", padding: "0 24px 96px" }}>
+          <Reveal>
+            <div style={{
+              background: "#fff", borderRadius: "24px", padding: "56px 48px",
+              textAlign: "center",
+              border: "1.5px solid #E8EEF2",
+              boxShadow: "0 8px 32px rgba(26,43,53,0.05)",
+            }}>
+              <p style={{ fontSize: "11px", fontWeight: "700", color: "#5BA8A0", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "12px" }}>Questions?</p>
+              <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: "clamp(20px,3vw,28px)", fontWeight: "800", color: "#1A2B35", letterSpacing: "-0.025em", marginBottom: "10px" }}>
+                Have a specific question?
+              </h3>
+              <p style={{ fontSize: "14px", color: "#8BA5B3", maxWidth: "340px", margin: "0 auto 28px", lineHeight: "1.7" }}>
+                If you need more details about our policies, feel free to contact our support team.
+              </p>
+              <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap" }}>
+                <button
+                  onClick={() => navigate("/")}
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "6px",
+                    padding: "12px 24px", background: "#F8FAFB",
+                    color: "#4A6572", border: "1.5px solid #E8EEF2",
+                    borderRadius: "999px", fontSize: "13px", fontWeight: "600",
+                    cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    transition: "all 0.25s",
+                  }}
+                  onMouseOver={e => { e.currentTarget.style.borderColor="#5BA8A0"; e.currentTarget.style.color="#5BA8A0"; }}
+                  onMouseOut={e => { e.currentTarget.style.borderColor="#E8EEF2"; e.currentTarget.style.color="#4A6572"; }}
+                >
+                  <FiHome size={13} /> Home
+                </button>
+                <button
+                  onClick={() => navigate("/products")}
+                  className="cta-primary"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "6px",
+                    padding: "12px 24px", background: "#5BA8A0",
+                    color: "#fff", border: "none",
+                    borderRadius: "999px", fontSize: "13px", fontWeight: "700",
+                    cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    transition: "all 0.25s",
+                  }}
+                >
+                  Go to Market <FiArrowRight size={13} />
+                </button>
+              </div>
+            </div>
+          </Reveal>
+        </section>
+
+        <div style={{ textAlign: "center", paddingBottom: "32px" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "#C5D4DA", textTransform: "uppercase", letterSpacing: "0.3em" }}>SeaBite Standard Agreement • 2025</p>
+        </div>
+      </div>
+    </>
   );
 }

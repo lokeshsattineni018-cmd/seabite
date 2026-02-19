@@ -1,158 +1,245 @@
 import { motion, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { FiHome, FiArrowRight, FiShield, FiLock, FiUser, FiShare2 } from "react-icons/fi";
 import { useRef } from "react";
+import {
+  FiHome, FiArrowRight, FiShield, FiLock, FiUser, FiShare2,
+} from "react-icons/fi";
 
-const FadeUp = ({ children, delay = 0, className = "" }) => {
+const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');`;
+
+const Reveal = ({ children, delay = 0, y = 24 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-10% 0px" });
+  const inView = useInView(ref, { once: true, margin: "-6% 0px" });
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
-      animate={
-        isInView
-          ? { opacity: 1, y: 0, filter: "blur(0px)" }
-          : { opacity: 0, y: 30, filter: "blur(8px)" }
-      }
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
+      initial={{ opacity: 0, y }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.62, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>
   );
 };
 
-const privacySections = [
+const SECTIONS = [
   {
+    icon: <FiUser size={16} />,
+    iconColor: "#3D8C85", iconBg: "#EAF6F5",
     title: "Data Collection",
-    icon: <FiUser className="text-blue-500" />,
-    content: "We collect essential information such as your name, email (via Google Login), phone number, and delivery address. This data is required to process your orders and provide a personalized shopping experience."
+    body: "We collect essential information such as your name, email (via Google Login), phone number, and delivery address. This data is required to process your orders and provide a personalised shopping experience.",
   },
   {
+    icon: <FiArrowRight size={16} />,
+    iconColor: "#3A7DA0", iconBg: "#EDF5FB",
     title: "How We Use Your Information",
-    icon: <FiArrowRight className="text-blue-500" />,
-    content: "Your data is used strictly for order fulfillment, real-time delivery tracking, and important account notifications. We do not sell your personal information to marketing agencies."
+    body: "Your data is used strictly for order fulfilment, real-time delivery tracking, and important account notifications. We do not sell your personal information to marketing agencies.",
   },
   {
+    icon: <FiLock size={16} />,
+    iconColor: "#8B6D45", iconBg: "#FAF4EC",
     title: "Data Security",
-    icon: <FiLock className="text-blue-500" />,
-    content: "We implement industry-standard 256-bit SSL encryption to protect your data. Your payment details are processed through secure third-party gateways; we never store credit card information on our servers."
+    body: "We implement industry-standard 256-bit SSL encryption to protect your data. Your payment details are processed through secure third-party gateways — we never store credit card information on our servers.",
   },
   {
+    icon: <FiShare2 size={16} />,
+    iconColor: "#C05A45", iconBg: "#FEF0EC",
     title: "Third-Party Services",
-    icon: <FiShare2 className="text-blue-500" />,
-    content: "To ensure your catch reaches you fresh, we share your delivery address and contact number with our trusted logistics partners. They are contractually bound to protect your data privacy."
-  }
+    body: "To ensure your catch reaches you fresh, we share your delivery address and contact number with our trusted logistics partners. They are contractually bound to protect your data privacy.",
+  },
 ];
 
 export default function Privacy() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#080d17] text-slate-900 dark:text-white transition-colors duration-500 pt-24 md:pt-32 pb-12">
-      
-      {/* HEADER */}
-      <section className="max-w-4xl mx-auto px-5 mb-16 md:mb-24">
-        <motion.div 
-          initial={{ opacity: 0, y: 40, filter: "blur(12px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
-          className="space-y-4 text-left"
-        >
+    <>
+      <style>{FONTS}{`
+        .priv-root * { box-sizing: border-box; }
+        .priv-card { transition: all 0.28s ease; }
+        .priv-card:hover { transform: translateY(-3px); box-shadow: 0 12px 36px rgba(91,168,160,0.09); border-color: #C5E6E4; }
+        .cta-primary:hover { background:#3D8C85; transform:translateY(-2px); box-shadow:0 8px 24px rgba(91,168,160,0.25); }
+        .cta-ghost:hover { border-color:rgba(255,255,255,0.55); color:#fff; transform:translateY(-2px); }
+      `}</style>
+
+      <div
+        className="priv-root"
+        style={{
+          minHeight: "100vh",
+          background: "#F8FAFB",
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
+          color: "#1A2B35",
+          paddingTop: "96px",
+        }}
+      >
+        {/* ── HEADER ─────────────────────────────────────── */}
+        <header style={{ maxWidth: "820px", margin: "0 auto", padding: "48px 24px 80px" }}>
           <motion.div
-            initial={{ opacity: 0, x: -15 }}
+            initial={{ opacity: 0, x: -16 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-black text-[10px] uppercase tracking-widest"
+            transition={{ delay: 0.18, duration: 0.5 }}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: "8px",
+              padding: "4px 14px", borderRadius: "999px",
+              background: "#EAF6F5", border: "1px solid #C5E6E4",
+              fontSize: "11px", fontWeight: "700", color: "#3D8C85",
+              textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "24px",
+            }}
           >
-            <FiShield /> <span>Privacy Center</span>
+            <FiShield size={11} /> Privacy Center
           </motion.div>
+
           <motion.h1
-            initial={{ opacity: 0, y: 20, filter: "blur(6px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ delay: 0.15, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="text-4xl md:text-6xl font-serif font-black leading-tight tracking-tight"
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.78, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            style={{
+              fontFamily: "'Bricolage Grotesque', sans-serif",
+              fontSize: "clamp(38px, 5.5vw, 64px)",
+              fontWeight: "800",
+              letterSpacing: "-0.035em",
+              lineHeight: 1.08,
+              marginBottom: "20px",
+            }}
           >
-            Privacy <br/> <span className="text-blue-600">Policy.</span>
+            Privacy <br />
+            <span style={{ color: "#5BA8A0" }}>Policy.</span>
           </motion.h1>
+
           <motion.p
-            initial={{ opacity: 0, y: 15, filter: "blur(4px)" }}
-            animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            transition={{ delay: 0.35, duration: 0.7 }}
-            className="text-slate-500 dark:text-slate-400 text-sm md:text-lg leading-relaxed max-w-2xl"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.65, delay: 0.36 }}
+            style={{ fontSize: "16px", color: "#4A6572", lineHeight: "1.8", maxWidth: "520px" }}
           >
             At SeaBite, your trust is as important as our freshness. Here is how we protect and handle your personal information.
           </motion.p>
-        </motion.div>
-      </section>
+        </header>
 
-      {/* CONTENT BLOCKS */}
-      <section className="max-w-4xl mx-auto px-5 space-y-10 md:space-y-16">
-        {privacySections.map((section, index) => (
-          <FadeUp key={index} delay={index * 0.08}>
-            <div className="flex gap-4 md:gap-6">
-              <motion.div
-                initial={{ scale: 0, rotate: -30 }}
-                whileInView={{ scale: 1, rotate: 0 }}
-                viewport={{ once: true }}
-                transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.15 }}
-                className="shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-50 dark:bg-white/5 flex items-center justify-center text-lg md:text-xl border border-slate-100 dark:border-white/5"
-              >
-                {section.icon}
-              </motion.div>
-              <div className="space-y-2">
-                <h2 className="text-lg md:text-2xl font-bold tracking-tight">
-                  {section.title}
-                </h2>
-                <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base leading-relaxed">
-                  {section.content}
-                </p>
-              </div>
-            </div>
-          </FadeUp>
-        ))}
-      </section>
+        {/* ── CONTENT SECTIONS ───────────────────────────── */}
+        <section style={{ maxWidth: "820px", margin: "0 auto", padding: "0 24px 80px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            {SECTIONS.map((s, i) => (
+              <Reveal key={i} delay={i * 0.07}>
+                <div
+                  className="priv-card"
+                  style={{
+                    display: "flex", gap: "24px", alignItems: "flex-start",
+                    background: "#fff",
+                    border: "1.5px solid #E8EEF2",
+                    borderRadius: "20px",
+                    padding: "32px 36px",
+                  }}
+                >
+                  <motion.div
+                    initial={{ scale: 0, rotate: -20 }}
+                    whileInView={{ scale: 1, rotate: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ type: "spring", stiffness: 220, damping: 14, delay: 0.1 + i * 0.05 }}
+                    style={{
+                      flexShrink: 0,
+                      width: "44px", height: "44px", borderRadius: "13px",
+                      background: s.iconBg, display: "flex",
+                      alignItems: "center", justifyContent: "center",
+                      color: s.iconColor,
+                    }}
+                  >
+                    {s.icon}
+                  </motion.div>
 
-      {/* BOTTOM ACTION BOX */}
-      <section className="max-w-4xl mx-auto px-5 mt-24">
-        <FadeUp>
-          <div className="bg-slate-900 dark:bg-white p-10 rounded-[2.5rem] text-center space-y-6">
-            <h3 className="text-xl md:text-2xl font-bold text-white dark:text-slate-900">Your Data, Your Control.</h3>
-            <p className="text-slate-400 dark:text-slate-500 text-xs md:text-sm max-w-sm mx-auto">
-              You can request to delete your account data at any time by contacting our support team.
-            </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-3 pt-2">
-              <motion.button
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/')}
-                className="w-full sm:w-auto px-10 py-4 bg-white/10 dark:bg-slate-100 text-white dark:text-slate-900 rounded-full font-black uppercase text-[10px] tracking-widest hover:bg-white/20 transition-all"
-              >
-                <FiHome className="inline mr-2" /> Home
-              </motion.button>
-              <motion.button
-                whileHover={{ y: -2, scale: 1.02 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => navigate('/products')}
-                className="w-full sm:w-auto px-10 py-4 bg-blue-600 text-white rounded-full font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 shadow-xl shadow-blue-500/20 transition-all group"
-              >
-                Marketplace <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
-              </motion.button>
+                  <div>
+                    <h2 style={{
+                      fontFamily: "'Bricolage Grotesque', sans-serif",
+                      fontSize: "19px", fontWeight: "700",
+                      letterSpacing: "-0.02em", marginBottom: "10px", color: "#1A2B35",
+                    }}>
+                      {s.title}
+                    </h2>
+                    <p style={{ fontSize: "14px", color: "#4A6572", lineHeight: "1.85", margin: 0 }}>
+                      {s.body}
+                    </p>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
+        {/* ── LAST UPDATED ───────────────────────────────── */}
+        <Reveal>
+          <div style={{ maxWidth: "820px", margin: "0 auto", padding: "0 24px 64px" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: "12px",
+              padding: "16px 24px",
+              background: "#F8FAFB",
+              border: "1.5px solid #E8EEF2",
+              borderRadius: "14px",
+            }}>
+              <FiShield size={14} style={{ color: "#5BA8A0", flexShrink: 0 }} />
+              <p style={{ fontSize: "13px", color: "#8BA5B3", margin: 0 }}>
+                This policy was last updated in <strong style={{ color: "#4A6572" }}>January 2025</strong>. We will notify registered users of material changes via email.
+              </p>
             </div>
           </div>
-        </FadeUp>
-      </section>
+        </Reveal>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
-        className="mt-16 text-center border-t border-slate-50 dark:border-white/5 pt-8"
-      >
-        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.4em]">SeaBite Privacy Standard • 2025</p>
-      </motion.div>
-    </div>
+        {/* ── CTA ────────────────────────────────────────── */}
+        <section style={{ maxWidth: "820px", margin: "0 auto", padding: "0 24px 96px" }}>
+          <Reveal>
+            <div style={{
+              background: "#1A2B35", borderRadius: "24px", padding: "60px 48px",
+              textAlign: "center", position: "relative", overflow: "hidden",
+            }}>
+              <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% -10%, rgba(91,168,160,0.14) 0%, transparent 60%)", pointerEvents: "none" }} />
+              <h3 style={{
+                fontFamily: "'Bricolage Grotesque', sans-serif",
+                fontSize: "clamp(22px, 3vw, 30px)", fontWeight: "800",
+                color: "#fff", letterSpacing: "-0.025em",
+                marginBottom: "10px", position: "relative",
+              }}>
+                Your Data, Your Control.
+              </h3>
+              <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.45)", maxWidth: "340px", margin: "0 auto 28px", position: "relative", lineHeight: "1.7" }}>
+                You can request deletion of your account data at any time by contacting our support team.
+              </p>
+              <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", position: "relative" }}>
+                <button
+                  onClick={() => navigate("/")}
+                  className="cta-ghost"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "6px",
+                    padding: "12px 24px", background: "rgba(255,255,255,0.08)",
+                    color: "rgba(255,255,255,0.72)", border: "1.5px solid rgba(255,255,255,0.16)",
+                    borderRadius: "999px", fontSize: "13px", fontWeight: "600",
+                    cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    transition: "all 0.25s",
+                  }}
+                >
+                  <FiHome size={13} /> Home
+                </button>
+                <button
+                  onClick={() => navigate("/products")}
+                  className="cta-primary"
+                  style={{
+                    display: "inline-flex", alignItems: "center", gap: "6px",
+                    padding: "12px 24px", background: "#5BA8A0",
+                    color: "#fff", border: "none",
+                    borderRadius: "999px", fontSize: "13px", fontWeight: "700",
+                    cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif",
+                    transition: "all 0.25s",
+                  }}
+                >
+                  Marketplace <FiArrowRight size={13} />
+                </button>
+              </div>
+            </div>
+          </Reveal>
+        </section>
+
+        <div style={{ textAlign: "center", paddingBottom: "32px" }}>
+          <p style={{ fontSize: "10px", fontWeight: "700", color: "#C5D4DA", textTransform: "uppercase", letterSpacing: "0.3em" }}>SeaBite Privacy Standard • 2025</p>
+        </div>
+      </div>
+    </>
   );
 }
