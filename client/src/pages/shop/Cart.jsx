@@ -5,11 +5,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiMinus, FiPlus, FiTrash2, FiShoppingBag, FiArrowRight, FiLock, FiPackage } from "react-icons/fi";
 import PopupModal from "../../components/common/PopupModal";
 import { ThemeContext } from "../../context/ThemeContext";
+import { CartContext } from "../../context/CartContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Cart({ open, onClose }) {
-  const { cartItems, removeFromCart, updateQuantity } = useContext(CartContext); // 🟢 Use Context
+  const { cartItems, removeFromCart, updateQuantity, deliveryFee, tax, grandTotal, subtotal } = useContext(CartContext); // 🟢 Use Context
+  const cart = cartItems; // Alias for legacy code
   const [showPopup, setShowPopup] = useState(false);
   const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
@@ -29,7 +31,8 @@ export default function Cart({ open, onClose }) {
     navigate("/checkout");
   };
 
-  const total = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  // Removed local total calculation - use Context values
+
 
   return (
     <>
@@ -199,11 +202,27 @@ export default function Cart({ open, onClose }) {
                   <div className="space-y-3 mb-6">
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">Subtotal</span>
-                      <span className="font-bold text-slate-900 dark:text-white">{"\u20B9"}{total.toFixed(2)}</span>
+                      <span className="font-bold text-slate-900 dark:text-white">{"\u20B9"}{subtotal}</span>
                     </div>
+
+                    {/* Tax Row - Only if > 0 */}
+                    {parseFloat(tax) > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-slate-500">Tax</span>
+                        <span className="font-bold text-slate-900 dark:text-white">{"\u20B9"}{tax}</span>
+                      </div>
+                    )}
+
                     <div className="flex justify-between text-sm">
                       <span className="text-slate-500">Shipping</span>
-                      <span className="font-bold text-emerald-600">Calculated at checkout</span>
+                      <span className={`font-bold ${parseFloat(deliveryFee) === 0 ? "text-emerald-600" : "text-slate-900 dark:text-white"}`}>
+                        {parseFloat(deliveryFee) === 0 ? "Free" : `\u20B9${deliveryFee}`}
+                      </span>
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex justify-between text-base">
+                      <span className="font-bold text-slate-900 dark:text-white">Total</span>
+                      <span className="font-bold text-blue-600 dark:text-blue-400">{"\u20B9"}{grandTotal}</span>
                     </div>
                   </div>
 

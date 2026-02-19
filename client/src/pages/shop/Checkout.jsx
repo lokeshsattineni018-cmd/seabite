@@ -1073,7 +1073,7 @@ export default function Checkout() {
 /* ============================================================
    ADDRESS MODAL WRAPPER (Uses AddressForm)
    ============================================================ */
-function AddressModal({ onClose, onSave }) {
+function AddressModal({ onClose, onSave, currentAddress }) {
   return (
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
       <motion.div
@@ -1085,6 +1085,7 @@ function AddressModal({ onClose, onSave }) {
         <AddressForm
           onSave={onSave}
           onCancel={onClose}
+          initialData={currentAddress}
         />
       </motion.div>
     </div>
