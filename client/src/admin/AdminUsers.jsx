@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiUsers, FiRefreshCw,
   FiShield, FiUser, FiArrowUpRight, FiEdit2, FiX, FiCheck,
-  FiActivity, FiClock, FiShoppingBag, FiTrendUp, FiAlertTriangle, FiTarget
+  FiActivity, FiClock, FiShoppingBag, FiAlertTriangle, FiTarget
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 
