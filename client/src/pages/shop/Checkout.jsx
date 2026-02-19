@@ -1,186 +1,124 @@
-// src/pages/Checkout.jsx
-import { useEffect, useState, useRef, useContext, useMemo } from "react";
-import { getCart, saveCart, clearCart } from "../../utils/cartStorage";
+import { useEffect, useState, useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiMapPin,
-  FiCheckCircle,
-  FiMinus,
-  FiPlus,
-  FiTrash2,
-  FiShield,
-  FiXCircle,
-  FiHome,
-  FiShoppingBag,
-  FiTag,
-  FiX,
-  FiTarget,
-  FiSearch,
-  FiCreditCard,
-  FiTruck,
-  FiLoader,
-  FiHash,
-  FiAlertCircle,
-  FiGift,
-  FiChevronRight,
-  FiClock,
-  FiPercent,
+  FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield,
+  FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiCreditCard,
+  FiTruck, FiLoader, FiAlertCircle, FiGift, FiChevronRight,
+  FiClock, FiPercent, FiCheck, FiPlus as FiPlusIcon,
 } from "react-icons/fi";
-import AddressForm from "../../components/forms/AddressForm"; // Added import
+import AddressForm from "../../components/forms/AddressForm";
 import PopupModal from "../../components/common/PopupModal";
 import { CartContext } from "../../context/CartContext";
-import { ThemeContext } from "../../context/ThemeContext";
-import toast from "react-hot-toast"; // Added toast import
-
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-const ALLOWED_DELIVERY_STATES = ["Andhra Pradesh", "Telangana", "AP", "TS"];
-
-const DEFAULT_DELIVERY_ADDRESS = {
-  name: "",
-  phone: "",
-  houseNo: "",
-  street: "",
-  city: "",
-  state: "",
-  postalCode: "",
+const T = {
+  bg: "#F4F9F8", surface: "#ffffff", border: "#E2EEEC",
+  textDark: "#1A2B35", textMid: "#4A6572", textLite: "#8BA5B3",
+  primary: "#5BA8A0", sky: "#89C2D9", coral: "#E8816A",
 };
 
 const ease = [0.22, 1, 0.36, 1];
-const fadeUp = {
-  hidden: { opacity: 0, y: 20, filter: "blur(6px)" },
-  visible: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    filter: "blur(0px)",
-    transition: { delay: i * 0.08, duration: 0.6, ease },
-  }),
-};
 
-const staggerContainer = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.07 } },
-};
-
-// --- CHECKOUT STEPS INDICATOR ---
-const CHECKOUT_STEPS = [
-  { id: 1, label: "Address", icon: <FiMapPin size={14} /> },
-  { id: 2, label: "Payment", icon: <FiCreditCard size={14} /> },
-  { id: 3, label: "Review", icon: <FiShoppingBag size={14} /> },
+const STEPS = [
+  { id: 1, label: "Address", icon: <FiMapPin size={13} /> },
+  { id: 2, label: "Payment", icon: <FiCreditCard size={13} /> },
+  { id: 3, label: "Review", icon: <FiShoppingBag size={13} /> },
 ];
 
-const CheckoutSteps = ({ currentStep }) => (
-  <motion.div
-    initial={{ opacity: 0, y: -10 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay: 0.1, duration: 0.5, ease }}
-    className="flex items-center justify-center gap-2 md:gap-4 mb-8 md:mb-10"
-  >
-    {CHECKOUT_STEPS.map((step, idx) => {
-      const isActive = step.id <= currentStep;
-      const isCurrent = step.id === currentStep;
-      return (
-        <div key={step.id} className="flex items-center gap-2 md:gap-4">
-          <div className="flex items-center gap-2">
-            <motion.div
-              animate={isCurrent ? { scale: [1, 1.1, 1] } : {}}
-              transition={isCurrent ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}}
-              className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center transition-all duration-500 ${isActive
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600"
-                } ${isCurrent ? "ring-2 ring-blue-600/30 ring-offset-2 ring-offset-white dark:ring-offset-slate-900" : ""}`}
-            >
-              {step.id < currentStep ? <FiCheckCircle size={14} /> : step.icon}
-            </motion.div>
-            <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wider hidden sm:block ${isActive ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"
-              }`}>
-              {step.label}
-            </span>
+const font = "'Plus Jakarta Sans', sans-serif";
+
+function StepsBar({ currentStep }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1, duration: 0.5, ease }}
+      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 32 }}
+    >
+      {STEPS.map((step, idx) => {
+        const isActive = step.id <= currentStep;
+        const isCurrent = step.id === currentStep;
+        return (
+          <div key={step.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <motion.div
+                animate={isCurrent ? { scale: [1, 1.08, 1] } : {}}
+                transition={isCurrent ? { repeat: Infinity, duration: 2.2, ease: "easeInOut" } : {}}
+                style={{
+                  width: 34, height: 34, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+                  background: isActive ? T.primary : "#EEF5F4",
+                  color: isActive ? "#fff" : T.textLite,
+                  boxShadow: isCurrent ? "0 0 0 4px rgba(91,168,160,0.15)" : "none",
+                  transition: "all 0.4s ease",
+                }}
+              >
+                {step.id < currentStep ? <FiCheck size={13} /> : step.icon}
+              </motion.div>
+              <span style={{
+                fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
+                color: isActive ? T.textDark : T.textLite, display: "none",
+              }}
+                className="sm-show">
+                {step.label}
+              </span>
+            </div>
+            {idx < STEPS.length - 1 && (
+              <div style={{ width: 32, height: 2, borderRadius: 2, background: step.id < currentStep ? T.primary : "#EEF5F4", transition: "background 0.4s" }} />
+            )}
           </div>
-          {idx < CHECKOUT_STEPS.length - 1 && (
-            <div className={`w-8 md:w-16 h-0.5 rounded-full transition-colors duration-500 ${step.id < currentStep ? "bg-blue-600" : "bg-slate-200 dark:bg-slate-700"
-              }`} />
-          )}
+        );
+      })}
+    </motion.div>
+  );
+}
+
+// Section card wrapper
+function SectionCard({ children, style = {} }) {
+  return (
+    <div style={{
+      background: T.surface, borderRadius: 18, border: `1px solid ${T.border}`,
+      boxShadow: "0 2px 16px rgba(91,168,160,0.07)", padding: "24px 26px",
+      ...style
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// Section heading
+function SectionHead({ icon, title, action }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+      <h3 style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 700, color: T.textDark, margin: 0 }}>
+        <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(91,168,160,0.1)", color: T.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          {icon}
         </div>
-      );
-    })}
-  </motion.div>
-);
+        {title}
+      </h3>
+      {action}
+    </div>
+  );
+}
 
 export default function Checkout() {
-  const { cartItems, subtotal, storeSettings, grandTotal: contextGrandTotal, refreshCartCount, clearCart } = useContext(CartContext); // 🟢 Use Context
+  const { cartItems, subtotal, storeSettings, refreshCartCount, clearCart, updateQuantity, removeFromCart } = useContext(CartContext);
   const [loading, setLoading] = useState(false);
-  const [modal, setModal] = useState({
-    show: false,
-    message: "",
-    type: "info",
-  });
+  const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [isCouponApplied, setIsCouponApplied] = useState(false);
   const [couponMessage, setCouponMessage] = useState(null);
   const [verifyingCoupon, setVerifyingCoupon] = useState(false);
-
-  // Load spin discount from localStorage
   const [spinDiscount, setSpinDiscount] = useState(null);
-
-  const navigate = useNavigate();
-  const { isDarkMode } = useContext(ThemeContext);
-
-  const [addresses, setAddresses] = useState([]); // Saved addresses state
-  const [deliveryAddress, setDeliveryAddress] = useState({}); // Selected address
+  const [addresses, setAddresses] = useState([]);
+  const [deliveryAddress, setDeliveryAddress] = useState({});
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-
-  const [userEmail, setUserEmail] = useState("");
-
-  useEffect(() => {
-    // Fetch saved addresses on mount
-    const fetchAddresses = async () => {
-      try {
-        const res = await axios.get(`${API_URL}/api/user/address`, { withCredentials: true });
-        setAddresses(res.data);
-        const defaultAddr = res.data.find(a => a.isDefault);
-        if (defaultAddr) setDeliveryAddress(defaultAddr);
-      } catch (err) {
-        // console.log("No saved addresses");
-      }
-    };
-    fetchAddresses();
-
-    // ... existing email init
-    const storedEmail = localStorage.getItem("userEmail");
-    if (storedEmail) {
-      setUserEmail(storedEmail.toLowerCase());
-    }
-  }, []);
-
-  useEffect(() => {
-    const savedDiscount = localStorage.getItem("seabiteSpinDiscount");
-    if (savedDiscount) {
-      try {
-        const discount = JSON.parse(savedDiscount);
-        const expiresAt = new Date(discount.expiresAt);
-        const now = new Date();
-
-        if (now < expiresAt) {
-          setSpinDiscount(discount);
-        } else {
-          localStorage.removeItem("seabiteSpinDiscount");
-        }
-      } catch (e) {
-        // console.error("Error parsing spin discount:", e);
-      }
-    }
-  }, []);
-
-  // Simplified logic, relies on state selection
-  const isDeliveryAllowed = true;
+  const navigate = useNavigate();
 
   const getFullImageUrl = (imagePath) => {
     if (!imagePath) return null;
@@ -189,103 +127,65 @@ export default function Checkout() {
   };
 
   useEffect(() => {
+    const fetchAddresses = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/user/address`, { withCredentials: true });
+        setAddresses(res.data);
+        const defaultAddr = res.data.find(a => a.isDefault);
+        if (defaultAddr) setDeliveryAddress(defaultAddr);
+      } catch {}
+    };
+    fetchAddresses();
+  }, []);
+
+  useEffect(() => {
+    const savedDiscount = localStorage.getItem("seabiteSpinDiscount");
+    if (savedDiscount) {
+      try {
+        const discount = JSON.parse(savedDiscount);
+        if (new Date() < new Date(discount.expiresAt)) setSpinDiscount(discount);
+        else localStorage.removeItem("seabiteSpinDiscount");
+      } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
     if (cartItems.length === 0) {
-      setModal({
-        show: true,
-        message: "Your cart is empty!",
-        type: "error",
-      });
+      setModal({ show: true, message: "Your cart is empty!", type: "error" });
       setTimeout(() => navigate("/products"), 2000);
     }
   }, [cartItems, navigate]);
 
-  // Handlers (using local set for now, but really should use Context if we want to update qty here)
-  // Checkout usually doesn't allow editing Qty, but existing code had logic. Context has updateQuantity.
-
-  // existing handleUpdateQty was local. We should use Context if we want to support it. 
-  // For now, I'll remove updating qty in checkout or use context methods if needed. 
-  // Since Checkout UI shows +/- buttons, I should use Context.
-  const { updateQuantity, removeFromCart } = useContext(CartContext);
-
-  const handleUpdateQty = (id, currentQty, change) => {
-    updateQuantity(id, currentQty + change);
-  };
-
-  const handleRemoveItem = (id) => {
-    removeFromCart(id);
-  };
-
-  // Derived itemTotal from Context Subtotal
   const itemTotal = parseFloat(subtotal);
-
-  // 🟢 Dynamic Settings from Context
   const taxRate = storeSettings?.taxRate ? storeSettings.taxRate / 100 : 0.05;
   const deliveryFee = storeSettings?.deliveryFee !== undefined ? storeSettings.deliveryFee : 99;
   const freeThreshold = storeSettings?.freeDeliveryThreshold !== undefined ? storeSettings.freeDeliveryThreshold : 1000;
-
   const deliveryCharge = itemTotal >= freeThreshold ? 0 : deliveryFee;
+  const freeDeliveryProgress = Math.min((itemTotal / freeThreshold) * 100, 100);
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode) return;
-
-    setVerifyingCoupon(true);
-    setCouponMessage(null);
-
-    const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
-
-    try {
-      const res = await axios.post(
-        `${API_URL}/api/coupons/validate`,
-        {
-          code: couponCode.trim().toUpperCase(),
-          cartTotal: itemTotal,
-          email: currentEmail || undefined,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-
-      if (res.data.success) {
-        setCouponDiscount(res.data.discountAmount);
-        setIsCouponApplied(true);
-        setCouponMessage({ type: "success", text: res.data.message });
-      }
-    } catch (err) {
-      setCouponDiscount(0);
-      setIsCouponApplied(false);
-      setCouponMessage({
-        type: "error",
-        text: err.response?.data?.message || "Invalid Coupon Code",
-      });
-    } finally {
-      setVerifyingCoupon(false);
-    }
-  };
-
-  const handleRemoveCoupon = () => {
-    setCouponCode("");
-    setCouponDiscount(0);
-    setIsCouponApplied(false);
-    setCouponMessage(null);
-  };
-
-  // Calculate total discount (spin takes priority)
   const discountAmount = useMemo(() => {
     let discount = 0;
-
-    if (spinDiscount) {
-      discount = (itemTotal * spinDiscount.percentage) / 100;
-    } else if (isCouponApplied) {
-      discount = couponDiscount;
-    }
-
+    if (spinDiscount) discount = (itemTotal * spinDiscount.percentage) / 100;
+    else if (isCouponApplied) discount = couponDiscount;
     return Math.min(discount, itemTotal);
   }, [itemTotal, spinDiscount, isCouponApplied, couponDiscount]);
 
   const taxableAmount = Math.max(0, itemTotal - discountAmount);
-  const gst = Math.round(taxableAmount * taxRate); // 🟢 Use dynamic tax rate
+  const gst = Math.round(taxableAmount * taxRate);
   const grandTotal = taxableAmount + deliveryCharge + gst;
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode) return;
+    setVerifyingCoupon(true); setCouponMessage(null);
+    const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
+    try {
+      const res = await axios.post(`${API_URL}/api/coupons/validate`, { code: couponCode.trim().toUpperCase(), cartTotal: itemTotal, email: currentEmail || undefined }, { withCredentials: true });
+      if (res.data.success) { setCouponDiscount(res.data.discountAmount); setIsCouponApplied(true); setCouponMessage({ type: "success", text: res.data.message }); }
+    } catch (err) {
+      setCouponDiscount(0); setIsCouponApplied(false);
+      setCouponMessage({ type: "error", text: err.response?.data?.message || "Invalid Coupon Code" });
+    } finally { setVerifyingCoupon(false); }
+  };
 
   const saveNewAddress = async (newAddress) => {
     try {
@@ -295,799 +195,441 @@ export default function Checkout() {
       setDeliveryAddress(added);
       setIsAddressModalOpen(false);
       toast.success("Address added");
-    } catch (err) {
-      toast.error("Failed to save address");
-    }
+    } catch { toast.error("Failed to save address"); }
   };
 
   const placeOrder = async () => {
-    if (!isDeliveryAllowed) {
-      setModal({
-        show: true,
-        message: "Delivery restricted to AP & Telangana.",
-        type: "error",
-      });
+    if (!deliveryAddress.name || !deliveryAddress.phone || !deliveryAddress.street || !deliveryAddress.houseNo || !deliveryAddress.city || !deliveryAddress.postalCode) {
+      setModal({ show: true, message: "Please complete all delivery address fields.", type: "error" });
       return;
     }
-
-    if (
-      !deliveryAddress.name ||
-      !deliveryAddress.phone ||
-      !deliveryAddress.street ||
-      !deliveryAddress.houseNo ||
-      !deliveryAddress.city ||
-      !deliveryAddress.postalCode
-    ) {
-      setModal({
-        show: true,
-        message:
-          "Please complete all delivery address fields.",
-        type: "error",
-      });
-      return;
-    }
-
     setLoading(true);
-
     const orderDetails = {
       amount: grandTotal,
-      items: cartItems.map((item) => ({ // 🟢 Use cartItems
-        productId: item._id,
-        name: item.name,
-        price: item.price,
-        qty: item.qty,
-        image: item.image,
-      })),
-      shippingAddress: {
-        fullName: deliveryAddress.name,
-        phone: deliveryAddress.phone,
-        houseNo: deliveryAddress.houseNo,
-        street: deliveryAddress.street,
-        city: deliveryAddress.city,
-        state: deliveryAddress.state,
-        zip: deliveryAddress.postalCode,
-      },
-      itemsPrice: itemTotal,
-      taxPrice: gst,
-      shippingPrice: deliveryCharge,
-      discount: discountAmount,
-      paymentMethod: paymentMethod,
+      items: cartItems.map(item => ({ productId: item._id, name: item.name, price: item.price, qty: item.qty, image: item.image })),
+      shippingAddress: { fullName: deliveryAddress.name, phone: deliveryAddress.phone, houseNo: deliveryAddress.houseNo, street: deliveryAddress.street, city: deliveryAddress.city, state: deliveryAddress.state, zip: deliveryAddress.postalCode },
+      itemsPrice: itemTotal, taxPrice: gst, shippingPrice: deliveryCharge, discount: discountAmount, paymentMethod,
     };
-
     try {
-      const { data } = await axios.post(
-        `${API_URL}/api/payment/checkout`,
-        orderDetails,
-        {
-          withCredentials: true,
-        }
-      );
-
+      const { data } = await axios.post(`${API_URL}/api/payment/checkout`, orderDetails, { withCredentials: true });
       const internalDbId = data.dbOrderId;
-
-      // Remove spin discount after successful order creation
-      if (spinDiscount) {
-        localStorage.removeItem("seabiteSpinDiscount");
-      }
-
+      if (spinDiscount) localStorage.removeItem("seabiteSpinDiscount");
       if (paymentMethod === "COD") {
-        clearCart();
-        refreshCartCount();
-        navigate(
-          `/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`
-        );
+        clearCart(); refreshCartCount();
+        navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`);
         return;
       }
-
       const options = {
-        key: "rzp_test_RudgOJMh7819Qs",
-        amount: data.order.amount,
-        currency: "INR",
-        name: "SeaBite",
-        description: "Fresh Coastal Catch Payment",
-        order_id: data.order.id,
-        handler: async function (response) {
+        key: "rzp_test_RudgOJMh7819Qs", amount: data.order.amount, currency: "INR",
+        name: "SeaBite", description: "Fresh Coastal Catch Payment", order_id: data.order.id,
+        handler: async (response) => {
           try {
-            const verifyRes = await axios.post(
-              `${API_URL}/api/payment/verify`,
-              response,
-              {
-                withCredentials: true,
-              }
-            );
-            if (verifyRes.data.success) {
-              clearCart();
-              refreshCartCount();
-              navigate(
-                `/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`
-              );
-            }
-          } catch (err) {
-            setModal({
-              show: true,
-              message: "Payment Verification Failed",
-              type: "error",
-            });
-          }
+            const verifyRes = await axios.post(`${API_URL}/api/payment/verify`, response, { withCredentials: true });
+            if (verifyRes.data.success) { clearCart(); refreshCartCount(); navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`); }
+          } catch { setModal({ show: true, message: "Payment Verification Failed", type: "error" }); }
         },
-        prefill: {
-          name: deliveryAddress.fullName,
-          contact: deliveryAddress.phone,
-        },
-        theme: {
-          color: "#2563eb",
-        },
-        modal: {
-          ondismiss: function () {
-            setLoading(false);
-          },
-        },
+        prefill: { name: deliveryAddress.name, contact: deliveryAddress.phone },
+        theme: { color: T.primary },
+        modal: { ondismiss: () => setLoading(false) },
       };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      new window.Razorpay(options).open();
     } catch (err) {
-      setModal({
-        show: true,
-        message: err.response?.data?.message || "Order initiation failed.",
-        type: "error",
-      });
-    } finally {
-      setLoading(false);
-    }
+      setModal({ show: true, message: err.response?.data?.message || "Order initiation failed.", type: "error" });
+    } finally { setLoading(false); }
   };
 
-  const freeDeliveryProgress = Math.min((itemTotal / 1000) * 100, 100);
-
-  // Calculate current step
   const currentStep = deliveryAddress._id ? (paymentMethod ? 3 : 2) : 1;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0b1120] pt-24 md:pt-32 pb-12 md:pb-20 px-4 md:px-8 font-sans text-slate-900 dark:text-slate-200 relative overflow-hidden transition-colors duration-500">
-      {/* Background gradients */}
-      <div className="fixed inset-0 pointer-events-none -z-10">
-        <div className="absolute top-0 left-0 w-[700px] h-[700px] bg-blue-500/[0.04] dark:bg-blue-600/[0.06] rounded-full blur-[120px]" />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[500px] bg-slate-300/20 dark:bg-slate-600/10 rounded-full blur-[100px]" />
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: font, padding: "100px 20px 60px", overflowX: "hidden" }}>
+      {/* Ambient */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 400, background: "linear-gradient(180deg, rgba(91,168,160,0.06) 0%, transparent 100%)" }} />
       </div>
 
-      <PopupModal
-        show={modal.show}
-        message={modal.message}
-        type={modal.type}
-        onClose={() => setModal({ ...modal, show: false })}
-      />
+      <PopupModal show={modal.show} message={modal.message} type={modal.type} onClose={() => setModal({ ...modal, show: false })} />
 
       <AnimatePresence>
         {isAddressModalOpen && (
-          <AddressModal
-            onClose={() => setIsAddressModalOpen(false)}
-            onSave={saveNewAddress}
-            currentAddress={deliveryAddress}
-            isDarkMode={isDarkMode}
-          />
+          <div style={{ position: "fixed", inset: 0, background: "rgba(26,43,53,0.45)", backdropFilter: "blur(10px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} style={{ width: "100%", maxWidth: 640 }}>
+              <AddressForm onSave={saveNewAddress} onCancel={() => setIsAddressModalOpen(false)} initialData={deliveryAddress} />
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={staggerContainer}
-        className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-10 relative z-10"
-      >
-        {/* LEFT COLUMN */}
-        <div className="lg:col-span-2 space-y-5 md:space-y-7">
-          {/* Checkout Steps */}
-          <CheckoutSteps currentStep={currentStep} />
+      <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
+        {/* Steps */}
+        <StepsBar currentStep={currentStep} />
 
-          {/* Page Header */}
-          <motion.div variants={fadeUp} custom={0}>
-            <span className="text-[10px] md:text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-[0.2em] mb-1 block">
-              Secure Checkout
-            </span>
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none">
-              Order{" "}
-              <span className="text-blue-600 dark:text-blue-400">Summary</span>
-            </h2>
-          </motion.div>
+        {/* Header */}
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} style={{ marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+            <div style={{ width: 4, height: 16, borderRadius: 2, background: `linear-gradient(180deg, ${T.primary}, ${T.sky})` }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.16em" }}>Secure Checkout</span>
+          </div>
+          <h1 style={{ fontSize: 34, fontWeight: 800, color: T.textDark, letterSpacing: "-0.03em", margin: 0 }}>
+            Order <span style={{ color: T.primary }}>Summary</span>
+          </h1>
+        </motion.div>
 
-          {/* ========== DELIVERY ADDRESS ========== */}
-          <motion.section
-            variants={fadeUp}
-            custom={1}
-            className="bg-white dark:bg-slate-800/80 p-5 md:p-7 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-white/5 shadow-lg shadow-slate-200/40 dark:shadow-none backdrop-blur-sm"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 md:mb-6 gap-3">
-              <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center shrink-0">
-                  <FiMapPin size={18} />
-                </div>
-                Delivery Address
-              </h3>
-              <motion.button
-                whileTap={{ scale: 0.96 }}
-                onClick={() => setIsAddressModalOpen(true)}
-                className="w-full sm:w-auto text-[10px] md:text-xs font-bold text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 px-5 py-2.5 rounded-xl hover:bg-blue-600 hover:text-white hover:border-blue-600 transition-all tracking-wider uppercase flex items-center justify-center gap-2"
-              >
-                <FiPlus size={14} /> Add New Address
-              </motion.button>
-            </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }} className="checkout-grid">
+          {/* LEFT */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
-            {/* Address Selection Grid */}
-            <div className="grid grid-cols-1 gap-4">
-              {addresses.length === 0 ? (
-                <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-xl border border-slate-100 dark:border-white/5 text-center">
-                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 mx-auto mb-3">
-                    <FiMapPin size={24} />
-                  </div>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No saved addresses found.</p>
-                  <p className="text-slate-400 dark:text-slate-500 text-xs mt-1">Add a new address to proceed with checkout.</p>
-                </div>
-              ) : (
-                addresses.map((addr) => (
-                  <div
-                    key={addr._id}
-                    onClick={() => {
-                      setDeliveryAddress(addr);
-                    }}
-                    className={`cursor-pointer p-4 rounded-xl border transition-all relative group shadow-sm ${deliveryAddress._id === addr._id
-                      ? "border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 ring-1 ring-blue-500"
-                      : "border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-700 hover:shadow-md"
-                      }`}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-bold text-slate-900 dark:text-white text-sm">{addr.name}</h4>
-                        {addr.isDefault && <span className="bg-blue-100 text-blue-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">Default</span>}
-                      </div>
-                      {deliveryAddress._id === addr._id && (
-                        <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white">
-                          <FiCheckCircle size={12} />
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-xs font-medium mb-1">{addr.phone}</p>
-                    <p className="text-slate-600 dark:text-slate-300 text-xs leading-relaxed">
-                      {addr.houseNo}, {addr.street}, {addr.city}, {addr.state} - {addr.postalCode}
-                    </p>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {deliveryAddress._id && (
-              <div className="mt-4 flex items-center gap-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 px-3 py-2 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
-                <FiCheckCircle size={14} />
-                Delivering to: {deliveryAddress.city}, {deliveryAddress.state}
-              </div>
-            )}
-          </motion.section>
-
-          {/* ========== PAYMENT METHOD ========== */}
-          <motion.section
-            variants={fadeUp}
-            custom={2}
-            className="bg-white dark:bg-slate-800/80 p-5 md:p-7 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-white/5 shadow-lg shadow-slate-200/40 dark:shadow-none backdrop-blur-sm"
-          >
-            <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white mb-5 md:mb-6 flex items-center gap-3">
-              <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center shrink-0">
-                <FiCreditCard size={18} />
-              </div>
-              Payment Method
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              {/* Prepaid - Disabled */}
-              <div className="group relative opacity-50 cursor-not-allowed">
-                <div className="p-4 md:p-5 rounded-xl border-2 border-slate-100 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/50 flex items-center gap-4">
-                  <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 flex items-center justify-center shrink-0">
-                    <div className="w-2.5 h-2.5 bg-slate-300 dark:bg-slate-600 rounded-full" />
-                  </div>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <FiCreditCard
-                      className="text-slate-400 shrink-0"
-                      size={16}
-                    />
-                    <div className="min-w-0">
-                      <p className="font-bold text-slate-500 dark:text-slate-400 text-sm">
-                        Prepaid (Razorpay)
-                      </p>
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                        Cards, UPI, Netbanking
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-slate-900 text-white text-[10px] font-bold px-3 py-2 rounded-lg shadow-xl whitespace-nowrap z-50 border border-slate-700">
-                  <div className="flex items-center gap-2">
-                    <FiAlertCircle className="text-amber-400" size={12} />
-                    <span>Currently under maintenance</span>
-                  </div>
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-900 rotate-45 -mt-1 border-r border-b border-slate-700" />
-                </div>
-              </div>
-
-              {/* COD */}
-              <motion.div
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setPaymentMethod("COD")}
-                className={`cursor-pointer p-4 md:p-5 rounded-xl border transition-all flex items-center gap-4 shadow-sm ${paymentMethod === "COD"
-                  ? "border-blue-500 bg-blue-50/40 dark:bg-blue-900/20 ring-1 ring-blue-500"
-                  : "border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600 hover:shadow-md"
-                  }`}
-              >
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors shrink-0 ${paymentMethod === "COD"
-                    ? "border-blue-500"
-                    : "border-slate-300 dark:border-slate-600"
-                    }`}
-                >
-                  {paymentMethod === "COD" && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="w-2.5 h-2.5 bg-blue-500 rounded-full"
-                    />
-                  )}
-                </div>
-                <div className="flex items-center gap-3 min-w-0">
-                  <FiTruck className="text-slate-400 shrink-0" size={16} />
-                  <div className="min-w-0">
-                    <p className="font-bold text-slate-900 dark:text-white text-sm">
-                      Cash on Delivery
-                    </p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                      Pay when your order arrives
-                    </p>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-          </motion.section>
-
-          {/* ========== CART ITEMS ========== */}
-          <motion.section
-            variants={fadeUp}
-            custom={3}
-            className="bg-white dark:bg-slate-800/80 p-5 md:p-7 rounded-2xl md:rounded-3xl border border-slate-100 dark:border-white/5 shadow-lg shadow-slate-200/40 dark:shadow-none backdrop-blur-sm"
-          >
-            <div className="flex items-center justify-between mb-5 md:mb-6">
-              <h3 className="text-base md:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                <div className="w-9 h-9 md:w-10 md:h-10 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center shrink-0">
-                  <FiShoppingBag size={18} />
-                </div>
-                Your Items
-              </h3>
-              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-lg">
-                {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              <AnimatePresence mode="popLayout">
-                {cartItems.map((item, index) => (
-                  <motion.div
-                    key={item._id}
-                    layout
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -20, filter: "blur(4px)" }}
-                    transition={{ delay: index * 0.03, ease }}
-                    className="flex flex-col sm:flex-row gap-3 md:gap-5 items-center p-3 md:p-4 rounded-xl bg-slate-50/50 dark:bg-slate-900/30 border border-slate-100/80 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10 transition-all group"
-                  >
-                    {/* Product Image */}
-                    <div className="w-14 h-14 md:w-16 md:h-16 bg-white dark:bg-slate-800 rounded-xl overflow-hidden shrink-0 border border-slate-100 dark:border-slate-700 p-1.5">
-                      <img
-                        src={getFullImageUrl(item.image)}
-                        alt={item.name}
-                        className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal"
-                      />
-                    </div>
-
-                    {/* Product Info */}
-                    <div className="flex-1 text-center sm:text-left min-w-0">
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate">
-                        {item.name}
-                      </h4>
-                      <p className="text-slate-500 dark:text-slate-400 text-[10px] font-medium mt-0.5">
-                        {"₹"}
-                        {item.price.toFixed(2)} / unit
-                      </p>
-                    </div>
-
-                    {/* Qty Controls + Price + Remove */}
-                    <div className="flex items-center justify-between w-full sm:w-auto gap-3 md:gap-5">
-                      {/* Quantity */}
-                      <div className="flex items-center bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleUpdateQty(item._id, item.qty, -1)}
-                          className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                        >
-                          <FiMinus size={12} />
-                        </motion.button>
-                        <span className="w-7 md:w-8 text-center font-bold text-xs text-slate-900 dark:text-white select-none">
-                          {item.qty}
-                        </span>
-                        <motion.button
-                          whileTap={{ scale: 0.9 }}
-                          onClick={() => handleUpdateQty(item._id, item.qty, 1)}
-                          className="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-                        >
-                          <FiPlus size={12} />
-                        </motion.button>
-                      </div>
-
-                      {/* Line Total */}
-                      <p className="font-bold text-slate-900 dark:text-white text-sm min-w-[65px] md:min-w-[75px] text-right font-mono">
-                        {"₹"}
-                        {(item.price * item.qty).toFixed(2)}
-                      </p>
-
-                      {/* Remove */}
-                      <motion.button
-                        whileTap={{ scale: 0.85 }}
-                        onClick={() => handleRemoveItem(item._id)}
-                        className="text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 transition-colors p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <FiTrash2 size={15} />
-                      </motion.button>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          </motion.section>
-        </div>
-
-        {/* ========== RIGHT COLUMN - PAYMENT SUMMARY ========== */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-24 md:top-32 space-y-5">
-            <motion.div
-              variants={fadeUp}
-              custom={2}
-              className="bg-white dark:bg-slate-800/80 p-5 md:p-7 rounded-2xl md:rounded-3xl shadow-xl shadow-slate-200/40 dark:shadow-none border border-slate-100 dark:border-white/5 relative overflow-hidden backdrop-blur-sm"
-            >
-              {/* Decorative accent */}
-              <div className="absolute -top-16 -right-16 w-40 h-40 bg-blue-500/[0.07] rounded-full blur-2xl pointer-events-none" />
-
-              <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-white mb-5 uppercase tracking-wider flex items-center gap-2">
-                <FiCreditCard size={15} className="text-blue-500" />
-                Payment Details
-              </h3>
-
-              {/* SPIN WHEEL DISCOUNT BANNER */}
-              <AnimatePresence>
-                {spinDiscount && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="mb-4 overflow-hidden"
-                  >
-                    <div className="p-4 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 rounded-xl border-2 border-emerald-200/60 dark:border-emerald-500/20">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-start gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                            <FiGift size={16} />
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
-                              Spin Wheel Discount Active
-                            </p>
-                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-0.5 flex items-center gap-1.5">
-                              <FiPercent size={10} />
-                              {spinDiscount.percentage}% OFF
-                              <span className="text-slate-400 dark:text-slate-500">
-                                &middot;
-                              </span>
-                              <FiClock size={10} />
-                              Until{" "}
-                              {new Date(
-                                spinDiscount.expiresAt
-                              ).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </div>
-                        <motion.button
-                          whileTap={{ scale: 0.85 }}
-                          onClick={() => {
-                            setSpinDiscount(null);
-                            localStorage.removeItem("seabiteSpinDiscount");
-                          }}
-                          className="text-emerald-600 dark:text-emerald-400 hover:text-red-500 transition-colors p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 shrink-0"
-                        >
-                          <FiX size={16} />
-                        </motion.button>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* COUPON INPUT (disabled if spin discount active) */}
-              {!spinDiscount ? (
-                <div className="mb-5">
-                  <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 ml-1 mb-2 block uppercase tracking-wider">
-                    Promo Code
-                  </label>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <FiTag
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
-                        size={14}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Enter code"
-                        value={couponCode}
-                        onChange={(e) => setCouponCode(e.target.value)}
-                        disabled={isCouponApplied || verifyingCoupon}
-                        className="w-full pl-9 pr-9 py-2.5 md:py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 transition-all uppercase placeholder:normal-case placeholder:font-medium disabled:opacity-50"
-                      />
-                      {isCouponApplied && (
-                        <motion.button
-                          whileTap={{ scale: 0.85 }}
-                          onClick={handleRemoveCoupon}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-red-500 transition-colors"
-                        >
-                          <FiX size={14} />
-                        </motion.button>
-                      )}
-                    </div>
+            {/* ── ADDRESS ── */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease }}>
+              <SectionCard>
+                <SectionHead
+                  icon={<FiMapPin size={16} />}
+                  title="Delivery Address"
+                  action={
                     <motion.button
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleApplyCoupon}
-                      disabled={
-                        isCouponApplied || !couponCode || verifyingCoupon
-                      }
-                      className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 rounded-xl font-bold text-[10px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-600 dark:hover:bg-blue-50 transition-colors flex items-center justify-center min-w-[65px] uppercase tracking-wider"
+                      whileTap={{ scale: 0.96 }} whileHover={{ y: -1 }}
+                      onClick={() => setIsAddressModalOpen(true)}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 10,
+                        border: `1px solid ${T.border}`, background: T.bg, color: T.primary,
+                        fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: font,
+                      }}
                     >
-                      {verifyingCoupon ? (
-                        <FiLoader className="animate-spin" size={14} />
-                      ) : isCouponApplied ? (
-                        <FiCheckCircle size={14} />
-                      ) : (
-                        "Apply"
-                      )}
+                      <FiPlusIcon size={12} /> Add Address
                     </motion.button>
+                  }
+                />
+                {addresses.length === 0 ? (
+                  <div style={{ padding: "28px 20px", borderRadius: 12, background: T.bg, border: `1px solid ${T.border}`, textAlign: "center" }}>
+                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: T.surface, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: T.textLite }}>
+                      <FiMapPin size={20} />
+                    </div>
+                    <p style={{ fontSize: 13, fontWeight: 500, color: T.textLite }}>No saved addresses yet.</p>
+                    <p style={{ fontSize: 11, color: T.textLite, marginTop: 4 }}>Add a new address to continue.</p>
                   </div>
-                  <AnimatePresence>
-                    {couponMessage && (
-                      <motion.p
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        className={`text-[10px] font-bold mt-2 ml-1 flex items-center gap-1 ${couponMessage.type === "success"
-                          ? "text-emerald-500"
-                          : "text-red-500"
-                          }`}
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {addresses.map(addr => {
+                      const isSelected = deliveryAddress._id === addr._id;
+                      return (
+                        <motion.div
+                          key={addr._id}
+                          whileHover={{ boxShadow: "0 4px 16px rgba(91,168,160,0.10)" }}
+                          onClick={() => setDeliveryAddress(addr)}
+                          style={{
+                            padding: "14px 16px", borderRadius: 12, cursor: "pointer",
+                            border: `1.5px solid ${isSelected ? T.primary : T.border}`,
+                            background: isSelected ? "rgba(91,168,160,0.05)" : T.bg,
+                            transition: "all 0.2s",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                              <h4 style={{ fontWeight: 700, fontSize: 13, color: T.textDark, margin: 0 }}>{addr.name}</h4>
+                              {addr.isDefault && <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", padding: "2px 8px", borderRadius: 5, background: "rgba(91,168,160,0.1)", color: T.primary }}>Default</span>}
+                            </div>
+                            {isSelected && <div style={{ width: 20, height: 20, borderRadius: "50%", background: T.primary, display: "flex", alignItems: "center", justifyContent: "center" }}><FiCheck size={10} style={{ color: "#fff" }} /></div>}
+                          </div>
+                          <p style={{ fontSize: 11, color: T.textLite, margin: "0 0 4px", fontWeight: 500 }}>{addr.phone}</p>
+                          <p style={{ fontSize: 12, color: T.textMid, margin: 0, lineHeight: 1.6 }}>
+                            {addr.houseNo}, {addr.street}, {addr.city}, {addr.state} — {addr.postalCode}
+                          </p>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                )}
+                {deliveryAddress._id && (
+                  <div style={{ marginTop: 12, padding: "8px 14px", borderRadius: 9, background: "rgba(91,168,160,0.08)", border: "1px solid rgba(91,168,160,0.18)", display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 700, color: T.primary }}>
+                    <FiCheckCircle size={12} /> Delivering to: {deliveryAddress.city}, {deliveryAddress.state}
+                  </div>
+                )}
+              </SectionCard>
+            </motion.div>
+
+            {/* ── PAYMENT METHOD ── */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18, duration: 0.5, ease }}>
+              <SectionCard>
+                <SectionHead icon={<FiCreditCard size={16} />} title="Payment Method" />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {/* Prepaid - disabled */}
+                  <div style={{ opacity: 0.45, cursor: "not-allowed", position: "relative" }} title="Currently under maintenance">
+                    <div style={{ padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${T.border}`, background: T.bg, display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${T.border}`, flexShrink: 0 }} />
+                      <div>
+                        <p style={{ fontWeight: 700, fontSize: 13, color: T.textMid, margin: 0 }}>Razorpay</p>
+                        <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0" }}>Under maintenance</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* COD */}
+                  <motion.div
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setPaymentMethod("COD")}
+                    style={{
+                      padding: "14px 16px", borderRadius: 12, cursor: "pointer",
+                      border: `1.5px solid ${paymentMethod === "COD" ? T.primary : T.border}`,
+                      background: paymentMethod === "COD" ? "rgba(91,168,160,0.05)" : T.bg,
+                      display: "flex", alignItems: "center", gap: 12, transition: "all 0.2s",
+                    }}
+                  >
+                    <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${paymentMethod === "COD" ? T.primary : T.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {paymentMethod === "COD" && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ width: 8, height: 8, borderRadius: "50%", background: T.primary }} />}
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 700, fontSize: 13, color: T.textDark, margin: 0 }}>Cash on Delivery</p>
+                      <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0" }}>Pay when it arrives</p>
+                    </div>
+                  </motion.div>
+                </div>
+              </SectionCard>
+            </motion.div>
+
+            {/* ── CART ITEMS ── */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26, duration: 0.5, ease }}>
+              <SectionCard>
+                <SectionHead
+                  icon={<FiShoppingBag size={16} />}
+                  title="Your Items"
+                  action={<span style={{ fontSize: 10, fontWeight: 700, color: T.primary, background: "rgba(91,168,160,0.1)", padding: "4px 10px", borderRadius: 7 }}>{cartItems.length} {cartItems.length === 1 ? "item" : "items"}</span>}
+                />
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <AnimatePresence mode="popLayout">
+                    {cartItems.map((item, index) => (
+                      <motion.div
+                        key={item._id} layout
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0, transition: { delay: index * 0.03, ease } }}
+                        exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
+                        style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 14px", borderRadius: 12, background: T.bg, border: `1px solid ${T.border}`, flexWrap: "wrap" }}
                       >
-                        {couponMessage.type === "success" ? (
-                          <FiCheckCircle size={10} />
-                        ) : (
-                          <FiXCircle size={10} />
-                        )}
-                        {couponMessage.text}
-                      </motion.p>
-                    )}
+                        <div style={{ width: 52, height: 52, borderRadius: 10, background: T.surface, border: `1px solid ${T.border}`, padding: 6, flexShrink: 0 }}>
+                          <img src={getFullImageUrl(item.image)} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <h4 style={{ fontWeight: 700, fontSize: 13, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</h4>
+                          <p style={{ fontSize: 10, color: T.textLite, margin: "3px 0 0" }}>₹{item.price.toFixed(2)} / unit</p>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", borderRadius: 9, border: `1px solid ${T.border}`, overflow: "hidden", background: T.surface }}>
+                            <motion.button whileTap={{ scale: 0.85 }} onClick={() => updateQuantity(item._id, item.qty - 1)}
+                              style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer" }}>
+                              <FiMinus size={11} />
+                            </motion.button>
+                            <span style={{ width: 28, textAlign: "center", fontSize: 12, fontWeight: 800, color: T.textDark }}>{item.qty}</span>
+                            <motion.button whileTap={{ scale: 0.85 }} onClick={() => updateQuantity(item._id, item.qty + 1)}
+                              style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer" }}>
+                              <FiPlus size={11} />
+                            </motion.button>
+                          </div>
+                          <span style={{ fontWeight: 700, fontSize: 13, color: T.textDark, minWidth: 60, textAlign: "right" }}>₹{(item.price * item.qty).toFixed(2)}</span>
+                          <motion.button whileTap={{ scale: 0.85 }} onClick={() => removeFromCart(item._id)}
+                            style={{ color: T.border, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                            <FiTrash2 size={13} />
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    ))}
                   </AnimatePresence>
                 </div>
-              ) : (
-                <div className="mb-5 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-700 text-center">
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-                    Coupon codes cannot be combined with spin discounts
-                  </p>
-                </div>
-              )}
+              </SectionCard>
+            </motion.div>
+          </div>
 
-              {/* Price Breakdown */}
-              <div className="space-y-3 text-xs font-medium">
-                <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span>Subtotal</span>
-                  <span className="text-slate-900 dark:text-white font-bold font-mono">
-                    {"₹"}
-                    {itemTotal.toFixed(2)}
-                  </span>
-                </div>
+          {/* RIGHT - ORDER SUMMARY */}
+          <div style={{ position: "sticky", top: 96, alignSelf: "flex-start" }}>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5, ease }}>
+              <SectionCard>
+                <h3 style={{ fontSize: 14, fontWeight: 700, color: T.textDark, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
+                  <FiCreditCard size={14} style={{ color: T.primary }} /> Payment Details
+                </h3>
 
+                {/* Spin discount */}
                 <AnimatePresence>
-                  {(spinDiscount || isCouponApplied) && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="flex justify-between text-emerald-600 dark:text-emerald-400"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <FiPercent size={11} />
-                        {spinDiscount
-                          ? `Spin (${spinDiscount.percentage}%)`
-                          : "Coupon"}
-                      </span>
-                      <span className="font-bold font-mono">
-                        -{"₹"}
-                        {discountAmount.toFixed(2)}
-                      </span>
+                  {spinDiscount && (
+                    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginBottom: 14, overflow: "hidden" }}>
+                      <div style={{ padding: "12px 14px", borderRadius: 12, background: "rgba(91,168,160,0.06)", border: "1px solid rgba(91,168,160,0.18)", display: "flex", alignItems: "flex-start", gap: 10 }}>
+                        <div style={{ width: 30, height: 30, borderRadius: 8, background: "rgba(91,168,160,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, flexShrink: 0 }}>
+                          <FiGift size={14} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: 11, fontWeight: 700, color: T.primary, margin: 0 }}>Spin Wheel Discount Active</p>
+                          <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0" }}>{spinDiscount.percentage}% OFF · Until {new Date(spinDiscount.expiresAt).toLocaleDateString()}</p>
+                        </div>
+                        <motion.button whileTap={{ scale: 0.85 }} onClick={() => { setSpinDiscount(null); localStorage.removeItem("seabiteSpinDiscount"); }}
+                          style={{ color: T.textLite, background: "none", border: "none", cursor: "pointer" }}>
+                          <FiX size={14} />
+                        </motion.button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
-                <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1.5">
-                    <FiTruck size={11} />
-                    Shipping
-                  </span>
-                  <span
-                    className={`font-bold ${deliveryCharge === 0
-                      ? "text-emerald-500 uppercase text-[10px]"
-                      : "text-slate-900 dark:text-white font-mono"
-                      }`}
-                  >
-                    {deliveryCharge === 0 ? (
-                      "Free"
-                    ) : (
-                      <>
-                        {"₹"}
-                        {deliveryCharge.toFixed(2)}
-                      </>
-                    )}
-                  </span>
-                </div>
-
-                <div className="flex justify-between text-slate-500 dark:text-slate-400">
-                  <span>GST (5%)</span>
-                  <span className="text-slate-900 dark:text-white font-bold font-mono">
-                    {"₹"}
-                    {gst.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Divider */}
-              <div className="my-5 h-px bg-slate-100 dark:bg-slate-700/80" />
-
-              {/* Grand Total */}
-              <div className="flex justify-between items-end mb-6">
-                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                  Total
-                </span>
-                <div className="text-right">
-                  <motion.span
-                    key={grandTotal}
-                    initial={{ opacity: 0, y: 5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-2xl md:text-3xl font-extrabold text-blue-600 dark:text-blue-400 block font-mono"
-                  >
-                    {"₹"}
-                    {grandTotal.toFixed(2)}
-                  </motion.span>
-                  {discountAmount > 0 && (
-                    <span className="text-[10px] font-bold text-emerald-500">
-                      You save {"₹"}
-                      {discountAmount.toFixed(2)}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Free Delivery Progress */}
-              {itemTotal < 1000 && (
-                <div className="mb-6 p-3.5 bg-blue-50/60 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/20">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[9px] md:text-[10px] font-black text-blue-600 dark:text-blue-400 uppercase tracking-widest">
-                      Free Delivery
-                    </p>
-                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                      {Math.round(freeDeliveryProgress)}%
-                    </span>
+                {/* Coupon */}
+                {!spinDiscount ? (
+                  <div style={{ marginBottom: 18 }}>
+                    <p style={{ fontSize: 10, fontWeight: 700, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Promo Code</p>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <div style={{ flex: 1, position: "relative" }}>
+                        <FiTag size={12} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: T.textLite }} />
+                        <input
+                          type="text" placeholder="Enter code" value={couponCode}
+                          onChange={e => setCouponCode(e.target.value)}
+                          disabled={isCouponApplied || verifyingCoupon}
+                          style={{
+                            width: "100%", paddingLeft: 34, paddingRight: isCouponApplied ? 34 : 12, paddingTop: 11, paddingBottom: 11,
+                            borderRadius: 11, border: `1px solid ${T.border}`, background: T.bg,
+                            fontSize: 12, fontWeight: 700, color: T.textDark, outline: "none",
+                            textTransform: "uppercase", fontFamily: font, boxSizing: "border-box",
+                          }}
+                        />
+                        {isCouponApplied && (
+                          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { setCouponCode(""); setCouponDiscount(0); setIsCouponApplied(false); setCouponMessage(null); }}
+                            style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: T.textLite, background: "none", border: "none", cursor: "pointer" }}>
+                            <FiX size={12} />
+                          </motion.button>
+                        )}
+                      </div>
+                      <motion.button whileTap={{ scale: 0.95 }} onClick={handleApplyCoupon} disabled={isCouponApplied || !couponCode || verifyingCoupon}
+                        style={{
+                          padding: "11px 16px", borderRadius: 11, background: T.primary, color: "#fff", border: "none",
+                          fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: font,
+                          opacity: (isCouponApplied || !couponCode) ? 0.5 : 1,
+                          display: "flex", alignItems: "center", justifyContent: "center", minWidth: 64,
+                        }}>
+                        {verifyingCoupon ? <FiLoader size={13} style={{ animation: "spin 1s linear infinite" }} /> : isCouponApplied ? <FiCheckCircle size={13} /> : "Apply"}
+                      </motion.button>
+                    </div>
+                    <AnimatePresence>
+                      {couponMessage && (
+                        <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                          style={{ fontSize: 10, fontWeight: 700, marginTop: 6, display: "flex", alignItems: "center", gap: 4, color: couponMessage.type === "success" ? T.primary : T.coral }}>
+                          {couponMessage.type === "success" ? <FiCheckCircle size={10} /> : <FiXCircle size={10} />}
+                          {couponMessage.text}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{
-                        width: `${freeDeliveryProgress}%`,
-                      }}
-                      transition={{ duration: 0.8, ease }}
-                      className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full"
-                    />
-                  </div>
-                  <p className="text-[8px] md:text-[9px] font-bold text-slate-500 dark:text-slate-400 text-center mt-2">
-                    Add {"₹"}
-                    {(1000 - itemTotal).toFixed(0)} more for free shipping
-                  </p>
-                </div>
-              )}
-
-              {/* Place Order Button */}
-              <motion.button
-                whileTap={{ scale: 0.97 }}
-                onClick={placeOrder}
-                disabled={loading || !isDeliveryAllowed}
-                className={`w-full py-3.5 md:py-4 rounded-xl font-bold uppercase tracking-wider text-[10px] md:text-xs shadow-lg transition-all disabled:cursor-not-allowed flex justify-center items-center gap-2.5 ${isDeliveryAllowed
-                  ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-blue-600 dark:hover:bg-blue-50 shadow-slate-900/20 disabled:opacity-60"
-                  : "bg-slate-200 dark:bg-slate-700 text-slate-400 dark:text-slate-500"
-                  }`}
-              >
-                {loading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                    Processing...
-                  </>
-                ) : !isDeliveryAllowed ? (
-                  "Location Not Supported"
-                ) : paymentMethod === "COD" ? (
-                  <>
-                    <FiCheckCircle size={15} /> Place COD Order
-                  </>
                 ) : (
-                  <>
-                    <FiCreditCard size={15} /> Pay & Place Order
-                  </>
+                  <div style={{ marginBottom: 18, padding: "10px 14px", borderRadius: 10, background: T.bg, border: `1px solid ${T.border}`, textAlign: "center" }}>
+                    <p style={{ fontSize: 10, color: T.textLite, fontWeight: 500 }}>Coupon codes cannot be combined with spin discounts</p>
+                  </div>
                 )}
-              </motion.button>
 
-              {/* Estimated Delivery */}
-              {isDeliveryAllowed && deliveryAddress.street && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="mt-4 p-3 bg-emerald-50/60 dark:bg-emerald-900/10 border border-emerald-100 dark:border-emerald-900/20 rounded-xl"
+                {/* Price breakdown */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, fontSize: 12, color: T.textMid }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>Subtotal</span>
+                    <span style={{ fontWeight: 700, color: T.textDark }}>₹{itemTotal.toFixed(2)}</span>
+                  </div>
+                  <AnimatePresence>
+                    {(spinDiscount || isCouponApplied) && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                        style={{ display: "flex", justifyContent: "space-between", color: T.primary, overflow: "hidden" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiPercent size={11} />{spinDiscount ? `Spin (${spinDiscount.percentage}%)` : "Coupon"}</span>
+                        <span style={{ fontWeight: 700 }}>-₹{discountAmount.toFixed(2)}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiTruck size={11} /> Shipping</span>
+                    <span style={{ fontWeight: 700, color: deliveryCharge === 0 ? T.primary : T.textDark }}>
+                      {deliveryCharge === 0 ? "Free" : `₹${deliveryCharge.toFixed(2)}`}
+                    </span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span>GST (5%)</span>
+                    <span style={{ fontWeight: 700, color: T.textDark }}>₹{gst.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div style={{ height: 1, background: T.border, margin: "16px 0" }} />
+
+                {/* Total */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 20 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.08em" }}>Total</span>
+                  <div style={{ textAlign: "right" }}>
+                    <motion.span key={grandTotal} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+                      style={{ display: "block", fontSize: 28, fontWeight: 800, color: T.primary, letterSpacing: "-0.03em" }}>
+                      ₹{grandTotal.toFixed(2)}
+                    </motion.span>
+                    {discountAmount > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: T.primary }}>You save ₹{discountAmount.toFixed(2)}</span>}
+                  </div>
+                </div>
+
+                {/* Free delivery progress */}
+                {itemTotal < freeThreshold && (
+                  <div style={{ marginBottom: 18, padding: "12px 14px", borderRadius: 12, background: "rgba(91,168,160,0.06)", border: "1px solid rgba(91,168,160,0.15)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.08em" }}>Free Delivery</span>
+                      <span style={{ fontSize: 10, fontWeight: 600, color: T.primary }}>{Math.round(freeDeliveryProgress)}%</span>
+                    </div>
+                    <div style={{ height: 5, background: "#E2EEEC", borderRadius: 3, overflow: "hidden" }}>
+                      <motion.div initial={{ width: 0 }} animate={{ width: `${freeDeliveryProgress}%` }} transition={{ duration: 0.8, ease }}
+                        style={{ height: "100%", background: `linear-gradient(90deg, ${T.primary}, ${T.sky})`, borderRadius: 3 }} />
+                    </div>
+                    <p style={{ fontSize: 9, color: T.textLite, textAlign: "center", marginTop: 6, fontWeight: 600 }}>
+                      Add ₹{(freeThreshold - itemTotal).toFixed(0)} more for free shipping
+                    </p>
+                  </div>
+                )}
+
+                {/* Place Order */}
+                <motion.button
+                  whileHover={{ y: -2, boxShadow: "0 10px 30px rgba(91,168,160,0.28)" }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={placeOrder}
+                  disabled={loading}
+                  style={{
+                    width: "100%", padding: "15px 20px", borderRadius: 14,
+                    background: T.primary, color: "#fff", border: "none",
+                    fontSize: 13, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
+                    fontFamily: font, boxShadow: "0 4px 20px rgba(91,168,160,0.22)",
+                    opacity: loading ? 0.75 : 1, transition: "all 0.2s",
+                  }}
                 >
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
-                      <FiTruck size={13} />
+                  {loading ? (
+                    <><div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }} /> Processing...</>
+                  ) : paymentMethod === "COD" ? (
+                    <><FiCheckCircle size={15} /> Place COD Order</>
+                  ) : (
+                    <><FiCreditCard size={15} /> Pay & Place Order</>
+                  )}
+                </motion.button>
+
+                {/* Delivery estimate */}
+                {deliveryAddress.street && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+                    style={{ marginTop: 12, padding: "11px 14px", borderRadius: 12, background: "rgba(91,168,160,0.06)", border: "1px solid rgba(91,168,160,0.15)", display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(91,168,160,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, flexShrink: 0 }}>
+                      <FiTruck size={12} />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                        Estimated Delivery
-                      </p>
-                      <p className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">
-                        {new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toLocaleDateString("en-GB", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                        })} - {new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString("en-GB", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                        })}
+                      <p style={{ fontSize: 10, fontWeight: 700, color: T.primary, margin: 0 }}>Estimated Delivery</p>
+                      <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0" }}>
+                        {new Date(Date.now() + 2 * 86400000).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} — {new Date(Date.now() + 4 * 86400000).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
                       </p>
                     </div>
-                  </div>
-                </motion.div>
-              )}
+                  </motion.div>
+                )}
 
-              {/* SSL Badge */}
-              <div className="mt-4 flex items-center justify-center gap-2 text-[9px] md:text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                <FiShield className="text-emerald-500" size={12} />
-                <span>Secure 256-bit SSL Encryption</span>
-              </div>
+                {/* SSL */}
+                <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+                  <FiShield size={10} style={{ color: T.primary }} /> Secure 256-bit SSL Encryption
+                </p>
+              </SectionCard>
             </motion.div>
           </div>
         </div>
-      </motion.div>
-    </div>
-  );
-}
+      </div>
 
-/* ============================================================
-   ADDRESS MODAL WRAPPER (Uses AddressForm)
-   ============================================================ */
-function AddressModal({ onClose, onSave, currentAddress }) {
-  return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-2xl"
-      >
-        <AddressForm
-          onSave={onSave}
-          onCancel={onClose}
-          initialData={currentAddress}
-        />
-      </motion.div>
+      <style>{`
+        @media (min-width: 900px) {
+          .checkout-grid { grid-template-columns: 1fr 380px !important; }
+        }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }

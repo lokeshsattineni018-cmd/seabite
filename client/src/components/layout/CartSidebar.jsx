@@ -2,50 +2,33 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiX,
-  FiMinus,
-  FiPlus,
-  FiTrash2,
-  FiShoppingBag,
-  FiArrowRight,
-  FiPackage,
+  FiX, FiMinus, FiPlus, FiTrash2, FiShoppingBag,
+  FiArrowRight, FiPackage, FiLock,
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
-import { ThemeContext } from "../../context/ThemeContext";
 import { removeFromCart, updateQty } from "../../utils/cartStorage";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+
+const T = {
+  bg: "#F4F9F8", surface: "#ffffff", border: "#E2EEEC",
+  textDark: "#1A2B35", textMid: "#4A6572", textLite: "#8BA5B3",
+  primary: "#5BA8A0", sky: "#89C2D9", coral: "#E8816A",
+};
 
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return null;
   return `${API_URL}${imagePath.startsWith("/") ? imagePath : `/${imagePath}`}`;
 };
 
-const PriceCounter = ({ value }) => (
-  <motion.span
-    key={value}
-    initial={{ y: 10, opacity: 0, filter: "blur(4px)" }}
-    animate={{ y: 0, opacity: 1, filter: "blur(0px)" }}
-    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-    className="inline-block"
-  >
-    {"\u20B9"}{value.toLocaleString()}
-  </motion.span>
-);
-
 export default function CartSidebar({ isOpen, onClose }) {
   const { cartCount, refreshCartCount, cartItems, subtotal: subtotalStr, storeSettings } = useContext(CartContext);
-  const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
 
-  // Use values from Context (already sanitized)
   const subtotal = parseFloat(subtotalStr || "0");
-
   const FREE_DELIVERY_THRESHOLD = storeSettings?.freeDeliveryThreshold || 1000;
-  const deliveryProgress = Math.min(
-    (subtotal / FREE_DELIVERY_THRESHOLD) * 100,
-    100
-  );
+  const deliveryProgress = Math.min((subtotal / FREE_DELIVERY_THRESHOLD) * 100, 100);
+  const remaining = Math.max(0, FREE_DELIVERY_THRESHOLD - subtotal);
 
   const handleUpdate = (item, newQty) => {
     if (newQty < 1) return;
@@ -63,6 +46,8 @@ export default function CartSidebar({ isOpen, onClose }) {
     navigate("/checkout");
   };
 
+  const font = "'Plus Jakarta Sans', sans-serif";
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -72,119 +57,123 @@ export default function CartSidebar({ isOpen, onClose }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.28 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-[60]"
+            style={{ position: "fixed", inset: 0, background: "rgba(26,43,53,0.32)", backdropFilter: "blur(6px)", zIndex: 60 }}
           />
 
-          {/* SIDEBAR */}
+          {/* SIDEBAR DRAWER */}
           <motion.div
-            initial={{ x: "100%", opacity: 0.5 }}
+            initial={{ x: "100%", opacity: 0.6 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
-            transition={{
-              type: "spring",
-              damping: 30,
-              stiffness: 250,
-              mass: 0.8,
+            transition={{ type: "spring", damping: 30, stiffness: 260, mass: 0.8 }}
+            style={{
+              position: "fixed", top: 0, right: 0, height: "100%",
+              width: "100%", maxWidth: 440,
+              background: T.surface, zIndex: 70,
+              display: "flex", flexDirection: "column",
+              borderLeft: `1px solid ${T.border}`,
+              boxShadow: "-8px 0 48px rgba(26,43,53,0.10)",
+              fontFamily: font,
             }}
-            className="fixed top-0 right-0 h-full w-full md:max-w-md bg-white dark:bg-[#0b1221] shadow-2xl z-[70] flex flex-col border-l border-slate-100 dark:border-white/5 transition-colors duration-500"
           >
-            {/* HEADER */}
-            <div className="px-4 md:px-6 py-4 md:py-6 border-b border-slate-100 dark:border-white/5">
-              <div className="flex items-center justify-between mb-4 md:mb-6">
-                <div className="flex items-center gap-3">
+            {/* ── HEADER ── */}
+            <div style={{
+              padding: "20px 24px", borderBottom: `1px solid ${T.border}`,
+              display: "flex", flexDirection: "column", gap: 16,
+              background: T.surface,
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <motion.div
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 15,
-                      delay: 0.1,
+                    transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.1 }}
+                    style={{
+                      width: 40, height: 40, borderRadius: 12,
+                      background: "linear-gradient(135deg, #5BA8A0, #89C2D9)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#fff", boxShadow: "0 4px 16px rgba(91,168,160,0.28)",
                     }}
-                    className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/30"
                   >
-                    <FiShoppingBag size={20} />
+                    <FiShoppingBag size={18} />
                   </motion.div>
                   <div>
-                    <h2 className="text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight">
-                      Your Cart
-                    </h2>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                      {cartCount} Items
+                    <h2 style={{ fontSize: 17, fontWeight: 800, color: T.textDark, margin: 0, letterSpacing: "-0.02em" }}>Your Cart</h2>
+                    <p style={{ fontSize: 10, fontWeight: 700, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
+                      {cartCount} {cartCount === 1 ? "item" : "items"}
                     </p>
                   </div>
                 </div>
                 <motion.button
-                  onClick={onClose}
                   whileHover={{ rotate: 90, scale: 1.1 }}
                   whileTap={{ scale: 0.85 }}
-                  transition={{ duration: 0.3 }}
-                  className="w-10 h-10 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400 transition-all"
+                  onClick={onClose}
+                  style={{
+                    width: 36, height: 36, borderRadius: "50%",
+                    background: T.bg, border: `1px solid ${T.border}`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: T.textLite, cursor: "pointer",
+                  }}
                 >
-                  <FiX size={24} />
+                  <FiX size={16} />
                 </motion.button>
               </div>
 
-              {/* DELIVERY PROGRESS */}
+              {/* Free delivery progress */}
               {cartItems.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2, duration: 0.4 }}
-                  className="space-y-2"
-                >
-                  <div className="flex justify-between text-[9px] md:text-[10px] font-black uppercase tracking-widest">
-                    <span className="text-emerald-600 dark:text-emerald-500">
-                      Freshness Meter
+                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                      Free Delivery
                     </span>
-                    <span className="text-slate-400">
-                      {subtotal < FREE_DELIVERY_THRESHOLD
-                        ? `Add \u20B9${FREE_DELIVERY_THRESHOLD - subtotal} more`
-                        : "Free Shipping Unlocked!"}
+                    <span style={{ fontSize: 10, fontWeight: 600, color: T.textLite }}>
+                      {remaining > 0 ? `₹${remaining.toFixed(0)} more` : "🎉 Unlocked!"}
                     </span>
                   </div>
-                  <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                  <div style={{ height: 5, background: "#EEF5F4", borderRadius: 4, overflow: "hidden" }}>
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${deliveryProgress}%` }}
-                      transition={{
-                        duration: 0.8,
-                        delay: 0.3,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
-                      className="h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                      transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                      style={{ height: "100%", background: "linear-gradient(90deg, #5BA8A0, #89C2D9)", borderRadius: 4 }}
                     />
                   </div>
                 </motion.div>
               )}
             </div>
 
-            {/* CART ITEMS */}
-            <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4 no-scrollbar">
+            {/* ── ITEMS ── */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: T.bg, display: "flex", flexDirection: "column", gap: 10 }}>
               {cartItems.length === 0 ? (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.94 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.5 }}
-                  className="h-full flex flex-col items-center justify-center text-center px-6"
+                  style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "40px 20px" }}
                 >
-                  <div className="w-20 h-20 bg-slate-50 dark:bg-slate-900 rounded-full flex items-center justify-center mb-4">
-                    <FiPackage
-                      size={32}
-                      className="text-slate-200 dark:text-slate-700"
-                    />
-                  </div>
-                  <p className="text-slate-500 font-bold tracking-tight">
-                    Your catch is empty.
-                  </p>
-                  <button
-                    onClick={onClose}
-                    className="mt-4 text-blue-600 font-bold text-sm hover:underline"
+                  <motion.div
+                    animate={{ y: [0, -8, 0] }}
+                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ width: 72, height: 72, borderRadius: "50%", background: T.surface, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20, boxShadow: "0 4px 20px rgba(91,168,160,0.10)" }}
                   >
-                    Continue Shopping
-                  </button>
+                    <FiPackage size={28} style={{ color: T.border }} />
+                  </motion.div>
+                  <h3 style={{ fontSize: 17, fontWeight: 700, color: T.textDark, marginBottom: 8 }}>Your cart is empty</h3>
+                  <p style={{ fontSize: 13, color: T.textLite, maxWidth: 220, lineHeight: 1.7, marginBottom: 24 }}>Add some fresh catch to get started.</p>
+                  <motion.button
+                    whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.22)" }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={onClose}
+                    style={{
+                      padding: "12px 24px", borderRadius: 12, background: T.primary,
+                      color: "#fff", fontWeight: 700, fontSize: 13, border: "none",
+                      cursor: "pointer", fontFamily: font,
+                    }}
+                  >
+                    Browse Products
+                  </motion.button>
                 </motion.div>
               ) : (
                 <AnimatePresence mode="popLayout">
@@ -192,78 +181,82 @@ export default function CartSidebar({ isOpen, onClose }) {
                     <motion.div
                       key={item._id}
                       layout
-                      initial={{ opacity: 0, x: 60, filter: "blur(4px)" }}
-                      animate={{
-                        opacity: 1,
-                        x: 0,
-                        filter: "blur(0px)",
-                        transition: {
-                          delay: index * 0.05,
-                          duration: 0.5,
-                          ease: [0.22, 1, 0.36, 1],
-                        },
+                      initial={{ opacity: 0, x: 40 }}
+                      animate={{ opacity: 1, x: 0, transition: { delay: index * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] } }}
+                      exit={{ opacity: 0, x: -40, scale: 0.94, transition: { duration: 0.25 } }}
+                      whileHover={{ boxShadow: "0 4px 20px rgba(91,168,160,0.10)" }}
+                      style={{
+                        display: "flex", gap: 12, padding: "12px 14px",
+                        borderRadius: 14, background: T.surface,
+                        border: `1px solid ${T.border}`,
+                        boxShadow: "0 1px 4px rgba(26,43,53,0.04)",
+                        transition: "box-shadow 0.2s",
                       }}
-                      exit={{
-                        opacity: 0,
-                        x: -60,
-                        scale: 0.9,
-                        filter: "blur(4px)",
-                        transition: { duration: 0.3 },
-                      }}
-                      className="group flex gap-3 md:gap-4 p-3 md:p-4 rounded-[1.25rem] md:rounded-[1.5rem] bg-white dark:bg-slate-800/40 border border-slate-100 dark:border-white/5 hover:border-blue-500/30 transition-all shadow-sm"
                     >
-                      <div className="w-16 h-16 md:w-20 md:h-20 bg-slate-50 dark:bg-slate-900 rounded-xl flex items-center justify-center p-2 shrink-0 overflow-hidden">
+                      {/* Image */}
+                      <div style={{
+                        width: 64, height: 64, borderRadius: 10, flexShrink: 0,
+                        background: T.bg, border: `1px solid ${T.border}`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        padding: 6, overflow: "hidden",
+                      }}>
                         <motion.img
                           src={getFullImageUrl(item.image)}
-                          className="w-full h-full object-contain"
                           alt={item.name}
-                          whileHover={{ scale: 1.1 }}
-                          transition={{ duration: 0.3 }}
+                          whileHover={{ scale: 1.08 }}
+                          style={{ width: "100%", height: "100%", objectFit: "contain" }}
                         />
                       </div>
 
-                      <div className="flex-1 min-w-0 flex flex-col justify-between">
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-bold text-slate-900 dark:text-white text-xs md:text-sm truncate pr-2">
+                      {/* Details */}
+                      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                          <h4 style={{ fontSize: 13, fontWeight: 700, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>
                             {item.name}
                           </h4>
                           <motion.button
-                            onClick={() => handleRemove(item._id)}
-                            whileHover={{ scale: 1.2, color: "#ef4444" }}
+                            whileHover={{ scale: 1.2, color: T.coral }}
                             whileTap={{ scale: 0.8 }}
-                            className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                            onClick={() => handleRemove(item._id)}
+                            style={{ color: T.border, background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0 }}
                           >
-                            <FiTrash2 size={14} />
+                            <FiTrash2 size={13} />
                           </motion.button>
                         </div>
 
-                        <div className="flex items-center justify-between mt-1">
-                          <div className="flex items-center bg-slate-100 dark:bg-slate-900/60 rounded-full p-1 border border-slate-200/50 dark:border-slate-700">
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
+                          {/* Qty stepper */}
+                          <div style={{
+                            display: "flex", alignItems: "center", gap: 0,
+                            background: T.bg, borderRadius: 9, border: `1px solid ${T.border}`,
+                            overflow: "hidden",
+                          }}>
                             <motion.button
+                              whileTap={{ scale: 0.85 }}
                               onClick={() => handleUpdate(item, item.qty - 1)}
-                              whileTap={{ scale: 0.8 }}
-                              className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all shadow-sm"
+                              style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer" }}
                             >
                               <FiMinus size={10} />
                             </motion.button>
                             <motion.span
                               key={item.qty}
-                              initial={{ scale: 1.3, color: "#3b82f6" }}
-                              animate={{ scale: 1, color: "inherit" }}
-                              className="text-[10px] md:text-xs font-black w-6 md:w-8 text-center text-slate-900 dark:text-white"
+                              initial={{ scale: 1.3, color: T.primary }}
+                              animate={{ scale: 1, color: T.textDark }}
+                              style={{ width: 28, textAlign: "center", fontSize: 12, fontWeight: 800 }}
                             >
                               {item.qty}
                             </motion.span>
                             <motion.button
+                              whileTap={{ scale: 0.85 }}
                               onClick={() => handleUpdate(item, item.qty + 1)}
-                              whileTap={{ scale: 0.8 }}
-                              className="w-6 h-6 md:w-7 md:h-7 rounded-full bg-white dark:bg-slate-800 flex items-center justify-center text-slate-500 hover:text-blue-600 transition-all shadow-sm"
+                              style={{ width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer" }}
                             >
                               <FiPlus size={10} />
                             </motion.button>
                           </div>
-                          <span className="font-black text-slate-900 dark:text-white text-xs md:text-sm">
-                            {"\u20B9"}{(item.price * item.qty).toFixed(0)}
+
+                          <span style={{ fontSize: 14, fontWeight: 800, color: T.textDark }}>
+                            ₹{(item.price * item.qty).toFixed(0)}
                           </span>
                         </div>
                       </div>
@@ -273,46 +266,60 @@ export default function CartSidebar({ isOpen, onClose }) {
               )}
             </div>
 
-            {/* FOOTER */}
+            {/* ── FOOTER ── */}
             {cartItems.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.4 }}
-                className="p-4 md:p-6 bg-slate-50/50 dark:bg-slate-900/20 border-t border-slate-100 dark:border-white/5"
+                transition={{ delay: 0.18, duration: 0.4 }}
+                style={{ padding: "20px 24px", background: T.surface, borderTop: `1px solid ${T.border}` }}
               >
-                <div className="flex justify-between items-center mb-4 md:mb-6">
-                  <div className="flex flex-col">
-                    <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
-                      Total Amount
-                    </span>
-                    <div className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
-                      <PriceCounter value={subtotal} />
-                    </div>
+                {/* Total */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <div>
+                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: T.textLite, margin: "0 0 2px" }}>Total Amount</p>
+                    <motion.p
+                      key={subtotal}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      style={{ fontSize: 26, fontWeight: 800, color: T.textDark, margin: 0, letterSpacing: "-0.03em" }}
+                    >
+                      ₹{subtotal.toLocaleString()}
+                    </motion.p>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <p style={{ fontSize: 10, color: T.textLite, margin: 0 }}>
+                      {cartCount} {cartCount === 1 ? "item" : "items"}
+                    </p>
                   </div>
                 </div>
 
+                {/* Checkout button */}
                 <motion.button
-                  onClick={handleCheckout}
-                  whileHover={{
-                    scale: 1.02,
-                    boxShadow: "0 15px 40px rgba(0,0,0,0.15)",
-                  }}
+                  whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(91,168,160,0.30)" }}
                   whileTap={{ scale: 0.97 }}
-                  className="w-full bg-slate-900 dark:bg-blue-600 text-white h-12 md:h-14 rounded-xl md:rounded-2xl font-black uppercase tracking-widest text-[10px] md:text-xs shadow-2xl transition-all flex items-center justify-center gap-3 group"
+                  onClick={handleCheckout}
+                  style={{
+                    width: "100%", padding: "15px 20px", borderRadius: 14,
+                    background: T.primary, color: "#fff", border: "none",
+                    fontSize: 14, fontWeight: 700, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                    fontFamily: font, boxShadow: "0 4px 20px rgba(91,168,160,0.24)",
+                    letterSpacing: "-0.01em",
+                  }}
                 >
-                  Checkout Now{" "}
+                  Checkout Now
                   <motion.span
                     animate={{ x: [0, 4, 0] }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 1.5,
-                      ease: "easeInOut",
-                    }}
+                    transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
                   >
-                    <FiArrowRight />
+                    <FiArrowRight size={16} />
                   </motion.span>
                 </motion.button>
+
+                <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+                  <FiLock size={10} /> Secured checkout
+                </p>
               </motion.div>
             )}
           </motion.div>
