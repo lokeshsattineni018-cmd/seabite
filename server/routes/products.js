@@ -68,6 +68,12 @@ router.get("/", async (req, res) => {
       query.stock = { $ne: "out" };
     }
 
+    // 🟢 FLASH SALE FILTER
+    if (req.query.flashSale === "true") {
+      query["flashSale.isFlashSale"] = true;
+      query["flashSale.saleEndDate"] = { $gt: new Date() };
+    }
+
     // Sorting
     let sortOptions = { createdAt: -1 }; // Default: Newest
     if (sort === "price-asc") sortOptions = { basePrice: 1 };
