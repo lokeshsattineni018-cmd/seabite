@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /profile
+Disallow: /orders
+Disallow: /checkout
+
+Sitemap: https://seabite.co.in/sitemap.xml
