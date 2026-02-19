@@ -34,14 +34,14 @@ const PriceCounter = ({ value }) => (
 );
 
 export default function CartSidebar({ isOpen, onClose }) {
-  const { cartCount, refreshCartCount, cartItems, subtotal: subtotalStr } = useContext(CartContext);
+  const { cartCount, refreshCartCount, cartItems, subtotal: subtotalStr, storeSettings } = useContext(CartContext);
   const { isDarkMode } = useContext(ThemeContext);
   const navigate = useNavigate();
 
   // Use values from Context (already sanitized)
   const subtotal = parseFloat(subtotalStr || "0");
 
-  const FREE_DELIVERY_THRESHOLD = 1000;
+  const FREE_DELIVERY_THRESHOLD = storeSettings?.freeDeliveryThreshold || 1000;
   const deliveryProgress = Math.min(
     (subtotal / FREE_DELIVERY_THRESHOLD) * 100,
     100

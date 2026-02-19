@@ -137,26 +137,29 @@ export default function Navbar({ openCart }) {
     linkColor:   isTransparent ? "rgba(255,255,255,0.88)"             : "#2C4A46",
     activeColor: isTransparent ? "#fff"                               : "#5BBFB5",
 
-    iconBg:      isTransparent ? "rgba(255,255,255,0.11)"             : "#F4F9F8",
-    iconBorder:  isTransparent ? "1px solid rgba(255,255,255,0.20)"   : "1px solid #E2EEEC",
-    iconColor:   isTransparent ? "rgba(255,255,255,0.80)"             : "#4A7570",
+    // On hero: solid white icons — crisp and always legible over any video frame
+    iconBg:      isTransparent ? "#ffffff"                            : "#F4F9F8",
+    iconBorder:  isTransparent ? "none"                               : "1px solid #E2EEEC",
+    iconColor:   isTransparent ? "#1A2E2C"                            : "#4A7570",
+    iconShadow:  isTransparent ? "0 2px 12px rgba(0,0,0,0.18)"       : "none",
 
-    loginBg:     isTransparent ? "rgba(255,255,255,0.15)"             : "#1A2E2C",
-    loginBorder: isTransparent ? "1.5px solid rgba(255,255,255,0.32)" : "none",
+    // Login button: solid seafoam on hero so it pops on dark video
+    loginBg:     isTransparent ? "#5BBFB5"                            : "#1A2E2C",
+    loginBorder: isTransparent ? "none"                               : "none",
 
-    profileBorder: isTransparent ? "rgba(255,255,255,0.28)"           : "#DDE9E7",
-    profileBg:     isTransparent ? "rgba(255,255,255,0.11)"           : "#fff",
-    profileName:   isTransparent ? "rgba(255,255,255,0.92)"           : "#1A2E2C",
-    chevron:       isTransparent ? "rgba(255,255,255,0.45)"           : "#A8C5C0",
+    profileBorder: isTransparent ? "rgba(255,255,255,0.55)"           : "#DDE9E7",
+    profileBg:     isTransparent ? "#ffffff"                          : "#fff",
+    profileName:   isTransparent ? "#1A2E2C"                          : "#1A2E2C",
+    chevron:       isTransparent ? "#8BBFBA"                          : "#A8C5C0",
   };
 
   const iconStyle = {
     width: "36px", height: "36px",
     border: T.iconBorder, borderRadius: "10px",
     background: T.iconBg, color: T.iconColor,
+    boxShadow: T.iconShadow,
     display: "flex", alignItems: "center", justifyContent: "center",
     cursor: "pointer",
-    backdropFilter: isTransparent ? "blur(8px)" : "none",
     transition: "all 0.25s",
   };
 
@@ -182,9 +185,9 @@ export default function Navbar({ openCart }) {
 
         /* Icon button hover */
         .nav-ib:hover {
-          background: ${isTransparent ? "rgba(255,255,255,0.22)" : "#E8F4F2"} !important;
-          border-color: ${isTransparent ? "rgba(255,255,255,0.45)" : "#BFD9D6"} !important;
-          color: ${isTransparent ? "#fff" : "#5BBFB5"} !important;
+          background: ${isTransparent ? "#E8F8F6" : "#E8F4F2"} !important;
+          color: #5BBFB5 !important;
+          box-shadow: ${isTransparent ? "0 4px 16px rgba(0,0,0,0.14)" : "none"} !important;
         }
 
         /* Dropdown items */
@@ -404,7 +407,7 @@ export default function Navbar({ openCart }) {
                     padding: "5px 11px 5px 5px",
                     border: `1.5px solid ${T.profileBorder}`,
                     borderRadius: "20px", background: T.profileBg,
-                    backdropFilter: isTransparent ? "blur(8px)" : "none",
+                    boxShadow: isTransparent ? "0 2px 12px rgba(0,0,0,0.18)" : "none",
                     cursor: "pointer", transition: "all 0.3s",
                   }}>
                     <div style={{
@@ -499,7 +502,7 @@ export default function Navbar({ openCart }) {
                     border: T.loginBorder, borderRadius: "10px",
                     fontSize: "13px", fontWeight: "700",
                     cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                    backdropFilter: isTransparent ? "blur(8px)" : "none",
+                    boxShadow: isTransparent ? "0 2px 12px rgba(0,0,0,0.18)" : "none",
                     transition: "all 0.3s",
                   }}>
                   <FiUser size={13} /> Login
