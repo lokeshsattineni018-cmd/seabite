@@ -133,7 +133,7 @@ export default function Checkout() {
         setAddresses(res.data);
         const defaultAddr = res.data.find(a => a.isDefault);
         if (defaultAddr) setDeliveryAddress(defaultAddr);
-      } catch {}
+      } catch { }
     };
     fetchAddresses();
   }, []);
@@ -145,15 +145,19 @@ export default function Checkout() {
         const discount = JSON.parse(savedDiscount);
         if (new Date() < new Date(discount.expiresAt)) setSpinDiscount(discount);
         else localStorage.removeItem("seabiteSpinDiscount");
-      } catch {}
+      } catch { }
     }
   }, []);
 
+  const isOrderSuccess = useRef(false);
+
   useEffect(() => {
-    if (cartItems.length === 0) {
+    let timeoutId;
+    if (cartItems.length === 0 && !isOrderSuccess.current) {
       setModal({ show: true, message: "Your cart is empty!", type: "error" });
-      setTimeout(() => navigate("/products"), 2000);
+      timeoutId = setTimeout(() => navigate("/products"), 2000);
     }
+    return () => clearTimeout(timeoutId);
   }, [cartItems, navigate]);
 
   const itemTotal = parseFloat(subtotal);
@@ -214,28 +218,44 @@ export default function Checkout() {
       const { data } = await axios.post(`${API_URL}/api/payment/checkout`, orderDetails, { withCredentials: true });
       const internalDbId = data.dbOrderId;
       if (spinDiscount) localStorage.removeItem("seabiteSpinDiscount");
+
       if (paymentMethod === "COD") {
-        clearCart(); refreshCartCount();
+        isOrderSuccess.current = true; // Prevent "Cart Empty" redirect
+        clearCart();
+        refreshCartCount();
         navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`);
         return;
       }
+
       const options = {
         key: "rzp_test_RudgOJMh7819Qs", amount: data.order.amount, currency: "INR",
         name: "SeaBite", description: "Fresh Coastal Catch Payment", order_id: data.order.id,
         handler: async (response) => {
           try {
             const verifyRes = await axios.post(`${API_URL}/api/payment/verify`, response, { withCredentials: true });
-            if (verifyRes.data.success) { clearCart(); refreshCartCount(); navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`); }
+            if (verifyRes.data.success) {
+              isOrderSuccess.current = true; // Prevent "Cart Empty" redirect
+              clearCart();
+              refreshCartCount();
+              navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`);
+            }
           } catch { setModal({ show: true, message: "Payment Verification Failed", type: "error" }); }
         },
         prefill: { name: deliveryAddress.name, contact: deliveryAddress.phone },
         theme: { color: T.primary },
         modal: { ondismiss: () => setLoading(false) },
       };
-      new window.Razorpay(options).open();
+
+      if (window.Razorpay) {
+        new window.Razorpay(options).open();
+      } else {
+        throw new Error("Razorpay SDK failed to load. Please check your connection.");
+      }
     } catch (err) {
-      setModal({ show: true, message: err.response?.data?.message || "Order initiation failed.", type: "error" });
-    } finally { setLoading(false); }
+      setModal({ show: true, message: err.response?.data?.message || err.message || "Order initiation failed.", type: "error" });
+    } finally {
+      if (!isOrderSuccess.current) setLoading(false);
+    }
   };
 
   const currentStep = deliveryAddress._id ? (paymentMethod ? 3 : 2) : 1;
