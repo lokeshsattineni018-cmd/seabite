@@ -1,53 +1,54 @@
-
 import { useState, useContext, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiSearch, FiChevronDown, FiPackage, FiFilter, FiX } from "react-icons/fi";
+import {
+  FiSearch, FiPackage, FiFilter, FiX,
+  FiSliders, FiChevronDown, FiChevronRight
+} from "react-icons/fi";
 import { CartContext } from "../context/CartContext";
 import EnhancedProductCard from "../components/EnhancedProductCard";
 import FilterSidebar from "../components/FilterSidebar";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-const CATEGORY_DATA = {
-  All: {
-    title: "Fresh Catch",
-    desc: "Sustainable seafood.",
-    gradient: "from-blue-500/10 via-cyan-400/5 to-transparent",
-    accent: "text-blue-600",
-  },
-  Fish: {
-    title: "Premium Fish",
-    desc: "Freshwater cuts.",
-    gradient: "from-cyan-500/10 via-blue-400/5 to-transparent",
-    accent: "text-cyan-600",
-  },
-  Prawn: {
-    title: "Jumbo Prawns",
-    desc: "Perfect for grilling.",
-    gradient: "from-orange-500/10 via-amber-400/5 to-transparent",
-    accent: "text-orange-600",
-  },
-  Crab: {
-    title: "Live Crabs",
-    desc: "Soft-shell delicacies.",
-    gradient: "from-red-500/10 via-rose-400/5 to-transparent",
-    accent: "text-red-600",
-  },
+// ─── Palette ─────────────────────────────────────────────
+// #5BBFB5  Seafoam primary
+// #7EB8D4  Sky secondary
+// #F07468  Coral accent (CTA)
+// #F4F9F8  Off-white bg
+// #FFFFFF  Card surface
+// #E2EEEC  Mist border
+// #1A2E2C  Deep tide text
+// #6B8F8A  Drift secondary text
+// #B8CFCC  Foam muted text
+// ─────────────────────────────────────────────────────────
+
+const CATEGORY_META = {
+  All:   { emoji: "🌊", label: "All Products",    tagline: "Fresh from the ocean, daily." },
+  Fish:  { emoji: "🐟", label: "Premium Fish",    tagline: "Wild-caught, restaurant quality." },
+  Prawn: { emoji: "🦐", label: "Jumbo Prawns",    tagline: "Perfect for grilling & curries." },
+  Crab:  { emoji: "🦀", label: "Live Crabs",      tagline: "Soft-shell & market-fresh." },
 };
+
+const SORT_OPTIONS = [
+  { value: "newest",     label: "Newest First" },
+  { value: "price_asc",  label: "Price: Low → High" },
+  { value: "price_desc", label: "Price: High → Low" },
+  { value: "popular",    label: "Most Popular" },
+];
 
 export default function Products() {
   const { refreshCartCount } = useContext(CartContext);
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [products, setProducts] = useState([]);
-  const [globalDiscount, setGlobalDiscount] = useState(0); // 🟢 NEW
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts]           = useState([]);
+  const [globalDiscount, setGlobalDiscount] = useState(0);
+  const [loading, setLoading]             = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [sortOpen, setSortOpen]           = useState(false);
 
-  // Consolidated Filter State
   const [filters, setFilters] = useState({
     category: "All",
     search: "",
@@ -58,17 +59,18 @@ export default function Products() {
   });
 
   const categories = ["All", "Fish", "Crab", "Prawn"];
-  const currentTheme = CATEGORY_DATA[filters.category] || CATEGORY_DATA["All"];
+  const meta = CATEGORY_META[filters.category] || CATEGORY_META.All;
+  const activeSort = SORT_OPTIONS.find((o) => o.value === filters.sort);
 
-  // Sync URL params with state on load
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const cat = params.get("category");
     const search = params.get("search");
-
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      category: cat ? (cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase().replace(/s$/, "")) : "All",
+      category: cat
+        ? cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase().replace(/s$/, "")
+        : "All",
       search: search || "",
     }));
   }, [location.search]);
@@ -78,16 +80,15 @@ export default function Products() {
     try {
       const params = {
         category: filters.category === "All" ? undefined : filters.category,
-        search: filters.search || undefined,
+        search:   filters.search   || undefined,
         minPrice: filters.minPrice || undefined,
         maxPrice: filters.maxPrice || undefined,
-        inStock: filters.inStock || undefined,
-        sort: filters.sort,
+        inStock:  filters.inStock  || undefined,
+        sort:     filters.sort,
       };
-
       const res = await axios.get(`${API_URL}/api/products`, { params });
       setProducts(res.data.products || res.data || []);
-      setGlobalDiscount(res.data.globalDiscount || 0); // 🟢 NEW
+      setGlobalDiscount(res.data.globalDiscount || 0);
     } catch (err) {
       console.error("Products fetch error:", err);
     } finally {
@@ -96,166 +97,362 @@ export default function Products() {
   }, [filters]);
 
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      fetchProducts();
-    }, 300); // Debounce for search/slider inputs
-    return () => clearTimeout(debounceTimer);
+    const t = setTimeout(fetchProducts, 300);
+    return () => clearTimeout(t);
   }, [fetchProducts]);
 
   const clearFilters = () => {
-    setFilters({
-      category: "All",
-      search: "",
-      minPrice: "",
-      maxPrice: "",
-      inStock: false,
-      sort: "newest"
-    });
+    setFilters({ category: "All", search: "", minPrice: "", maxPrice: "", inStock: false, sort: "newest" });
     navigate("/products");
   };
 
+  const activeFilterCount = [
+    filters.minPrice, filters.maxPrice, filters.inStock,
+  ].filter(Boolean).length;
+
   return (
-    <div className="min-h-screen bg-[#fafafa] dark:bg-[#0b1221] pt-28 pb-12 px-4 transition-colors duration-500 font-sans">
-      {/* Ambient gradient */}
-      <motion.div
-        key={`gradient-${filters.category}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.3 }}
-        transition={{ duration: 0.8 }}
-        className={`fixed top-0 left-0 w-full h-[50vh] bg-gradient-to-b ${currentTheme.gradient} pointer-events-none -z-10`}
-      />
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@500;600&display=swap');
+        * { box-sizing: border-box; }
+        .products-root { font-family: 'Manrope', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .sort-dropdown { animation: fadeDown 0.18s cubic-bezier(.4,0,.2,1); }
+        @keyframes fadeDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        .category-pill-active { background: #1A2E2C !important; color: #fff !important; border-color: #1A2E2C !important; }
+        .category-pill { border: 1.5px solid #E2EEEC; color: #6B8F8A; background: #fff; transition: all 0.18s ease; cursor: pointer; }
+        .category-pill:hover { border-color: #5BBFB5; color: #5BBFB5; }
+        .search-input:focus { border-color: #5BBFB5 !important; box-shadow: 0 0 0 3px rgba(91,191,181,0.12) !important; }
+        .filter-btn:hover { border-color: #5BBFB5; color: #5BBFB5; }
+      `}</style>
 
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row justify-between items-end mb-8 gap-6">
-          <div className="max-w-xl w-full">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={`label-${filters.category}`}
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
-                className={`text-[10px] md:text-xs font-bold uppercase tracking-widest ${currentTheme.accent} mb-2 block`}
-              >
-                Explore / {filters.category}
-              </motion.span>
-            </AnimatePresence>
-            <motion.h1
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-3xl md:text-5xl font-medium tracking-tight text-slate-900 dark:text-white"
-            >
-              {currentTheme.title}
-            </motion.h1>
-          </div>
+      <div
+        className="products-root"
+        style={{ minHeight: "100vh", background: "#F4F9F8", paddingTop: "88px", paddingBottom: "64px" }}
+      >
+        {/* Subtle ocean header swell */}
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, height: "320px",
+          background: "linear-gradient(180deg, rgba(91,191,181,0.07) 0%, transparent 100%)",
+          pointerEvents: "none", zIndex: 0,
+        }} />
 
+        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px", position: "relative", zIndex: 1 }}>
+
+          {/* ── Page Header ─────────────────────────────────── */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="flex gap-3 w-full lg:w-auto"
+            transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+            style={{ marginBottom: "36px" }}
           >
-            {/* Mobile Filter Toggle */}
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="lg:hidden px-4 py-2.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white flex items-center gap-2 font-bold text-sm shadow-sm"
-            >
-              <FiFilter /> Filters
-            </button>
+            {/* Breadcrumb */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.1em" }}>SeaBite</span>
+              <FiChevronRight size={10} style={{ color: "#B8CFCC" }} />
+              <span style={{ fontSize: "11px", fontWeight: "600", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                {filters.category === "All" ? "All Products" : filters.category}
+              </span>
+            </div>
 
-            <div className="relative flex-grow lg:w-64">
-              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search..."
-                value={filters.search}
-                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700 text-sm focus:ring-1 focus:ring-blue-500 outline-none transition-all text-slate-900 dark:text-white shadow-sm"
-              />
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
+              <div>
+                <AnimatePresence mode="wait">
+                  <motion.h1
+                    key={filters.category}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.3 }}
+                    style={{
+                      fontFamily: "'Lora', serif",
+                      fontSize: "clamp(28px, 4vw, 40px)",
+                      fontWeight: "600",
+                      color: "#1A2E2C",
+                      letterSpacing: "-0.02em",
+                      marginBottom: "6px",
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {meta.emoji} {meta.label}
+                  </motion.h1>
+                </AnimatePresence>
+                <p style={{ fontSize: "14px", color: "#6B8F8A", fontWeight: "500" }}>{meta.tagline}</p>
+              </div>
+
+              {/* Search + Filter Controls */}
+              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                {/* Mobile filter toggle */}
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="filter-btn"
+                  style={{
+                    display: "none", /* shown via media query override below */
+                    alignItems: "center", gap: "6px",
+                    padding: "9px 16px", borderRadius: "10px",
+                    border: "1.5px solid #E2EEEC", background: "#fff",
+                    color: "#6B8F8A", fontSize: "13px", fontWeight: "600",
+                    cursor: "pointer", transition: "all 0.2s ease",
+                  }}
+                >
+                  <FiSliders size={14} />
+                  Filters
+                  {activeFilterCount > 0 && (
+                    <span style={{ background: "#5BBFB5", color: "#fff", width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "800" }}>
+                      {activeFilterCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Search */}
+                <div style={{ position: "relative" }}>
+                  <FiSearch size={14} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#B8CFCC", pointerEvents: "none" }} />
+                  <input
+                    type="text"
+                    placeholder="Search fish, crab, prawn…"
+                    value={filters.search}
+                    onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
+                    className="search-input"
+                    style={{
+                      paddingLeft: "38px", paddingRight: "16px", paddingTop: "9px", paddingBottom: "9px",
+                      border: "1.5px solid #E2EEEC", borderRadius: "10px", background: "#fff",
+                      fontSize: "13px", color: "#1A2E2C", outline: "none",
+                      width: "220px", transition: "all 0.2s ease",
+                      fontFamily: "'Manrope', sans-serif",
+                    }}
+                  />
+                  {filters.search && (
+                    <button
+                      onClick={() => setFilters((p) => ({ ...p, search: "" }))}
+                      style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", alignItems: "center" }}
+                    >
+                      <FiX size={13} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Sort Dropdown */}
+                <div style={{ position: "relative" }}>
+                  <button
+                    onClick={() => setSortOpen((o) => !o)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "6px",
+                      padding: "9px 14px", borderRadius: "10px",
+                      border: "1.5px solid #E2EEEC", background: "#fff",
+                      color: "#6B8F8A", fontSize: "13px", fontWeight: "600",
+                      cursor: "pointer", fontFamily: "'Manrope', sans-serif",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <FiFilter size={13} />
+                    {activeSort?.label}
+                    <FiChevronDown size={12} style={{ transition: "transform 0.2s", transform: sortOpen ? "rotate(180deg)" : "none" }} />
+                  </button>
+
+                  <AnimatePresence>
+                    {sortOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        transition={{ duration: 0.15 }}
+                        style={{
+                          position: "absolute", top: "calc(100% + 6px)", right: 0,
+                          background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "12px",
+                          padding: "6px", zIndex: 50, minWidth: "180px",
+                          boxShadow: "0 8px 24px rgba(26,46,44,0.08)",
+                        }}
+                      >
+                        {SORT_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            onClick={() => { setFilters((p) => ({ ...p, sort: opt.value })); setSortOpen(false); }}
+                            style={{
+                              display: "block", width: "100%", textAlign: "left",
+                              padding: "8px 12px", borderRadius: "8px", border: "none",
+                              background: filters.sort === opt.value ? "#F4F9F8" : "transparent",
+                              color: filters.sort === opt.value ? "#5BBFB5" : "#1A2E2C",
+                              fontSize: "13px", fontWeight: filters.sort === opt.value ? "700" : "500",
+                              cursor: "pointer", fontFamily: "'Manrope', sans-serif",
+                              transition: "background 0.15s",
+                            }}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
             </div>
           </motion.div>
-        </div>
 
-        <div className="flex gap-8 items-start">
-          {/* Sidebar Component */}
-          <FilterSidebar
-            isOpen={isSidebarOpen}
-            onClose={() => setIsSidebarOpen(false)}
-            filters={filters}
-            setFilters={setFilters}
-            clearFilters={clearFilters}
-          />
+          <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
+            {/* ── Sidebar ─────────────────────────────────── */}
+            <FilterSidebar
+              isOpen={isSidebarOpen}
+              onClose={() => setIsSidebarOpen(false)}
+              filters={filters}
+              setFilters={setFilters}
+              clearFilters={clearFilters}
+            />
 
-          <div className="flex-1 w-full">
-            {/* Category Filter Tabs */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex gap-2 mb-8 overflow-x-auto pb-2 no-scrollbar"
-            >
-              {categories.map((cat) => (
-                <motion.button
-                  key={cat}
-                  whileHover={{ scale: 1.04 }}
-                  whileTap={{ scale: 0.96 }}
-                  onClick={() => {
-                    setFilters(prev => ({ ...prev, category: cat }));
-                    navigate(cat === "All" ? "/products" : `/products?category=${cat}`);
-                  }}
-                  className={`px-5 py-2 rounded-full text-xs font-medium transition-all whitespace-nowrap relative ${filters.category === cat
-                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md"
-                    : "bg-white dark:bg-slate-800 text-slate-500 border border-slate-100 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
-                    }`}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Category Pills */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                style={{ display: "flex", gap: "8px", marginBottom: "28px", overflowX: "auto" }}
+                className="no-scrollbar"
+              >
+                {categories.map((cat) => (
+                  <motion.button
+                    key={cat}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => {
+                      setFilters((p) => ({ ...p, category: cat }));
+                      navigate(cat === "All" ? "/products" : `/products?category=${cat}`);
+                    }}
+                    className={`category-pill ${filters.category === cat ? "category-pill-active" : ""}`}
+                    style={{
+                      padding: "7px 18px",
+                      borderRadius: "20px",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      whiteSpace: "nowrap",
+                      display: "flex", alignItems: "center", gap: "6px",
+                      fontFamily: "'Manrope', sans-serif",
+                    }}
+                  >
+                    <span>{CATEGORY_META[cat]?.emoji}</span>
+                    {cat}
+                  </motion.button>
+                ))}
+
+                {/* Active filters chips */}
+                {filters.inStock && (
+                  <motion.div
+                    initial={{ scale: 0.85, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "20px", background: "#F0FBF9", border: "1.5px solid #5BBFB5", color: "#5BBFB5", fontSize: "12px", fontWeight: "700", whiteSpace: "nowrap" }}
+                  >
+                    In Stock Only
+                    <button onClick={() => setFilters((p) => ({ ...p, inStock: false }))} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", display: "flex", padding: 0 }}>
+                      <FiX size={11} />
+                    </button>
+                  </motion.div>
+                )}
+                {(filters.minPrice || filters.maxPrice) && (
+                  <motion.div
+                    initial={{ scale: 0.85, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "20px", background: "#F0FBF9", border: "1.5px solid #5BBFB5", color: "#5BBFB5", fontSize: "12px", fontWeight: "700", whiteSpace: "nowrap" }}
+                  >
+                    ₹{filters.minPrice || "0"} – ₹{filters.maxPrice || "∞"}
+                    <button onClick={() => setFilters((p) => ({ ...p, minPrice: "", maxPrice: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", display: "flex", padding: 0 }}>
+                      <FiX size={11} />
+                    </button>
+                  </motion.div>
+                )}
+              </motion.div>
+
+              {/* Result count */}
+              {!loading && products.length > 0 && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{ fontSize: "12px", color: "#B8CFCC", fontWeight: "600", marginBottom: "20px", letterSpacing: "0.03em" }}
                 >
-                  {cat}
-                </motion.button>
-              ))}
-            </motion.div>
+                  {products.length} result{products.length !== 1 ? "s" : ""} found
+                </motion.p>
+              )}
 
-            {/* Product Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-6">
+              {/* ── Product Grid ────────────────────────────── */}
               <AnimatePresence mode="popLayout">
                 {loading ? (
-                  [...Array(6)].map((_, i) => (
-                    <motion.div
-                      key={`skeleton-${i}`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: [0.3, 0.6, 0.3] }}
-                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1 }}
-                      className="h-80 rounded-2xl bg-slate-200 dark:bg-slate-800"
-                    />
-                  ))
-                ) : products.length > 0 ? (
-                  products.map((p) => (
-                    <motion.div
-                      key={p._id}
-                      layout
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.9 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
-                    </motion.div>
-                  ))
-                ) : (
                   <motion.div
+                    key="skeleton"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="col-span-full py-20 text-center"
+                    exit={{ opacity: 0 }}
+                    style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "20px" }}
                   >
-                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <FiPackage size={28} className="text-slate-300 dark:text-slate-600" />
+                    {[...Array(6)].map((_, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          height: "320px", borderRadius: "16px",
+                          background: "linear-gradient(90deg, #E2EEEC 25%, #EDF5F3 50%, #E2EEEC 75%)",
+                          backgroundSize: "200% 100%",
+                          animation: `shimmer 1.6s infinite ${i * 0.1}s`,
+                        }}
+                      />
+                    ))}
+                    <style>{`
+                      @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+                    `}</style>
+                  </motion.div>
+                ) : products.length > 0 ? (
+                  <motion.div
+                    key="grid"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "20px" }}
+                  >
+                    {products.map((p, i) => (
+                      <motion.div
+                        key={p._id}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}
+                        style={{ height: "100%" }}
+                      >
+                        <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="empty"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{
+                      textAlign: "center",
+                      padding: "80px 24px",
+                      background: "#fff",
+                      borderRadius: "20px",
+                      border: "1.5px solid #E2EEEC",
+                    }}
+                  >
+                    {/* Simple ocean illustration */}
+                    <div style={{ marginBottom: "20px" }}>
+                      <svg width="80" height="60" viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <ellipse cx="40" cy="48" rx="32" ry="6" fill="#E2EEEC" />
+                        <path d="M10 32 Q20 18 30 28 Q40 38 50 22 Q60 8 70 24" stroke="#B8CFCC" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+                        <circle cx="40" cy="22" r="10" fill="#E2EEEC" />
+                        <text x="40" y="27" textAnchor="middle" fontSize="14">🎣</text>
+                      </svg>
                     </div>
-                    <h2 className="text-lg font-medium dark:text-white mb-1">
+                    <h3 style={{ fontSize: "17px", fontWeight: "700", color: "#1A2E2C", marginBottom: "8px", fontFamily: "'Lora', serif" }}>
                       No catches found
-                    </h2>
-                    <p className="text-xs text-slate-500 mb-4">
-                      Try adjusting your filters or search.
+                    </h3>
+                    <p style={{ fontSize: "13px", color: "#6B8F8A", marginBottom: "24px", lineHeight: 1.6 }}>
+                      The ocean's quiet right now. Try adjusting your filters or search.
                     </p>
                     <button
                       onClick={clearFilters}
-                      className="text-blue-600 font-bold text-sm hover:underline"
+                      style={{
+                        padding: "10px 24px", borderRadius: "10px",
+                        background: "#1A2E2C", color: "#fff",
+                        border: "none", fontSize: "13px", fontWeight: "700",
+                        cursor: "pointer", fontFamily: "'Manrope', sans-serif",
+                        transition: "opacity 0.2s",
+                      }}
                     >
                       Clear all filters
                     </button>
@@ -266,6 +463,6 @@ export default function Products() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

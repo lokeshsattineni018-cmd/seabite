@@ -23,6 +23,7 @@ import couponRoutes from "./routes/couponRoutes.js";
 import spinRoutes from "./routes/spinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js"; // 🟢 NEW
+import watchtowerRoutes from "./routes/watchtowerRoutes.js"; // 🟢 WATCHTOWER
 import checkMaintenance from "./middleware/checkMaintenance.js";
 
 const app = express();
@@ -218,6 +219,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/settings", settingsRoutes); // 🟢 NEW
+app.use("/api/admin/watchtower", watchtowerRoutes); // 🟢 WATCHTOWER
 
 app.get("/health", (req, res) => {
   const state = mongoose.connection.readyState;
