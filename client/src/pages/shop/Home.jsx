@@ -91,10 +91,10 @@ const Counter = ({ value, suffix = "" }) => {
 
 const Chip = ({ children, color = "teal" }) => {
   const p = {
-    teal: "bg-[#EAF6F5] text-[#3D8C85] border-[#C5E6E4]",
+    teal:  "bg-[#EAF6F5] text-[#3D8C85] border-[#C5E6E4]",
     coral: "bg-[#FEF0EC] text-[#C05A45] border-[#F5C4BB]",
-    sand: "bg-[#FAF4EC] text-[#8B6D45] border-[#EAD9C0]",
-    sky: "bg-[#EDF5FB] text-[#3A7DA0] border-[#BDD9EE]",
+    sand:  "bg-[#FAF4EC] text-[#8B6D45] border-[#EAD9C0]",
+    sky:   "bg-[#EDF5FB] text-[#3A7DA0] border-[#BDD9EE]",
   };
   return <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase border ${p[color]}`}>{children}</span>;
 };
@@ -111,7 +111,7 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
   const styles = {
     primary: "px-7 py-3.5 bg-[#1A2B35] text-white hover:bg-[#5BA8A0] shadow-sm hover:shadow-[0_4px_20px_rgba(91,168,160,0.35)]",
     outline: "px-7 py-3.5 border border-[#CBD8DF] text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] bg-white",
-    coral: "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
+    coral:   "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
   };
   return (
     <Link to={to}>
@@ -123,7 +123,7 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
 };
 
 // ══════════════════════════════════════════════
-//  HERO — No bottom wave. Dark container handles it.
+//  HERO
 // ══════════════════════════════════════════════
 const Hero = () => {
   const { scrollY } = useScroll();
@@ -241,8 +241,6 @@ const Hero = () => {
 
 // ══════════════════════════════════════════════
 //  WAVE TICKER
-//  Sits inside the dark bg-[#1A2B35] container.
-//  Zero gap from hero. Bottom wave exits to #F8FAFB.
 // ══════════════════════════════════════════════
 const WaveTicker = () => {
   const items = ["Fresh Catch Daily", "Ocean to Table", "Sustainable Sourcing", "Cold Chain Delivery", "Chef Approved", "Lab Tested Quality"];
@@ -265,22 +263,13 @@ const WaveTicker = () => {
 
   return (
     <div style={{ lineHeight: 0 }}>
-      {/* Ticker strip — same dark colour as parent container, zero gap guaranteed */}
       <div className="bg-[#1A2B35] overflow-hidden" style={{ paddingTop: "16px", paddingBottom: "16px", position: "relative", lineHeight: "normal" }}>
         <div className="absolute left-0 right-0 pointer-events-none" style={{ top: "50%", transform: "translateY(-50%)", height: "1px", background: "linear-gradient(90deg, transparent, rgba(91,168,160,0.18), transparent)" }} />
         <motion.div className="flex whitespace-nowrap" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 32, ease: "linear", repeat: Infinity }} style={{ willChange: "transform" }}>
           {doubled.map((item, i) => <WaveWord key={i} text={item} index={i % items.length} totalWords={items.length} />)}
         </motion.div>
       </div>
-
-      {/* Exit wave: dark (#1A2B35) → page bg (#F8FAFB) */}
-      <svg
-        viewBox="0 0 1440 60"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ display: "block", width: "100%", height: "60px", background: "#F8FAFB" }}
-        preserveAspectRatio="none"
-      >
+      <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", width: "100%", height: "60px", background: "#F8FAFB" }} preserveAspectRatio="none">
         <path d="M0 0 C200 60, 400 0, 600 30 C800 60, 1000 0, 1200 30 C1320 50, 1400 20, 1440 30 L1440 0 Z" fill="#1A2B35" />
       </svg>
     </div>
@@ -291,9 +280,9 @@ const WaveTicker = () => {
 //  CATEGORIES
 // ══════════════════════════════════════════════
 const categories = [
-  { title: "Premium Fish", sub: "20+ varieties", img: "/fish.png", tag: "Fish", bg: "from-[#EAF6F5] to-[#F8FAFB]", accent: "#5BA8A0" },
-  { title: "Jumbo Prawns", sub: "Wild-caught daily", img: "/prawn.png", tag: "Prawn", bg: "from-[#EDF5FB] to-[#F8FAFB]", accent: "#89C2D9" },
-  { title: "Live Crabs", sub: "Ships in tank water", img: "/crab.png", tag: "Crab", bg: "from-[#FEF0EC] to-[#F8FAFB]", accent: "#E8816A" },
+  { title: "Premium Fish",  sub: "20+ varieties",      img: "/fish.png",  tag: "Fish",  bg: "from-[#EAF6F5] to-[#F8FAFB]", accent: "#5BA8A0" },
+  { title: "Jumbo Prawns",  sub: "Wild-caught daily",  img: "/prawn.png", tag: "Prawn", bg: "from-[#EDF5FB] to-[#F8FAFB]", accent: "#89C2D9" },
+  { title: "Live Crabs",    sub: "Ships in tank water", img: "/crab.png",  tag: "Crab",  bg: "from-[#FEF0EC] to-[#F8FAFB]", accent: "#E8816A" },
 ];
 
 const CategorySection = () => {
@@ -346,35 +335,17 @@ const CategorySection = () => {
 };
 
 // ══════════════════════════════════════════════
-//  FLASH SALE (DYNAMIC)
+//  FLASH SALE
 // ══════════════════════════════════════════════
 const FlashSale = () => {
-  const [saleProduct, setSaleProduct] = useState(null);
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
-
   useEffect(() => {
-    // Fetch active flash sale
-    axios.get(`${API_URL}/api/products?flashSale=true`).then((res) => {
-      const active = res.data.products && res.data.products.length > 0 ? res.data.products[0] : null;
-      setSaleProduct(active);
-    }).catch(() => { });
-  }, []);
-
-  useEffect(() => {
-    if (!saleProduct?.flashSale?.saleEndDate) return;
     const calc = () => {
-      const diff = new Date(saleProduct.flashSale.saleEndDate) - Date.now();
-      if (diff > 0) {
-        setTimeLeft({ hours: Math.floor((diff / 36e5)), minutes: Math.floor((diff / 6e4) % 60), seconds: Math.floor((diff / 1e3) % 60) });
-      } else {
-        setSaleProduct(null); // Expired
-      }
+      const diff = new Date().setHours(24, 0, 0, 0) - Date.now();
+      if (diff > 0) setTimeLeft({ hours: Math.floor((diff / 36e5) % 24), minutes: Math.floor((diff / 6e4) % 60), seconds: Math.floor((diff / 1e3) % 60) });
     };
     calc(); const t = setInterval(calc, 1000); return () => clearInterval(t);
-  }, [saleProduct]);
-
-  if (!saleProduct) return null; // Hide if no active sale
-
+  }, []);
   const pad = (v) => String(v).padStart(2, "0");
 
   return (
@@ -385,28 +356,30 @@ const FlashSale = () => {
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#5BA8A0] via-[#89C2D9] to-[#E8816A]" />
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-8 md:p-10">
               <div className="flex items-center gap-5">
-                <div className="w-16 h-16 rounded-2xl bg-[#FEF0EC] flex items-center justify-center flex-shrink-0 p-2 border border-[#F5C4BB]">
-                  <img src={saleProduct.image?.startsWith('http') ? saleProduct.image : `${API_URL}${saleProduct.image}`} className="w-full h-full object-contain mix-blend-multiply" alt="Deal" />
-                </div>
+                <div className="w-12 h-12 rounded-2xl bg-[#FEF0EC] flex items-center justify-center flex-shrink-0"><Flame size={22} className="text-[#E8816A]" /></div>
                 <div>
                   <div className="flex items-center gap-2 mb-1"><Chip color="coral"><Zap size={10} /> Flash Deal</Chip></div>
-                  <p className="text-[#1A2B35] font-bold text-lg md:text-xl leading-snug">{saleProduct.name} — <span className="text-[#E8816A]">₹{saleProduct.flashSale.discountPrice}</span></p>
-                  <p className="text-[#8BA5B3] text-sm mt-1 line-through">Originally ₹{saleProduct.basePrice}</p>
+                  <p className="text-[#1A2B35] font-bold text-lg md:text-xl leading-snug">Order above <span className="text-[#5BA8A0]">₹1,699</span> — get <span className="text-[#E8816A]">10% OFF</span></p>
+                  <p className="text-[#8BA5B3] text-sm mt-1">Use coupon <span className="font-mono font-bold text-[#1A2B35] bg-[#F5EFE6] px-2 py-0.5 rounded-md text-xs border border-[#E8D9C4]">SEABITE10</span> at checkout</p>
                 </div>
               </div>
               <div className="flex items-center gap-5 flex-shrink-0">
-                <div className="flex items-center gap-1.5 bg-[#FEF0EC] px-4 py-2 rounded-xl border border-[#F5C4BB]">
+                <div className="flex items-center gap-1.5">
                   {[{ v: timeLeft.hours, label: "HRS" }, { v: timeLeft.minutes, label: "MIN" }, { v: timeLeft.seconds, label: "SEC" }].map((t, i) => (
                     <div key={i} className="flex items-center gap-1.5">
-                      {i > 0 && <span className="text-[#E8816A] font-bold text-lg mb-2">:</span>}
+                      {i > 0 && <span className="text-[#CBD8DF] font-bold text-lg mb-2">:</span>}
                       <div className="text-center">
-                        <div className="font-bold text-[#C05A45] text-lg tabular-nums leading-none">{pad(t.v)}</div>
-                        <p className="text-[8px] text-[#D4705A] font-bold tracking-wider">{t.label}</p>
+                        <AnimatePresence mode="popLayout">
+                          <motion.div key={t.v} initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 10, opacity: 0 }} transition={{ duration: 0.2 }} className="w-11 h-11 bg-[#F8FAFB] border border-[#E8EEF2] rounded-xl flex items-center justify-center font-bold text-[#1A2B35] text-base tabular-nums">
+                            {pad(t.v)}
+                          </motion.div>
+                        </AnimatePresence>
+                        <p className="text-[9px] text-[#8BA5B3] mt-1 font-medium tracking-wider">{t.label}</p>
                       </div>
                     </div>
                   ))}
                 </div>
-                <CTAButton to={`/products/${saleProduct._id}`} variant="coral">Grab Deal <ArrowRight size={14} /></CTAButton>
+                <CTAButton to="/products" variant="coral">Grab Deal <ArrowRight size={14} /></CTAButton>
               </div>
             </div>
           </div>
@@ -417,36 +390,21 @@ const FlashSale = () => {
 };
 
 // ══════════════════════════════════════════════
-//  PRODUCT ROWS (OPTIMIZED)
+//  PRODUCT ROWS
 // ══════════════════════════════════════════════
 const CategoryRow = ({ title, filterType }) => {
   const [products, setProducts] = useState([]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
-
   useEffect(() => {
-    // 🟢 Optimized: Scoped Query
-    let query = "";
-    if (filterType === "Fish") query = "category=Fish&limit=4";
-    else if (filterType === "Shellfish") query = "category=Prawn&limit=4"; // Prawn/Crab workaround (backend supports regex so can loop)
-
-    // For Shellfish, we might need a custom approach if API doesn't support multiple categories in one go easily via 'category=A,B'.
-    // Provided API `products.js` uses regex `^${category}$`. So we can only fetch one exact category or "all".
-    // Workaround: Send `category=Prawn` for now or improve backend.
-    // The user asked to "switch this to a specific API call".
-    // I made backend changes for `flashSale`. I didn't change category to accept arrays.
-    // I'll use `Prawn` as representative for Shellfish for now to respect performance.
-
-    const endpoint = filterType === "Shellfish"
-      ? `${API_URL}/api/products?category=Prawn&limit=4` // Partial match search is safer for "Prawns", "Crabs" mixed if search covers category? No search is name.
-      // Let's stick to Prawn for Shellfish section as a safe bet for performance
-      : `${API_URL}/api/products?category=${filterType}&limit=4`;
-
-    axios.get(endpoint).then((res) => {
-      setProducts(res.data.products || []);
+    axios.get(`${API_URL}/api/products`).then((res) => {
+      const all = res.data.products || [];
       setGlobalDiscount(res.data.globalDiscount || 0);
-    }).catch(() => { });
+      const filtered = filterType === "Fish"
+        ? all.filter((p) => p.category === "Fish").slice(0, 4)
+        : all.filter((p) => p.category === "Prawn" || p.category === "Crab").slice(0, 4);
+      setProducts(filtered);
+    });
   }, [filterType]);
-
   if (!products.length) return null;
   return (
     <section className="py-16 px-6 md:px-12 bg-[#F8FAFB]">
@@ -478,37 +436,106 @@ const CategoryRow = ({ title, filterType }) => {
   );
 };
 
-
-
 // ══════════════════════════════════════════════
-//  CTA BANNER
+//  WHY SEABITE
 // ══════════════════════════════════════════════
-const CTABanner = () => (
-  <section className="px-6 md:px-12 py-6 bg-[#F8FAFB]">
-    <div className="max-w-7xl mx-auto">
-      <ScaleReveal>
-        <div className="relative rounded-2xl overflow-hidden bg-[#1A2B35] p-10 md:p-14 text-center">
-          <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none"><div className="w-96 h-96 rounded-full bg-[#5BA8A0] opacity-10 blur-3xl" /></div>
-          <div className="relative z-10 space-y-5">
-            <Reveal><Chip color="teal"><Waves size={11} /> Ocean Fresh</Chip></Reveal>
-            <Reveal delay={0.08}><h2 className="text-3xl md:text-5xl font-bold text-white leading-tight" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>Taste the ocean,<br />delivered today.</h2></Reveal>
-            <Reveal delay={0.16}><p className="text-white/50 max-w-md mx-auto text-[15px]">Premium seafood, cold-chain delivered. From the coast to your plate in hours.</p></Reveal>
-            <Reveal delay={0.24}>
-              <div className="pt-2">
-                <Link to="/products">
-                  <motion.button whileHover={{ y: -2, boxShadow: "0 8px 30px rgba(91,168,160,0.4)" }} whileTap={{ scale: 0.97 }} className="inline-flex items-center gap-2.5 px-8 py-4 bg-[#5BA8A0] text-white font-semibold rounded-full text-sm transition-all">
-                    Start Your Order <ArrowRight size={15} />
-                  </motion.button>
-                </Link>
-              </div>
-            </Reveal>
-          </div>
+const WhySeaBite = () => {
+  const features = [
+    { icon: <ShieldCheck size={20} />, title: "Quality Guaranteed",   desc: "Every batch lab-tested for freshness and safety before dispatch.",             color: "text-[#3D8C85]", bg: "bg-[#EAF6F5]" },
+    { icon: <Thermometer size={20} />, title: "Cold Chain Delivery",  desc: "Temperature-controlled packaging from ocean to your doorstep.",                color: "text-[#3A7DA0]", bg: "bg-[#EDF5FB]" },
+    { icon: <Truck size={20} />,       title: "Same Day Dispatch",    desc: "Order before 2 PM and it ships today — freshness guaranteed.",                 color: "text-[#8B6D45]", bg: "bg-[#FAF4EC]" },
+    { icon: <Utensils size={20} />,    title: "Chef Approved",        desc: "Trusted by restaurants and home cooks across the coastline.",                  color: "text-[#C05A45]", bg: "bg-[#FEF0EC]" },
+  ];
+  const stats = [
+    { value: 500, suffix: "+",  label: "Happy Customers" },
+    { value: 20,  suffix: "+",  label: "Varieties Available" },
+    { value: 98,  suffix: "%",  label: "Freshness Score" },
+    { value: 4,   suffix: ".8★", label: "Average Rating" },
+  ];
+  return (
+    <section className="py-20 px-6 md:px-12 bg-white">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+          <RevealLeft>
+            <div>
+              <SectionLabel>Why Choose Us</SectionLabel>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>The SeaBite<br />difference.</h2>
+            </div>
+          </RevealLeft>
+          <RevealRight delay={0.1}>
+            <p className="text-[#4A6572] max-w-sm text-[15px] leading-relaxed">We set the bar higher so every meal you cook starts with the finest, freshest ingredient possible.</p>
+          </RevealRight>
         </div>
-      </ScaleReveal>
-    </div>
-  </section>
-);
+        <ScaleReveal delay={0.05}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+            {stats.map((s, i) => (
+              <motion.div key={i} whileHover={{ y: -3, borderColor: "#C5E6E4" }} transition={{ duration: 0.25 }} className="bg-[#F8FAFB] border border-[#E8EEF2] rounded-2xl p-6 text-center transition-colors duration-300">
+                <p className="text-3xl font-black text-[#1A2B35] mb-1"><Counter value={s.value} suffix={s.suffix} /></p>
+                <p className="text-[11px] text-[#8BA5B3] font-medium uppercase tracking-wider">{s.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </ScaleReveal>
+        <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {features.map((f, i) => (
+            <SI key={i}>
+              <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.3 }} className="bg-[#F8FAFB] border border-[#E8EEF2] rounded-2xl p-6 h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+                <div className={`w-10 h-10 rounded-xl ${f.bg} ${f.color} flex items-center justify-center mb-5`}>{f.icon}</div>
+                <h3 className="font-bold text-[#1A2B35] mb-2 text-[15px]">{f.title}</h3>
+                <p className="text-sm text-[#8BA5B3] leading-relaxed">{f.desc}</p>
+              </motion.div>
+            </SI>
+          ))}
+        </Stagger>
+      </div>
+    </section>
+  );
+};
+
+// ══════════════════════════════════════════════
+//  REVIEWS
+// ══════════════════════════════════════════════
+const Reviews = () => {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    axios.get(`${API_URL}/api/products/top-reviews`).then((res) => { setReviews(res.data); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
+  return (
+    <section className="py-20 px-6 md:px-12 bg-[#F8FAFB]">
+      <div className="max-w-7xl mx-auto">
+        <Reveal>
+          <SectionLabel>Customer Reviews</SectionLabel>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] mb-12" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>Loved by seafood lovers.</h2>
+        </Reveal>
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {loading ? (
+            [...Array(3)].map((_, i) => <SI key={i}><div className="h-48 rounded-2xl" style={{ background: "linear-gradient(90deg,#E8EEF2 25%,#F0F5F8 50%,#E8EEF2 75%)", backgroundSize: "200% 100%", animation: `shimmer 1.6s infinite ${i * 0.15}s` }} /></SI>)
+          ) : reviews.length > 0 ? (
+            reviews.map((r, i) => (
+              <SI key={i}>
+                <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.3 }} className="bg-white border border-[#E8EEF2] rounded-2xl p-6 h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-shadow duration-300">
+                  <div className="flex gap-0.5 mb-5">
+                    {[...Array(5)].map((_, j) => <Star key={j} size={13} className={j < r.rating ? "text-amber-400 fill-amber-400" : "text-[#E8EEF2] fill-[#E8EEF2]"} />)}
+                  </div>
+                  <p className="text-[#4A6572] text-sm leading-relaxed mb-6">&ldquo;{r.comment}&rdquo;</p>
+                  <div className="flex items-center gap-3 pt-4 border-t border-[#F5F7F9]">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#5BA8A0] to-[#89C2D9] flex items-center justify-center text-white"><User size={14} /></div>
+                    <div>
+                      <p className="text-sm font-semibold text-[#1A2B35]">{r.userName}</p>
+                      <p className="text-[11px] text-[#5BA8A0] font-medium">{r.productName}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              </SI>
+            ))
+          ) : <p className="col-span-3 text-center text-[#8BA5B3]">No reviews yet.</p>}
+        </Stagger>
+        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+      </div>
+    </section>
+  );
+};
 
 // ══════════════════════════════════════════════
 //  SCROLL-TO-TOP
@@ -541,14 +568,6 @@ export default function Home() {
         * { -webkit-font-smoothing: antialiased; }
       `}</style>
 
-      {/*
-        ═══════════════════════════════════════════
-        DARK CONTAINER — Hero + WaveTicker share the
-        same bg-[#1A2B35]. A gap between them is
-        physically impossible. Only the bottom SVG
-        wave of WaveTicker exits to #F8FAFB.
-        ═══════════════════════════════════════════
-      */}
       <div className="bg-[#1A2B35]">
         <Hero />
         <WaveTicker />
@@ -566,8 +585,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Removed Reviews and WhySeaBite as requested */}
-      <CTABanner />
+      <Reviews />
+      <WhySeaBite />
       <ScrollTop />
     </div>
   );
