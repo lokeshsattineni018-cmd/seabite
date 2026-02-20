@@ -6,6 +6,7 @@ import {
     FiSearch, FiTrash2, FiStar, FiMessageSquare, FiRefreshCw, FiFilter
 } from "react-icons/fi";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
@@ -96,7 +97,7 @@ export default function AdminReviews() {
                         </div>
 
                         <button onClick={fetchReviews} className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-2xl transition-colors">
-                            <FiRefreshCw className={loading ? "animate-spin" : ""} size={18} />
+                            {loading ? <SeaBiteLoader small /> : <FiRefreshCw size={18} />}
                         </button>
                     </div>
                 </motion.div>
@@ -105,9 +106,9 @@ export default function AdminReviews() {
                 <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                     <AnimatePresence mode="popLayout">
                         {loading ? (
-                            [...Array(6)].map((_, i) => (
-                                <motion.div key={i} variants={fadeUp} className="h-48 bg-stone-50 rounded-3xl border border-stone-100 animate-pulse" />
-                            ))
+                            <div className="col-span-full py-20 flex justify-center">
+                                <SeaBiteLoader />
+                            </div>
                         ) : filteredReviews.length === 0 ? (
                             <motion.div variants={fadeUp} className="col-span-full py-20 text-center">
                                 <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-300">

@@ -6,6 +6,7 @@ import {
     FiTarget, FiZap, FiLayout, FiType, FiRefreshCw
 } from "react-icons/fi";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -34,7 +35,7 @@ export default function AdminMarketing() {
     const fetchUsers = async () => {
         setIsLoadingUsers(true);
         try {
-            const { data } = await axios.get(`${API_URL}/api/admin/users`);
+            const { data } = await axios.get(`${API_URL}/api/admin/users`, { withCredentials: true });
             setUsers(Array.isArray(data) ? data : []);
         } catch (err) {
             toast.error("Failed to load users");
@@ -180,7 +181,7 @@ export default function AdminMarketing() {
                                 >
                                     {sending ? (
                                         <>
-                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <SeaBiteLoader small />
                                             Sending...
                                         </>
                                     ) : (
@@ -287,7 +288,9 @@ export default function AdminMarketing() {
 
                                 <div className="overflow-y-auto flex-1 p-3">
                                     {isLoadingUsers ? (
-                                        <div className="p-10 text-center text-stone-400 text-sm">Loading...</div>
+                                        <div className="p-10 flex justify-center">
+                                            <SeaBiteLoader />
+                                        </div>
                                     ) : (
                                         <div className="space-y-1">
                                             {/* Select All */}

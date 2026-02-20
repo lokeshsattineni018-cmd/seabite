@@ -4,6 +4,7 @@ import axios from "axios";
 import { FiTrendingUp, FiActivity, FiUsers, FiBox, FiAlertTriangle } from "react-icons/fi";
 import { ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from "recharts";
 import { motion } from "framer-motion";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
@@ -33,9 +34,9 @@ export default function AdminAnalytics() {
     }, []);
 
     if (loading) return (
-        <div className="p-10 flex flex-col items-center justify-center min-h-[60vh] text-stone-400 font-bold space-y-3">
-            <div className="w-8 h-8 border-2 border-stone-200 border-t-stone-800 rounded-full animate-spin" />
-            <p className="text-xs uppercase tracking-widest">Crunching Numbers...</p>
+        <div className="p-10 flex flex-col items-center justify-center min-h-[60vh] text-stone-400 font-bold space-y-4">
+            <SeaBiteLoader />
+            <p className="text-xs uppercase tracking-widest mt-2">Crunching Numbers...</p>
         </div>
     );
 

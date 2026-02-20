@@ -8,6 +8,7 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import PopupModal from "../components/common/PopupModal";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
@@ -249,7 +250,7 @@ export default function AddProduct() {
               <div className="pt-6 flex gap-4">
                 <button type="button" onClick={() => window.history.back()} className="flex-1 py-3.5 rounded-xl border border-stone-200 text-stone-500 font-bold text-xs uppercase hover:bg-stone-50 transition-colors">Cancel</button>
                 <button type="submit" disabled={loading} className="flex-[2] py-3.5 bg-stone-900 text-white rounded-xl font-bold text-xs uppercase shadow-lg hover:bg-stone-800 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                  {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <><FiPlus size={16} /> Create Product</>}
+                  {loading ? <SeaBiteLoader small /> : <><FiPlus size={16} /> Create Product</>}
                 </button>
               </div>
 

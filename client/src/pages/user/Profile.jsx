@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FiLogOut, FiHome, FiArrowLeft, FiEdit2 } from "react-icons/fi";
 import { motion, useInView } from "framer-motion";
 import UserInfo from "./UserInfo";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -42,7 +43,7 @@ export default function Profile() {
   const handleLogout = async () => {
     try {
       await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
-    } catch {}
+    } catch { }
     finally {
       navigate("/login");
       window.location.reload();
@@ -52,27 +53,7 @@ export default function Profile() {
   useEffect(() => { fetchUser(); }, []);
 
   if (loading) {
-    return (
-      <div style={{
-        minHeight: "100vh", background: "#F4F9F8",
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        fontFamily: "'Plus Jakarta Sans', sans-serif",
-      }}>
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-          style={{
-            width: 44, height: 44,
-            border: "3px solid #E2EEEC",
-            borderTopColor: "#5BA8A0",
-            borderRadius: "50%", marginBottom: 16,
-          }}
-        />
-        <p style={{ color: "#8BA5B3", fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          Loading Profile...
-        </p>
-      </div>
-    );
+    return <SeaBiteLoader fullScreen />;
   }
 
   if (!user) return null;

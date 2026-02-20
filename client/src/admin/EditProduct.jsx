@@ -8,6 +8,7 @@ import {
   FiTrendingUp, FiCheck, FiArrowLeft, FiSave, FiBox,
 } from "react-icons/fi";
 import PopupModal from "../components/common/PopupModal";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const ease = [0.22, 1, 0.36, 1];
 const fadeUp = {
@@ -24,7 +25,7 @@ export default function EditProduct() {
   const backendBase = import.meta.env.VITE_API_URL || "";
 
   const [form, setForm] = useState({
-    name: "", category: "", basePrice: "", unit: "kg", desc: "", image: "", trending: false, stock: "in",
+    name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", image: "", trending: false, stock: "in",
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -51,6 +52,30 @@ export default function EditProduct() {
       });
   }, [id, backendBase]);
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("image", file);
+
+    setSubmitting(true);
+    const toastId = toast.loading("Uploading image...");
+
+    try {
+      const { data } = await axios.post(`${backendBase}/api/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+        withCredentials: true
+      });
+      setForm(prev => ({ ...prev, image: data.file || data.url }));
+      toast.success("Image uploaded", { id: toastId });
+    } catch (err) {
+      toast.error("Upload failed", { id: toastId });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm({ ...form, [name]: type === "checkbox" ? checked : value });
@@ -74,8 +99,8 @@ export default function EditProduct() {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-[60vh] p-6 text-center">
-      <div className="w-10 h-10 border-2 border-stone-200 border-t-stone-800 rounded-full animate-spin mb-4" />
-      <p className="text-stone-400 font-bold text-xs uppercase tracking-widest">Loading product...</p>
+      <SeaBiteLoader />
+      <p className="text-stone-400 font-bold text-xs uppercase tracking-widest mt-4">Loading product...</p>
     </div>
   );
 
@@ -107,9 +132,19 @@ export default function EditProduct() {
                   <div className="text-stone-300 flex flex-col items-center"><FiImage size={32} /><span className="text-xs mt-3 font-bold uppercase tracking-wider">No Image</span></div>
                 )}
               </div>
-              <div className="relative">
+              <div className="relative group cursor-pointer">
                 <FiImage className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
-                <input value={form.image} className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold text-stone-500 outline-none" disabled />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                />
+                <input
+                  value={form.image ? (form.image.length > 25 ? "..." + form.image.slice(-22) : form.image) : "Click to upload"}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold text-stone-500 outline-none group-hover:border-stone-300 transition-all"
+                  readOnly
+                />
               </div>
             </div>
 
@@ -204,7 +239,7 @@ export default function EditProduct() {
               <div className="flex flex-col md:flex-row items-center gap-4 pt-4">
                 <button type="button" onClick={() => navigate("/admin/products")} className="w-full md:w-auto px-8 py-4 rounded-xl font-bold text-xs uppercase tracking-wider text-stone-400 hover:text-stone-600 hover:bg-stone-50 transition-colors order-2 md:order-1">Cancel</button>
                 <motion.button whileTap={{ scale: 0.97 }} type="submit" disabled={submitting} className="w-full md:flex-1 bg-stone-900 text-white py-4 rounded-2xl font-bold shadow-xl shadow-stone-200 hover:bg-stone-800 transition-all disabled:opacity-70 flex items-center justify-center gap-3 text-xs uppercase tracking-widest order-1 md:order-2">
-                  {submitting ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Saving...</> : <><FiSave size={18} /> Save Changes</>}
+                  {submitting ? <><SeaBiteLoader small /> Saving...</> : <><FiSave size={18} /> Save Changes</>}
                 </motion.button>
               </div>
             </div>

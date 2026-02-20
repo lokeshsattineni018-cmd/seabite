@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { FiMenu, FiX, FiSearch, FiBell } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
+import { useAuth } from "../context/AuthContext";
 
 const AdminPageLoader = () => (
   <div className="w-full animate-pulse space-y-8 p-6">
@@ -28,8 +29,10 @@ const AdminPageLoader = () => (
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [settings, setSettings] = useState({ isMaintenanceMode: false, maintenanceMessage: "", banner: { active: false, image: "", text: "" } });
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -105,7 +108,7 @@ export default function AdminLayout() {
         <div className="hidden md:flex items-center justify-between px-8 py-5 sticky top-0 bg-[#fafaf9]/90 backdrop-blur-sm z-20 mb-2">
           <div>
             <h1 className="text-xl font-bold text-stone-800 tracking-tight">Overview</h1>
-            <p className="text-xs text-stone-400 font-bold uppercase tracking-widest mt-0.5">Welcome back, Lokesh</p>
+            <p className="text-xs text-stone-400 font-bold uppercase tracking-widest mt-0.5">Welcome back, {user?.name?.split(" ")[0] || "Admin"}</p>
           </div>
 
           <div className="flex items-center gap-4">
@@ -120,33 +123,52 @@ export default function AdminLayout() {
             </div>
 
             {/* Notifications Dropdown */}
-            <div className="relative group">
-              <button className="relative p-3 bg-white border border-stone-200/80 rounded-2xl text-stone-400 hover:text-stone-900 hover:border-stone-300 transition-all shadow-sm active:scale-95">
+            <div className="relative">
+              <button
+                onClick={() => setShowNotifications(!showNotifications)}
+                className={`relative p-3 bg-white border rounded-2xl transition-all shadow-sm active:scale-95 ${showNotifications ? "text-stone-900 border-stone-300 ring-4 ring-stone-100" : "text-stone-400 border-stone-200/80 hover:text-stone-900 hover:border-stone-300"}`}
+              >
                 <FiBell size={20} />
                 <span className="absolute top-2.5 right-3 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
               </button>
 
-              {/* Dropdown Content (Hover or Focus) */}
-              <div className="absolute right-0 top-full mt-3 w-80 bg-white rounded-3xl shadow-xl border border-stone-100 p-2 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-all z-50 transform origin-top-right scale-95 group-hover:scale-100">
-                <div className="px-4 py-3 border-b border-stone-50 flex justify-between items-center">
-                  <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Notifications</span>
-                  <span className="text-[10px] font-bold text-stone-900 cursor-pointer hover:underline">Mark read</span>
-                </div>
-                <div className="max-h-60 overflow-y-auto">
-                  <div className="p-6 text-center">
-                    <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-3 text-stone-300">
-                      <FiBell size={20} />
-                    </div>
-                    <p className="text-xs text-stone-400 font-bold uppercase tracking-wider">No new alerts</p>
-                  </div>
-                </div>
-              </div>
+              <AnimatePresence>
+                {showNotifications && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute right-0 top-full mt-3 w-80 bg-white rounded-3xl shadow-xl border border-stone-100 p-2 z-50 transform origin-top-right transition-all"
+                    >
+                      <div className="px-4 py-3 border-b border-stone-50 flex justify-between items-center">
+                        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Notifications</span>
+                        <span className="text-[10px] font-bold text-stone-900 cursor-pointer hover:underline">Mark read</span>
+                      </div>
+                      <div className="max-h-60 overflow-y-auto">
+                        <div className="p-6 text-center">
+                          <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-3 text-stone-300">
+                            <FiBell size={20} />
+                          </div>
+                          <p className="text-xs text-stone-400 font-bold uppercase tracking-wider">No new alerts</p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Profile Avatar */}
             <div className="flex items-center gap-3 pl-4 border-l border-stone-200">
-              <div className="w-10 h-10 rounded-2xl bg-stone-900 p-0.5 shadow-lg shadow-stone-200 cursor-pointer hover:scale-105 transition-transform">
-                <div className="w-full h-full rounded-2xl bg-stone-900 flex items-center justify-center text-xs font-bold text-white border border-white/20">LS</div>
+              <div
+                onClick={() => navigate("/profile")}
+                className="w-10 h-10 rounded-2xl bg-stone-900 p-0.5 shadow-lg shadow-stone-200 cursor-pointer hover:scale-105 transition-transform"
+              >
+                <div className="w-full h-full rounded-2xl bg-stone-900 flex items-center justify-center text-xs font-bold text-white border border-white/20">
+                  {user?.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "AD"}
+                </div>
               </div>
             </div>
           </div>

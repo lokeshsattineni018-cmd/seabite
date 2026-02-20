@@ -6,6 +6,7 @@ import {
     FiUser, FiShoppingCart, FiSearch, FiLock, FiClock, FiZap, FiMapPin
 } from "react-icons/fi";
 import { useSocket } from "../context/SocketContext";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -207,8 +208,11 @@ export default function AdminWatchtower() {
                                         </AnimatePresence>
                                         {logs.length === 0 && (
                                             <tr>
-                                                <td colSpan={4} style={{ padding: 40, textAlign: "center", color: T.textSoft, fontStyle: "italic" }}>
-                                                    Waiting for stream data...
+                                                <td colSpan={4} style={{ padding: 40, textAlign: "center" }}>
+                                                    <SeaBiteLoader />
+                                                    <p style={{ marginTop: 12, fontSize: 12, color: T.textSoft, fontStyle: "italic" }}>
+                                                        Waiting for stream data...
+                                                    </p>
                                                 </td>
                                             </tr>
                                         )}

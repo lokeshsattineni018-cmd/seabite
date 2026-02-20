@@ -12,6 +12,7 @@ import AddressForm from "../../components/forms/AddressForm";
 import PopupModal from "../../components/common/PopupModal";
 import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -228,7 +229,8 @@ export default function Checkout() {
       }
 
       const options = {
-        key: "rzp_test_RudgOJMh7819Qs", amount: data.order.amount, currency: "INR",
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_RudgOJMh7819Qs",
+        amount: data.order.amount, currency: "INR",
         name: "SeaBite", description: "Fresh Coastal Catch Payment", order_id: data.order.id,
         handler: async (response) => {
           try {
@@ -243,7 +245,12 @@ export default function Checkout() {
         },
         prefill: { name: deliveryAddress.name, contact: deliveryAddress.phone },
         theme: { color: T.primary },
-        modal: { ondismiss: () => setLoading(false) },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+            // Don't flip isOrderSuccess here, as payment was cancelled but order might still be in DB (Pending)
+          }
+        },
       };
 
       if (window.Razorpay) {
@@ -610,7 +617,7 @@ export default function Checkout() {
                   }}
                 >
                   {loading ? (
-                    <><div style={{ width: 16, height: 16, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 1s linear infinite" }} /> Processing...</>
+                    <><SeaBiteLoader small /> Processing...</>
                   ) : paymentMethod === "COD" ? (
                     <><FiCheckCircle size={15} /> Place COD Order</>
                   ) : (

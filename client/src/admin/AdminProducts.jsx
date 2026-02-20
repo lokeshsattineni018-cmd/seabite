@@ -8,6 +8,7 @@ import {
   FiRefreshCw, FiGrid, FiList, FiFilter, FiMoreHorizontal
 } from "react-icons/fi";
 import PopupModal from "../components/common/PopupModal";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 // --- Design Constants ---
 const ease = [0.16, 1, 0.3, 1];
@@ -139,7 +140,7 @@ export default function AdminProducts() {
         <AnimatePresence mode="wait">
           {loading ? (
             <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-20 flex justify-center">
-              <div className="animate-spin w-8 h-8 border-2 border-stone-200 border-t-stone-800 rounded-full" />
+              <SeaBiteLoader />
             </motion.div>
           ) : filteredProducts.length === 0 ? (
             <motion.div key="empty" variants={fadeUp} className="py-20 text-center">

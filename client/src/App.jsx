@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "react-hot-toast";
 
 // Components
@@ -15,7 +16,7 @@ import AdminRoute from "./components/AdminRoute";
 import SupportWidget from "./components/common/SupportWidget";
 import BannerPopup from "./components/layout/BannerPopup";
 import AnnouncementBar from "./components/layout/AnnouncementBar";
-import PageSkeleton from "./components/common/PageSkeleton"; // 🟢 Added Skeleton
+import SeaBiteLoader from "./components/common/SeaBiteLoader"; // 🟢 Added Custom Loader
 import CookieConsent from "./components/common/CookieConsent"; // 🟢 Cookie Consent
 
 // Lazy Imports for Critical Pages
@@ -23,7 +24,6 @@ const Home = lazy(() => import("./pages/shop/Home"));
 const Products = lazy(() => import("./pages/shop/Products"));
 const ProductDetails = lazy(() => import("./pages/shop/ProductDetails"));
 const Wishlist = lazy(() => import("./pages/shop/Wishlist"));
-const Cart = lazy(() => import("./pages/shop/Cart"));
 const Profile = lazy(() => import("./pages/user/Profile"));
 const Checkout = lazy(() => import("./pages/shop/Checkout"));
 const Login = lazy(() => import("./pages/auth/Login"));
@@ -67,12 +67,7 @@ import { AuthProvider } from "./context/AuthContext";
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
 
-// Loader for secondary pages
-const SeaBiteLoader = () => (
-  <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
-    <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-  </div>
-);
+
 
 function MainLayout() {
   const location = useLocation();
@@ -178,7 +173,7 @@ function MainLayout() {
           )}
 
           <div className="flex-grow">
-            <Suspense fallback={<PageSkeleton />}>
+            <Suspense fallback={<SeaBiteLoader fullScreen />}>
               {isAdminRoute ? (
                 <Routes>
                   <Route path="/admin" element={adminLayoutElement}>
@@ -207,7 +202,6 @@ function MainLayout() {
                     <Route path="/" element={<PageTransition><Home /></PageTransition>} />
                     <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
                     <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
-                    <Route path="/cart" element={<PageTransition><Cart /></PageTransition>} />
                     <Route path="/wishlist" element={<PageTransition><PrivateRoute><Wishlist /></PrivateRoute></PageTransition>} />
                     <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
                     <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
@@ -240,12 +234,14 @@ function MainLayout() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CartProvider>
-          <MainLayout />
-        </CartProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <HelmetProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            <MainLayout />
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </HelmetProvider>
   );
 }

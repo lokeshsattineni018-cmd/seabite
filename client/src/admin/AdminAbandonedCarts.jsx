@@ -3,6 +3,7 @@ import axios from "axios";
 import { FiShoppingBag, FiMail, FiClock, FiTrash2 } from "react-icons/fi";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -50,8 +51,8 @@ export default function AdminAbandonedCarts() {
     };
 
     if (loading) return (
-        <div className="p-8 text-center text-stone-500">
-            <div className="w-8 h-8 border-2 border-stone-300 border-t-stone-900 rounded-full animate-spin mx-auto" />
+        <div className="p-8 text-center flex justify-center">
+            <SeaBiteLoader />
         </div>
     );
 
@@ -112,7 +113,7 @@ export default function AdminAbandonedCarts() {
                                     >
                                         {sending === user._id ? (
                                             <>
-                                                <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                                <SeaBiteLoader small />
                                                 Sending...
                                             </>
                                         ) : (

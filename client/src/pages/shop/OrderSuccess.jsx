@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -82,6 +83,7 @@ export default function OrderSuccess() {
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [orderFetchSuccess, setOrderFetchSuccess] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -89,13 +91,21 @@ export default function OrderSuccess() {
       try {
         const { data } = await axios.get(`${API_URL}/api/orders/${dbId}`, { withCredentials: true });
         setOrderDetails(data);
-      } catch { }
+        setOrderFetchSuccess(true);
+      } catch {
+        setOrderFetchSuccess(false);
+      }
       finally { setLoading(false); }
     };
     fetchOrder();
-    const timer = setTimeout(() => setShowContent(true), 300);
-    return () => clearTimeout(timer);
   }, [dbId]);
+
+  useEffect(() => {
+    if (orderFetchSuccess) {
+      const timer = setTimeout(() => setShowContent(true), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [orderFetchSuccess]);
 
   const copyOrderId = () => {
     if (orderDetails?.orderId) {
@@ -226,10 +236,8 @@ export default function OrderSuccess() {
           <AnimatePresence mode="wait">
             {loading ? (
               <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "4px 0" }}>
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  style={{ width: 18, height: 18, border: `2px solid ${T.border}`, borderTopColor: T.primary, borderRadius: "50%" }} />
-                <span style={{ fontSize: 12, color: T.textLite, fontWeight: 500 }}>Fetching...</span>
+                style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "4px 0" }}>
+                <SeaBiteLoader />
               </motion.div>
             ) : (
               <motion.div key="orderId" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
@@ -303,14 +311,17 @@ export default function OrderSuccess() {
           {/* Invoice Button (New) */}
           <motion.button
             onClick={() => orderDetails && generateInvoicePDF(orderDetails)}
-            whileHover={{ y: -1, background: T.bg }}
-            whileTap={{ scale: 0.97 }}
+            disabled={!orderDetails}
+            whileHover={orderDetails ? { y: -1, background: T.bg } : {}}
+            whileTap={orderDetails ? { scale: 0.97 } : {}}
             style={{
               width: "100%", padding: "13px 20px", borderRadius: 14,
-              background: "transparent", color: T.textMid, border: `1px solid ${T.border}`,
-              fontSize: 13, fontWeight: 600, cursor: "pointer",
+              background: "transparent", color: orderDetails ? T.textMid : T.textLite,
+              border: `1px solid ${T.border}`,
+              fontSize: 13, fontWeight: 600, cursor: orderDetails ? "pointer" : "not-allowed",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
               fontFamily: font, transition: "all 0.2s",
+              opacity: orderDetails ? 1 : 0.6
             }}
           >
             <FiDownload size={14} /> Download Invoice

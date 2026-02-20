@@ -7,6 +7,7 @@ import {
   FiXCircle, FiPackage, FiArrowUpRight, FiFilter
 } from "react-icons/fi";
 import PopupModal from "../components/common/PopupModal";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 import Invoice from "../components/content/Invoice";
 import { generateInvoicePDF } from "../utils/pdfGenerator";
 import toast from "react-hot-toast";
@@ -39,7 +40,7 @@ export default function AdminOrders() {
   const fetchOrders = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
-      const { data } = await axios.get("/api/orders");
+      const { data } = await axios.get("/api/orders", { withCredentials: true });
       setOrders(Array.isArray(data) ? data : []);
       if (selectedOrder) {
         const updated = data.find((o) => o._id === selectedOrder._id);
@@ -61,7 +62,7 @@ export default function AdminOrders() {
       return toast.error("Cannot modify cancelled orders");
     }
     try {
-      await axios.put(`/api/orders/${id}/status`, { status });
+      await axios.put(`/api/orders/${id}/status`, { status }, { withCredentials: true });
       toast.success(`Updated to ${status}`);
       fetchOrders(true);
     } catch {
@@ -72,7 +73,7 @@ export default function AdminOrders() {
   const handleRazorpayRefund = async (orderId) => {
     if (!window.confirm("Refund full amount via Razorpay and cancel?")) return;
     try {
-      await axios.put("/api/payment/refund", { orderId, reason: "Admin Request" });
+      await axios.put("/api/payment/refund", { orderId, reason: "Admin Request" }, { withCredentials: true });
       toast.success("Refund Initiated");
       fetchOrders(true);
     } catch (err) {
@@ -82,7 +83,7 @@ export default function AdminOrders() {
 
   const updateRefundStatus = async (id, refundStatus) => {
     try {
-      await axios.put(`/api/orders/${id}/status`, { refundStatus });
+      await axios.put(`/api/orders/${id}/status`, { refundStatus }, { withCredentials: true });
       toast.success(`Refund: ${refundStatus}`);
       fetchOrders(true);
     } catch {
@@ -202,11 +203,11 @@ export default function AdminOrders() {
               </thead>
               <tbody className="divide-y divide-stone-50">
                 {loading ? (
-                  [...Array(5)].map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="px-6 py-4" colSpan={6}><div className="h-10 bg-stone-50 rounded-xl" /></td>
-                    </tr>
-                  ))
+                  <tr>
+                    <td colSpan={6} className="py-20">
+                      <SeaBiteLoader />
+                    </td>
+                  </tr>
                 ) : filteredOrders.length === 0 ? (
                   <tr><td colSpan={6} className="py-12 text-center text-stone-400 font-medium">No orders found</td></tr>
                 ) : (

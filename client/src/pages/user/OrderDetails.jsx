@@ -8,6 +8,7 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import PopupModal from "../../components/common/PopupModal";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import toast from "react-hot-toast";
 import { generateInvoicePDF } from "../../utils/pdfGenerator";
 
@@ -67,12 +68,7 @@ export default function OrderDetails() {
   };
 
 
-  if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: T.bg }}>
-      <div style={{ width: 40, height: 40, border: `3px solid ${T.primary}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-      <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
+  if (loading) return <SeaBiteLoader fullScreen />;
 
   if (!order) return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: T.bg, gap: 16 }}>

@@ -16,6 +16,7 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const PLACEHOLDER_IMG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
@@ -65,6 +66,12 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   const fetchDashboardData = useCallback(async (isManual = false) => {
     if (isManual) {
@@ -82,12 +89,14 @@ export default function AdminDashboard() {
         axios.get("/api/admin/insights/search", { withCredentials: true }),
       ]);
 
+      if (!isMounted.current) return;
+
       setStats(dashboardRes.data.stats);
       setGraph(dashboardRes.data.graph);
       setRecentOrders(dashboardRes.data.recentOrders);
       setRecentMessages(messagesRes.data.slice(0, 5));
       setAllReviews(reviewsRes.data?.slice(0, 6) || []);
-      setSearchInsights(insightsRes.data || []); // 🟢 Added
+      setSearchInsights(insightsRes.data || []);
 
       setLoading(false);
       setError(null);
@@ -95,12 +104,13 @@ export default function AdminDashboard() {
 
       if (isManual) toast.success("Updated", { id: "refresh" });
     } catch (err) {
+      if (!isMounted.current) return;
       setLoading(false);
       if (err.response?.status === 401) navigate("/login");
       setError(err.response?.data?.message || "Failed to load data");
       if (isManual) toast.error("Update failed", { id: "refresh" });
     } finally {
-      if (isManual) setIsRefreshing(false);
+      if (isMounted.current && isManual) setIsRefreshing(false);
     }
   }, [timeFilter, navigate]);
 
@@ -230,7 +240,7 @@ export default function AdminDashboard() {
                   >
                     {verifyingOtp ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        <SeaBiteLoader small />
                         Verifying...
                       </>
                     ) : (

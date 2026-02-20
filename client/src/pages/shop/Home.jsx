@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import {
   motion,
   useScroll,
@@ -9,6 +10,8 @@ import {
   AnimatePresence,
 } from "framer-motion";
 import axios from "axios";
+import { Helmet } from "react-helmet-async";
+import toast from "react-hot-toast";
 import {
   ArrowRight,
   Star,
@@ -22,6 +25,8 @@ import {
   ChevronRight,
   Zap,
   Waves,
+  Copy,
+  Check,
 } from "lucide-react";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import TrendingProducts from "../../components/products/TrendingProducts";
@@ -129,12 +134,27 @@ const Hero = () => {
   const { scrollY } = useScroll();
   const videoY = useTransform(scrollY, [0, 700], [0, 140]);
   const videoOpacity = useTransform(scrollY, [0, 500], [1, 0.25]);
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   return (
     <section className="relative h-screen min-h-[680px] max-h-[960px] overflow-hidden">
+      {!isVideoLoaded && (
+        <div className="absolute inset-0 z-40 bg-[#1A2B35] flex items-center justify-center">
+          <SeaBiteLoader />
+        </div>
+      )}
       <motion.div style={{ y: videoY, opacity: videoOpacity }} className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 z-10" />
-        <video autoPlay loop muted playsInline src="1.mp4" className="w-full h-full object-cover scale-105" />
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          onCanPlayThrough={() => setIsVideoLoaded(true)}
+          poster="/hero-poster.jpg"
+          src="1.mp4"
+          className="w-full h-full object-cover scale-105"
+        />
       </motion.div>
 
       <div className="absolute inset-0 z-10 opacity-[0.015]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
@@ -339,6 +359,8 @@ const CategorySection = () => {
 // ══════════════════════════════════════════════
 const FlashSale = () => {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     const calc = () => {
       const diff = new Date().setHours(24, 0, 0, 0) - Date.now();
@@ -346,6 +368,14 @@ const FlashSale = () => {
     };
     calc(); const t = setInterval(calc, 1000); return () => clearInterval(t);
   }, []);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText("SEABITE10");
+    setCopied(true);
+    toast.success("Coupon code copied!");
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const pad = (v) => String(v).padStart(2, "0");
 
   return (
@@ -360,7 +390,17 @@ const FlashSale = () => {
                 <div>
                   <div className="flex items-center gap-2 mb-1"><Chip color="coral"><Zap size={10} /> Flash Deal</Chip></div>
                   <p className="text-[#1A2B35] font-bold text-lg md:text-xl leading-snug">Order above <span className="text-[#5BA8A0]">₹1,699</span> — get <span className="text-[#E8816A]">10% OFF</span></p>
-                  <p className="text-[#8BA5B3] text-sm mt-1">Use coupon <span className="font-mono font-bold text-[#1A2B35] bg-[#F5EFE6] px-2 py-0.5 rounded-md text-xs border border-[#E8D9C4]">SEABITE10</span> at checkout</p>
+                  <div className="flex items-center gap-2 text-[#8BA5B3] text-sm mt-1">
+                    Use coupon
+                    <button
+                      onClick={handleCopy}
+                      className="group flex items-center gap-2 font-mono font-bold text-[#1A2B35] bg-[#F5EFE6] px-2.5 py-1 rounded-md text-xs border border-[#E8D9C4] hover:bg-[#E8D9C4] transition-colors"
+                    >
+                      SEABITE10
+                      {copied ? <Check size={12} className="text-[#5BA8A0]" /> : <Copy size={12} className="text-[#8BA5B3] group-hover:text-[#1A2B35]" />}
+                    </button>
+                    at checkout
+                  </div>
                 </div>
               </div>
               <div className="flex items-center gap-5 flex-shrink-0">
@@ -395,7 +435,10 @@ const FlashSale = () => {
 const CategoryRow = ({ title, filterType }) => {
   const [products, setProducts] = useState([]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
+    setLoading(true);
     axios.get(`${API_URL}/api/products`).then((res) => {
       const all = res.data.products || [];
       setGlobalDiscount(res.data.globalDiscount || 0);
@@ -403,8 +446,17 @@ const CategoryRow = ({ title, filterType }) => {
         ? all.filter((p) => p.category === "Fish").slice(0, 4)
         : all.filter((p) => p.category === "Prawn" || p.category === "Crab").slice(0, 4);
       setProducts(filtered);
-    });
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, [filterType]);
+
+  const Skeleton = () => (
+    <div className="bg-white rounded-2xl border border-[#E8EEF2] overflow-hidden p-4 space-y-4 animate-pulse">
+      <div className="aspect-square bg-stone-100 rounded-xl" />
+      <div className="h-4 bg-stone-100 rounded-md w-3/4" />
+      <div className="h-4 bg-stone-100 rounded-md w-1/2" />
+    </div>
+  );
   if (!products.length) return null;
   return (
     <section className="py-16 px-6 md:px-12 bg-[#F8FAFB]">
@@ -423,13 +475,19 @@ const CategoryRow = ({ title, filterType }) => {
           </RevealRight>
         </div>
         <Stagger className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {products.map((p) => (
-            <SI key={p._id}>
-              <div className="bg-white rounded-2xl border border-[#E8EEF2] overflow-hidden hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1">
-                <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
-              </div>
-            </SI>
-          ))}
+          {loading ? (
+            [...Array(4)].map((_, i) => <Skeleton key={i} />)
+          ) : products.length > 0 ? (
+            products.map((p) => (
+              <SI key={p._id}>
+                <div className="bg-white rounded-2xl border border-[#E8EEF2] overflow-hidden hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1">
+                  <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
+                </div>
+              </SI>
+            ))
+          ) : (
+            <div className="col-span-full py-12 text-center text-[#8BA5B3]">No products available in this category.</div>
+          )}
         </Stagger>
       </div>
     </section>
@@ -510,7 +568,7 @@ const Reviews = () => {
         </Reveal>
         <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {loading ? (
-            [...Array(3)].map((_, i) => <SI key={i}><div className="h-48 rounded-2xl" style={{ background: "linear-gradient(90deg,#E8EEF2 25%,#F0F5F8 50%,#E8EEF2 75%)", backgroundSize: "200% 100%", animation: `shimmer 1.6s infinite ${i * 0.15}s` }} /></SI>)
+            <div className="col-span-1 md:col-span-3"><SeaBiteLoader /></div>
           ) : reviews.length > 0 ? (
             reviews.map((r, i) => (
               <SI key={i}>
@@ -548,9 +606,9 @@ const ScrollTop = () => {
       {show && (
         <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} whileHover={{ y: -2 }}
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-8 right-8 z-50 w-11 h-11 bg-white border border-[#E8EEF2] rounded-full shadow-md flex items-center justify-center text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] transition-colors"
+          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-white border border-[#E8EEF2] rounded-full shadow-md flex items-center justify-center text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] transition-colors"
         >
-          <ChevronDown size={18} className="rotate-180" />
+          <ChevronDown size={20} className="rotate-180" />
         </motion.button>
       )}
     </AnimatePresence>
@@ -563,6 +621,14 @@ const ScrollTop = () => {
 export default function Home() {
   return (
     <div className="bg-[#F8FAFB] min-h-screen text-[#1A2B35] selection:bg-[#C5E6E4] selection:text-[#1A2B35] antialiased" style={{ fontFamily: "'Plus Jakarta Sans', 'Manrope', sans-serif" }}>
+      <Helmet>
+        <title>SeaBite - Premium Ocean-Fresh Seafood Delivered</title>
+        <meta name="description" content="Shop premium fish, prawns, and crabs sourced daily from Mogalthur. Cold-chain delivered ocean-fresh seafood directly to your doorstep. Experience the SeaBite quality." />
+        <meta property="og:title" content="SeaBite - Fresh Coastal Catch Delivered" />
+        <meta property="og:description" content="Premium seafood sourced daily at 4 AM and delivered fresh by noon. Chemical-free and 100% traceable coastal catch from SeaBite." />
+        <meta property="og:image" content="/banner.jpg" />
+        <meta name="twitter:card" content="summary_large_image" />
+      </Helmet>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
         * { -webkit-font-smoothing: antialiased; }
@@ -580,7 +646,10 @@ export default function Home() {
 
       <section className="py-4 px-6 md:px-12 bg-white">
         <div className="max-w-7xl mx-auto">
-          <Reveal><SectionLabel>Trending</SectionLabel></Reveal>
+          <Reveal>
+            <SectionLabel>Trending</SectionLabel>
+            <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] mb-8" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>Customer Favorites</h2>
+          </Reveal>
           <TrendingProducts />
         </div>
       </section>

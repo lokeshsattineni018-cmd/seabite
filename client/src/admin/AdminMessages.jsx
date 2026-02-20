@@ -7,6 +7,7 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
@@ -29,7 +30,7 @@ export default function AdminMessages() {
   const fetchMessages = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
-      const res = await axios.get("/api/contact");
+      const res = await axios.get("/api/contact", { withCredentials: true });
       setMessages(res.data || []);
     } catch {
       toast.error("Failed to load messages");
@@ -52,7 +53,7 @@ export default function AdminMessages() {
         subject: `Re: Inquiry from ${new Date(selectedMsg.createdAt).toLocaleDateString()}`,
         message: replyText,
         originalMessageId: selectedMsg._id
-      });
+      }, { withCredentials: true });
       toast.success("Sent!", { id: t });
       setReplyModal(false);
       setReplyText("");
@@ -83,7 +84,7 @@ export default function AdminMessages() {
           </div>
         </div>
         <button onClick={() => fetchMessages()} className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-xl transition-colors">
-          <FiRefreshCw className={loading ? "animate-spin" : ""} size={18} />
+          {loading ? <SeaBiteLoader small /> : <FiRefreshCw size={18} />}
         </button>
       </div>
 
@@ -103,7 +104,9 @@ export default function AdminMessages() {
 
           <div className="flex-1 overflow-y-auto pr-2 space-y-2 custom-scrollbar">
             {loading ? (
-              [...Array(5)].map((_, i) => <div key={i} className="h-24 bg-stone-50 rounded-2xl animate-pulse" />)
+              <div className="py-10 flex justify-center">
+                <SeaBiteLoader />
+              </div>
             ) : filtered.length === 0 ? (
               <div className="text-center py-10 text-stone-400 text-sm font-medium">No conversation found</div>
             ) : (
@@ -190,7 +193,7 @@ export default function AdminMessages() {
                 <div className="flex justify-end gap-3 mt-6">
                   <button onClick={() => setReplyModal(false)} className="px-6 py-3 rounded-xl text-stone-500 font-bold text-xs uppercase hover:bg-stone-50 transition-colors">Cancel</button>
                   <button onClick={handleReply} disabled={sending} className="px-8 py-3 bg-stone-900 text-white rounded-xl font-bold text-xs uppercase hover:bg-stone-800 shadow-lg transition-all disabled:opacity-50 flex items-center gap-2">
-                    {sending ? <FiRefreshCw className="animate-spin" /> : <FiSend />} Send Reply
+                    {sending ? <SeaBiteLoader small /> : <FiSend />} Send Reply
                   </button>
                 </div>
               </div>

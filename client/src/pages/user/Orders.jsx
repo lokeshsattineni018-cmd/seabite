@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import ReviewModal from "../../components/common/ReviewModal";
 import PopupModal from "../../components/common/PopupModal";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -57,6 +58,7 @@ export default function Order() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedReview, setSelectedReview] = useState(null);
   const [modalConfig, setModalConfig] = useState({ show: false, message: "", type: "info" });
+  const [visibleCount, setVisibleCount] = useState(8);
   const navigate = useNavigate();
 
   const fetchOrders = async () => {
@@ -87,6 +89,11 @@ export default function Order() {
     return result;
   }, [orders, activeTab, searchQuery, sortBy]);
 
+  const displayedOrders = useMemo(() => filteredOrders.slice(0, visibleCount), [filteredOrders, visibleCount]);
+  const hasMore = filteredOrders.length > visibleCount;
+
+  const loadMore = () => setVisibleCount(prev => prev + 8);
+
   const tabCounts = useMemo(() => ({
     all: orders.length,
     active: orders.filter(o => ["Pending", "Processing", "Shipped"].includes(o.status)).length,
@@ -112,13 +119,7 @@ export default function Order() {
     setIsReviewOpen(true);
   };
 
-  if (loading) return (
-    <div style={{ minHeight: "100vh", background: T.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        style={{ width: 44, height: 44, border: `3px solid ${T.border}`, borderTopColor: T.primary, borderRadius: "50%", marginBottom: 16 }} />
-      <p style={{ color: T.textLite, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Loading your orders...</p>
-    </div>
-  );
+  if (loading) return <SeaBiteLoader fullScreen />;
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'Plus Jakarta Sans', sans-serif", overflowX: "hidden" }}>
@@ -230,7 +231,7 @@ export default function Order() {
               })}
             </motion.div>
 
-            {filteredOrders.length === 0 ? (
+            {displayedOrders.length === 0 ? (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 style={{ textAlign: "center", padding: "60px 20px", background: T.surface, borderRadius: 18, border: `1px solid ${T.border}` }}>
                 <FiSearch size={28} style={{ color: T.border, marginBottom: 12 }} />
@@ -238,12 +239,13 @@ export default function Order() {
               </motion.div>
             ) : (
               <motion.div variants={containerVariants} initial="hidden" animate="visible" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {filteredOrders.map(order => {
+                {displayedOrders.map(order => {
                   const statusInfo = getStatusConfig(order.status);
                   const isDelivered = order.status === "Delivered";
                   const isExpanded = expandedOrder === order._id;
 
                   return (
+                    // ... (rest of the card remains same)
                     <motion.div key={order._id} variants={itemVariants} layout
                       style={{
                         background: T.surface, borderRadius: 18, border: `1px solid ${T.border}`,
@@ -403,6 +405,24 @@ export default function Order() {
                     </motion.div>
                   );
                 })}
+
+                {/* Load More Button */}
+                {hasMore && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ textAlign: "center", marginTop: 24 }}>
+                    <motion.button
+                      whileHover={{ scale: 1.02, background: "rgba(91,168,160,0.08)" }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={loadMore}
+                      style={{
+                        padding: "10px 24px", borderRadius: 12, border: `1.5px solid ${T.border}`, background: T.surface,
+                        color: T.primary, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif",
+                        transition: "all 0.2s"
+                      }}
+                    >
+                      Load More Orders
+                    </motion.button>
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </>
