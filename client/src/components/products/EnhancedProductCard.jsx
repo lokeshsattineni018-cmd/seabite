@@ -163,24 +163,12 @@ const EnhancedProductCard = ({
         flexDirection: "column",
         height: "100%",
         position: "relative",
-        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-        boxShadow: "0 1px 4px rgba(91,191,181,0.06)",
         fontFamily: "'Manrope', sans-serif",
       }}
-      className="product-card-hover group"
+      className="group"
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-        .product-card-hover:hover {
-          box-shadow: 0 8px 32px rgba(91,191,181,0.14);
-          transform: translateY(-2px);
-          border-color: #B8DDD9;
-        }
-        .cart-btn-wave:hover {
-          background: #5BBFB5 !important;
-          color: white !important;
-          border-color: #5BBFB5 !important;
-        }
       `}</style>
 
       {/* Badge Row */}
@@ -212,16 +200,15 @@ const EnhancedProductCard = ({
         onClick={handleWishlistToggle}
         disabled={loadingWishlist}
         style={{
-          position: "absolute", top: "12px", right: "12px", zIndex: 20,
-          width: "34px", height: "34px",
-          background: "rgba(255,255,255,0.92)",
+          position: "absolute", top: "16px", right: "16px", zIndex: 20,
+          width: "36px", height: "36px",
+          background: "#FFFFFF",
           border: "1px solid #E2EEEC",
           borderRadius: "50%",
           display: "flex", alignItems: "center", justifyContent: "center",
           cursor: "pointer",
           color: isWishlisted ? "#F07468" : "#A0B8B5",
           transition: "all 0.2s ease",
-          backdropFilter: "blur(4px)",
         }}
       >
         {loadingWishlist ? (
@@ -237,13 +224,13 @@ const EnhancedProductCard = ({
       <Link
         to={`/products/${product._id}`}
         style={{
-          height: "200px",
+          height: "220px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#F4F9F8",
+          background: "transparent",
           overflow: "hidden",
-          padding: "24px",
+          padding: "20px",
           position: "relative",
         }}
       >
@@ -320,15 +307,14 @@ const EnhancedProductCard = ({
             ref={addBtnRef}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
-            className={`cart-btn-wave ${!isOutOfStock && !isAdding ? 'liquid-cta' : ''}`}
             style={{
               width: "100%",
               padding: "10px 0",
               borderRadius: "10px",
               border: "1.5px solid",
-              borderColor: isOutOfStock ? "#E2EEEC" : isAdding ? "#5BBFB5" : "#5BBFB5",
-              background: isAdding ? "#5BBFB5" : "transparent",
-              color: isOutOfStock ? "#B8CFCC" : isAdding ? "#fff" : "#5BBFB5",
+              borderColor: isOutOfStock ? "#E2EEEC" : "#5BBFB5",
+              background: "transparent",
+              color: isOutOfStock ? "#B8CFCC" : "#5BBFB5",
               fontSize: "13px",
               fontWeight: "700",
               letterSpacing: "0.02em",
@@ -336,7 +322,7 @@ const EnhancedProductCard = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "6px",
+              gap: "8px",
               transition: "all 0.2s ease",
               fontFamily: "'Manrope', sans-serif",
             }}
