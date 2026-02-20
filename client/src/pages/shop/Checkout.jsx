@@ -141,7 +141,7 @@ export default function Checkout() {
   }, []);
 
   useEffect(() => {
-    axios.get(`${API_URL}/api/coupons`, { withCredentials: true })
+    axios.get(`${API_URL}/api/coupons/public`, { withCredentials: true })
       .then(res => setAvailableCoupons(Array.isArray(res.data) ? res.data : []))
       .catch(() => { });
   }, []);
@@ -196,8 +196,8 @@ export default function Checkout() {
     // First try to find locally
     const local = availableCoupons.find(c => c.code?.toUpperCase() === code.toUpperCase());
     if (local) {
-      if (itemTotal < (local.minOrder || 0)) {
-        setCouponMessage({ type: "error", text: `Min order ₹${local.minOrder} required` });
+      if (itemTotal < (local.minOrderAmount || 0)) {
+        setCouponMessage({ type: "error", text: `Min order ₹${local.minOrderAmount} required` });
         setVerifyingCoupon(false); return;
       }
       setAppliedCoupon(local);
@@ -219,6 +219,17 @@ export default function Checkout() {
   };
 
   const handleApplyCoupon = () => applyCouponByCode(couponCode);
+
+  const deleteAddress = async (addrId, e) => {
+    e.stopPropagation();
+    try {
+      await axios.delete(`${API_URL}/api/user/address/${addrId}`, { withCredentials: true });
+      const updated = addresses.filter(a => a._id !== addrId);
+      setAddresses(updated);
+      if (deliveryAddress._id === addrId) setDeliveryAddress(updated[0] || {});
+      toast.success("Address removed");
+    } catch { toast.error("Failed to remove address"); }
+  };
 
   const saveNewAddress = async (newAddress) => {
     try {
@@ -368,23 +379,32 @@ export default function Checkout() {
                       return (
                         <motion.div
                           key={addr._id}
-                          whileHover={{ boxShadow: "0 4px 16px rgba(91,168,160,0.10)" }}
+                          whileHover={{ boxShadow: "0 4px 20px rgba(91,168,160,0.12)" }}
                           onClick={() => setDeliveryAddress(addr)}
                           style={{
-                            padding: "14px 16px", borderRadius: 12, cursor: "pointer",
+                            padding: "14px 16px", borderRadius: 14, cursor: "pointer",
                             border: `1.5px solid ${isSelected ? T.primary : T.border}`,
                             background: isSelected ? "rgba(91,168,160,0.05)" : T.bg,
-                            transition: "all 0.2s",
+                            transition: "all 0.2s", position: "relative",
                           }}
                         >
+                          {/* Left accent bar */}
+                          {isSelected && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, borderRadius: "14px 0 0 14px", background: `linear-gradient(180deg, ${T.primary}, ${T.sky})` }} />}
+
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                               <h4 style={{ fontWeight: 700, fontSize: 13, color: T.textDark, margin: 0 }}>{addr.name}</h4>
-                              {addr.isDefault && <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", padding: "2px 8px", borderRadius: 5, background: "rgba(91,168,160,0.1)", color: T.primary }}>Default</span>}
+                              {addr.isDefault && <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", padding: "2px 8px", borderRadius: 5, background: "rgba(91,168,160,0.12)", color: T.primary }}>Default</span>}
                             </div>
-                            {isSelected && <div style={{ width: 20, height: 20, borderRadius: "50%", background: T.primary, display: "flex", alignItems: "center", justifyContent: "center" }}><FiCheck size={10} style={{ color: "#fff" }} /></div>}
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                              {isSelected && <div style={{ width: 20, height: 20, borderRadius: "50%", background: T.primary, display: "flex", alignItems: "center", justifyContent: "center" }}><FiCheck size={10} style={{ color: "#fff" }} /></div>}
+                              <motion.button whileTap={{ scale: 0.85 }} onClick={e => deleteAddress(addr._id, e)}
+                                style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(232,129,106,0.08)", border: `1px solid rgba(232,129,106,0.18)`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: T.coral, flexShrink: 0 }}>
+                                <FiTrash2 size={10} />
+                              </motion.button>
+                            </div>
                           </div>
-                          <p style={{ fontSize: 11, color: T.textLite, margin: "0 0 4px", fontWeight: 500 }}>{addr.phone}</p>
+                          <p style={{ fontSize: 11, color: T.textLite, margin: "0 0 3px", fontWeight: 500 }}>{addr.phone}</p>
                           <p style={{ fontSize: 12, color: T.textMid, margin: 0, lineHeight: 1.6 }}>
                             {addr.houseNo}, {addr.street}, {addr.city}, {addr.state} — {addr.postalCode}
                           </p>
@@ -533,43 +553,58 @@ export default function Checkout() {
 
                     {/* Available coupons list */}
                     <AnimatePresence>
-                      {showCouponList && availableCoupons.length > 0 && (
+                      {showCouponList && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                           transition={{ duration: 0.28 }} style={{ overflow: "hidden", marginBottom: 10 }}>
-                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                            {availableCoupons.map(c => {
-                              const isApplied = appliedCoupon?.code === c.code;
-                              const canApply = itemTotal >= (c.minOrder || 0);
-                              return (
-                                <div key={c._id || c.code} style={{
-                                  padding: "10px 12px", borderRadius: 10,
-                                  border: `1.5px dashed ${isApplied ? T.primary : T.border}`,
-                                  background: isApplied ? "rgba(91,168,160,0.05)" : T.bg,
-                                  display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8,
-                                }}>
-                                  <div style={{ flex: 1, minWidth: 0 }}>
-                                    <p style={{ fontFamily: "monospace", fontWeight: 800, fontSize: 12, color: T.textDark, margin: 0 }}>{c.code}</p>
-                                    <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.description}</p>
-                                    {!canApply && (
-                                      <p style={{ fontSize: 9, color: T.coral, margin: "2px 0 0", fontWeight: 600 }}>Min order ₹{c.minOrder}</p>
-                                    )}
+                          {availableCoupons.length === 0 ? (
+                            <p style={{ fontSize: 11, color: T.textLite, textAlign: "center", padding: "14px 0" }}>No active coupons available</p>
+                          ) : (
+                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                              {availableCoupons.map(c => {
+                                const isApplied = appliedCoupon?.code === c.code;
+                                const canApply = itemTotal >= (c.minOrderAmount || 0);
+                                const discLabel = c.discountType === "percent" ? `${c.value}% OFF` : `₹${c.value} OFF`;
+                                return (
+                                  <div key={c._id || c.code} style={{
+                                    borderRadius: 12, overflow: "hidden",
+                                    border: `1.5px solid ${isApplied ? T.primary : canApply ? T.border : "#EEF5F4"}`,
+                                    background: isApplied ? "rgba(91,168,160,0.04)" : T.surface,
+                                    boxShadow: isApplied ? "0 2px 12px rgba(91,168,160,0.1)" : "none",
+                                  }}>
+                                    {/* Top accent bar */}
+                                    <div style={{ height: 3, background: isApplied ? `linear-gradient(90deg, ${T.primary}, ${T.sky})` : canApply ? `linear-gradient(90deg, ${T.sky}80, transparent)` : "#EEF5F4" }} />
+                                    <div style={{ padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
+                                      <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                                          <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: 12, color: isApplied ? T.primary : T.textDark, letterSpacing: "0.05em" }}>{c.code}</span>
+                                          <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 5, background: isApplied ? `rgba(91,168,160,0.12)` : "rgba(137,194,217,0.12)", color: isApplied ? T.primary : T.sky }}>{discLabel}</span>
+                                        </div>
+                                        {c.minOrderAmount > 0 && (
+                                          <p style={{ fontSize: 10, color: canApply ? T.textLite : T.coral, margin: 0, fontWeight: 600 }}>
+                                            {canApply ? `✓ Min ₹${c.minOrderAmount} met` : `Min order ₹${c.minOrderAmount} needed`}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <button
+                                        onClick={() => isApplied ? clearCoupon() : applyCouponByCode(c.code)}
+                                        disabled={!canApply && !isApplied}
+                                        style={{
+                                          padding: "6px 14px", borderRadius: 9,
+                                          border: isApplied ? `1px solid rgba(232,129,106,0.25)` : canApply ? `1px solid rgba(91,168,160,0.25)` : `1px solid ${T.border}`,
+                                          cursor: canApply || isApplied ? "pointer" : "not-allowed",
+                                          fontSize: 10, fontWeight: 700, fontFamily: font,
+                                          background: isApplied ? "rgba(232,129,106,0.08)" : canApply ? "rgba(91,168,160,0.08)" : "transparent",
+                                          color: isApplied ? T.coral : canApply ? T.primary : T.textLite,
+                                          flexShrink: 0, transition: "all 0.18s",
+                                        }}>
+                                        {isApplied ? "✕ Remove" : "Apply"}
+                                      </button>
+                                    </div>
                                   </div>
-                                  <button
-                                    onClick={() => isApplied ? clearCoupon() : applyCouponByCode(c.code)}
-                                    disabled={!canApply && !isApplied}
-                                    style={{
-                                      padding: "5px 12px", borderRadius: 8, border: "none", cursor: canApply || isApplied ? "pointer" : "not-allowed",
-                                      fontSize: 10, fontWeight: 700, fontFamily: font,
-                                      background: isApplied ? "rgba(232,129,106,0.1)" : canApply ? "rgba(91,168,160,0.1)" : "rgba(0,0,0,0.04)",
-                                      color: isApplied ? T.coral : canApply ? T.primary : T.textLite,
-                                      flexShrink: 0,
-                                    }}>
-                                    {isApplied ? "Remove" : "Apply"}
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </motion.div>
                       )}
                     </AnimatePresence>

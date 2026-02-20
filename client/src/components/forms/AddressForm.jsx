@@ -1,9 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FiMapPin, FiNavigation, FiCheck, FiX, FiLoader, FiHome, FiSmartphone, FiUser, FiMap, FiHash } from "react-icons/fi";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
+const T = {
+    bg: "#F4F9F8", surface: "#ffffff", border: "#E2EEEC",
+    textDark: "#1A2B35", textMid: "#4A6572", textLite: "#8BA5B3",
+    primary: "#5BA8A0", sky: "#89C2D9", coral: "#E8816A",
+};
+const font = "'Plus Jakarta Sans', sans-serif";
+
 const ALLOWED_STATES = ["Andhra Pradesh", "Telangana", "AP", "TS"];
+
+// Shared input style builder
+const inputStyle = (hasError) => ({
+    width: "100%", boxSizing: "border-box",
+    paddingLeft: 36, paddingRight: 14, paddingTop: 11, paddingBottom: 11,
+    borderRadius: 12,
+    border: `1.5px solid ${hasError ? T.coral : T.border}`,
+    background: T.bg,
+    fontSize: 13, fontWeight: 500, color: T.textDark,
+    outline: "none", fontFamily: font,
+    transition: "border-color 0.2s",
+});
+
+const inputNoPadStyle = (hasError) => ({
+    ...inputStyle(hasError),
+    paddingLeft: 14,
+});
+
+const labelStyle = {
+    fontSize: 9, fontWeight: 800, color: T.textLite,
+    textTransform: "uppercase", letterSpacing: "0.14em",
+    display: "block", marginBottom: 6,
+};
 
 export default function AddressForm({ onSave, onCancel, initialData = {} }) {
     const [formData, setFormData] = useState({
@@ -21,13 +51,8 @@ export default function AddressForm({ onSave, onCancel, initialData = {} }) {
     const [detecting, setDetecting] = useState(false);
     const [errors, setErrors] = useState({});
 
-    // Auto-detect location
     const detectLocation = () => {
-        if (!navigator.geolocation) {
-            toast.error("Geolocation is not supported by your browser.");
-            return;
-        }
-
+        if (!navigator.geolocation) { toast.error("Geolocation not supported."); return; }
         setDetecting(true);
         navigator.geolocation.getCurrentPosition(
             async (position) => {
@@ -37,225 +62,214 @@ export default function AddressForm({ onSave, onCancel, initialData = {} }) {
                         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
                     );
                     const data = await res.json();
-
-                    if (data && data.address) {
+                    if (data?.address) {
                         const addr = data.address;
                         const state = addr.state || "";
                         const isAllowed = ALLOWED_STATES.some(s => state.toLowerCase().includes(s.toLowerCase()));
-
-                        if (!isAllowed) {
-                            toast.error(`Service not available in ${state}. Only AP & Telangana.`);
-                        }
-
+                        if (!isAllowed) toast.error(`Service not available in ${state}. Only AP & Telangana.`);
                         setFormData(prev => ({
                             ...prev,
                             street: data.display_name.split(",")[0],
                             city: addr.city || addr.town || addr.village || addr.county || "",
-                            state: state,
+                            state,
                             postalCode: addr.postcode || "",
                         }));
-
                         toast.success("Location detected!");
                     }
-                } catch (error) {
-                    toast.error("Failed to fetch location details.");
-                } finally {
-                    setDetecting(false);
-                }
+                } catch { toast.error("Failed to fetch location."); }
+                finally { setDetecting(false); }
             },
-            () => {
-                toast.error("Unable to retrieve your location.");
-                setDetecting(false);
-            }
+            () => { toast.error("Unable to retrieve location."); setDetecting(false); }
         );
     };
 
     const validate = () => {
         const newErrors = {};
         if (!formData.name) newErrors.name = "Name is required";
-        if (!formData.phone || formData.phone.length < 10) newErrors.phone = "Valid phone number required";
+        if (!formData.phone || formData.phone.length < 10) newErrors.phone = "Valid phone required";
         if (!formData.houseNo) newErrors.houseNo = "House No is required";
         if (!formData.street) newErrors.street = "Street/Area is required";
         if (!formData.city) newErrors.city = "City is required";
         if (!formData.postalCode) newErrors.postalCode = "Pincode is required";
-
         const isAllowed = ALLOWED_STATES.some(s => formData.state.toLowerCase().includes(s.toLowerCase()));
-        if (!isAllowed) newErrors.state = "Delivery available only in AP & Telangana";
-
+        if (!isAllowed) newErrors.state = "Delivery only in AP & Telangana";
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        if (validate()) {
-            onSave(formData);
-        } else {
-            toast.error("Please fix the errors");
-        }
+        if (validate()) onSave(formData);
+        else toast.error("Please fix the errors");
     };
+
+    const Field = ({ label, error, children }) => (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+            <label style={labelStyle}>{label}</label>
+            {children}
+            {error && <p style={{ fontSize: 10, color: T.coral, marginTop: 4, fontWeight: 600 }}>{error}</p>}
+        </div>
+    );
+
+    const IconWrap = ({ children }) => (
+        <span style={{
+            position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
+            color: T.textLite, pointerEvents: "none", display: "flex", alignItems: "center",
+        }}>{children}</span>
+    );
 
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-xl border border-slate-100 dark:border-slate-700"
+            style={{
+                background: T.surface, borderRadius: 22, padding: 28,
+                boxShadow: "0 8px 48px rgba(26,43,53,0.12)",
+                border: `1px solid ${T.border}`, fontFamily: font,
+            }}
         >
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <FiMapPin className="text-blue-500" />
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: T.textDark, display: "flex", alignItems: "center", gap: 10, margin: 0 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(91,168,160,0.1)", color: T.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <FiMapPin size={15} />
+                    </div>
                     {initialData._id ? "Edit Address" : "Add New Address"}
                 </h3>
-                <button onClick={onCancel} className="text-slate-400 hover:text-red-500">
+                <button onClick={onCancel} style={{ color: T.textLite, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
                     <FiX size={20} />
                 </button>
             </div>
 
+            {/* Detect Location */}
             <button
                 type="button"
                 onClick={detectLocation}
                 disabled={detecting}
-                className="w-full mb-6 flex items-center justify-center gap-2 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-xl font-bold text-sm hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-200 dark:border-blue-800"
+                style={{
+                    width: "100%", marginBottom: 20,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                    padding: "12px 20px", borderRadius: 14,
+                    background: "rgba(91,168,160,0.08)", color: T.primary,
+                    border: `1.5px solid rgba(91,168,160,0.22)`,
+                    fontSize: 13, fontWeight: 700, cursor: detecting ? "not-allowed" : "pointer",
+                    fontFamily: font, transition: "all 0.2s",
+                }}
             >
-                {detecting ? <FiLoader className="animate-spin" /> : <FiNavigation />}
+                {detecting ? <FiLoader size={14} style={{ animation: "spin 1s linear infinite" }} /> : <FiNavigation size={14} />}
                 Use My Current Location
             </button>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Row 1 */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
-                        <div className="relative">
-                            <FiUser className="absolute left-3 top-3 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="John Doe"
-                                className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.name ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            />
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+                {/* Name + Phone */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <Field label="Full Name" error={errors.name}>
+                        <div style={{ position: "relative" }}>
+                            <IconWrap><FiUser size={13} /></IconWrap>
+                            <input type="text" placeholder="Lokesh" value={formData.name}
+                                onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                style={inputStyle(errors.name)} />
                         </div>
-                        {errors.name && <p className="text-red-500 text-xs ml-1">{errors.name}</p>}
-                    </div>
-
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Phone Number</label>
-                        <div className="relative">
-                            <FiSmartphone className="absolute left-3 top-3 text-slate-400" />
-                            <input
-                                type="tel"
-                                placeholder="9876543210"
-                                className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.phone ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                                value={formData.phone}
-                                onChange={(e) => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                            />
+                    </Field>
+                    <Field label="Phone Number" error={errors.phone}>
+                        <div style={{ position: "relative" }}>
+                            <IconWrap><FiSmartphone size={13} /></IconWrap>
+                            <input type="tel" placeholder="9876543210" value={formData.phone}
+                                onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                                style={inputStyle(errors.phone)} />
                         </div>
-                        {errors.phone && <p className="text-red-500 text-xs ml-1">{errors.phone}</p>}
-                    </div>
+                    </Field>
                 </div>
 
-                {/* Row 2 */}
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">House No / Flat / Building</label>
-                    <div className="relative">
-                        <FiHome className="absolute left-3 top-3 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Flat 101, Sea View Apartments"
-                            className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.houseNo ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                            value={formData.houseNo}
-                            onChange={(e) => setFormData({ ...formData, houseNo: e.target.value })}
-                        />
+                {/* House No */}
+                <Field label="House No / Flat / Building" error={errors.houseNo}>
+                    <div style={{ position: "relative" }}>
+                        <IconWrap><FiHome size={13} /></IconWrap>
+                        <input type="text" placeholder="Flat 101, Sea View Apartments" value={formData.houseNo}
+                            onChange={e => setFormData({ ...formData, houseNo: e.target.value })}
+                            style={inputStyle(errors.houseNo)} />
                     </div>
-                    {errors.houseNo && <p className="text-red-500 text-xs ml-1">{errors.houseNo}</p>}
-                </div>
+                </Field>
 
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Street / Area / Colony</label>
-                    <div className="relative">
-                        <FiMap className="absolute left-3 top-3 text-slate-400" />
-                        <input
-                            type="text"
-                            placeholder="Main Road, Near Clock Tower"
-                            className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.street ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                            value={formData.street}
-                            onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                        />
+                {/* Street */}
+                <Field label="Street / Area / Colony" error={errors.street}>
+                    <div style={{ position: "relative" }}>
+                        <IconWrap><FiMap size={13} /></IconWrap>
+                        <input type="text" placeholder="Main Road, Near Clock Tower" value={formData.street}
+                            onChange={e => setFormData({ ...formData, street: e.target.value })}
+                            style={inputStyle(errors.street)} />
                     </div>
-                    {errors.street && <p className="text-red-500 text-xs ml-1">{errors.street}</p>}
-                </div>
+                </Field>
 
-                {/* Row 3 */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">City</label>
-                        <input
-                            type="text"
-                            placeholder="Visakhapatnam"
-                            className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.city ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                            value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        />
-                        {errors.city && <p className="text-red-500 text-xs ml-1">{errors.city}</p>}
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">Pincode</label>
-                        <div className="relative">
-                            <FiHash className="absolute left-3 top-3 text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="530001"
-                                className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.postalCode ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                                value={formData.postalCode}
-                                onChange={(e) => setFormData({ ...formData, postalCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                            />
+                {/* City + Pincode */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <Field label="City" error={errors.city}>
+                        <input type="text" placeholder="Visakhapatnam" value={formData.city}
+                            onChange={e => setFormData({ ...formData, city: e.target.value })}
+                            style={inputNoPadStyle(errors.city)} />
+                    </Field>
+                    <Field label="Pincode" error={errors.postalCode}>
+                        <div style={{ position: "relative" }}>
+                            <IconWrap><FiHash size={13} /></IconWrap>
+                            <input type="text" placeholder="530001" value={formData.postalCode}
+                                onChange={e => setFormData({ ...formData, postalCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                                style={inputStyle(errors.postalCode)} />
                         </div>
-                        {errors.postalCode && <p className="text-red-500 text-xs ml-1">{errors.postalCode}</p>}
-                    </div>
+                    </Field>
                 </div>
 
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider ml-1">State</label>
-                    <select
-                        value={formData.state}
-                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                        className={`w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${errors.state ? 'border-red-500' : 'border-slate-200 dark:border-slate-700'}`}
-                    >
+                {/* State */}
+                <Field label="State" error={errors.state}>
+                    <select value={formData.state}
+                        onChange={e => setFormData({ ...formData, state: e.target.value })}
+                        style={{ ...inputNoPadStyle(errors.state), appearance: "none", paddingRight: 14 }}>
                         <option value="Andhra Pradesh">Andhra Pradesh</option>
                         <option value="Telangana">Telangana</option>
                     </select>
-                    {errors.state && <p className="text-red-500 text-xs ml-1">{errors.state}</p>}
-                </div>
+                </Field>
 
-                <div className="flex items-center gap-2 pt-2">
-                    <input
-                        type="checkbox"
-                        id="defaultAddr"
-                        checked={formData.isDefault}
-                        onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
-                        className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                    />
-                    <label htmlFor="defaultAddr" className="text-sm font-medium text-slate-700 dark:text-slate-300">Set as default address</label>
-                </div>
+                {/* Default checkbox */}
+                <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", userSelect: "none" }}>
+                    <div
+                        onClick={() => setFormData({ ...formData, isDefault: !formData.isDefault })}
+                        style={{
+                            width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                            border: `1.5px solid ${formData.isDefault ? T.primary : T.border}`,
+                            background: formData.isDefault ? T.primary : T.surface,
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", transition: "all 0.18s",
+                        }}>
+                        {formData.isDefault && <FiCheck size={11} color="#fff" strokeWidth={3} />}
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: T.textMid }}>Set as default address</span>
+                </label>
 
-                <div className="flex gap-4 pt-4">
-                    <button
-                        type="button"
-                        onClick={onCancel}
-                        className="flex-1 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    >
+                {/* Buttons */}
+                <div style={{ display: "flex", gap: 12, paddingTop: 4 }}>
+                    <button type="button" onClick={onCancel}
+                        style={{
+                            flex: 1, padding: "13px 20px", borderRadius: 14, fontWeight: 700, fontSize: 13,
+                            color: T.textMid, background: T.bg, border: `1px solid ${T.border}`,
+                            cursor: "pointer", fontFamily: font,
+                        }}>
                         Cancel
                     </button>
-                    <button
-                        type="submit"
-                        className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
-                    >
-                        <FiCheck /> Save Address
-                    </button>
+                    <motion.button type="submit" whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.28)" }} whileTap={{ scale: 0.97 }}
+                        style={{
+                            flex: 2, padding: "13px 20px", borderRadius: 14, fontWeight: 700, fontSize: 13,
+                            color: "#fff", background: T.primary, border: "none",
+                            cursor: "pointer", fontFamily: font,
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                            boxShadow: "0 4px 16px rgba(91,168,160,0.22)",
+                        }}>
+                        <FiCheck size={14} strokeWidth={3} /> Save Address
+                    </motion.button>
                 </div>
             </form>
+
+            <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </motion.div>
     );
 }
