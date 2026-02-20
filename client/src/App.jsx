@@ -2,7 +2,8 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
+import { FiX } from "react-icons/fi";
 
 // Components
 import Navbar from "./components/layout/Navbar";
@@ -126,38 +127,46 @@ function MainLayout() {
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: 'rgba(20, 20, 20, 0.75)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            color: '#ffffff',
-            borderRadius: '9999px',
-            padding: '12px 24px',
-            fontSize: '14px',
-            fontWeight: '600',
-            border: '1px solid rgba(255,255,255,0.1)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-            transformOrigin: 'top center',
-          },
-          success: {
-            iconTheme: {
-              primary: '#10b981',
-              secondary: 'white',
-            },
-          },
-          error: {
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: 'white',
-            },
-          }
-        }}
-      />
+      <style>{`
+        @keyframes toast-timeline {
+          0% { width: 100%; }
+          100% { width: 0%; }
+        }
+      `}</style>
+      <Toaster position="top-center">
+        {(t) => (
+          <div
+            style={{
+              opacity: t.visible ? 1 : 0,
+              transform: t.visible ? 'translateY(0)' : 'translateY(-15px)',
+              transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
+            }}
+            className="pointer-events-auto bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-xl px-5 py-4 w-80 relative overflow-hidden"
+          >
+            <div className="flex items-center justify-between text-slate-800 dark:text-slate-100 mb-1">
+              <span className="text-[13px] font-semibold tracking-wide">
+                {typeof t.message === 'function' ? t.message(t) : t.message}
+              </span>
+              <button
+                onClick={() => toast.dismiss(t.id)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                <FiX size={16} />
+              </button>
+            </div>
 
+            {/* Timeline Progress Bar */}
+            <div className="absolute bottom-0 left-0 h-1 bg-slate-100 dark:bg-slate-800 w-full">
+              <div
+                className="h-full bg-teal-500"
+                style={{
+                  animation: t.visible ? 'toast-timeline 2s linear forwards' : 'none'
+                }}
+              />
+            </div>
+          </div>
+        )}
+      </Toaster>
       {/* 🟢 Global Announcement */}
       <AnnouncementBar settings={announcement} />
 

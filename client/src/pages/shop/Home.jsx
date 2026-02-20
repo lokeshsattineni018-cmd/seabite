@@ -6,7 +6,6 @@ import {
   useTransform,
   useInView,
   useSpring,
-  useMotionValue,
   AnimatePresence,
 } from "framer-motion";
 import axios from "axios";
@@ -108,29 +107,6 @@ const SectionLabel = ({ children }) => (
 );
 
 const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  // Extremely smooth spring setup for magnetic pull
-  const springX = useSpring(x, { stiffness: 150, damping: 15, mass: 0.1 });
-  const springY = useSpring(y, { stiffness: 150, damping: 15, mass: 0.1 });
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    // Magnetic pull distance (max 10px)
-    x.set((mouseX / width - 0.5) * 20);
-    y.set((mouseY / height - 0.5) * 20);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
   const base = "inline-flex items-center gap-2.5 font-semibold text-sm transition-all duration-300 rounded-full";
   const styles = {
     primary: "px-7 py-3.5 bg-[#1A2B35] text-white hover:bg-[#5BA8A0] shadow-sm hover:shadow-[0_4px_20px_rgba(91,168,160,0.35)]",
@@ -138,15 +114,8 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
     coral: "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
   };
   return (
-    <Link to={to} style={{ display: "inline-block" }}>
-      <motion.button
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        style={{ x: springX, y: springY }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className={`${base} ${styles[variant]} ${className}`}
-      >
+    <Link to={to}>
+      <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className={`${base} ${styles[variant]} ${className}`}>
         {children}
       </motion.button>
     </Link>
@@ -180,18 +149,10 @@ const Hero = () => {
             <motion.h1
               initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.85, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight drop-shadow-sm flex flex-col"
+              className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
               style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
             >
-              <motion.span style={{ color: "white", opacity: useTransform(scrollY, [0, 150], [1, 0.2]), x: useTransform(scrollY, [0, 200], [0, -20]) }}>
-                Ocean-Fresh
-              </motion.span>
-              <motion.span style={{ color: "#5BA8A0", opacity: useTransform(scrollY, [0, 250], [1, 0.4]), scale: useTransform(scrollY, [0, 300], [1, 0.95]), originX: 0 }}>
-                Seafood
-              </motion.span>
-              <motion.span style={{ color: "white", opacity: useTransform(scrollY, [0, 350], [1, 0.2]), x: useTransform(scrollY, [0, 400], [0, 20]) }}>
-                Delivered.
-              </motion.span>
+              Ocean-Fresh<br /><span className="text-[#5BA8A0]">Seafood</span><br />Delivered.
             </motion.h1>
 
             <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.55 }} className="text-white/75 text-lg leading-relaxed max-w-md">
