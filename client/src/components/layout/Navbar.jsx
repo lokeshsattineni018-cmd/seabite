@@ -1,5 +1,5 @@
 // src/components/Navbar.jsx
-import { useState, useContext, useEffect, useRef } from "react";
+import { useState, useContext, useEffect, useRef, Suspense } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
