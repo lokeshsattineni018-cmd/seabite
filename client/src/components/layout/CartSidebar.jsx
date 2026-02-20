@@ -59,7 +59,7 @@ export default function CartSidebar({ isOpen, onClose }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.28 }}
             onClick={onClose}
-            style={{ position: "fixed", inset: 0, background: "rgba(26,43,53,0.32)", backdropFilter: "blur(6px)", zIndex: 60 }}
+            style={{ position: "fixed", inset: 0, background: "rgba(26,43,53,0.32)", backdropFilter: "blur(6px)", zIndex: 1000 }}
           />
 
           {/* SIDEBAR DRAWER */}
@@ -71,7 +71,7 @@ export default function CartSidebar({ isOpen, onClose }) {
             style={{
               position: "fixed", top: 0, right: 0, height: "100%",
               width: "100%", maxWidth: 440,
-              background: T.surface, zIndex: 70,
+              background: T.surface, zIndex: 1010,
               display: "flex", flexDirection: "column",
               borderLeft: `1px solid ${T.border}`,
               boxShadow: "-8px 0 48px rgba(26,43,53,0.10)",

@@ -9,7 +9,6 @@ import { Toaster } from "react-hot-toast";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import CartSidebar from "./components/layout/CartSidebar";
-import PageTransition from "./components/common/PageTransition";
 import ScrollToTop from "./components/layout/ScrollToTop";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
@@ -199,23 +198,23 @@ function MainLayout() {
               ) : (
                 <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
                   <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-                    <Route path="/products" element={<PageTransition><Products openCart={openCart} /></PageTransition>} />
-                    <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
-                    <Route path="/wishlist" element={<PageTransition><PrivateRoute><Wishlist /></PrivateRoute></PageTransition>} />
-                    <Route path="/profile" element={<PageTransition><PrivateRoute><Profile /></PrivateRoute></PageTransition>} />
-                    <Route path="/spin" element={<PageTransition><Spin /></PageTransition>} />
-                    <Route path="/notifications" element={<PageTransition><PrivateRoute><Notifications /></PrivateRoute></PageTransition>} />
-                    <Route path="/checkout" element={<PageTransition><PrivateRoute><Checkout /></PrivateRoute></PageTransition>} />
-                    <Route path="/success" element={<PageTransition><PrivateRoute><OrderSuccess /></PrivateRoute></PageTransition>} />
-                    <Route path="/orders" element={<PageTransition><PrivateRoute><Orders /></PrivateRoute></PageTransition>} />
-                    <Route path="/orders/:orderId" element={<PageTransition><PrivateRoute><OrderDetails /></PrivateRoute></PageTransition>} />
-                    <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
-                    <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-                    <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
-                    <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
-                    <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
-                    <Route path="/cancellation" element={<PageTransition><Cancellation /></PageTransition>} />
+                    <Route path="/" element={<Home />} />
+                    <Route path="/products" element={<Products openCart={openCart} />} />
+                    <Route path="/products/:id" element={<ProductDetails />} />
+                    <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
+                    <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                    <Route path="/spin" element={<Spin />} />
+                    <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
+                    <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
+                    <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
+                    <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
+                    <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/faq" element={<FAQ />} />
+                    <Route path="/terms" element={<Terms />} />
+                    <Route path="/privacy" element={<Privacy />} />
+                    <Route path="/cancellation" element={<Cancellation />} />
                     <Route path="/maintenance" element={<Maintenance />} />
                   </Routes>
                 </AnimatePresence>
