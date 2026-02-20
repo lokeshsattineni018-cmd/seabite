@@ -118,10 +118,10 @@ export default function AdminWatchtower() {
         <>
             <GS />
             <motion.div className="sb" initial="hidden" animate="visible" variants={stagger}
-                style={{ minHeight: "100vh", background: T.bg, padding: "28px", maxWidth: 1400, margin: "0 auto", color: T.text }}
+                style={{ background: T.bg, padding: "16px 0 0 0", maxWidth: 1400, margin: "0 auto", color: T.text }}
             >
                 {/* ── HEADER ─────────────────────────────────── */}
-                <motion.div variants={fadeUp} style={{ marginBottom: 28, borderBottom: `1px solid ${T.borderSoft}`, paddingBottom: 20, display: "flex", justifyContent: "space-between", alignItems: "end" }}>
+                <motion.div variants={fadeUp} style={{ marginBottom: 16, borderBottom: `1px solid ${T.borderSoft}`, paddingBottom: 16, display: "flex", justifyContent: "space-between", alignItems: "end" }}>
                     <div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                             <FiRadio size={14} style={{ color: isConnected ? T.teal : T.textGhost }} className={isConnected ? "animate-pulse" : ""} />
