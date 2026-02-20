@@ -1,8 +1,14 @@
 {
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\""
+  },
   "dependencies": {
     "react-hot-toast": "^2.6.0"
   },
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "kill-port": "^2.0.1"
   }
 }

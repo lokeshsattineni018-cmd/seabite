@@ -615,7 +615,7 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
           intelligence: {
             totalSpent: Math.round(totalSpent),
             orderCount,
-            reviewCount,
+            reviewsCount,
             avgOrderValue: orderCount > 0 ? Math.round(totalSpent / orderCount) : 0,
             lastOrderDate,
             recencyDays,
