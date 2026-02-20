@@ -15,7 +15,7 @@ const ReviewModal = ({ isOpen, onClose, product, existingReview, token, API_URL,
       } else {
         setRating(5);
         setComment('');
-      }
+      }//hh
     }
   }, [isOpen, existingReview]);
 
