@@ -2,8 +2,7 @@ import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
-import { Toaster, toast } from "react-hot-toast";
-import { FiX } from "react-icons/fi";
+import { Toaster } from "react-hot-toast";
 
 // Components
 import Navbar from "./components/layout/Navbar";
@@ -127,46 +126,36 @@ function MainLayout() {
   return (
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
-      <style>{`
-        @keyframes toast-timeline {
-          0% { width: 100%; }
-          100% { width: 0%; }
-        }
-      `}</style>
-      <Toaster position="top-center">
-        {(t) => (
-          <div
-            style={{
-              opacity: t.visible ? 1 : 0,
-              transform: t.visible ? 'translateY(0)' : 'translateY(-15px)',
-              transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
-            }}
-            className="pointer-events-auto bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 shadow-xl rounded-xl px-5 py-4 w-80 relative overflow-hidden"
-          >
-            <div className="flex items-center justify-between text-slate-800 dark:text-slate-100 mb-1">
-              <span className="text-[13px] font-semibold tracking-wide">
-                {typeof t.message === 'function' ? t.message(t) : t.message}
-              </span>
-              <button
-                onClick={() => toast.dismiss(t.id)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              >
-                <FiX size={16} />
-              </button>
-            </div>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(12px)',
+            color: '#0f172a',
+            borderRadius: '16px',
+            padding: '16px 24px',
+            fontSize: '14px',
+            fontWeight: '600',
+            border: '1px solid rgba(255,255,255,0.5)',
+            boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)'
+          },
+          success: {
+            iconTheme: {
+              primary: '#10b981',
+              secondary: 'white',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: 'white',
+            },
+          }
+        }}
+      />
 
-            {/* Timeline Progress Bar */}
-            <div className="absolute bottom-0 left-0 h-1 bg-slate-100 dark:bg-slate-800 w-full">
-              <div
-                className="h-full bg-teal-500"
-                style={{
-                  animation: t.visible ? 'toast-timeline 2s linear forwards' : 'none'
-                }}
-              />
-            </div>
-          </div>
-        )}
-      </Toaster>
       {/* 🟢 Global Announcement */}
       <AnnouncementBar settings={announcement} />
 
@@ -188,7 +177,7 @@ function MainLayout() {
             />
           )}
 
-          <div className="flex-grow z-10 relative transition-colors duration-500 shadow-[0_10px_40px_rgba(0,0,0,0.1)]">
+          <div className="flex-grow">
             <Suspense fallback={<PageSkeleton />}>
               {isAdminRoute ? (
                 <Routes>
