@@ -6,9 +6,9 @@ import {
   FiSearch, FiPackage, FiFilter, FiX,
   FiSliders, FiChevronDown, FiChevronRight
 } from "react-icons/fi";
-import { CartContext } from "../context/CartContext";
-import EnhancedProductCard from "../components/EnhancedProductCard";
-import FilterSidebar from "../components/FilterSidebar";
+import { CartContext } from "../../context/CartContext";
+import EnhancedProductCard from "../../components/products/EnhancedProductCard";
+import FilterSidebar from "../../components/layout/FilterSidebar";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -25,17 +25,17 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 // ─────────────────────────────────────────────────────────
 
 const CATEGORY_META = {
-  All:   { emoji: "🌊", label: "All Products",    tagline: "Fresh from the ocean, daily." },
-  Fish:  { emoji: "🐟", label: "Premium Fish",    tagline: "Wild-caught, restaurant quality." },
-  Prawn: { emoji: "🦐", label: "Jumbo Prawns",    tagline: "Perfect for grilling & curries." },
-  Crab:  { emoji: "🦀", label: "Live Crabs",      tagline: "Soft-shell & market-fresh." },
+  All: { emoji: "🌊", label: "All Products", tagline: "Fresh from the ocean, daily." },
+  Fish: { emoji: "🐟", label: "Premium Fish", tagline: "Wild-caught, restaurant quality." },
+  Prawn: { emoji: "🦐", label: "Jumbo Prawns", tagline: "Perfect for grilling & curries." },
+  Crab: { emoji: "🦀", label: "Live Crabs", tagline: "Soft-shell & market-fresh." },
 };
 
 const SORT_OPTIONS = [
-  { value: "newest",     label: "Newest First" },
-  { value: "price_asc",  label: "Price: Low → High" },
+  { value: "newest", label: "Newest First" },
+  { value: "price_asc", label: "Price: Low → High" },
   { value: "price_desc", label: "Price: High → Low" },
-  { value: "popular",    label: "Most Popular" },
+  { value: "popular", label: "Most Popular" },
 ];
 
 export default function Products() {
@@ -43,11 +43,11 @@ export default function Products() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [products, setProducts]           = useState([]);
+  const [products, setProducts] = useState([]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
-  const [loading, setLoading]             = useState(true);
+  const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [sortOpen, setSortOpen]           = useState(false);
+  const [sortOpen, setSortOpen] = useState(false);
 
   const [filters, setFilters] = useState({
     category: "All",
@@ -80,11 +80,11 @@ export default function Products() {
     try {
       const params = {
         category: filters.category === "All" ? undefined : filters.category,
-        search:   filters.search   || undefined,
+        search: filters.search || undefined,
         minPrice: filters.minPrice || undefined,
         maxPrice: filters.maxPrice || undefined,
-        inStock:  filters.inStock  || undefined,
-        sort:     filters.sort,
+        inStock: filters.inStock || undefined,
+        sort: filters.sort,
       };
       const res = await axios.get(`${API_URL}/api/products`, { params });
       setProducts(res.data.products || res.data || []);
