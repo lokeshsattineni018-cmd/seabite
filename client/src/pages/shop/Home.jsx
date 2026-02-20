@@ -6,7 +6,6 @@ import {
   useTransform,
   useInView,
   useSpring,
-  useMotionValue,
   AnimatePresence,
 } from "framer-motion";
 import axios from "axios";
@@ -108,29 +107,6 @@ const SectionLabel = ({ children }) => (
 );
 
 const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-  // Extremely smooth spring setup for magnetic pull
-  const springX = useSpring(x, { stiffness: 150, damping: 15, mass: 0.1 });
-  const springY = useSpring(y, { stiffness: 150, damping: 15, mass: 0.1 });
-
-  const handleMouseMove = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-
-    // Magnetic pull distance (max 10px)
-    x.set((mouseX / width - 0.5) * 20);
-    y.set((mouseY / height - 0.5) * 20);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
   const base = "inline-flex items-center gap-2.5 font-semibold text-sm transition-all duration-300 rounded-full";
   const styles = {
     primary: "px-7 py-3.5 bg-[#1A2B35] text-white hover:bg-[#5BA8A0] shadow-sm hover:shadow-[0_4px_20px_rgba(91,168,160,0.35)]",
@@ -138,15 +114,8 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
     coral: "px-7 py-3.5 bg-[#E8816A] text-white hover:bg-[#D4705A] shadow-sm hover:shadow-[0_4px_20px_rgba(232,129,106,0.3)]",
   };
   return (
-    <Link to={to} style={{ display: "inline-block" }}>
-      <motion.button
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-        style={{ x: springX, y: springY }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className={`${base} ${styles[variant]} ${className}`}
-      >
+    <Link to={to}>
+      <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className={`${base} ${styles[variant]} ${className}`}>
         {children}
       </motion.button>
     </Link>
