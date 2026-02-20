@@ -188,7 +188,7 @@ function MainLayout() {
             />
           )}
 
-          <div className="flex-grow z-10 relative bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 shadow-[0_10px_40px_rgba(0,0,0,0.1)] mb-[400px]">
+          <div className="flex-grow z-10 relative transition-colors duration-500 shadow-[0_10px_40px_rgba(0,0,0,0.1)]">
             <Suspense fallback={<PageSkeleton />}>
               {isAdminRoute ? (
                 <Routes>
@@ -240,11 +240,7 @@ function MainLayout() {
             </Suspense>
           </div>
 
-          {!isAdminRoute && (
-            <div className="fixed bottom-0 left-0 w-full h-[400px] z-0">
-              <Footer />
-            </div>
-          )}
+          {!isAdminRoute && <Footer />}
           {!isAdminRoute && <SupportWidget />}
         </>
       )
