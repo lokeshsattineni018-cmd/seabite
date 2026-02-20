@@ -12,7 +12,7 @@ export const SocketProvider = ({ children }) => {
 
     useEffect(() => {
         // Determine URL: Use specific URL if in production, else auto-detect (for proxy)
-        const socketUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const socketUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? window.location.origin : "http://localhost:5000");
 
         // console.log("🔌 Initializing Socket Connection to:", socketUrl);
 

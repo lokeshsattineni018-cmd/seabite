@@ -139,12 +139,12 @@ const Hero = () => {
   return (
     <section className="relative h-screen min-h-[680px] max-h-[960px] overflow-hidden">
       {!isVideoLoaded && (
-        <div className="absolute inset-0 z-40 bg-[#1A2B35] flex items-center justify-center">
+        <div className="absolute inset-0 z-40 bg-[#FDF9F4] flex items-center justify-center">
           <SeaBiteLoader />
         </div>
       )}
       <motion.div style={{ y: videoY, opacity: videoOpacity }} className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white/30 z-10" />
         <video
           autoPlay
           loop
@@ -169,13 +169,13 @@ const Hero = () => {
             <motion.h1
               initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.85, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
+              className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-[#1A2B35] drop-shadow-sm"
               style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
             >
               Ocean-Fresh<br /><span className="text-[#5BA8A0]">Seafood</span><br />Delivered.
             </motion.h1>
 
-            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.55 }} className="text-white/75 text-lg leading-relaxed max-w-md">
+            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.55 }} className="text-[#4A6572] text-lg leading-relaxed max-w-md">
               Premium fish, prawns & crabs — sourced daily from the coast, cold-chain delivered straight to your kitchen.
             </motion.p>
 
@@ -183,7 +183,7 @@ const Hero = () => {
               <CTAButton to="/products" variant="primary">Shop Now <ArrowRight size={15} /></CTAButton>
               <Link to="/products">
                 <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full border border-white/25 text-white/80 hover:border-white/60 hover:text-white bg-white/10 backdrop-blur-sm transition-all duration-300"
+                  className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full border border-[#CBD8DF] text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] bg-white transition-all duration-300"
                 >
                   View All Catch
                 </motion.button>
@@ -195,8 +195,8 @@ const Hero = () => {
                 <div key={i} className="flex items-center gap-2">
                   {i > 0 && <div className="w-px h-8 bg-white/15" />}
                   <div>
-                    <p className="text-sm font-bold text-white">{s.n}</p>
-                    <p className="text-[11px] text-white/50">{s.label}</p>
+                    <p className="text-sm font-bold text-[#1A2B35]">{s.n}</p>
+                    <p className="text-[11px] text-[#4A6572]/60">{s.label}</p>
                   </div>
                 </div>
               ))}
@@ -250,9 +250,9 @@ const Hero = () => {
       </div>
 
       <motion.div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }}>
-        <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Scroll</span>
+        <span className="text-[10px] text-[#4A6572]/40 uppercase tracking-[0.2em]">Scroll</span>
         <motion.div animate={{ y: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>
-          <ChevronDown size={16} className="text-white/40" />
+          <ChevronDown size={16} className="text-[#4A6572]/40" />
         </motion.div>
       </motion.div>
     </section>
@@ -273,7 +273,7 @@ const WaveTicker = () => {
         transition={{ repeat: Infinity, duration: 2.4, delay: (index / totalWords) * 1.2, ease: "easeInOut" }}
         style={{ display: "inline-flex", alignItems: "center" }}
       >
-        <span className="text-xs font-semibold tracking-[0.15em] uppercase text-white/70 mx-8">{text}</span>
+        <span className="text-xs font-semibold tracking-[0.15em] uppercase text-[#4A6572]/70 mx-8">{text}</span>
         <span style={{ color: "#5BA8A0", fontSize: "13px" }}>〰</span>
       </motion.span>
     );
@@ -283,14 +283,14 @@ const WaveTicker = () => {
 
   return (
     <div style={{ lineHeight: 0 }}>
-      <div className="bg-[#1A2B35] overflow-hidden" style={{ paddingTop: "16px", paddingBottom: "16px", position: "relative", lineHeight: "normal" }}>
-        <div className="absolute left-0 right-0 pointer-events-none" style={{ top: "50%", transform: "translateY(-50%)", height: "1px", background: "linear-gradient(90deg, transparent, rgba(91,168,160,0.18), transparent)" }} />
+      <div className="bg-[#F8FAFB] overflow-hidden" style={{ paddingTop: "16px", paddingBottom: "16px", position: "relative", lineHeight: "normal" }}>
+        <div className="absolute left-0 right-0 pointer-events-none" style={{ top: "50%", transform: "translateY(-50%)", height: "1px", background: "linear-gradient(90deg, transparent, rgba(91,168,160,0.1), transparent)" }} />
         <motion.div className="flex whitespace-nowrap" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 32, ease: "linear", repeat: Infinity }} style={{ willChange: "transform" }}>
           {doubled.map((item, i) => <WaveWord key={i} text={item} index={i % items.length} totalWords={items.length} />)}
         </motion.div>
       </div>
       <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", width: "100%", height: "60px", background: "#F8FAFB" }} preserveAspectRatio="none">
-        <path d="M0 0 C200 60, 400 0, 600 30 C800 60, 1000 0, 1200 30 C1320 50, 1400 20, 1440 30 L1440 0 Z" fill="#1A2B35" />
+        <path d="M0 0 C200 60, 400 0, 600 30 C800 60, 1000 0, 1200 30 C1320 50, 1400 20, 1440 30 L1440 0 Z" fill="#F8FAFB" />
       </svg>
     </div>
   );
@@ -634,7 +634,7 @@ export default function Home() {
         * { -webkit-font-smoothing: antialiased; }
       `}</style>
 
-      <div className="bg-[#1A2B35]">
+      <div className="bg-[#FDF9F4]">
         <Hero />
         <WaveTicker />
       </div>

@@ -230,7 +230,7 @@ export default function Navbar({ openCart }) {
               <button className="nav-ul" style={{
                 display: "flex", alignItems: "center", gap: "4px",
                 padding: "6px 12px", border: "none", background: "none",
-                fontSize: "13.5px", fontWeight: "600", color: T.link,
+                fontSize: "15px", fontWeight: "600", color: T.link,
                 cursor: "pointer", fontFamily: "'Manrope', sans-serif",
                 borderRadius: "8px", transition: "color 0.3s",
               }}>
@@ -250,7 +250,7 @@ export default function Navbar({ openCart }) {
                     {NAV_LINKS.map(link => (
                       <button key={link.path} className="dd-item"
                         onClick={() => { navigate(link.path); setShowShop(false); }}
-                        style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 13px", border: "none", background: "none", borderRadius: "9px", fontSize: "13.5px", fontWeight: "600", color: "#1A2E2C", cursor: "pointer", fontFamily: "'Manrope', sans-serif", transition: "all 0.15s" }}>
+                        style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 13px", border: "none", background: "none", borderRadius: "9px", fontSize: "15px", fontWeight: "600", color: "#1A2E2C", cursor: "pointer", fontFamily: "'Manrope', sans-serif", transition: "all 0.15s" }}>
                         {link.label}
                       </button>
                     ))}
@@ -262,7 +262,7 @@ export default function Navbar({ openCart }) {
             {[{ label: "About", path: "/about" }, { label: "Orders", path: "/orders" }].map(link => (
               <Link key={link.path} to={link.path}
                 className={`nav-ul ${isActive(link.path) ? "nav-ul-active" : ""}`}
-                style={{ padding: "6px 12px", borderRadius: "8px", fontSize: "13.5px", fontWeight: "600", color: isActive(link.path) ? T.linkActive : T.link, textDecoration: "none", transition: "color 0.3s" }}>
+                style={{ padding: "6px 12px", borderRadius: "8px", fontSize: "15px", fontWeight: "600", color: isActive(link.path) ? T.linkActive : T.link, textDecoration: "none", transition: "color 0.3s" }}>
                 {link.label}
               </Link>
             ))}

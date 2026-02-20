@@ -41,11 +41,11 @@ export default function TrendingProducts() {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-12 overflow-hidden border-y border-gray-200 dark:border-white/5 transition-colors duration-300 relative bg-gradient-to-b from-slate-50 via-white to-slate-50 dark:from-[#0a1625] dark:via-[#0d1a2d] dark:to-[#0a1625]">
+    <section className="py-12 overflow-hidden border-y border-[#E8EEF2] transition-colors duration-300 relative bg-[#FDF9F4]/50">
       {/* Decorative Background */}
-      <div className="absolute inset-0 pointer-events-none opacity-5">
-        <div className="absolute top-10 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl" />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.03]">
+        <div className="absolute top-10 left-10 w-72 h-72 bg-[#5BA8A0] rounded-full blur-3xl" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-[#E8816A] rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto px-6 mb-12 flex flex-col items-center text-center relative z-10">
@@ -54,14 +54,15 @@ export default function TrendingProducts() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 bg-yellow-400/10 backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-yellow-600 dark:text-yellow-400 uppercase tracking-widest mb-6 border border-yellow-400/20"
+          className="inline-flex items-center gap-2 bg-[#FAF4EC] backdrop-blur px-4 py-2 rounded-full text-xs font-bold text-[#8B6D45] uppercase tracking-widest mb-6 border border-[#EAD9C0]"
         >
           <Flame size={14} /> Customer Favorites
         </motion.div>
 
         <TextReveal
           text="Best Sellers"
-          className="text-4xl md:text-5xl font-serif text-slate-900 dark:text-white transition-colors duration-300 mb-4"
+          className="text-4xl md:text-5xl font-bold text-[#1A2B35] transition-colors duration-300 mb-4"
+          style={{ fontFamily: "'Bricolage Grotesque', sans-serif" }}
         />
 
         <motion.p
@@ -69,7 +70,7 @@ export default function TrendingProducts() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.2 }}
-          className="text-slate-600 dark:text-slate-400 max-w-2xl"
+          className="text-[#4A6572] max-w-2xl"
         >
           Handpicked from our ocean-fresh collection. These crowd favorites fly off the shelves!
         </motion.p>
