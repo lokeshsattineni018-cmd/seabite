@@ -106,10 +106,9 @@ export default function Cart({ open, onClose }) {
                     className="h-full flex flex-col items-center justify-center text-center p-6"
                   >
                     <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 12, delay: 0.2 }}
-                      className="w-24 h-24 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 shadow-sm"
+                      animate={{ y: [0, -15, 0], rotate: [0, -4, 4, 0] }}
+                      transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+                      className="w-24 h-24 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mb-6 shadow-xl shadow-slate-200/50 dark:shadow-black/50"
                     >
                       <FiPackage size={40} className="text-slate-300 dark:text-slate-600" />
                     </motion.div>

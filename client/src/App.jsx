@@ -127,19 +127,21 @@ function MainLayout() {
     <div className="flex flex-col min-h-screen bg-[#f4f7fa] dark:bg-[#0a1625] transition-colors duration-500 ease-in-out relative">
       <ScrollToTop />
       <Toaster
-        position="top-right"
+        position="top-center"
         toastOptions={{
           duration: 4000,
           style: {
-            background: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(12px)',
-            color: '#0f172a',
-            borderRadius: '16px',
-            padding: '16px 24px',
+            background: 'rgba(20, 20, 20, 0.75)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            color: '#ffffff',
+            borderRadius: '9999px',
+            padding: '12px 24px',
             fontSize: '14px',
             fontWeight: '600',
-            border: '1px solid rgba(255,255,255,0.5)',
-            boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)'
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            transformOrigin: 'top center',
           },
           success: {
             iconTheme: {

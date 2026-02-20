@@ -21,11 +21,11 @@ const T = {
 
 const getStatusConfig = (status) => {
   switch (status) {
-    case "Delivered":   return { bg: "rgba(91,168,160,0.10)", text: T.primary, icon: <FiCheck size={12} />, dot: T.primary };
+    case "Delivered": return { bg: "rgba(91,168,160,0.10)", text: T.primary, icon: <FiCheck size={12} />, dot: T.primary };
     case "Cancelled":
     case "Cancelled by User": return { bg: "rgba(232,129,106,0.10)", text: T.coral, icon: <FiX size={12} />, dot: T.coral };
-    case "Shipped":     return { bg: "rgba(137,194,217,0.12)", text: T.sky, icon: <FiTruck size={12} />, dot: T.sky };
-    default:            return { bg: "rgba(251,191,36,0.10)", text: "#C9941A", icon: <FiRefreshCcw size={12} />, dot: "#F59E0B" };
+    case "Shipped": return { bg: "rgba(137,194,217,0.12)", text: T.sky, icon: <FiTruck size={12} />, dot: T.sky };
+    default: return { bg: "rgba(251,191,36,0.10)", text: "#C9941A", icon: <FiRefreshCcw size={12} />, dot: "#F59E0B" };
   }
 };
 
@@ -72,7 +72,7 @@ export default function Order() {
 
   const filteredOrders = useMemo(() => {
     let result = [...orders];
-    if (activeTab === "active") result = result.filter(o => ["Pending","Processing","Shipped"].includes(o.status));
+    if (activeTab === "active") result = result.filter(o => ["Pending", "Processing", "Shipped"].includes(o.status));
     else if (activeTab === "delivered") result = result.filter(o => o.status === "Delivered");
     else if (activeTab === "cancelled") result = result.filter(o => o.status?.includes("Cancelled"));
     if (searchQuery.trim()) {
@@ -89,7 +89,7 @@ export default function Order() {
 
   const tabCounts = useMemo(() => ({
     all: orders.length,
-    active: orders.filter(o => ["Pending","Processing","Shipped"].includes(o.status)).length,
+    active: orders.filter(o => ["Pending", "Processing", "Shipped"].includes(o.status)).length,
     delivered: orders.filter(o => o.status === "Delivered").length,
     cancelled: orders.filter(o => o.status?.includes("Cancelled")).length,
   }), [orders]);
@@ -133,7 +133,7 @@ export default function Order() {
       <div style={{ position: "relative", zIndex: 1, maxWidth: 900, margin: "0 auto", padding: "112px 20px 60px" }}>
 
         {/* ── HEADER ── */}
-        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: [0.22,1,0.36,1] }} style={{ marginBottom: 32 }}>
+        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }} style={{ marginBottom: 32 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <div style={{ width: 4, height: 16, borderRadius: 2, background: `linear-gradient(180deg, ${T.primary}, ${T.sky})` }} />
             <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.16em" }}>My Account</span>
@@ -152,8 +152,8 @@ export default function Order() {
           /* ── EMPTY STATE ── */
           <motion.div initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}
             style={{ background: T.surface, borderRadius: 20, border: `1px solid ${T.border}`, boxShadow: "0 2px 24px rgba(91,168,160,0.08)", padding: "72px 40px", textAlign: "center" }}>
-            <motion.div animate={{ y: [0, -8, 0] }} transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(91,168,160,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", color: T.primary }}>
+            <motion.div animate={{ y: [0, -12, 0], rotate: [0, 4, -4, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(91,168,160,0.1)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", color: T.primary, boxShadow: "0 10px 25px rgba(91,168,160,0.15)" }}>
               <FiShoppingBag size={30} />
             </motion.div>
             <h3 style={{ fontSize: 22, fontWeight: 700, color: T.textDark, marginBottom: 10 }}>No orders yet</h3>
@@ -330,7 +330,7 @@ export default function Order() {
                         <AnimatePresence>
                           {isExpanded && (
                             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                              transition={{ height: { duration: 0.35, ease: [0.22,1,0.36,1] }, opacity: { duration: 0.25 } }}
+                              transition={{ height: { duration: 0.35, ease: [0.22, 1, 0.36, 1] }, opacity: { duration: 0.25 } }}
                               style={{ overflow: "hidden" }}>
                               <div style={{ padding: "4px 20px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
                                 {order.items.map((item, idx) => {
