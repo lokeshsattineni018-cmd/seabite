@@ -180,10 +180,18 @@ const Hero = () => {
             <motion.h1
               initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.85, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
+              className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight drop-shadow-sm flex flex-col"
               style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
             >
-              Ocean-Fresh<br /><span className="text-[#5BA8A0]">Seafood</span><br />Delivered.
+              <motion.span style={{ color: "white", opacity: useTransform(scrollY, [0, 150], [1, 0.2]), x: useTransform(scrollY, [0, 200], [0, -20]) }}>
+                Ocean-Fresh
+              </motion.span>
+              <motion.span style={{ color: "#5BA8A0", opacity: useTransform(scrollY, [0, 250], [1, 0.4]), scale: useTransform(scrollY, [0, 300], [1, 0.95]), originX: 0 }}>
+                Seafood
+              </motion.span>
+              <motion.span style={{ color: "white", opacity: useTransform(scrollY, [0, 350], [1, 0.2]), x: useTransform(scrollY, [0, 400], [0, 20]) }}>
+                Delivered.
+              </motion.span>
             </motion.h1>
 
             <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.55 }} className="text-white/75 text-lg leading-relaxed max-w-md">
