@@ -139,26 +139,31 @@ export const googleLogin = async (req, res) => {
 
 // ✅ Use req.user from protect, do not re-query Mongo unless needed
 export const getLoggedUser = async (req, res) => {
-  console.log("👤 getLoggedUser called");
-  console.log("🍪 Cookie header:", req.headers.cookie);
-  console.log("🔑 Session ID:", req.sessionID);
-  console.log("👤 Session user:", req.session?.user);
+  if (!req.user) return res.status(401).json({ message: "Not authenticated" });
 
-  if (!req.user) {
-    console.log("❌ No user in request (protect middleware failed)");
-    return res.status(401).json({ message: "Not authenticated" });
+  try {
+    // Full DB fetch to get createdAt, picture, phone, addresses
+    const dbUser = await User.findById(req.user.id || req.user._id)
+      .select("name email role phone picture avatar addresses wishlist createdAt")
+      .lean();
+
+    if (!dbUser) return res.status(404).json({ message: "User not found" });
+
+    res.json({
+      id: dbUser._id,
+      name: dbUser.name,
+      email: dbUser.email,
+      role: dbUser.role,
+      phone: dbUser.phone || "",
+      picture: dbUser.picture || dbUser.avatar || "",
+      addresses: dbUser.addresses || [],
+      wishlist: dbUser.wishlist || [],
+      createdAt: dbUser.createdAt,
+    });
+  } catch (err) {
+    console.error("❌ getLoggedUser DB error:", err);
+    res.status(500).json({ message: "Server error" });
   }
-
-  console.log("✅ Returning user data");
-  res.json({
-    id: req.user.id || req.user._id,
-    name: req.user.name,
-    email: req.user.email,
-    role: req.user.role,
-    phone: req.user.phone || "",
-    addresses: req.user.addresses || [],
-    wishlist: req.user.wishlist || [],
-  });
 };
 
 export const updateUserProfile = async (req, res) => {

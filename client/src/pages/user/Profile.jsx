@@ -174,12 +174,12 @@ export default function Profile() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", flexShrink: 0 }}>
             {[
               { label: "Member Since", value: user.createdAt ? new Date(user.createdAt).getFullYear() : "—" },
               { label: "Account", value: user.role === "admin" ? "Admin" : "Customer" },
             ].map((stat, i) => (
-              <div key={i} style={{ textAlign: "center" }}>
+              <div key={i} style={{ textAlign: "center", minWidth: 60 }}>
                 <p style={{ fontSize: 18, fontWeight: 700, color: "#1A2B35", margin: 0 }}>{stat.value}</p>
                 <p style={{ fontSize: 10, color: "#8BA5B3", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{stat.label}</p>
               </div>
