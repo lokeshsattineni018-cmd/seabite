@@ -111,10 +111,11 @@ export default function Checkout() {
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [couponCode, setCouponCode] = useState("");
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [isCouponApplied, setIsCouponApplied] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponMessage, setCouponMessage] = useState(null);
   const [verifyingCoupon, setVerifyingCoupon] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [showCouponList, setShowCouponList] = useState(false);
   const [spinDiscount, setSpinDiscount] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [deliveryAddress, setDeliveryAddress] = useState({});
@@ -137,6 +138,12 @@ export default function Checkout() {
       } catch { }
     };
     fetchAddresses();
+  }, []);
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/coupons`, { withCredentials: true })
+      .then(res => setAvailableCoupons(Array.isArray(res.data) ? res.data : []))
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -165,32 +172,53 @@ export default function Checkout() {
   const taxRate = storeSettings?.taxRate ? storeSettings.taxRate / 100 : 0.05;
   const deliveryFee = storeSettings?.deliveryFee !== undefined ? storeSettings.deliveryFee : 99;
   const freeThreshold = storeSettings?.freeDeliveryThreshold !== undefined ? storeSettings.freeDeliveryThreshold : 1000;
-  const deliveryCharge = itemTotal >= freeThreshold ? 0 : deliveryFee;
+  const isShippingCoupon = appliedCoupon?.discountType === "shipping";
+  const deliveryCharge = (itemTotal >= freeThreshold || isShippingCoupon) ? 0 : deliveryFee;
   const freeDeliveryProgress = Math.min((itemTotal / freeThreshold) * 100, 100);
 
   const discountAmount = useMemo(() => {
-    let discount = 0;
-    if (spinDiscount) discount = (itemTotal * spinDiscount.percentage) / 100;
-    else if (isCouponApplied) discount = couponDiscount;
-    return Math.min(discount, itemTotal);
-  }, [itemTotal, spinDiscount, isCouponApplied, couponDiscount]);
+    if (spinDiscount) return Math.min((itemTotal * spinDiscount.percentage) / 100, itemTotal);
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.discountType === "percent") return Math.min((itemTotal * appliedCoupon.discountValue) / 100, itemTotal);
+    if (appliedCoupon.discountType === "flat") return Math.min(appliedCoupon.discountValue, itemTotal);
+    return 0; // shipping coupons show in their own row
+  }, [itemTotal, spinDiscount, appliedCoupon]);
 
   const taxableAmount = Math.max(0, itemTotal - discountAmount);
   const gst = Math.round(taxableAmount * taxRate);
   const grandTotal = taxableAmount + deliveryCharge + gst;
 
-  const handleApplyCoupon = async () => {
-    if (!couponCode) return;
+  const clearCoupon = () => { setAppliedCoupon(null); setCouponCode(""); setCouponMessage(null); };
+
+  const applyCouponByCode = async (code) => {
+    if (!code) return;
     setVerifyingCoupon(true); setCouponMessage(null);
+    // First try to find locally
+    const local = availableCoupons.find(c => c.code?.toUpperCase() === code.toUpperCase());
+    if (local) {
+      if (itemTotal < (local.minOrder || 0)) {
+        setCouponMessage({ type: "error", text: `Min order ₹${local.minOrder} required` });
+        setVerifyingCoupon(false); return;
+      }
+      setAppliedCoupon(local);
+      setCouponCode(local.code);
+      setCouponMessage({ type: "success", text: local.description || "Coupon applied!" });
+      setVerifyingCoupon(false); return;
+    }
     const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
     try {
-      const res = await axios.post(`${API_URL}/api/coupons/validate`, { code: couponCode.trim().toUpperCase(), cartTotal: itemTotal, email: currentEmail || undefined }, { withCredentials: true });
-      if (res.data.success) { setCouponDiscount(res.data.discountAmount); setIsCouponApplied(true); setCouponMessage({ type: "success", text: res.data.message }); }
+      const res = await axios.post(`${API_URL}/api/coupons/validate`, { code: code.trim().toUpperCase(), cartTotal: itemTotal, email: currentEmail || undefined }, { withCredentials: true });
+      if (res.data.success) {
+        setAppliedCoupon({ code: code.trim().toUpperCase(), discountType: "flat", discountValue: res.data.discountAmount, description: res.data.message });
+        setCouponCode(code.trim().toUpperCase());
+        setCouponMessage({ type: "success", text: res.data.message });
+      }
     } catch (err) {
-      setCouponDiscount(0); setIsCouponApplied(false);
       setCouponMessage({ type: "error", text: err.response?.data?.message || "Invalid Coupon Code" });
     } finally { setVerifyingCoupon(false); }
   };
+
+  const handleApplyCoupon = () => applyCouponByCode(couponCode);
 
   const saveNewAddress = async (newAddress) => {
     try {
@@ -495,36 +523,93 @@ export default function Checkout() {
                 {/* Coupon */}
                 {!spinDiscount ? (
                   <div style={{ marginBottom: 18 }}>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Promo Code</p>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                      <p style={{ fontSize: 10, fontWeight: 700, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Promo Code</p>
+                      <button onClick={() => setShowCouponList(v => !v)}
+                        style={{ fontSize: 10, fontWeight: 700, color: T.primary, background: "none", border: "none", cursor: "pointer", fontFamily: font, padding: 0 }}>
+                        {showCouponList ? "Hide" : "View available"}
+                      </button>
+                    </div>
+
+                    {/* Available coupons list */}
+                    <AnimatePresence>
+                      {showCouponList && availableCoupons.length > 0 && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.28 }} style={{ overflow: "hidden", marginBottom: 10 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            {availableCoupons.map(c => {
+                              const isApplied = appliedCoupon?.code === c.code;
+                              const canApply = itemTotal >= (c.minOrder || 0);
+                              return (
+                                <div key={c._id || c.code} style={{
+                                  padding: "10px 12px", borderRadius: 10,
+                                  border: `1.5px dashed ${isApplied ? T.primary : T.border}`,
+                                  background: isApplied ? "rgba(91,168,160,0.05)" : T.bg,
+                                  display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8,
+                                }}>
+                                  <div style={{ flex: 1, minWidth: 0 }}>
+                                    <p style={{ fontFamily: "monospace", fontWeight: 800, fontSize: 12, color: T.textDark, margin: 0 }}>{c.code}</p>
+                                    <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.description}</p>
+                                    {!canApply && (
+                                      <p style={{ fontSize: 9, color: T.coral, margin: "2px 0 0", fontWeight: 600 }}>Min order ₹{c.minOrder}</p>
+                                    )}
+                                  </div>
+                                  <button
+                                    onClick={() => isApplied ? clearCoupon() : applyCouponByCode(c.code)}
+                                    disabled={!canApply && !isApplied}
+                                    style={{
+                                      padding: "5px 12px", borderRadius: 8, border: "none", cursor: canApply || isApplied ? "pointer" : "not-allowed",
+                                      fontSize: 10, fontWeight: 700, fontFamily: font,
+                                      background: isApplied ? "rgba(232,129,106,0.1)" : canApply ? "rgba(91,168,160,0.1)" : "rgba(0,0,0,0.04)",
+                                      color: isApplied ? T.coral : canApply ? T.primary : T.textLite,
+                                      flexShrink: 0,
+                                    }}>
+                                    {isApplied ? "Remove" : "Apply"}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* Manual input row */}
                     <div style={{ display: "flex", gap: 8 }}>
                       <div style={{ flex: 1, position: "relative" }}>
                         <FiTag size={12} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: T.textLite }} />
                         <input
                           type="text" placeholder="Enter code" value={couponCode}
                           onChange={e => setCouponCode(e.target.value)}
-                          disabled={isCouponApplied || verifyingCoupon}
+                          onKeyDown={e => e.key === "Enter" && handleApplyCoupon()}
+                          disabled={!!appliedCoupon || verifyingCoupon}
                           style={{
-                            width: "100%", paddingLeft: 34, paddingRight: isCouponApplied ? 34 : 12, paddingTop: 11, paddingBottom: 11,
-                            borderRadius: 11, border: `1px solid ${T.border}`, background: T.bg,
+                            width: "100%", paddingLeft: 34, paddingRight: appliedCoupon ? 34 : 12, paddingTop: 11, paddingBottom: 11,
+                            borderRadius: 11, border: `1px solid ${appliedCoupon ? T.primary : T.border}`, background: T.bg,
                             fontSize: 12, fontWeight: 700, color: T.textDark, outline: "none",
                             textTransform: "uppercase", fontFamily: font, boxSizing: "border-box",
                           }}
                         />
-                        {isCouponApplied && (
-                          <motion.button whileTap={{ scale: 0.85 }} onClick={() => { setCouponCode(""); setCouponDiscount(0); setIsCouponApplied(false); setCouponMessage(null); }}
+                        {appliedCoupon && (
+                          <motion.button whileTap={{ scale: 0.85 }} onClick={clearCoupon}
                             style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: T.textLite, background: "none", border: "none", cursor: "pointer" }}>
                             <FiX size={12} />
                           </motion.button>
                         )}
                       </div>
-                      <motion.button whileTap={{ scale: 0.95 }} onClick={handleApplyCoupon} disabled={isCouponApplied || !couponCode || verifyingCoupon}
+                      <motion.button whileTap={{ scale: 0.95 }}
+                        onClick={appliedCoupon ? clearCoupon : handleApplyCoupon}
+                        disabled={!appliedCoupon && (!couponCode || verifyingCoupon)}
                         style={{
-                          padding: "11px 16px", borderRadius: 11, background: T.primary, color: "#fff", border: "none",
+                          padding: "11px 16px", borderRadius: 11,
+                          background: appliedCoupon ? "rgba(232,129,106,0.1)" : T.primary,
+                          color: appliedCoupon ? T.coral : "#fff",
+                          border: appliedCoupon ? `1px solid rgba(232,129,106,0.25)` : "none",
                           fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: font,
-                          opacity: (isCouponApplied || !couponCode) ? 0.5 : 1,
+                          opacity: (!appliedCoupon && !couponCode) ? 0.5 : 1,
                           display: "flex", alignItems: "center", justifyContent: "center", minWidth: 64,
                         }}>
-                        {verifyingCoupon ? <FiLoader size={13} style={{ animation: "spin 1s linear infinite" }} /> : isCouponApplied ? <FiCheckCircle size={13} /> : "Apply"}
+                        {verifyingCoupon ? <FiLoader size={13} style={{ animation: "spin 1s linear infinite" }} /> : appliedCoupon ? "Remove" : "Apply"}
                       </motion.button>
                     </div>
                     <AnimatePresence>
@@ -550,11 +635,20 @@ export default function Checkout() {
                     <span style={{ fontWeight: 700, color: T.textDark }}>₹{itemTotal.toFixed(2)}</span>
                   </div>
                   <AnimatePresence>
-                    {(spinDiscount || isCouponApplied) && (
+                    {(spinDiscount || appliedCoupon) && discountAmount > 0 && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
                         style={{ display: "flex", justifyContent: "space-between", color: T.primary, overflow: "hidden" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiPercent size={11} />{spinDiscount ? `Spin (${spinDiscount.percentage}%)` : "Coupon"}</span>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiPercent size={11} />{spinDiscount ? `Spin (${spinDiscount.percentage}%)` : appliedCoupon?.code}</span>
                         <span style={{ fontWeight: 700 }}>-₹{discountAmount.toFixed(2)}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <AnimatePresence>
+                    {isShippingCoupon && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                        style={{ display: "flex", justifyContent: "space-between", color: T.primary, overflow: "hidden" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiTruck size={11} />Free Shipping ({appliedCoupon?.code})</span>
+                        <span style={{ fontWeight: 700 }}>-₹{deliveryFee.toFixed(2)}</span>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -619,7 +713,7 @@ export default function Checkout() {
                   {loading ? (
                     <><SeaBiteLoader small /> Processing...</>
                   ) : paymentMethod === "COD" ? (
-                    <><FiCheckCircle size={15} /> Place COD Order</>
+                    <>Place COD Order</>
                   ) : (
                     <><FiCreditCard size={15} /> Pay & Place Order</>
                   )}
@@ -628,14 +722,14 @@ export default function Checkout() {
                 {/* Delivery estimate */}
                 {deliveryAddress.street && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-                    style={{ marginTop: 12, padding: "11px 14px", borderRadius: 12, background: "rgba(91,168,160,0.06)", border: "1px solid rgba(91,168,160,0.15)", display: "flex", alignItems: "center", gap: 10 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(91,168,160,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, flexShrink: 0 }}>
+                    style={{ marginTop: 12, padding: "11px 14px", borderRadius: 12, background: "rgba(91,168,160,0.08)", border: "1.5px solid rgba(91,168,160,0.22)", display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: 8, background: "rgba(91,168,160,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, flexShrink: 0 }}>
                       <FiTruck size={12} />
                     </div>
                     <div>
                       <p style={{ fontSize: 10, fontWeight: 700, color: T.primary, margin: 0 }}>Estimated Delivery</p>
-                      <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0" }}>
-                        {new Date(Date.now() + 2 * 86400000).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} — {new Date(Date.now() + 4 * 86400000).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                      <p style={{ fontSize: 10, color: T.primary, margin: "2px 0 0", opacity: 0.75 }}>
+                        {new Date(Date.now() + 2 * 86400000).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} — {new Date(Date.now() + 4 * 86400000).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} · {deliveryAddress.city}
                       </p>
                     </div>
                   </motion.div>
