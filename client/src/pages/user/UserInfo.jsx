@@ -4,14 +4,21 @@ import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiShield } from "react-i
 export default function UserInfo({ user }) {
   if (!user) return null;
 
+  const primaryAddr = user.addresses?.find(a => a.isDefault) || user.addresses?.[0];
+  const addrLabel = primaryAddr
+    ? `${primaryAddr.houseNo ? primaryAddr.houseNo + ", " : ""}${primaryAddr.city}, ${primaryAddr.state}`
+    : "No address saved";
+
   const infoItems = [
     { icon: FiUser, label: "Full Name", value: user.name, accent: "#5BA8A0" },
     { icon: FiMail, label: "Email Address", value: user.email, accent: "#89C2D9" },
     { icon: FiPhone, label: "Phone Number", value: user.phone || "Not provided", accent: "#5BA8A0" },
-    { icon: FiMapPin, label: "Primary Address", value: user.address || "No address saved", accent: "#89C2D9" },
+    { icon: FiMapPin, label: "Primary Address", value: addrLabel, accent: "#89C2D9" },
     {
       icon: FiCalendar, label: "Member Since", accent: "#5BA8A0",
-      value: user.createdAt ? new Date(user.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "N/A",
+      value: user.createdAt
+        ? new Date(user.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+        : "—",
     },
     {
       icon: FiShield, label: "Account Type", accent: user.role === "admin" ? "#E8816A" : "#5BA8A0",
