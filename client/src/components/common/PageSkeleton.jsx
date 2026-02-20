@@ -2,7 +2,13 @@ import { motion } from "framer-motion";
 
 export default function PageSkeleton() {
     return (
-        <div className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto space-y-8 animate-pulse">
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="min-h-screen pt-24 pb-12 px-4 md:px-8 max-w-7xl mx-auto space-y-8 animate-pulse"
+        >
             {/* Header Skeleton */}
             <div className="space-y-4">
                 <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div>
@@ -21,6 +27,6 @@ export default function PageSkeleton() {
                     <div key={i} className="h-24 bg-slate-200 dark:bg-slate-800 rounded-xl w-full"></div>
                 ))}
             </div>
-        </div>
+        </motion.div>
     );
 }

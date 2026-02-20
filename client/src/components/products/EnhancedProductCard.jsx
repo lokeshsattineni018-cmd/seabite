@@ -1,10 +1,12 @@
-import { useState, useContext, useEffect } from "react";
+import { useState, useContext, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 import axios from "axios";
+import { motion } from "framer-motion";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -34,6 +36,15 @@ const EnhancedProductCard = ({
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Animation states
+  const [flyItems, setFlyItems] = useState([]);
+  const flyIdRef = useRef(0);
+  const addBtnRef = useRef(null);
+
+  const handleFlyComplete = useCallback((fId) => {
+    setFlyItems((prev) => prev.filter((item) => item.id !== fId));
+  }, []);
 
   const isActiveFlashSale =
     product.flashSale?.isFlashSale &&
@@ -88,6 +99,21 @@ const EnhancedProductCard = ({
     e.preventDefault();
     e.stopPropagation();
     setIsAdding(true);
+
+    if (addBtnRef.current) {
+      const rect = addBtnRef.current.getBoundingClientRect();
+      const cartEl = document.querySelector("[data-cart-icon]");
+      const cartRect = cartEl?.getBoundingClientRect() ?? { left: window.innerWidth - 60, top: 20 };
+      setFlyItems((prev) => [...prev, {
+        id: ++flyIdRef.current,
+        startX: rect.left + rect.width / 2 - 28,
+        startY: rect.top - 28,
+        endX: cartRect.left,
+        endY: cartRect.top,
+        image: getImageUrl(product.image),
+      }]);
+    }
+
     setTimeout(() => {
       addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
       toast.success(`${product.name} added`, {
@@ -95,7 +121,7 @@ const EnhancedProductCard = ({
         icon: "🛒",
       });
       setIsAdding(false);
-    }, 500);
+    }, 600);
   };
 
   const handleWishlistToggle = async (e) => {
@@ -231,7 +257,9 @@ const EnhancedProductCard = ({
             </span>
           </div>
         )}
-        <img
+        <motion.img
+          layoutId={`product-image-${product._id}`}
+          layout="position"
           src={getImageUrl(product.image)}
           alt={product.name}
           style={{
@@ -239,6 +267,7 @@ const EnhancedProductCard = ({
             transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
             filter: isOutOfStock ? "grayscale(0.4) opacity(0.6)" : "none",
             opacity: imageLoaded ? 1 : 0,
+            zIndex: 10,
           }}
           onLoad={() => setImageLoaded(true)}
           className="group-hover:scale-105"
@@ -288,9 +317,10 @@ const EnhancedProductCard = ({
           </div>
 
           <button
+            ref={addBtnRef}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
-            className="cart-btn-wave"
+            className={`cart-btn-wave ${!isOutOfStock && !isAdding ? 'liquid-cta' : ''}`}
             style={{
               width: "100%",
               padding: "10px 0",
@@ -325,6 +355,23 @@ const EnhancedProductCard = ({
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
+
+      {/* Portal for flying items so they don't get clipped by overflow:hidden */}
+      {typeof window !== "undefined" && createPortal(
+        flyItems.map((item) => (
+          <motion.div
+            key={item.id}
+            initial={{ position: "fixed", left: item.startX, top: item.startY, width: 56, height: 56, zIndex: 9999, opacity: 1, scale: 1, borderRadius: "50%", pointerEvents: "none" }}
+            animate={{ left: item.endX, top: item.endY, width: 16, height: 16, opacity: [1, 1, 0], scale: [1, 1.1, 0.2] }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            onAnimationComplete={() => handleFlyComplete(item.id)}
+            style={{ position: "fixed", borderRadius: "50%", overflow: "hidden", border: "2px solid #fff", boxShadow: "0 4px 16px rgba(91,191,181,0.3)" }}
+          >
+            <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", background: "#F4F9F8", padding: "4px" }} />
+          </motion.div>
+        )),
+        document.body
+      )}
     </div>
   );
 };
