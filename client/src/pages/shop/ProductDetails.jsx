@@ -1,4 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import { useContext, useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { CartContext } from "../../context/CartContext";
@@ -286,19 +287,7 @@ export default function ProductDetails() {
 
   // ── Loading ────────────────────────────────────────────
   if (loading) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#F4F9F8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "'Manrope', sans-serif" }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600&display=swap');`}</style>
-        <div style={{
-          width: "40px", height: "40px", border: "3px solid #E2EEEC", borderTopColor: "#5BBFB5",
-          borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: "16px",
-        }} />
-        <p style={{ fontSize: "12px", fontWeight: "600", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.12em" }}>
-          Reeling it in…
-        </p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
+    return <SeaBiteLoader fullScreen />;
   }
 
   // ── Not found ─────────────────────────────────────────

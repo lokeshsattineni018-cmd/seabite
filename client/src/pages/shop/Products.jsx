@@ -1,28 +1,17 @@
-import { useState, useContext, useEffect, useCallback } from "react";
+import { useState, useContext, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiPackage, FiFilter, FiX,
-  FiSliders, FiChevronDown, FiChevronRight
+  FiSliders, FiChevronDown, FiChevronRight, FiAlertCircle
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import FilterSidebar from "../../components/layout/FilterSidebar";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
-
-// ─── Palette ─────────────────────────────────────────────
-// #5BBFB5  Seafoam primary
-// #7EB8D4  Sky secondary
-// #F07468  Coral accent (CTA)
-// #F4F9F8  Off-white bg
-// #FFFFFF  Card surface
-// #E2EEEC  Mist border
-// #1A2E2C  Deep tide text
-// #6B8F8A  Drift secondary text
-// #B8CFCC  Foam muted text
-// ─────────────────────────────────────────────────────────
 
 const CATEGORY_META = {
   All: { emoji: "🌊", label: "All Products", tagline: "Fresh from the ocean, daily." },
@@ -46,8 +35,10 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
 
   const [filters, setFilters] = useState({
     category: "All",
@@ -61,6 +52,17 @@ export default function Products() {
   const categories = ["All", "Fish", "Crab", "Prawn"];
   const meta = CATEGORY_META[filters.category] || CATEGORY_META.All;
   const activeSort = SORT_OPTIONS.find((o) => o.value === filters.sort);
+
+  // Outside click for sort dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (sortRef.current && !sortRef.current.contains(event.target)) {
+        setSortOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -77,6 +79,7 @@ export default function Products() {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const params = {
         category: filters.category === "All" ? undefined : filters.category,
@@ -91,6 +94,7 @@ export default function Products() {
       setGlobalDiscount(res.data.globalDiscount || 0);
     } catch (err) {
       console.error("Products fetch error:", err);
+      setError("Failed to fetch fresh catch. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -125,13 +129,16 @@ export default function Products() {
         .category-pill:hover { border-color: #5BBFB5; color: #5BBFB5; }
         .search-input:focus { border-color: #5BBFB5 !important; box-shadow: 0 0 0 3px rgba(91,191,181,0.12) !important; }
         .filter-btn:hover { border-color: #5BBFB5; color: #5BBFB5; }
+        
+        @media (max-width: 900px) {
+          .mobile-filter-btn { display: flex !important; }
+        }
       `}</style>
 
       <div
         className="products-root"
         style={{ minHeight: "100vh", background: "#F4F9F8", paddingTop: "88px", paddingBottom: "64px" }}
       >
-        {/* Subtle ocean header swell */}
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, height: "320px",
           background: "linear-gradient(180deg, rgba(91,191,181,0.07) 0%, transparent 100%)",
@@ -140,14 +147,12 @@ export default function Products() {
 
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px", position: "relative", zIndex: 1 }}>
 
-          {/* ── Page Header ─────────────────────────────────── */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
             style={{ marginBottom: "36px" }}
           >
-            {/* Breadcrumb */}
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
               <span style={{ fontSize: "11px", fontWeight: "600", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.1em" }}>SeaBite</span>
               <FiChevronRight size={10} style={{ color: "#B8CFCC" }} />
@@ -181,14 +186,12 @@ export default function Products() {
                 <p style={{ fontSize: "14px", color: "#6B8F8A", fontWeight: "500" }}>{meta.tagline}</p>
               </div>
 
-              {/* Search + Filter Controls */}
               <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                {/* Mobile filter toggle */}
                 <button
                   onClick={() => setIsSidebarOpen(true)}
-                  className="filter-btn"
+                  className="filter-btn mobile-filter-btn"
                   style={{
-                    display: "none", /* shown via media query override below */
+                    display: "none",
                     alignItems: "center", gap: "6px",
                     padding: "9px 16px", borderRadius: "10px",
                     border: "1.5px solid #E2EEEC", background: "#fff",
@@ -205,7 +208,6 @@ export default function Products() {
                   )}
                 </button>
 
-                {/* Search */}
                 <div style={{ position: "relative" }}>
                   <FiSearch size={14} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#B8CFCC", pointerEvents: "none" }} />
                   <input
@@ -232,8 +234,7 @@ export default function Products() {
                   )}
                 </div>
 
-                {/* Sort Dropdown */}
-                <div style={{ position: "relative" }}>
+                <div style={{ position: "relative" }} ref={sortRef}>
                   <button
                     onClick={() => setSortOpen((o) => !o)}
                     style={{
@@ -290,7 +291,6 @@ export default function Products() {
           </motion.div>
 
           <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
-            {/* ── Sidebar ─────────────────────────────────── */}
             <FilterSidebar
               isOpen={isSidebarOpen}
               onClose={() => setIsSidebarOpen(false)}
@@ -300,7 +300,6 @@ export default function Products() {
             />
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              {/* Category Pills */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -331,69 +330,24 @@ export default function Products() {
                     {cat}
                   </motion.button>
                 ))}
-
-                {/* Active filters chips */}
-                {filters.inStock && (
-                  <motion.div
-                    initial={{ scale: 0.85, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "20px", background: "#F0FBF9", border: "1.5px solid #5BBFB5", color: "#5BBFB5", fontSize: "12px", fontWeight: "700", whiteSpace: "nowrap" }}
-                  >
-                    In Stock Only
-                    <button onClick={() => setFilters((p) => ({ ...p, inStock: false }))} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", display: "flex", padding: 0 }}>
-                      <FiX size={11} />
-                    </button>
-                  </motion.div>
-                )}
-                {(filters.minPrice || filters.maxPrice) && (
-                  <motion.div
-                    initial={{ scale: 0.85, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    style={{ display: "flex", alignItems: "center", gap: "5px", padding: "6px 12px", borderRadius: "20px", background: "#F0FBF9", border: "1.5px solid #5BBFB5", color: "#5BBFB5", fontSize: "12px", fontWeight: "700", whiteSpace: "nowrap" }}
-                  >
-                    ₹{filters.minPrice || "0"} – ₹{filters.maxPrice || "∞"}
-                    <button onClick={() => setFilters((p) => ({ ...p, minPrice: "", maxPrice: "" }))} style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", display: "flex", padding: 0 }}>
-                      <FiX size={11} />
-                    </button>
-                  </motion.div>
-                )}
               </motion.div>
 
-              {/* Result count */}
-              {!loading && products.length > 0 && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  style={{ fontSize: "12px", color: "#B8CFCC", fontWeight: "600", marginBottom: "20px", letterSpacing: "0.03em" }}
-                >
-                  {products.length} result{products.length !== 1 ? "s" : ""} found
-                </motion.p>
-              )}
-
-              {/* ── Product Grid ────────────────────────────── */}
-              <AnimatePresence mode="popLayout">
+              <AnimatePresence mode="wait">
                 {loading ? (
+                  <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <SeaBiteLoader />
+                  </motion.div>
+                ) : error ? (
                   <motion.div
-                    key="skeleton"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "20px" }}
+                    key="error"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    style={{ textAlign: "center", padding: "60px 24px", background: "#fff", borderRadius: "20px", border: "1.5px solid #F0746822" }}
                   >
-                    {[...Array(6)].map((_, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          height: "320px", borderRadius: "16px",
-                          background: "linear-gradient(90deg, #E2EEEC 25%, #EDF5F3 50%, #E2EEEC 75%)",
-                          backgroundSize: "200% 100%",
-                          animation: `shimmer 1.6s infinite ${i * 0.1}s`,
-                        }}
-                      />
-                    ))}
-                    <style>{`
-                      @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-                    `}</style>
+                    <FiAlertCircle size={40} style={{ color: "#F07468", marginBottom: "16px" }} />
+                    <h3 style={{ fontSize: "17px", fontWeight: "700", color: "#1A2E2C", marginBottom: "8px" }}>Something went wrong</h3>
+                    <p style={{ fontSize: "13px", color: "#6B8F8A", marginBottom: "24px" }}>{error}</p>
+                    <button onClick={fetchProducts} style={{ padding: "10px 24px", borderRadius: "10px", background: "#5BBFB5", color: "#fff", border: "none", fontWeight: "700", cursor: "pointer" }}>Try Again</button>
                   </motion.div>
                 ) : products.length > 0 ? (
                   <motion.div
@@ -403,15 +357,7 @@ export default function Products() {
                     style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "20px" }}
                   >
                     {products.map((p, i) => (
-                      <motion.div
-                        key={p._id}
-                        layout
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}
-                        style={{ height: "100%" }}
-                      >
+                      <motion.div key={p._id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}>
                         <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
                       </motion.div>
                     ))}
@@ -421,41 +367,18 @@ export default function Products() {
                     key="empty"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    style={{
-                      textAlign: "center",
-                      padding: "80px 24px",
-                      background: "#fff",
-                      borderRadius: "20px",
-                      border: "1.5px solid #E2EEEC",
-                    }}
+                    style={{ textAlign: "center", padding: "80px 24px", background: "#fff", borderRadius: "20px", border: "1.5px solid #E2EEEC" }}
                   >
-                    {/* Simple ocean illustration */}
                     <div style={{ marginBottom: "20px" }}>
                       <svg width="80" height="60" viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <ellipse cx="40" cy="48" rx="32" ry="6" fill="#E2EEEC" />
-                        <path d="M10 32 Q20 18 30 28 Q40 38 50 22 Q60 8 70 24" stroke="#B8CFCC" strokeWidth="2.5" fill="none" strokeLinecap="round" />
                         <circle cx="40" cy="22" r="10" fill="#E2EEEC" />
                         <text x="40" y="27" textAnchor="middle" fontSize="14">🎣</text>
                       </svg>
                     </div>
-                    <h3 style={{ fontSize: "17px", fontWeight: "700", color: "#1A2E2C", marginBottom: "8px", fontFamily: "'Lora', serif" }}>
-                      No catches found
-                    </h3>
-                    <p style={{ fontSize: "13px", color: "#6B8F8A", marginBottom: "24px", lineHeight: 1.6 }}>
-                      The ocean's quiet right now. Try adjusting your filters or search.
-                    </p>
-                    <button
-                      onClick={clearFilters}
-                      style={{
-                        padding: "10px 24px", borderRadius: "10px",
-                        background: "#1A2E2C", color: "#fff",
-                        border: "none", fontSize: "13px", fontWeight: "700",
-                        cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                        transition: "opacity 0.2s",
-                      }}
-                    >
-                      Clear all filters
-                    </button>
+                    <h3 style={{ fontSize: "17px", fontWeight: "700", color: "#1A2E2C", marginBottom: "8px", fontFamily: "'Lora', serif" }}>No catches found</h3>
+                    <p style={{ fontSize: "13px", color: "#6B8F8A", marginBottom: "24px" }}>Adjust your filters and try again.</p>
+                    <button onClick={clearFilters} style={{ padding: "10px 24px", borderRadius: "10px", background: "#1A2E2C", color: "#fff", border: "none", fontWeight: "700", cursor: "pointer" }}>Clear all filters</button>
                   </motion.div>
                 )}
               </AnimatePresence>

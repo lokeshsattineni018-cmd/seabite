@@ -1,6 +1,5 @@
-import { useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import PopupModal from "../../components/common/PopupModal";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -11,6 +10,14 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 export default function Login() {
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const { setUser, refreshMe } = useAuth();
+  const navigate = useNavigate();
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -27,14 +34,14 @@ export default function Login() {
           const redirectPath = localStorage.getItem("postLoginRedirect");
           if (redirectPath) localStorage.removeItem("postLoginRedirect");
           const targetPath = redirectPath || (res.data.user.role === "admin" ? "/admin/dashboard" : "/");
-          window.location.href = targetPath;
+          navigate(targetPath);
         }, 1500);
       } catch (err) {
         setModal({ show: true, message: err?.response?.data?.message || "Verification failed. Please try again.", type: "error" });
       }
     },
     onError: () => setModal({ show: true, message: "Google login was unsuccessful.", type: "error" }),
-    flow: window.innerWidth < 768 ? "redirect" : "implicit",
+    flow: windowWidth < 768 ? "redirect" : "implicit",
   });
 
   return (

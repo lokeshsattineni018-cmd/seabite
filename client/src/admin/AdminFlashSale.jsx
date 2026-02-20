@@ -7,6 +7,7 @@ import {
     FiX, FiSearch, FiRefreshCw
 } from "react-icons/fi";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
@@ -123,7 +124,9 @@ export default function AdminFlashSale() {
                 <motion.div variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     <AnimatePresence>
                         {loading ? (
-                            [...Array(6)].map((_, i) => <motion.div key={i} variants={fadeUp} className="h-80 bg-stone-50 rounded-3xl animate-pulse" />)
+                            <div className="col-span-full py-20 flex justify-center">
+                                <SeaBiteLoader />
+                            </div>
                         ) : filtered.map((p) => (
                             <motion.div
                                 key={p._id}

@@ -39,6 +39,7 @@ export default function Navbar({ openCart }) {
   const [showSpinWheel, setShowSpinWheel] = useState(false);
   const lastScrollY = useRef(0);
   const searchRef = useRef(null);
+  const debounceRef = useRef(null);
 
   // Only the home page has the dark video hero
   const isHome = location.pathname === "/";
@@ -73,11 +74,19 @@ export default function Navbar({ openCart }) {
 
   const handleSearchInput = (val) => {
     setSearchTerm(val);
-    if (val.length < 2) return setSuggestions([]);
-    const t = setTimeout(async () => {
-      try { const r = await axios.get(`${API_URL}/api/products/search/suggest?q=${val}`); setSuggestions(r.data); } catch { }
-    }, 280);
-    return () => clearTimeout(t);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (val.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const r = await axios.get(`${API_URL}/api/products/search/suggest?q=${val}`);
+        setSuggestions(r.data);
+      } catch { }
+    }, 300);
   };
 
   const handleSearchSubmit = (e) => {
@@ -514,7 +523,9 @@ export default function Navbar({ openCart }) {
         )}
       </AnimatePresence>
 
-      <Spin isOpen={showSpinWheel} onClose={() => setShowSpinWheel(false)} />
+      <Suspense fallback={null}>
+        {showSpinWheel && <Spin isOpen={showSpinWheel} onClose={() => setShowSpinWheel(false)} />}
+      </Suspense>
 
       <style>{`
         @media (max-width: 768px) {

@@ -8,6 +8,7 @@ import {
   FiActivity, FiClock, FiShoppingBag, FiAlertTriangle, FiTarget
 } from "react-icons/fi";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 // --- Design Constants ---
 const ease = [0.16, 1, 0.3, 1];
@@ -140,15 +141,11 @@ export default function AdminUsers() {
               </thead>
               <tbody className="divide-y divide-stone-50">
                 {loading ? (
-                  [...Array(5)].map((_, i) => (
-                    <tr key={i} className="animate-pulse">
-                      <td className="px-6 py-4"><div className="h-10 w-48 bg-stone-100 rounded-xl" /></td>
-                      <td className="px-6 py-4"><div className="h-6 w-24 bg-stone-100 rounded-lg" /></td>
-                      <td className="px-6 py-4"><div className="h-6 w-16 bg-stone-100 rounded-lg" /></td> {/* New */}
-                      <td className="px-6 py-4"><div className="h-6 w-16 bg-stone-100 rounded-lg ml-auto" /></td>
-                      <td className="px-6 py-4"><div className="h-8 w-20 bg-stone-100 rounded-lg ml-auto" /></td>
-                    </tr>
-                  ))
+                  <tr>
+                    <td colSpan={5} className="py-20">
+                      <SeaBiteLoader />
+                    </td>
+                  </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center text-stone-400 font-medium">No users found</td>

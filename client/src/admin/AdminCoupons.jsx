@@ -4,6 +4,7 @@ import axios from "axios";
 import { FiTrash2, FiTag, FiPlus, FiRefreshCw, FiPercent, FiDollarSign, FiCopy, FiCheck } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -168,7 +169,9 @@ export default function AdminCoupons() {
 
             <AnimatePresence>
               {loading ? (
-                [...Array(3)].map((_, i) => <div key={i} className="h-24 bg-stone-50 rounded-3xl animate-pulse" />)
+                <div className="py-20 flex justify-center">
+                  <SeaBiteLoader />
+                </div>
               ) : coupons.length === 0 ? (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-20 text-center bg-white rounded-3xl border border-dashed border-stone-200">
                   <div className="w-16 h-16 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-300"><FiTag size={24} /></div>

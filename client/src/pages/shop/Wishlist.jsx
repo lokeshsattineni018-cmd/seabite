@@ -7,6 +7,7 @@ import { ThemeContext } from "../../context/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import { FiHeart, FiArrowRight } from "react-icons/fi";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -56,22 +57,7 @@ export default function Wishlist() {
 
     // ── Loader ──────────────────────────────────────────────────────
     if (loading) {
-        return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="relative w-14 h-14">
-                        <div className="absolute inset-0 rounded-full border-2 border-sky-200 border-t-sky-500 animate-spin" />
-                        <div
-                            className="absolute inset-[7px] rounded-full border-2 border-rose-200 border-b-rose-400 animate-spin"
-                            style={{ animationDirection: "reverse", animationDuration: "0.75s" }}
-                        />
-                    </div>
-                    <p className="text-xs tracking-[0.2em] uppercase text-slate-400 font-medium">
-                        Fetching your catches…
-                    </p>
-                </div>
-            </div>
-        );
+        return <SeaBiteLoader fullScreen />;
     }
 
     // ── Page ────────────────────────────────────────────────────────

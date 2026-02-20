@@ -6,6 +6,7 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -24,10 +25,10 @@ const FILTERS = [
 
 const getStatusConfig = (type) => {
   switch (type) {
-    case "Shipped":    return { icon: <FiTruck />, color: T.sky, bg: "rgba(137,194,217,0.12)", label: "In Transit" };
-    case "Delivered":  return { icon: <FiCheckCircle />, color: T.primary, bg: "rgba(91,168,160,0.1)", label: "Delivered" };
+    case "Shipped": return { icon: <FiTruck />, color: T.sky, bg: "rgba(137,194,217,0.12)", label: "In Transit" };
+    case "Delivered": return { icon: <FiCheckCircle />, color: T.primary, bg: "rgba(91,168,160,0.1)", label: "Delivered" };
     case "Processing": return { icon: <FiPackage />, color: "#C9941A", bg: "rgba(245,158,11,0.1)", label: "Processing" };
-    default:           return { icon: <FiInfo />, color: T.textMid, bg: "rgba(74,101,114,0.08)", label: "Update" };
+    default: return { icon: <FiInfo />, color: T.textMid, bg: "rgba(74,101,114,0.08)", label: "Update" };
   }
 };
 
@@ -43,7 +44,7 @@ export default function Notifications() {
   );
 
   const groupedNotifications = useMemo(() => {
-    const today = new Date(); today.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
     const todayItems = [], earlierItems = [];
     filteredNotifications.forEach(n => {
       new Date(n.createdAt) >= today ? todayItems.push(n) : earlierItems.push(n);
@@ -56,7 +57,7 @@ export default function Notifications() {
       const res = await axios.get(`${API_URL}/api/notifications`, { withCredentials: true });
       setNotifications(res.data);
       await axios.put(`${API_URL}/api/notifications/read-all`, {}, { withCredentials: true });
-    } catch {}
+    } catch { }
     finally { setLoading(false); }
   };
 
@@ -66,25 +67,19 @@ export default function Notifications() {
     try {
       await axios.delete(`${API_URL}/api/notifications/${id}`, { withCredentials: true });
       setNotifications(prev => prev.filter(n => n._id !== id));
-    } catch {}
+    } catch { }
   };
 
   const clearAll = async () => {
     try {
       await axios.delete(`${API_URL}/api/notifications/clear/all`, { withCredentials: true });
       setNotifications([]);
-    } catch {}
+    } catch { }
   };
 
   const font = "'Plus Jakarta Sans', sans-serif";
 
-  if (loading) return (
-    <div style={{ minHeight: "100vh", background: T.bg, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: font }}>
-      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-        style={{ width: 44, height: 44, border: `3px solid ${T.border}`, borderTopColor: T.primary, borderRadius: "50%", marginBottom: 16 }} />
-      <p style={{ color: T.textLite, fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" }}>Syncing updates...</p>
-    </div>
-  );
+  if (loading) return <SeaBiteLoader fullScreen />;
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: font, padding: "100px 20px 60px", overflowX: "hidden" }}>
@@ -93,7 +88,7 @@ export default function Notifications() {
 
       <div style={{ maxWidth: 720, margin: "0 auto", position: "relative", zIndex: 1 }}>
         {/* ── HEADER ── */}
-        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: [0.22,1,0.36,1] }}
+        <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           style={{ marginBottom: 32 }}>
           <motion.button whileHover={{ x: -3 }} onClick={() => navigate(-1)}
             style={{ display: "flex", alignItems: "center", gap: 8, color: T.textLite, fontWeight: 700, fontSize: 12, background: "none", border: "none", cursor: "pointer", fontFamily: font, marginBottom: 20 }}>
@@ -210,7 +205,7 @@ function NotificationCard({ n, index, onDelete, T, font }) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -48, scale: 0.96, transition: { duration: 0.25 } }}
-      transition={{ delay: index * 0.05, duration: 0.5, ease: [0.22,1,0.36,1] }}
+      transition={{ delay: index * 0.05, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -2, boxShadow: "0 8px 32px rgba(91,168,160,0.10)" }}
       style={{
         background: "#ffffff", borderRadius: 16, border: `1px solid #E2EEEC`,

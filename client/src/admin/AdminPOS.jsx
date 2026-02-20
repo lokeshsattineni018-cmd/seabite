@@ -7,6 +7,7 @@ import {
 } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import PopupModal from "../components/common/PopupModal";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const ease = [0.22, 1, 0.36, 1];
 const fadeUp = {
@@ -147,8 +148,8 @@ export default function AdminPOS() {
                 {/* Products Grid */}
                 <div className="flex-1 overflow-y-auto p-4 bg-stone-50/30">
                     {loading ? (
-                        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {[...Array(8)].map((_, i) => <div key={i} className="bg-white h-48 rounded-2xl animate-pulse border border-stone-100" />)}
+                        <div className="col-span-full py-20 flex justify-center">
+                            <SeaBiteLoader />
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -305,7 +306,7 @@ export default function AdminPOS() {
                     >
                         {processing ? (
                             <>
-                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <SeaBiteLoader small />
                                 Processing...
                             </>
                         ) : (

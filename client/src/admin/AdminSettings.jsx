@@ -5,6 +5,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import { FiSave, FiSettings, FiDollarSign, FiClock, FiMapPin, FiTruck, FiPercent, FiBriefcase } from "react-icons/fi";
 import { motion } from "framer-motion";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const fadeUp = {
     hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
@@ -59,7 +60,7 @@ export default function AdminSettings() {
                         disabled={saving}
                         className="bg-stone-900 text-white px-8 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-wide hover:bg-stone-800 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        {saving ? <FiSettings className="animate-spin" /> : <FiSave size={16} />}
+                        {saving ? <SeaBiteLoader small /> : <FiSave size={16} />}
                         {saving ? "Saving..." : "Save Changes"}
                     </button>
                 </div>
