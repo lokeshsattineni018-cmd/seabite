@@ -5,6 +5,7 @@ import {
     FiActivity, FiCpu, FiGlobe, FiRadio, FiTerminal,
     FiUser, FiShoppingCart, FiSearch, FiLock, FiClock, FiZap, FiMapPin
 } from "react-icons/fi";
+import { useSocket } from "../context/SocketContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
