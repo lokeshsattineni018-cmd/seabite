@@ -211,42 +211,44 @@ router.post("/maintenance/verify", adminAuth, async (req, res) => {
 router.put("/enterprise/settings", adminAuth, async (req, res) => {
   try {
     const {
-      maintenanceMessage, globalDiscount,
+      isMaintenanceMode, maintenanceMessage, globalDiscount,
       storeName, contactPhone, contactEmail, logoUrl,
       taxRate, deliveryFee, minOrderValue, freeDeliveryThreshold,
       openingTime, closingTime, isClosed,
-      banner, announcement // 🟢 Added announcement
+      banner, announcement
     } = req.body;
 
     const settings = await getSettings();
 
     // General
-    if (storeName) settings.storeName = storeName;
-    if (contactPhone) settings.contactPhone = contactPhone;
-    if (contactEmail) settings.contactEmail = contactEmail;
-    if (logoUrl) settings.logoUrl = logoUrl;
+    if (storeName !== undefined) settings.storeName = storeName;
+    if (contactPhone !== undefined) settings.contactPhone = contactPhone;
+    if (contactEmail !== undefined) settings.contactEmail = contactEmail;
+    if (logoUrl !== undefined) settings.logoUrl = logoUrl;
 
     // Finance
-    if (taxRate !== undefined) settings.taxRate = taxRate;
-    if (deliveryFee !== undefined) settings.deliveryFee = deliveryFee;
-    if (minOrderValue !== undefined) settings.minOrderValue = minOrderValue;
-    if (freeDeliveryThreshold !== undefined) settings.freeDeliveryThreshold = freeDeliveryThreshold;
+    if (taxRate !== undefined) settings.taxRate = Number(taxRate);
+    if (deliveryFee !== undefined) settings.deliveryFee = Number(deliveryFee);
+    if (minOrderValue !== undefined) settings.minOrderValue = Number(minOrderValue);
+    if (freeDeliveryThreshold !== undefined) settings.freeDeliveryThreshold = Number(freeDeliveryThreshold);
 
     // Operations
-    if (openingTime) settings.openingTime = openingTime;
-    if (closingTime) settings.closingTime = closingTime;
+    if (openingTime !== undefined) settings.openingTime = openingTime;
+    if (closingTime !== undefined) settings.closingTime = closingTime;
     if (isClosed !== undefined) settings.isClosed = isClosed;
 
     // Features
     if (isMaintenanceMode !== undefined) settings.isMaintenanceMode = isMaintenanceMode;
-    if (maintenanceMessage) settings.maintenanceMessage = maintenanceMessage;
-    if (banner) settings.banner = banner;
-    if (announcement) settings.announcement = announcement; // 🟢 Added announcement
+    if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
+    if (globalDiscount !== undefined) settings.globalDiscount = Number(globalDiscount);
+    if (banner !== undefined) settings.banner = banner;
+    if (announcement !== undefined) settings.announcement = announcement;
 
-    settings.lastUpdatedBy = req.user._id;
+    settings.lastUpdatedBy = req.session?.userId || null;
     await settings.save();
     res.json({ message: "Settings updated", settings });
   } catch (err) {
+    console.error("Settings Update Error:", err);
     res.status(500).json({ message: "Failed to update settings" });
   }
 });

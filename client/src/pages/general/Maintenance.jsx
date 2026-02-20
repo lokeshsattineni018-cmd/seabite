@@ -37,12 +37,9 @@ const Maintenance = ({ message }) => {
 
             {/* Main content */}
             <div className="relative z-10 text-center px-6 animate-gentle-float">
-                <div className="mb-6">
-                    <span className="text-6xl filter drop-shadow-md">🦐</span>
+                <div className="mb-6 flex justify-center">
+                    <img src="/logo.png" alt="SeaBite Logo" className="h-16 md:h-20 drop-shadow-md" />
                 </div>
-                <h1 className="text-5xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-sm">
-                    SeaBite
-                </h1>
                 <div className="w-16 h-0.5 bg-blue-500 mx-auto mb-6 rounded-full" />
                 <p className="text-lg md:text-xl text-slate-500 dark:text-slate-300 font-light mb-2">
                     We're freshening things up

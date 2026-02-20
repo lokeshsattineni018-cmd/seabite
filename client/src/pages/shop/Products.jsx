@@ -1,7 +1,7 @@
 import { useState, useContext, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useVelocity, useTransform, useSpring } from "framer-motion";
 import {
   FiSearch, FiPackage, FiFilter, FiX,
   FiSliders, FiChevronDown, FiChevronRight
@@ -48,6 +48,16 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
+
+  // Scroll Velocity Animation Setup
+  const { scrollY } = useScroll();
+  const scrollVelocity = useVelocity(scrollY);
+  const smoothVelocity = useSpring(scrollVelocity, {
+    damping: 50,
+    stiffness: 400
+  });
+  // Map smooth velocity to a slight skew value (-2deg to 2deg)
+  const skewVelocity = useTransform(smoothVelocity, [-1000, 1000], [-3, 3]);
 
   const [filters, setFilters] = useState({
     category: "All",
@@ -400,7 +410,13 @@ export default function Products() {
                     key="grid"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "20px" }}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                      gap: "20px",
+                      skewY: skewVelocity,
+                      transformOrigin: "top left"
+                    }}
                   >
                     {products.map((p, i) => (
                       <motion.div

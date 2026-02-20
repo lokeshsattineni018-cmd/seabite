@@ -329,7 +329,9 @@ export default function Navbar({ openCart }) {
 
             {/* Cart */}
             <motion.button whileTap={{ scale: 0.88 }} onClick={openCart} data-cart-icon className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
-              <FiShoppingBag size={15} />
+              <motion.div key={`cart-icon-${cartCount}`} animate={{ scale: [1, 1.25, 1], rotate: [0, -10, 10, 0] }} transition={{ duration: 0.4 }}>
+                <FiShoppingBag size={15} />
+              </motion.div>
               <AnimatePresence>
                 {cartCount > 0 && (
                   <motion.span key={cartCount} initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }}

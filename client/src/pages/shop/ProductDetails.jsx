@@ -414,6 +414,8 @@ export default function ProductDetails() {
                 </div>
 
                 <motion.img
+                  layoutId={`product-image-${product._id}`}
+                  layout="position"
                   initial={{ scale: 0.88, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
@@ -648,7 +650,7 @@ export default function ProductDetails() {
                 {/* Add to cart */}
                 <motion.button
                   ref={addBtnRef}
-                  className="add-btn"
+                  className={`add-btn ${!isAdded && product.stock !== "out" ? "liquid-cta" : ""}`}
                   whileTap={!isAdded && product.stock !== "out" ? { scale: 0.97 } : {}}
                   onClick={handleAddToCart}
                   disabled={isAdded || product.stock === "out"}
