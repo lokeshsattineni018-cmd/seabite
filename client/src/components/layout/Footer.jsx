@@ -28,19 +28,19 @@ const FOOTER_LINKS = [
   {
     title: "Explore",
     links: [
-      { to: "/products",          label: "Shop Seafood" },
-      { to: "/products?category=Fish",  label: "Fresh Fish" },
+      { to: "/products", label: "Shop Seafood" },
+      { to: "/products?category=Fish", label: "Fresh Fish" },
       { to: "/products?category=Prawn", label: "Jumbo Prawns" },
-      { to: "/products?category=Crab",  label: "Live Crabs" },
+      { to: "/products?category=Crab", label: "Live Crabs" },
     ],
   },
   {
     title: "Company",
     links: [
-      { to: "/about",        label: "About Us" },
-      { to: "/faq",          label: "FAQ" },
-      { to: "/terms",        label: "Terms & Conditions" },
-      { to: "/privacy",      label: "Privacy Policy" },
+      { to: "/about", label: "About Us" },
+      { to: "/faq", label: "FAQ" },
+      { to: "/terms", label: "Terms & Conditions" },
+      { to: "/privacy", label: "Privacy Policy" },
       { to: "/cancellation", label: "Cancellation & Refund" },
     ],
   },
@@ -48,7 +48,7 @@ const FOOTER_LINKS = [
 
 export default function Footer() {
   const [formData, setFormData] = useState({ email: "", message: "" });
-  const [status, setStatus]     = useState("idle"); // idle | loading | success | error
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -83,8 +83,7 @@ export default function Footer() {
           borderTop: "1.5px solid #E2EEEC",
           fontFamily: "'Manrope', sans-serif",
           paddingTop: "64px",
-          paddingBottom: "0",
-          position: "relative",
+          paddingBottom: "24px",
           overflow: "hidden",
         }}
       >
@@ -171,7 +170,7 @@ export default function Footer() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   {[
                     { icon: <FiPhone size={13} />, text: "+91 9866635566" },
-                    { icon: <FiMail size={13} />,  text: "support@seabite.co.in" },
+                    { icon: <FiMail size={13} />, text: "support@seabite.co.in" },
                   ].map((item, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                       <div style={{ width: "28px", height: "28px", background: "#F0FBF9", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#5BBFB5", flexShrink: 0 }}>
