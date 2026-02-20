@@ -5,8 +5,8 @@ export const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
     const [isDarkMode, setIsDarkMode] = useState(() => {
         const saved = localStorage.getItem('theme');
-        // Default to dark mode for SeaBite aesthetic
-        return saved ? saved === 'dark' : true;
+        // Default to light mode for SeaBite aesthetic
+        return saved ? saved === 'dark' : false;
     });
 
     useEffect(() => {
