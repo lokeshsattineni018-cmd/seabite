@@ -152,7 +152,7 @@ export default function AdminLayout() {
           </div>
         </div>
 
-        <div className="px-4 md:px-8 pb-10 min-h-full">
+        <div className="px-4 md:px-8 pb-6 min-h-full">
           <Suspense fallback={<AdminPageLoader />}>
             <Outlet context={{ settings, setSettings, fetchSettings }} />
           </Suspense>

@@ -178,9 +178,9 @@ export default function AdminDashboard() {
   return (
     <motion.div
       initial="hidden" animate="visible" variants={staggerContainer}
-      className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white p-6 md:p-10 font-sans"
+      className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white p-4 md:p-6 font-sans"
     >
-      <div className="max-w-[1600px] mx-auto space-y-10">
+      <div className="max-w-[1600px] mx-auto space-y-6">
 
         {/* OTP Modal */}
         <AnimatePresence>
@@ -244,7 +244,7 @@ export default function AdminDashboard() {
         </AnimatePresence>
 
         {/* Header */}
-        <motion.div variants={fadeUp} className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-stone-200/50 pb-8">
+        <motion.div variants={fadeUp} className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-stone-200/50 pb-4">
           <div>
             <h1 className="text-4xl md:text-5xl font-light text-stone-900 tracking-tight mb-2">
               Dashboard
@@ -741,7 +741,7 @@ function BannerControl({ settings, setSettings }) {
       </div>
 
       <div
-        className={`border-2 border-dashed rounded-2xl p-3 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${isDragging ? "border-teal-400 bg-teal-50/50" : "border-stone-200 hover:border-stone-300 bg-stone-50/30"}`}
+        className={`relative border-2 border-dashed rounded-2xl p-3 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${isDragging ? "border-teal-400 bg-teal-50/50" : "border-stone-200 hover:border-stone-300 bg-stone-50/30"}`}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={(e) => {
