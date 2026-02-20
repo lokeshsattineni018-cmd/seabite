@@ -1,12 +1,10 @@
-import { useState, useContext, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
+import { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 import axios from "axios";
-import { motion } from "framer-motion";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -36,15 +34,6 @@ const EnhancedProductCard = ({
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
   const [imageLoaded, setImageLoaded] = useState(false);
-
-  // Animation states
-  const [flyItems, setFlyItems] = useState([]);
-  const flyIdRef = useRef(0);
-  const addBtnRef = useRef(null);
-
-  const handleFlyComplete = useCallback((fId) => {
-    setFlyItems((prev) => prev.filter((item) => item.id !== fId));
-  }, []);
 
   const isActiveFlashSale =
     product.flashSale?.isFlashSale &&
@@ -99,21 +88,6 @@ const EnhancedProductCard = ({
     e.preventDefault();
     e.stopPropagation();
     setIsAdding(true);
-
-    if (addBtnRef.current) {
-      const rect = addBtnRef.current.getBoundingClientRect();
-      const cartEl = document.querySelector("[data-cart-icon]");
-      const cartRect = cartEl?.getBoundingClientRect() ?? { left: window.innerWidth - 60, top: 20 };
-      setFlyItems((prev) => [...prev, {
-        id: ++flyIdRef.current,
-        startX: rect.left + rect.width / 2 - 28,
-        startY: rect.top - 28,
-        endX: cartRect.left,
-        endY: cartRect.top,
-        image: getImageUrl(product.image),
-      }]);
-    }
-
     setTimeout(() => {
       addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
       toast.success(`${product.name} added`, {
@@ -121,7 +95,7 @@ const EnhancedProductCard = ({
         icon: "🛒",
       });
       setIsAdding(false);
-    }, 600);
+    }, 500);
   };
 
   const handleWishlistToggle = async (e) => {
@@ -163,12 +137,24 @@ const EnhancedProductCard = ({
         flexDirection: "column",
         height: "100%",
         position: "relative",
+        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+        boxShadow: "0 1px 4px rgba(91,191,181,0.06)",
         fontFamily: "'Manrope', sans-serif",
       }}
-      className="group"
+      className="product-card-hover group"
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+        .product-card-hover:hover {
+          box-shadow: 0 8px 32px rgba(91,191,181,0.14);
+          transform: translateY(-2px);
+          border-color: #B8DDD9;
+        }
+        .cart-btn-wave:hover {
+          background: #5BBFB5 !important;
+          color: white !important;
+          border-color: #5BBFB5 !important;
+        }
       `}</style>
 
       {/* Badge Row */}
@@ -200,15 +186,16 @@ const EnhancedProductCard = ({
         onClick={handleWishlistToggle}
         disabled={loadingWishlist}
         style={{
-          position: "absolute", top: "16px", right: "16px", zIndex: 20,
-          width: "36px", height: "36px",
-          background: "#FFFFFF",
+          position: "absolute", top: "12px", right: "12px", zIndex: 20,
+          width: "34px", height: "34px",
+          background: "rgba(255,255,255,0.92)",
           border: "1px solid #E2EEEC",
           borderRadius: "50%",
           display: "flex", alignItems: "center", justifyContent: "center",
           cursor: "pointer",
           color: isWishlisted ? "#F07468" : "#A0B8B5",
           transition: "all 0.2s ease",
+          backdropFilter: "blur(4px)",
         }}
       >
         {loadingWishlist ? (
@@ -224,13 +211,13 @@ const EnhancedProductCard = ({
       <Link
         to={`/products/${product._id}`}
         style={{
-          height: "220px",
+          height: "200px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "transparent",
+          background: "#F4F9F8",
           overflow: "hidden",
-          padding: "20px",
+          padding: "24px",
           position: "relative",
         }}
       >
@@ -244,9 +231,7 @@ const EnhancedProductCard = ({
             </span>
           </div>
         )}
-        <motion.img
-          layoutId={`product-image-${product._id}`}
-          layout="position"
+        <img
           src={getImageUrl(product.image)}
           alt={product.name}
           style={{
@@ -254,7 +239,6 @@ const EnhancedProductCard = ({
             transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
             filter: isOutOfStock ? "grayscale(0.4) opacity(0.6)" : "none",
             opacity: imageLoaded ? 1 : 0,
-            zIndex: 10,
           }}
           onLoad={() => setImageLoaded(true)}
           className="group-hover:scale-105"
@@ -304,17 +288,17 @@ const EnhancedProductCard = ({
           </div>
 
           <button
-            ref={addBtnRef}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
+            className="cart-btn-wave"
             style={{
               width: "100%",
               padding: "10px 0",
               borderRadius: "10px",
               border: "1.5px solid",
-              borderColor: isOutOfStock ? "#E2EEEC" : "#5BBFB5",
-              background: "transparent",
-              color: isOutOfStock ? "#B8CFCC" : "#5BBFB5",
+              borderColor: isOutOfStock ? "#E2EEEC" : isAdding ? "#5BBFB5" : "#5BBFB5",
+              background: isAdding ? "#5BBFB5" : "transparent",
+              color: isOutOfStock ? "#B8CFCC" : isAdding ? "#fff" : "#5BBFB5",
               fontSize: "13px",
               fontWeight: "700",
               letterSpacing: "0.02em",
@@ -322,7 +306,7 @@ const EnhancedProductCard = ({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "8px",
+              gap: "6px",
               transition: "all 0.2s ease",
               fontFamily: "'Manrope', sans-serif",
             }}
@@ -341,23 +325,6 @@ const EnhancedProductCard = ({
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
-
-      {/* Portal for flying items so they don't get clipped by overflow:hidden */}
-      {typeof window !== "undefined" && createPortal(
-        flyItems.map((item) => (
-          <motion.div
-            key={item.id}
-            initial={{ position: "fixed", left: item.startX, top: item.startY, width: 56, height: 56, zIndex: 9999, opacity: 1, scale: 1, borderRadius: "50%", pointerEvents: "none" }}
-            animate={{ left: item.endX, top: item.endY, width: 16, height: 16, opacity: [1, 1, 0], scale: [1, 1.1, 0.2] }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            onAnimationComplete={() => handleFlyComplete(item.id)}
-            style={{ position: "fixed", borderRadius: "50%", overflow: "hidden", border: "2px solid #fff", boxShadow: "0 4px 16px rgba(91,191,181,0.3)" }}
-          >
-            <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", background: "#F4F9F8", padding: "4px" }} />
-          </motion.div>
-        )),
-        document.body
-      )}
     </div>
   );
 };
