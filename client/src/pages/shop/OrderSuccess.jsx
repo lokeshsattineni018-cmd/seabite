@@ -42,6 +42,25 @@ const PulseRing = ({ delay }) => (
   />
 );
 
+const Particle = ({ i }) => (
+  <motion.div
+    initial={{ opacity: 0, x: 0, y: 0, scale: 0 }}
+    animate={{
+      opacity: [0, 1, 0],
+      x: (Math.random() - 0.5) * 400,
+      y: (Math.random() - 0.5) * 400,
+      scale: [0, 1.2, 0],
+    }}
+    transition={{
+      duration: 3 + Math.random() * 2,
+      repeat: Infinity,
+      delay: Math.random() * 2,
+    }}
+    className="absolute w-1.5 h-1.5 rounded-full bg-[#5BA8A0]/20 z-0"
+    style={{ left: "50%", top: "50%" }}
+  />
+);
+
 // ── SVG check that draws itself ───────────────
 const AnimatedCheck = () => (
   <motion.svg
@@ -115,7 +134,7 @@ export default function OrderSuccess() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [redirectTime, setRedirectTime] = useState(8);
+  const [redirectTime, setRedirectTime] = useState(12);
 
   useEffect(() => {
     if (!dbId) { setLoading(false); return; }
@@ -192,7 +211,12 @@ export default function OrderSuccess() {
           className="grad-bar h-[3px] w-full origin-left"
         />
 
-        <div className="max-w-[480px] mx-auto px-8 pt-12 pb-0 text-center relative z-10">
+        <div className="max-w-[480px] mx-auto px-8 pt-12 pb-0 text-center relative z-10 overflow-hidden">
+          {/* Decorative particles */}
+          {[...Array(12)].map((_, i) => (
+            <Particle key={i} i={i} />
+          ))}
+
 
           {/* Check icon */}
           <motion.div {...FU(0)} className="relative w-[88px] h-[88px] mx-auto mb-7 flex items-center justify-center">
@@ -348,9 +372,10 @@ export default function OrderSuccess() {
                     : item.product ? (typeof item.product === "object" ? item.product._id : item.product) : item._id;
 
                   return (
-                    <Link key={idx} to={`/product/${realId}`} style={{ textDecoration: "none" }}>
+                    <Link key={idx} to={`/products/${realId}`} style={{ textDecoration: "none" }}>
                       <motion.div
-                        whileHover={{ background: "rgba(91,168,160,0.05)" }}
+                        whileHover={{ background: "rgba(91,168,160,0.05)", scale: 1.02 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         style={{
                           display: "flex", alignItems: "center", gap: 12, padding: "10px",
                           borderRadius: 12, border: `1.5px solid ${T.border}`, background: "#fff"
@@ -465,6 +490,9 @@ export default function OrderSuccess() {
       </motion.div>
 
       <Ticker />
+
+      {/* Decorative success bloom */}
+      <div className="fixed top-0 left-0 w-full h-[4px] grad-bar z-[100] opacity-60" />
     </div>
   );
 }

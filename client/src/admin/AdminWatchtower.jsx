@@ -70,20 +70,30 @@ function Card({ children, style = {}, hover = true }) {
 }
 
 export default function AdminWatchtower() {
-    const { socket, isConnected, activeUsers } = useSocket();
+    const { socket, isConnected, activeUsers: socketActiveUsers } = useSocket();
     const [logs, setLogs] = useState([]);
+    const [metrics, setMetrics] = useState(null);
+    const [traceFilter, setTraceFilter] = useState(null);
+    const [activeUsers, setActiveUsers] = useState(0);
 
-    // Initial Fetch
+    // Initial Fetch & Periodic Metrics
     useEffect(() => {
-        const fetchInitialLogs = async () => {
+        const fetchData = async () => {
             try {
-                const { data } = await axios.get(`${API_URL}/api/admin/watchtower/live`, { withCredentials: true });
-                setLogs(data.logs);
+                const [liveRes, healthRes] = await Promise.all([
+                    axios.get(`${API_URL}/api/admin/watchtower/live`, { withCredentials: true }),
+                    axios.get(`${API_URL}/health`, { withCredentials: true })
+                ]);
+                setLogs(liveRes.data.logs);
+                setActiveUsers(liveRes.data.activeCount);
+                setMetrics(healthRes.data);
             } catch (err) {
-                // console.error("Initial log fetch failed", err);
+                // Silent fail
             }
         };
-        fetchInitialLogs();
+        fetchData();
+        const interval = setInterval(fetchData, 30000); // 30s monitoring
+        return () => clearInterval(interval);
     }, []);
 
     // Real-time Listener
@@ -107,6 +117,10 @@ export default function AdminWatchtower() {
             case "CART_UPDATE": return { icon: <FiShoppingCart />, color: T.warning, bg: T.warningL, label: "Cart" };
             case "SEARCH": return { icon: <FiSearch />, color: T.sky, bg: T.skyL, label: "Search" };
             case "WISHLIST_ADD": return { icon: <FiActivity />, color: T.purple, bg: T.purpleL, label: "Wishlist" };
+            case "ORDER_STATUS_UPDATE":
+            case "AUDIT": return { icon: <FiTerminal />, color: T.textMid, bg: T.surfaceMid, label: "Audit" };
+            case "SECURITY":
+            case "ORDER_CANCELLED": return { icon: <FiLock />, color: "#E11D48", bg: "#FFF1F2", label: "Security" };
             default: return { icon: <FiZap />, color: T.textMid, bg: T.surfaceMid, label: "System" };
         }
     };
@@ -138,11 +152,32 @@ export default function AdminWatchtower() {
                         <Card style={{ padding: "12px 20px", borderRadius: 16 }}>
                             <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Active Users</div>
                             <div style={{ fontSize: 24, fontWeight: 600, color: T.teal, display: "flex", alignItems: "center", gap: 8 }}>
-                                <FiGlobe size={20} className="opacity-50" />
-                                {activeUsers}
+                                {socketActiveUsers || activeUsers}
                             </div>
                         </Card>
                     </div>
+                </motion.div>
+
+                {/* ── METRICS BAR (NEW) ─────────────────────────── */}
+                <motion.div variants={fadeUp} style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
+                    <Card style={{ padding: 16 }}>
+                        <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>DB Latency</div>
+                        <div style={{ fontSize: 18, fontWeight: 600, color: (metrics?.database?.latency?.replace('ms', '') > 100) ? T.warning : T.teal }}>
+                            {metrics?.database?.latency || "---"}
+                        </div>
+                    </Card>
+                    <Card style={{ padding: 16 }}>
+                        <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>Server RAM</div>
+                        <div style={{ fontSize: 18, fontWeight: 600 }}>{metrics?.memory?.heapUsed || "---"}</div>
+                    </Card>
+                    <Card style={{ padding: 16 }}>
+                        <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>System Load</div>
+                        <div style={{ fontSize: 18, fontWeight: 600 }}>{metrics?.system?.load?.[0]?.toFixed(2) || "0.00"}</div>
+                    </Card>
+                    <Card style={{ padding: 16 }}>
+                        <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>Uptime</div>
+                        <div style={{ fontSize: 18, fontWeight: 600 }}>{Math.floor((metrics?.uptime || 0) / 3600)}h {Math.floor(((metrics?.uptime || 0) % 3600) / 60)}m</div>
+                    </Card>
                 </motion.div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24 }}>
@@ -151,60 +186,87 @@ export default function AdminWatchtower() {
                     <motion.div variants={fadeUp} custom={1}>
                         <Card hover={false} style={{ minHeight: "60vh" }}>
                             <div style={{ padding: "20px 24px", borderBottom: `1px solid ${T.borderSoft}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <h3 style={{ fontSize: 14, fontWeight: 600, color: T.text }}>Recent Activity</h3>
-                                <div style={{ fontSize: 11, color: T.textGhost, fontFamily: "Geist Mono, monospace" }}>LATENCY: 24ms</div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                    <h3 style={{ fontSize: 14, fontWeight: 600, color: T.text }}>
+                                        {traceFilter ? `Trace: ${traceFilter.slice(0, 8)}...` : "Recent Activity"}
+                                    </h3>
+                                    {traceFilter && (
+                                        <button
+                                            onClick={() => setTraceFilter(null)}
+                                            style={{ fontSize: 10, color: T.teal, background: T.tealL, border: `1px solid ${T.teal}`, padding: "2px 6px", borderRadius: 4, cursor: "pointer" }}
+                                        >Clear Filter</button>
+                                    )}
+                                </div>
+                                <div style={{ fontSize: 11, color: T.textGhost, fontFamily: "Geist Mono, monospace" }}>
+                                    LATENCY: {metrics?.database?.latency || "---"}
+                                </div>
                             </div>
 
                             <div style={{ overflowX: "auto" }}>
                                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                     <tbody style={{ fontSize: 13 }}>
                                         <AnimatePresence initial={false}>
-                                            {logs.map((log) => {
-                                                const style = getActionStyle(log.action);
-                                                return (
-                                                    <motion.tr
-                                                        key={log._id}
-                                                        initial={{ opacity: 0, height: 0 }}
-                                                        animate={{ opacity: 1, height: "auto" }}
-                                                        exit={{ opacity: 0 }}
-                                                        style={{ borderBottom: `1px solid ${T.borderSoft}` }}
-                                                    >
-                                                        <td style={{ padding: "16px 24px", width: "1%", whiteSpace: "nowrap", color: T.textSoft, fontFamily: "Geist Mono, monospace", fontSize: 11 }}>
-                                                            {formatTime(log.timestamp)}
-                                                        </td>
-                                                        <td style={{ padding: "16px 12px", width: "1%" }}>
-                                                            <div style={{
-                                                                width: 32, height: 32, borderRadius: 10,
-                                                                background: style.bg, color: style.color,
-                                                                display: "flex", alignItems: "center", justifyContent: "center"
-                                                            }}>
-                                                                {style.icon}
-                                                            </div>
-                                                        </td>
-                                                        <td style={{ padding: "16px 12px" }}>
-                                                            <div style={{ fontWeight: 500, color: T.text, marginBottom: 2 }}>{log.details}</div>
-                                                            <div style={{ fontSize: 11, color: T.textSoft, display: "flex", gap: 6 }}>
-                                                                <span style={{ fontWeight: 600, color: style.color }}>{log.action}</span>
-                                                                {log.meta && Object.keys(log.meta).length > 0 && (
-                                                                    <><span>•</span> <span>{JSON.stringify(log.meta)}</span></>
+                                            {logs
+                                                .filter(log => !traceFilter || log.meta?.traceId === traceFilter)
+                                                .map((log) => {
+                                                    const style = getActionStyle(log.action);
+                                                    return (
+                                                        <motion.tr
+                                                            key={log._id}
+                                                            initial={{ opacity: 0, height: 0 }}
+                                                            animate={{ opacity: 1, height: "auto" }}
+                                                            exit={{ opacity: 0 }}
+                                                            style={{ borderBottom: `1px solid ${T.borderSoft}` }}
+                                                        >
+                                                            <td style={{ padding: "16px 24px", width: "1%", whiteSpace: "nowrap", color: T.textSoft, fontFamily: "Geist Mono, monospace", fontSize: 11 }}>
+                                                                {formatTime(log.timestamp)}
+                                                            </td>
+                                                            <td style={{ padding: "16px 12px", width: "1%" }}>
+                                                                <div style={{
+                                                                    width: 32, height: 32, borderRadius: 10,
+                                                                    background: style.bg, color: style.color,
+                                                                    display: "flex", alignItems: "center", justifyContent: "center"
+                                                                }}>
+                                                                    {style.icon}
+                                                                </div>
+                                                            </td>
+                                                            <td style={{ padding: "16px 12px" }}>
+                                                                <div style={{ fontWeight: 500, color: T.text, marginBottom: 2 }}>{log.details}</div>
+                                                                <div style={{ fontSize: 11, color: T.textSoft, display: "flex", gap: 6, alignItems: "center" }}>
+                                                                    <span style={{ fontWeight: 600, color: style.color }}>{log.action}</span>
+                                                                    {log.meta?.traceId && (
+                                                                        <button
+                                                                            onClick={() => setTraceFilter(log.meta.traceId)}
+                                                                            style={{
+                                                                                fontSize: 9, fontFamily: "Geist Mono", background: T.surfaceWarm,
+                                                                                border: `1px solid ${T.border}`, padding: "1px 4px", borderRadius: 4,
+                                                                                color: traceFilter === log.meta.traceId ? T.teal : T.textSoft,
+                                                                                cursor: "pointer"
+                                                                            }}
+                                                                        >
+                                                                            TRACE: {log.meta.traceId.slice(0, 8)}
+                                                                        </button>
+                                                                    )}
+                                                                    {log.meta && Object.keys(log.meta).filter(k => k !== 'traceId').length > 0 && (
+                                                                        <><span>•</span> <span>{JSON.stringify(Object.fromEntries(Object.entries(log.meta).filter(([k]) => k !== 'traceId')))}</span></>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                            <td style={{ padding: "16px 24px", textAlign: "right" }}>
+                                                                {log.user ? (
+                                                                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.surfaceWarm, padding: "4px 8px", borderRadius: 6, border: `1px solid ${T.border}` }}>
+                                                                        <FiUser size={10} style={{ color: T.textSoft }} />
+                                                                        <span style={{ fontSize: 11, fontWeight: 500, color: T.text }}>{log.user.name}</span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px" }}>
+                                                                        <span style={{ fontSize: 11, fontWeight: 500, color: T.textGhost }}>Guest</span>
+                                                                    </div>
                                                                 )}
-                                                            </div>
-                                                        </td>
-                                                        <td style={{ padding: "16px 24px", textAlign: "right" }}>
-                                                            {log.user ? (
-                                                                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.surfaceWarm, padding: "4px 8px", borderRadius: 6, border: `1px solid ${T.border}` }}>
-                                                                    <FiUser size={10} style={{ color: T.textSoft }} />
-                                                                    <span style={{ fontSize: 11, fontWeight: 500, color: T.text }}>{log.user.name}</span>
-                                                                </div>
-                                                            ) : (
-                                                                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px" }}>
-                                                                    <span style={{ fontSize: 11, fontWeight: 500, color: T.textGhost }}>Guest</span>
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                    </motion.tr>
-                                                );
-                                            })}
+                                                            </td>
+                                                        </motion.tr>
+                                                    );
+                                                })}
                                         </AnimatePresence>
                                         {logs.length === 0 && (
                                             <tr>
@@ -256,14 +318,20 @@ export default function AdminWatchtower() {
                         <motion.div variants={fadeUp} custom={3}>
                             <Card hover={false} style={{
                                 padding: 24,
-                                background: `linear-gradient(135deg, ${T.teal} 0%, #115E59 100%)`,
+                                background: metrics?.status === "healthy"
+                                    ? `linear-gradient(135deg, ${T.teal} 0%, #115E59 100%)`
+                                    : `linear-gradient(135deg, ${T.warning} 0%, #B45309 100%)`,
                                 color: "#FFF",
                                 border: "none"
                             }}>
                                 <FiZap size={20} style={{ opacity: 0.8, marginBottom: 12 }} />
-                                <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>System Healthy</h3>
+                                <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 6 }}>
+                                    {metrics?.status === "healthy" ? "System Healthy" : "Status Degraded"}
+                                </h3>
                                 <p style={{ fontSize: 12, opacity: 0.8, lineHeight: 1.5 }}>
-                                    All services operational. Database latency normal. Email service standing by.
+                                    {metrics?.status === "healthy"
+                                        ? "All services operational. Database latency normal. Email service standing by."
+                                        : "Database latency or memory pressure detected. Monitoring in progress."}
                                 </p>
                             </Card>
                         </motion.div>

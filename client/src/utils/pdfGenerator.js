@@ -27,7 +27,7 @@ export const generateInvoicePDF = async (order) => {
 
     // Add Logo
     try {
-        const logoData = await getBase64ImageFromURL("/logo.png");
+        const logoData = await getBase64ImageFromURL("/round-logo.png");
         if (logoData) {
             doc.addImage(logoData, "PNG", 14, 10, 25, 25); // x, y, w, h
         }
@@ -84,6 +84,9 @@ export const generateInvoicePDF = async (order) => {
     doc.text(`Phone: ${addr.phone || ""}`, 100, 87);
 
     // ----- table: Line Items -----
+    if (!order.items || !Array.isArray(order.items)) {
+        order.items = [];
+    }
     const tableRows = order.items.map((item) => [
         item.name,
         `Rs. ${item.price.toLocaleString()}`,
@@ -139,15 +142,15 @@ export const generateInvoicePDF = async (order) => {
     doc.setFont("helvetica", "bold");
     doc.setTextColor(26, 43, 53);
     doc.text(`Rs. ${itemsPrice.toLocaleString()}`, 196, finalY, { align: "right" });
-    doc.text(`Rs. ${taxPrice.toLocaleString()}`, 196, finalY + 6, { align: "right" });
-    doc.text(shippingPrice === 0 ? "Free" : `Rs. ${shippingPrice.toLocaleString()}`, 196, finalY + 12, { align: "right" });
+    doc.text(`Rs. ${taxPrice?.toLocaleString()}`, 196, finalY + 6, { align: "right" });
+    doc.text(shippingPrice === 0 ? "Free" : `Rs. ${shippingPrice?.toLocaleString()}`, 196, finalY + 12, { align: "right" });
 
     // Discount
     let currentY = finalY + 18;
     if (discount > 0) {
         doc.setTextColor(232, 129, 106); // Coral
         doc.text("Discount:", summaryX, currentY);
-        doc.text(`- Rs. ${discount.toLocaleString()}`, 196, currentY, { align: "right" });
+        doc.text(`- Rs. ${discount?.toLocaleString()}`, 196, currentY, { align: "right" });
         currentY += 6;
     }
 
@@ -159,7 +162,7 @@ export const generateInvoicePDF = async (order) => {
     doc.setFontSize(12);
     doc.setTextColor(26, 43, 53); // Dark
     doc.text("GRAND TOTAL:", summaryX, currentY + 6);
-    doc.text(`Rs. ${total.toLocaleString()}`, 196, currentY + 6, { align: "right" });
+    doc.text(`Rs. ${total?.toLocaleString()}`, 196, currentY + 6, { align: "right" });
 
     // ----- Footer -----
     doc.setFontSize(8);

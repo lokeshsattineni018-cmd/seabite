@@ -7,7 +7,9 @@ import Settings, { getSettings } from "../models/Settings.js";
 import SearchInsight from "../models/SearchInsight.js";
 import ActivityLog from "../models/ActivityLog.js"; // 🟢 Added
 import Coupon from "../models/Coupon.js"; // 🟢 Added
+import Contact from "../models/Contact.js"; // 🟢 Added
 import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail, sendEmail, sendWinBackEmail } from "../utils/emailService.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -603,8 +605,10 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
         // 5. Activity Intelligence
         const recentLogs = await ActivityLog.find({
           $or: [{ user: u._id }, { "meta.email": u.email }] // Match by ID or Email
-        }).sort({ timestamp: -1 }).limit(5);
+        }).sort({ timestamp: -1 }).limit(10);
 
+        // 6. Unified History (Support Command Center)
+        const recentMessages = await Contact.find({ email: u.email }).sort({ createdAt: -1 }).limit(3);
         const lastActive = recentLogs.length > 0 ? recentLogs[0].timestamp : u.updatedAt;
 
         return {
@@ -624,7 +628,9 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
             segment,
             churnRisk,
             lastActive,
-            recentActivity: recentLogs.map(l => ({ action: l.action, details: l.details, time: l.timestamp }))
+            recentActivity: recentLogs.map(l => ({ action: l.action, details: l.details, time: l.timestamp, type: 'activity' })),
+            recentOrders: orders.slice(0, 3).map(o => ({ id: o._id, orderId: o.orderId, amount: o.totalAmount, date: o.createdAt, status: o.status, type: 'order' })),
+            recentMessages: recentMessages.map(m => ({ message: m.message, date: m.createdAt, type: 'message' }))
           }
         };
       })
@@ -873,6 +879,79 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("POS Order Error:", err);
     res.status(500).json({ message: "Failed to create manual order", error: err.message });
+  }
+});
+
+// 🟢 7. ACCESS SENTINEL (IAM MANAGEMENT)
+router.get("/iam/locked", adminAuth, async (req, res) => {
+  try {
+    const lockedUsers = await User.find({
+      $or: [
+        { lockUntil: { $gt: Date.now() } },
+        { loginAttempts: { $gt: 0 } }
+      ]
+    }).select("name email loginAttempts lockUntil lastActiveAt role");
+    res.json(lockedUsers);
+  } catch (err) {
+    logger.error("IAM Locked User Fetch Failed", { traceId: req.traceId, error: err.message });
+    res.status(500).json({ message: "Failed to fetch locked users" });
+  }
+});
+
+router.post("/iam/unlock/:id", adminAuth, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.loginAttempts = 0;
+    user.lockUntil = undefined;
+    await user.save();
+    logger.audit("User Account Unlocked", { traceId: req.traceId, admin: req.user.email, unlockedUser: user.email });
+    res.json({ message: `Account for ${user.email} unlocked successfully.` });
+  } catch (err) {
+    logger.error("IAM Unlock Failed", { traceId: req.traceId, error: err.message });
+    res.status(500).json({ message: "Failed to unlock user" });
+  }
+});
+
+// 🟢 8. THE REGISTRY (HISTORICAL AUDIT)
+router.get("/registry/logs", adminAuth, async (req, res) => {
+  try {
+    const { action, user, startDate, endDate, page = 1, limit = 50 } = req.query;
+    const query = {};
+    if (action) query.action = action;
+    if (user) query.user = user;
+    if (startDate || endDate) {
+      query.timestamp = {};
+      if (startDate) query.timestamp.$gte = new Date(startDate);
+      if (endDate) query.timestamp.$lte = new Date(endDate);
+    }
+
+    const logs = await ActivityLog.find(query)
+      .sort({ timestamp: -1 })
+      .skip((page - 1) * limit)
+      .limit(Number(limit))
+      .populate("user", "name email");
+
+    const total = await ActivityLog.countDocuments(query);
+    res.json({ logs, total, pages: Math.ceil(total / limit) });
+  } catch (err) {
+    logger.error("Registry Fetch Failed", { traceId: req.traceId, error: err.message });
+    res.status(500).json({ message: "Failed to fetch audit registry" });
+  }
+});
+
+// 🟢 9. SEARCH DISCOVERY HUB
+router.get("/insights/search-discovery", adminAuth, async (req, res) => {
+  try {
+    const zeroResults = await SearchInsight.find({ found: false })
+      .sort({ count: -1 })
+      .limit(20);
+    const topSearches = await SearchInsight.find({ found: true })
+      .sort({ count: -1 })
+      .limit(20);
+    res.json({ zeroResults, topSearches });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch search discovery" });
   }
 });
 
