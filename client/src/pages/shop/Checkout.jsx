@@ -264,7 +264,7 @@ export default function Checkout() {
         isOrderSuccess.current = true; // Prevent "Cart Empty" redirect
         clearCart();
         refreshCartCount();
-        navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`, { replace: true });
+        navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`, { replace: true, state: { fromCheckout: true } });
         return;
       }
 
@@ -279,7 +279,7 @@ export default function Checkout() {
               isOrderSuccess.current = true; // Prevent "Cart Empty" redirect
               clearCart();
               refreshCartCount();
-              navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`, { replace: true });
+              navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`, { replace: true, state: { fromCheckout: true } });
             }
           } catch { setModal({ show: true, message: "Payment Verification Failed", type: "error" }); }
         },

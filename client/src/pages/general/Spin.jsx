@@ -12,6 +12,9 @@ const Spin = ({ isOpen, onClose }) => {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
   const canvasRef = useRef(null);
+  const isPage = isOpen === undefined;
+  const show = isPage || isOpen;
+
   const [rotation, setRotation] = useState(0);
 
   const prizes = [
@@ -24,8 +27,8 @@ const Spin = ({ isOpen, onClose }) => {
   ];
 
   useEffect(() => {
-    if (isOpen && canvasRef.current) drawWheel();
-  }, [isOpen]);
+    if (show && canvasRef.current) drawWheel();
+  }, [show]);
 
   const drawWheel = () => {
     const canvas = canvasRef.current;
@@ -33,7 +36,7 @@ const Spin = ({ isOpen, onClose }) => {
     const centerX = 150;
     const centerY = 150;
     const radius = 140;
-    
+
     ctx.clearRect(0, 0, 300, 300);
 
     prizes.forEach((prize, i) => {
@@ -97,7 +100,7 @@ const Spin = ({ isOpen, onClose }) => {
       setTimeout(() => {
         setResult(backendResult);
         setSpinning(false);
-        
+
         if (backendResult.result === "COUPON") {
           const discountData = {
             percentage: backendResult.discountValue,
@@ -123,7 +126,7 @@ const Spin = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!isOpen) return null;
+  if (!show) return null;
 
   return (
     <AnimatePresence>
@@ -131,8 +134,8 @@ const Spin = ({ isOpen, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
-        onClick={onClose}
+        className={`fixed inset-0 z-[9999] flex items-center justify-center ${isPage ? 'bg-slate-50 dark:bg-slate-950' : 'bg-black/60 backdrop-blur-sm'} px-4`}
+        onClick={isPage ? undefined : onClose}
       >
         <motion.div
           onClick={(e) => e.stopPropagation()}
@@ -183,11 +186,10 @@ const Spin = ({ isOpen, onClose }) => {
               disabled={spinning}
               whileHover={{ scale: spinning ? 1 : 1.02 }}
               whileTap={{ scale: spinning ? 1 : 0.98 }}
-              className={`w-full py-4 rounded-xl font-bold text-base uppercase tracking-wide shadow-lg transition-all ${
-                spinning
+              className={`w-full py-4 rounded-xl font-bold text-base uppercase tracking-wide shadow-lg transition-all ${spinning
                   ? "bg-slate-400 cursor-not-allowed text-white"
                   : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100"
-              }`}
+                }`}
             >
               {spinning ? (
                 <span className="flex items-center justify-center gap-2">
@@ -230,7 +232,7 @@ const Spin = ({ isOpen, onClose }) => {
                   </p>
                 </div>
               )}
-              
+
               <Link
                 to="/products"
                 onClick={onClose}

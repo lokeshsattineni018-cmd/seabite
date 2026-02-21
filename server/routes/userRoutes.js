@@ -73,8 +73,10 @@ router.post("/cart", protect, async (req, res) => {
 
         // 🟢 WATCHTOWER LOG (Debounce or check if cart not empty)
         if (cart.length > 0) {
-            // import { logActivity } from "../utils/activityLogger.js"; // Removed from here
-            logActivity("CART_UPDATE", `Updated Cart: ${cart.length} items`, req);
+            logActivity("CART_UPDATE", `Updated Cart: ${cart.length} items`, req, {
+                itemCount: cart.length,
+                items: cart.map(i => ({ id: i.product?._id || i.product || i._id, qty: i.qty }))
+            });
         }
 
         res.json({ message: "Cart synced", cart: user.cart });

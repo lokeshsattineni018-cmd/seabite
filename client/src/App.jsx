@@ -128,28 +128,30 @@ function MainLayout() {
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 4000,
+          duration: 2500,
           style: {
-            background: 'rgba(255, 255, 255, 0.8)',
-            backdropFilter: 'blur(12px)',
-            color: '#0f172a',
-            borderRadius: '16px',
-            padding: '16px 24px',
-            fontSize: '14px',
+            background: '#1A2B35',
+            color: '#fff',
+            borderRadius: '12px',
+            padding: '12px 20px',
+            fontSize: '13px',
             fontWeight: '600',
-            border: '1px solid rgba(255,255,255,0.5)',
-            boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)'
+            border: '1px solid rgba(255,255,255,0.1)',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
           },
           success: {
+            icon: '✅',
             iconTheme: {
-              primary: '#10b981',
-              secondary: 'white',
+              primary: '#fff',
+              secondary: '#1A2B35',
             },
           },
           error: {
+            icon: '❌',
             iconTheme: {
-              primary: '#ef4444',
-              secondary: 'white',
+              primary: '#fff',
+              secondary: '#1A2B35',
             },
           }
         }}
@@ -211,7 +213,7 @@ function MainLayout() {
                     <Route path="/products/:id" element={<ProductDetails />} />
                     <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                    <Route path="/spin" element={<Spin />} />
+                    <Route path="/spin" element={<PrivateRoute><Spin /></PrivateRoute>} />
                     <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
                     <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
                     <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />

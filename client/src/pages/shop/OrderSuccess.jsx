@@ -137,6 +137,12 @@ export default function OrderSuccess() {
   const [redirectTime, setRedirectTime] = useState(12);
 
   useEffect(() => {
+    // 🔐 Navigation Guard: Prevent direct URL access
+    if (!location.state?.fromCheckout) {
+      navigate("/orders", { replace: true });
+      return;
+    }
+
     if (!dbId) { setLoading(false); return; }
     axios.get(`${API_URL}/api/orders/${dbId}`, { withCredentials: true })
       .then(({ data }) => setOrder(data))
