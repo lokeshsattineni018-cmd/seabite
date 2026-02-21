@@ -1,6 +1,9 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
+/**
+ * Advanced Base64 Image Fetcher
+ */
 const getBase64ImageFromURL = (url) => {
     return new Promise((resolve) => {
         const img = new Image();
@@ -16,91 +19,113 @@ const getBase64ImageFromURL = (url) => {
             resolve(dataURL);
         };
         img.onerror = () => {
-            // console.warn("Logo load failed");
-            resolve(null); // Continue without logo
+            resolve(null);
         };
     });
 };
 
+/**
+ * Premium PDF Generator
+ */
 export const generateInvoicePDF = async (order) => {
     const doc = new jsPDF();
+    const primaryColor = [91, 168, 160]; // #5BA8A0
+    const darkColor = [26, 43, 53];    // #1A2B35
+    const midColor = [139, 165, 179];   // #8BA5B3
 
-    // Add Logo
+    // ─── ADD LOGO ───
     try {
-        const logoData = await getBase64ImageFromURL("/round-logo.png");
+        const logoData = await getBase64ImageFromURL("/roundlogo.png");
         if (logoData) {
-            doc.addImage(logoData, "PNG", 14, 10, 25, 25); // x, y, w, h
+            doc.addImage(logoData, "PNG", 14, 12, 22, 22);
         }
     } catch (e) {
-        // console.error("Logo Error", e);
+        // Fallback
     }
 
-    // ----- Header: Brand & Invoice Info -----
-    doc.setFontSize(24);
-    doc.setTextColor(26, 43, 53); // textDark
+    // ─── BRANDING ───
+    doc.setFontSize(22);
+    doc.setTextColor(...darkColor);
     doc.setFont("helvetica", "bold");
-    doc.text("SeaBite", 14, 42);
+    doc.text("SeaBite", 40, 24);
 
-    doc.setFontSize(10);
-    doc.setTextColor(74, 101, 114); // textMid
+    doc.setFontSize(8);
+    doc.setTextColor(...primaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.text("PREMIUM SEAFOOD LOGISTICS", 40, 29);
+
+    // ─── DOCUMENT TYPE ───
+    doc.setDrawColor(...darkColor);
+    doc.setFillColor(...darkColor);
+    doc.rect(140, 15, 56, 12, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.text("TAX INVOICE", 168, 23, { align: "center" });
+
+    // ─── ORIGIN DETAILS (Legal) ───
+    doc.setTextColor(...midColor);
+    doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text("Fresh Coastal Catch", 14, 48);
+    doc.text("SeaBite Seafoods Pvt. Ltd.", 14, 42);
+    doc.text("West Godavari, Andhra Pradesh", 14, 46);
+    doc.text("GSTIN: 37AAHCS5226E1ZA", 14, 50);
 
-    doc.setFontSize(12);
-    doc.setTextColor(26, 43, 53);
+    // ─── META INFO ───
+    doc.setTextColor(...darkColor);
     doc.setFont("helvetica", "bold");
-    doc.text("INVOICE", 150, 22);
+    doc.text(`Invoice ID:`, 140, 42);
+    doc.text(`Order Date:`, 140, 46);
+    doc.text(`Payment:`, 140, 50);
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...midColor);
+    doc.text(`#${order.orderId}`, 196, 42, { align: "right" });
+    doc.text(`${new Date(order.createdAt).toLocaleDateString('en-IN')}`, 196, 46, { align: "right" });
+    doc.text(`${order.paymentMethod === 'Prepaid' ? 'PREPAID' : 'COD'}`, 196, 50, { align: "right" });
+
+    // ─── SEPARATOR ───
+    doc.setDrawColor(226, 238, 236);
+    doc.line(14, 56, 196, 56);
+
+    // ─── SHIPPING/BILLING GRID ───
+    doc.setFontSize(9);
+    doc.setTextColor(...primaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.text("BILL TO (CUSTOMER DETAILS)", 14, 65);
+    doc.text("LOGISTICS LOG", 110, 65);
+
+    doc.setTextColor(...darkColor);
+    doc.setFontSize(10);
+    doc.text(order.shippingAddress?.fullName || "Customer", 14, 72);
 
     doc.setFontSize(9);
+    doc.setTextColor(...midColor);
     doc.setFont("helvetica", "normal");
-    doc.text(`ID: #${order.orderId || order._id.substring(0, 8).toUpperCase()}`, 150, 28);
-    doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 150, 33);
-    doc.text(`Status: ${order.status}`, 150, 38);
-
-    // ----- Horizontal Line -----
-    doc.setDrawColor(226, 238, 236); // border
-    doc.line(14, 55, 196, 55);
-
-    // ----- Billing & Shipping -----
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(26, 43, 53);
-    doc.text("BILL TO", 14, 65);
-    doc.text("SHIP TO", 100, 65);
-
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(74, 101, 114); // textMid
-
-    // Bill to (User)
-    doc.text(order.user?.name || "Customer", 14, 72);
-    doc.text(order.user?.email || "", 14, 77);
-
-    // Ship to (Address)
     const addr = order.shippingAddress || {};
-    doc.text(`${addr.fullName || ""}`, 100, 72);
-    doc.text(`${addr.houseNo || ""}, ${addr.street || ""}`, 100, 77);
-    doc.text(`${addr.city || ""}, ${addr.state || ""} - ${addr.zip || ""}`, 100, 82);
-    doc.text(`Phone: ${addr.phone || ""}`, 100, 87);
+    doc.text(`+91 ${addr.phone || ""}`, 14, 77);
+    doc.text(`${addr.houseNo ? addr.houseNo + ', ' : ''}${addr.street || ""}`, 14, 82);
+    doc.text(`${addr.city || ""}, ${addr.state || ""} - ${addr.zip || ""}`, 14, 86);
 
-    // ----- table: Line Items -----
-    if (!order.items || !Array.isArray(order.items)) {
-        order.items = [];
-    }
-    const tableRows = order.items.map((item) => [
+    // Logistics side
+    doc.text(`Order Ref: SB-${order._id.toString().slice(-6).toUpperCase()}`, 110, 72);
+    doc.text(`Gateway: ${order.paymentMethod === 'Prepaid' ? 'Razorpay' : 'Manual'}`, 110, 77);
+    if (order.paymentId) doc.text(`TXN ID: ${order.paymentId}`, 110, 82);
+
+    // ─── TABLE ───
+    const tableRows = (order.items || []).map((item) => [
         item.name,
-        `Rs. ${item.price.toLocaleString()}`,
         item.qty.toString(),
-        `Rs. ${(item.price * item.qty).toLocaleString()}`,
+        `₹${item.price.toLocaleString()}`,
+        `₹${(item.price * item.qty).toLocaleString()}`,
     ]);
 
     autoTable(doc, {
         startY: 95,
-        head: [["Description", "Price", "Qty", "Total"]],
+        head: [["ITEM DESCRIPTION", "QTY", "UNIT PRICE", "AMOUNT"]],
         body: tableRows,
-        theme: "grid",
+        theme: "striped",
         headStyles: {
-            fillColor: [91, 168, 160], // #5BA8A0 Primary
+            fillColor: [26, 43, 53],
             textColor: [255, 255, 255],
             fontSize: 9,
             fontStyle: "bold",
@@ -108,68 +133,66 @@ export const generateInvoicePDF = async (order) => {
         },
         bodyStyles: {
             fontSize: 9,
-            textColor: [74, 101, 114], // textMid
-            lineColor: [226, 238, 236], // border
+            textColor: [26, 43, 53],
+            cellPadding: 5
         },
         columnStyles: {
+            0: { halign: "left" },
+            1: { halign: "center" },
+            2: { halign: "right" },
             3: { halign: "right", fontStyle: "bold" },
-            1: { halign: "right" },
-            2: { halign: "center" },
-        },
-        styles: {
-            cellPadding: 4,
         },
         margin: { left: 14, right: 14 },
     });
 
-    // ----- Summary -----
-    const finalY = (doc.lastAutoTable?.finalY || 95) + 10;
-    const total = order.totalAmount || order.amount || 0;
+    // ─── SUMMARY ───
+    const finalY = doc.lastAutoTable.finalY + 12;
     const itemsPrice = order.itemsPrice || 0;
     const taxPrice = order.taxPrice || 0;
     const shippingPrice = order.shippingPrice ?? 0;
     const discount = order.discount || 0;
+    const total = order.totalAmount || 0;
 
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(74, 101, 114);
+    doc.setTextColor(...midColor);
 
-    const summaryX = 130;
+    const summaryX = 135;
     doc.text("Subtotal:", summaryX, finalY);
-    doc.text("Tax:", summaryX, finalY + 6);
+    doc.text("GST (5%):", summaryX, finalY + 6);
     doc.text("Shipping:", summaryX, finalY + 12);
+    if (discount > 0) doc.text("Discount:", summaryX, finalY + 18);
 
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(26, 43, 53);
-    doc.text(`Rs. ${itemsPrice.toLocaleString()}`, 196, finalY, { align: "right" });
-    doc.text(`Rs. ${taxPrice?.toLocaleString()}`, 196, finalY + 6, { align: "right" });
-    doc.text(shippingPrice === 0 ? "Free" : `Rs. ${shippingPrice?.toLocaleString()}`, 196, finalY + 12, { align: "right" });
-
-    // Discount
-    let currentY = finalY + 18;
+    doc.setTextColor(...darkColor);
+    doc.text(`₹${itemsPrice.toLocaleString()}`, 196, finalY, { align: "right" });
+    doc.text(`₹${taxPrice.toLocaleString()}`, 196, finalY + 6, { align: "right" });
+    doc.text(shippingPrice === 0 ? "FREE" : `₹${shippingPrice.toLocaleString()}`, 196, finalY + 12, { align: "right" });
     if (discount > 0) {
-        doc.setTextColor(232, 129, 106); // Coral
-        doc.text("Discount:", summaryX, currentY);
-        doc.text(`- Rs. ${discount?.toLocaleString()}`, 196, currentY, { align: "right" });
-        currentY += 6;
+        doc.setTextColor(16, 185, 129); // Green
+        doc.text(`- ₹${discount.toLocaleString()}`, 196, finalY + 18, { align: "right" });
     }
 
-    // Grand Total
-    doc.setDrawColor(226, 238, 236);
-    doc.setLineWidth(0.5);
-    doc.line(summaryX, currentY - 2, 196, currentY - 2);
+    // ─── TOTAL BOX ───
+    const totalBoxY = finalY + (discount > 0 ? 24 : 18);
+    doc.setFillColor(...darkColor);
+    doc.rect(summaryX - 5, totalBoxY, 66, 12, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.text("TOTAL PAYABLE", summaryX, totalBoxY + 8);
+    doc.text(`₹${total.toLocaleString()}`, 196, totalBoxY + 8, { align: "right" });
 
-    doc.setFontSize(12);
-    doc.setTextColor(26, 43, 53); // Dark
-    doc.text("GRAND TOTAL:", summaryX, currentY + 6);
-    doc.text(`Rs. ${total?.toLocaleString()}`, 196, currentY + 6, { align: "right" });
-
-    // ----- Footer -----
+    // ─── FOOTER ───
+    doc.setTextColor(...midColor);
     doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(139, 165, 179); // textLite
-    doc.text("Thank you for choosing SeaBite. Fresh from the coast to your kitchen.", 105, 280, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text("Declaration: Fresh seafood should be consumed within 24 hours.", 14, 280);
+    doc.text("This is a computer-generated invoice, no signature required.", 14, 284);
 
-    // Save the PDF
-    doc.save(`Invoice_SeaBite_${order.orderId || order._id}.pdf`);
+    doc.setTextColor(...primaryColor);
+    doc.setFont("helvetica", "bold");
+    doc.text("www.seabite.co.in", 196, 284, { align: "right" });
+
+    // Save
+    doc.save(`SeaBite_Invoice_${order.orderId}.pdf`);
 };

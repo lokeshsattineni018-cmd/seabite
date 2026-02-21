@@ -1,5 +1,9 @@
 import React from "react";
 
+/**
+ * Premium Technical Invoice Component
+ * Optimized for professional print and "top-level" aesthetics.
+ */
 export default function Invoice({ order, type = "invoice" }) {
   if (!order) return null;
 
@@ -10,156 +14,147 @@ export default function Invoice({ order, type = "invoice" }) {
   return (
     <div id="printable-area">
       <div className="invoice-container">
-        {/* DYNAMIC CANCELLED WATERMARK */}
-        {isCancelled && (
-          <div className="watermark">CANCELLED</div>
-        )}
 
-        {/* TOP HEADER SECTION */}
-        <div className="invoice-header">
-          <div className="brand-branding">
-            <img src="/round-logo.png" alt="SeaBite Logo" className="invoice-logo" />
-            <div className="brand-text"></div>
-          </div>
-          <div className="header-meta">
-            <div className="doc-type-switcher">
-              <span className={type === "label" ? "active" : ""}>SHIPPING LABEL</span>
-              <span className="separator"></span>
-              <span className={type === "invoice" ? "active" : ""}>TAX INVOICE</span>
+        {/* ─── WATERMARK ─── */}
+        {isCancelled && <div className="watermark">VOID / CANCELLED</div>}
+
+        {/* ─── TOP LEVEL HEADER ─── */}
+        <div className="header-grid">
+          <div className="brand-section">
+            <div className="logo-wrapper">
+              <img src="/roundlogo.png" alt="SeaBite" className="main-logo" />
+              <div className="brand-info">
+                <h1 className="brand-name">SeaBite</h1>
+                <p className="brand-tagline">Premium Seafood Logistics</p>
+              </div>
             </div>
-            <div className="qr-container">
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${order.orderId}`} alt="QR Code" />
-              <p className="qr-text">SCAN FOR TRACKING</p>
+            <div className="origin-details">
+              <p className="legal-name">SeaBite Seafoods Pvt. Ltd.</p>
+              <p>West Godavari, Andhra Pradesh</p>
+              <p>GSTIN: 37AAHCS5226E1ZA</p>
+              <p>Support: support@seabite.co.in</p>
+            </div>
+          </div>
+
+          <div className="doc-meta">
+            <div className="type-badge">
+              {type === "invoice" ? "TAX INVOICE" : "SHIPPING LABEL"}
+            </div>
+            <div className="qr-box">
+              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=https://seabite.co.in/orders/${order.orderId}`} alt="Track" />
+              <span>SCAN TO TRACK</span>
             </div>
           </div>
         </div>
 
-        {/* LOGISTICS BAR */}
-        <div className={`blue-bar ${isCancelled ? 'bg-red' : ''}`}></div>
+        {/* ─── TECHNICAL BAR ─── */}
+        <div className={`status-bar ${isCancelled ? 'status-void' : ''}`}>
+          <div className="bar-segment">ORDER ID: <strong>#{order.orderId}</strong></div>
+          <div className="bar-segment">DATE: <strong>{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase()}</strong></div>
+          <div className="bar-segment">PAYMENT: <strong>{order.paymentMethod === 'Prepaid' ? 'PREPAID' : 'COD'}</strong></div>
+          <div className="bar-segment">MODE: <strong className={order.isPaid ? 'text-paid' : 'text-unpaid'}>{order.isPaid ? 'PAID' : 'PENDING'}</strong></div>
+        </div>
 
-        {/* INFO GRID */}
-        <div className="info-grid">
-          <div className="info-section">
-            <label className="section-label">DELIVER TO</label>
-            <p className="recipient-name">{order.shippingAddress?.fullName}</p>
-            <p className="address-details">
-              {order.shippingAddress?.houseNo && `${order.shippingAddress.houseNo}, `}
+        {/* ─── BILLING GRID ─── */}
+        <div className="billing-grid">
+          <div className="bill-box">
+            <h3 className="box-title">CUSTOMER DETAILS</h3>
+            <p className="cust-name">{order.shippingAddress?.fullName}</p>
+            <p className="cust-phone">+91 {order.shippingAddress?.phone}</p>
+            <div className="cust-addr">
+              {order.shippingAddress?.houseNo && <span>{order.shippingAddress.houseNo}, </span>}
               {order.shippingAddress?.street}<br />
-              {order.shippingAddress?.city}, {order.shippingAddress?.state}<br />
-              <span className="pin-code">PIN: {order.shippingAddress?.zip}</span>
-            </p>
-            <p className="phone-line">+91 {order.shippingAddress?.phone}</p>
+              {order.shippingAddress?.city}, {order.shippingAddress?.state} - <strong>{order.shippingAddress?.zip}</strong>
+            </div>
           </div>
 
-          <div className="info-section right-align">
-            <div className="meta-row">
-              <label>ORDER DATE</label>
-              <p>{new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })} / {order.paymentMethod || 'COD'}</p>
-            </div>
-
-            <div className="meta-row mt-4">
-              <label>PAYMENT MODE</label>
-              <p className={order.isPaid ? "blue-text" : "orange-text"}>
-                {order.paymentMethod === 'Prepaid' ? 'PREPAID (ONLINE)' : 'CASH ON DELIVERY'}
-              </p>
-
-              {isCancelled && isPrepaid && (
-                <div className={`refund-badge ${isRefunded ? 'refund-success' : 'refund-init'}`}>
-                  {isRefunded ? "REFUND SUCCESSFUL" : "REFUND INITIATED (6-7 DAYS)"}
-                </div>
-              )}
-
-              {order.isPaid && order.paymentId && (
-                <p className="transaction-id">TXN ID: {order.paymentId}</p>
-              )}
-              {!order.isPaid && !isCancelled && (
-                <p className="cod-instruction text-red-600 font-bold">COLLECT: {"\u20B9"}{order.totalAmount?.toLocaleString()}</p>
-              )}
-            </div>
+          <div className="bill-box right-border">
+            <h3 className="box-title">LOGISTICS LOG</h3>
+            <div className="log-row"><span>Order Ref:</span> <span>SB-{order._id.toString().slice(-6).toUpperCase()}</span></div>
+            <div className="log-row"><span>Time:</span> <span>{new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span></div>
+            <div className="log-row"><span>Gateway:</span> <span>{order.paymentMethod === 'Prepaid' ? 'Razorpay' : 'Manual'}</span></div>
+            {order.paymentId && <div className="log-row font-mono"><span>TXN:</span> <span className="small-text">{order.paymentId}</span></div>}
           </div>
         </div>
 
-        {/* DATA TABLE */}
-        <div className="table-section">
-          <table className="invoice-table">
+        {/* ─── ITEMIZATION TABLE ─── */}
+        <div className="table-wrapper">
+          <table className="inv-table">
             <thead>
               <tr>
-                <th className="left">PRODUCT DETAILS</th>
-                <th className="center">QTY</th>
-                <th className="right">UNIT PRICE</th>
-                <th className="right">TOTAL</th>
+                <th className="text-left">ITEM DESCRIPTION</th>
+                <th className="text-center">QTY</th>
+                <th className="text-right">UNIT PRICE</th>
+                <th className="text-right">AMOUNT</th>
               </tr>
             </thead>
             <tbody>
               {order.items?.map((item, i) => (
                 <tr key={i}>
-                  <td className="left font-bold">{item.name}</td>
-                  <td className="center">{item.qty}</td>
-                  <td className="right">{"\u20B9"}{item.price?.toFixed(2)}</td>
-                  <td className="right">{"\u20B9"}{(item.price * item.qty).toFixed(2)}</td>
+                  <td className="text-left">
+                    <span className="item-font">{item.name}</span>
+                  </td>
+                  <td className="text-center">{item.qty}</td>
+                  <td className="text-right">₹{item.price?.toLocaleString()}</td>
+                  <td className="text-right">₹{(item.price * item.qty).toLocaleString()}</td>
                 </tr>
               ))}
-
-              <tr className="summary-row">
-                <td className="left border-none" colSpan="2"></td>
-                <td className="right font-semibold">Subtotal:</td>
-                <td className="right">{"\u20B9"}{order.itemsPrice?.toFixed(2)}</td>
-              </tr>
-
-              {order.discount > 0 && (
-                <tr className="discount-row">
-                  <td className="left border-none" colSpan="2"></td>
-                  <td className="right font-bold green-text">Discount:</td>
-                  <td className="right font-bold green-text">- {"\u20B9"}{order.discount?.toFixed(2)}</td>
-                </tr>
-              )}
-
-              <tr>
-                <td className="left border-none" colSpan="2"></td>
-                <td className="right font-semibold">Shipping:</td>
-                <td className="right">{order.shippingPrice === 0 ? "FREE" : `\u20B9${order.shippingPrice}`}</td>
-              </tr>
-              <tr>
-                <td className="left border-none" colSpan="2"></td>
-                <td className="right font-semibold">Tax (GST 5%):</td>
-                <td className="right">{"\u20B9"}{order.taxPrice?.toFixed(2)}</td>
-              </tr>
-
-              <tr className={`grand-total-row ${isCancelled ? 'border-red' : ''}`}>
-                <td className="left font-black" colSpan="2">{isCancelled ? 'VOID / CANCELLED' : 'GRAND TOTAL'}</td>
-                <td className="right font-black">{isCancelled ? 'REFUNDABLE' : 'PAYABLE'}</td>
-                <td className={`right font-black ${isCancelled ? 'text-red' : 'blue-text'}`}>
-                  {"\u20B9"}{order.totalAmount?.toLocaleString()}
-                </td>
-              </tr>
             </tbody>
           </table>
-
-          {isCancelled && order.cancelReason && (
-            <p className="cancel-note">Cancellation Reason: "{order.cancelReason}"</p>
-          )}
         </div>
 
-        {/* BOTTOM BRANDING */}
-        <div className="footer-branding">
-          <p className="thank-you">THANK YOU FOR CHOOSING <span className="blue-text">SEABITE!</span></p>
-          <div className="footer-divider"></div>
-          <div className="barcode-row">
-            <div className="barcode-container">
-              <div className="barcode-placeholder">|||| ||| || |||| ||| ||</div>
-              <p className="barcode-text">Order ID: {order.orderId}</p>
+        {/* ─── SUMMARY SECTION ─── */}
+        <div className="summary-flex">
+          <div className="note-section">
+            <h4 className="note-title">DECLARATION & TERMS</h4>
+            <p className="note-text">
+              1. Goods once sold will not be taken back.<br />
+              2. Fresh seafood items should be consumed within 24 hours of delivery.<br />
+              3. This is a computer-generated invoice, no signature required.
+            </p>
+
+            {isCancelled && (
+              <div className="cancel-pill">
+                REASON: {order.cancelReason || "System/Manual Cancel"}
+              </div>
+            )}
+          </div>
+
+          <div className="totals-section">
+            <div className="total-row"><span>Subtotal</span> <span>₹{order.itemsPrice?.toLocaleString()}</span></div>
+            {order.discount > 0 && <div className="total-row discount"><span>Discount Applied</span> <span>- ₹{order.discount?.toLocaleString()}</span></div>}
+            <div className="total-row"><span>Tax (GST 5%)</span> <span>₹{order.taxPrice?.toLocaleString()}</span></div>
+            <div className="total-row"><span>Shipping</span> <span>{order.shippingPrice === 0 ? 'FREE' : `₹${order.shippingPrice}`}</span></div>
+
+            <div className="grand-total-box">
+              <div className="grand-label">{isCancelled ? 'REFUNDABLE AMOUNT' : 'TOTAL PAYABLE'}</div>
+              <div className="grand-value">₹{order.totalAmount?.toLocaleString()}</div>
             </div>
           </div>
         </div>
 
-        {/* INVOICE FOOTER */}
-        <div className="legal-footer">
-          <label>INVOICE FOOTER</label>
-          <p>This is a digitally generated document via SeaBite Logistics. No signature required.</p>
+        {/* ─── FOOTER ─── */}
+        <div className="invoice-footer">
+          <div className="official-stamp">
+            <div className="stamp-circle">
+              Verified Fresh
+            </div>
+          </div>
+          <div className="barcode-box">
+            <div className="barcode-visual">|| ||| | ||| || ||| | || |||</div>
+            <p className="barcode-meta">{order.orderId}</p>
+          </div>
+          <div className="company-info-bottom">
+            <p className="thank-you">Thank you for choosing SeaBite — Taste the Excellence of the Ocean.</p>
+            <p className="web-url">www.seabite.co.in</p>
+          </div>
         </div>
+
       </div>
 
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap');
+
         #printable-area { display: none; }
 
         @media print {
@@ -169,92 +164,103 @@ export default function Invoice({ order, type = "invoice" }) {
             display: block !important;
             position: absolute;
             left: 0; top: 0; width: 100%;
-            background: white;
+            background: #fff;
             padding: 0; margin: 0;
           }
 
           .invoice-container {
             width: 210mm;
             min-height: 297mm;
-            padding: 20mm;
-            margin: auto;
+            padding: 15mm;
+            margin: 0 auto;
+            background: #fff;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            color: #1A2B35;
             position: relative;
-            font-family: 'Inter', Arial, sans-serif;
-            color: #333;
-            overflow: hidden;
+            box-sizing: border-box;
           }
 
           .watermark {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 100pt;
-            font-weight: 900;
-            color: rgba(255, 0, 0, 0.08);
-            z-index: 0;
-            pointer-events: none;
-            white-space: nowrap;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) rotate(-35deg);
+            font-size: 80pt; font-weight: 800;
+            color: rgba(220, 38, 38, 0.04);
+            z-index: 0; pointer-events: none;
+            white-space: nowrap; border: 15pt solid rgba(220,38,38,0.04);
+            padding: 20px;
           }
 
-          .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; position: relative; z-index: 10;}
-          .brand-branding { display: flex; align-items: center; gap: 15px; }
-          .invoice-logo { height: 60px; width: auto; object-fit: contain; }
+          /* HEADER GRID */
+          .header-grid { display: grid; grid-template-columns: 1fr auto; align-items: flex-start; margin-bottom: 25px; }
+          .logo-wrapper { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
+          .main-logo { height: 65px; width: 65px; border-radius: 50%; }
+          .brand-name { font-size: 24pt; font-weight: 800; color: #1A2B35; margin: 0; letter-spacing: -1px; }
+          .brand-tagline { font-size: 8pt; color: #5BA8A0; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+          .origin-details { font-size: 8pt; color: #8BA5B3; line-height: 1.4; }
+          .origin-details .legal-name { color: #1A2B35; font-weight: 800; }
+
+          .doc-meta { text-align: right; }
+          .type-badge { background: #1A2B35; color: #fff; padding: 6px 15px; font-weight: 800; font-size: 10pt; display: inline-block; border-radius: 4px; border-left: 5px solid #5BA8A0; }
+          .qr-box { margin-top: 15px; text-align: center; }
+          .qr-box img { width: 70px; height: 70px; }
+          .qr-box span { display: block; font-size: 6pt; font-weight: 800; color: #8BA5B3; margin-top: 4px; }
+
+          /* STATUS BAR */
+          .status-bar { display: flex; background: #F4F9F8; border: 1px solid #E2EEEC; border-radius: 8px; margin-bottom: 25px; padding: 12px; justify-content: space-around; }
+          .bar-segment { font-size: 8pt; color: #8BA5B3; font-weight: 500; }
+          .bar-segment strong { color: #1A2B35; margin-left: 5px; font-weight: 700; }
+          .text-paid { color: #10B981 !important; }
+          .text-unpaid { color: #F59E0B !important; }
+          .status-void { background: #FEF2F2; border-color: #FEE2E2; }
+
+          /* BILLING GRID */
+          .billing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px; }
+          .bill-box { padding: 15px; border-left: 1px solid #E2EEEC; }
+          .box-title { font-size: 7.5pt; font-weight: 800; color: #5BA8A0; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px; }
+          .cust-name { font-size: 12pt; font-weight: 800; margin-bottom: 4px; }
+          .cust-phone { font-size: 9pt; font-weight: 700; color: #1A2B35; margin-bottom: 8px; }
+          .cust-addr { font-size: 9pt; color: #8BA5B3; line-height: 1.6; }
+          .cust-addr strong { color: #1A2B35; }
+          .log-row { display: flex; justify-content: space-between; font-size: 8.5pt; margin-bottom: 6px; padding-bottom: 4px; border-bottom: 1px dashed #F0F4F7; }
+          .log-row span:first-child { color: #8BA5B3; font-weight: 600; }
+          .log-row span:last-child { color: #1A2B35; font-weight: 700; }
+          .font-mono { font-family: 'JetBrains Mono', monospace; }
+          .small-text { font-size: 7pt; }
+
+          /* TABLE */
+          .table-wrapper { margin-bottom: 25px; }
+          .inv-table { width: 100%; border-collapse: collapse; }
+          .inv-table th { font-size: 7.5pt; font-weight: 800; color: #5BA8A0; padding: 10px 15px; border-bottom: 2px solid #1A2B35; background: #fff; }
+          .inv-table td { padding: 14px 15px; border-bottom: 1px solid #E2EEEC; font-size: 9.5pt; color: #1A2B35; vertical-align: middle; }
+          .item-font { font-weight: 700; display: block; font-size: 10pt; }
+          .text-left { text-align: left; } .text-center { text-align: center; } .text-right { text-align: right; }
+
+          /* SUMMARY */
+          .summary-flex { display: grid; grid-template-columns: 1.2fr 1fr; gap: 40px; margin-top: 10px; }
+          .note-title { font-size: 8pt; font-weight: 800; color: #5BA8A0; margin-bottom: 10px; }
+          .note-text { font-size: 7.5pt; color: #8BA5B3; line-height: 1.8; font-weight: 500; }
+          .cancel-pill { margin-top: 20px; padding: 10px; background: #FEF2F2; color: #DC2626; border-radius: 4px; font-weight: 800; font-size: 7.5pt; border: 1px solid #FEE2E2; }
+
+          .totals-section { background: #fff; }
+          .total-row { display: flex; justify-content: space-between; font-size: 9pt; font-weight: 600; color: #8BA5B3; margin-bottom: 8px; }
+          .total-row span:last-child { color: #1A2B35; font-weight: 700; }
+          .discount span:last-child { color: #10B981; }
           
-          .header-meta { display: flex; align-items: center; gap: 20px; }
-          .doc-type-switcher { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 20px; padding: 5px 15px; font-size: 10pt; font-weight: 800; color: #999; }
-          .doc-type-switcher span.active { color: #333; }
-          .separator { width: 1px; height: 15px; background: #ddd; margin: 0 10px; }
-          
-          .qr-container { text-align: center; }
-          .qr-text { font-size: 6pt; font-weight: 900; margin-top: 2px; color: #333; }
+          .grand-total-box { margin-top: 20px; padding: 15px; background: #1A2B35; color: #fff; border-radius: 8px; text-align: right; position: relative; overflow: hidden; }
+          .grand-total-box::after { content: ''; position: absolute; top: 0; left: 0; width: 5px; height: 100%; background: #5BA8A0; }
+          .grand-label { font-size: 7pt; font-weight: 800; letter-spacing: 1px; margin-bottom: 4px; opacity: 0.8; }
+          .grand-value { font-size: 18pt; font-weight: 800; }
 
-          .blue-bar { width: 100%; height: 8px; background: #004aad; margin: 15px 0; }
-          .bg-red { background: #dc2626 !important; }
-
-          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 30px; position: relative; z-index: 10;}
-          .section-label { font-size: 8pt; font-weight: 900; color: #333; border-bottom: 1px solid #333; display: block; padding-bottom: 3px; margin-bottom: 10px; }
-          .recipient-name { font-size: 12pt; font-weight: 900; margin-bottom: 5px; }
-          .address-details { font-size: 9pt; line-height: 1.4; color: #555; }
-          .pin-code { font-weight: 900; color: #004aad; }
-          .phone-line { font-weight: 900; font-size: 9pt; margin-top: 10px; }
-
-          .meta-row label { font-size: 8pt; font-weight: 900; color: #333; display: block; margin-bottom: 2px; }
-          .meta-row p { font-size: 9pt; font-weight: 600; margin: 0; }
-          .transaction-id { font-size: 7pt !important; color: #004aad; font-family: monospace; margin-top: 2px !important; }
-          .right-align { text-align: right; }
-
-          .refund-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 7pt; font-weight: 900; margin-top: 5px; }
-          .refund-init { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-          .refund-success { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-
-          .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; border-top: 1px solid #ddd; position: relative; z-index: 10; }
-          .invoice-table th { background: #f9f9f9; padding: 10px; font-size: 8pt; font-weight: 900; border-bottom: 1px solid #ddd; }
-          .invoice-table td { padding: 12px 10px; font-size: 9pt; border-bottom: 1px solid #eee; }
-          .border-none { border: none !important; }
-          .left { text-align: left; } .center { text-align: center; } .right { text-align: right; }
-          
-          .green-text { color: #10b981 !important; }
-          .blue-text { color: #004aad !important; }
-          .orange-text { color: #f59e0b !important; }
-          .text-red { color: #dc2626 !important; }
-          .font-black { font-weight: 900; }
-          
-          .grand-total-row { background: #f0f4ff; border-top: 2px solid #004aad; }
-          .border-red { background: #fef2f2 !important; border-top: 2px solid #dc2626 !important; }
-          .grand-total-row td { font-size: 11pt; padding: 15px 10px; }
-
-          .cancel-note { font-size: 8pt; color: #dc2626; font-style: italic; margin-top: 10px; font-weight: 600; }
-
-          .footer-branding { text-align: center; margin-top: 40px; position: relative; z-index: 10;}
-          .thank-you { font-weight: 900; font-size: 11pt; letter-spacing: 1px; }
-          .footer-divider { width: 100%; height: 1px; background: #ddd; margin: 15px 0; }
-          .barcode-placeholder { font-family: 'monospace'; font-size: 18pt; letter-spacing: 2px; }
-          .barcode-text { font-size: 7pt; font-weight: bold; color: #666; }
-
-          .legal-footer { margin-top: 30px; position: relative; z-index: 10; }
-          .legal-footer label { font-size: 8pt; font-weight: 900; color: #333; display: block; margin-bottom: 5px; }
-          .legal-footer p { font-size: 8pt; color: #999; }
+          /* FOOTER */
+          .invoice-footer { margin-top: 60px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 40px; }
+          .stamp-circle { width: 80px; height: 80px; border: 4px double #5BA8A0; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 8pt; font-weight: 900; color: #5BA8A0; text-transform: uppercase; transform: rotate(-12deg); opacity: 0.6; }
+          .barcode-box { text-align: center; }
+          .barcode-visual { font-family: monospace; font-size: 14pt; letter-spacing: 2px; color: #1A2B35; }
+          .barcode-meta { font-size: 6.5pt; font-weight: 800; color: #8BA5B3; margin-top: 2px; }
+          .company-info-bottom { text-align: right; }
+          .thank-you { font-size: 8.5pt; font-weight: 800; color: #1A2B35; margin-bottom: 4px; }
+          .web-url { font-size: 7.5pt; font-weight: 700; color: #5BA8A0; }
 
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
