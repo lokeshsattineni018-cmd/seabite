@@ -6,6 +6,7 @@ import {
   FiSearch, FiPackage, FiFilter, FiX,
   FiSliders, FiChevronDown, FiChevronRight, FiAlertCircle
 } from "react-icons/fi";
+import { Helmet } from "react-helmet-async";
 import { CartContext } from "../../context/CartContext";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import FilterSidebar from "../../components/layout/FilterSidebar";
@@ -116,6 +117,12 @@ export default function Products() {
 
   return (
     <>
+      <Helmet>
+        <title>{meta.label} | SeaBite - Fresh Coastal Seafood Delivery</title>
+        <meta name="description" content={`Buy fresh ${meta.label.toLowerCase()} online. ${meta.tagline} Chemical-free, traceable seafood delivered from Mogalthur every day.`} />
+        <meta property="og:title" content={`${meta.label} | SeaBite`} />
+        <meta property="og:description" content={meta.tagline} />
+      </Helmet>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@500;600&display=swap');
         * { box-sizing: border-box; }

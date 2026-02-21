@@ -1,6 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   FiArrowRight, FiHome, FiZap, FiShield, FiTruck, FiCompass,
 } from "react-icons/fi";
@@ -78,10 +79,10 @@ const Chip = ({ children }) => (
 );
 
 const WHY_CARDS = [
-  { icon: <FiZap  size={18} />, title: "Morning Sourcing",   desc: "Harvested at 4 AM, reaching us while the coast is still quiet.",       bg: "#EAF6F5", color: "#3D8C85" },
-  { icon: <FiShield size={18} />, title: "Zero Chemicals",   desc: "Strictly no Ammonia or Formalin. We use only ice and speed.",          bg: "#EDF5FB", color: "#3A7DA0" },
-  { icon: <FiTruck size={18} />,  title: "Rapid Cold-Chain", desc: "Maintained at a precise 0–4°C from boat to doorstep.",                 bg: "#FAF4EC", color: "#8B6D45" },
-  { icon: <FiCompass size={18} />,title: "Coastal Heritage",  desc: "100% sourced from Mogalthur's local artisan fishing community.",      bg: "#FEF0EC", color: "#C05A45" },
+  { icon: <FiZap size={18} />, title: "Morning Sourcing", desc: "Harvested at 4 AM, reaching us while the coast is still quiet.", bg: "#EAF6F5", color: "#3D8C85" },
+  { icon: <FiShield size={18} />, title: "Zero Chemicals", desc: "Strictly no Ammonia or Formalin. We use only ice and speed.", bg: "#EDF5FB", color: "#3A7DA0" },
+  { icon: <FiTruck size={18} />, title: "Rapid Cold-Chain", desc: "Maintained at a precise 0–4°C from boat to doorstep.", bg: "#FAF4EC", color: "#8B6D45" },
+  { icon: <FiCompass size={18} />, title: "Coastal Heritage", desc: "100% sourced from Mogalthur's local artisan fishing community.", bg: "#FEF0EC", color: "#C05A45" },
 ];
 
 export default function About() {
@@ -89,6 +90,10 @@ export default function About() {
 
   return (
     <>
+      <Helmet>
+        <title>About Us | SeaBite - Ocean-Fresh Seafood from Mogalthur</title>
+        <meta name="description" content="Learn about SeaBite — sourcing the freshest coastal catch from Mogalthur since 2024. Chemical-free, traceable seafood delivered farm to fork." />
+      </Helmet>
       <style>{FONTS}{`
         .about-root * { box-sizing: border-box; }
         .why-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(91,168,160,0.10); border-color: #C5E6E4; }
@@ -314,7 +319,7 @@ export default function About() {
                         initial={{ opacity: 0, x: -16 }}
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
-                        transition={{ delay: i * 0.1 + 0.1, duration: 0.55, ease: [0.22,1,0.36,1] }}
+                        transition={{ delay: i * 0.1 + 0.1, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                         style={{ fontSize: "15px", color: "#4A6572", lineHeight: "1.8", margin: 0 }}
                       >
                         {p}

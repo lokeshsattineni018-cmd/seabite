@@ -12,6 +12,7 @@ import {
   FiInfo, FiCheck, FiPackage, FiStar, FiMessageSquare,
   FiHeart, FiZap, FiChevronRight, FiBox,
 } from "react-icons/fi";
+import { Helmet } from "react-helmet-async";
 import toast from "react-hot-toast";
 import ReviewModal from "../../components/common/ReviewModal";
 
@@ -313,6 +314,16 @@ export default function ProductDetails() {
 
   return (
     <>
+      {product && (
+        <Helmet>
+          <title>{product.name} | SeaBite - Fresh Seafood Delivery</title>
+          <meta name="description" content={`Buy fresh ${product.name} online from SeaBite. ${product.description?.slice(0, 120) || "Sourced daily from the coast, delivered fresh to your door. Chemical-free and 100% traceable."}`} />
+          <meta property="og:title" content={`${product.name} | SeaBite`} />
+          <meta property="og:description" content={product.description?.slice(0, 160) || "Fresh coastal seafood from SeaBite."} />
+          <meta property="og:image" content={product.image ? `${API_URL}${product.image}` : "/banner.jpg"} />
+          <meta property="og:type" content="product" />
+        </Helmet>
+      )}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@500;600;700&display=swap');
         * { box-sizing: border-box; }
