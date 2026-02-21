@@ -220,7 +220,7 @@ export default function Navbar({ openCart, announcementActive = false }) {
           </div>
 
           {/* ── Desktop nav links ── */}
-          <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "2px", flex: 1 }}>
+          <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
 
             {/* Shop dropdown */}
             <div style={{ position: "relative" }}
@@ -269,7 +269,7 @@ export default function Navbar({ openCart, announcementActive = false }) {
           </div>
 
           {/* ── Right controls ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginLeft: "auto" }}>
 
             {/* Search */}
             <div style={{ position: "relative" }} className="hidden-mobile">
