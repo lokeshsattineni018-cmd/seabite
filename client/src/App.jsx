@@ -37,6 +37,7 @@ const Terms = lazy(() => import("./pages/legal/Terms"));
 const Privacy = lazy(() => import("./pages/legal/Privacy"));
 const Cancellation = lazy(() => import("./pages/legal/Cancellation"));
 const Maintenance = lazy(() => import("./pages/general/Maintenance"));
+const NotFound = lazy(() => import("./pages/general/NotFound"));
 
 // Admin Lazy Imports
 const AdminLayout = lazy(() => import("./admin/AdminLayout"));
@@ -216,6 +217,7 @@ function MainLayout() {
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/cancellation" element={<Cancellation />} />
                     <Route path="/maintenance" element={<Maintenance />} />
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </AnimatePresence>
               )}

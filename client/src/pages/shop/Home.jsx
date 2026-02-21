@@ -626,7 +626,7 @@ export default function Home() {
         <meta name="description" content="Shop premium fish, prawns, and crabs sourced daily from Mogalthur. Cold-chain delivered ocean-fresh seafood directly to your doorstep. Experience the SeaBite quality." />
         <meta property="og:title" content="SeaBite - Fresh Coastal Catch Delivered" />
         <meta property="og:description" content="Premium seafood sourced daily at 4 AM and delivered fresh by noon. Chemical-free and 100% traceable coastal catch from SeaBite." />
-        <meta property="og:image" content="/banner.jpg" />
+        <meta property="og:image" content="/fisherman.jpg" />
         <meta name="twitter:card" content="summary_large_image" />
       </Helmet>
       <style>{`
