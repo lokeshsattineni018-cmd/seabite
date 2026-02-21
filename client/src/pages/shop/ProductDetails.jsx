@@ -318,10 +318,39 @@ export default function ProductDetails() {
         <Helmet>
           <title>{product.name} | SeaBite - Fresh Seafood Delivery</title>
           <meta name="description" content={`Buy fresh ${product.name} online from SeaBite. ${product.description?.slice(0, 120) || "Sourced daily from the coast, delivered fresh to your door. Chemical-free and 100% traceable."}`} />
+          <link rel="canonical" href={`https://seabite.co.in/products/${product._id}`} />
           <meta property="og:title" content={`${product.name} | SeaBite`} />
           <meta property="og:description" content={product.description?.slice(0, 160) || "Fresh coastal seafood from SeaBite."} />
-          <meta property="og:image" content={product.image ? `${API_URL}${product.image}` : "/banner.jpg"} />
+          <meta property="og:image" content={product.image ? `${API_URL}${product.image}` : "https://seabite.co.in/fisherman.jpg"} />
           <meta property="og:type" content="product" />
+          <meta property="og:url" content={`https://seabite.co.in/products/${product._id}`} />
+          <meta name="twitter:card" content="summary_large_image" />
+          <meta name="twitter:title" content={`${product.name} | SeaBite`} />
+          <meta name="twitter:description" content={product.description?.slice(0, 120) || "Fresh coastal seafood from SeaBite."} />
+          <meta name="twitter:image" content={product.image ? `${API_URL}${product.image}` : "https://seabite.co.in/fisherman.jpg"} />
+          <script type="application/ld+json">{JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": product.name,
+            "description": product.description || `Fresh ${product.name} from SeaBite`,
+            "image": product.image ? `${API_URL}${product.image}` : "https://seabite.co.in/fisherman.jpg",
+            "brand": { "@type": "Brand", "name": "SeaBite" },
+            "offers": {
+              "@type": "Offer",
+              "priceCurrency": "INR",
+              "price": product.flashSale?.isFlashSale ? product.flashSale.discountPrice : product.basePrice,
+              "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              "url": `https://seabite.co.in/products/${product._id}`,
+              "seller": { "@type": "Organization", "name": "SeaBite" }
+            },
+            ...(product.numReviews > 0 && {
+              "aggregateRating": {
+                "@type": "AggregateRating",
+                "ratingValue": product.rating || 4.5,
+                "reviewCount": product.numReviews
+              }
+            })
+          })}</script>
         </Helmet>
       )}
       <style>{`

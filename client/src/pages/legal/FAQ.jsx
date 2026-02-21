@@ -1,6 +1,7 @@
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import {
   FiPlus, FiMinus, FiHome, FiHelpCircle,
   FiTruck, FiShield, FiHeart, FiArrowRight,
@@ -78,6 +79,14 @@ export default function FAQ() {
 
   return (
     <>
+      <Helmet>
+        <title>FAQ | SeaBite - Freshness, Delivery & Order Questions Answered</title>
+        <meta name="description" content="Got questions about SeaBite? Find answers about our freshness guarantee, delivery timelines, cancellations, and chemical-free seafood sourcing." />
+        <link rel="canonical" href="https://seabite.co.in/faq" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="SeaBite FAQ" />
+        <meta name="twitter:description" content="Everything you need to know about SeaBite freshness and service." />
+      </Helmet>
       <style>{FONTS}{`
         .faq-root * { box-sizing: border-box; }
         .faq-cta-primary:hover { background:#3D8C85; transform:translateY(-2px); }

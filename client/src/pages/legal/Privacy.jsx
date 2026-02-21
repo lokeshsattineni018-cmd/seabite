@@ -1,6 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   FiHome, FiArrowRight, FiShield, FiLock, FiUser, FiShare2,
 } from "react-icons/fi";
@@ -54,6 +55,13 @@ export default function Privacy() {
 
   return (
     <>
+      <Helmet>
+        <title>Privacy Policy | SeaBite</title>
+        <meta name="description" content="SeaBite's privacy policy. We collect only essential data, never sell your information, and use industry-standard encryption to protect your details." />
+        <link rel="canonical" href="https://seabite.co.in/privacy" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Privacy Policy | SeaBite" />
+      </Helmet>
       <style>{FONTS}{`
         .priv-root * { box-sizing: border-box; }
         .priv-card { transition: all 0.28s ease; }

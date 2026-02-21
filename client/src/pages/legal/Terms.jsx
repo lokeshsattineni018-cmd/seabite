@@ -1,6 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { FiHome, FiArrowRight, FiShield } from "react-icons/fi";
 
 const FONTS = `@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');`;
@@ -44,13 +45,20 @@ const SECTIONS = [
 ];
 
 // Accent colours cycling per section
-const ACCENTS = ["#5BA8A0","#89C2D9","#E8816A","#5BA8A0","#89C2D9"];
+const ACCENTS = ["#5BA8A0", "#89C2D9", "#E8816A", "#5BA8A0", "#89C2D9"];
 
 export default function Terms() {
   const navigate = useNavigate();
 
   return (
     <>
+      <Helmet>
+        <title>Terms & Conditions | SeaBite</title>
+        <meta name="description" content="Read SeaBite's terms of service covering orders, payments, delivery, cancellations, and user responsibilities. Governed by Indian law." />
+        <link rel="canonical" href="https://seabite.co.in/terms" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Terms & Conditions | SeaBite" />
+      </Helmet>
       <style>{FONTS}{`
         .terms-root * { box-sizing: border-box; }
         .terms-item { border-left: 3px solid transparent; transition: all 0.25s ease; }
@@ -191,8 +199,8 @@ export default function Terms() {
                     cursor: "pointer", fontFamily: "'Plus Jakarta Sans',sans-serif",
                     transition: "all 0.25s",
                   }}
-                  onMouseOver={e => { e.currentTarget.style.borderColor="#5BA8A0"; e.currentTarget.style.color="#5BA8A0"; }}
-                  onMouseOut={e => { e.currentTarget.style.borderColor="#E8EEF2"; e.currentTarget.style.color="#4A6572"; }}
+                  onMouseOver={e => { e.currentTarget.style.borderColor = "#5BA8A0"; e.currentTarget.style.color = "#5BA8A0"; }}
+                  onMouseOut={e => { e.currentTarget.style.borderColor = "#E8EEF2"; e.currentTarget.style.color = "#4A6572"; }}
                 >
                   <FiHome size={13} /> Home
                 </button>

@@ -1,6 +1,7 @@
 import { motion, useInView } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import {
   FiHome, FiRotateCcw, FiXCircle, FiClock,
   FiCheckCircle, FiAlertCircle, FiArrowRight,
@@ -53,6 +54,13 @@ export default function Cancellation() {
 
   return (
     <>
+      <Helmet>
+        <title>Cancellation & Refund Policy | SeaBite</title>
+        <meta name="description" content="SeaBite's cancellation and refund policy. Cancel before shipment for a full refund. Quality issues resolved within 5-7 business days." />
+        <link rel="canonical" href="https://seabite.co.in/cancellation" />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content="Cancellation & Refund Policy | SeaBite" />
+      </Helmet>
       <style>{FONTS}{`
         .cancel-root * { box-sizing: border-box; }
         .policy-card:hover { box-shadow: 0 12px 36px rgba(26,43,53,0.07); transform: translateY(-2px); }

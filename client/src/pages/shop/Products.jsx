@@ -120,8 +120,13 @@ export default function Products() {
       <Helmet>
         <title>{meta.label} | SeaBite - Fresh Coastal Seafood Delivery</title>
         <meta name="description" content={`Buy fresh ${meta.label.toLowerCase()} online. ${meta.tagline} Chemical-free, traceable seafood delivered from Mogalthur every day.`} />
+        <link rel="canonical" href={`https://seabite.co.in/products${filters.category !== "All" ? `?category=${filters.category}` : ""}`} />
         <meta property="og:title" content={`${meta.label} | SeaBite`} />
         <meta property="og:description" content={meta.tagline} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${meta.label} | SeaBite`} />
+        <meta name="twitter:description" content={meta.tagline} />
+        <meta name="twitter:image" content="https://seabite.co.in/fisherman.jpg" />
       </Helmet>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@500;600&display=swap');
