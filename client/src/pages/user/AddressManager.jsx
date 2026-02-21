@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { FiPlus, FiEdit2, FiTrash2, FiMapPin, FiCheck, FiX } from "react-icons/fi";
-import { motion, AnimatePresence } from "framer-motion";
+import { FiPlus, FiEdit2, FiTrash2, FiMapPin } from "react-icons/fi";
+import { AnimatePresence } from "framer-motion";
 import AddressForm from "../../components/forms/AddressForm";
 import toast from "react-hot-toast";
 
