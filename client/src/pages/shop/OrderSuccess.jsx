@@ -217,7 +217,7 @@ export default function OrderSuccess() {
           className="grad-bar h-[3px] w-full origin-left"
         />
 
-        <div className="max-w-[480px] mx-auto px-8 pt-12 pb-0 text-center relative z-10 overflow-hidden">
+        <div className="max-w-[480px] mx-auto px-8 pt-6 pb-0 text-center relative z-10 overflow-hidden">
           {/* Decorative particles */}
           {[...Array(12)].map((_, i) => (
             <Particle key={i} i={i} />
@@ -241,7 +241,7 @@ export default function OrderSuccess() {
 
           {/* Headline */}
           <motion.h1 {...FU(0.38)}
-            className="text-[32px] font-[800] text-white leading-none mb-3"
+            className="text-[32px] font-[800] text-white leading-none mb-1.5"
             style={{ fontFamily: "'Bricolage Grotesque',sans-serif", letterSpacing: "-0.04em" }}
           >
             Order Confirmed!
@@ -249,8 +249,8 @@ export default function OrderSuccess() {
 
           {/* Sub-text */}
           <motion.p {...FU(0.46)}
-            className="text-[14px] leading-relaxed mb-7"
-            style={{ color: "rgba(255,255,255,.55)", maxWidth: 300, margin: "0 auto 28px" }}
+            className="text-[14px] leading-relaxed mb-4"
+            style={{ color: "rgba(255,255,255,.55)", maxWidth: 300, margin: "0 auto 16px" }}
           >
             Your fresh catch is being packed with care.{" "}
             Estimated delivery in{" "}
@@ -258,7 +258,7 @@ export default function OrderSuccess() {
           </motion.p>
 
           {/* Seafood quality chips */}
-          <div className="flex justify-center gap-2.5 flex-wrap pb-10">
+          <div className="flex justify-center gap-2.5 flex-wrap pb-4">
             {CHIPS.map((c, i) => (
               <motion.div
                 key={i}
@@ -281,7 +281,7 @@ export default function OrderSuccess() {
 
         {/* Wave — dark to light, matches WaveTicker */}
         <svg viewBox="0 0 1440 56" fill="none" xmlns="http://www.w3.org/2000/svg"
-          style={{ display: "block", width: "100%", height: 56, background: "#F4F9F8" }}
+          style={{ display: "block", width: "100%", height: 32, background: "#F4F9F8" }}
           preserveAspectRatio="none">
           <path d="M0 0 C200 56, 440 0, 660 28 C880 56, 1060 0, 1260 24 C1360 36, 1410 12, 1440 20 L1440 0 Z" fill="#1A2B35" />
         </svg>
@@ -299,7 +299,7 @@ export default function OrderSuccess() {
 
         {/* ── Order ID card ── */}
         <motion.div {...FU(0.70)}
-          className="bg-white rounded-[20px] mb-3 overflow-hidden relative"
+          className="bg-white rounded-[20px] mb-2 overflow-hidden relative"
           style={{ border: "1.5px solid #E2EEEC" }}
         >
           <motion.div
@@ -308,7 +308,7 @@ export default function OrderSuccess() {
             className="absolute bottom-0 left-0 right-0 h-[2px] opacity-35 origin-left"
             style={{ background: "linear-gradient(90deg,#5BA8A0,#89C2D9)" }}
           />
-          <div className="px-5 pt-5 pb-4">
+          <div className="px-5 pt-3 pb-3">
             <div className="flex items-center justify-between mb-1">
               <span className="text-[9px] font-bold text-[#8BA5B3] uppercase tracking-[.18em]">Order Number</span>
               <span className="text-[11px] text-[#8BA5B3] flex items-center gap-1">
@@ -347,7 +347,7 @@ export default function OrderSuccess() {
 
         {/* ── Savings badge ── */}
         {discount > 0 && (
-          <motion.div {...FU(0.78)} className="flex justify-center mb-4">
+          <motion.div {...FU(0.78)} className="flex justify-center mb-2">
             <span className="inline-flex items-center gap-2 px-4 py-2 rounded-[10px] text-[12px] font-bold uppercase tracking-wider"
               style={{ color: "#3D8C85", background: "rgba(91,168,160,.10)", border: "1px solid rgba(91,168,160,.22)" }}>
               🎉 You saved ₹{discount.toLocaleString()} on this order
@@ -362,7 +362,7 @@ export default function OrderSuccess() {
               initial={{ opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.65, duration: 0.5 }}
-              style={{ marginBottom: 24, textAlign: "left" }}
+              style={{ marginBottom: 12, textAlign: "left" }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
                 <div style={{ width: 10, height: 10, borderRadius: 3, background: T.primary }} />
@@ -410,7 +410,7 @@ export default function OrderSuccess() {
         </AnimatePresence>
 
         {/* ── Primary CTA ── */}
-        <motion.div {...FU(0.84)} className="mb-3">
+        <motion.div {...FU(0.84)} className="mb-2">
           <Link to={`/orders/${dbId}`} className="block no-underline">
             <motion.button
               whileHover={{ y: -2, boxShadow: "0 10px 28px rgba(91,168,160,.30)" }}
@@ -434,7 +434,7 @@ export default function OrderSuccess() {
         </motion.div>
 
         {/* ── Secondary CTAs ── */}
-        <motion.div {...FU(0.90)} className="grid grid-cols-2 gap-2.5 mb-5">
+        <motion.div {...FU(0.90)} className="grid grid-cols-2 gap-2.5 mb-2">
           <Link to="/products" className="block no-underline">
             <motion.button
               whileHover={{ y: -1, borderColor: "#C5E6E4" }} whileTap={{ scale: 0.97 }}
@@ -462,7 +462,7 @@ export default function OrderSuccess() {
 
         {/* ── Timeline ── */}
         <motion.div {...FU(0.96)}
-          className="bg-white rounded-[20px] p-5 mb-5"
+          className="bg-white rounded-[20px] p-4 mb-2"
           style={{ border: "1.5px solid #E2EEEC" }}
         >
           <p className="text-[9px] font-bold text-[#8BA5B3] uppercase tracking-[.18em] mb-4 text-center">
@@ -489,7 +489,7 @@ export default function OrderSuccess() {
 
         {/* Redirect Hint */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}
-          style={{ textAlign: "center", marginBottom: 24, fontSize: 11, color: "#8BA5B3", fontWeight: 500 }}>
+          style={{ textAlign: "center", marginBottom: 10, fontSize: 11, color: "#8BA5B3", fontWeight: 500 }}>
           Redirecting to your orders in <strong style={{ color: "#5BA8A0" }}>{redirectTime}s</strong>...
         </motion.div>
 

@@ -256,7 +256,7 @@ function MainLayout() {
             </Suspense>
           </div>
 
-          {!isAdminRoute && <Footer />}
+          {!isAdminRoute && location.pathname !== "/success" && <Footer />}
           {!isAdminRoute && <SupportWidget />}
         </>
       )
