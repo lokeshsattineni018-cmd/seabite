@@ -7,7 +7,7 @@ const router = express.Router();
 router.post("/validate", async (req, res) => {
   try {
     const { code, cartTotal, email } = req.body;
-    
+
     if (!code) {
       return res.status(404).json({ success: false, message: "No coupon code provided." });
     }
@@ -40,9 +40,9 @@ router.post("/validate", async (req, res) => {
 
     // Check min order amount
     if (coupon.minOrderAmount > 0 && cartTotal < coupon.minOrderAmount) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `Minimum order amount ₹${coupon.minOrderAmount} required.` 
+      return res.status(400).json({
+        success: false,
+        message: `Minimum order amount ₹${coupon.minOrderAmount} required.`
       });
     }
 
@@ -80,7 +80,7 @@ router.post("/", async (req, res) => {
     console.log("📥 Received coupon creation request:", req.body);
 
     const { code, value, minOrderAmount, discountType, maxDiscount, isActive, expiresAt, maxUses } = req.body;
-    
+
     // ✅ Validation
     if (!code || code.trim() === "") {
       console.log("❌ Validation failed: No code provided");
@@ -116,9 +116,9 @@ router.post("/", async (req, res) => {
     console.log("💾 Creating coupon with data:", couponData);
 
     const newCoupon = await Coupon.create(couponData);
-    
+
     console.log("✅ Coupon created successfully:", newCoupon._id);
-    
+
     res.status(201).json(newCoupon);
   } catch (error) {
     console.error("❌ Create coupon error:");
@@ -129,10 +129,10 @@ router.post("/", async (req, res) => {
       console.error("   Validation errors:", error.errors);
     }
     console.error("   Full error:", error);
-    
+
     // ✅ Send detailed error response
-    res.status(500).json({ 
-      message: "Error creating coupon", 
+    res.status(500).json({
+      message: "Error creating coupon",
       error: error.message,
       errorType: error.name,
       details: error.errors ? Object.keys(error.errors).join(", ") : null
@@ -163,7 +163,7 @@ router.get("/public", async (req, res) => {
         { expiresAt: null }
       ]
     }).sort({ createdAt: -1 });
-    
+
     res.json(coupons);
   } catch (error) {
     console.error("❌ Fetch public coupons error:", error);
@@ -177,13 +177,13 @@ router.put("/:id", async (req, res) => {
     const updated = await Coupon.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     );
-    
+
     if (!updated) {
       return res.status(404).json({ message: "Coupon not found" });
     }
-    
+
     res.json(updated);
   } catch (error) {
     console.error("❌ Update coupon error:", error);
@@ -195,11 +195,11 @@ router.put("/:id", async (req, res) => {
 router.delete("/:id", async (req, res) => {
   try {
     const deleted = await Coupon.findByIdAndDelete(req.params.id);
-    
+
     if (!deleted) {
       return res.status(404).json({ message: "Coupon not found" });
     }
-    
+
     res.json({ success: true, message: "Coupon Deleted" });
   } catch (error) {
     console.error("❌ Delete coupon error:", error);

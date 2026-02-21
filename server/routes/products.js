@@ -95,7 +95,7 @@ router.get("/", async (req, res) => {
               lastSearched: Date.now()
             }
           },
-          { upsert: true, new: true }
+          { upsert: true, returnDocument: "after" }
         );
 
         // 🟢 WATCHTOWER LOGGING

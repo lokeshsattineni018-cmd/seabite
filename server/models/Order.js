@@ -89,7 +89,7 @@ orderSchema.pre("save", async function () {
     const counter = await Counter.findOneAndUpdate(
       { name: "order" },
       { $inc: { seq: 1 } },
-      { new: true, upsert: true }
+      { returnDocument: "after", upsert: true }
     );
     this.orderId = counter.seq + 999;
   }

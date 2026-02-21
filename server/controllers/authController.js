@@ -163,7 +163,7 @@ export const updateUserProfile = async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       req.session.user.id,
       { $set: req.body },
-      { new: true, runValidators: true, select: "-password" }
+      { returnDocument: "after", runValidators: true, select: "-password" }
     );
 
     console.log("✅ Profile updated for:", updatedUser.email);

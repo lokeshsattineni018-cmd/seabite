@@ -32,7 +32,7 @@ router.get("/", async (req, res) => {
             found: products.length > 0,
             lastSearched: Date.now()
           },
-          { upsert: true, new: true }
+          { upsert: true, returnDocument: "after" }
         );
       } catch (err) {
         console.error("Search Insight Error:", err);
