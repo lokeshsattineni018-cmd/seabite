@@ -217,7 +217,7 @@ export default function OrderSuccess() {
           className="grad-bar h-[3px] w-full origin-left"
         />
 
-        <div className="max-w-[480px] mx-auto px-8 pt-6 pb-0 text-center relative z-10 overflow-hidden">
+        <div className="max-w-[480px] mx-auto px-8 pt-20 pb-0 text-center relative z-10 overflow-hidden">
           {/* Decorative particles */}
           {[...Array(12)].map((_, i) => (
             <Particle key={i} i={i} />
