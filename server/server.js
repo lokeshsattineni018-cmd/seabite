@@ -25,8 +25,25 @@ import userRoutes from "./routes/userRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import watchtowerRoutes from "./routes/watchtowerRoutes.js";
 import checkMaintenance from "./middleware/checkMaintenance.js";
+import auditTrail from "./middleware/auditMiddleware.js";
+import traceMiddleware from "./middleware/traceMiddleware.js";
+import logger from "./utils/logger.js";
+import os from "os";
 
 const app = express();
+app.disable("x-powered-by");
+
+// 🛡️ Enterprise: Global Process Handlers
+process.on("uncaughtException", (err) => {
+  logger.error("UNCAUGHT EXCEPTION! 💥 Shutting down...", { error: err.message, stack: err.stack });
+  process.exit(1);
+});
+
+process.on("unhandledRejection", (err) => {
+  logger.error("UNHANDLED REJECTION! 💥 Shutting down...", { error: err.message, stack: err.stack });
+  process.exit(1);
+});
+
 const httpServer = createServer(app);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -58,7 +75,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json());
+app.use(express.json({ limit: "10kb" })); // 🛡️ Limit body size to prevent attacks
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 /* --- SOCKET.IO SETUP --- */
 const io = new Server(httpServer, {
@@ -102,8 +120,28 @@ import compression from "compression";
 // 0. Compress all responses
 app.use(compression());
 
-// 1. Set Security Headers
-app.use(helmet());
+// 1. Assign unique trace ID to every request for enterprise observability
+app.use(traceMiddleware);
+
+// 2. Set Strict Security Headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://checkout.razorpay.com", "https://www.google-analytics.com"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      imgSrc: ["'self'", "data:", "https://res.cloudinary.com", "https://*.razorpay.com", "https://lh3.googleusercontent.com"],
+      connectSrc: ["'self'", "https://api.razorpay.com", "https://lokeshsattineni018-cmd.p.pcloud.xyz", "https://seabite-server.vercel.app"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      frameSrc: ["'self'", "https://api.razorpay.com"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+}));
+
+app.use(helmet.hidePoweredBy());
+app.use(helmet.noSniff());
+app.use(helmet.xssFilter());
 
 // 2. Global Rate Limiting
 const limiter = rateLimit({
@@ -187,11 +225,17 @@ const connectDB = async () => {
   }
 };
 
-// Global handlers for connection events
-mongoose.connection.on('disconnected', () => console.log('⚠️ MongoDB disconnected'));
-mongoose.connection.on('reconnected', () => console.log('✅ MongoDB reconnected'));
+(async () => {
+  try {
+    await connectDB();
+  } catch (err) {
+    logger.error("Initial DB Connection Failed", { error: err.message });
+  }
+})();
 
-await connectDB();
+// Global handlers for connection events
+mongoose.connection.on('disconnected', () => logger.warn('MongoDB disconnected'));
+mongoose.connection.on('reconnected', () => logger.info('MongoDB reconnected'));
 
 // ✅ Session Setup (Optimized: Reuses Mongoose Connection)
 const sessionMiddleware = session({
@@ -222,12 +266,15 @@ app.use((req, res, next) => {
   const originalSave = req.session.save.bind(req.session);
   req.session.save = function (callback) {
     originalSave(function (err) {
-      if (err) console.error('❌ Session save error:', err);
+      if (err) logger.error('Session save error', { error: err.message });
       if (callback) callback(err);
     });
   };
   next();
 });
+
+// ✅ AUDIT TRAIL: Global Admin Observer (Senior Level)
+app.use("/api/admin", auditTrail);
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
@@ -249,26 +296,83 @@ app.use("/api/user", userRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/admin/watchtower", watchtowerRoutes);
 
-app.get("/health", (req, res) => {
-  const state = mongoose.connection.readyState;
+app.get("/health", async (req, res) => {
+  const start = Date.now();
+  let dbStatus = "down";
+  try {
+    await mongoose.connection.db.admin().ping();
+    dbStatus = "ok";
+  } catch (e) {
+    dbStatus = "error";
+  }
+  const latency = Date.now() - start;
+
   res.json({
-    status: state === 1 ? "ok" : "down",
-    mongoState: state,
+    status: dbStatus === "ok" ? "healthy" : "degraded",
+    uptime: process.uptime(),
+    memory: {
+      rss: `${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB`,
+      heapTotal: `${Math.round(process.memoryUsage().heapTotal / 1024 / 1024)} MB`,
+      heapUsed: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)} MB`,
+    },
+    system: {
+      load: os.loadavg(),
+      freeMem: `${Math.round(os.freemem() / 1024 / 1024)} MB`
+    },
+    database: {
+      status: dbStatus,
+      latency: `${latency}ms`,
+      readyState: mongoose.connection.readyState
+    }
   });
 });
 
 app.use((req, res) => res.status(404).json({ error: "Route not found" }));
 
 app.use((err, req, res, next) => {
-  console.error("❌ Server Error:", err);
-  res.status(500).json({ error: "Internal server error" });
+  const statusCode = err.statusCode || 500;
+  const isProduction = process.env.NODE_ENV === "production";
+
+  // console.error(`❌ ${req.method} ${req.path} Error:`, err);
+
+  res.status(statusCode).json({
+    success: false,
+    message: isProduction ? "Internal server error" : err.message,
+    ...(isProduction ? {} : { stack: err.stack }),
+  });
 });
 
 export { io }; // Export real IO
 
 const PORT = process.env.PORT || 5000;
-httpServer.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+const server = httpServer.listen(PORT, () => {
+  logger.info(`Server started`, { port: PORT, mode: process.env.NODE_ENV || 'development' });
 });
+
+// 🛡️ GRACEFUL SHUTDOWN (Phase 27)
+const shutdown = async (signal) => {
+  console.log(`\n🛑 ${signal} received. Starting graceful shutdown...`);
+
+  server.close(async () => {
+    logger.info("HTTP server closed");
+    try {
+      await mongoose.connection.close(false);
+      logger.info("MongoDB connection closed");
+      process.exit(0);
+    } catch (err) {
+      logger.error("Error during shutdown", { error: err.message });
+      process.exit(1);
+    }
+  });
+
+  // Force shutdown after 10s
+  setTimeout(() => {
+    console.error("⚠️ Could not close connections in time, forcefully shutting down.");
+    process.exit(1);
+  }, 10000);
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
 
 export default app;

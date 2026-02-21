@@ -1,9 +1,10 @@
-import Order from '../models/Order.js';
-import Notification from "../models/notification.js";
 import {
     sendOrderPlacedEmail,
     sendStatusUpdateEmail
 } from "../utils/emailService.js";
+import logger from "../utils/logger.js";
+import ActivityLog from "../models/ActivityLog.js";
+import mongoose from "mongoose";
 
 /**
  * @desc    Create new order
@@ -11,6 +12,8 @@ import {
  * @access  Private
  */
 export const createOrder = async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         const {
             items,
@@ -21,17 +24,18 @@ export const createOrder = async (req, res) => {
         } = req.body;
 
         if (items && items.length === 0) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ message: 'No order items' });
         }
 
-        // 🟢 CORE LOGIC: Pricing & Taxes
         const subtotal = itemsPrice || 0;
         const shippingPrice = subtotal < 1000 ? 99 : 0;
         const taxPrice = Math.round((subtotal - (discount || 0)) * 0.05);
         const totalAmount = subtotal - (discount || 0) + shippingPrice + taxPrice;
 
         const order = new Order({
-            user: req.user._id, // Set from protect middleware
+            user: req.user._id,
             items,
             itemsPrice: subtotal,
             taxPrice,
@@ -41,37 +45,40 @@ export const createOrder = async (req, res) => {
             shippingAddress: deliveryAddress || shippingAddress
         });
 
-        const createdOrder = await order.save();
+        const createdOrder = await order.save({ session });
 
-        // 🟢 REAL-TIME ALERT: Notify Admin Dashboard
+        // Commit transaction before secondary effects (email, socket)
+        await session.commitTransaction();
+        session.endSession();
+
+        logger.info("Order Created Successfully", { orderId: createdOrder.orderId, user: req.user.email });
+
         if (req.io) {
             req.io.emit("ORDER_PLACED", {
                 ...createdOrder._doc,
-                user: { name: req.user.name } // Ensure user name is available for the toast
+                user: { name: req.user.name }
             });
         }
 
-        // ✅ FIXED EMAIL TRIGGER: Use req.user directly for immediate reliable delivery
         if (req.user && req.user.email) {
             try {
-                // We pass req.user.email and req.user.name to ensure no population delay
                 await sendOrderPlacedEmail(
                     req.user.email,
                     req.user.name,
                     createdOrder.orderId || createdOrder._id,
                     createdOrder.totalAmount,
-                    createdOrder.items // Passed for the premium itemized table
+                    createdOrder.items
                 );
-                console.log(`✅ SeaBite Confirmation Email sent to ${req.user.email}`);
             } catch (err) {
-                // Log the error but allow the response to proceed so the user isn't blocked
-                console.error("❌ Resend Email Error (Order Placed):", err.message);
+                logger.error("Order Confirmation Email Failed", { error: err.message, orderId: createdOrder._id });
             }
         }
 
         res.status(201).json(createdOrder);
     } catch (error) {
-        console.error("Create Order Error:", error);
+        await session.abortTransaction();
+        session.endSession();
+        logger.error("Create Order Transaction Failed", { error: error.message, user: req.user?.email });
         res.status(500).json({ message: 'Server error during order creation' });
     }
 };
@@ -99,6 +106,16 @@ export const updateOrderStatus = async (req, res) => {
 
         const updatedOrder = await order.save();
 
+        // 🔐 AUDIT TRAIL: Log status change
+        await ActivityLog.create({
+            user: req.user._id,
+            action: `ORDER_STATUS_UPDATE`,
+            details: `Order #${order.orderId} status changed to ${status || 'N/A'}${refundStatus ? `, Refund: ${refundStatus}` : ''}`,
+            meta: { orderId: order._id, oldStatus: order.status, newStatus: status }
+        });
+
+        logger.audit("Order Status Updated", { orderId: order.orderId, admin: req.user.email, status });
+
         // ✅ FIXED EMAIL TRIGGER: Multi-Status Amazon/Flipkart Style Notifications
         try {
             if (status && order.user && order.user.email) {
@@ -108,10 +125,9 @@ export const updateOrderStatus = async (req, res) => {
                     order.orderId || order._id,
                     status
                 );
-                console.log(`✅ Status update (${status}) sent to ${order.user.email}`);
             }
         } catch (e) {
-            console.error("❌ Status Email Failed:", e.message);
+            logger.error("Status Update Email Failed", { error: e.message, orderId: order._id });
         }
 
         res.json(updatedOrder);
@@ -146,6 +162,16 @@ export const cancelOrder = async (req, res) => {
         order.cancelReason = reason || "No reason provided";
 
         const updatedOrder = await order.save();
+
+        // 🔐 AUDIT TRAIL: Log cancellation
+        await ActivityLog.create({
+            user: req.user._id,
+            action: `ORDER_CANCELLED`,
+            details: `Order #${order.orderId} was cancelled. Reason: ${reason}`,
+            meta: { orderId: order._id, reason }
+        });
+
+        logger.info("Order Cancelled", { orderId: order.orderId, user: req.user.email, reason });
 
         // Sync with internal dashboard notifications
         await Notification.create({

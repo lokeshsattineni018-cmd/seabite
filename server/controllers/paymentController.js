@@ -2,10 +2,10 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import Order from '../models/Order.js';
 import Notification from '../models/notification.js';
-import Product from '../models/Product.js'; // Added
-import User from '../models/User.js'; // Added
-// 🟢 IMPORT EMAIL SERVICE
+import Product from '../models/Product.js';
+import User from '../models/User.js';
 import { sendOrderPlacedEmail } from "../utils/emailService.js";
+import logger from "../utils/logger.js";
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -14,10 +14,28 @@ const instance = new Razorpay({
 
 // 1. Checkout
 export const checkout = async (req, res) => {
+  const traceId = req.traceId;
+  const idempotencyKey = req.headers["idempotency-key"];
+
   try {
     const { amount, items, shippingAddress, itemsPrice, taxPrice, shippingPrice, discount, paymentMethod } = req.body;
 
     if (!req.user || !req.user._id) return res.status(401).json({ success: false, message: "Auth failed" });
+
+    // 🔐 ENTERPRISE IDEMPOTENCY CHECK
+    if (idempotencyKey) {
+      const existingOrder = await Order.findOne({ user: req.user._id, idempotencyKey });
+      if (existingOrder) {
+        logger.info("Idempotent request detected, returning existing order", { traceId, idempotencyKey, orderId: existingOrder.orderId });
+        return res.status(200).json({
+          success: true,
+          order: existingOrder.razorpay_order_id ? { id: existingOrder.razorpay_order_id, amount: Math.round(existingOrder.totalAmount * 100), currency: "INR" } : null,
+          dbOrderId: existingOrder._id,
+          orderId: existingOrder.orderId,
+          _idempotent: true
+        });
+      }
+    }
 
     // 🟢 STOCK VALIDATION
     // Check if all items are in stock
@@ -53,13 +71,13 @@ export const checkout = async (req, res) => {
       paymentMethod: paymentMethod || "COD",
       razorpay_order_id: razorpayOrder ? razorpayOrder.id : null,
       status: "Pending",
-      isPaid: false
+      isPaid: false,
+      idempotencyKey: idempotencyKey || null
     });
 
     const savedOrder = await newOrder.save();
 
     // 🟢 STOCK DEDUCTION & CART CLEARING
-    // Deduct stock for each item
     for (const item of items) {
       const product = await Product.findById(item.productId);
       if (product) {
@@ -68,14 +86,11 @@ export const checkout = async (req, res) => {
       }
     }
 
-    // Clear User Cart
     await User.findByIdAndUpdate(req.user._id, { cart: [] });
-
 
     // ✅ TRIGGER EMAIL: ONLY for COD orders here
     if (paymentMethod === "COD") {
       try {
-        // 🟢 Pass paymentMethod so the email knows to show "Pay on Delivery"
         await sendOrderPlacedEmail(
           req.user.email,
           req.user.name,
@@ -84,9 +99,8 @@ export const checkout = async (req, res) => {
           savedOrder.items,
           savedOrder.paymentMethod
         );
-        console.log(`✅ COD Confirmation Email sent to ${req.user.email}`);
       } catch (mailErr) {
-        console.error("❌ COD Email Failed:", mailErr.message);
+        logger.error("COD Confirmation Email Failed", { traceId, error: mailErr.message, orderId: savedOrder._id });
       }
 
       await Notification.create({
@@ -96,6 +110,8 @@ export const checkout = async (req, res) => {
         statusType: "Pending"
       });
     }
+
+    logger.info("Order created in checkout", { traceId, orderId: savedOrder.orderId, paymentMethod });
 
     res.status(200).json({
       success: true,
@@ -134,11 +150,10 @@ export const paymentVerification = async (req, res) => {
             updatedOrder.orderId || updatedOrder._id,
             updatedOrder.totalAmount,
             updatedOrder.items,
-            updatedOrder.paymentMethod // 🟢 Passes "Prepaid" for "Total Paid" label
+            updatedOrder.paymentMethod
           );
-          console.log(`✅ Prepaid Confirmation Email sent to ${updatedOrder.user.email}`);
         } catch (mailErr) {
-          console.error("❌ Prepaid Email Failed:", mailErr.message);
+          logger.error("Prepaid Confirmation Email Failed", { traceId: req.traceId, error: mailErr.message, orderId: updatedOrder._id });
         }
 
         await Notification.create({

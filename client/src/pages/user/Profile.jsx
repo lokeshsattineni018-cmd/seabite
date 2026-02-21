@@ -118,7 +118,7 @@ export default function Profile() {
             borderRadius: 20, border: "1px solid #E2EEEC",
             boxShadow: "0 4px 32px rgba(91,168,160,0.10), 0 1px 4px rgba(26,43,53,0.04)",
             padding: "24px 28px",
-            marginTop: -48, marginBottom: 20,
+            marginTop: -8, marginBottom: 20,
             display: "flex", alignItems: "center", gap: 20,
             flexWrap: "wrap",
           }}

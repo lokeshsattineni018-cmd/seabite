@@ -62,6 +62,7 @@ const AdminAnalytics = lazy(() => import("./admin/AdminAnalytics"));
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
+import ErrorBoundary from "./components/common/ErrorBoundary";
 
 // ✅ Axios global config
 axios.defaults.withCredentials = true;
@@ -235,14 +236,16 @@ function MainLayout() {
 
 export default function App() {
   return (
-    <HelmetProvider>
-      <ThemeProvider>
-        <AuthProvider>
-          <CartProvider>
-            <MainLayout />
-          </CartProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </HelmetProvider>
+    <ErrorBoundary>
+      <HelmetProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <CartProvider>
+              <MainLayout />
+            </CartProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </HelmetProvider>
+    </ErrorBoundary>
   );
 }

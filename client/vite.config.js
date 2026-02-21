@@ -18,6 +18,7 @@ export default defineConfig({
     },
   },
   build: {
+    sourcemap: false, // 🛡️ Protect source code in production
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {

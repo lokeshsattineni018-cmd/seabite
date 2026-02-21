@@ -3,7 +3,8 @@ import User from "../models/User.js";
 import { sendAuthEmail } from "../utils/emailService.js";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
-import { logActivity } from "../utils/activityLogger.js"; // 🟢 Added import
+import { logActivity } from "../utils/activityLogger.js";
+import logger from "../utils/logger.js";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -54,41 +55,40 @@ export const googleLogin = async (req, res) => {
     const googleId = userData.sub || userData.id;
 
     let user = await User.findOne({ email });
-    let isNewUser = false;
+
+    // 🔐 ENTERPRISE IAM: Brute-Force Check
+    if (user && user.lockUntil && user.lockUntil > Date.now()) {
+      logger.security("Blocked login attempt: Account locked", { traceId: req.traceId, email: user.email });
+      return res.status(403).json({ message: "Too many failed attempts. Account is temporarily locked." });
+    }
 
     if (user) {
-      console.log("👤 Existing user found:", email);
       if (!user.googleId) {
         user.googleId = googleId;
         await user.save();
-        console.log("🔗 Google ID linked to existing user");
       }
     } else {
-      console.log("👤 Creating new user:", email);
       user = new User({ name, email, googleId, role: "user" });
       await user.save();
-      isNewUser = true;
-      console.log("✅ New user created");
     }
 
     // 🚫 BAN CHECK
     if (user.isBanned) {
-      console.log("🚫 Banned user attempted login:", email);
+      logger.security("Banned user attempted login", { traceId: req.traceId, email: user.email });
       return res.status(403).json({ message: "Access Denied: Your account has been suspended." });
     }
 
-    // ✅ SESSION VERIFICATION
+    // ✅ Reset login attempts on success
+    if (user.loginAttempts > 0) {
+      user.loginAttempts = 0;
+      user.lockUntil = undefined;
+      await user.save();
+    }
+
     if (!req.session) {
-      //console.error(
-      //  "❌ Session middleware failed to initialize. Check MongoDB connection."
-      // );
       return res.status(500).json({ message: "Server Session Error" });
     }
 
-    console.log("🔑 Current Session ID:", req.sessionID);
-    console.log("🔑 Session before save:", req.session);
-
-    // ✅ POPULATE MONGO SESSION (consistent shape)
     req.session.user = {
       id: user._id,
       name: user.name,
@@ -96,43 +96,28 @@ export const googleLogin = async (req, res) => {
       role: user.role,
     };
 
-    console.log("💾 Attempting to save session...");
-
-    // ✅ FORCE SAVE: Sync with MongoDB before responding
     req.session.save((err) => {
       if (err) {
-        console.error("❌ Session save error:", err);
+        logger.error("Session save failed", { traceId: req.traceId, error: err.message });
         return res.status(500).json({ message: "Session save failed" });
       }
 
-      console.log("✅ Session saved successfully!");
-      console.log("🔑 Session ID after save:", req.sessionID);
-      console.log("👤 Session user:", req.session.user);
+      logger.info("User Authenticated", { traceId: req.traceId, userId: user._id, email: user.email });
 
       // Send welcome email (non-blocking)
-      sendAuthEmail(user.email, user.name, isNewUser).catch((err) => {
-        console.log("⚠️ Email send failed (non-critical):", err.message);
+      sendAuthEmail(user.email, user.name, user.createdAt > (Date.now() - 5000)).catch((err) => {
+        logger.warn("Welcome Email Failed", { traceId: req.traceId, error: err.message });
       });
 
-      // ✅ Explicitly set cookie in response headers (redundant but ensures it's sent)
-      const cookieHeader = res.getHeader('Set-Cookie');
-      console.log("🍪 Set-Cookie header:", cookieHeader);
-
-      // 🟢 WATCHTOWER LOGGING
       logActivity("LOGIN", `User Logged In: ${user.name} (${user.email})`, req);
 
       res.status(200).json({
         user: req.session.user,
-        sessionId: req.sessionID, // Include for debugging
-        debug: {
-          mobile: /mobile/i.test(req.headers["user-agent"]),
-          origin: req.headers.origin
-        }
+        sessionId: req.sessionID
       });
     });
   } catch (error) {
-    console.error("❌ Google Auth Error:", error.message);
-    console.error("Stack:", error.stack);
+    logger.error("Auth Failure", { traceId: req.traceId, error: error.message });
     res.status(401).json({ message: "Google verification failed." });
   }
 };
@@ -161,7 +146,7 @@ export const getLoggedUser = async (req, res) => {
       createdAt: dbUser.createdAt,
     });
   } catch (err) {
-    console.error("❌ getLoggedUser DB error:", err);
+    logger.error("getLoggedUser DB failure", { traceId: req.traceId, error: err.message });
     res.status(500).json({ message: "Server error" });
   }
 };

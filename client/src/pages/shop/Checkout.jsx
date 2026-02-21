@@ -168,19 +168,20 @@ export default function Checkout() {
     return () => clearTimeout(timeoutId);
   }, [cartItems, navigate]);
 
-  const itemTotal = parseFloat(subtotal);
-  const taxRate = storeSettings?.taxRate ? storeSettings.taxRate / 100 : 0.05;
-  const deliveryFee = storeSettings?.deliveryFee !== undefined ? storeSettings.deliveryFee : 99;
-  const freeThreshold = storeSettings?.freeDeliveryThreshold !== undefined ? storeSettings.freeDeliveryThreshold : 1000;
+  const itemTotal = parseFloat(subtotal) || 0;
+  const taxRate = storeSettings?.taxRate !== undefined ? parseFloat(storeSettings.taxRate) / 100 : 0.05;
+  const deliveryFee = storeSettings?.deliveryFee !== undefined ? parseFloat(storeSettings.deliveryFee) : 99;
+  const freeThreshold = storeSettings?.freeDeliveryThreshold !== undefined ? parseFloat(storeSettings.freeDeliveryThreshold) : 1000;
   const isShippingCoupon = appliedCoupon?.discountType === "shipping";
   const deliveryCharge = (itemTotal >= freeThreshold || isShippingCoupon) ? 0 : deliveryFee;
-  const freeDeliveryProgress = Math.min((itemTotal / freeThreshold) * 100, 100);
+  const freeDeliveryProgress = freeThreshold > 0 ? Math.min((itemTotal / freeThreshold) * 100, 100) : 100;
 
   const discountAmount = useMemo(() => {
-    if (spinDiscount) return Math.min((itemTotal * spinDiscount.percentage) / 100, itemTotal);
+    if (spinDiscount) return Math.min((itemTotal * (spinDiscount.percentage || 0)) / 100, itemTotal);
     if (!appliedCoupon) return 0;
-    if (appliedCoupon.discountType === "percent") return Math.min((itemTotal * appliedCoupon.discountValue) / 100, itemTotal);
-    if (appliedCoupon.discountType === "flat") return Math.min(appliedCoupon.discountValue, itemTotal);
+    const val = parseFloat(appliedCoupon.discountValue || appliedCoupon.value || 0);
+    if (appliedCoupon.discountType === "percent") return Math.min((itemTotal * val) / 100, itemTotal);
+    if (appliedCoupon.discountType === "flat") return Math.min(val, itemTotal);
     return 0; // shipping coupons show in their own row
   }, [itemTotal, spinDiscount, appliedCoupon]);
 
@@ -263,7 +264,7 @@ export default function Checkout() {
         isOrderSuccess.current = true; // Prevent "Cart Empty" redirect
         clearCart();
         refreshCartCount();
-        navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`);
+        navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`, { replace: true });
         return;
       }
 
@@ -278,7 +279,7 @@ export default function Checkout() {
               isOrderSuccess.current = true; // Prevent "Cart Empty" redirect
               clearCart();
               refreshCartCount();
-              navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`);
+              navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`, { replace: true });
             }
           } catch { setModal({ show: true, message: "Payment Verification Failed", type: "error" }); }
         },
@@ -694,7 +695,7 @@ export default function Checkout() {
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span>GST (5%)</span>
+                    <span>GST ({Math.round(taxRate * 100)}%)</span>
                     <span style={{ fontWeight: 700, color: T.textDark }}>₹{gst.toFixed(2)}</span>
                   </div>
                 </div>

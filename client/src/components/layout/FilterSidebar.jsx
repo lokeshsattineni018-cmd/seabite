@@ -59,7 +59,8 @@ const FilterContent = ({ filters, setFilters, clearFilters, localPrice, handlePr
                         onChange={handlePriceChange}
                         onBlur={applyPrice}
                         placeholder="Min"
-                        className="w-full pl-6 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors"
+                        className="w-full pl-6 pr-3 py-2 rounded-lg text-sm outline-none transition-colors"
+                        style={{ background: '#fff', border: '1.5px solid #D8ECEA', color: '#1A2E2C' }}
                     />
                 </div>
                 <span className="text-slate-400">-</span>
@@ -72,13 +73,15 @@ const FilterContent = ({ filters, setFilters, clearFilters, localPrice, handlePr
                         onChange={handlePriceChange}
                         onBlur={applyPrice}
                         placeholder="Max"
-                        className="w-full pl-6 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm outline-none focus:border-blue-500 transition-colors"
+                        className="w-full pl-6 pr-3 py-2 rounded-lg text-sm outline-none transition-colors"
+                        style={{ background: '#fff', border: '1.5px solid #D8ECEA', color: '#1A2E2C' }}
                     />
                 </div>
             </div>
             <button
                 onClick={applyPrice}
-                className="w-full py-2 text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                className="w-full py-2 text-xs font-bold rounded-lg transition-colors"
+                style={{ background: '#1A2E2C', color: '#fff' }}
             >
                 Apply Price
             </button>

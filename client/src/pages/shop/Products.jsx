@@ -366,7 +366,7 @@ export default function Products() {
                     key="grid"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    style={{ display: "grid", gap: "20px" }}
+                    style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "20px" }}
                     className="product-grid"
                   >
                     {products.map((p, i) => (
