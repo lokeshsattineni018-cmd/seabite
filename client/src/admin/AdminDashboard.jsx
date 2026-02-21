@@ -503,13 +503,25 @@ export default function AdminDashboard() {
                       onClick={() => navigate(`/admin/orders`)}
                       className="flex items-center justify-between p-4 bg-stone-50/30 hover:bg-stone-100/50 rounded-2xl border border-transparent hover:border-stone-200 transition-all cursor-pointer group"
                     >
-                      <div className="flex items-center gap-3 flex-1">
-                        <div className="w-10 h-10 rounded-xl bg-stone-200 flex items-center justify-center text-stone-600 font-medium text-xs">
-                          #{order._id.slice(-4)}
-                        </div>
+                      <div className="flex items-center gap-4 flex-1">
+                        {order.items?.[0] ? (
+                          <img
+                            src={getImageUrl(order.items[0].image)}
+                            className="w-12 h-12 object-cover rounded-xl bg-stone-50 border border-stone-100"
+                            alt="product"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-stone-100 flex items-center justify-center text-stone-400">
+                            <FiPackage size={20} />
+                          </div>
+                        )}
                         <div>
-                          <h4 className="text-sm font-medium text-stone-900">{order.user?.name || "Customer"}</h4>
-                          <p className="text-xs text-stone-400">{new Date(order.createdAt).toLocaleDateString()}</p>
+                          <h4 className="text-sm font-bold text-stone-900">
+                            {order.user?.name || "Customer"}
+                          </h4>
+                          <p className="text-[10px] text-stone-500 font-medium uppercase tracking-wider">
+                            #{order.orderId || order._id.slice(-6).toUpperCase()} • {new Date(order.createdAt).toLocaleDateString()}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">

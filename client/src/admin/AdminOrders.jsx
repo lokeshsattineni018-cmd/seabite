@@ -36,6 +36,8 @@ export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const fetchOrders = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -102,6 +104,59 @@ export default function AdminOrders() {
       fetchOrders(true);
     } catch {
       toast.error("Failed to update refund status");
+    }
+  };
+
+  const handleBulkStatusUpdate = async (status) => {
+    if (selectedOrderIds.length === 0) return;
+    setIsBulkUpdating(true);
+    const t = toast.loading(`Updating ${selectedOrderIds.length} orders to ${status}...`);
+    try {
+      await Promise.all(
+        selectedOrderIds.map(id => axios.put(`/api/orders/${id}/status`, { status }, { withCredentials: true }))
+      );
+      toast.success(`Updated ${selectedOrderIds.length} orders successfully`, { id: t });
+      setSelectedOrderIds([]);
+      fetchOrders(true);
+    } catch (err) {
+      toast.error("Failed to update some orders", { id: t });
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedOrderIds.length === 0) return;
+    if (!window.confirm(`Are you sure you want to PERMANENTLY delete ${selectedOrderIds.length} orders?`)) return;
+
+    setIsBulkUpdating(true);
+    const t = toast.loading(`Deleting ${selectedOrderIds.length} orders...`);
+    try {
+      await Promise.all(
+        selectedOrderIds.map(id => axios.delete(`/api/orders/${id}`, { withCredentials: true }))
+      );
+      toast.success(`${selectedOrderIds.length} orders removed`, { id: t });
+      setSelectedOrderIds([]);
+      fetchOrders(true);
+    } catch (err) {
+      toast.error("Failed to delete some orders", { id: t });
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const toggleSelectOrder = (id, e) => {
+    e.stopPropagation();
+    setSelectedOrderIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedOrderIds.length === filteredOrders.length) {
+      setSelectedOrderIds([]);
+    } else {
+      setSelectedOrderIds(filteredOrders.map(o => o._id));
     }
   };
 
@@ -201,12 +256,68 @@ export default function AdminOrders() {
           })}
         </motion.div>
 
+        {/* Bulk Action Bar */}
+        <AnimatePresence>
+          {selectedOrderIds.length > 0 && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-stone-900 border border-stone-800 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 min-w-[500px]"
+            >
+              <div className="flex items-center gap-2 pr-6 border-r border-stone-800">
+                <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm">
+                  {selectedOrderIds.length}
+                </div>
+                <span className="text-stone-400 text-xs font-bold uppercase tracking-widest">Selected</span>
+              </div>
+
+              <div className="flex items-center gap-3 flex-1">
+                <select
+                  disabled={isBulkUpdating}
+                  onChange={(e) => handleBulkStatusUpdate(e.target.value)}
+                  className="bg-stone-800 border-none text-white text-xs font-bold px-3 py-2 rounded-xl outline-none cursor-pointer hover:bg-stone-700 transition-colors"
+                  value=""
+                >
+                  <option value="" disabled>Update Status to...</option>
+                  {STATUS_OPTIONS.filter(s => s !== "All").map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+
+                <button
+                  disabled={isBulkUpdating}
+                  onClick={handleBulkDelete}
+                  className="p-2.5 text-stone-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                  title="Bulk Delete"
+                >
+                  <FiTrash2 size={18} />
+                </button>
+              </div>
+
+              <button
+                onClick={() => setSelectedOrderIds([])}
+                className="text-stone-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
+                disabled={isBulkUpdating}
+              >
+                Cancel
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Table */}
         <motion.div variants={fadeUp} className="bg-white rounded-3xl border border-stone-200/50 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-stone-50/50 border-b border-stone-100 text-[10px] font-bold uppercase tracking-wider text-stone-400">
                 <tr>
+                  <th className="px-6 py-4 w-10">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900 cursor-pointer"
+                      checked={selectedOrderIds.length > 0 && selectedOrderIds.length === filteredOrders.length}
+                      onChange={toggleSelectAll}
+                    />
+                  </th>
                   <th className="px-6 py-4">Order ID</th>
                   <th className="px-6 py-4">Customer</th>
                   <th className="px-6 py-4">Payment</th>
@@ -229,8 +340,16 @@ export default function AdminOrders() {
                     <tr
                       key={o._id}
                       onClick={() => setSelectedOrder(o)}
-                      className="group hover:bg-stone-50/50 transition-colors cursor-pointer"
+                      className={`group transition-colors cursor-pointer ${selectedOrderIds.includes(o._id) ? 'bg-stone-100/80 hover:bg-stone-100' : 'hover:bg-stone-50/50'}`}
                     >
+                      <td className="px-6 py-4" onClick={(e) => toggleSelectOrder(o._id, e)}>
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900 cursor-pointer"
+                          checked={selectedOrderIds.includes(o._id)}
+                          readOnly
+                        />
+                      </td>
                       <td className="px-6 py-4 font-mono text-sm font-medium text-stone-500 group-hover:text-blue-600 transition-colors">#{o.orderId}</td>
                       <td className="px-6 py-4 text-sm font-semibold text-stone-900">{o.user?.name || "Guest"}</td>
                       <td className="px-6 py-4">
