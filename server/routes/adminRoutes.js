@@ -217,7 +217,7 @@ router.put("/enterprise/settings", adminAuth, async (req, res) => {
       storeName, contactPhone, contactEmail, logoUrl,
       taxRate, deliveryFee, minOrderValue, freeDeliveryThreshold,
       openingTime, closingTime, isClosed,
-      banner, announcement
+      banner, announcement, spinWheelEnabled
     } = req.body;
 
     const settings = await getSettings();
@@ -245,6 +245,7 @@ router.put("/enterprise/settings", adminAuth, async (req, res) => {
     if (globalDiscount !== undefined) settings.globalDiscount = Number(globalDiscount);
     if (banner !== undefined) settings.banner = banner;
     if (announcement !== undefined) settings.announcement = announcement;
+    if (spinWheelEnabled !== undefined) settings.spinWheelEnabled = spinWheelEnabled;
 
     settings.lastUpdatedBy = req.session?.userId || null;
     await settings.save();

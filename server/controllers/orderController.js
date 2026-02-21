@@ -35,7 +35,7 @@ export const createOrder = async (req, res) => {
         const taxPrice = Math.round((subtotal - (discount || 0)) * 0.05);
         const totalAmount = subtotal - (discount || 0) + shippingPrice + taxPrice;
 
-        const order = new Order({
+        const orderData = {
             user: req.user._id,
             items,
             itemsPrice: subtotal,
@@ -44,8 +44,13 @@ export const createOrder = async (req, res) => {
             totalAmount,
             discount: discount || 0,
             shippingAddress: deliveryAddress || shippingAddress,
-            idempotencyKey: idempotencyKey || undefined
-        });
+        };
+
+        if (idempotencyKey) {
+            orderData.idempotencyKey = idempotencyKey;
+        }
+
+        const order = new Order(orderData);
 
         const createdOrder = await order.save({ session });
 
