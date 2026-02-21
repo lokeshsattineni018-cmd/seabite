@@ -79,6 +79,8 @@ function MainLayout() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [maintenance, setMaintenance] = useState({ active: false, message: "" });
   const [announcement, setAnnouncement] = useState(null); // 🟢 Added
+  const [spinWheelEnabled, setSpinWheelEnabled] = useState(false);
+  const [isSpinOpen, setIsSpinOpen] = useState(false);
 
   const openCart = () => setIsCartOpen(true);
 
@@ -107,6 +109,7 @@ function MainLayout() {
           banner: data.banner
         });
         setAnnouncement(data.announcement); // 🟢 Capture Announcement
+        setSpinWheelEnabled(data.spinWheelEnabled); // 🟢 Capture Spin State
       } catch (error) {
         // console.error("Failed to check maintenance mode:", error);
       }
@@ -115,6 +118,24 @@ function MainLayout() {
     const interval = setInterval(fetchSettings, 60000); // Check every minute
     return () => clearInterval(interval);
   }, []);
+
+  // 🎡 Spin Wheel Trigger Logic
+  useEffect(() => {
+    const hasSpunThisSession = sessionStorage.getItem("seabite_spun_this_session");
+    const user = JSON.parse(localStorage.getItem("userInfo") || "null");
+
+    if (spinWheelEnabled && user && !hasSpunThisSession) {
+      // Check if user actually can spin from backend
+      axios.get("/api/spin/can-spin")
+        .then(res => {
+          if (res.data.canSpin) {
+            setIsSpinOpen(true);
+            sessionStorage.setItem("seabite_spun_this_session", "true");
+          }
+        })
+        .catch(() => { });
+    }
+  }, [spinWheelEnabled]);
 
   const adminLayoutElement = (
     <AdminRoute>
@@ -172,10 +193,13 @@ function MainLayout() {
         <>
           {!isAdminRoute && <Navbar openCart={openCart} announcementActive={!!announcement?.active} />}
           {!isAdminRoute && (
-            <CartSidebar
-              isOpen={isCartOpen}
-              onClose={() => setIsCartOpen(false)}
-            />
+            <>
+              <CartSidebar
+                isOpen={isCartOpen}
+                onClose={() => setIsCartOpen(false)}
+              />
+              <Spin isOpen={isSpinOpen} onClose={() => setIsSpinOpen(false)} />
+            </>
           )}
 
           <div className="flex-grow">
@@ -213,7 +237,6 @@ function MainLayout() {
                     <Route path="/products/:id" element={<ProductDetails />} />
                     <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                    <Route path="/spin" element={<PrivateRoute><Spin /></PrivateRoute>} />
                     <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
                     <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
                     <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />

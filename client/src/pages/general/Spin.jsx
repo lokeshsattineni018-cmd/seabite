@@ -9,11 +9,9 @@ axios.defaults.withCredentials = true;
 
 const Spin = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
-  const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState(null);
   const canvasRef = useRef(null);
-  const isPage = isOpen === undefined;
-  const show = isPage || isOpen;
+  const show = isOpen; // Simplified: if isOpen is passed, use it. If not, it's a page.
 
   const [rotation, setRotation] = useState(0);
 
@@ -27,8 +25,8 @@ const Spin = ({ isOpen, onClose }) => {
   ];
 
   useEffect(() => {
-    if (show && canvasRef.current) drawWheel();
-  }, [show]);
+    if (isOpen && canvasRef.current) drawWheel();
+  }, [isOpen]);
 
   const drawWheel = () => {
     const canvas = canvasRef.current;
@@ -126,7 +124,7 @@ const Spin = ({ isOpen, onClose }) => {
     }
   };
 
-  if (!show) return null;
+  if (!isOpen) return null;
 
   return (
     <AnimatePresence>
@@ -134,8 +132,8 @@ const Spin = ({ isOpen, onClose }) => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className={`fixed inset-0 z-[9999] flex items-center justify-center ${isPage ? 'bg-slate-50 dark:bg-slate-950' : 'bg-black/60 backdrop-blur-sm'} px-4`}
-        onClick={isPage ? undefined : onClose}
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+        onClick={onClose}
       >
         <motion.div
           onClick={(e) => e.stopPropagation()}
@@ -187,8 +185,8 @@ const Spin = ({ isOpen, onClose }) => {
               whileHover={{ scale: spinning ? 1 : 1.02 }}
               whileTap={{ scale: spinning ? 1 : 0.98 }}
               className={`w-full py-4 rounded-xl font-bold text-base uppercase tracking-wide shadow-lg transition-all ${spinning
-                  ? "bg-slate-400 cursor-not-allowed text-white"
-                  : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100"
+                ? "bg-slate-400 cursor-not-allowed text-white"
+                : "bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100"
                 }`}
             >
               {spinning ? (

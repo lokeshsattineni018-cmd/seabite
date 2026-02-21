@@ -94,7 +94,7 @@ export const generateInvoicePDF = async (order) => {
         `Rs. ${(item.price * item.qty).toLocaleString()}`,
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: 95,
         head: [["Description", "Price", "Qty", "Total"]],
         body: tableRows,

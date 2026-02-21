@@ -33,6 +33,9 @@ const settingsSchema = new mongoose.Schema({
     closingTime: { type: String, default: "23:00" },
     isClosed: { type: Boolean, default: false }, // Manual Override
 
+    // 🎡 Gamification
+    spinWheelEnabled: { type: Boolean, default: true },
+
     lastUpdatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 }, { timestamps: true });
 

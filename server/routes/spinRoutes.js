@@ -1,10 +1,16 @@
 import express from "express";
 import User from "../models/User.js";
+import { getSettings } from "../models/Settings.js";
 
 const router = express.Router();
 
 router.post("/spin", async (req, res) => {
   try {
+    const settings = await getSettings();
+    if (!settings.spinWheelEnabled) {
+      return res.status(403).json({ error: "The Spin Wheel is currently disabled by administrator." });
+    }
+
     const userEmail = req.session?.user?.email;
     if (!userEmail) {
       return res.status(401).json({ error: "Please login first to spin!" });
@@ -12,7 +18,7 @@ router.post("/spin", async (req, res) => {
 
     // Check if user already spun (stored in User model)
     const user = await User.findOne({ email: userEmail.toLowerCase() });
-    
+
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
@@ -22,24 +28,24 @@ router.post("/spin", async (req, res) => {
     if (user.lastSpinTime && user.lastOrderCompletionTime) {
       const hoursSinceOrder = (now - new Date(user.lastOrderCompletionTime)) / (1000 * 60 * 60);
       const hoursSinceSpin = (now - new Date(user.lastSpinTime)) / (1000 * 60 * 60);
-      
+
       // If less than 24hrs since last order, can't spin
       if (hoursSinceOrder < 24) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: "You can spin again 24 hours after your last order!",
           nextSpinTime: new Date(user.lastOrderCompletionTime.getTime() + 24 * 60 * 60 * 1000)
         });
       }
-      
+
       // If already spun after last order, can't spin again
       if (user.lastSpinTime > user.lastOrderCompletionTime) {
-        return res.status(403).json({ 
+        return res.status(403).json({
           error: "You've already used your spin! Complete an order to spin again.",
         });
       }
     } else if (user.lastSpinTime && !user.lastOrderCompletionTime) {
       // User spun but never ordered
-      return res.status(403).json({ 
+      return res.status(403).json({
         error: "You've already used your spin! Complete an order to spin again.",
       });
     }
@@ -93,6 +99,11 @@ router.post("/spin", async (req, res) => {
 // Check if user can spin
 router.get("/can-spin", async (req, res) => {
   try {
+    const settings = await getSettings();
+    if (!settings.spinWheelEnabled) {
+      return res.json({ canSpin: false, reason: "Feature disabled" });
+    }
+
     const userEmail = req.session?.user?.email;
     if (!userEmail) {
       return res.json({ canSpin: false, reason: "Not logged in" });
@@ -104,7 +115,7 @@ router.get("/can-spin", async (req, res) => {
     }
 
     const now = new Date();
-    
+
     // Never spun before
     if (!user.lastSpinTime) {
       return res.json({ canSpin: true });
@@ -117,21 +128,21 @@ router.get("/can-spin", async (req, res) => {
 
     // Check if 24hrs passed since last order
     const hoursSinceOrder = (now - new Date(user.lastOrderCompletionTime)) / (1000 * 60 * 60);
-    
+
     if (hoursSinceOrder < 24) {
       const nextSpinTime = new Date(user.lastOrderCompletionTime.getTime() + 24 * 60 * 60 * 1000);
-      return res.json({ 
-        canSpin: false, 
+      return res.json({
+        canSpin: false,
         reason: "Wait 24hrs after your last order",
-        nextSpinTime 
+        nextSpinTime
       });
     }
 
     // Check if already spun after last order
     if (user.lastSpinTime > user.lastOrderCompletionTime) {
-      return res.json({ 
-        canSpin: false, 
-        reason: "Already spun after last order" 
+      return res.json({
+        canSpin: false,
+        reason: "Already spun after last order"
       });
     }
 

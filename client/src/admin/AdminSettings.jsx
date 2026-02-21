@@ -231,6 +231,36 @@ export default function AdminSettings() {
                         </div>
                     </div>
 
+                    {/* 🎡 Gamification */}
+                    <div className="md:col-span-2 bg-white p-8 rounded-3xl border border-stone-200/60 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl"><FiPercent size={20} /></div>
+                            <h2 className="text-lg font-bold text-stone-900">Gamification & Rewards</h2>
+                        </div>
+
+                        <div className="flex items-center justify-between p-6 bg-stone-50 rounded-2xl border border-stone-100">
+                            <div className="flex items-center gap-4">
+                                <div className={`p-4 rounded-2xl transition-all ${formData.spinWheelEnabled ? "bg-rose-100 text-rose-600" : "bg-stone-200 text-stone-400"}`}>
+                                    <FiSettings className={formData.spinWheelEnabled ? "animate-spin-slow" : ""} size={24} />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-stone-900 text-lg">Spin & Win Wheel</h3>
+                                    <p className="text-sm text-stone-500">Allow users to win instant discounts on login</p>
+                                </div>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer scale-110">
+                                <input
+                                    type="checkbox"
+                                    name="spinWheelEnabled"
+                                    checked={formData.spinWheelEnabled || false}
+                                    onChange={handleChange}
+                                    className="sr-only peer"
+                                />
+                                <div className="w-14 h-8 bg-stone-200 rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500 shadow-inner"></div>
+                            </label>
+                        </div>
+                    </div>
+
                 </form >
             </div >
         </motion.div >

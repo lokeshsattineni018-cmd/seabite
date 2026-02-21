@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FiLogOut, FiHome, FiArrowLeft, FiEdit2, FiMapPin } from "react-icons/fi";
 import { motion, useInView } from "framer-motion";
 import UserInfo from "./UserInfo";
+import AddressManager from "./AddressManager";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -192,28 +193,17 @@ export default function Profile() {
           <UserInfo user={user} />
         </FadeUp>
 
+        {/* ── ADDRESS MANAGER ── */}
+        <FadeUp delay={0.2}>
+          <AddressManager />
+        </FadeUp>
+
         {/* ── ACTION BUTTONS ── */}
         <FadeUp delay={0.25}>
           <div style={{
             display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center",
             marginTop: 24, marginBottom: 48, paddingBottom: 8,
           }}>
-            {/* Edit Address */}
-            <motion.button
-              whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.15)" }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate("/checkout")}
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "12px 24px", borderRadius: 14,
-                background: "rgba(91,168,160,0.08)", border: "1px solid rgba(91,168,160,0.2)",
-                color: "#5BA8A0", fontSize: 13, fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}
-            >
-              <FiMapPin size={15} /> Edit Address
-            </motion.button>
 
             {/* Home */}
             <motion.button

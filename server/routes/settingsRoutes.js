@@ -25,7 +25,8 @@ router.get("/", async (req, res) => {
             openingTime: settings.openingTime,
             closingTime: settings.closingTime,
             isClosed: settings.isClosed,
-            globalDiscount: settings.globalDiscount
+            globalDiscount: settings.globalDiscount,
+            spinWheelEnabled: settings.spinWheelEnabled
         };
 
         res.json(publicSettings);
