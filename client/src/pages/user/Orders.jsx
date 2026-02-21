@@ -204,10 +204,10 @@ export default function Order() {
           </motion.div>
         ) : (
           /* ── TWO-COLUMN LAYOUT ── */
-          <div style={{ display: "grid", gridTemplateColumns: "210px 1fr", gap: 20, alignItems: "start" }}>
+          <div className="orders-grid" style={{ display: "grid", gridTemplateColumns: "210px 1fr", gap: 20, alignItems: "start" }}>
 
             {/* ── LEFT SIDEBAR ── */}
-            <div style={{ position: "sticky", top: 100, alignSelf: "flex-start", display: "flex", flexDirection: "column", gap: 14 }}>
+            <div className="orders-sidebar" style={{ position: "sticky", top: 100, alignSelf: "flex-start", display: "flex", flexDirection: "column", gap: 14 }}>
 
               {/* Overview card */}
               <div style={{ background: T.surface, borderRadius: T.radius, border: `1px solid ${T.border}`, padding: "16px 14px", boxShadow: "0 2px 12px rgba(91,168,160,0.06)" }}>

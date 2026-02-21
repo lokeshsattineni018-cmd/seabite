@@ -1,7 +1,7 @@
 import { useEffect, useState, useContext, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiHome, FiArrowLeft, FiEdit2 } from "react-icons/fi";
+import { FiLogOut, FiHome, FiArrowLeft, FiEdit2, FiMapPin } from "react-icons/fi";
 import { motion, useInView } from "framer-motion";
 import UserInfo from "./UserInfo";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
@@ -68,7 +68,7 @@ export default function Profile() {
       overflowX: "hidden",
     }}>
       {/* ── HERO BANNER ── */}
-      <div style={{ position: "relative", height: 240, overflow: "hidden" }}>
+      <div style={{ position: "relative", height: 300, overflow: "hidden" }}>
         {/* Ocean photo */}
         <motion.img
           initial={{ scale: 1.06 }}
@@ -93,7 +93,7 @@ export default function Profile() {
           whileTap={{ scale: 0.96 }}
           onClick={() => navigate("/")}
           style={{
-            position: "absolute", top: 24, left: 24,
+            position: "absolute", top: 80, left: 24,
             display: "flex", alignItems: "center", gap: 8,
             padding: "8px 16px", borderRadius: 12,
             background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)",
@@ -118,7 +118,7 @@ export default function Profile() {
             borderRadius: 20, border: "1px solid #E2EEEC",
             boxShadow: "0 4px 32px rgba(91,168,160,0.10), 0 1px 4px rgba(26,43,53,0.04)",
             padding: "24px 28px",
-            marginTop: -56, marginBottom: 20,
+            marginTop: -48, marginBottom: 20,
             display: "flex", alignItems: "center", gap: 20,
             flexWrap: "wrap",
           }}
@@ -198,6 +198,23 @@ export default function Profile() {
             display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center",
             marginTop: 24, marginBottom: 48, paddingBottom: 8,
           }}>
+            {/* Manage Addresses */}
+            <motion.button
+              whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.15)" }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/checkout")}
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "12px 24px", borderRadius: 14,
+                background: "rgba(91,168,160,0.08)", border: "1px solid rgba(91,168,160,0.2)",
+                color: "#5BA8A0", fontSize: 13, fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
+            >
+              <FiMapPin size={15} /> Manage Addresses
+            </motion.button>
+
             {/* Home */}
             <motion.button
               whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(26,43,53,0.10)" }}

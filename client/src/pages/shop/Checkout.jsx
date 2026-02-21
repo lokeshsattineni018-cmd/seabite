@@ -340,7 +340,7 @@ export default function Checkout() {
           </h1>
         </motion.div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 20 }} className="checkout-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr min(390px, 40%)", gap: 20 }} className="checkout-grid">
           {/* LEFT */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
