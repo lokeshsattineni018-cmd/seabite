@@ -136,7 +136,7 @@ export default function Products() {
       `}</style>
 
       <div
-        className="products-root"
+        className="products-root products-wrapper"
         style={{ minHeight: "100vh", background: "#F4F9F8", paddingTop: "88px", paddingBottom: "64px" }}
       >
         <div style={{
@@ -161,7 +161,7 @@ export default function Products() {
               </span>
             </div>
 
-            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
+            <div className="products-header" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
               <div>
                 <AnimatePresence mode="wait">
                   <motion.h1
@@ -354,7 +354,8 @@ export default function Products() {
                     key="grid"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "20px" }}
+                    style={{ display: "grid", gap: "20px" }}
+                    className="product-grid"
                   >
                     {products.map((p, i) => (
                       <motion.div key={p._id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}>

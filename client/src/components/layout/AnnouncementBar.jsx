@@ -5,10 +5,17 @@ export default function AnnouncementBar({ settings }) {
 
     return (
         <div
-            className="w-full py-2.5 px-4 text-center text-xs md:text-sm font-bold tracking-wide relative z-[60]"
             style={{
-                backgroundColor: settings.bgColor || "#000",
-                color: settings.textColor || "#fff"
+                position: "fixed",
+                top: 0, left: 0, right: 0,
+                zIndex: 110,
+                padding: "8px 16px",
+                textAlign: "center",
+                fontSize: "13px",
+                fontWeight: 700,
+                letterSpacing: "0.03em",
+                backgroundColor: settings.bgColor || "#1A2B35",
+                color: settings.textColor || "#fff",
             }}
         >
             <motion.div

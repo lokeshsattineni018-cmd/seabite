@@ -21,7 +21,7 @@ const NAV_LINKS = [
   { label: "Crabs", path: "/products?category=Crab" },
 ];
 
-export default function Navbar({ openCart }) {
+export default function Navbar({ openCart, announcementActive = false }) {
   const { cartCount } = useContext(CartContext);
   const { user, setUser, refreshMe } = useAuth();
   const navigate = useNavigate();
@@ -200,7 +200,7 @@ export default function Navbar({ openCart }) {
         animate={{ y: hidden ? -72 : 0, opacity: hidden ? 0 : 1 }}
         transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
         style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+          position: "fixed", top: announcementActive ? 40 : 0, left: 0, right: 0, zIndex: 100,
           fontFamily: "'Manrope', sans-serif",
           background: T.navBg,
           backdropFilter: T.navBlur,
@@ -208,7 +208,7 @@ export default function Navbar({ openCart }) {
           borderBottom: `1px solid ${T.navBorder}`,
           boxShadow: T.navShadow,
           padding: T.navPy,
-          transition: "background 0.35s, box-shadow 0.35s, padding 0.3s, border-color 0.35s",
+          transition: "background 0.35s, box-shadow 0.35s, padding 0.3s, border-color 0.35s, top 0.3s",
         }}
       >
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 28px", display: "flex", alignItems: "center" }}>
@@ -328,7 +328,7 @@ export default function Navbar({ openCart }) {
                 <AnimatePresence>
                   {user?.wishlist?.length > 0 && (
                     <motion.span key={user.wishlist.length} initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                      style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>
+                      style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {user.wishlist.length}
                     </motion.span>
                   )}
@@ -345,7 +345,7 @@ export default function Navbar({ openCart }) {
                 {cartCount > 0 && (
                   <motion.span key={cartCount} initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }}
                     transition={{ type: "spring", stiffness: 500, damping: 18 }}
-                    style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>
+                    style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     {cartCount}
                   </motion.span>
                 )}

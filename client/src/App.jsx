@@ -163,7 +163,7 @@ function MainLayout() {
         <Maintenance message={maintenance.message} />
       ) : (
         <>
-          {!isAdminRoute && <Navbar openCart={openCart} />}
+          {!isAdminRoute && <Navbar openCart={openCart} announcementActive={!!announcement?.active} />}
           {!isAdminRoute && (
             <CartSidebar
               isOpen={isCartOpen}
