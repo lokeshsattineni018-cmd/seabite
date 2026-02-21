@@ -1,7 +1,7 @@
 import express from "express";
-import Order from "../models/Order.js"; 
+import Order from "../models/Order.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
-import { cancelOrder, updateOrderStatus } from "../controllers/orderController.js"; 
+import { cancelOrder, updateOrderStatus, deleteOrder } from "../controllers/orderController.js";
 // 🟢 ADDED: Import the email service to trigger the confirmation mail
 import { sendOrderPlacedEmail } from "../utils/emailService.js";
 
@@ -27,7 +27,7 @@ router.get("/", protect, admin, async (req, res) => {
 router.get("/myorders", protect, async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
-      .populate("items.productId", "name image reviews") 
+      .populate("items.productId", "name image reviews")
       .sort({ createdAt: -1 });
     res.status(200).json(orders);
   } catch (error) {
@@ -44,7 +44,7 @@ router.get("/:orderId", protect, async (req, res) => {
     const order = await Order.findOne(query)
       .populate("user", "name email")
       .populate("items.productId", "name image reviews");
-    
+
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.status(200).json(order);
   } catch (error) {
@@ -58,24 +58,27 @@ router.put("/:id/status", protect, admin, updateOrderStatus);
 // --- USER CANCEL ORDER ---
 router.put("/:id/cancel", protect, cancelOrder);
 
+// --- ADMIN DELETE ORDER ---
+router.delete("/:id", protect, admin, deleteOrder);
+
 // ===============================================
 // 🟢 PLACE ORDER (With Email Trigger)
 // ===============================================
 router.post("/", protect, async (req, res) => {
   try {
-    const { 
-        items, 
-        totalAmount, 
-        deliveryAddress, 
-        discount,
-        itemsPrice,   
-        taxPrice,     
-        shippingPrice,
-        paymentMethod,
-        isPaid,
-        paymentId,
-        razorpay_order_id 
-    } = req.body; 
+    const {
+      items,
+      totalAmount,
+      deliveryAddress,
+      discount,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      paymentMethod,
+      isPaid,
+      paymentId,
+      razorpay_order_id
+    } = req.body;
 
     if (!items || items.length === 0) {
       return res.status(400).json({ message: "No items in order" });
@@ -86,18 +89,18 @@ router.post("/", protect, async (req, res) => {
       items,
       totalAmount,
       discount: discount || 0,
-      itemsPrice: itemsPrice || 0,     
-      taxPrice: taxPrice || 0,         
+      itemsPrice: itemsPrice || 0,
+      taxPrice: taxPrice || 0,
       shippingPrice: shippingPrice || 0,
       paymentMethod: paymentMethod || "COD",
       isPaid: isPaid || false,
       paidAt: isPaid ? Date.now() : null,
       paymentId: paymentId || null,
-      razorpay_order_id: razorpay_order_id || null, 
+      razorpay_order_id: razorpay_order_id || null,
       shippingAddress: {
         fullName: deliveryAddress.fullName,
         phone: deliveryAddress.phone,
-        houseNo: deliveryAddress.houseNo || "", 
+        houseNo: deliveryAddress.houseNo || "",
         street: deliveryAddress.street,
         city: deliveryAddress.city,
         state: deliveryAddress.state,
@@ -106,23 +109,23 @@ router.post("/", protect, async (req, res) => {
     });
 
     const savedOrder = await newOrder.save();
-    
+
     // 🟢 TRIGGER: Send the Premium Order Confirmation Email
     // Since we are inside 'protect', req.user is available
     try {
-        await sendOrderPlacedEmail(
-            req.user.email, 
-            req.user.name, 
-            savedOrder.orderId || savedOrder._id, 
-            savedOrder.totalAmount,
-            savedOrder.items 
-        );
-        console.log(`✅ Confirmation email sent for Order #${savedOrder.orderId}`);
+      await sendOrderPlacedEmail(
+        req.user.email,
+        req.user.name,
+        savedOrder.orderId || savedOrder._id,
+        savedOrder.totalAmount,
+        savedOrder.items
+      );
+      console.log(`✅ Confirmation email sent for Order #${savedOrder.orderId}`);
     } catch (mailErr) {
-        console.error("❌ Email Trigger Failed:", mailErr.message);
+      console.error("❌ Email Trigger Failed:", mailErr.message);
     }
 
-    res.status(201).json(savedOrder); 
+    res.status(201).json(savedOrder);
   } catch (error) {
     console.error("Order Creation Error:", error);
     res.status(500).json({ message: error.message });

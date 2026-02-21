@@ -3,7 +3,9 @@ import {
     sendStatusUpdateEmail
 } from "../utils/emailService.js";
 import logger from "../utils/logger.js";
+import Order from "../models/Order.js";
 import ActivityLog from "../models/ActivityLog.js";
+import Notification from "../models/notification.js";
 import mongoose from "mongoose";
 
 /**
@@ -246,5 +248,34 @@ export const migrateOldOrderDiscounts = async (req, res) => {
         res.status(200).json({ message: `Fixed ${updatedCount} orders.` });
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * @desc    Delete an order (ADMIN ONLY)
+ * @route   DELETE /api/orders/:id
+ * @access  Private/Admin
+ */
+export const deleteOrder = async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        await order.deleteOne();
+
+        // 🔐 AUDIT TRAIL: Log deletion
+        await ActivityLog.create({
+            user: req.user._id,
+            action: `ORDER_DELETED`,
+            details: `Order #${order.orderId || order._id} was permanently deleted by Admin.`,
+            meta: { orderId: order._id, orderNumber: order.orderId }
+        });
+
+        logger.warn("Order Deleted", { orderId: order.orderId, admin: req.user.email });
+
+        res.json({ message: "Order removed successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
 };
