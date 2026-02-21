@@ -34,6 +34,8 @@ export default function AdminProducts() {
   const [viewMode, setViewMode] = useState("table");
   const backendBase = import.meta.env.VITE_API_URL || "";
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
 
   const fetchProducts = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -63,6 +65,59 @@ export default function AdminProducts() {
       fetchProducts(true);
     } catch {
       setModal({ show: true, message: "Delete failed", type: "error" });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Are you sure you want to PERMANENTLY delete ${selectedIds.length} products?`)) return;
+
+    setIsBulkProcessing(true);
+    const t = toast.loading(`Deleting ${selectedIds.length} products...`);
+    try {
+      await Promise.all(
+        selectedIds.map(id => axios.delete(`${backendBase}/api/admin/products/${id}`, { withCredentials: true }))
+      );
+      toast.success(`${selectedIds.length} products removed`, { id: t });
+      setSelectedIds([]);
+      fetchProducts(true);
+    } catch (err) {
+      toast.error("Bulk deletion failed", { id: t });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkStockUpdate = async (stock) => {
+    if (selectedIds.length === 0) return;
+    setIsBulkProcessing(true);
+    const t = toast.loading(`Updating ${selectedIds.length} products to ${stock === 'in' ? 'In Stock' : 'Out of Stock'}...`);
+    try {
+      await Promise.all(
+        selectedIds.map(id => axios.put(`${backendBase}/api/admin/products/${id}`, { stock }, { withCredentials: true }))
+      );
+      toast.success("Inventory updated", { id: t });
+      setSelectedIds([]);
+      fetchProducts(true);
+    } catch (err) {
+      toast.error("Update failed", { id: t });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const toggleSelect = (id, e) => {
+    if (e) e.stopPropagation();
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredProducts.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredProducts.map(p => p._id));
     }
   };
 
@@ -136,6 +191,58 @@ export default function AdminProducts() {
           </div>
         </motion.div>
 
+        {/* Bulk Action Bar */}
+        <AnimatePresence>
+          {selectedIds.length > 0 && (
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-stone-900 border border-stone-800 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 min-w-[500px]"
+            >
+              <div className="flex items-center gap-2 pr-6 border-r border-stone-800">
+                <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-emerald-500/20">
+                  {selectedIds.length}
+                </div>
+                <span className="text-stone-400 text-xs font-bold uppercase tracking-widest">Inventory Selection</span>
+              </div>
+
+              <div className="flex items-center gap-3 flex-1">
+                <button
+                  onClick={() => handleBulkStockUpdate('in')}
+                  disabled={isBulkProcessing}
+                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white text-[10px] font-bold uppercase rounded-xl transition-all border border-stone-700 active:scale-95"
+                >
+                  Mark In Stock
+                </button>
+                <button
+                  onClick={() => handleBulkStockUpdate('out')}
+                  disabled={isBulkProcessing}
+                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white text-[10px] font-bold uppercase rounded-xl transition-all border border-stone-700 active:scale-95"
+                >
+                  Mark Out
+                </button>
+                <button
+                  disabled={isBulkProcessing}
+                  onClick={handleBulkDelete}
+                  className="p-2.5 text-stone-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                  title="Bulk Delete"
+                >
+                  <FiTrash2 size={18} />
+                </button>
+              </div>
+
+              <button
+                onClick={() => setSelectedIds([])}
+                className="text-stone-500 hover:text-white text-[10px] font-bold uppercase tracking-widest transition-colors"
+                disabled={isBulkProcessing}
+              >
+                Cancel
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Content */}
         <AnimatePresence mode="wait">
           {loading ? (
@@ -178,6 +285,14 @@ export default function AdminProducts() {
                 <table className="w-full text-left">
                   <thead className="bg-stone-50/50 border-b border-stone-100 text-[10px] font-bold uppercase tracking-wider text-stone-400">
                     <tr>
+                      <th className="px-6 py-4 w-10">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900 cursor-pointer"
+                          checked={selectedIds.length > 0 && selectedIds.length === filteredProducts.length}
+                          onChange={toggleSelectAll}
+                        />
+                      </th>
                       <th className="px-6 py-4">Product</th>
                       <th className="px-6 py-4">Category</th>
                       <th className="px-6 py-4">Price</th>
@@ -187,7 +302,19 @@ export default function AdminProducts() {
                   </thead>
                   <tbody className="divide-y divide-stone-50">
                     {filteredProducts.map((p) => (
-                      <tr key={p._id} className="group hover:bg-stone-50/30 transition-colors">
+                      <tr
+                        key={p._id}
+                        onClick={() => toggleSelect(p._id)}
+                        className={`group transition-colors cursor-pointer ${selectedIds.includes(p._id) ? 'bg-stone-100/80 hover:bg-stone-100' : 'hover:bg-stone-50/30'}`}
+                      >
+                        <td className="px-6 py-4" onClick={(e) => toggleSelect(p._id, e)}>
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900 cursor-pointer"
+                            checked={selectedIds.includes(p._id)}
+                            readOnly
+                          />
+                        </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-stone-50 border border-stone-100 p-1 shrink-0">

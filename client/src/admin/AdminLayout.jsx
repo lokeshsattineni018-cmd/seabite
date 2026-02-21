@@ -16,14 +16,14 @@ const AdminPageLoader = () => (
         <div className="h-8 w-48 bg-stone-200 rounded-lg" />
         <div className="h-4 w-32 bg-stone-100 rounded" />
       </div>
-      <div className="h-10 w-32 bg-stone-200 rounded-xl" />
+      <div className="h-10 w-40 bg-stone-200 rounded-xl" />
     </div>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-40 bg-white border border-stone-100 rounded-2xl shadow-sm" />
+        <div key={i} className="h-32 bg-white border border-stone-100 rounded-3xl" />
       ))}
     </div>
-    <div className="h-96 bg-white border border-stone-100 rounded-2xl shadow-sm" />
+    <div className="h-96 bg-white border border-stone-100 rounded-3xl" />
   </div>
 );
 
@@ -105,10 +105,20 @@ export default function AdminLayout() {
       {/* 🟢 Main Content Area */}
       <main className="flex-1 relative z-10 overflow-y-auto overflow-x-hidden h-full pt-16 md:pt-0 scroll-smooth bg-[#fafaf9]">
         {/* Top Navigation Bar (Desktop) */}
-        <div className="hidden md:flex items-center justify-between px-8 py-5 sticky top-0 bg-[#fafaf9]/90 backdrop-blur-sm z-20 mb-2">
-          <div>
-            <h1 className="text-xl font-bold text-stone-800 tracking-tight">Overview</h1>
-            <p className="text-xs text-stone-400 font-bold uppercase tracking-widest mt-0.5">Welcome back, {user?.name?.split(" ")[0] || "Admin"}</p>
+        <div className="hidden md:flex items-center justify-between px-8 py-5 sticky top-0 bg-[#fafaf9]/95 backdrop-blur-md z-20 border-b border-stone-200/40">
+          <div className="flex items-center gap-6">
+            <div>
+              <h1 className="text-xl font-bold text-stone-900 tracking-tight">System Control</h1>
+              <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-0.5 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                Live: {user?.name?.split(" ")[0] || "Operator"}
+              </p>
+            </div>
+            <div className="h-8 w-px bg-stone-200/60" />
+            <div className="px-3 py-1.5 bg-stone-100/50 rounded-full border border-stone-200/40 flex items-center gap-2">
+              <span className="text-[9px] font-bold text-stone-500 uppercase tracking-tighter">Status:</span>
+              <span className="text-[10px] font-bold text-stone-800 uppercase">Operational</span>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">

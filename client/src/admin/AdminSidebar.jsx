@@ -87,6 +87,10 @@ export default function AdminSidebar({ settings, onUpdateBanner }) {
                   {link.name}
                 </span>
 
+                {link.name === "Live Ops" && (
+                  <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                )}
+
                 {isActive && (
                   <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }}>
                     <FiChevronRight size={14} className="text-stone-400" />

@@ -35,7 +35,8 @@ export const generateInvoicePDF = async (order) => {
 
     // ─── ADD LOGO ───
     try {
-        const logoData = await getBase64ImageFromURL("/roundlogo.png");
+        // Fallback to logo.png if roundlogo.png is missing or fails
+        const logoData = await getBase64ImageFromURL("/roundlogo.png") || await getBase64ImageFromURL("/logo.png");
         if (logoData) {
             doc.addImage(logoData, "PNG", 14, 12, 22, 22);
         }
@@ -57,10 +58,10 @@ export const generateInvoicePDF = async (order) => {
     // ─── DOCUMENT TYPE ───
     doc.setDrawColor(...darkColor);
     doc.setFillColor(...darkColor);
-    doc.rect(140, 15, 56, 12, "F");
+    doc.rect(130, 15, 66, 12, "F");
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(11);
-    doc.text("TAX INVOICE", 168, 23, { align: "center" });
+    doc.text("TAX INVOICE", 163, 23, { align: "center" });
 
     // ─── ORIGIN DETAILS (Legal) ───
     doc.setTextColor(...midColor);
@@ -73,9 +74,9 @@ export const generateInvoicePDF = async (order) => {
     // ─── META INFO ───
     doc.setTextColor(...darkColor);
     doc.setFont("helvetica", "bold");
-    doc.text(`Invoice ID:`, 140, 42);
-    doc.text(`Order Date:`, 140, 46);
-    doc.text(`Payment:`, 140, 50);
+    doc.text(`Order ID:`, 130, 42);
+    doc.text(`Date:`, 130, 46);
+    doc.text(`Payment:`, 130, 50);
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...midColor);
@@ -91,8 +92,8 @@ export const generateInvoicePDF = async (order) => {
     doc.setFontSize(9);
     doc.setTextColor(...primaryColor);
     doc.setFont("helvetica", "bold");
-    doc.text("BILL TO (CUSTOMER DETAILS)", 14, 65);
-    doc.text("LOGISTICS LOG", 110, 65);
+    doc.text("BILL TO (CUSTOMER)", 14, 65);
+    doc.text("STATUS & LOGS", 110, 65);
 
     doc.setTextColor(...darkColor);
     doc.setFontSize(10);
@@ -107,16 +108,17 @@ export const generateInvoicePDF = async (order) => {
     doc.text(`${addr.city || ""}, ${addr.state || ""} - ${addr.zip || ""}`, 14, 86);
 
     // Logistics side
-    doc.text(`Order Ref: SB-${order._id.toString().slice(-6).toUpperCase()}`, 110, 72);
-    doc.text(`Gateway: ${order.paymentMethod === 'Prepaid' ? 'Razorpay' : 'Manual'}`, 110, 77);
-    if (order.paymentId) doc.text(`TXN ID: ${order.paymentId}`, 110, 82);
+    doc.text(`Ref: SB-${order._id.toString().slice(-6).toUpperCase()}`, 110, 72);
+    doc.text(`Method: ${order.paymentMethod === 'Prepaid' ? 'Online' : 'Cash'}`, 110, 77);
+    if (order.paymentId) doc.text(`TXN: ${order.paymentId}`, 110, 82);
+    doc.text(`Status: ${order.status}`, 110, 87);
 
     // ─── TABLE ───
     const tableRows = (order.items || []).map((item) => [
         item.name,
         item.qty.toString(),
-        `₹${item.price.toLocaleString()}`,
-        `₹${(item.price * item.qty).toLocaleString()}`,
+        `Rs. ${item.price.toLocaleString()}`,
+        `Rs. ${(item.price * item.qty).toLocaleString()}`,
     ]);
 
     autoTable(doc, {
@@ -157,37 +159,41 @@ export const generateInvoicePDF = async (order) => {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...midColor);
 
-    const summaryX = 135;
+    const summaryX = 125;
     doc.text("Subtotal:", summaryX, finalY);
     doc.text("GST (5%):", summaryX, finalY + 6);
-    doc.text("Shipping:", summaryX, finalY + 12);
-    if (discount > 0) doc.text("Discount:", summaryX, finalY + 18);
+    doc.text("Shipping Charge:", summaryX, finalY + 12);
+    if (discount > 0) doc.text("Discount Applied:", summaryX, finalY + 18);
 
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...darkColor);
-    doc.text(`₹${itemsPrice.toLocaleString()}`, 196, finalY, { align: "right" });
-    doc.text(`₹${taxPrice.toLocaleString()}`, 196, finalY + 6, { align: "right" });
-    doc.text(shippingPrice === 0 ? "FREE" : `₹${shippingPrice.toLocaleString()}`, 196, finalY + 12, { align: "right" });
+    doc.text(`Rs. ${itemsPrice.toLocaleString()}`, 196, finalY, { align: "right" });
+    doc.text(`Rs. ${taxPrice.toLocaleString()}`, 196, finalY + 6, { align: "right" });
+    doc.text(shippingPrice === 0 ? "FREE" : `Rs. ${shippingPrice.toLocaleString()}`, 196, finalY + 12, { align: "right" });
     if (discount > 0) {
         doc.setTextColor(16, 185, 129); // Green
-        doc.text(`- ₹${discount.toLocaleString()}`, 196, finalY + 18, { align: "right" });
+        doc.text(`- Rs. ${discount.toLocaleString()}`, 196, finalY + 18, { align: "right" });
     }
 
     // ─── TOTAL BOX ───
+    const totalBoxHeight = 14;
     const totalBoxY = finalY + (discount > 0 ? 24 : 18);
     doc.setFillColor(...darkColor);
-    doc.rect(summaryX - 5, totalBoxY, 66, 12, "F");
+    doc.rect(summaryX - 10, totalBoxY, 81, totalBoxHeight, "F");
+
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(11);
-    doc.text("TOTAL PAYABLE", summaryX, totalBoxY + 8);
-    doc.text(`₹${total.toLocaleString()}`, 196, totalBoxY + 8, { align: "right" });
+    doc.text("TOTAL PAYABLE", summaryX - 5, totalBoxY + 9);
+
+    doc.setFontSize(13);
+    doc.text(`Rs. ${total.toLocaleString()}`, 196, totalBoxY + 9, { align: "right" });
 
     // ─── FOOTER ───
     doc.setTextColor(...midColor);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    doc.text("Declaration: Fresh seafood should be consumed within 24 hours.", 14, 280);
-    doc.text("This is a computer-generated invoice, no signature required.", 14, 284);
+    doc.text("Terms: Fresh seafood must be consumed within 24-36 hrs of delivery.", 14, 280);
+    doc.text("Digitally generated invoice. No signature required.", 14, 284);
 
     doc.setTextColor(...primaryColor);
     doc.setFont("helvetica", "bold");
