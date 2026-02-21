@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { FiUser, FiMail, FiPhone, FiMapPin, FiCalendar, FiShield } from "react-icons/fi";
 
 export default function UserInfo({ user }) {
@@ -72,14 +71,7 @@ export default function UserInfo({ user }) {
         }}
       >
         {infoItems.map((item, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            whileHover={{ y: -1 }}
-            style={{ cursor: "default" }}
-          >
+          <div key={index} style={{ cursor: "default" }}>
             {/* Label row */}
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
               <div style={{
@@ -124,7 +116,7 @@ export default function UserInfo({ user }) {
               marginTop: 12, marginLeft: 38,
               height: 1, background: "#F0F5F4",
             }} />
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

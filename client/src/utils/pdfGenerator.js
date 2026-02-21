@@ -2,7 +2,7 @@ import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const getBase64ImageFromURL = (url) => {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         const img = new Image();
         img.setAttribute("crossOrigin", "anonymous");
         img.src = url;
@@ -15,8 +15,8 @@ const getBase64ImageFromURL = (url) => {
             const dataURL = canvas.toDataURL("image/png");
             resolve(dataURL);
         };
-        img.onerror = (error) => {
-            // console.warn("Logo load failed:", error);
+        img.onerror = () => {
+            // console.warn("Logo load failed");
             resolve(null); // Continue without logo
         };
     });

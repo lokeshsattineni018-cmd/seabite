@@ -1,8 +1,8 @@
-import { useEffect, useState, useContext, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiHome, FiArrowLeft, FiEdit2, FiMapPin } from "react-icons/fi";
-import { motion, useInView } from "framer-motion";
+import { FiLogOut, FiHome, FiArrowLeft, FiMapPin } from "react-icons/fi";
+import { useInView } from "framer-motion";
 import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
@@ -30,7 +30,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
       setUser(res.data);
@@ -39,19 +39,21 @@ export default function Profile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   const handleLogout = async () => {
     try {
       await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
-    } catch { }
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
     finally {
       navigate("/login");
       window.location.reload();
     }
   };
 
-  useEffect(() => { fetchUser(); }, []);
+  useEffect(() => { fetchUser(); }, [fetchUser]);
 
   if (loading) {
     return <SeaBiteLoader fullScreen />;
