@@ -4,7 +4,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiRefreshCw, FiTruck, FiPrinter,
-  FiXCircle, FiPackage, FiArrowUpRight, FiFilter
+  FiXCircle, FiPackage, FiArrowUpRight, FiFilter, FiTrash2
 } from "react-icons/fi";
 import PopupModal from "../components/common/PopupModal";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
@@ -67,6 +67,20 @@ export default function AdminOrders() {
       fetchOrders(true);
     } catch {
       toast.error("Update failed");
+    }
+  };
+
+  const handleDeleteOrder = async (id, orderNumber) => {
+    if (!window.confirm(`Are you sure you want to PERMANENTLY delete Order #${orderNumber}? This action cannot be undone.`)) return;
+
+    const t = toast.loading("Deleting order...");
+    try {
+      await axios.delete(`/api/orders/${id}`, { withCredentials: true });
+      toast.success("Order deleted successfully", { id: t });
+      fetchOrders(true);
+      if (selectedOrder?._id === id) setSelectedOrder(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Deletion failed", { id: t });
     }
   };
 
@@ -227,14 +241,27 @@ export default function AdminOrders() {
                       <td className="px-6 py-4 font-mono text-sm font-bold text-stone-900">₹{o.totalAmount.toLocaleString()}</td>
                       <td className="px-6 py-4"><StatusPill status={o.status} /></td>
                       <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        <select
-                          value={o.status}
-                          disabled={o.status.includes("Cancelled")}
-                          onChange={(e) => updateStatus(o._id, e.target.value)}
-                          className="bg-white border border-stone-200 rounded-lg py-1.5 px-2 text-xs font-bold text-stone-600 outline-none cursor-pointer hover:border-blue-400 transition-colors disabled:opacity-50"
-                        >
-                          {STATUS_OPTIONS.filter(s => s !== "All").map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
+                        <div className="flex items-center justify-end gap-2">
+                          <select
+                            value={o.status}
+                            disabled={o.status.includes("Cancelled")}
+                            onChange={(e) => updateStatus(o._id, e.target.value)}
+                            className="bg-white border border-stone-200 rounded-lg py-1.5 px-2 text-xs font-bold text-stone-600 outline-none cursor-pointer hover:border-blue-400 transition-colors disabled:opacity-50"
+                          >
+                            {STATUS_OPTIONS.filter((s) => s !== "All").map((s) => (
+                              <option key={s} value={s}>
+                                {s}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => handleDeleteOrder(o._id, o.orderId)}
+                            className="p-2 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Delete Order"
+                          >
+                            <FiTrash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -244,8 +271,8 @@ export default function AdminOrders() {
           </div>
         </motion.div>
 
-      </div>
-    </motion.div>
+      </div >
+    </motion.div >
   );
 }
 
@@ -313,6 +340,17 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
               <FiXCircle size={24} />
             </button>
           </div>
+        </div>
+
+        {/* Delete Banner (Warning) */}
+        <div className="px-8 py-2 bg-rose-50 border-b border-rose-100 flex justify-between items-center group">
+          <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">Danger Zone: Permanent Deletion</p>
+          <button
+            onClick={() => handleDeleteOrder(order._id, order.orderId)}
+            className="flex items-center gap-1.5 text-[10px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-wider transition-colors"
+          >
+            <FiTrash2 size={12} /> Delete Order
+          </button>
         </div>
 
         {/* content */}
