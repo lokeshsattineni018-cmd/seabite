@@ -57,6 +57,9 @@ const AdminWatchtower = lazy(() => import("./admin/AdminWatchtower"));
 const AdminAbandonedCarts = lazy(() => import("./admin/AdminAbandonedCarts"));
 const AdminSettings = lazy(() => import("./admin/AdminSettings"));
 const AdminAnalytics = lazy(() => import("./admin/AdminAnalytics"));
+const AdminIAM = lazy(() => import("./admin/AdminIAM"));
+const AdminRegistry = lazy(() => import("./admin/AdminRegistry"));
+const AdminSearchDiscovery = lazy(() => import("./admin/AdminSearchDiscovery"));
 
 // Context
 import { CartProvider } from "./context/CartContext";
@@ -195,6 +198,9 @@ function MainLayout() {
                     <Route path="carts" element={<AdminAbandonedCarts />} />
                     <Route path="settings" element={<AdminSettings />} />
                     <Route path="analytics" element={<AdminAnalytics />} />
+                    <Route path="iam" element={<AdminIAM />} />
+                    <Route path="registry" element={<AdminRegistry />} />
+                    <Route path="discovery" element={<AdminSearchDiscovery />} />
                   </Route>
                 </Routes>
               ) : (

@@ -64,7 +64,7 @@ function ItemRow({ item, index }) {
       display: "flex", alignItems: "center", gap: 10, padding: "9px 12px",
       borderRadius: 10, background: "#F7FAFA", border: "1px solid #EEF5F4",
     }}>
-      <Link to={`/product/${realId}`} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flex: 1, minWidth: 0 }}>
+      <Link to={`/products/${realId}`} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flex: 1, minWidth: 0 }}>
         <div style={{
           width: 32, height: 32, borderRadius: 8, flexShrink: 0,
           background: "rgba(91,168,160,0.10)", display: "flex", alignItems: "center",

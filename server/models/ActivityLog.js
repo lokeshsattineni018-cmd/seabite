@@ -6,7 +6,7 @@ const activityLogSchema = new mongoose.Schema({
     action: { type: String, required: true }, // e.g., "LOGIN", "VIEW_PRODUCT", "ADD_TO_CART", "SEARCH"
     details: { type: String, default: "" }, // e.g., "Added Tiger Prawns", "Searched for 'Lobster'"
     meta: { type: Object, default: {} }, // Flexible payload for extra data (price, qty, etc.)
-    timestamp: { type: Date, default: Date.now, expires: 86400 } // Auto-delete after 24h to keep DB light
+    timestamp: { type: Date, default: Date.now, expires: 7776000 } // Auto-delete after 90 days (7776000s) for historical auditing
 });
 
 // Index for rapid time-based queries

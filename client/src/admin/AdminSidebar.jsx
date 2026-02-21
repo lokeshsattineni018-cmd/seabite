@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import {
   FiGrid, FiPlusSquare, FiShoppingBag, FiClipboard,
   FiUsers, FiLogOut, FiGlobe, FiMail, FiTag,
-  FiChevronRight, FiZap, FiSend, FiShoppingCart, FiCreditCard, FiStar, FiActivity, FiSettings
+  FiChevronRight, FiZap, FiSend, FiShoppingCart, FiCreditCard, FiStar, FiActivity, FiSettings, FiShield,
+  FiArchive, FiTarget
 } from "react-icons/fi";
 import axios from "axios";
 
@@ -22,6 +23,9 @@ const LINKS = [
   { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={18} /> },
   { name: "Abandoned Cart", path: "/admin/carts", icon: <FiShoppingCart size={18} /> },
   { name: "Live Ops", path: "/admin/watchtower", icon: <FiActivity size={18} /> },
+  { name: "Access Sentinel", path: "/admin/iam", icon: <FiShield size={18} /> },
+  { name: "Audit Registry", path: "/admin/registry", icon: <FiArchive size={18} /> },
+  { name: "Search Discovery", path: "/admin/discovery", icon: <FiTarget size={18} /> },
   { name: "Analytics", path: "/admin/analytics", icon: <FiActivity size={18} /> },
   { name: "Settings", path: "/admin/settings", icon: <FiSettings size={18} /> },
 ];

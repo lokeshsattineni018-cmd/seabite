@@ -181,7 +181,7 @@ export default function OrderDetails() {
 
                 return (
                   <div key={i} style={{ display: "flex", gap: 14 }}>
-                    <Link to={`/product/${realId}`} style={{ display: "flex", gap: 14, textDecoration: "none", flex: 1 }}>
+                    <Link to={`/products/${realId}`} style={{ display: "flex", gap: 14, textDecoration: "none", flex: 1 }}>
                       <motion.img
                         whileHover={{ scale: 1.05 }}
                         src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}

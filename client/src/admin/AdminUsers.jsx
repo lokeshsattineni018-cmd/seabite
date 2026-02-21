@@ -1,11 +1,11 @@
-// AdminUsers.jsx
+// AdminUsers.jsx (Upgraded 360° Version)
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiUsers, FiRefreshCw,
-  FiShield, FiUser, FiArrowUpRight, FiEdit2, FiX, FiCheck,
-  FiActivity, FiClock, FiShoppingBag, FiAlertTriangle, FiTarget
+  FiShield, FiUser, FiArrowUpRight, FiX, FiCheck,
+  FiActivity, FiClock, FiShoppingBag, FiAlertTriangle, FiTarget, FiMail, FiCalendar
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
@@ -42,9 +42,7 @@ export default function AdminUsers() {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   const handleUpdate = async () => {
     if (!editingUser) return;
@@ -68,6 +66,17 @@ export default function AdminUsers() {
 
   const adminCount = users.filter(u => u.role === "admin").length;
   const totalRevenue = users.reduce((sum, u) => sum + (u.intelligence?.totalSpent || 0), 0);
+
+  // Unified Timeline Logic
+  const getTimeline = (user) => {
+    if (!user) return [];
+    const timeline = [
+      ...(user.intelligence.recentActivity || []),
+      ...(user.intelligence.recentOrders || []),
+      ...(user.intelligence.recentMessages || [])
+    ].sort((a, b) => new Date(b.time || b.date) - new Date(a.time || a.date));
+    return timeline;
+  };
 
   return (
     <motion.div
@@ -148,7 +157,7 @@ export default function AdminUsers() {
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-12 text-center text-stone-400 font-medium">No users found</td>
+                    <td colSpan={5} className="px-6 py-12 text-center text-stone-400 font-medium">No users found</td>
                   </tr>
                 ) : (
                   filteredUsers.map((u) => (
@@ -188,7 +197,7 @@ export default function AdminUsers() {
                             onClick={() => setEditingUser(u)}
                             className="px-4 py-2 bg-white hover:bg-white text-stone-600 hover:text-blue-600 border border-stone-200 hover:border-blue-200 rounded-xl font-medium text-xs transition-all shadow-sm hover:shadow active:scale-95"
                           >
-                            Manage
+                            360° View
                           </button>
                         ) : (
                           <span className="text-[10px] uppercase font-bold text-stone-300 select-none">Protected</span>
@@ -202,7 +211,7 @@ export default function AdminUsers() {
           </div>
         </motion.div>
 
-        {/* Deep Dive User Modal */}
+        {/* 360° Profile Modal */}
         <AnimatePresence>
           {editingUser && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -215,7 +224,7 @@ export default function AdminUsers() {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-4xl bg-[#fafaf9] rounded-3xl overflow-hidden shadow-2xl border border-stone-200 flex flex-col md:flex-row max-h-[90vh]"
+                className="relative w-full max-w-5xl bg-[#fafaf9] rounded-3xl overflow-hidden shadow-2xl border border-stone-200 flex flex-col md:flex-row max-h-[90vh]"
               >
                 {/* Close Button */}
                 <button
@@ -227,7 +236,7 @@ export default function AdminUsers() {
 
                 {/* Left Panel: Identity & Actions */}
                 <div className="w-full md:w-1/3 bg-white p-8 border-r border-stone-200 flex flex-col items-center text-center">
-                  <div className={`w-24 h-24 rounded-3xl flex items-center justify-center text-3xl font-bold text-white shadow-xl mb-6 ${editingUser.isBanned ? "bg-stone-400 grayscale" : "bg-gradient-to-br from-blue-600 to-indigo-600"}`}>
+                  <div className={`w-28 h-28 rounded-3xl flex items-center justify-center text-4xl font-bold text-white shadow-xl mb-6 ${editingUser.isBanned ? "bg-stone-400 grayscale" : "bg-gradient-to-br from-blue-600 to-indigo-600"}`}>
                     {editingUser.name?.charAt(0).toUpperCase()}
                   </div>
 
@@ -257,75 +266,91 @@ export default function AdminUsers() {
 
                     <button
                       onClick={() => setEditingUser({ ...editingUser, isBanned: !editingUser.isBanned })}
-                      className={`w-full py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all border ${editingUser.isBanned
+                      className={`w-full py-3 rounded-xl font-bold text-[11px] flex items-center justify-center gap-2 transition-all border ${editingUser.isBanned
                         ? "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100"
                         : "bg-white text-stone-600 border-stone-200 hover:border-stone-300"
                         }`}
                     >
                       {editingUser.isBanned ? (
-                        <><FiShield /> Lift Ban</>
+                        <><FiShield /> Lift Security Ban</>
                       ) : (
-                        <><FiShield /> Ban Account</>
+                        <><FiShield /> Restrict Account</>
                       )}
                     </button>
 
                     <button
                       onClick={handleUpdate}
-                      className="w-full py-3 rounded-xl bg-stone-900 text-white font-bold text-xs hover:bg-stone-800 shadow-lg active:scale-95 transition-all"
+                      className="w-full py-3 rounded-xl bg-stone-900 text-white font-bold text-[11px] hover:bg-stone-800 shadow-lg active:scale-95 transition-all"
                     >
-                      Save Changes
+                      Apply Status Changes
                     </button>
                   </div>
                 </div>
 
-                {/* Right Panel: Intelligence & Activity */}
-                <div className="w-full md:w-2/3 p-8 overflow-y-auto">
-                  <h3 className="text-lg font-bold text-stone-800 mb-6 flex items-center gap-2">
-                    <FiActivity className="text-blue-500" /> Intelligence Profile
-                  </h3>
+                {/* Right Panel: Unified 360° Timeline */}
+                <div className="w-full md:w-2/3 p-8 overflow-y-auto bg-stone-50/30">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-lg font-bold text-stone-800 flex items-center gap-2">
+                      Unified Support History
+                    </h3>
+                  </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-8">
-                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm">
-                      <div className="text-stone-400 text-xs font-bold uppercase mb-1">Lifetime Value</div>
-                      <div className="text-2xl font-light text-stone-900">₹{editingUser.intelligence?.totalSpent?.toLocaleString()}</div>
+                  <div className="grid grid-cols-3 gap-4 mb-8">
+                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm text-center">
+                      <div className="text-stone-400 text-[10px] font-bold uppercase mb-1">Lifetime Value</div>
+                      <div className="text-xl font-bold text-stone-900">₹{editingUser.intelligence?.totalSpent?.toLocaleString()}</div>
                     </div>
-                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm">
-                      <div className="text-stone-400 text-xs font-bold uppercase mb-1">Avg Order Value</div>
-                      <div className="text-2xl font-light text-stone-900">₹{editingUser.intelligence?.avgOrderValue?.toLocaleString()}</div>
+                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm text-center">
+                      <div className="text-stone-400 text-[10px] font-bold uppercase mb-1">Avg Order</div>
+                      <div className="text-xl font-bold text-stone-900">₹{editingUser.intelligence?.avgOrderValue?.toLocaleString()}</div>
                     </div>
-                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm">
-                      <div className="text-stone-400 text-xs font-bold uppercase mb-1">Total Orders</div>
-                      <div className="text-2xl font-light text-stone-900">{editingUser.intelligence?.orderCount}</div>
-                    </div>
-                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm">
-                      <div className="text-stone-400 text-xs font-bold uppercase mb-1">Last Active</div>
-                      <div className="text-sm font-medium text-stone-700">
-                        {editingUser.intelligence?.lastActive ? new Date(editingUser.intelligence.lastActive).toLocaleDateString() : "Never"}
-                      </div>
+                    <div className="p-5 rounded-2xl bg-white border border-stone-100 shadow-sm text-center">
+                      <div className="text-stone-400 text-[10px] font-bold uppercase mb-1">Total Orders</div>
+                      <div className="text-xl font-bold text-stone-900">{editingUser.intelligence?.orderCount}</div>
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-bold text-stone-800 mb-4 flex items-center gap-2">
-                    <FiClock className="text-stone-400" /> Recent Activity
-                  </h3>
+                  <h4 className="text-[10px] uppercase font-bold text-stone-400 tracking-widest mb-4 flex items-center gap-2">
+                    <FiActivity size={10} /> 360° Timeline
+                  </h4>
 
-                  <div className="space-y-3">
-                    {editingUser.intelligence?.recentActivity?.length > 0 ? (
-                      editingUser.intelligence.recentActivity.map((act, i) => (
-                        <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-white border border-stone-100">
-                          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                          <div className="flex-1">
-                            <div className="text-xs font-bold text-stone-700">{act.details}</div>
-                            <div className="text-[10px] text-stone-400">{act.action}</div>
+                  <div className="space-y-4 relative before:absolute before:inset-y-0 before:left-[15px] before:w-px before:bg-stone-200">
+                    {getTimeline(editingUser).length > 0 ? (
+                      getTimeline(editingUser).map((evt, i) => (
+                        <div key={i} className="flex gap-4 relative">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 shrink-0 shadow-sm 
+                            ${evt.type === 'order' ? 'bg-amber-100 text-amber-600' :
+                              evt.type === 'message' ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-100 text-blue-600'}`}>
+                            {evt.type === 'order' ? <FiShoppingBag size={14} /> :
+                              evt.type === 'message' ? <FiMail size={14} /> : <FiActivity size={14} />}
                           </div>
-                          <div className="text-[10px] text-stone-400 font-mono">
-                            {new Date(act.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+
+                          <div className="flex-1 bg-white p-4 rounded-2xl border border-stone-100 shadow-sm">
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">
+                                {evt.type === 'order' ? "Order Created" : evt.type === 'message' ? "Customer Inquiry" : evt.action}
+                              </span>
+                              <span className="text-[10px] text-stone-400 font-medium">
+                                {new Date(evt.time || evt.date).toLocaleDateString()} • {new Date(evt.time || evt.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+
+                            <div className="text-sm font-semibold text-stone-800">
+                              {evt.type === 'order' ? `Order #${evt.orderId} - ₹${evt.amount.toLocaleString()}` :
+                                evt.type === 'message' ? `"${evt.message}"` : evt.details}
+                            </div>
+
+                            {evt.type === 'order' && (
+                              <div className="mt-2">
+                                <span className="text-[10px] px-2 py-0.5 rounded-md bg-stone-100 text-stone-600 font-bold uppercase">{evt.status}</span>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))
                     ) : (
                       <div className="text-center py-8 text-stone-400 text-sm italic">
-                        No recent activity logs found.
+                        No historical data available for this customer.
                       </div>
                     )}
                   </div>
