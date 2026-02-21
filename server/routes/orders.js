@@ -1,7 +1,7 @@
 import express from "express";
-import Order from "./models/Order.js"; 
-import adminAuth from "../middleware/adminAuth.js"; 
-import authMiddleware from "../middleware/authMiddleware.js"; 
+import Order from "./models/Order.js";
+import adminAuth from "../middleware/adminAuth.js";
+import authMiddleware from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
@@ -10,17 +10,17 @@ const router = express.Router();
 // POST /api/orders
 router.post("/", authMiddleware, async (req, res) => {
   const { items, totalAmount, deliveryAddress } = req.body;
-  
-  const userId = req.user?._id; 
+
+  const userId = req.user?._id;
 
   if (!userId) {
-     return res.status(401).json({ message: "Not authorized. Please log in." });
+    return res.status(401).json({ message: "Not authorized. Please log in." });
   }
 
   // Check: Ensure the userId is a valid MongoDB ObjectId format
   if (!mongoose.Types.ObjectId.isValid(userId)) {
-      console.error("❌ Invalid User ID Format:", userId);
-      return res.status(400).json({ message: "Invalid user ID format provided." });
+    console.error("❌ Invalid User ID Format:", userId);
+    return res.status(400).json({ message: "Invalid user ID format provided." });
   }
 
   // Basic validation
@@ -37,30 +37,30 @@ router.post("/", authMiddleware, async (req, res) => {
     });
 
     const createdOrder = await order.save();
-    
+
     res.status(201).json(createdOrder);
-    
+
   } catch (err) {
     console.error("❌ ORDER SAVE FAILED:", err);
-    
+
     if (err.name === 'ValidationError') {
-        const messages = Object.values(err.errors).map(val => val.message);
-        return res.status(400).json({ 
-            message: "Order validation failed.", 
-            details: messages 
-        });
-    } 
-    
-    if (err.name === 'CastError') {
-         return res.status(400).json({ 
-            message: "Data format error.", 
-            details: `Failed to cast field: ${err.path}`
-        });
+      const messages = Object.values(err.errors).map(val => val.message);
+      return res.status(400).json({
+        message: "Order validation failed.",
+        details: messages
+      });
     }
 
-    res.status(500).json({ 
-        message: "An unexpected server error occurred.",
-        error: err.message
+    if (err.name === 'CastError') {
+      return res.status(400).json({
+        message: "Data format error.",
+        details: `Failed to cast field: ${err.path}`
+      });
+    }
+
+    res.status(500).json({
+      message: "An unexpected server error occurred.",
+      error: err.message
     });
   }
 });
@@ -105,7 +105,7 @@ router.put("/:id/status", adminAuth, async (req, res) => {
     const order = await Order.findByIdAndUpdate(
       req.params.id,
       { status },
-      { new: true }
+      { returnDocument: "after" }
     );
 
     res.json(order);

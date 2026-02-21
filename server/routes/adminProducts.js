@@ -110,7 +110,7 @@ router.put("/:id", adminAuth, async (req, res) => {
           countInStock: countInStock !== undefined ? Number(countInStock) : oldProduct.countInStock
         }
       },
-      { new: true, runValidators: true }
+      { returnDocument: "after", runValidators: true }
     ).populate('waitlist', 'name email');
 
     // ✅ Enterprise: Trigger Waitlist Notifications

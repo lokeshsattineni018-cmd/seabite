@@ -59,7 +59,7 @@ export const checkout = async (req, res) => {
       });
     }
 
-    const newOrder = new Order({
+    const orderData = {
       user: req.user._id,
       items,
       shippingAddress,
@@ -72,8 +72,13 @@ export const checkout = async (req, res) => {
       razorpay_order_id: razorpayOrder ? razorpayOrder.id : null,
       status: "Pending",
       isPaid: false,
-      idempotencyKey: idempotencyKey || null
-    });
+    };
+
+    if (idempotencyKey) {
+      orderData.idempotencyKey = idempotencyKey;
+    }
+
+    const newOrder = new Order(orderData);
 
     const savedOrder = await newOrder.save();
 
@@ -138,7 +143,7 @@ export const paymentVerification = async (req, res) => {
       const updatedOrder = await Order.findOneAndUpdate(
         { razorpay_order_id: razorpay_order_id },
         { status: "Processing", paymentId: razorpay_payment_id, paidAt: Date.now(), isPaid: true },
-        { new: true }
+        { returnDocument: 'after' }
       ).populate('user', 'name email');
 
       if (updatedOrder) {

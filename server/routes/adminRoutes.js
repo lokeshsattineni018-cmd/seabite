@@ -673,7 +673,7 @@ router.put("/users/:id", adminAuth, async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       { $set: updates },
-      { new: true, runValidators: false } // Disable validation for partial updates
+      { returnDocument: "after", runValidators: false } // Disable validation for partial updates
     );
 
     res.json({ message: "User updated successfully", user: updatedUser });
