@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FiLogOut, FiHome, FiArrowLeft, FiMapPin } from "react-icons/fi";
-import { useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
