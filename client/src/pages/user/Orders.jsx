@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   FiClock, FiPackage, FiCheck, FiX, FiRefreshCcw, FiChevronRight,
   FiShoppingBag, FiStar, FiEdit2, FiTag, FiSearch, FiTruck, FiChevronDown,
@@ -10,6 +10,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import ReviewModal from "../../components/common/ReviewModal";
 import PopupModal from "../../components/common/PopupModal";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
+import { generateInvoicePDF } from "../../utils/pdfGenerator";
+import { FiDownload } from "react-icons/fi";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -54,21 +56,36 @@ const itemVariants = {
 
 // ── ItemRow Component ──
 function ItemRow({ item, index }) {
-  const emoji = EMOJIS[index % EMOJIS.length];
+  const realId = item.productId ? (typeof item.productId === "object" ? item.productId._id : item.productId)
+    : item.product ? (typeof item.product === "object" ? item.product._id : item.product) : item._id;
+
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 10, padding: "9px 12px",
       borderRadius: 10, background: "#F7FAFA", border: "1px solid #EEF5F4",
     }}>
-      <div style={{
-        width: 32, height: 32, borderRadius: 8, flexShrink: 0,
-        background: "rgba(91,168,160,0.10)", display: "flex", alignItems: "center",
-        justifyContent: "center", fontSize: 16,
-      }}>{emoji}</div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontWeight: 700, fontSize: 12, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
-        <p style={{ fontSize: 10, color: T.textLite, margin: "1px 0 0" }}>{formatCurrency(item.price)} × {item.qty}</p>
-      </div>
+      <Link to={`/product/${realId}`} style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", flex: 1, minWidth: 0 }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+          background: "rgba(91,168,160,0.10)", display: "flex", alignItems: "center",
+          justifyContent: "center", overflow: "hidden", border: `1px solid ${T.border}`,
+        }}>
+          {item.image ? (
+            <img
+              src={`${API_URL}/uploads/${item.image.replace("uploads/", "")}`}
+              alt={item.name}
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              onError={e => e.target.src = "https://via.placeholder.com/32"}
+            />
+          ) : (
+            <span style={{ fontSize: 16 }}>{EMOJIS[index % EMOJIS.length]}</span>
+          )}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontWeight: 700, fontSize: 12, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</p>
+          <p style={{ fontSize: 10, color: T.textLite, margin: "1px 0 0" }}>{formatCurrency(item.price)} × {item.qty}</p>
+        </div>
+      </Link>
       <span style={{ fontSize: 12, fontWeight: 800, color: T.textDark, flexShrink: 0 }}>{formatCurrency(item.price * item.qty)}</span>
     </div>
   );
@@ -453,6 +470,16 @@ export default function Order() {
 
                                   {/* Action buttons */}
                                   <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, paddingBottom: 6 }}>
+                                    <button
+                                      onClick={e => { e.stopPropagation(); generateInvoicePDF(order); }}
+                                      style={{
+                                        display: "flex", alignItems: "center", gap: 4, padding: "6px 12px", borderRadius: 8, cursor: "pointer",
+                                        fontSize: 10, fontWeight: 700, border: `1px solid ${T.border}`,
+                                        background: "white", color: T.textMid,
+                                        fontFamily: "'Plus Jakarta Sans', sans-serif",
+                                      }}>
+                                      <FiDownload size={10} /> Invoice
+                                    </button>
                                     {isDelivered && (
                                       <button
                                         onClick={e => { e.stopPropagation(); openReviewModal(order.items[0], getUserReview(order.items[0], order.user)); }}

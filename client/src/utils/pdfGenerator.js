@@ -121,6 +121,11 @@ export const generateInvoicePDF = async (order) => {
 
     // ----- Summary -----
     const finalY = (doc.lastAutoTable?.finalY || 95) + 10;
+    const total = order.totalAmount || order.amount || 0;
+    const itemsPrice = order.itemsPrice || 0;
+    const taxPrice = order.taxPrice || 0;
+    const shippingPrice = order.shippingPrice ?? 0;
+    const discount = order.discount || 0;
 
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
@@ -133,16 +138,16 @@ export const generateInvoicePDF = async (order) => {
 
     doc.setFont("helvetica", "bold");
     doc.setTextColor(26, 43, 53);
-    doc.text(`Rs. ${(order.itemsPrice || 0).toLocaleString()}`, 196, finalY, { align: "right" });
-    doc.text(`Rs. ${(order.taxPrice || 0).toLocaleString()}`, 196, finalY + 6, { align: "right" });
-    doc.text(order.shippingPrice === 0 ? "Free" : `Rs. ${order.shippingPrice}`, 196, finalY + 12, { align: "right" });
+    doc.text(`Rs. ${itemsPrice.toLocaleString()}`, 196, finalY, { align: "right" });
+    doc.text(`Rs. ${taxPrice.toLocaleString()}`, 196, finalY + 6, { align: "right" });
+    doc.text(shippingPrice === 0 ? "Free" : `Rs. ${shippingPrice.toLocaleString()}`, 196, finalY + 12, { align: "right" });
 
     // Discount
     let currentY = finalY + 18;
-    if (order.discount > 0) {
+    if (discount > 0) {
         doc.setTextColor(232, 129, 106); // Coral
         doc.text("Discount:", summaryX, currentY);
-        doc.text(`- Rs. ${order.discount.toLocaleString()}`, 196, currentY, { align: "right" });
+        doc.text(`- Rs. ${discount.toLocaleString()}`, 196, currentY, { align: "right" });
         currentY += 6;
     }
 
@@ -154,7 +159,7 @@ export const generateInvoicePDF = async (order) => {
     doc.setFontSize(12);
     doc.setTextColor(26, 43, 53); // Dark
     doc.text("GRAND TOTAL:", summaryX, currentY + 6);
-    doc.text(`Rs. ${order.totalAmount.toLocaleString()}`, 196, currentY + 6, { align: "right" });
+    doc.text(`Rs. ${total.toLocaleString()}`, 196, currentY + 6, { align: "right" });
 
     // ----- Footer -----
     doc.setFontSize(8);

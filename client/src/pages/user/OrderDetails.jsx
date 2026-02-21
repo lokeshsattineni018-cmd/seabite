@@ -175,23 +175,31 @@ export default function OrderDetails() {
               <FiShoppingBag /> Items
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {order.items.map((item, i) => (
-                <div key={i} style={{ display: "flex", gap: 14 }}>
-                  <img
-                    src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
-                    alt={item.name}
-                    style={{ width: 60, height: 60, borderRadius: 12, objectFit: "cover", background: "#F7FAFA" }}
-                    onError={e => e.target.src = "https://via.placeholder.com/60"}
-                  />
-                  <div>
-                    <p style={{ fontSize: 14, fontWeight: 600, color: T.textDark, margin: "0 0 4px" }}>{item.name}</p>
-                    <p style={{ fontSize: 12, color: T.textLite, margin: 0 }}>{item.qty} x ₹{item.price}</p>
+              {order.items.map((item, i) => {
+                const realId = item.productId ? (typeof item.productId === "object" ? item.productId._id : item.productId)
+                  : item.product ? (typeof item.product === "object" ? item.product._id : item.product) : item._id;
+
+                return (
+                  <div key={i} style={{ display: "flex", gap: 14 }}>
+                    <Link to={`/product/${realId}`} style={{ display: "flex", gap: 14, textDecoration: "none", flex: 1 }}>
+                      <motion.img
+                        whileHover={{ scale: 1.05 }}
+                        src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
+                        alt={item.name}
+                        style={{ width: 60, height: 60, borderRadius: 12, objectFit: "cover", background: "#F7FAFA", border: `1px solid ${T.border}` }}
+                        onError={e => e.target.src = "https://via.placeholder.com/60"}
+                      />
+                      <div>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: T.textDark, margin: "0 0 4px" }}>{item.name}</p>
+                        <p style={{ fontSize: 12, color: T.textLite, margin: 0 }}>{item.qty} x ₹{item.price}</p>
+                      </div>
+                    </Link>
+                    <div style={{ marginLeft: "auto", fontWeight: 700, color: T.textDark }}>
+                      ₹{item.price * item.qty}
+                    </div>
                   </div>
-                  <div style={{ marginLeft: "auto", fontWeight: 700, color: T.textDark }}>
-                    ₹{item.price * item.qty}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${T.border}`, display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: T.textMid }}>
