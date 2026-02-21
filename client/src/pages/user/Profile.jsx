@@ -198,7 +198,7 @@ export default function Profile() {
             display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center",
             marginTop: 24, marginBottom: 48, paddingBottom: 8,
           }}>
-            {/* Manage Addresses */}
+            {/* Edit Address */}
             <motion.button
               whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.15)" }}
               whileTap={{ scale: 0.97 }}
@@ -212,7 +212,7 @@ export default function Profile() {
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
               }}
             >
-              <FiMapPin size={15} /> Manage Addresses
+              <FiMapPin size={15} /> Edit Address
             </motion.button>
 
             {/* Home */}

@@ -47,7 +47,8 @@ export default function EditProduct() {
         setLoading(false);
       })
       .catch((err) => {
-        setModal({ show: true, message: "Failed to load product data.", type: "error" });
+        setModal({ show: true, message: "Product not found or access denied.", type: "error" });
+        setTimeout(() => navigate("/admin/products"), 2000);
         setLoading(false);
       });
   }, [id, backendBase]);

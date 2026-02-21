@@ -173,7 +173,11 @@ export default function AdminRegistry() {
                                 background: "#1C1917", color: "#00FFC2", padding: 20, borderRadius: 16,
                                 fontSize: 12, overflowX: "auto", fontFamily: "Geist Mono"
                             }}>
-                                {JSON.stringify(logs.find(l => l._id === expandedLog)?.meta, null, 2)}
+                                {(() => {
+                                    const meta = logs.find(l => l._id === expandedLog)?.meta;
+                                    if (!meta || Object.keys(meta).length === 0) return "No extended metadata captured for this event.";
+                                    return JSON.stringify(meta, null, 2);
+                                })()}
                             </pre>
                             <button
                                 onClick={() => setExpandedLog(null)}

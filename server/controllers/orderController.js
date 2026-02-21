@@ -20,7 +20,8 @@ export const createOrder = async (req, res) => {
             itemsPrice,
             discount,
             deliveryAddress,
-            shippingAddress
+            shippingAddress,
+            idempotencyKey
         } = req.body;
 
         if (items && items.length === 0) {
@@ -42,12 +43,12 @@ export const createOrder = async (req, res) => {
             shippingPrice,
             totalAmount,
             discount: discount || 0,
-            shippingAddress: deliveryAddress || shippingAddress
+            shippingAddress: deliveryAddress || shippingAddress,
+            idempotencyKey: idempotencyKey || undefined
         });
 
         const createdOrder = await order.save({ session });
 
-        // Commit transaction before secondary effects (email, socket)
         await session.commitTransaction();
         session.endSession();
 
@@ -76,10 +77,12 @@ export const createOrder = async (req, res) => {
 
         res.status(201).json(createdOrder);
     } catch (error) {
-        await session.abortTransaction();
+        if (session.inTransaction()) {
+            await session.abortTransaction();
+        }
         session.endSession();
         logger.error("Create Order Transaction Failed", { error: error.message, user: req.user?.email });
-        res.status(500).json({ message: 'Server error during order creation' });
+        res.status(500).json({ message: error.code === 11000 ? 'Duplicate order detected.' : 'Server error during order creation' });
     }
 };
 
