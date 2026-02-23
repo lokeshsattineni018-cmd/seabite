@@ -198,8 +198,8 @@ const connectDB = async () => {
 
   if (!cached.promise) {
     const opts = {
-      serverSelectionTimeoutMS: 5000, // Fail fast (5s)
-      connectTimeoutMS: 10000, // 10s
+      serverSelectionTimeoutMS: 30000, // Increased to 30s for resilience
+      connectTimeoutMS: 30000, // Increased to 30s
       socketTimeoutMS: 45000,
       maxPoolSize: 5,
       minPoolSize: 0,
@@ -207,6 +207,14 @@ const connectDB = async () => {
       retryReads: true,
       ssl: true,
     };
+
+    // 🛡️ Debugging: Verify URI presence (Sanitized)
+    if (process.env.MONGO_URI) {
+      const sanitizedUri = process.env.MONGO_URI.replace(/\/\/.*@/, "//***:***@");
+      console.log(`🔗 Attempting connection to: ${sanitizedUri}`);
+    } else {
+      console.error("❌ CRITICAL: MONGO_URI is missing from environment variables!");
+    }
 
     console.log("🔄 Initializing new MongoDB connection...");
     cached.promise = mongoose.connect(process.env.MONGO_URI, opts).then((mongoose) => {
