@@ -5,6 +5,7 @@ import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
 import { logActivity } from "../utils/activityLogger.js";
 import logger from "../utils/logger.js";
+import admin from "../utils/firebaseAdmin.js";
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -119,6 +120,71 @@ export const googleLogin = async (req, res) => {
   } catch (error) {
     logger.error("Auth Failure", { traceId: req.traceId, error: error.message });
     res.status(401).json({ message: "Google verification failed." });
+  }
+};
+
+export const firebaseLogin = async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    logger.warn("Firebase Login attempt without token", { traceId: req.traceId });
+    return res.status(400).json({ message: "No token provided" });
+  }
+
+  try {
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const { phone_number, uid } = decodedToken;
+
+    if (!phone_number) {
+      logger.warn("Firebase token lacks phone number", { traceId: req.traceId, uid });
+      return res.status(400).json({ message: "Phone number verification required." });
+    }
+
+    let user = await User.findOne({ phone: phone_number });
+
+    if (!user) {
+      // New User: Create with phone as primary identifier
+      user = new User({
+        name: `Customer ${phone_number.slice(-4)}`,
+        phone: phone_number,
+        role: "user"
+      });
+      await user.save();
+      logger.info("New user registered via Phone OTP", { traceId: req.traceId, phone: phone_number });
+    }
+
+    // 🚫 BAN CHECK
+    if (user.isBanned) {
+      logger.security("Banned user attempted phone login", { traceId: req.traceId, phone: phone_number });
+      return res.status(403).json({ message: "Access Denied: Your account has been suspended." });
+    }
+
+    // ✅ Establish Session
+    req.session.user = {
+      id: user._id,
+      name: user.name,
+      email: user.email || "",
+      role: user.role,
+    };
+
+    req.session.save((err) => {
+      if (err) {
+        logger.error("Session save failed (Firebase)", { traceId: req.traceId, error: err.message });
+        return res.status(500).json({ message: "Session initialization failed" });
+      }
+
+      logger.info("User Authenticated via Phone", { traceId: req.traceId, userId: user._id, phone: phone_number });
+      logActivity("LOGIN", `User Logged In via Phone: ${phone_number}`, req);
+
+      res.status(200).json({
+        user: req.session.user,
+        sessionId: req.sessionID
+      });
+    });
+
+  } catch (error) {
+    logger.error("Firebase Auth Bridge Failure", { traceId: req.traceId, error: error.message });
+    res.status(401).json({ message: "Phone verification session expired. Please login again." });
   }
 };
 

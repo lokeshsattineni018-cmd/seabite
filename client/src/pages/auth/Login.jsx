@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import PopupModal from "../../components/common/PopupModal";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../../context/AuthContext";
+import { auth } from "../../utils/firebaseConfig";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -19,6 +21,83 @@ export default function Login() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // 📱 Mobile OTP States
+  const [loginStep, setLoginStep] = useState("default"); // 'default' | 'phone' | 'otp'
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const setupRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+        size: "invisible",
+        callback: () => {
+          console.log("✅ Recaptcha verified");
+        },
+      });
+    }
+  };
+
+  const handleRequestOTP = async (e) => {
+    if (e) e.preventDefault();
+    if (!phoneNumber || phoneNumber.length < 10) {
+      return setModal({ show: true, message: "Please enter a valid 10-digit phone number.", type: "error" });
+    }
+
+    setLoading(true);
+    try {
+      setupRecaptcha();
+      const appVerifier = window.recaptchaVerifier;
+      const formattedPhone = phoneNumber.startsWith("+") ? phoneNumber : `+91${phoneNumber}`;
+      const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+      setConfirmationResult(confirmation);
+      setLoginStep("otp");
+      setModal({ show: true, message: "OTP sent to your phone!", type: "success" });
+    } catch (err) {
+      console.error("OTP Request Error:", err);
+      setModal({ show: true, message: "Failed to send OTP. Please try again.", type: "error" });
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    if (e) e.preventDefault();
+    setLoading(true);
+    try {
+      const result = await confirmationResult.confirm(verificationCode);
+      const user = result.user;
+      const idToken = await user.getIdToken();
+
+      // 🌉 Bridge to SeaBite Backend
+      const res = await axios.post(
+        `${API_URL}/api/auth/firebase-login`,
+        { idToken },
+        { withCredentials: true }
+      );
+
+      setUser(res.data.user);
+      setModal({ show: true, message: "Login Successful!", type: "success" });
+      setTimeout(async () => {
+        await refreshMe?.();
+        const redirectPath = localStorage.getItem("postLoginRedirect");
+        if (redirectPath) localStorage.removeItem("postLoginRedirect");
+        const targetPath = redirectPath || (res.data.user.role === "admin" ? "/admin/dashboard" : "/");
+        navigate(targetPath);
+      }, 1500);
+    } catch (err) {
+      console.error("OTP Verification Error:", err);
+      setModal({ show: true, message: "Invalid OTP. Please try again.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -136,35 +215,156 @@ export default function Login() {
             </p>
           </motion.div>
 
-          {/* Google Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            style={{ marginBottom: 24 }}
-          >
-            <motion.button
-              onClick={() => login()}
-              whileHover={{ y: -2, boxShadow: "0 8px 28px rgba(91,168,160,0.22)" }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
-                width: "100%", padding: "14px 24px", borderRadius: 14,
-                background: "#1A2B35", color: "#ffffff",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer",
-                boxShadow: "0 2px 16px rgba(26,43,53,0.18)",
-                transition: "all 0.2s ease",
-              }}
+          {/* Auth Flow */}
+          <div id="recaptcha-container"></div>
+
+          {loginStep === "default" && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              style={{ marginBottom: 24 }}
             >
-              <img
-                src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
-                style={{ width: 20, height: 20, borderRadius: "50%", background: "#fff", padding: 2 }}
-                alt="google"
-              />
-              Continue with Google
-            </motion.button>
-          </motion.div>
+              <motion.button
+                onClick={() => login()}
+                whileHover={{ y: -2, boxShadow: "0 8px 28px rgba(91,168,160,0.22)" }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                  width: "100%", padding: "14px 24px", borderRadius: 14,
+                  background: "#1A2B35", color: "#ffffff",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer",
+                  boxShadow: "0 2px 16px rgba(26,43,53,0.18)",
+                  transition: "all 0.2s ease",
+                  marginBottom: 16
+                }}
+              >
+                <img
+                  src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
+                  style={{ width: 20, height: 20, borderRadius: "50%", background: "#fff", padding: 2 }}
+                  alt="google"
+                />
+                Continue with Google
+              </motion.button>
+
+              <motion.button
+                onClick={() => setLoginStep("phone")}
+                whileHover={{ y: -2, background: "rgba(91,168,160,0.08)" }}
+                whileTap={{ scale: 0.97 }}
+                style={{
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                  width: "100%", padding: "14px 24px", borderRadius: 14,
+                  background: "transparent", color: "#1A2B35",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  fontSize: 14, fontWeight: 600, border: "1px solid #E2EEEC", cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                <span style={{ fontSize: 18 }}>📱</span>
+                Login with Mobile
+              </motion.button>
+            </motion.div>
+          )}
+
+          {loginStep === "phone" && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-4"
+            >
+              <div style={{ textAlign: "left", marginBottom: 20 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 8 }}>
+                  Indian Mobile Number
+                </label>
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "#6B8A97", fontSize: 14, fontWeight: 600 }}>+91</span>
+                  <input
+                    type="tel"
+                    placeholder="99999 00000"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                    style={{
+                      width: "100%", padding: "14px 14px 14px 52px", borderRadius: 14,
+                      background: "#F8FBFA", border: "1px solid #E2EEEC",
+                      fontSize: 15, color: "#1A2B35", fontWeight: 600,
+                      outline: "none", transition: "all 0.2s"
+                    }}
+                  />
+                </div>
+              </div>
+
+              <motion.button
+                onClick={handleRequestOTP}
+                disabled={loading || phoneNumber.length < 10}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  width: "100%", padding: "14px", borderRadius: 14,
+                  background: phoneNumber.length === 10 ? "#1A2B35" : "#E2EEEC",
+                  color: "#ffffff", fontWeight: 600, border: "none", cursor: "pointer",
+                  opacity: loading ? 0.7 : 1
+                }}
+              >
+                {loading ? "Sending..." : "Send OTP"}
+              </motion.button>
+
+              <button
+                onClick={() => setLoginStep("default")}
+                style={{ background: "none", border: "none", color: "#5BA8A0", fontSize: 13, fontWeight: 600, cursor: "pointer", marginTop: 16 }}
+              >
+                ← Back to options
+              </button>
+            </motion.div>
+          )}
+
+          {loginStep === "otp" && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="space-y-4"
+            >
+              <div style={{ textAlign: "left", marginBottom: 20 }}>
+                <label style={{ fontSize: 12, fontWeight: 700, color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 8 }}>
+                  Enter 6-digit OTP
+                </label>
+                <input
+                  type="text"
+                  placeholder="000000"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  style={{
+                    width: "100%", padding: "14px", borderRadius: 14,
+                    background: "#F8FBFA", border: "1px solid #E2EEEC",
+                    fontSize: 20, textAlign: "center", color: "#1A2B35", fontWeight: 700,
+                    letterSpacing: "0.2em", outline: "none"
+                  }}
+                />
+              </div>
+
+              <motion.button
+                onClick={handleVerifyOTP}
+                disabled={loading || verificationCode.length < 6}
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                style={{
+                  width: "100%", padding: "14px", borderRadius: 14,
+                  background: verificationCode.length === 6 ? "#5BA8A0" : "#E2EEEC",
+                  color: "#ffffff", fontWeight: 600, border: "none", cursor: "pointer",
+                  opacity: loading ? 0.7 : 1
+                }}
+              >
+                {loading ? "Verifying..." : "Verify & Login"}
+              </motion.button>
+
+              <button
+                onClick={() => setLoginStep("phone")}
+                style={{ background: "none", border: "none", color: "#6B8A97", fontSize: 13, fontWeight: 500, cursor: "pointer", marginTop: 16 }}
+              >
+                Wrong number? Edit phone
+              </button>
+            </motion.div>
+          )}
 
           {/* Secondary option hint */}
           <motion.div
