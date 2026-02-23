@@ -71,7 +71,14 @@ export default function Login() {
       setModal({ show: true, message: "OTP sent to your phone!", type: "success" });
     } catch (err) {
       console.error("OTP Request Error:", err);
-      setModal({ show: true, message: "Failed to send OTP. Please try again.", type: "error" });
+      const isConfigError = err.message?.includes("Auth system not ready");
+      setModal({
+        show: true,
+        message: isConfigError
+          ? "Configuration missing (API Key). Please ensure Vercel environment variables are set and the site is RE-DEPLOYED."
+          : "Failed to send OTP. Please try again.",
+        type: "error"
+      });
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.clear();
         window.recaptchaVerifier = null;
@@ -107,7 +114,14 @@ export default function Login() {
       }, 1500);
     } catch (err) {
       console.error("OTP Verification Error:", err);
-      setModal({ show: true, message: "Invalid OTP. Please try again.", type: "error" });
+      const isConfigError = err.message?.includes("Auth system not ready");
+      setModal({
+        show: true,
+        message: isConfigError
+          ? "Configuration missing (API Key). Please ensure Vercel environment variables are set and the site is re-deployed."
+          : "Invalid OTP. Please try again.",
+        type: "error"
+      });
     } finally {
       setLoading(false);
     }
@@ -386,6 +400,25 @@ export default function Login() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
+            {/* 🔴 CONFIG WARNING (Only shows if Auth is broken) */}
+            {!auth && (
+              <div
+                style={{
+                  padding: "12px 16px", borderRadius: 12,
+                  background: "#FEF2F2", border: "1px solid #FEE2E2",
+                  marginBottom: 20, textAlign: "left"
+                }}
+              >
+                <p style={{ fontSize: 11.5, color: "#DC2626", fontWeight: 700, marginBottom: 4 }}>
+                  ⚠️ SYSTEM NOT CONFIGURED
+                </p>
+                <p style={{ fontSize: 10.5, color: "#991B1B", fontWeight: 500, lineHeight: 1.4 }}>
+                  Mobile login is disabled because Vercel keys haven't been "baked" into this build yet.
+                  Please <b>Redeploy</b> with the "Clear Build Cache" option.
+                </p>
+              </div>
+            )}
+
             {/* Seafoam accent bar */}
             <div
               style={{
