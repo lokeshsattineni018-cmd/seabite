@@ -17,17 +17,20 @@ if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "undefined") {
     try {
         app = initializeApp(firebaseConfig);
         auth = getAuth(app);
+        console.log("✅ Firebase Initialized Successfully");
     } catch (err) {
         console.error("Firebase Initialization Error:", err);
     }
 } else {
     console.warn("⚠️ Firebase API Key is MISSING in this build.");
-    console.log("Check for VITE_FIREBASE_API_KEY in your Vercel/Local environment.");
-    console.log("Current Keys Found (Presence Only):", {
-        apiKey: !!firebaseConfig.apiKey,
-        authDomain: !!firebaseConfig.authDomain,
-        projectId: !!firebaseConfig.projectId,
+    console.log("--- VITE ENVIRONMENT DIAGNOSTICS ---");
+    console.log("Visible VITE_ keys:", Object.keys(import.meta.env).filter(k => k.startsWith("VITE_")));
+    console.log("Firebase Config State:", {
+        apiKey: firebaseConfig.apiKey ? "Present (Hidden)" : "MISSING",
+        authDomain: firebaseConfig.authDomain ? "Present" : "MISSING",
+        projectId: firebaseConfig.projectId ? "Present" : "MISSING",
     });
+    console.log("------------------------------------");
 }
 
 export { auth };
