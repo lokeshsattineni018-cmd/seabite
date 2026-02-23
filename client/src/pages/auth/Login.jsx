@@ -413,8 +413,12 @@ export default function Login() {
                   ⚠️ SYSTEM NOT CONFIGURED
                 </p>
                 <p style={{ fontSize: 10.5, color: "#991B1B", fontWeight: 500, lineHeight: 1.4 }}>
-                  Mobile login is disabled because Vercel keys haven't been "baked" into this build yet.
-                  Please <b>Redeploy</b> with the "Clear Build Cache" option.
+                  Keys missing in this build: <b>{[
+                    !import.meta.env.VITE_FIREBASE_API_KEY && "API_KEY",
+                    !import.meta.env.VITE_FIREBASE_PROJECT_ID && "PROJECT_ID",
+                    !import.meta.env.VITE_FIREBASE_AUTH_DOMAIN && "AUTH_DOMAIN"
+                  ].filter(Boolean).join(", ")}</b>.
+                  Please <b>Redeploy</b> with "Clear Build Cache".
                 </p>
               </div>
             )}
