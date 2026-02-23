@@ -4,7 +4,8 @@ import User from "../models/User.js";
 import {
   getLoggedUser,
   updateUserProfile,
-  googleLogin,  // ✅ Import the token-based googleLogin
+  googleLogin,
+  firebaseLogin, // ✅ OTP Login
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -34,8 +35,9 @@ router.post("/logout", (req, res) => {
   });
 });
 
-// ================= GOOGLE LOGIN (Token-based) =================
-router.post("/google", googleLogin);  // ✅ POST route that accepts token
+// ================= THIRD PARTY LOGIN =================
+router.post("/google", googleLogin);
+router.post("/firebase-login", firebaseLogin); // ✅ OTP Verify Bridge
 
 // ================= CURRENT USER =================
 router

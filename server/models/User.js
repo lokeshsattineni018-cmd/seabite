@@ -21,7 +21,7 @@ const addressSchema = new mongoose.Schema(
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, unique: true, required: true },
+    email: { type: String, unique: true, sparse: true, required: false },
 
     // Password optional (for Google login)
     password: { type: String, required: false },
