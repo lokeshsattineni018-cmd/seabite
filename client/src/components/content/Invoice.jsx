@@ -95,8 +95,8 @@ export default function Invoice({ order, type = "invoice" }) {
                     <span className="item-font">{item.name}</span>
                   </td>
                   <td className="text-center">{item.qty}</td>
-                  <td className="text-right">₹{item.price?.toLocaleString()}</td>
-                  <td className="text-right">₹{(item.price * item.qty).toLocaleString()}</td>
+                  <td className="text-right">₹{(item.price || 0).toLocaleString()}</td>
+                  <td className="text-right">₹{((item.price || 0) * (item.qty || 0)).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
@@ -121,14 +121,14 @@ export default function Invoice({ order, type = "invoice" }) {
           </div>
 
           <div className="totals-section">
-            <div className="total-row"><span>Subtotal</span> <span>₹{order.itemsPrice?.toLocaleString()}</span></div>
-            {order.discount > 0 && <div className="total-row discount"><span>Discount Applied</span> <span>- ₹{order.discount?.toLocaleString()}</span></div>}
-            <div className="total-row"><span>Tax (GST 5%)</span> <span>₹{order.taxPrice?.toLocaleString()}</span></div>
+            <div className="total-row"><span>Subtotal</span> <span>₹{(order.itemsPrice || 0).toLocaleString()}</span></div>
+            {order.discount > 0 && <div className="total-row discount"><span>Discount Applied</span> <span>- ₹{(order.discount || 0).toLocaleString()}</span></div>}
+            <div className="total-row"><span>Tax (GST 5%)</span> <span>₹{(order.taxPrice || 0).toLocaleString()}</span></div>
             <div className="total-row"><span>Shipping</span> <span>{order.shippingPrice === 0 ? 'FREE' : `₹${order.shippingPrice}`}</span></div>
 
             <div className="grand-total-box">
               <div className="grand-label">{isCancelled ? 'REFUNDABLE AMOUNT' : 'TOTAL PAYABLE'}</div>
-              <div className="grand-value">₹{order.totalAmount?.toLocaleString()}</div>
+              <div className="grand-value">₹{(order.totalAmount || 0).toLocaleString()}</div>
             </div>
           </div>
         </div>
