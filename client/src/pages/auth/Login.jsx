@@ -417,8 +417,8 @@ export default function Login() {
                     !import.meta.env.VITE_FIREBASE_API_KEY && "API_KEY",
                     !import.meta.env.VITE_FIREBASE_PROJECT_ID && "PROJECT_ID",
                     !import.meta.env.VITE_FIREBASE_AUTH_DOMAIN && "AUTH_DOMAIN"
-                  ].filter(Boolean).join(", ")}</b>.
-                  Please <b>Redeploy</b> with "Clear Build Cache".
+                  ].filter(Boolean).join(", ")}</b>. <br />
+                  <b>Hint:</b> Are these keys in your <b>SeaBite-Client</b> project on Vercel? (Not just the server!)
                 </p>
               </div>
             )}
