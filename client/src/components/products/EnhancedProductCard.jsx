@@ -121,7 +121,7 @@ const EnhancedProductCard = ({
     }
   };
 
-  const isOutOfStock = product.stock === "out" || !product.stock;
+  const isOutOfStock = product.stock === "out" || (product.countInStock !== undefined && product.countInStock <= 0);
   const isNew =
     product.createdAt &&
     new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
