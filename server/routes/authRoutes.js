@@ -5,7 +5,6 @@ import {
   getLoggedUser,
   updateUserProfile,
   googleLogin,
-  firebaseLogin, // ✅ OTP Login
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -37,7 +36,6 @@ router.post("/logout", (req, res) => {
 
 // ================= THIRD PARTY LOGIN =================
 router.post("/google", googleLogin);
-router.post("/firebase-login", firebaseLogin); // ✅ OTP Verify Bridge
 
 // ================= CURRENT USER =================
 router
