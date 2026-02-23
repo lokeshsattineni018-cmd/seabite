@@ -30,14 +30,25 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
 
   const setupRecaptcha = () => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
-        size: "invisible",
-        callback: () => {
-          console.log("✅ Recaptcha verified");
-        },
-      });
+    if (!auth) {
+      console.error("❌ Firebase Auth not initialized. Check your API keys.");
+      return false;
     }
+    if (!window.recaptchaVerifier) {
+      try {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, "recaptcha-container", {
+          size: "invisible",
+          callback: () => {
+            console.log("✅ Recaptcha verified");
+          },
+        });
+        return true;
+      } catch (err) {
+        console.error("Recaptcha Setup Error:", err);
+        return false;
+      }
+    }
+    return true;
   };
 
   const handleRequestOTP = async (e) => {
@@ -48,7 +59,10 @@ export default function Login() {
 
     setLoading(true);
     try {
-      setupRecaptcha();
+      const isReady = setupRecaptcha();
+      if (!isReady || !auth) {
+        throw new Error("Auth system not ready. Please try again or use Google login.");
+      }
       const appVerifier = window.recaptchaVerifier;
       const formattedPhone = phoneNumber.startsWith("+") ? phoneNumber : `+91${phoneNumber}`;
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
