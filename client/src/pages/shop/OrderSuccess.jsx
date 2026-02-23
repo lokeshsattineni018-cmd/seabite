@@ -176,18 +176,17 @@ export default function OrderSuccess() {
 
             <div className="mt-8 pt-8 border-t border-gray-100 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Subtotal</span>
-                <span className="text-gray-900 font-semibold">₹{(order?.totalPrice + (discount || 0)).toLocaleString()}</span>
+                <span className="text-gray-900 font-semibold">₹{((order?.totalPrice || 0) + (discount || 0)).toLocaleString()}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-emerald-600">Discount Applied</span>
-                  <span className="text-emerald-600 font-semibold">-₹{discount.toLocaleString()}</span>
+                  <span className="text-emerald-600 font-semibold">-₹{(discount || 0).toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg pt-2">
                 <span className="font-extrabold text-gray-900">Total</span>
-                <span className="font-extrabold text-gray-900">₹{order?.totalPrice.toLocaleString()}</span>
+                <span className="font-extrabold text-gray-900">₹{(order?.totalPrice || 0).toLocaleString()}</span>
               </div>
             </div>
           </motion.div>
