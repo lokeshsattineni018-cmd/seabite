@@ -21,7 +21,13 @@ if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "undefined") {
         console.error("Firebase Initialization Error:", err);
     }
 } else {
-    console.warn("⚠️ Firebase API Key is missing! Mobile OTP Login will be disabled until redeployed.");
+    console.warn("⚠️ Firebase API Key is MISSING in this build.");
+    console.log("Check for VITE_FIREBASE_API_KEY in your Vercel/Local environment.");
+    console.log("Current Keys Found (Presence Only):", {
+        apiKey: !!firebaseConfig.apiKey,
+        authDomain: !!firebaseConfig.authDomain,
+        projectId: !!firebaseConfig.projectId,
+    });
 }
 
 export { auth };
