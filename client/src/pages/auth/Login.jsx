@@ -182,7 +182,7 @@ export default function Login() {
             >
               <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#5BA8A0", flexShrink: 0 }} />
               <p style={{ fontSize: 11.5, color: "#5BA8A0", fontWeight: 600, textAlign: "left", lineHeight: 1.5 }}>
-                Secured by Google OAuth 2.0 — we never store your password.
+                Secured by Google
               </p>
             </div>
 
