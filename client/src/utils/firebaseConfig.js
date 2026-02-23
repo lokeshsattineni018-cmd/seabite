@@ -10,6 +10,19 @@ const firebaseConfig = {
     appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
+let app = null;
+let auth = null;
+
+if (firebaseConfig.apiKey && firebaseConfig.apiKey !== "undefined") {
+    try {
+        app = initializeApp(firebaseConfig);
+        auth = getAuth(app);
+    } catch (err) {
+        console.error("Firebase Initialization Error:", err);
+    }
+} else {
+    console.warn("⚠️ Firebase API Key is missing! Mobile OTP Login will be disabled until redeployed.");
+}
+
+export { auth };
 export default app;
