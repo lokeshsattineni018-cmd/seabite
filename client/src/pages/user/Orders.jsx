@@ -14,7 +14,7 @@ import { generateInvoicePDF } from "../../utils/pdfGenerator";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// ── Design tokens ─────────────────────────────────────────────────────────
+// ── Desdign tokens ─────────────────────────────────────────────────────────
 const T = {
   bg: "#F4F9F8", surface: "#ffffff", border: "#E2EEEC",
   textDark: "#1A2B35", textMid: "#4A6572", textLite: "#8BA5B3",
