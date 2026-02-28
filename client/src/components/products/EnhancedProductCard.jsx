@@ -1,332 +1,548 @@
-import { useState, useContext, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck } from "react-icons/fi";
-import { CartContext } from "../../context/CartContext";
-import { AuthContext } from "../../context/AuthContext";
-import toast from "react-hot-toast";
+/**
+ * Notifications.jsx — Premium Redesign
+ *
+ * Design: "Activity Stream"
+ * ─────────────────────────────────────────────────────────────
+ * Notifications are ephemeral — the UI should feel light, fast,
+ * and easy to action. Key choices:
+ *
+ *   • Filter pills: Scrollable horizontal row with a sliding
+ *     `layoutId` background pill for buttery-smooth transitions.
+ *   • Timeline groups: "Today" and "Earlier" sections with a
+ *     left accent line creating a timeline metaphor.
+ *   • Card exit: Slides left + fades — feels like swiping away.
+ *   • Delete hover: FiX icon scales and turns coral, giving
+ *     clear affordance before the irreversible action.
+ *   • Clear All: Animated in/out with AnimatePresence.
+ *
+ * All data contracts preserved. API calls unchanged.
+ */
+
+import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
+import {
+  FiBell, FiPackage, FiTruck, FiCheckCircle, FiInfo,
+  FiArrowLeft, FiInbox, FiTrash2, FiX, FiClock,
+} from "react-icons/fi";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// ─── Design Tokens ───────────────────────────────────────────────────────────
-// Primary:    Seafoam   #5BBFB5
-// Secondary:  Sky       #7EB8D4
-// Accent:     Coral     #F07468
-// Surface:    White     #FFFFFF
-// Background: Off-white #F4F9F8
-// Border:     Mist      #E2EEEC
-// Text-1:     Slate     #1A2E2C
-// Text-2:     Drift     #6B8F8A
-// ─────────────────────────────────────────────────────────────────────────────
-
-const EnhancedProductCard = ({
-  product,
-  onWishlistChange,
-  isWishlistMode = false,
-  globalDiscount = 0,
-}) => {
-  const { addToCart } = useContext(CartContext);
-  const { user, refreshMe } = useContext(AuthContext);
-  const navigate = useNavigate();
-
-  const [isAdding, setIsAdding] = useState(false);
-  const [loadingWishlist, setLoadingWishlist] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState("");
-  const [imageLoaded, setImageLoaded] = useState(false);
-
-  const isActiveFlashSale =
-    product.flashSale?.isFlashSale &&
-    new Date(product.flashSale.saleEndDate) > new Date();
-
-  let displayPrice = isActiveFlashSale
-    ? product.flashSale.discountPrice
-    : product.basePrice;
-  const globalDiscountApplied = !isActiveFlashSale && globalDiscount > 0;
-
-  if (globalDiscountApplied) {
-    displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
-  }
-
-  const discountPct = isActiveFlashSale
-    ? Math.round((1 - product.flashSale.discountPrice / product.basePrice) * 100)
-    : globalDiscountApplied
-      ? globalDiscount
-      : 0;
-
-  useEffect(() => {
-    if (!isActiveFlashSale) return;
-    const timer = setInterval(() => {
-      const diff = new Date(product.flashSale.saleEndDate) - new Date();
-      if (diff <= 0) { setTimeLeft("EXPIRED"); clearInterval(timer); return; }
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(`${h}h ${m}m ${s}s`);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [product.flashSale, isActiveFlashSale]);
-
-  useEffect(() => {
-    if (user?.wishlist) {
-      setIsWishlisted(
-        user.wishlist.some(
-          (item) => (typeof item === "string" ? item : item._id) === product._id
-        )
-      );
-    } else {
-      setIsWishlisted(false);
-    }
-  }, [user, product._id]);
-
-  const getImageUrl = (path) => {
-    if (!path) return "https://placehold.co/400?text=No+Image";
-    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  };
-
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsAdding(true);
-    setTimeout(() => {
-      addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
-      toast.success(`${product.name} added`, {
-        style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
-        icon: "🛒",
-      });
-      setIsAdding(false);
-    }, 500);
-  };
-
-  const handleWishlistToggle = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user) { toast.error("Login to save items"); return navigate("/login"); }
-    const prev = isWishlisted;
-    setIsWishlisted(!prev);
-    setLoadingWishlist(true);
-    try {
-      await axios.post(`${API_URL}/api/user/wishlist/${product._id}`, {}, { withCredentials: true });
-      await refreshMe();
-      toast.success(prev ? "Removed from wishlist" : "Saved to wishlist", {
-        style: { borderRadius: "12px", fontSize: "13px" },
-        icon: prev ? "💔" : "❤️",
-      });
-      if (onWishlistChange && prev) onWishlistChange(product._id);
-    } catch {
-      setIsWishlisted(prev);
-      toast.error("Failed to update wishlist");
-    } finally {
-      setLoadingWishlist(false);
-    }
-  };
-
-  const isOutOfStock = product.stock === "out" || (product.countInStock !== undefined && product.countInStock <= 0);
-  const isNew =
-    product.createdAt &&
-    new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-
-  return (
-    <div
-      style={{
-        background: "#FFFFFF",
-        border: "1px solid #E2EEEC",
-        borderRadius: "16px",
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        position: "relative",
-        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-        boxShadow: "0 1px 4px rgba(91,191,181,0.06)",
-        fontFamily: "'Manrope', sans-serif",
-      }}
-      className="product-card-hover group"
-    >
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-        .product-card-hover:hover {
-          box-shadow: 0 8px 32px rgba(91,191,181,0.14);
-          transform: translateY(-2px);
-          border-color: #B8DDD9;
-        }
-        .cart-btn-wave:hover {
-          background: #5BBFB5 !important;
-          color: white !important;
-          border-color: #5BBFB5 !important;
-        }
-      `}</style>
-
-      {/* Badge Row */}
-      <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "4px", zIndex: 10 }}>
-        {product.trending && (
-          <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            HOT
-          </span>
-        )}
-        {isNew && !product.trending && (
-          <span style={{ background: "#DBEAFE", color: "#1E40AF", fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            NEW
-          </span>
-        )}
-        {discountPct > 0 && (
-          <span style={{
-            background: isActiveFlashSale ? "#FEE2E2" : "#EDE9FE",
-            color: isActiveFlashSale ? "#B91C1C" : "#6D28D9",
-            fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.06em", textTransform: "uppercase",
-            display: "flex", alignItems: "center", gap: "3px"
-          }}>
-            {isActiveFlashSale && <FiZap size={7} />} -{discountPct}%
-          </span>
-        )}
-      </div>
-
-      {/* Wishlist */}
-      <button
-        onClick={handleWishlistToggle}
-        disabled={loadingWishlist}
-        style={{
-          position: "absolute", top: "12px", right: "12px", zIndex: 20,
-          width: "34px", height: "34px",
-          background: "rgba(255,255,255,0.92)",
-          border: "1px solid #E2EEEC",
-          borderRadius: "50%",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: "pointer",
-          color: isWishlisted ? "#F07468" : "#A0B8B5",
-          transition: "all 0.2s ease",
-          backdropFilter: "blur(4px)",
-        }}
-      >
-        {loadingWishlist ? (
-          <div style={{ width: "14px", height: "14px", border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-        ) : isWishlistMode ? (
-          <FiX size={15} />
-        ) : (
-          <FiHeart size={15} fill={isWishlisted ? "currentColor" : "none"} />
-        )}
-      </button>
-
-      {/* Image */}
-      <Link
-        to={`/products/${product._id}`}
-        style={{
-          height: "200px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#F4F9F8",
-          overflow: "hidden",
-          padding: "24px",
-          position: "relative",
-        }}
-      >
-        {isOutOfStock && (
-          <div style={{
-            position: "absolute", inset: 0, background: "rgba(244,249,248,0.6)",
-            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5,
-          }}>
-            <span style={{ background: "#F4F9F8", border: "1px solid #E2EEEC", color: "#9AB5B1", fontSize: "10px", fontWeight: "700", padding: "4px 12px", borderRadius: "20px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              SOLD OUT
-            </span>
-          </div>
-        )}
-        <img
-          src={getImageUrl(product.image)}
-          alt={product.name}
-          style={{
-            width: "100%", height: "100%", objectFit: "contain",
-            transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-            filter: isOutOfStock ? "grayscale(0.4) opacity(0.6)" : "none",
-            opacity: imageLoaded ? 1 : 0,
-          }}
-          onLoad={() => setImageLoaded(true)}
-          className="group-hover:scale-105"
-          loading="lazy"
-        />
-      </Link>
-
-      {/* Content */}
-      <div style={{ padding: "16px 18px 18px", display: "flex", flexDirection: "column", flex: 1 }}>
-        {/* Category */}
-        <span style={{ fontSize: "10px", fontWeight: "700", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px", display: "block" }}>
-          {product.category || "Fresh Catch"}
-        </span>
-
-        {/* Name */}
-        <h3 style={{ fontSize: "15px", fontWeight: "700", color: "#1A2E2C", lineHeight: "1.35", marginBottom: "10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-          {product.name}
-        </h3>
-
-        {/* Stock dot */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "14px" }}>
-          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: !isOutOfStock ? "#5BBFB5" : "#FDA29B", flexShrink: 0 }} />
-          <span style={{ fontSize: "10px", fontWeight: "600", color: !isOutOfStock ? "#5BBFB5" : "#F04438", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-            {!isOutOfStock ? "In Stock" : "Out of Stock"}
-          </span>
-          {isActiveFlashSale && timeLeft && (
-            <span style={{ marginLeft: "auto", fontSize: "9px", fontWeight: "800", color: "#DC2626", background: "#FEF2F2", padding: "2px 6px", borderRadius: "6px" }}>
-              ⏱ {timeLeft}
-            </span>
-          )}
-        </div>
-
-        {/* Price + CTA */}
-        <div style={{ marginTop: "auto" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "12px" }}>
-            {(isActiveFlashSale || globalDiscountApplied) && (
-              <span style={{ fontSize: "13px", color: "#B8CFCC", textDecoration: "line-through", fontWeight: "500" }}>
-                ₹{product.basePrice}
-              </span>
-            )}
-            <span style={{ fontSize: "22px", fontWeight: "800", color: "#1A2E2C", letterSpacing: "-0.02em" }}>
-              ₹{displayPrice}
-            </span>
-            <span style={{ fontSize: "11px", color: "#9AB5B1", fontWeight: "500" }}>
-              /{product.unit || "kg"}
-            </span>
-          </div>
-
-          <button
-            onClick={handleAddToCart}
-            disabled={isOutOfStock || isAdding}
-            className="cart-btn-wave"
-            style={{
-              width: "100%",
-              padding: "10px 0",
-              borderRadius: "10px",
-              border: "1.5px solid",
-              borderColor: isOutOfStock ? "#E2EEEC" : isAdding ? "#5BBFB5" : "#5BBFB5",
-              background: isAdding ? "#5BBFB5" : "transparent",
-              color: isOutOfStock ? "#B8CFCC" : isAdding ? "#fff" : "#5BBFB5",
-              fontSize: "13px",
-              fontWeight: "700",
-              letterSpacing: "0.02em",
-              cursor: isOutOfStock ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              transition: "all 0.2s ease",
-              fontFamily: "'Manrope', sans-serif",
-            }}
-          >
-            {isAdding ? (
-              <><FiCheck size={14} /> Added</>
-            ) : isOutOfStock ? (
-              "Sold Out"
-            ) : (
-              <><FiShoppingCart size={14} /> Add to Cart</>
-            )}
-          </button>
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
-    </div>
-  );
+// ─────────────────────────────────────────────────────────────
+// DESIGN TOKENS
+// ─────────────────────────────────────────────────────────────
+const T = {
+  bg:        "#F7F8FA",
+  surface:   "#FFFFFF",
+  border:    "#EAECF0",
+  ink:       "#0D1117",
+  inkMid:    "#44505C",
+  inkSoft:   "#8A96A3",
+  inkGhost:  "#B8C0C8",
+  teal:      "#4ECDC4",
+  tealDeep:  "#38B2AC",
+  tealGlow:  "rgba(78,205,196,0.13)",
+  amber:     "#F59E0B",
+  amberBg:   "rgba(245,158,11,0.09)",
+  coral:     "#EF4444",
+  coralBg:   "rgba(239,68,68,0.08)",
+  jade:      "#10B981",
+  jadeBg:    "rgba(16,185,129,0.09)",
+  sky:       "#38BDF8",
+  skyBg:     "rgba(56,189,248,0.09)",
+  shadow:    "0 1px 4px rgba(13,17,23,0.05), 0 3px 12px rgba(13,17,23,0.04)",
+  shadowMd:  "0 4px 24px rgba(13,17,23,0.08), 0 1px 5px rgba(13,17,23,0.04)",
+  ease:      [0.16, 1, 0.3, 1],
+  spring:    { type: "spring", stiffness: 360, damping: 34 },
+  r:         14,
+  rLg:       20,
+  rXl:       26,
+  rFull:     9999,
 };
 
-export default EnhancedProductCard;
+// ─────────────────────────────────────────────────────────────
+// GLOBAL STYLES
+// ─────────────────────────────────────────────────────────────
+const CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+  .nt-focus:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(78,205,196,0.18), 0 0 0 1.5px #4ECDC4;
+  }
+  .nt-del-btn { transition: color 0.15s, transform 0.15s; }
+  .nt-del-btn:hover { color: #EF4444 !important; transform: scale(1.18); }
+`;
+if (typeof document !== "undefined" && !document.getElementById("nt-styles")) {
+  const el = document.createElement("style"); el.id = "nt-styles"; el.textContent = CSS;
+  document.head.appendChild(el);
+}
+
+// ─────────────────────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────────────────────
+const FILTERS = [
+  { id: "all",        label: "All",        icon: <FiBell size={11} />       },
+  { id: "Shipped",    label: "Shipping",   icon: <FiTruck size={11} />      },
+  { id: "Delivered",  label: "Delivered",  icon: <FiCheckCircle size={11} /> },
+  { id: "Processing", label: "Processing", icon: <FiPackage size={11} />    },
+];
+
+function statusCfg(type) {
+  switch (type) {
+    case "Shipped":    return { icon: <FiTruck />,       color: T.sky,   bg: T.skyBg,   label: "In Transit"  };
+    case "Delivered":  return { icon: <FiCheckCircle />, color: T.jade,  bg: T.jadeBg,  label: "Delivered"   };
+    case "Processing": return { icon: <FiPackage />,     color: T.amber, bg: T.amberBg, label: "Processing"  };
+    default:           return { icon: <FiInfo />,        color: T.teal,  bg: T.tealGlow,label: "Update"      };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// NOTIFICATION CARD
+// ─────────────────────────────────────────────────────────────
+function NotificationCard({ n, index, onDelete, reduced }) {
+  const cfg = statusCfg(n.statusType);
+  return (
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: reduced ? 0 : 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{
+        opacity: 0,
+        x: reduced ? 0 : -56,
+        scale: 0.95,
+        transition: { duration: 0.24, ease: "easeIn" },
+      }}
+      transition={{ delay: reduced ? 0 : index * 0.045, duration: 0.42, ease: T.ease }}
+      style={{
+        background: T.surface,
+        borderRadius: T.r,
+        border: `1px solid ${T.border}`,
+        padding: "18px 20px",
+        boxShadow: T.shadow,
+        display: "flex", gap: 14, alignItems: "flex-start",
+      }}
+      whileHover={reduced ? {} : {
+        y: -2,
+        boxShadow: T.shadowMd,
+        transition: { duration: 0.18, ease: T.ease },
+      }}
+    >
+      {/* Status icon */}
+      <motion.div
+        initial={reduced ? {} : { scale: 0.7, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: reduced ? 0 : index * 0.045 + 0.14, ...T.spring }}
+        style={{
+          width: 44, height: 44, borderRadius: 13, flexShrink: 0,
+          background: cfg.bg, color: cfg.color,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 18,
+        }}
+      >
+        {cfg.icon}
+      </motion.div>
+
+      {/* Content */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+          {/* Label badge */}
+          <span style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 9.5, fontWeight: 700, textTransform: "uppercase",
+            letterSpacing: "0.1em", padding: "3px 9px", borderRadius: T.rFull,
+            background: cfg.bg, color: cfg.color,
+          }}>
+            {cfg.label}
+          </span>
+
+          {/* Delete */}
+          <button
+            onClick={() => onDelete(n._id)}
+            aria-label={`Delete notification: ${n.message}`}
+            className="nt-del-btn nt-focus"
+            style={{
+              color: T.inkGhost, background: "none", border: "none",
+              cursor: "pointer", padding: 4, flexShrink: 0,
+              display: "flex", alignItems: "center",
+            }}
+          >
+            <FiX size={14} />
+          </button>
+        </div>
+
+        <h4 style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 13.5, fontWeight: 600, color: T.ink,
+          margin: "0 0 7px", lineHeight: 1.5,
+        }}>
+          {n.message}
+        </h4>
+
+        <p style={{
+          fontSize: 11, color: T.inkSoft, margin: 0,
+          display: "flex", alignItems: "center", gap: 5,
+        }}>
+          <FiClock size={9} aria-hidden="true" />
+          <time dateTime={n.createdAt}>
+            {new Date(n.createdAt).toLocaleDateString("en-GB", {
+              day: "numeric", month: "short",
+              hour: "2-digit", minute: "2-digit",
+            })}
+          </time>
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// TIMELINE GROUP LABEL
+// ─────────────────────────────────────────────────────────────
+function GroupLabel({ label, live = false, reduced }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      style={{
+        display: "flex", alignItems: "center", gap: 8,
+        fontFamily: "'Sora', sans-serif",
+        fontSize: 9.5, fontWeight: 700, color: live ? T.teal : T.inkGhost,
+        textTransform: "uppercase", letterSpacing: "0.15em",
+        paddingLeft: 2,
+      }}
+    >
+      <span style={{
+        width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+        background: live ? T.teal : T.border,
+        boxShadow: live ? `0 0 0 3px ${T.tealGlow}` : "none",
+      }} />
+      {label}
+    </motion.div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// MAIN COMPONENT
+// ─────────────────────────────────────────────────────────────
+export default function Notifications() {
+  const [notifications, setNotifications] = useState([]);
+  const [loading,       setLoading]       = useState(true);
+  const [activeFilter,  setActiveFilter]  = useState("all");
+  const navigate = useNavigate();
+  const reduced  = useReducedMotion();
+
+  // ── Derived lists ─────────────────────────────────────────
+  const filtered = useMemo(() =>
+    activeFilter === "all"
+      ? notifications
+      : notifications.filter(n => n.statusType === activeFilter),
+    [notifications, activeFilter]
+  );
+
+  const { todayItems, earlierItems } = useMemo(() => {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const t = [], e = [];
+    filtered.forEach(n =>
+      new Date(n.createdAt) >= today ? t.push(n) : e.push(n)
+    );
+    return { todayItems: t, earlierItems: e };
+  }, [filtered]);
+
+  // ── Data fetching ─────────────────────────────────────────
+  const fetchNotifications = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/notifications`, { withCredentials: true });
+      setNotifications(res.data);
+      // Mark all as read silently
+      axios.put(`${API_URL}/api/notifications/read-all`, {}, { withCredentials: true }).catch(() => {});
+    } catch {}
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { fetchNotifications(); }, []);
+
+  const deleteOne = async (id) => {
+    setNotifications(prev => prev.filter(n => n._id !== id)); // optimistic
+    try {
+      await axios.delete(`${API_URL}/api/notifications/${id}`, { withCredentials: true });
+    } catch {}
+  };
+
+  const clearAll = async () => {
+    setNotifications([]); // optimistic
+    try {
+      await axios.delete(`${API_URL}/api/notifications/clear/all`, { withCredentials: true });
+    } catch {}
+  };
+
+  if (loading) return <SeaBiteLoader fullScreen />;
+
+  // ─────────────────────────────────────────────────────────
+  // RENDER
+  // ─────────────────────────────────────────────────────────
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: T.bg,
+      fontFamily: "'DM Sans', sans-serif",
+      padding: "100px 20px 72px",
+      overflowX: "hidden",
+    }}>
+      {/* Ambient gradient */}
+      <div aria-hidden="true" style={{
+        position: "fixed", top: 0, left: 0, right: 0, height: 400,
+        background: "linear-gradient(180deg, rgba(78,205,196,0.05) 0%, transparent 100%)",
+        pointerEvents: "none", zIndex: 0,
+      }} />
+
+      <div style={{ maxWidth: 740, margin: "0 auto", position: "relative", zIndex: 1 }}>
+
+        {/* ── HEADER ──────────────────────────────────── */}
+        <motion.header
+          initial={{ opacity: 0, y: reduced ? 0 : -18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.52, ease: T.ease }}
+          style={{ marginBottom: 32 }}
+        >
+          {/* Back */}
+          <motion.button
+            whileHover={reduced ? {} : { x: -3 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => navigate(-1)}
+            className="nt-focus"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              color: T.inkSoft, fontFamily: "'DM Sans', sans-serif",
+              fontWeight: 500, fontSize: 13, background: "none", border: "none",
+              cursor: "pointer", marginBottom: 22,
+            }}
+          >
+            <FiArrowLeft size={14} /> Back
+          </motion.button>
+
+          <div style={{
+            display: "flex", justifyContent: "space-between",
+            alignItems: "flex-end", flexWrap: "wrap", gap: 16,
+          }}>
+            <div>
+              {/* Eyebrow */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                <div style={{ width: 3, height: 18, borderRadius: 2, background: T.teal }} />
+                <span style={{
+                  fontFamily: "'Sora', sans-serif",
+                  fontSize: 9.5, fontWeight: 700, color: T.teal,
+                  textTransform: "uppercase", letterSpacing: "0.17em",
+                }}>
+                  Your Feed
+                </span>
+              </div>
+
+              <h1 style={{
+                fontFamily: "'Sora', sans-serif",
+                fontSize: 34, fontWeight: 800, color: T.ink,
+                letterSpacing: "-0.032em", margin: 0,
+              }}>
+                Activity{" "}
+                <span style={{
+                  background: `linear-gradient(135deg, ${T.teal}, ${T.sky})`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
+                }}>
+                  Log
+                </span>
+              </h1>
+            </div>
+
+            {/* Clear all button */}
+            <AnimatePresence>
+              {notifications.length > 0 && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.88 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.88 }}
+                  whileHover={reduced ? {} : { y: -2 }}
+                  whileTap={{ scale: 0.96 }}
+                  onClick={clearAll}
+                  className="nt-focus"
+                  style={{
+                    display: "flex", alignItems: "center", gap: 7,
+                    padding: "10px 18px", borderRadius: T.r,
+                    background: T.surface, border: `1.5px solid ${T.border}`,
+                    color: T.inkSoft, fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 11.5, fontWeight: 600, cursor: "pointer",
+                    boxShadow: T.shadow,
+                  }}
+                >
+                  <FiTrash2 size={12} /> Clear All
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        </motion.header>
+
+        {/* ── FILTER PILLS ──────────────────────────────── */}
+        <motion.div
+          initial={{ opacity: 0, y: reduced ? 0 : 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4, ease: T.ease }}
+          role="tablist"
+          aria-label="Filter notifications"
+          style={{
+            display: "flex", gap: 7, overflowX: "auto",
+            paddingBottom: 2, marginBottom: 28,
+            scrollbarWidth: "none",
+          }}
+        >
+          {FILTERS.map(f => {
+            const active = activeFilter === f.id;
+            const count  = f.id === "all"
+              ? notifications.length
+              : notifications.filter(n => n.statusType === f.id).length;
+
+            return (
+              <div key={f.id} style={{ position: "relative" }}>
+                {/* Sliding background indicator */}
+                {active && (
+                  <motion.div
+                    layoutId="nt-filter-pill"
+                    style={{
+                      position: "absolute", inset: 0,
+                      borderRadius: T.r,
+                      background: T.teal,
+                      boxShadow: "0 4px 18px rgba(78,205,196,0.28)",
+                    }}
+                    transition={T.spring}
+                  />
+                )}
+                <button
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setActiveFilter(f.id)}
+                  className="nt-focus"
+                  style={{
+                    position: "relative", zIndex: 1,
+                    display: "flex", alignItems: "center", gap: 6,
+                    padding: "9px 16px", borderRadius: T.r,
+                    cursor: "pointer", whiteSpace: "nowrap",
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 12, fontWeight: active ? 600 : 400,
+                    color: active ? T.surface : T.inkMid,
+                    background: active ? "transparent" : T.surface,
+                    border: `1.5px solid ${active ? "transparent" : T.border}`,
+                    transition: "color 0.18s, border-color 0.18s",
+                  }}
+                >
+                  {f.icon}
+                  {f.label}
+                  {count > 0 && (
+                    <span style={{
+                      padding: "1px 7px", borderRadius: T.rFull,
+                      fontSize: 9.5, fontWeight: 700,
+                      background: active ? "rgba(255,255,255,0.22)" : T.tealGlow,
+                      color: active ? T.surface : T.tealDeep,
+                    }}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              </div>
+            );
+          })}
+        </motion.div>
+
+        {/* ── NOTIFICATION LIST ─────────────────────────── */}
+        <AnimatePresence mode="popLayout">
+          {filtered.length === 0 ? (
+            /* Empty state */
+            <motion.div
+              key="nt-empty"
+              initial={{ opacity: 0, scale: reduced ? 1 : 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                background: T.surface, borderRadius: T.rLg,
+                border: `1px solid ${T.border}`,
+                boxShadow: T.shadow,
+                padding: "72px 40px", textAlign: "center",
+              }}
+            >
+              <motion.div
+                animate={reduced ? {} : { y: [0, -7, 0] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
+                style={{
+                  width: 68, height: 68, borderRadius: "50%",
+                  background: T.tealGlow, border: `1px solid rgba(78,205,196,0.2)`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  margin: "0 auto 22px", color: T.teal,
+                }}
+              >
+                <FiInbox size={28} />
+              </motion.div>
+              <h3 style={{
+                fontFamily: "'Sora', sans-serif",
+                fontSize: 19, fontWeight: 700, color: T.ink, marginBottom: 8,
+              }}>
+                All Caught Up
+              </h3>
+              <p style={{
+                fontSize: 13.5, color: T.inkSoft,
+                maxWidth: 270, margin: "0 auto", lineHeight: 1.7,
+              }}>
+                You have no{activeFilter !== "all" ? ` ${activeFilter.toLowerCase()}` : " new"} notifications.
+              </p>
+            </motion.div>
+
+          ) : (
+            <div key="nt-list" style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+
+              {/* Today group */}
+              {todayItems.length > 0 && (
+                <motion.div
+                  key="today-group"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                >
+                  <GroupLabel label="Today" live reduced={reduced} />
+                  <AnimatePresence mode="popLayout">
+                    {todayItems.map((n, i) => (
+                      <NotificationCard
+                        key={n._id} n={n} index={i}
+                        onDelete={deleteOne} reduced={reduced}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+
+              {/* Earlier group */}
+              {earlierItems.length > 0 && (
+                <motion.div
+                  key="earlier-group"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: todayItems.length ? 8 : 0 }}
+                >
+                  <GroupLabel label="Earlier" reduced={reduced} />
+                  <AnimatePresence mode="popLayout">
+                    {earlierItems.map((n, i) => (
+                      <NotificationCard
+                        key={n._id} n={n} index={i}
+                        onDelete={deleteOne} reduced={reduced}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </motion.div>
+              )}
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
