@@ -7,6 +7,7 @@ import {
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { removeFromCart, updateQty } from "../../utils/cartStorage";
+import StripeButton from "../stripe/StripeButton";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -295,27 +296,18 @@ export default function CartSidebar({ isOpen, onClose }) {
                 </div>
 
                 {/* Checkout button */}
-                <motion.button
-                  whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(91,168,160,0.30)" }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleCheckout}
-                  style={{
-                    width: "100%", padding: "15px 20px", borderRadius: 14,
-                    background: T.primary, color: "#fff", border: "none",
-                    fontSize: 14, fontWeight: 700, cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                    fontFamily: font, boxShadow: "0 4px 20px rgba(91,168,160,0.24)",
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  Checkout Now
-                  <motion.span
-                    animate={{ x: [0, 4, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
-                  >
-                    <FiArrowRight size={16} />
-                  </motion.span>
-                </motion.button>
+                <div style={{ marginTop: 8 }}>
+                  <StripeButton onClick={handleCheckout}>
+                    Checkout Now
+                    <motion.span
+                      animate={{ x: [0, 4, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+                      style={{ display: "flex", alignItems: "center" }}
+                    >
+                      <FiArrowRight size={16} />
+                    </motion.span>
+                  </StripeButton>
+                </div>
 
                 <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
                   <FiLock size={10} /> Secured checkout
