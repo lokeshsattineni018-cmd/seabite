@@ -815,6 +815,15 @@ export default function Order() {
 
 
 
+  // ── Status-aware card tint
+  const cardBg = (status) => {
+    if (status === "Delivered") return T.jadeBg;
+    if (status?.includes("Cancelled")) return T.coralBg;
+    if (["Pending", "Processing"].includes(status)) return T.amberBg;
+    if (status === "Shipped") return T.skyBg;
+    return "#fff";
+  };
+
   // ─────────────────────────────────────────────────────────
   // Spinner for reorder
   // ─────────────────────────────────────────────────────────
