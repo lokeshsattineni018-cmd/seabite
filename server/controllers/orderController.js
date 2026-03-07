@@ -105,6 +105,8 @@ export const updateOrderStatus = async (req, res) => {
         const order = await Order.findById(req.params.id).populate('user', 'name email');
         if (!order) return res.status(404).json({ message: 'Order not found' });
 
+        const oldStatus = order.status;
+
         if (status) order.status = status;
 
         if (refundStatus) {
@@ -117,12 +119,16 @@ export const updateOrderStatus = async (req, res) => {
         const updatedOrder = await order.save();
 
         // 🔐 AUDIT TRAIL: Log status change
-        await ActivityLog.create({
-            user: req.user._id,
-            action: `ORDER_STATUS_UPDATE`,
-            details: `Order #${order.orderId} status changed to ${status || 'N/A'}${refundStatus ? `, Refund: ${refundStatus}` : ''}`,
-            meta: { orderId: order._id, oldStatus: order.status, newStatus: status }
-        });
+        try {
+            await ActivityLog.create({
+                user: req.user._id,
+                action: `ORDER_STATUS_UPDATE`,
+                details: `Order #${order.orderId} status changed to ${status || 'N/A'}${refundStatus ? `, Refund: ${refundStatus}` : ''}`,
+                meta: { orderId: order._id, oldStatus, newStatus: status }
+            });
+        } catch (auditErr) {
+            console.error("ActivityLog create failed:", auditErr.message);
+        }
 
         logger.audit("Order Status Updated", { orderId: order.orderId, admin: req.user.email, status });
 
@@ -142,7 +148,8 @@ export const updateOrderStatus = async (req, res) => {
 
         res.json(updatedOrder);
     } catch (error) {
-        res.status(500).json({ message: 'Error updating status' });
+        console.error("updateOrderStatus CRASH:", error);
+        res.status(500).json({ message: error.message || 'Error updating status' });
     }
 };
 
