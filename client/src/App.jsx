@@ -229,7 +229,7 @@ function MainLayout() {
                 <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
                   <Routes location={location} key={location.pathname}>
                     <Route path="/" element={<Home />} />
-                    <Route path="/products" element={<Products openCart={openCart} />} />
+                    <Route path="/products" element={<Products />} />
                     <Route path="/products/:id" element={<ProductDetails />} />
                     <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />

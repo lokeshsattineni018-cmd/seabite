@@ -22,6 +22,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 const EnhancedProductCard = ({
   product,
   onWishlistChange,
+  onAddToCart,
   isWishlistMode = false,
   globalDiscount = 0,
 }) => {
@@ -95,6 +96,7 @@ const EnhancedProductCard = ({
         icon: "🛒",
       });
       setIsAdding(false);
+      if (onAddToCart) onAddToCart(product._id);
     }, 500);
   };
 
