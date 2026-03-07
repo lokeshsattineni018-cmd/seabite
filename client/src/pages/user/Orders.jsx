@@ -48,53 +48,53 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 // DESIGN TOKENS — single source of truth
 // ─────────────────────────────────────────────────────────────
 const T = {
-  // Backgrounds
-  bg:            "#F7F8FA",
-  surface:       "#FFFFFF",
-  surfaceRaised: "#FDFDFD",
-  glass:         "rgba(255,255,255,0.78)",
+  // Apple/H&M Backgrounds
+  bg: "#FFFFFF",
+  surface: "#FFFFFF",
+  surfaceRaised: "#FFFFFF",
+  glass: "rgba(255,255,255,0.85)",
 
   // Borders
-  border:        "#EAECF0",
-  borderFocus:   "#4ECDC4",
+  border: "#F1F1F1",
+  borderFocus: "#0071E3",
 
   // Text
-  ink:           "#0D1117",
-  inkMid:        "#44505C",
-  inkSoft:       "#8A96A3",
-  inkGhost:      "#B8C0C8",
+  ink: "#111111",
+  inkMid: "#333333",
+  inkSoft: "#6E6E73",
+  inkGhost: "#A1A1A6",
 
   // Brand / Accent
-  teal:          "#4ECDC4",
-  tealDeep:      "#38B2AC",
-  tealGlow:      "rgba(78,205,196,0.18)",
+  teal: "#0071E3",
+  tealDeep: "#005BB5",
+  tealGlow: "rgba(0, 113, 227, 0.08)",
 
-  // Status
-  amber:         "#F59E0B",
-  amberBg:       "rgba(245,158,11,0.10)",
-  coral:         "#EF4444",
-  coralBg:       "rgba(239,68,68,0.09)",
-  jade:          "#10B981",
-  jadeBg:        "rgba(16,185,129,0.09)",
-  sky:           "#38BDF8",
-  skyBg:         "rgba(56,189,248,0.09)",
+  // Status (Kept for compatibility)
+  amber: "#F59E0B",
+  amberBg: "rgba(245,158,11,0.10)",
+  coral: "#EF4444",
+  coralBg: "rgba(239,68,68,0.09)",
+  jade: "#10B981",
+  jadeBg: "rgba(16,185,129,0.09)",
+  sky: "#38BDF8",
+  skyBg: "rgba(56,189,248,0.09)",
 
   // Easing
-  spring:        { type: "spring", stiffness: 380, damping: 36 },
-  ease:          [0.16, 1, 0.3, 1],
-  easeOut:       [0, 0, 0.4, 1],
+  spring: { type: "spring", stiffness: 380, damping: 36 },
+  ease: [0.16, 1, 0.3, 1],
+  easeOut: [0, 0, 0.4, 1],
 
   // Radii
-  r:             14,
-  rLg:           20,
-  rXl:           28,
-  rFull:         9999,
+  r: 16,
+  rLg: 22,
+  rXl: 28,
+  rFull: 9999,
 
   // Shadows
-  shadow:        "0 1px 4px rgba(13,17,23,0.06), 0 4px 16px rgba(13,17,23,0.04)",
-  shadowMd:      "0 4px 24px rgba(13,17,23,0.08), 0 1px 6px rgba(13,17,23,0.05)",
-  shadowLg:      "0 12px 48px rgba(13,17,23,0.12), 0 4px 16px rgba(13,17,23,0.06)",
-  shadowTeal:    "0 8px 32px rgba(78,205,196,0.22)",
+  shadow: "0 6px 30px rgba(0,0,0,0.05)",
+  shadowMd: "0 8px 30px rgba(0,0,0,0.05)",
+  shadowLg: "0 12px 40px rgba(0,0,0,0.08)",
+  shadowTeal: "0 6px 20px rgba(0, 113, 227, 0.2)",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -103,34 +103,34 @@ const T = {
 const TABS = ["All", "Active", "Delivered", "Cancelled"];
 
 const SORTS = [
-  { v: "newest",  l: "Newest First"    },
-  { v: "oldest",  l: "Oldest First"    },
-  { v: "highest", l: "Highest Amount"  },
-  { v: "lowest",  l: "Lowest Amount"   },
+  { v: "newest", l: "Newest First" },
+  { v: "oldest", l: "Oldest First" },
+  { v: "highest", l: "Highest Amount" },
+  { v: "lowest", l: "Lowest Amount" },
 ];
 
-const EMOJI_MAP = ["🐟","🦐","🦞","🦀","🐙","🦑","🐠"];
+const EMOJI_MAP = ["🐟", "🦐", "🦞", "🦀", "🐙", "🦑", "🐠"];
 
 const COMPLAINT_ISSUES = [
-  { v: "wrong_item",    l: "Wrong item delivered"      },
-  { v: "poor_quality",  l: "Poor freshness / quality"  },
-  { v: "missing_items", l: "Missing items from order"  },
-  { v: "damaged",       l: "Item damaged in transit"   },
-  { v: "other",         l: "Other issue"               },
+  { v: "wrong_item", l: "Wrong item delivered" },
+  { v: "poor_quality", l: "Poor freshness / quality" },
+  { v: "missing_items", l: "Missing items from order" },
+  { v: "damaged", l: "Item damaged in transit" },
+  { v: "other", l: "Other issue" },
 ];
 
 const TAB_META = {
-  All:       { emoji: "📦", color: T.teal,  bg: T.tealGlow  },
-  Active:    { emoji: "🔄", color: T.amber, bg: T.amberBg   },
-  Delivered: { emoji: "✅", color: T.jade,  bg: T.jadeBg    },
-  Cancelled: { emoji: "🚫", color: T.coral, bg: T.coralBg   },
+  All: { emoji: "📦", color: T.teal, bg: T.tealGlow },
+  Active: { emoji: "🔄", color: T.amber, bg: T.amberBg },
+  Delivered: { emoji: "✅", color: T.jade, bg: T.jadeBg },
+  Cancelled: { emoji: "🚫", color: T.coral, bg: T.coralBg },
 };
 
 const EMPTY_COPY = {
-  All:       { icon: "📦", h: "No orders yet",            p: "Your order history will appear once you place your first order." },
-  Active:    { icon: "🌊", h: "No active orders",         p: "Browse our fresh catch and place an order to see it here." },
-  Delivered: { icon: "✅", h: "No delivered orders",      p: "Delivered orders will appear here once they arrive." },
-  Cancelled: { icon: "🎉", h: "No cancellations",         p: "Great record — none of your orders have been cancelled." },
+  All: { icon: "📦", h: "No orders yet", p: "Your order history will appear once you place your first order." },
+  Active: { icon: "🌊", h: "No active orders", p: "Browse our fresh catch and place an order to see it here." },
+  Delivered: { icon: "✅", h: "No delivered orders", p: "Delivered orders will appear here once they arrive." },
+  Cancelled: { icon: "🎉", h: "No cancellations", p: "Great record — none of your orders have been cancelled." },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -210,14 +210,14 @@ if (typeof document !== "undefined" && !document.getElementById("lx-styles")) {
 function statusConfig(status) {
   switch (status) {
     case "Delivered":
-      return { color: T.jade,  bg: T.jadeBg,  text: T.jade,  icon: <FiCheck  size={11} />, pulse: false, label: "Delivered"  };
+      return { color: T.jade, bg: T.jadeBg, text: T.jade, icon: <FiCheck size={11} />, pulse: false, label: "Delivered" };
     case "Cancelled":
     case "Cancelled by User":
-      return { color: T.coral, bg: T.coralBg, text: T.coral, icon: <FiX      size={11} />, pulse: false, label: status       };
+      return { color: T.coral, bg: T.coralBg, text: T.coral, icon: <FiX size={11} />, pulse: false, label: status };
     case "Shipped":
-      return { color: T.sky,   bg: T.skyBg,   text: T.sky,   icon: <FiTruck  size={11} />, pulse: true,  label: "Shipped"    };
+      return { color: T.sky, bg: T.skyBg, text: T.sky, icon: <FiTruck size={11} />, pulse: true, label: "Shipped" };
     case "Processing":
-      return { color: T.teal,  bg: T.tealGlow, text: T.teal, icon: <FiPackage size={11} />, pulse: true,  label: "Processing" };
+      return { color: T.teal, bg: T.tealGlow, text: T.teal, icon: <FiPackage size={11} />, pulse: true, label: "Processing" };
     default: // Pending
       return { color: T.amber, bg: T.amberBg, text: T.amber, icon: <FiRefreshCcw size={11} />, pulse: true, label: "Pending" };
   }
@@ -361,9 +361,9 @@ const ItemRow = React.memo(function ItemRow({ item, index, isFrequent }) {
 // QUALITY COMPLAINT MODAL
 // ─────────────────────────────────────────────────────────────
 function QualityComplaintModal({ order, onClose, onSuccess }) {
-  const [issueType,    setIssueType]    = useState("");
-  const [description,  setDescription]  = useState("");
-  const [submitting,   setSubmitting]   = useState(false);
+  const [issueType, setIssueType] = useState("");
+  const [description, setDescription] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   // Trap Escape key
   useEffect(() => {
@@ -611,78 +611,32 @@ function MobileSortSheet({ sortBy, setSortBy, onClose }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// OVERVIEW STAT ROW
-// ─────────────────────────────────────────────────────────────
-function StatRow({ label, value, color, border }) {
-  return (
-    <div style={{
-      display: "flex", justifyContent: "space-between", alignItems: "center",
-      padding: "7px 0",
-      borderBottom: border ? `1px solid ${T.border}` : "none",
-    }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
-        <span style={{ fontSize: 11.5, color: T.inkSoft, fontWeight: 400 }}>{label}</span>
-      </div>
-      <span className="lx-badge" style={{ fontSize: 12, fontWeight: 700, color: color || T.ink }}>
-        {value}
-      </span>
-    </div>
-  );
-}
 
-// ─────────────────────────────────────────────────────────────
-// SIDEBAR CARD WRAPPER
-// ─────────────────────────────────────────────────────────────
-function SideCard({ accent, title, children }) {
-  return (
-    <div style={{
-      background: T.surface, borderRadius: T.rLg,
-      border: `1px solid ${T.border}`, boxShadow: T.shadow,
-      overflow: "hidden",
-    }}>
-      {/* Accent bar */}
-      <div style={{ height: 3, background: accent }} />
-      <div style={{ padding: "16px 16px 14px" }}>
-        <p style={{
-          fontFamily: "'Sora', sans-serif",
-          fontSize: 10, fontWeight: 700, color: T.inkGhost,
-          textTransform: "uppercase", letterSpacing: "0.14em",
-          margin: "0 0 12px",
-        }}>
-          {title}
-        </p>
-        {children}
-      </div>
-    </div>
-  );
-}
 
 // ─────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────
 export default function Order() {
-  const [orders,          setOrders]          = useState([]);
-  const [loading,         setLoading]         = useState(true);
-  const [expandedOrder,   setExpandedOrder]   = useState(null);
-  const [isReviewOpen,    setIsReviewOpen]    = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedOrder, setExpandedOrder] = useState(null);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedReview,  setSelectedReview]  = useState(null);
-  const [modalConfig,     setModalConfig]     = useState({ show: false, message: "", type: "info" });
-  const [complaintOrder,  setComplaintOrder]  = useState(null);
-  const [reorderingId,    setReorderingId]    = useState(null);
-  const [showSortSheet,   setShowSortSheet]   = useState(false);
-  const [searchQuery,     setSearchQuery]     = useState("");
+  const [selectedReview, setSelectedReview] = useState(null);
+  const [modalConfig, setModalConfig] = useState({ show: false, message: "", type: "info" });
+  const [complaintOrder, setComplaintOrder] = useState(null);
+  const [reorderingId, setReorderingId] = useState(null);
+  const [showSortSheet, setShowSortSheet] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const searchRef = useRef(null);
-  const reduced   = useReducedMotion();
+  const reduced = useReducedMotion();
 
   // ── URL-synced state ──────────────────────────────────────
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab")  || "All";
-  const sortBy    = searchParams.get("sort") || "newest";
+  const activeTab = searchParams.get("tab") || "All";
+  const sortBy = searchParams.get("sort") || "newest";
 
   const setActiveTab = useCallback(tab => {
     setSearchParams(p => { const n = new URLSearchParams(p); n.set("tab", tab); return n; });
@@ -745,7 +699,7 @@ export default function Order() {
   const filtered = useMemo(() => {
     let r = [...orders];
     if (activeTab === "Active")
-      r = r.filter(o => ["Pending","Processing","Shipped"].includes(o.status));
+      r = r.filter(o => ["Pending", "Processing", "Shipped"].includes(o.status));
     else if (activeTab === "Delivered")
       r = r.filter(o => o.status === "Delivered");
     else if (activeTab === "Cancelled")
@@ -758,24 +712,24 @@ export default function Order() {
         (o.items || []).some(i => String(i.name || "").toLowerCase().includes(q))
       );
     }
-    if (sortBy === "newest")  r.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-    if (sortBy === "oldest")  r.sort((a,b) => new Date(a.createdAt) - new Date(b.createdAt));
-    if (sortBy === "highest") r.sort((a,b) => (b.totalAmount||0) - (a.totalAmount||0));
-    if (sortBy === "lowest")  r.sort((a,b) => (a.totalAmount||0) - (b.totalAmount||0));
+    if (sortBy === "newest") r.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (sortBy === "oldest") r.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    if (sortBy === "highest") r.sort((a, b) => (b.totalAmount || 0) - (a.totalAmount || 0));
+    if (sortBy === "lowest") r.sort((a, b) => (a.totalAmount || 0) - (b.totalAmount || 0));
     return r;
   }, [orders, activeTab, debouncedSearch, sortBy]);
 
   const counts = useMemo(() => ({
-    All:       orders.length,
-    Active:    orders.filter(o => ["Pending","Processing","Shipped"].includes(o.status)).length,
+    All: orders.length,
+    Active: orders.filter(o => ["Pending", "Processing", "Shipped"].includes(o.status)).length,
     Delivered: orders.filter(o => o.status === "Delivered").length,
     Cancelled: orders.filter(o => o.status?.includes("Cancelled")).length,
   }), [orders]);
 
   const totalSpent = useMemo(() =>
-    orders.filter(o => !o.status?.includes("Cancelled")).reduce((s,o) => s + (o.totalAmount||0), 0), [orders]);
+    orders.filter(o => !o.status?.includes("Cancelled")).reduce((s, o) => s + (o.totalAmount || 0), 0), [orders]);
   const totalSaved = useMemo(() =>
-    orders.reduce((s,o) => s + (o.discount||0), 0), [orders]);
+    orders.reduce((s, o) => s + (o.discount || 0), 0), [orders]);
 
   // ── Review helpers ────────────────────────────────────────
   const getUserReview = useCallback((item, orderUserId) => {
@@ -859,7 +813,7 @@ export default function Order() {
     },
   };
   const itemVariants = {
-    hidden:  { opacity: 0, y: reduced ? 0 : 20 },
+    hidden: { opacity: 0, y: reduced ? 0 : 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.42, ease: T.ease } },
   };
 
@@ -1000,7 +954,7 @@ export default function Order() {
             {/* Cards skeleton */}
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div className="lx-shimmer" style={{ height: 44, borderRadius: 14 }} />
-              {[1,2,3].map(i => <SkeletonCard key={i} />)}
+              {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
             </div>
           </div>
         ) : orders.length === 0 ? (
@@ -1051,151 +1005,48 @@ export default function Order() {
             </motion.button>
           </motion.div>
         ) : (
-          // ── TWO-COLUMN LAYOUT ──────────────────────────
-          <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 22, alignItems: "start" }}>
+          // ── SINGLE COLUMN APPLE LYOUT ──────────────────────────
+          <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
 
-            {/* ── MOBILE TOP BAR ──────────────────────── */}
-            <div
-              className="lx-mob-bar"
-              style={{ display: "none", gridColumn: "1/-1", gap: 8, alignItems: "center" }}
-            >
-              <div role="tablist" style={{ display: "flex", gap: 6, overflowX: "auto", flex: 1, scrollbarWidth: "none", paddingBottom: 2 }}>
-                {TABS.map(tab => {
-                  const meta = TAB_META[tab];
-                  const active = activeTab === tab;
-                  return (
-                    <button
-                      key={tab} role="tab" aria-selected={active}
-                      onClick={() => setActiveTab(tab)}
-                      className="lx-focus"
-                      style={{
-                        flexShrink: 0, padding: "8px 14px", borderRadius: T.rFull,
-                        border: `1.5px solid ${active ? meta.color : T.border}`,
-                        background: active ? meta.bg : T.surface,
-                        cursor: "pointer", fontSize: 12, fontWeight: active ? 600 : 400,
-                        color: active ? meta.color : T.inkMid,
-                        fontFamily: "'DM Sans', sans-serif",
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      {tab} <span style={{ fontWeight: 700, opacity: 0.7 }}>{counts[tab]}</span>
-                    </button>
-                  );
-                })}
+            {/* ── TOP NAV BAR ──────────────────────── */}
+            <div style={{
+              display: "flex", gap: 24, borderBottom: `1px solid ${T.border}`,
+              marginBottom: 16, overflowX: "auto", paddingBottom: 0,
+              scrollbarWidth: "none", alignItems: "center", justifyContent: "space-between"
+            }}>
+              <div style={{ display: "flex", gap: 24 }}>
+                {TABS.map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    style={{
+                      background: "none", border: "none",
+                      fontWeight: activeTab === tab ? 600 : 500,
+                      color: activeTab === tab ? T.ink : T.inkSoft,
+                      paddingBottom: 12, fontSize: 15,
+                      borderBottom: activeTab === tab ? `2px solid ${T.ink}` : "2px solid transparent",
+                      cursor: "pointer", whiteSpace: "nowrap", transition: "color 0.2s"
+                    }}
+                  >
+                    {tab} <span style={{ color: T.inkGhost, fontSize: 13, marginLeft: 4 }}>{counts[tab]}</span>
+                  </button>
+                ))}
               </div>
-              <button
-                onClick={() => setShowSortSheet(true)}
-                className="lx-focus"
-                style={{
-                  flexShrink: 0, display: "flex", alignItems: "center", gap: 5,
-                  padding: "8px 14px", borderRadius: 12,
-                  border: `1px solid ${T.border}`, background: T.surface,
-                  fontSize: 12, fontWeight: 500, color: T.inkMid,
-                  cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                }}
-              >
-                <FiFilter size={11} /> Sort
-              </button>
+              <div style={{ display: "flex", gap: 16, paddingBottom: 12 }}>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{
+                    background: "none", border: "none", fontWeight: 500,
+                    color: T.ink, fontSize: 14, cursor: "pointer", outline: "none"
+                  }}
+                >
+                  {SORTS.map(s => <option key={s.v} value={s.v}>{s.l}</option>)}
+                </select>
+              </div>
             </div>
 
-            {/* ── LEFT SIDEBAR ───────────────────────── */}
-            <div
-              className="lx-sidebar"
-              style={{ position: "sticky", top: 96, display: "flex", flexDirection: "column", gap: 14 }}
-            >
-              {/* Overview */}
-              <SideCard title="Overview" accent={`linear-gradient(90deg, ${T.teal}, ${T.sky})`}>
-                <StatRow label="Total Orders" value={counts.All}              color={T.teal}    border />
-                <StatRow label="Delivered"    value={counts.Delivered}        color={T.jade}    border />
-                <StatRow label="Active"       value={counts.Active}           color={T.amber}   border />
-                <StatRow label="Cancelled"    value={counts.Cancelled}        color={T.coral}   border />
-                <StatRow label="Total Spent"  value={fmt(totalSpent)}         color={T.ink}     border />
-                <StatRow label="Total Saved"  value={fmt(totalSaved)}         color={T.tealDeep} />
-              </SideCard>
-
-              {/* Filter */}
-              <SideCard title="Filter" accent={`linear-gradient(90deg, ${T.amber}, ${T.coral})`}>
-                <div role="tablist" aria-label="Filter orders" style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                  {TABS.map(tab => {
-                    const meta   = TAB_META[tab];
-                    const active = activeTab === tab;
-                    return (
-                      <div key={tab} style={{ position: "relative" }}>
-                        {active && (
-                          <motion.div
-                            layoutId="lx-tab-bg"
-                            style={{ position: "absolute", inset: 0, borderRadius: 10, background: meta.bg }}
-                            transition={T.spring}
-                          />
-                        )}
-                        <button
-                          role="tab" aria-selected={active}
-                          onClick={() => setActiveTab(tab)}
-                          className="lx-focus"
-                          style={{
-                            position: "relative", zIndex: 1,
-                            display: "flex", justifyContent: "space-between", alignItems: "center",
-                            width: "100%", padding: "8px 10px",
-                            border: "none", borderLeft: `3px solid ${active ? meta.color : "transparent"}`,
-                            borderRadius: 10, background: "transparent",
-                            color: active ? meta.color : T.inkSoft,
-                            fontSize: 12.5, fontWeight: active ? 600 : 400,
-                            cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                            transition: "color 0.16s, border-color 0.16s",
-                          }}
-                        >
-                          {tab}
-                          <span className="lx-badge" style={{
-                            fontSize: 10, fontWeight: 700,
-                            padding: "1px 7px", borderRadius: T.rFull,
-                            background: active ? `${meta.color}22` : "rgba(0,0,0,0.04)",
-                            color: active ? meta.color : T.inkGhost,
-                          }}>
-                            {counts[tab]}
-                          </span>
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </SideCard>
-
-              {/* Sort */}
-              <SideCard title="Sort" accent={`linear-gradient(90deg, ${T.sky}, #7DD3FC)`}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {SORTS.map(s => {
-                    const sel = sortBy === s.v;
-                    return (
-                      <button
-                        key={s.v}
-                        onClick={() => setSortBy(s.v)}
-                        className="lx-focus"
-                        style={{
-                          display: "flex", alignItems: "center", gap: 8,
-                          width: "100%", padding: "7px 10px",
-                          border: "none", borderRadius: 10,
-                          background: sel ? T.skyBg : "transparent",
-                          color: sel ? T.sky : T.inkSoft,
-                          fontSize: 12, fontWeight: sel ? 600 : 400,
-                          cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-                          transition: "all 0.16s", textAlign: "left",
-                        }}
-                      >
-                        <span style={{
-                          width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-                          background: sel ? T.sky : "transparent",
-                          border: sel ? "none" : `1.5px solid ${T.border}`,
-                          transition: "all 0.14s",
-                        }} />
-                        {s.l}
-                      </button>
-                    );
-                  })}
-                </div>
-              </SideCard>
-            </div>
-
-            {/* ── RIGHT COLUMN ─────────────────────────── */}
+            {/* ── MAIN CONTENT LIST ─────────────────────────── */}
             <div>
               {/* Search bar */}
               <div style={{ position: "relative", marginBottom: 12 }}>
@@ -1323,320 +1174,143 @@ export default function Order() {
                   style={{ display: "flex", flexDirection: "column", gap: 14 }}
                 >
                   {filtered.map(order => {
-                    const sc         = statusConfig(order.status);
-                    const delivered  = order.status === "Delivered";
-                    const expanded   = expandedOrder === order._id;
-                    const panelId    = `lx-panel-${order._id}`;
-                    const display    = order.orderId || order._id.slice(-6).toUpperCase();
+                    const sc = statusConfig(order.status);
+                    const delivered = order.status === "Delivered";
+                    const expanded = expandedOrder === order._id;
+                    const panelId = `lx-panel-${order._id}`;
+                    const display = order.orderId || order._id.slice(-6).toUpperCase();
                     const reordering = reorderingId === order._id;
                     const canReorder = delivered || order.status?.includes("Cancelled");
 
                     return (
-                      <motion.article
+                      <motion.div
                         key={order._id}
                         variants={itemVariants}
                         layout="position"
+                        whileHover={reduced ? {} : { scale: 1.01 }}
+                        transition={{ duration: 0.2 }}
                         style={{
-                          background: T.surface,
-                          borderRadius: T.rLg,
-                          border: `1px solid ${T.border}`,
-                          boxShadow: T.shadow,
-                          overflow: "hidden",
-                        }}
-                        whileHover={reduced ? {} : {
-                          boxShadow: T.shadowMd,
-                          y: -2,
-                          transition: { duration: 0.2, ease: T.easeOut },
+                          background: "#fff",
+                          borderRadius: 20,
+                          padding: 24,
+                          boxShadow: "0 8px 30px rgba(0,0,0,0.05)",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 18,
                         }}
                       >
-                        {/* ── Status strip ── */}
-                        <div
-                          aria-hidden="true"
-                          style={{
-                            height: 3,
-                            background: sc.color,
-                            opacity: 0.85,
-                          }}
-                        />
-
-                        {/* ── Card body ── */}
-                        <div style={{ padding: "18px 20px" }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
-                            
-                            {/* Left: icon + meta */}
-                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                              <div style={{
-                                width: 38, height: 38, borderRadius: 11, flexShrink: 0,
-                                background: sc.bg, color: sc.color,
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                              }}>
-                                {sc.icon}
-                              </div>
-                              <div>
-                                {/* Order ID + copy */}
-                                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-                                  <button
-                                    onClick={() => copyId(display)}
-                                    title="Click to copy order ID"
-                                    className="lx-focus"
-                                    style={{
-                                      fontFamily: "monospace", fontWeight: 700,
-                                      fontSize: 13.5, color: T.ink,
-                                      background: "none", border: "none",
-                                      cursor: "pointer", padding: 0,
-                                      display: "flex", alignItems: "center", gap: 5,
-                                    }}
-                                  >
-                                    #{display}
-                                    <FiCopy size={9} style={{ color: T.inkGhost }} />
-                                  </button>
-
-                                  {/* Status badge */}
-                                  <span style={{
-                                    display: "inline-flex", alignItems: "center", gap: 4,
-                                    padding: "2px 8px", borderRadius: T.rFull,
-                                    fontSize: 9, fontWeight: 700,
-                                    textTransform: "uppercase", letterSpacing: "0.07em",
-                                    background: sc.bg, color: sc.color,
-                                  }}>
-                                    {sc.pulse
-                                      ? <span className="lx-pulse" style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: sc.color }} />
-                                      : <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%", background: sc.color }} />
-                                    }
-                                    {order.status}
-                                  </span>
-                                </div>
-
-                                {/* Date + item count */}
-                                <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: T.inkGhost }}>
-                                  <FiClock size={9} aria-hidden="true" />
-                                  <time dateTime={order.createdAt}>
-                                    {new Date(order.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                                  </time>
-                                  <span aria-hidden>·</span>
-                                  <span>{order.items?.length || 0} items</span>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Right: total + quick reorder */}
-                            <div style={{ textAlign: "right", flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 8 }}>
-                              <div>
-                                <p style={{
-                                  fontFamily: "'DM Sans', sans-serif",
-                                  fontSize: 9, fontWeight: 600, color: T.inkGhost,
-                                  textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 3px",
-                                }}>
-                                  Total
-                                </p>
-                                <p className="lx-badge" style={{
-                                  fontFamily: "'Sora', sans-serif",
-                                  fontSize: 17, fontWeight: 800, color: T.ink, margin: 0, letterSpacing: "-0.02em",
-                                }}>
-                                  {fmt(order.totalAmount)}
-                                </p>
-                              </div>
-
-                              {canReorder && (
-                                <motion.button
-                                  whileTap={{ scale: 0.94 }}
-                                  onClick={e => handleReorder(order, e)}
-                                  disabled={reordering}
-                                  className="lx-focus"
-                                  style={{
-                                    display: "flex", alignItems: "center", gap: 5,
-                                    padding: "5px 11px", borderRadius: 8,
-                                    border: `1.5px solid ${T.teal}33`,
-                                    background: T.tealGlow, color: T.tealDeep,
-                                    cursor: reordering ? "not-allowed" : "pointer",
-                                    fontSize: 10.5, fontWeight: 600,
-                                    fontFamily: "'DM Sans', sans-serif",
-                                    transition: "all 0.15s",
-                                  }}
-                                >
-                                  {reordering ? <Spinner /> : <FiShoppingCart size={10} />}
-                                  Reorder
-                                </motion.button>
-                              )}
-                            </div>
+                        {/* ── Order Header ── */}
+                        <div style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center"
+                        }}>
+                          <div>
+                            <p style={{
+                              fontSize: 20,
+                              fontWeight: 600,
+                              margin: 0,
+                              color: T.ink
+                            }}>
+                              Order #{display}
+                            </p>
+                            <p style={{
+                              fontSize: 13,
+                              color: T.inkSoft,
+                              marginTop: 4,
+                              marginBottom: 0
+                            }}>
+                              {new Date(order.createdAt).toLocaleDateString("en-GB", { day: 'numeric', month: 'long', year: 'numeric' })}
+                            </p>
                           </div>
-
-                          {/* Info strip */}
-                          <div style={{
-                            display: "flex", flexWrap: "wrap", gap: "4px 14px",
-                            padding: "8px 12px", borderRadius: 10,
-                            background: T.bg, border: `1px solid ${T.border}`,
-                            fontSize: 10.5, color: T.inkSoft,
+                          <span style={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: cancelled ? T.coralBg : sc.color,
+                            background: sc.bg,
+                            padding: "4px 12px",
+                            borderRadius: T.rFull,
                           }}>
-                            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                              <FiMapPin size={8} aria-hidden="true" />
-                              {order.shippingAddress?.city}, {order.shippingAddress?.zip}
-                            </span>
-                            <span aria-hidden>·</span>
-                            <span style={{ color: order.shippingPrice === 0 ? T.tealDeep : T.inkSoft }}>
-                              {order.shippingPrice === 0 ? "✓ Free Shipping" : `Shipping ₹${order.shippingPrice?.toFixed(0)}`}
-                            </span>
-                            {order.discount > 0 && (
-                              <>
-                                <span aria-hidden>·</span>
-                                <span style={{ color: T.tealDeep, display: "flex", alignItems: "center", gap: 3 }}>
-                                  <FiTag size={8} aria-hidden="true" /> Saved ₹{order.discount.toFixed(0)}
-                                </span>
-                              </>
-                            )}
-                          </div>
+                            {order.status}
+                          </span>
                         </div>
 
-                        {/* ── Expand toggle ── */}
-                        <div style={{ borderTop: `1px solid ${T.border}` }}>
+                        {/* ── Product Preview Row ── */}
+                        <div style={{
+                          display: "flex",
+                          gap: 12,
+                          overflowX: "auto",
+                          paddingBottom: 4,
+                          scrollbarWidth: "none" // hide scrollbar Firefox
+                        }}>
+                          {order.items?.slice(0, 4).map((item, idx) => {
+                            const pid = item.productId
+                              ? (typeof item.productId === "object" ? item.productId._id : item.productId)
+                              : item.product
+                                ? (typeof item.product === "object" ? item.product._id : item.product)
+                                : item._id;
+                            return (
+                              <img
+                                key={idx}
+                                src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
+                                alt={item.name}
+                                onError={e => { e.target.onerror = null; e.target.src = "/placeholder-fish.svg"; }}
+                                style={{
+                                  width: 64,
+                                  height: 64,
+                                  borderRadius: 12,
+                                  objectFit: "cover",
+                                  border: `1px solid ${T.border}`
+                                }}
+                              />
+                            );
+                          })}
+                          {(order.items?.length || 0) > 4 && (
+                            <div style={{
+                              width: 64, height: 64, borderRadius: 12, background: T.bg, border: `1px solid ${T.border}`,
+                              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: T.inkMid
+                            }}>
+                              +{order.items.length - 4}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* ── Order Footer ── */}
+                        <div style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          borderTop: `1px solid ${T.border}`,
+                          paddingTop: 18
+                        }}>
+                          <span style={{
+                            fontSize: 18,
+                            fontWeight: 600,
+                            color: T.ink
+                          }}>
+                            {fmt(order.totalAmount)}
+                          </span>
+
                           <button
-                            onClick={() => setExpandedOrder(expanded ? null : order._id)}
-                            aria-expanded={expanded}
-                            aria-controls={panelId}
+                            onClick={() => navigate(`/orders/${order._id}`)}
                             className="lx-focus"
                             style={{
-                              width: "100%", padding: "10px 20px",
-                              display: "flex", justifyContent: "space-between", alignItems: "center",
-                              background: "transparent", border: "none", cursor: "pointer",
-                              fontSize: 10.5, fontWeight: 600, letterSpacing: "0.08em",
-                              textTransform: "uppercase", color: T.inkGhost,
-                              fontFamily: "'DM Sans', sans-serif",
+                              padding: "10px 18px",
+                              borderRadius: 999,
+                              border: "none",
+                              background: "#111",
+                              color: "#fff",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              transition: "transform 0.2s"
                             }}
+                            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
+                            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
                           >
-                            <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
-                              <FiShoppingBag size={10} aria-hidden="true" />
-                              {order.items?.length} Item{order.items?.length !== 1 ? "s" : ""}
-                            </span>
-                            <motion.div
-                              animate={{ rotate: expanded ? 180 : 0 }}
-                              transition={{ duration: 0.24 }}
-                              aria-hidden="true"
-                            >
-                              <FiChevronDown size={14} style={{ color: T.inkGhost }} />
-                            </motion.div>
+                            View Order
                           </button>
-
-                          {/* ── Expandable panel ── */}
-                          <AnimatePresence initial={false}>
-                            {expanded && (
-                              <motion.div
-                                id={panelId}
-                                role="region"
-                                aria-label={`Items for order #${display}`}
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ height: { duration: 0.35, ease: T.ease }, opacity: { duration: 0.22 } }}
-                                style={{ overflow: "hidden" }}
-                              >
-                                <div style={{ padding: "6px 14px 8px", display: "flex", flexDirection: "column", gap: 6 }}>
-                                  {/* Item rows */}
-                                  {order.items?.map((item, idx) => {
-                                    const pid = item.productId
-                                      ? (typeof item.productId === "object" ? item.productId._id : item.productId)
-                                      : item.product
-                                        ? (typeof item.product === "object" ? item.product._id : item.product)
-                                        : item._id;
-                                    return (
-                                      <ItemRow
-                                        key={idx}
-                                        item={item}
-                                        index={idx}
-                                        isFrequent={frequentIds.has(pid)}
-                                      />
-                                    );
-                                  })}
-
-                                  {/* Bill summary */}
-                                  <div style={{
-                                    display: "flex", flexWrap: "wrap", gap: "4px 16px",
-                                    padding: "8px 14px", borderRadius: 10,
-                                    background: T.bg, border: `1px solid ${T.border}`,
-                                    fontSize: 10.5, color: T.inkSoft, marginTop: 2,
-                                  }}>
-                                    <span>Subtotal: <strong style={{ color: T.ink }}>₹{(order.itemsPrice||0).toFixed(2)}</strong></span>
-                                    <span>Tax: <strong style={{ color: T.ink }}>₹{(order.taxPrice||0).toFixed(2)}</strong></span>
-                                    <span>Ship: <strong style={{ color: order.shippingPrice === 0 ? T.tealDeep : T.ink }}>
-                                      {order.shippingPrice === 0 ? "FREE" : `₹${order.shippingPrice?.toFixed(0)}`}
-                                    </strong></span>
-                                    {order.discount > 0 && (
-                                      <span style={{ color: T.tealDeep }}>
-                                        Saved: <strong>₹{order.discount.toFixed(2)}</strong>
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  {/* Action buttons */}
-                                  <div style={{ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", gap: 7, paddingBottom: 8, paddingTop: 2 }}>
-                                    {/* Invoice */}
-                                    <ActionBtn
-                                      icon={<FiDownload size={10} />}
-                                      label="Invoice"
-                                      onClick={e => { e.stopPropagation(); generateInvoicePDF(order); }}
-                                      variant="ghost"
-                                    />
-
-                                    {/* Report issue — delivered only */}
-                                    {delivered && (
-                                      <ActionBtn
-                                        icon={<FiAlertCircle size={10} />}
-                                        label="Report Issue"
-                                        onClick={e => { e.stopPropagation(); setComplaintOrder(order); }}
-                                        variant="danger"
-                                      />
-                                    )}
-
-                                    {/* Per-item reviews */}
-                                    {delivered && order.items?.map((item, idx) => {
-                                      const existing = getUserReview(item, order.user);
-                                      return (
-                                        <ActionBtn
-                                          key={idx}
-                                          icon={<FiStar size={10} />}
-                                          label={`${existing ? "Edit" : "Review"} ${item.name.split(" ")[0]}`}
-                                          onClick={e => { e.stopPropagation(); openReviewModal(item, existing); }}
-                                          variant={existing ? "primary" : "amber"}
-                                        />
-                                      );
-                                    })}
-
-                                    {/* Reorder all */}
-                                    {canReorder && (
-                                      <ActionBtn
-                                        icon={reordering ? <Spinner /> : <FiRotateCcw size={10} />}
-                                        label="Reorder All"
-                                        onClick={e => handleReorder(order, e)}
-                                        disabled={reordering}
-                                        variant="primary"
-                                      />
-                                    )}
-
-                                    {/* Details */}
-                                    <motion.button
-                                      whileHover={reduced ? {} : { x: 2 }}
-                                      whileTap={{ scale: 0.96 }}
-                                      onClick={() => navigate(`/orders/${order._id}`)}
-                                      className="lx-focus"
-                                      style={{
-                                        display: "flex", alignItems: "center", gap: 5,
-                                        fontSize: 10.5, fontWeight: 600,
-                                        padding: "7px 13px", borderRadius: 9,
-                                        cursor: "pointer", color: T.surface,
-                                        background: T.teal,
-                                        border: "none",
-                                        fontFamily: "'DM Sans', sans-serif",
-                                        boxShadow: T.shadowTeal,
-                                      }}
-                                    >
-                                      Details & Tracking <FiChevronRight size={11} aria-hidden="true" />
-                                    </motion.button>
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
                         </div>
-                      </motion.article>
+                      </motion.div>
                     );
                   })}
                 </motion.div>
@@ -1654,10 +1328,10 @@ export default function Order() {
 // ─────────────────────────────────────────────────────────────
 function ActionBtn({ icon, label, onClick, disabled = false, variant = "ghost" }) {
   const styles = {
-    ghost:   { bg: T.surface,   color: T.inkMid,  border: T.border   },
-    primary: { bg: T.tealGlow,  color: T.tealDeep, border: `${T.teal}33` },
-    amber:   { bg: T.amberBg,   color: T.amber,   border: `${T.amber}33` },
-    danger:  { bg: T.coralBg,   color: T.coral,   border: `${T.coral}33` },
+    ghost: { bg: T.surface, color: T.inkMid, border: T.border },
+    primary: { bg: T.tealGlow, color: T.tealDeep, border: `${T.teal}33` },
+    amber: { bg: T.amberBg, color: T.amber, border: `${T.amber}33` },
+    danger: { bg: T.coralBg, color: T.coral, border: `${T.coral}33` },
   }[variant] || {};
 
   return (
