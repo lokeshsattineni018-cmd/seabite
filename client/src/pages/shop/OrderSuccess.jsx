@@ -206,27 +206,16 @@ export default function OrderSuccess() {
             <motion.div
               initial={{ scale: 0 }}
               animate={visible ? { scale: 1 } : {}}
-              transition={{
-                type: "spring",
-                stiffness: 200,
-                damping: 14
-              }}
+              transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.1 }}
               style={{
-                width: 80,
-                height: 80,
-                borderRadius: "50%",
-                background: "linear-gradient(135deg,#635BFF,#7A73FF)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "#fff",
-                margin: "auto",
-                position: "relative",
-                zIndex: 1,
-                boxShadow: "0 16px 48px rgba(99,91,255,0.38)",
+                width: 80, height: 80, borderRadius: "50%",
+                background: `linear-gradient(135deg, ${T.primary} 0%, ${T.sky} 100%)`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                boxShadow: `0 16px 48px rgba(91,168,160,0.38)`,
+                position: "relative", zIndex: 1,
               }}
             >
-              <FiCheck size={34} strokeWidth={3} />
+              <FiCheck size={36} color="#fff" strokeWidth={2.8} />
             </motion.div>
           </div>
 
