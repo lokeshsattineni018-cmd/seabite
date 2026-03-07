@@ -87,6 +87,9 @@ export const checkout = async (req, res) => {
       const product = await Product.findById(item.productId);
       if (product) {
         product.countInStock = Math.max(0, product.countInStock - item.qty);
+        if (product.countInStock <= 0) {
+          product.stock = "out";
+        }
         await product.save();
       }
     }
