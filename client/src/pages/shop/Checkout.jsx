@@ -870,6 +870,7 @@ export default function Checkout() {
                   fullWidth
                   onClick={placeOrder}
                   loading={loading}
+                  loadingLabel={paymentMethod === "COD" ? "Placing COD order..." : "Authorising payment..."}
                   style={{
                     borderRadius: 14,
                     fontSize: 13,
