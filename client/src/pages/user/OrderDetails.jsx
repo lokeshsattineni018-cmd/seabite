@@ -723,6 +723,43 @@ export default function OrderDetails() {
   // ── Guards ────────────────────────────────────────────────
   if (loading) return <SeaBiteLoader fullScreen />;
 
+  if (!order && !loading) return (
+    <div style={{
+      minHeight: "100vh", display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      background: T.bg, gap: 20, fontFamily: "'DM Sans', sans-serif",
+    }}>
+      <div style={{
+        width: 72, height: 72, borderRadius: 20,
+        background: T.coralBg, display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <FiAlertCircle size={32} style={{ color: T.coral }} />
+      </div>
+      <h2 style={{ fontFamily: "'Sora', sans-serif", color: T.ink, fontSize: 22, fontWeight: 700, margin: 0 }}>
+        Failed to load order
+      </h2>
+      <p style={{ color: T.inkSoft, fontSize: 14, margin: 0 }}>
+        Please check your connection and try again.
+      </p>
+      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <button
+          onClick={() => { setLoading(true); window.location.reload(); }}
+          style={{
+            padding: "12px 24px", borderRadius: 999,
+            background: T.teal, color: "#fff", border: "none",
+            fontWeight: 600, fontSize: 14, cursor: "pointer",
+            fontFamily: "'DM Sans', sans-serif",
+          }}
+        >
+          Retry
+        </button>
+        <Link to="/orders" style={{ color: T.teal, fontWeight: 600, textDecoration: "none", fontSize: 14 }}>
+          ← Back to Orders
+        </Link>
+      </div>
+    </div>
+  );
+
   if (!order) return (
     <div style={{
       minHeight: "100vh", display: "flex", flexDirection: "column",
@@ -821,7 +858,7 @@ export default function OrderDetails() {
       </AnimatePresence>
 
       {/* ── Main content ─────────────────────────────────── */}
-      <div style={{ maxWidth: 820, margin: "0 auto", padding: "96px 24px 72px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 24px 72px" }}>
 
         {/* ── PAGE HEADER ─────────────────────────────── */}
         <motion.div
@@ -898,6 +935,102 @@ export default function OrderDetails() {
         >
           {/* ── LEFT COLUMN ────────────────────────── */}
           <div style={{ flex: "1 1 60%", minWidth: 320, display: "flex", flexDirection: "column", gap: 32 }}>
+
+            {/* ── Cancelled Banner (replaces tracker) ── */}
+            {cancelled && (
+              <AppleSection style={{ background: "#FEF2F2", borderColor: "#FECACA" }}>
+                <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 16, flexShrink: 0,
+                    background: T.coralBg, color: T.coral,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <FiXCircle size={26} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 700, color: T.coral, margin: "0 0 8px" }}>
+                      Order Cancelled
+                    </h2>
+                    {order.cancelledAt && (
+                      <p style={{ fontSize: 13, color: T.inkSoft, margin: "0 0 8px" }}>
+                        <time dateTime={order.cancelledAt}>
+                          {new Date(order.cancelledAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+                        </time>
+                      </p>
+                    )}
+                    <p style={{ fontSize: 14, color: T.inkMid, lineHeight: 1.7, margin: "0 0 16px" }}>
+                      <span style={{ color: T.ink, fontWeight: 600 }}>Reason: </span>
+                      {order.cancelReason || "No reason provided."}
+                    </p>
+                    <motion.button
+                      whileTap={{ scale: 0.96 }}
+                      onClick={handleReorder}
+                      disabled={reordering}
+                      className="lx-focus"
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        padding: "10px 20px", borderRadius: 999,
+                        background: T.teal, color: "#fff", border: "none",
+                        fontWeight: 600, fontSize: 14, cursor: reordering ? "not-allowed" : "pointer",
+                        fontFamily: "'DM Sans', sans-serif",
+                        boxShadow: T.shadowTeal,
+                      }}
+                    >
+                      {reordering ? <Spinner size={13} /> : <FiShoppingCart size={14} />}
+                      Reorder Items
+                    </motion.button>
+                  </div>
+                </div>
+              </AppleSection>
+            )}
+
+            {/* ── Cancelled Banner (replaces tracker) ── */}
+            {cancelled && (
+              <AppleSection style={{ background: "#FEF2F2", borderColor: "#FECACA" }}>
+                <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 16, flexShrink: 0,
+                    background: T.coralBg, color: T.coral,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <FiXCircle size={26} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 700, color: T.coral, margin: "0 0 8px" }}>
+                      Order Cancelled
+                    </h2>
+                    {order.cancelledAt && (
+                      <p style={{ fontSize: 13, color: T.inkSoft, margin: "0 0 8px" }}>
+                        <time dateTime={order.cancelledAt}>
+                          {new Date(order.cancelledAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+                        </time>
+                      </p>
+                    )}
+                    <p style={{ fontSize: 14, color: T.inkMid, lineHeight: 1.7, margin: "0 0 16px" }}>
+                      <span style={{ color: T.ink, fontWeight: 600 }}>Reason: </span>
+                      {order.cancelReason || "No reason provided."}
+                    </p>
+                    <motion.button
+                      whileTap={{ scale: 0.96 }}
+                      onClick={handleReorder}
+                      disabled={reordering}
+                      className="lx-focus"
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        padding: "10px 20px", borderRadius: 999,
+                        background: T.teal, color: "#fff", border: "none",
+                        fontWeight: 600, fontSize: 14, cursor: reordering ? "not-allowed" : "pointer",
+                        fontFamily: "'DM Sans', sans-serif",
+                        boxShadow: T.shadowTeal,
+                      }}
+                    >
+                      {reordering ? <Spinner size={13} /> : <FiShoppingCart size={14} />}
+                      Reorder Items
+                    </motion.button>
+                  </div>
+                </div>
+              </AppleSection>
+            )}
 
             {/* ── Order Status Tracker ── */}
             {!cancelled && (
@@ -1134,38 +1267,16 @@ export default function OrderDetails() {
                     exit={{ opacity: 0 }}
                     style={{ fontWeight: 700, color: order.isPaid ? T.teal : T.inkMid }}
                   >
-                    {order.isPaid ? "Paid" : "Pending"}
+                    {order.isPaid ? "Paid" : (order.paymentMethod?.toLowerCase().includes("cod") || order.paymentMethod?.toLowerCase().includes("cash")) ? "Cash on Delivery" : "Pending"}
                   </motion.span>
                 </AnimatePresence>
               </div>
             </AppleSection>
 
-            {/* Cancelled notice */}
-            <AnimatePresence>
-              {cancelled && (
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: T.ease }} role="alert">
-                  <AppleSection style={{ background: "#FEF2F2", borderColor: "#FECACA" }}>
-                    <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.coral, margin: "0 0 12px" }}>
-                      Order Cancelled
-                    </h3>
-                    {order.cancelledAt && (
-                      <p style={{ fontSize: 14, color: T.inkSoft, margin: "0 0 12px" }}>
-                        <time dateTime={order.cancelledAt}>
-                          {new Date(order.cancelledAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-                        </time>
-                      </p>
-                    )}
-                    <p style={{ fontSize: 14, color: T.inkMid, lineHeight: 1.7, margin: 0 }}>
-                      <span style={{ color: T.ink, fontWeight: 600 }}>Reason: </span>
-                      {order.cancelReason || "No reason provided."}
-                    </p>
-                  </AppleSection>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
           </div>
         </motion.div>
+      </div>
+
       {/* ── CANCELLATION MODAL ──────────────────────────── */}
       <AnimatePresence>
         {cancelOpen && (
