@@ -149,7 +149,10 @@ export const updateOrderStatus = async (req, res) => {
         res.json(updatedOrder);
     } catch (error) {
         console.error("updateOrderStatus CRASH:", error);
-        res.status(500).json({ message: error.message || 'Error updating status' });
+        res.status(500).json({
+            message: error.message || 'Error updating status',
+            stack: error.stack
+        });
     }
 };
 
