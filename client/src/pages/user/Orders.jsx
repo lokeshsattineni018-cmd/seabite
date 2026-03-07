@@ -25,7 +25,7 @@
  */
 
 import React, {
-  useEffect, useState, useMemo, useCallback, useRef,
+  useEffect, useState, useMemo, useCallback, useRef, useContext,
 } from "react";
 import axios from "axios";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
@@ -40,6 +40,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import ReviewModal from "../../components/common/ReviewModal";
 import PopupModal from "../../components/common/PopupModal";
 import { generateInvoicePDF } from "../../utils/pdfGenerator";
+import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -632,6 +633,7 @@ export default function Order() {
   const [visibleCount, setVisibleCount] = useState(10);
 
   const navigate = useNavigate();
+  const { addToCart } = useContext(CartContext);
   const searchRef = useRef(null);
   const reduced = useReducedMotion();
 
@@ -787,27 +789,32 @@ export default function Order() {
     e?.stopPropagation();
     setReorderingId(order._id);
     try {
-      await Promise.all(
-        order.items.map(item => {
-          const pid = item.productId
-            ? (typeof item.productId === "object" ? item.productId._id : item.productId)
-            : item.product
-              ? (typeof item.product === "object" ? item.product._id : item.product)
-              : item._id;
-          return axios.post(`${API_URL}/api/cart`, { productId: pid, qty: item.qty }, { withCredentials: true });
-        })
-      );
+      // Use the context's addToCart for each item
+      order.items.forEach(item => {
+        // Build product object compatible with addToCart expectations
+        const product = {
+          _id: (item.productId?._id || item.productId || item.product?._id || item.product || item._id),
+          name: item.name,
+          image: item.image,
+          price: item.price,
+          quantity: item.qty
+        };
+        addToCart(product);
+      });
+
       toast.success(
-        `${order.items.length} item${order.items.length > 1 ? "s" : ""} added to cart!`,
+        `${order.items.length} item${order.items.length > 1 ? "s" : ""} added!`,
         { icon: "🛒", style: { fontFamily: "'DM Sans', sans-serif" } }
       );
-      navigate("/cart");
+
+      // Briefly show success before navigating
+      setTimeout(() => navigate("/cart"), 800);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to add to cart");
+      toast.error("Failed to reorder items");
     } finally {
       setReorderingId(null);
     }
-  }, [navigate]);
+  }, [navigate, addToCart]);
 
   const isFiltered = activeTab !== "All" || searchQuery.trim() !== "" || sortBy !== "newest";
 
@@ -815,13 +822,13 @@ export default function Order() {
 
 
 
-  // ── Status-aware card tint
-  const cardBg = (status) => {
-    if (status === "Delivered") return T.jadeBg;
-    if (status?.includes("Cancelled")) return T.coralBg;
-    if (["Pending", "Processing"].includes(status)) return T.amberBg;
-    if (status === "Shipped") return T.skyBg;
-    return "#fff";
+  // ── Status-aware color (used for border/accents)
+  const statusColor = (status) => {
+    if (status === "Delivered") return T.jade;
+    if (status?.includes("Cancelled")) return T.coral;
+    if (["Pending", "Processing"].includes(status)) return T.amber;
+    if (status === "Shipped") return T.sky;
+    return T.inkGhost;
   };
 
   // ─────────────────────────────────────────────────────────
@@ -1373,7 +1380,8 @@ export default function Order() {
                         whileHover={reduced ? {} : { scale: 1.01, boxShadow: T.shadowLg, transform: "translateY(-2px)" }}
                         transition={{ duration: 0.2 }}
                         style={{
-                          background: cardBg(order.status),
+                          background: "#FFFFFF",
+                          border: "1px solid #F1F5F9",
                           borderRadius: 20,
                           padding: 24,
                           boxShadow: "0 8px 30px rgba(0,0,0,0.05)",
@@ -1385,7 +1393,7 @@ export default function Order() {
                         }}
                       >
                         {/* Colored Left Border */}
-                        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: sc.color }} />
+                        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: statusColor(order.status) }} />
 
                         {/* ── Order Header ── */}
                         <div style={{
