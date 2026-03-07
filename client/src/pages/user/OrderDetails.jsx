@@ -145,6 +145,15 @@ const DETAIL_CSS = `
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
+
+  @media (max-width: 800px) {
+    .lx-desktop-only { display: none !important; }
+    .lx-mobile-only { display: block !important; }
+    .lx-row-to-col { flex-direction: column !important; }
+  }
+  @media (min-width: 801px) {
+    .lx-mobile-only { display: none !important; }
+  }
 `;
 
 if (typeof document !== "undefined" && !document.getElementById("lx-detail-styles")) {
@@ -855,44 +864,6 @@ export default function OrderDetails() {
             {/* Action cluster */}
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
 
-              {/* Reorder */}
-              {(delivered || cancelled) && (
-                <HeaderBtn
-                  icon={reordering
-                    ? <Spinner size={13} />
-                    : <FiRotateCcw size={13} />}
-                  label="Reorder"
-                  onClick={handleReorder}
-                  disabled={reordering}
-                  primary={true}
-                />
-              )}
-
-              {/* Report issue */}
-              {delivered && (
-                <HeaderBtn
-                  icon={<FiAlertCircle size={13} />}
-                  label="Report Issue"
-                  onClick={() => setComplaintOpen(true)}
-                />
-              )}
-
-              {/* Invoice */}
-              <HeaderBtn
-                icon={<FiDownload size={13} />}
-                label="Invoice"
-                onClick={() => generateInvoicePDF(order)}
-              />
-
-              {/* Cancel */}
-              {canCancel && (
-                <HeaderBtn
-                  icon={<FiXCircle size={13} />}
-                  label="Cancel Order"
-                  onClick={() => setCancelOpen(true)}
-                />
-              )}
-
               {/* Status pill */}
               <AnimatePresence mode="wait">
                 <motion.span
@@ -917,249 +888,225 @@ export default function OrderDetails() {
           </div>
         </motion.div>
 
-        {/* ── PROGRESS TRACKER ────────────────────────── */}
-        {!cancelled && (
-          <motion.div
-            initial={{ opacity: 0, y: reduced ? 0 : 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.48, delay: 0.1, ease: T.ease }}
-            style={{ marginBottom: 24 }}
-          >
-            <AppleSection accent={`linear-gradient(90deg, ${T.teal}, ${T.sky})`}>
-              {/* ETA + tracking */}
-              {!delivered && (
-                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 24 }}>
-                  <div style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    padding: "6px 14px", borderRadius: T.rFull,
-                    background: T.tealGlow, border: `1px solid ${T.teal}33`,
-                  }}>
-                    <FiCalendar size={11} style={{ color: T.tealDeep }} aria-hidden="true" />
-                    <span style={{
-                      fontFamily: "'DM Sans', sans-serif",
-                      fontSize: 11.5, fontWeight: 600, color: T.tealDeep,
-                    }}>
-                      Expected by {getETA(order.createdAt)}
-                    </span>
-                  </div>
-
-                  {order.status === "Shipped" && order.trackingId && (
-                    <a
-                      href={order.trackingUrl || `https://www.shiprocket.in/shipment-tracking/?id=${order.trackingId}`}
-                      target="_blank" rel="noopener noreferrer"
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 5,
-                        padding: "6px 14px", borderRadius: T.rFull,
-                        background: T.skyBg, border: `1px solid ${T.sky}44`,
-                        textDecoration: "none",
-                        fontSize: 11.5, fontWeight: 600, color: T.sky,
-                      }}
-                    >
-                      <FiTruck size={11} aria-hidden="true" />
-                      Track Shipment
-                      <FiExternalLink size={9} />
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {/* Horizontal tracker (desktop) */}
-              <div className="lx-track-h" style={{ overflowX: "auto" }}>
-                <div style={{ minWidth: 400 }}>
-                  <HorizontalTracker currentStepIndex={stepIdx} reduced={reduced} />
-                </div>
-              </div>
-
-              {/* Vertical tracker (mobile) */}
-              <div className="lx-track-v" style={{ display: "none" }}>
-                <VerticalTracker currentStepIndex={stepIdx} reduced={reduced} />
-              </div>
-            </AppleSection>
-          </motion.div>
-        )}
-
-        {/* ── CONTENT (Single Column) ────────────────────────────── */}
+        {/* ── TWO-COLUMN LAYOUT ────────────────────────────── */}
         <motion.div
           initial={{ opacity: 0, y: reduced ? 0 : 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.48, delay: 0.18, ease: T.ease }}
-          style={{ display: "flex", flexDirection: "column", gap: 32 }}
+          className="lx-row-to-col"
+          style={{ display: "flex", flexDirection: "row", gap: 32, alignItems: "flex-start", flexWrap: "wrap" }}
         >
-          {/* ── Order Status Tracker (Vertical Only) ── */}
-          {!cancelled && (
+          {/* ── LEFT COLUMN ────────────────────────── */}
+          <div style={{ flex: "1 1 60%", minWidth: 320, display: "flex", flexDirection: "column", gap: 32 }}>
+
+            {/* ── Order Status Tracker ── */}
+            {!cancelled && (
+              <AppleSection>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                  <h2 style={{
+                    fontFamily: "'Sora', sans-serif",
+                    fontSize: 20, fontWeight: 700, color: T.ink, margin: 0
+                  }}>
+                    Order Status
+                  </h2>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: T.teal, background: T.tealGlow, padding: "4px 10px", borderRadius: T.rFull }}>
+                    {order.status}
+                  </span>
+                </div>
+
+                {!delivered && (
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 24 }}>
+                    <div style={{
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                      padding: "6px 14px", borderRadius: T.rFull,
+                      background: T.surface, border: `1px solid ${T.border}`, color: T.inkMid,
+                    }}>
+                      <FiCalendar size={13} aria-hidden="true" />
+                      <span style={{ fontSize: 12, fontWeight: 600 }}>
+                        Expected by {getETA(order.createdAt)}
+                      </span>
+                    </div>
+
+                    {order.status === "Shipped" && order.trackingId && (
+                      <a
+                        href={order.trackingUrl || `https://www.shiprocket.in/shipment-tracking/?id=${order.trackingId}`}
+                        target="_blank" rel="noopener noreferrer"
+                        style={{
+                          display: "inline-flex", alignItems: "center", gap: 5,
+                          padding: "6px 14px", borderRadius: T.rFull,
+                          background: T.ink, border: `1px solid ${T.ink}`,
+                          textDecoration: "none",
+                          fontSize: 12, fontWeight: 600, color: T.surface,
+                        }}
+                      >
+                        <FiTruck size={13} aria-hidden="true" />
+                        Track Shipment
+                        <FiExternalLink size={10} />
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                <div className="lx-desktop-only" style={{ overflowX: "auto", paddingBottom: 10 }}>
+                  <div style={{ minWidth: 400 }}>
+                    <HorizontalTracker currentStepIndex={stepIdx} reduced={reduced} />
+                  </div>
+                </div>
+                <div className="lx-mobile-only">
+                  <VerticalTracker currentStepIndex={stepIdx} reduced={reduced} />
+                </div>
+              </AppleSection>
+            )}
+
+            {/* ── Items card ─────────────────────────── */}
             <AppleSection>
               <h2 style={{
                 fontFamily: "'Sora', sans-serif",
-                fontSize: 22, fontWeight: 700, color: T.ink,
-                margin: "0 0 24px",
+                fontSize: 20, fontWeight: 700, color: T.ink,
+                margin: "0 0 20px",
               }}>
-                Order Status
+                Purchased Items
               </h2>
 
-              {!delivered && (
-                <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 32 }}>
-                  <div style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    padding: "8px 16px", borderRadius: T.rFull,
-                    background: "#F5F5F7", color: T.inkMid,
-                  }}>
-                    <FiCalendar size={14} aria-hidden="true" />
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>
-                      Expected by {getETA(order.createdAt)}
-                    </span>
-                  </div>
+              {order.items?.length === 0 ? (
+                <p style={{ color: T.inkSoft, fontSize: 14, textAlign: "center", padding: "24px 0" }}>
+                  No items found.
+                </p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {order.items.map((item, i) => {
+                    const pid = item.productId
+                      ? (typeof item.productId === "object" ? item.productId._id : item.productId)
+                      : item.product
+                        ? (typeof item.product === "object" ? item.product._id : item.product)
+                        : item._id;
+                    return (
+                      <div key={i} style={{ display: "flex", gap: 16, alignItems: "center", borderBottom: i !== order.items.length - 1 ? `1px solid ${T.border}` : "none", paddingBottom: i !== order.items.length - 1 ? 16 : 0 }}>
+                        {/* Compact Thumbnail */}
+                        <Link to={`/products/${pid}`} style={{ display: "block", flexShrink: 0 }}>
+                          <ShimmerImage
+                            src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
+                            alt={item.name}
+                            style={{
+                              width: 72, height: 72, borderRadius: 12,
+                              objectFit: "cover", display: "block",
+                              border: `1px solid ${T.border}`
+                            }}
+                          />
+                        </Link>
 
-                  {order.status === "Shipped" && order.trackingId && (
-                    <a
-                      href={order.trackingUrl || `https://www.shiprocket.in/shipment-tracking/?id=${order.trackingId}`}
-                      target="_blank" rel="noopener noreferrer"
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 5,
-                        padding: "8px 16px", borderRadius: T.rFull,
-                        background: T.ink, textDecoration: "none",
-                        fontSize: 13, fontWeight: 600, color: T.surface,
-                      }}
-                    >
-                      <FiTruck size={14} aria-hidden="true" />
-                      Track Shipment
-                      <FiExternalLink size={12} />
-                    </a>
-                  )}
-                </div>
-              )}
-
-              <VerticalTracker currentStepIndex={stepIdx} reduced={reduced} />
-            </AppleSection>
-          )}
-
-          {/* ── Items card ─────────────────────────── */}
-          <AppleSection>
-            <h2 style={{
-              fontFamily: "'Sora', sans-serif",
-              fontSize: 22, fontWeight: 700, color: T.ink,
-              margin: "0 0 24px",
-            }}>
-              Purchased Items
-            </h2>
-
-            {order.items?.length === 0 ? (
-              <p style={{ color: T.inkSoft, fontSize: 15, textAlign: "center", padding: "24px 0" }}>
-                No items found.
-              </p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-                {order.items.map((item, i) => {
-                  const pid = item.productId
-                    ? (typeof item.productId === "object" ? item.productId._id : item.productId)
-                    : item.product
-                      ? (typeof item.product === "object" ? item.product._id : item.product)
-                      : item._id;
-                  return (
-                    <div key={i} style={{ display: "flex", gap: 24 }}>
-                      {/* Large H&M Style Image */}
-                      <Link to={`/products/${pid}`} style={{ display: "block", flexShrink: 0 }}>
-                        <ShimmerImage
-                          src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
-                          alt={item.name}
-                          style={{
-                            width: 120, height: 160, borderRadius: 0, // Hard edges for fashion feel
-                            objectFit: "cover", display: "block",
-                            background: "#F5F5F7",
-                          }}
-                        />
-                      </Link>
-
-                      {/* Info */}
-                      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "4px 0" }}>
-                        <div>
-                          <Link to={`/products/${pid}`} style={{ textDecoration: "none" }}>
-                            <p title={item.name} style={{
+                        {/* Info */}
+                        <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                            <div>
+                              <Link to={`/products/${pid}`} style={{ textDecoration: "none" }}>
+                                <p title={item.name} style={{
+                                  fontFamily: "'Sora', sans-serif",
+                                  fontSize: 15, fontWeight: 600, color: T.ink,
+                                  margin: "0 0 4px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+                                }}>
+                                  {item.name}
+                                </p>
+                              </Link>
+                              <p style={{ fontSize: 13, color: T.inkSoft, margin: 0 }}>
+                                Quantity: {item.qty} × ₹{item.price}
+                              </p>
+                            </div>
+                            <span style={{
                               fontFamily: "'Sora', sans-serif",
-                              fontSize: 18, fontWeight: 600, color: T.ink,
-                              margin: "0 0 8px",
+                              fontSize: 15, fontWeight: 700, color: T.ink,
+                              whiteSpace: "nowrap"
                             }}>
-                              {item.name}
-                            </p>
-                          </Link>
-                          <p style={{ fontSize: 14, color: T.inkSoft, margin: 0 }}>
-                            Quantity: {item.qty}
-                          </p>
-                          <p style={{ fontSize: 14, color: T.inkSoft, margin: "4px 0 0" }}>
-                            Price: ₹{item.price}
-                          </p>
-                        </div>
+                              ₹{item.price * item.qty}
+                            </span>
+                          </div>
 
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
                           {delivered && (
-                            <motion.button
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => openReview(item)}
-                              className="lx-focus"
-                              style={{
-                                display: "inline-flex", alignItems: "center", gap: 6,
-                                padding: "8px 16px",
-                                borderRadius: 4,
-                                border: `1px solid ${T.border}`,
-                                background: "transparent", color: T.ink,
-                                cursor: "pointer", fontSize: 13, fontWeight: 600,
-                              }}
-                            >
-                              Write Review
-                            </motion.button>
+                            <div style={{ marginTop: 8 }}>
+                              <button
+                                onClick={() => openReview(item)}
+                                className="lx-focus"
+                                style={{
+                                  display: "inline-flex", alignItems: "center", gap: 4,
+                                  padding: 0, border: "none", background: "transparent",
+                                  color: T.teal, cursor: "pointer", fontSize: 12, fontWeight: 600,
+                                }}
+                              >
+                                <FiStar size={12} /> Write a Review
+                              </button>
+                            </div>
                           )}
-                          <span style={{
-                            fontFamily: "'Sora', sans-serif",
-                            fontSize: 18, fontWeight: 600, color: T.ink,
-                          }}>
-                            Total: ₹{item.price * item.qty}
-                          </span>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Price breakdown */}
-            <div style={{ marginTop: 32, paddingTop: 24, borderTop: `1px solid ${T.border}` }}>
-              <PriceRow label="Subtotal" value={`₹${order.itemsPrice}`} />
-              <PriceRow label="Shipping" value={order.shippingPrice === 0 ? "Free" : `₹${order.shippingPrice}`} color={order.shippingPrice === 0 ? T.ink : undefined} />
-              <PriceRow label="Tax" value={`₹${order.taxPrice}`} />
-              {order.discount > 0 && (
-                <PriceRow label="Discount" value={`-₹${order.discount}`} color={T.teal} />
+                    );
+                  })}
+                </div>
               )}
-              <PriceRow label="Total" value={`₹${order.totalAmount}`} bold borderTop />
-            </div>
-          </AppleSection>
+            </AppleSection>
+          </div>
 
-          {/* ── Details row (Address & Payment) ── */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 32 }}>
+          {/* ── RIGHT COLUMN (STICKY) ────────────────── */}
+          <div style={{ flex: "1 1 35%", minWidth: 300, display: "flex", flexDirection: "column", gap: 24, position: "sticky", top: 100 }}>
+
+            <AppleSection>
+              {/* Action Buttons Group */}
+              <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24, paddingBottom: 24, borderBottom: `1px solid ${T.border}` }}>
+                {(delivered || cancelled) && (
+                  <HeaderBtn
+                    icon={reordering ? <Spinner size={13} /> : <FiShoppingCart size={13} />}
+                    label="Reorder"
+                    onClick={handleReorder}
+                    disabled={reordering}
+                    primary={true}
+                  />
+                )}
+                {delivered && (
+                  <HeaderBtn
+                    icon={<FiAlertCircle size={13} />}
+                    label="Report Issue"
+                    onClick={() => setComplaintOpen(true)}
+                  />
+                )}
+                <HeaderBtn
+                  icon={<FiDownload size={13} />}
+                  label="Invoice"
+                  onClick={() => generateInvoicePDF(order)}
+                />
+                {canCancel && (
+                  <HeaderBtn
+                    icon={<FiXCircle size={13} />}
+                    label="Cancel"
+                    onClick={() => setCancelOpen(true)}
+                  />
+                )}
+              </div>
+
+              {/* Price breakdown */}
+              <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink, margin: "0 0 16px" }}>Order Summary</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <PriceRow label="Subtotal" value={`₹${order.itemsPrice}`} />
+                <PriceRow label="Shipping" value={order.shippingPrice === 0 ? "Free" : `₹${order.shippingPrice}`} color={order.shippingPrice === 0 ? T.ink : undefined} />
+                <PriceRow label="Tax" value={`₹${order.taxPrice}`} />
+                {order.discount > 0 && (
+                  <PriceRow label="Discount" value={`-₹${order.discount}`} color={T.teal} />
+                )}
+                <PriceRow label="Total" value={`₹${order.totalAmount}`} bold borderTop />
+              </div>
+            </AppleSection>
 
             {/* Delivery address */}
             <AppleSection>
-              <h2 style={{
-                fontFamily: "'Sora', sans-serif",
-                fontSize: 18, fontWeight: 700, color: T.ink,
-                margin: "0 0 16px",
-              }}>
+              <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink, margin: "0 0 16px" }}>
                 Delivery Address
-              </h2>
-              <address style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 14, color: T.inkMid, lineHeight: 1.8, fontStyle: "normal",
-              }}>
+              </h3>
+              <address style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: T.inkMid, lineHeight: 1.6, fontStyle: "normal" }}>
                 <strong style={{ color: T.ink, fontWeight: 600 }}>{order.shippingAddress?.fullName}</strong><br />
                 {order.shippingAddress?.houseNo}, {order.shippingAddress?.street}<br />
                 {order.shippingAddress?.city}, {order.shippingAddress?.state} — {order.shippingAddress?.zip}<br />
                 <span style={{ color: T.inkSoft, marginTop: 12, display: "inline-block" }}>{order.shippingAddress?.phone}</span>
               </address>
               {order.shippingAddress?.instructions && (
-                <div style={{
-                  marginTop: 16, padding: "12px 16px", borderRadius: 8,
-                  background: "#F5F5F7", fontSize: 13, color: T.inkMid,
-                  borderLeft: `3px solid ${T.ink}`
-                }}>
+                <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 8, background: "#F5F5F7", fontSize: 13, color: T.inkMid, borderLeft: `3px solid ${T.ink}` }}>
                   {order.shippingAddress.instructions}
                 </div>
               )}
@@ -1167,21 +1114,17 @@ export default function OrderDetails() {
 
             {/* Payment info */}
             <AppleSection>
-              <h2 style={{
-                fontFamily: "'Sora', sans-serif",
-                fontSize: 18, fontWeight: 700, color: T.ink,
-                margin: "0 0 16px",
-              }}>
+              <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink, margin: "0 0 16px" }}>
                 Payment Information
-              </h2>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, marginBottom: 16 }}>
+              </h3>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, marginBottom: 16 }}>
                 <span style={{ color: T.inkSoft }}>Method</span>
                 <span style={{ fontWeight: 600, color: T.ink, display: "flex", alignItems: "center", gap: 8 }}>
                   <PaymentIcon method={order.paymentMethod} />
                   {order.paymentMethod}
                 </span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 15, alignItems: "center" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14, alignItems: "center" }}>
                 <span style={{ color: T.inkSoft }}>Status</span>
                 <AnimatePresence mode="wait">
                   <motion.span
@@ -1189,10 +1132,7 @@ export default function OrderDetails() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    style={{
-                      fontWeight: 700,
-                      color: order.isPaid ? T.teal : T.inkMid,
-                    }}
+                    style={{ fontWeight: 700, color: order.isPaid ? T.teal : T.inkMid }}
                   >
                     {order.isPaid ? "Paid" : "Pending"}
                   </motion.span>
@@ -1203,19 +1143,9 @@ export default function OrderDetails() {
             {/* Cancelled notice */}
             <AnimatePresence>
               {cancelled && (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.3, ease: T.ease }}
-                  role="alert"
-                >
+                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: T.ease }} role="alert">
                   <AppleSection style={{ background: "#FEF2F2", borderColor: "#FECACA" }}>
-                    <h3 style={{
-                      fontFamily: "'Sora', sans-serif",
-                      fontSize: 18, fontWeight: 700, color: T.coral,
-                      margin: "0 0 12px",
-                    }}>
+                    <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.coral, margin: "0 0 12px" }}>
                       Order Cancelled
                     </h3>
                     {order.cancelledAt && (
@@ -1225,7 +1155,7 @@ export default function OrderDetails() {
                         </time>
                       </p>
                     )}
-                    <p style={{ fontSize: 15, color: T.inkMid, lineHeight: 1.7, margin: 0 }}>
+                    <p style={{ fontSize: 14, color: T.inkMid, lineHeight: 1.7, margin: 0 }}>
                       <span style={{ color: T.ink, fontWeight: 600 }}>Reason: </span>
                       {order.cancelReason || "No reason provided."}
                     </p>
@@ -1233,10 +1163,9 @@ export default function OrderDetails() {
                 </motion.div>
               )}
             </AnimatePresence>
+
           </div>
         </motion.div>
-      </div>
-
       {/* ── CANCELLATION MODAL ──────────────────────────── */}
       <AnimatePresence>
         {cancelOpen && (

@@ -916,19 +916,24 @@ export default function Order() {
 
             {!loading && orders.length > 0 && (
               <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.3, duration: 0.35 }}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6,
-                  padding: "6px 14px", borderRadius: T.rFull,
-                  background: T.tealGlow, border: `1px solid ${T.teal}22`,
-                }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1, duration: 0.4 }}
+                style={{ display: "flex", gap: 12, flexWrap: "wrap" }}
               >
-                <span style={{ fontFamily: "'Sora', sans-serif", fontSize: 13, fontWeight: 700, color: T.tealDeep }}>
-                  {orders.length}
-                </span>
-                <span style={{ fontSize: 12, color: T.inkSoft }}>total orders</span>
+                {/* Stats Cards */}
+                <div style={{ padding: "10px 16px", background: T.surface, borderRadius: 14, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                  <p style={{ margin: 0, fontSize: 11, color: T.inkSoft, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Spent</p>
+                  <p style={{ margin: "2px 0 0", fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink }}>{fmt(totalSpent)}</p>
+                </div>
+                <div style={{ padding: "10px 16px", background: T.surface, borderRadius: 14, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                  <p style={{ margin: 0, fontSize: 11, color: T.inkSoft, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Orders Count</p>
+                  <p style={{ margin: "2px 0 0", fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink }}>{orders.length}</p>
+                </div>
+                <div style={{ padding: "10px 16px", background: T.surface, borderRadius: 14, border: `1px solid ${T.border}`, boxShadow: T.shadow }}>
+                  <p style={{ margin: 0, fontSize: 11, color: T.inkSoft, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em" }}>Total Saved</p>
+                  <p style={{ margin: "2px 0 0", fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.jade }}>{fmt(totalSaved)}</p>
+                </div>
               </motion.div>
             )}
           </div>
@@ -1010,110 +1015,115 @@ export default function Order() {
 
             {/* ── TOP NAV BAR ──────────────────────── */}
             <div style={{
-              display: "flex", gap: 24, borderBottom: `1px solid ${T.border}`,
-              marginBottom: 16, overflowX: "auto", paddingBottom: 0,
-              scrollbarWidth: "none", alignItems: "center", justifyContent: "space-between"
+              display: "flex", gap: 12,
+              marginBottom: 16, overflowX: "auto", paddingBottom: 8,
+              scrollbarWidth: "none", alignItems: "center"
             }}>
-              <div style={{ display: "flex", gap: 24 }}>
-                {TABS.map(tab => (
+              {TABS.map(tab => {
+                const active = activeTab === tab;
+                const meta = TAB_META[tab] || TAB_META.All;
+                return (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     style={{
-                      background: "none", border: "none",
-                      fontWeight: activeTab === tab ? 600 : 500,
-                      color: activeTab === tab ? T.ink : T.inkSoft,
-                      paddingBottom: 12, fontSize: 15,
-                      borderBottom: activeTab === tab ? `2px solid ${T.ink}` : "2px solid transparent",
-                      cursor: "pointer", whiteSpace: "nowrap", transition: "color 0.2s"
+                      background: active ? meta.bg : "transparent",
+                      border: `1.5px solid ${active ? meta.color : T.border}`,
+                      fontWeight: active ? 600 : 500,
+                      color: active ? meta.color : T.inkSoft,
+                      padding: "8px 16px", borderRadius: 999, fontSize: 13.5,
+                      display: "flex", alignItems: "center", gap: 8,
+                      cursor: "pointer", whiteSpace: "nowrap", transition: "all 0.2s"
                     }}
                   >
-                    {tab} <span style={{ color: T.inkGhost, fontSize: 13, marginLeft: 4 }}>{counts[tab]}</span>
+                    {active && <span>{meta.emoji}</span>}
+                    {tab}
+                    <span style={{
+                      background: active ? meta.color : T.border,
+                      color: active ? "#fff" : T.inkSoft,
+                      fontSize: 11, padding: "2px 8px", borderRadius: 999,
+                      fontWeight: 700
+                    }}>
+                      {counts[tab]}
+                    </span>
                   </button>
-                ))}
-              </div>
-              <div style={{ display: "flex", gap: 16, paddingBottom: 12 }}>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  style={{
-                    background: "none", border: "none", fontWeight: 500,
-                    color: T.ink, fontSize: 14, cursor: "pointer", outline: "none"
-                  }}
-                >
-                  {SORTS.map(s => <option key={s.v} value={s.v}>{s.l}</option>)}
-                </select>
-              </div>
+                );
+              })}
             </div>
 
             {/* ── MAIN CONTENT LIST ─────────────────────────── */}
             <div>
-              {/* Search bar */}
-              <div style={{ position: "relative", marginBottom: 12 }}>
-                <FiSearch style={{
-                  position: "absolute", left: 15, top: "50%",
-                  transform: "translateY(-50%)", color: T.inkGhost, pointerEvents: "none",
-                }} size={14} />
-                <input
-                  ref={searchRef}
-                  type="search"
-                  aria-label="Search orders by ID or product name"
-                  placeholder="Search by order ID or product name…"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
+              {/* Search bar & Sort */}
+              <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  <FiSearch style={{
+                    position: "absolute", left: 15, top: "50%",
+                    transform: "translateY(-50%)", color: T.inkGhost, pointerEvents: "none",
+                  }} size={14} />
+                  <input
+                    ref={searchRef}
+                    type="search"
+                    aria-label="Search orders by ID or product name"
+                    placeholder="Search by order ID or product name…"
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="lx-focus"
+                    style={{
+                      width: "100%", paddingLeft: 44, paddingRight: 44,
+                      paddingTop: 12, paddingBottom: 12,
+                      borderRadius: T.r, border: `1.5px solid ${T.border}`,
+                      background: T.surface, fontSize: 13.5, fontWeight: 400,
+                      color: T.ink, outline: "none",
+                      fontFamily: "'DM Sans', sans-serif",
+                      boxSizing: "border-box", boxShadow: T.shadow,
+                      transition: "border-color 0.18s, box-shadow 0.18s",
+                    }}
+                    onFocus={e => {
+                      e.target.style.borderColor = T.teal;
+                      e.target.style.boxShadow = `${T.shadow}, 0 0 0 3px ${T.tealGlow}`;
+                    }}
+                    onBlur={e => {
+                      e.target.style.borderColor = T.border;
+                      e.target.style.boxShadow = T.shadow;
+                    }}
+                  />
+                  <AnimatePresence>
+                    {searchQuery && (
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.6 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.6 }}
+                        onClick={() => setSearchQuery("")}
+                        aria-label="Clear search"
+                        className="lx-focus"
+                        style={{
+                          position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
+                          width: 22, height: 22, borderRadius: "50%",
+                          border: "none", cursor: "pointer",
+                          background: T.border, color: T.inkMid,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 12,
+                        }}
+                      >
+                        ×
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <button
+                  onClick={() => setShowSortSheet(true)}
                   className="lx-focus"
                   style={{
-                    width: "100%", paddingLeft: 44, paddingRight: 72,
-                    paddingTop: 12, paddingBottom: 12,
-                    borderRadius: T.r, border: `1.5px solid ${T.border}`,
-                    background: T.surface, fontSize: 13.5, fontWeight: 400,
-                    color: T.ink, outline: "none",
-                    fontFamily: "'DM Sans', sans-serif",
-                    boxSizing: "border-box", boxShadow: T.shadow,
-                    transition: "border-color 0.18s, box-shadow 0.18s",
+                    width: 44, flexShrink: 0, borderRadius: T.r, border: `1.5px solid ${T.border}`,
+                    background: T.surface, color: T.inkMid, display: "flex", alignItems: "center", justifyContent: "center",
+                    cursor: "pointer", boxShadow: T.shadow, transition: "background 0.2s"
                   }}
-                  onFocus={e => {
-                    e.target.style.borderColor = T.teal;
-                    e.target.style.boxShadow = `${T.shadow}, 0 0 0 3px ${T.tealGlow}`;
-                  }}
-                  onBlur={e => {
-                    e.target.style.borderColor = T.border;
-                    e.target.style.boxShadow = T.shadow;
-                  }}
-                />
-                {!searchQuery && (
-                  <span style={{
-                    position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
-                    fontSize: 9, fontWeight: 600, color: T.inkGhost,
-                    background: T.bg, border: `1px solid ${T.border}`,
-                    padding: "2px 7px", borderRadius: 6, letterSpacing: "0.04em",
-                    pointerEvents: "none",
-                  }}>
-                    ⌘K
-                  </span>
-                )}
-                <AnimatePresence>
-                  {searchQuery && (
-                    <motion.button
-                      initial={{ opacity: 0, scale: 0.6 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.6 }}
-                      onClick={() => setSearchQuery("")}
-                      aria-label="Clear search"
-                      className="lx-focus"
-                      style={{
-                        position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)",
-                        width: 22, height: 22, borderRadius: "50%",
-                        border: "none", cursor: "pointer",
-                        background: T.border, color: T.inkMid,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 12,
-                      }}
-                    >
-                      ×
-                    </motion.button>
-                  )}
-                </AnimatePresence>
+                  onMouseEnter={e => e.currentTarget.style.background = "#F9F9F9"}
+                  onMouseLeave={e => e.currentTarget.style.background = T.surface}
+                >
+                  <FiSliders size={18} />
+                </button>
               </div>
 
               {/* Results bar */}
@@ -1141,25 +1151,30 @@ export default function Order() {
               {/* Per-tab empty state */}
               {filtered.length === 0 ? (
                 <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: T.ease }}
                   style={{
-                    textAlign: "center", padding: "64px 24px",
+                    textAlign: "center", padding: "80px 24px",
                     background: T.surface, borderRadius: T.rLg,
                     border: `1px solid ${T.border}`, boxShadow: T.shadow,
                   }}
                   role="status" aria-live="polite"
                 >
-                  <div style={{ fontSize: 44, marginBottom: 14 }}>
+                  <motion.div
+                    animate={reduced ? {} : { y: [0, -8, 0] }}
+                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ fontSize: 44, marginBottom: 14 }}
+                  >
                     {debouncedSearch ? "🔍" : EMPTY_COPY[activeTab]?.icon}
-                  </div>
+                  </motion.div>
                   <p style={{
                     fontFamily: "'Sora', sans-serif",
-                    color: T.ink, fontSize: 16, fontWeight: 700, margin: "0 0 8px",
+                    color: T.ink, fontSize: 18, fontWeight: 700, margin: "0 0 8px",
                   }}>
                     {debouncedSearch ? "No matching orders" : EMPTY_COPY[activeTab]?.h}
                   </p>
-                  <p style={{ color: T.inkSoft, fontSize: 13, maxWidth: 300, margin: "0 auto" }}>
+                  <p style={{ color: T.inkSoft, fontSize: 14, maxWidth: 300, margin: "0 auto" }}>
                     {debouncedSearch
                       ? `No orders match "${debouncedSearch}"`
                       : EMPTY_COPY[activeTab]?.p}
@@ -1187,7 +1202,7 @@ export default function Order() {
                         key={order._id}
                         variants={itemVariants}
                         layout="position"
-                        whileHover={reduced ? {} : { scale: 1.01 }}
+                        whileHover={reduced ? {} : { scale: 1.01, boxShadow: T.shadowLg, transform: "translateY(-2px)" }}
                         transition={{ duration: 0.2 }}
                         style={{
                           background: "#fff",
@@ -1197,8 +1212,13 @@ export default function Order() {
                           display: "flex",
                           flexDirection: "column",
                           gap: 18,
+                          position: "relative",
+                          overflow: "hidden"
                         }}
                       >
+                        {/* Colored Left Border */}
+                        <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 4, background: sc.color }} />
+
                         {/* ── Order Header ── */}
                         <div style={{
                           display: "flex",
@@ -1206,14 +1226,22 @@ export default function Order() {
                           alignItems: "center"
                         }}>
                           <div>
-                            <p style={{
-                              fontSize: 20,
-                              fontWeight: 600,
-                              margin: 0,
-                              color: T.ink
-                            }}>
-                              Order #{display}
-                            </p>
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <p style={{
+                                fontSize: 20,
+                                fontWeight: 700,
+                                margin: 0,
+                                color: T.ink,
+                                fontFamily: "'Sora', sans-serif"
+                              }}>
+                                Order #{display}
+                              </p>
+                              {activeTab !== "Delivered" && !order.status?.includes("Cancelled") && order.expectedDelivery && (
+                                <span style={{ fontSize: 11, background: T.surface, border: `1px solid ${T.border}`, padding: "2px 8px", borderRadius: 6, color: T.inkSoft, fontWeight: 600 }}>
+                                  ETA: {new Date(order.expectedDelivery).toLocaleDateString("en-GB", { day: 'numeric', month: 'short' })}
+                                </span>
+                              )}
+                            </div>
                             <p style={{
                               fontSize: 13,
                               color: T.inkSoft,
@@ -1226,9 +1254,9 @@ export default function Order() {
                           <span style={{
                             fontSize: 13,
                             fontWeight: 600,
-                            color: order.status?.includes("Cancelled") ? T.coralBg : sc.color,
-                            background: sc.bg,
-                            padding: "4px 12px",
+                            color: order.status?.includes("Cancelled") ? T.coral : sc.color,
+                            background: order.status?.includes("Cancelled") ? T.coralBg : sc.bg,
+                            padding: "6px 14px",
                             borderRadius: T.rFull,
                           }}>
                             {order.status}
@@ -1241,7 +1269,8 @@ export default function Order() {
                           gap: 12,
                           overflowX: "auto",
                           paddingBottom: 4,
-                          scrollbarWidth: "none" // hide scrollbar Firefox
+                          scrollbarWidth: "none",
+                          alignItems: "center"
                         }}>
                           {order.items?.slice(0, 4).map((item, idx) => {
                             const pid = item.productId
@@ -1250,25 +1279,31 @@ export default function Order() {
                                 ? (typeof item.product === "object" ? item.product._id : item.product)
                                 : item._id;
                             return (
-                              <img
-                                key={idx}
-                                src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
-                                alt={item.name}
-                                onError={e => { e.target.onerror = null; e.target.src = "/placeholder-fish.svg"; }}
-                                style={{
-                                  width: 64,
-                                  height: 64,
-                                  borderRadius: 12,
-                                  objectFit: "cover",
-                                  border: `1px solid ${T.border}`
-                                }}
-                              />
+                              <div key={idx} style={{ position: "relative" }}>
+                                <img
+                                  src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
+                                  alt={item.name}
+                                  onError={e => { e.target.onerror = null; e.target.src = "/placeholder-fish.svg"; }}
+                                  style={{
+                                    width: 64,
+                                    height: 64,
+                                    borderRadius: 12,
+                                    objectFit: "cover",
+                                    border: `1px solid ${T.border}`
+                                  }}
+                                />
+                                {item.qty > 1 && (
+                                  <span style={{ position: "absolute", top: -6, right: -6, background: T.ink, color: "#fff", fontSize: 10, fontWeight: 700, width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", border: "2px solid #fff" }}>
+                                    {item.qty}
+                                  </span>
+                                )}
+                              </div>
                             );
                           })}
                           {(order.items?.length || 0) > 4 && (
                             <div style={{
-                              width: 64, height: 64, borderRadius: 12, background: T.bg, border: `1px solid ${T.border}`,
-                              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 600, color: T.inkMid
+                              width: 64, height: 64, borderRadius: 12, background: "#f8f9fa", border: `1px solid ${T.border}`,
+                              display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: T.inkMid
                             }}>
                               +{order.items.length - 4}
                             </div>
@@ -1285,8 +1320,9 @@ export default function Order() {
                         }}>
                           <span style={{
                             fontSize: 18,
-                            fontWeight: 600,
-                            color: T.ink
+                            fontWeight: 700,
+                            color: T.ink,
+                            fontFamily: "'Sora', sans-serif"
                           }}>
                             {fmt(order.totalAmount)}
                           </span>
@@ -1295,17 +1331,20 @@ export default function Order() {
                             onClick={() => navigate(`/orders/${order._id}`)}
                             className="lx-focus"
                             style={{
-                              padding: "10px 18px",
+                              padding: "10px 20px",
                               borderRadius: 999,
                               border: "none",
-                              background: "#111",
+                              background: T.teal,
                               color: "#fff",
                               fontWeight: 600,
                               cursor: "pointer",
-                              transition: "transform 0.2s"
+                              transition: "all 0.2s",
+                              boxShadow: "0 4px 14px rgba(0,113,227,0.25)",
+                              fontSize: 14,
+                              fontFamily: "'DM Sans', sans-serif"
                             }}
-                            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
-                            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                            onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,113,227,0.4)"; }}
+                            onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,113,227,0.25)"; }}
                           >
                             View Order
                           </button>
