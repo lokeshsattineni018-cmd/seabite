@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 
 const STYLES = `
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -125,7 +125,7 @@ function Bubbles() {
     );
 }
 
-export default function SeaBiteError() {
+export function SeaBiteError() {
     const [dark, setDark] = useState(false);
 
     const bg = dark ? "#0a1625" : "#f4f7fa";
@@ -207,7 +207,9 @@ export default function SeaBiteError() {
                             fontSize: 36,
                             boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
                             backdropFilter: "blur(8px)",
-                        }}>🌊</div>
+                        }}>
+                            <img src="/logo.png" alt="SeaBite" style={{ width: 44, height: 44, objectFit: "contain" }} />
+                        </div>
                     </div>
 
                     {/* Wordmark */}
@@ -339,4 +341,26 @@ export default function SeaBiteError() {
             </div>
         </>
     );
+}
+
+export default class ErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+    }
+
+    static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+    }
+
+    componentDidCatch(error, errorInfo) {
+        console.error("Uncaught error:", error, errorInfo);
+    }
+
+    render() {
+        if (this.state.hasError) {
+            return <SeaBiteError />;
+        }
+        return this.props.children;
+    }
 }
