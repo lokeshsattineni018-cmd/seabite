@@ -100,15 +100,21 @@ export const createOrder = async (req, res) => {
  */
 export const updateOrderStatus = async (req, res) => {
     const { status, refundStatus } = req.body;
+    console.log(`[STATUS_UPDATE] Initiating update for Order ID: ${req.params.id} | New Status: ${status}`);
+
     try {
-        // We populate user to get the email for the notification function
+        // 1. Fetch Order
         const order = await Order.findById(req.params.id).populate('user', 'name email');
-        if (!order) return res.status(404).json({ message: 'Order not found' });
+        if (!order) {
+            console.warn(`[STATUS_UPDATE] 404 - Order not found: ${req.params.id}`);
+            return res.status(404).json({ message: 'Order not found' });
+        }
 
         const oldStatus = order.status;
+        console.log(`[STATUS_UPDATE] Found order: #${order.orderId} | Current status: ${oldStatus}`);
 
+        // 2. Apply Changes
         if (status) order.status = status;
-
         if (refundStatus) {
             order.refundStatus = refundStatus;
             if (refundStatus === "Success") {
@@ -116,25 +122,55 @@ export const updateOrderStatus = async (req, res) => {
             }
         }
 
+        // 3. Save Order (Critical Step)
         const updatedOrder = await order.save();
+        console.log(`[STATUS_UPDATE] Order saved successfully: #${order.orderId}`);
 
-        // 🔐 AUDIT TRAIL: Log status change
+        // 4. Audit Logging (Non-Critical)
         try {
-            await ActivityLog.create({
-                user: req.user._id,
-                action: `ORDER_STATUS_UPDATE`,
-                details: `Order #${order.orderId} status changed to ${status || 'N/A'}${refundStatus ? `, Refund: ${refundStatus}` : ''}`,
-                meta: { orderId: order._id, oldStatus, newStatus: status }
-            });
+            if (ActivityLog) {
+                await ActivityLog.create({
+                    user: req.user._id,
+                    action: `ORDER_STATUS_UPDATE`,
+                    details: `Order #${order.orderId} status changed to ${status || 'N/A'}${refundStatus ? `, Refund: ${refundStatus}` : ''}`,
+                    meta: {
+                        orderId: order._id,
+                        orderNumber: order.orderId,
+                        oldStatus,
+                        newStatus: status
+                    }
+                });
+            }
         } catch (auditErr) {
-            console.error("ActivityLog create failed:", auditErr.message);
+            console.error("[STATUS_UPDATE] AuditLog failed:", auditErr.message);
         }
 
-        logger.audit("Order Status Updated", { orderId: order.orderId, admin: req.user.email, status });
-
-        // ✅ FIXED EMAIL TRIGGER: Multi-Status Amazon/Flipkart Style Notifications
+        // 5. Audit Trace (Non-Critical)
         try {
-            if (status && order.user && order.user.email) {
+            if (logger && logger.audit) {
+                logger.audit("Order Status Updated", {
+                    orderId: order.orderId,
+                    admin: req.user?.email,
+                    status
+                });
+            }
+        } catch (logErr) {
+            console.error("[STATUS_UPDATE] Logger audit failed:", logErr.message);
+        }
+
+        // 6. Push Notification / Socket (Non-Critical)
+        try {
+            if (req.io) {
+                req.io.to(`order_${order._id}`).emit('ORDER_UPDATED', updatedOrder);
+                req.io.emit('ADMIN_ORDER_UPDATED', updatedOrder);
+            }
+        } catch (socketErr) {
+            console.error("[STATUS_UPDATE] Socket notification failed:", socketErr.message);
+        }
+
+        // 7. Email Notification (Non-Critical)
+        try {
+            if (status && order.user && order.user.email && typeof sendStatusUpdateEmail === 'function') {
                 await sendStatusUpdateEmail(
                     order.user.email,
                     order.user.name,
@@ -142,16 +178,22 @@ export const updateOrderStatus = async (req, res) => {
                     status
                 );
             }
-        } catch (e) {
-            logger.error("Status Update Email Failed", { error: e.message, orderId: order._id });
+        } catch (mailErr) {
+            console.error("[STATUS_UPDATE] Email notification failed:", mailErr.message);
+            if (logger && logger.error) {
+                logger.error("Status Update Email Failed", { error: mailErr.message, orderId: order._id });
+            }
         }
 
-        res.json(updatedOrder);
+        console.log(`[STATUS_UPDATE] Successfully completed update for #${order.orderId}`);
+        res.status(200).json(updatedOrder);
+
     } catch (error) {
-        console.error("updateOrderStatus CRASH:", error);
+        console.error("[STATUS_UPDATE] CRITICAL CRASH:", error);
         res.status(500).json({
-            message: error.message || 'Error updating status',
-            stack: error.stack
+            message: 'Internal server error during status update',
+            error: error.message,
+            stack: process.env.NODE_ENV === 'production' ? undefined : error.stack
         });
     }
 };
