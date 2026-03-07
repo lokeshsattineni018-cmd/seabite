@@ -3,16 +3,33 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield,
-  FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiCreditCard,
-  FiTruck, FiLoader, FiAlertCircle, FiGift, FiChevronRight,
-  FiClock, FiPercent, FiCheck, FiPlus as FiPlusIcon,
+  FiMapPin,
+  FiCheckCircle,
+  FiMinus,
+  FiPlus,
+  FiTrash2,
+  FiShield,
+  FiXCircle,
+  FiHome,
+  FiShoppingBag,
+  FiTag,
+  FiX,
+  FiCreditCard,
+  FiTruck,
+  FiLoader,
+  FiAlertCircle,
+  FiGift,
+  FiChevronRight,
+  FiClock,
+  FiPercent,
+  FiCheck,
+  FiPlus as FiPlusIcon,
 } from "react-icons/fi";
 import AddressForm from "../../components/forms/AddressForm";
 import PopupModal from "../../components/common/PopupModal";
 import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
-import SeaBiteLoader from "../../components/common/SeaBiteLoader";
+import StripeButton from "../../components/common/StripeButton";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -326,22 +343,76 @@ export default function Checkout() {
         )}
       </AnimatePresence>
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: 1120, margin: "0 auto", position: "relative", zIndex: 1 }}>
         {/* Steps */}
         <StepsBar currentStep={currentStep} />
 
         {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} style={{ marginBottom: 28 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <div style={{ width: 4, height: 16, borderRadius: 2, background: `linear-gradient(180deg, ${T.primary}, ${T.sky})` }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.16em" }}>Secure Checkout</span>
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease }}
+          style={{
+            marginBottom: 24,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+              <div
+                style={{
+                  width: 4,
+                  height: 16,
+                  borderRadius: 2,
+                  background: `linear-gradient(180deg, ${T.primary}, ${T.sky})`,
+                }}
+              />
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: T.primary,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.16em",
+                }}
+              >
+                Secure checkout
+              </span>
+            </div>
+            <h1
+              style={{
+                fontSize: 30,
+                fontWeight: 800,
+                color: T.textDark,
+                letterSpacing: "-0.03em",
+                margin: 0,
+              }}
+            >
+              Complete your purchase
+            </h1>
           </div>
-          <h1 style={{ fontSize: 34, fontWeight: 800, color: T.textDark, letterSpacing: "-0.03em", margin: 0 }}>
-            Order <span style={{ color: T.primary }}>Summary</span>
-          </h1>
+          <div
+            style={{
+              fontSize: 11,
+              color: T.textLite,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <FiClock size={12} />
+            <span>Session secured · No extra fees</span>
+          </div>
         </motion.div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr min(390px, 40%)", gap: 20 }} className="checkout-grid">
+        <div
+          style={{ display: "grid", gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr)", gap: 20 }}
+          className="checkout-grid"
+        >
           {/* LEFT */}
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
@@ -352,17 +423,21 @@ export default function Checkout() {
                   icon={<FiMapPin size={16} />}
                   title="Delivery Address"
                   action={
-                    <motion.button
-                      whileTap={{ scale: 0.96 }} whileHover={{ y: -1 }}
+                    <StripeButton
+                      variant="secondary"
+                      size="sm"
                       onClick={() => setIsAddressModalOpen(true)}
                       style={{
-                        display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 10,
-                        border: `1px solid ${T.border}`, background: T.bg, color: T.primary,
-                        fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: font,
+                        borderRadius: 10,
+                        paddingInline: 12,
+                        fontSize: 11,
+                        borderColor: T.border,
+                        background: T.bg,
+                        color: T.primary,
                       }}
                     >
-                      <FiPlusIcon size={12} /> Add Address
-                    </motion.button>
+                      <FiPlusIcon size={12} /> Add address
+                    </StripeButton>
                   }
                 />
                 {addresses.length === 0 ? (
@@ -398,11 +473,39 @@ export default function Checkout() {
                               {addr.isDefault && <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", padding: "2px 8px", borderRadius: 5, background: "rgba(91,168,160,0.12)", color: T.primary }}>Default</span>}
                             </div>
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              {isSelected && <div style={{ width: 20, height: 20, borderRadius: "50%", background: T.primary, display: "flex", alignItems: "center", justifyContent: "center" }}><FiCheck size={10} style={{ color: "#fff" }} /></div>}
-                              <motion.button whileTap={{ scale: 0.85 }} onClick={e => deleteAddress(addr._id, e)}
-                                style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(232,129,106,0.08)", border: `1px solid rgba(232,129,106,0.18)`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: T.coral, flexShrink: 0 }}>
+                              {isSelected && (
+                                <div
+                                  style={{
+                                    width: 20,
+                                    height: 20,
+                                    borderRadius: "50%",
+                                    background: T.primary,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  <FiCheck size={10} style={{ color: "#fff" }} />
+                                </div>
+                              )}
+                              <StripeButton
+                                variant="ghost"
+                                size="sm"
+                                onClick={e => deleteAddress(addr._id, e)}
+                                style={{
+                                  width: 24,
+                                  height: 24,
+                                  borderRadius: 6,
+                                  padding: 0,
+                                  borderColor: "rgba(232,129,106,0.18)",
+                                  background: "rgba(232,129,106,0.08)",
+                                  color: T.coral,
+                                  boxShadow: "none",
+                                  flexShrink: 0,
+                                }}
+                              >
                                 <FiTrash2 size={10} />
-                              </motion.button>
+                              </StripeButton>
                             </div>
                           </div>
                           <p style={{ fontSize: 11, color: T.textLite, margin: "0 0 3px", fontWeight: 500 }}>{addr.phone}</p>
@@ -546,10 +649,14 @@ export default function Checkout() {
                   <div style={{ marginBottom: 18 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <p style={{ fontSize: 10, fontWeight: 700, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Promo Code</p>
-                      <button onClick={() => setShowCouponList(v => !v)}
-                        style={{ fontSize: 10, fontWeight: 700, color: T.primary, background: "none", border: "none", cursor: "pointer", fontFamily: font, padding: 0 }}>
+                      <StripeButton
+                        variant="link"
+                        size="sm"
+                        onClick={() => setShowCouponList(v => !v)}
+                        style={{ fontSize: 10 }}
+                      >
                         {showCouponList ? "Hide" : "View available"}
-                      </button>
+                      </StripeButton>
                     </div>
 
                     {/* Available coupons list */}
@@ -586,20 +693,36 @@ export default function Checkout() {
                                           </p>
                                         )}
                                       </div>
-                                      <button
-                                        onClick={() => isApplied ? clearCoupon() : applyCouponByCode(c.code)}
+                                      <StripeButton
+                                        variant={isApplied ? "secondary" : canApply ? "primary" : "secondary"}
+                                        size="sm"
+                                        onClick={() => (isApplied ? clearCoupon() : applyCouponByCode(c.code))}
                                         disabled={!canApply && !isApplied}
                                         style={{
-                                          padding: "6px 14px", borderRadius: 9,
-                                          border: isApplied ? `1px solid rgba(232,129,106,0.25)` : canApply ? `1px solid rgba(91,168,160,0.25)` : `1px solid ${T.border}`,
+                                          padding: "6px 12px",
+                                          borderRadius: 9,
+                                          fontSize: 10,
+                                          background: isApplied
+                                            ? "rgba(232,129,106,0.08)"
+                                            : canApply
+                                            ? "rgba(91,168,160,0.08)"
+                                            : "transparent",
+                                          color: isApplied
+                                            ? T.coral
+                                            : canApply
+                                            ? T.primary
+                                            : T.textLite,
+                                          borderColor: isApplied
+                                            ? "rgba(232,129,106,0.25)"
+                                            : canApply
+                                            ? "rgba(91,168,160,0.25)"
+                                            : T.border,
+                                          boxShadow: "none",
                                           cursor: canApply || isApplied ? "pointer" : "not-allowed",
-                                          fontSize: 10, fontWeight: 700, fontFamily: font,
-                                          background: isApplied ? "rgba(232,129,106,0.08)" : canApply ? "rgba(91,168,160,0.08)" : "transparent",
-                                          color: isApplied ? T.coral : canApply ? T.primary : T.textLite,
-                                          flexShrink: 0, transition: "all 0.18s",
-                                        }}>
+                                        }}
+                                      >
                                         {isApplied ? "✕ Remove" : "Apply"}
-                                      </button>
+                                      </StripeButton>
                                     </div>
                                   </div>
                                 );
@@ -633,20 +756,29 @@ export default function Checkout() {
                           </motion.button>
                         )}
                       </div>
-                      <motion.button whileTap={{ scale: 0.95 }}
+                      <StripeButton
+                        variant={appliedCoupon ? "secondary" : "primary"}
+                        size="md"
                         onClick={appliedCoupon ? clearCoupon : handleApplyCoupon}
                         disabled={!appliedCoupon && (!couponCode || verifyingCoupon)}
                         style={{
-                          padding: "11px 16px", borderRadius: 11,
-                          background: appliedCoupon ? "rgba(232,129,106,0.1)" : T.primary,
-                          color: appliedCoupon ? T.coral : "#fff",
-                          border: appliedCoupon ? `1px solid rgba(232,129,106,0.25)` : "none",
-                          fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: font,
-                          opacity: (!appliedCoupon && !couponCode) ? 0.5 : 1,
-                          display: "flex", alignItems: "center", justifyContent: "center", minWidth: 64,
-                        }}>
-                        {verifyingCoupon ? <FiLoader size={13} style={{ animation: "spin 1s linear infinite" }} /> : appliedCoupon ? "Remove" : "Apply"}
-                      </motion.button>
+                          borderRadius: 11,
+                          minWidth: 76,
+                          fontSize: 11,
+                          opacity: !appliedCoupon && !couponCode ? 0.5 : 1,
+                          background: appliedCoupon ? "rgba(232,129,106,0.1)" : undefined,
+                          color: appliedCoupon ? T.coral : undefined,
+                          borderColor: appliedCoupon ? "rgba(232,129,106,0.25)" : undefined,
+                        }}
+                      >
+                        {verifyingCoupon ? (
+                          <FiLoader size={13} style={{ animation: "spin 1s linear infinite" }} />
+                        ) : appliedCoupon ? (
+                          "Remove"
+                        ) : (
+                          "Apply"
+                        )}
+                      </StripeButton>
                     </div>
                     <AnimatePresence>
                       {couponMessage && (
@@ -732,28 +864,25 @@ export default function Checkout() {
                 )}
 
                 {/* Place Order */}
-                <motion.button
-                  whileHover={{ y: -2, boxShadow: "0 10px 30px rgba(91,168,160,0.28)" }}
-                  whileTap={{ scale: 0.97 }}
+                <StripeButton
+                  variant="primary"
+                  size="lg"
+                  fullWidth
                   onClick={placeOrder}
-                  disabled={loading}
+                  loading={loading}
                   style={{
-                    width: "100%", padding: "15px 20px", borderRadius: 14,
-                    background: T.primary, color: "#fff", border: "none",
-                    fontSize: 13, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
-                    fontFamily: font, boxShadow: "0 4px 20px rgba(91,168,160,0.22)",
-                    opacity: loading ? 0.75 : 1, transition: "all 0.2s",
+                    borderRadius: 14,
+                    fontSize: 13,
                   }}
                 >
-                  {loading ? (
-                    <><SeaBiteLoader small /> Processing...</>
-                  ) : paymentMethod === "COD" ? (
-                    <>Place COD Order</>
+                  {paymentMethod === "COD" ? (
+                    <>Place COD order</>
                   ) : (
-                    <><FiCreditCard size={15} /> Pay & Place Order</>
+                    <>
+                      <FiCreditCard size={15} /> Pay &amp; place order
+                    </>
                   )}
-                </motion.button>
+                </StripeButton>
 
                 {/* Delivery estimate */}
                 {deliveryAddress.street && (
@@ -783,7 +912,7 @@ export default function Checkout() {
 
       <style>{`
         @media (min-width: 900px) {
-          .checkout-grid { grid-template-columns: 1fr 380px !important; }
+          .checkout-grid { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) !important; }
         }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
       `}</style>
