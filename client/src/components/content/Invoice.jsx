@@ -85,7 +85,7 @@ export default function Invoice({ order, type = "invoice" }) {
           </div>
           <div className="inv-hero-right">
             <p className={`inv-status-pill ${isCancelled ? "pill-void" :
-                order.isPaid ? "pill-paid" : "pill-cod"
+              order.isPaid ? "pill-paid" : "pill-cod"
               }`}>
               {isCancelled ? "Cancelled" : order.isPaid ? "Paid" : "Cash on Delivery"}
             </p>
