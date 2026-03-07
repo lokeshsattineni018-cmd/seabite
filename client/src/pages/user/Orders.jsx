@@ -628,6 +628,8 @@ export default function Order() {
   const [reorderingId, setReorderingId] = useState(null);
   const [showSortSheet, setShowSortSheet] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [fetchError, setFetchError] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(10);
 
   const navigate = useNavigate();
   const searchRef = useRef(null);
@@ -655,11 +657,13 @@ export default function Order() {
 
   // ── Data fetching ─────────────────────────────────────────
   const fetchOrders = useCallback(async () => {
+    setFetchError(false);
     try {
       const { data } = await axios.get(`${API_URL}/api/orders/myorders`, { withCredentials: true });
       setOrders(data);
     } catch (err) {
       if (err.response?.status === 401) setTimeout(() => navigate("/login"), 1000);
+      else setFetchError(true);
     } finally {
       setLoading(false);
     }
@@ -788,6 +792,10 @@ export default function Order() {
   }, [navigate]);
 
   const isFiltered = activeTab !== "All" || searchQuery.trim() !== "" || sortBy !== "newest";
+
+
+
+
 
   // ─────────────────────────────────────────────────────────
   // Spinner for reorder
@@ -962,6 +970,90 @@ export default function Order() {
               {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
             </div>
           </div>
+        ) : fetchError ? (
+          // ── ERROR STATE ──────────────────────────────
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: T.ease }}
+            style={{
+              background: T.surface, borderRadius: T.rXl,
+              border: `1px solid ${T.border}`, boxShadow: T.shadowMd,
+              padding: "80px 40px", textAlign: "center",
+            }}
+          >
+            <div style={{
+              width: 72, height: 72, borderRadius: 20,
+              background: T.coralBg, display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 24px", color: T.coral,
+            }}>
+              <FiAlertCircle size={32} />
+            </div>
+            <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 10 }}>
+              Something went wrong
+            </h3>
+            <p style={{ fontSize: 14, color: T.inkSoft, maxWidth: 340, margin: "0 auto 28px", lineHeight: 1.7 }}>
+              We couldn't load your orders. Please check your connection and try again.
+            </p>
+            <motion.button
+              whileHover={reduced ? {} : { y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => { setLoading(true); fetchOrders(); }}
+              className="lx-focus"
+              style={{
+                padding: "14px 32px", borderRadius: T.rLg,
+                background: T.teal, color: T.surface,
+                fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14.5,
+                border: "none", cursor: "pointer",
+                boxShadow: T.shadowTeal,
+              }}
+            >
+              <FiRefreshCcw size={14} style={{ marginRight: 8 }} />
+              Retry
+            </motion.button>
+          </motion.div>
+        ) : fetchError ? (
+          // ── ERROR STATE ──────────────────────────────
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: T.ease }}
+            style={{
+              background: T.surface, borderRadius: T.rXl,
+              border: `1px solid ${T.border}`, boxShadow: T.shadowMd,
+              padding: "80px 40px", textAlign: "center",
+            }}
+          >
+            <div style={{
+              width: 72, height: 72, borderRadius: 20,
+              background: T.coralBg, display: "flex", alignItems: "center", justifyContent: "center",
+              margin: "0 auto 24px", color: T.coral,
+            }}>
+              <FiAlertCircle size={32} />
+            </div>
+            <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 700, color: T.ink, marginBottom: 10 }}>
+              Something went wrong
+            </h3>
+            <p style={{ fontSize: 14, color: T.inkSoft, maxWidth: 340, margin: "0 auto 28px", lineHeight: 1.7 }}>
+              We couldn't load your orders. Please check your connection and try again.
+            </p>
+            <motion.button
+              whileHover={reduced ? {} : { y: -2 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => { setLoading(true); fetchOrders(); }}
+              className="lx-focus"
+              style={{
+                padding: "14px 32px", borderRadius: T.rLg,
+                background: T.teal, color: T.surface,
+                fontFamily: "'Sora', sans-serif", fontWeight: 700, fontSize: 14.5,
+                border: "none", cursor: "pointer",
+                boxShadow: T.shadowTeal,
+              }}
+            >
+              <FiRefreshCcw size={14} style={{ marginRight: 8 }} />
+              Retry
+            </motion.button>
+          </motion.div>
         ) : orders.length === 0 ? (
           // ── GLOBAL EMPTY STATE ──────────────────────────
           <motion.div
@@ -1012,6 +1104,55 @@ export default function Order() {
         ) : (
           // ── SINGLE COLUMN APPLE LYOUT ──────────────────────────
           <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
+
+            {/* ── FREQUENTLY ORDERED ────────────────── */}
+            {frequentItems.length > 0 && activeTab === "All" && !debouncedSearch && (
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, ease: T.ease }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
+                    Frequently Ordered
+                  </h3>
+                  <span style={{ fontSize: 12, color: T.inkSoft }}>Ordered 3+ times</span>
+                </div>
+                <div style={{
+                  display: "flex", gap: 14, overflowX: "auto", paddingBottom: 6,
+                  scrollbarWidth: "none",
+                }}>
+                  {frequentItems.map(fi => (
+                    <div
+                      key={fi.id}
+                      onClick={() => navigate(`/products/${fi.id}`)}
+                      style={{
+                        flexShrink: 0, width: 120, cursor: "pointer",
+                        background: T.surface, borderRadius: 16, border: `1px solid ${T.border}`,
+                        boxShadow: T.shadow, overflow: "hidden",
+                        transition: "transform 0.2s, box-shadow 0.2s",
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = T.shadowMd; }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = T.shadow; }}
+                    >
+                      <img
+                        src={`${API_URL}/uploads/${fi.image?.replace("uploads/", "")}`}
+                        alt={fi.name}
+                        onError={e => { e.target.onerror = null; e.target.src = "/placeholder-fish.svg"; }}
+                        style={{ width: "100%", height: 90, objectFit: "cover", display: "block" }}
+                      />
+                      <div style={{ padding: "8px 10px" }}>
+                        <p style={{
+                          fontSize: 12, fontWeight: 600, color: T.ink, margin: 0,
+                          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
+                        }}>{fi.name}</p>
+                        <p style={{ fontSize: 11, color: T.inkSoft, margin: "2px 0 0" }}>₹{fi.price}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* ── TOP NAV BAR ──────────────────────── */}
             <div style={{
@@ -1180,15 +1321,15 @@ export default function Order() {
                       : EMPTY_COPY[activeTab]?.p}
                   </p>
                 </motion.div>
-              ) : (
-                // ── ORDER CARDS ──────────────────────────────
+              ) : (<>
+                {/* ── ORDER CARDS ────────────────────────────── */}
                 <motion.div
                   variants={listVariants}
                   initial="hidden"
                   animate="visible"
                   style={{ display: "flex", flexDirection: "column", gap: 14 }}
                 >
-                  {filtered.map(order => {
+                  {filtered.slice(0, visibleCount).map(order => {
                     const sc = statusConfig(order.status);
                     const delivered = order.status === "Delivered";
                     const expanded = expandedOrder === order._id;
@@ -1205,7 +1346,7 @@ export default function Order() {
                         whileHover={reduced ? {} : { scale: 1.01, boxShadow: T.shadowLg, transform: "translateY(-2px)" }}
                         transition={{ duration: 0.2 }}
                         style={{
-                          background: "#fff",
+                          background: cardBg(order.status),
                           borderRadius: 20,
                           padding: 24,
                           boxShadow: "0 8px 30px rgba(0,0,0,0.05)",
@@ -1251,14 +1392,16 @@ export default function Order() {
                               {new Date(order.createdAt).toLocaleDateString("en-GB", { day: 'numeric', month: 'long', year: 'numeric' })}
                             </p>
                           </div>
-                          <span style={{
-                            fontSize: 13,
-                            fontWeight: 600,
-                            color: order.status?.includes("Cancelled") ? T.coral : sc.color,
-                            background: order.status?.includes("Cancelled") ? T.coralBg : sc.bg,
-                            padding: "6px 14px",
-                            borderRadius: T.rFull,
-                          }}>
+                          <span
+                            aria-label={`Order status: ${order.status}`}
+                            style={{
+                              fontSize: 13,
+                              fontWeight: 600,
+                              color: order.status?.includes("Cancelled") ? T.coral : sc.color,
+                              background: order.status?.includes("Cancelled") ? T.coralBg : sc.bg,
+                              padding: "6px 14px",
+                              borderRadius: T.rFull,
+                            }}>
                             {order.status}
                           </span>
                         </div>
@@ -1327,38 +1470,85 @@ export default function Order() {
                             {fmt(order.totalAmount)}
                           </span>
 
-                          <button
-                            onClick={() => navigate(`/orders/${order._id}`)}
-                            className="lx-focus"
-                            style={{
-                              padding: "10px 20px",
-                              borderRadius: 999,
-                              border: "none",
-                              background: T.teal,
-                              color: "#fff",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              transition: "all 0.2s",
-                              boxShadow: "0 4px 14px rgba(0,113,227,0.25)",
-                              fontSize: 14,
-                              fontFamily: "'DM Sans', sans-serif"
-                            }}
-                            onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,113,227,0.4)"; }}
-                            onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,113,227,0.25)"; }}
-                          >
-                            View Order
-                          </button>
+                          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                            {canReorder && (
+                              <motion.button
+                                whileTap={{ scale: 0.93 }}
+                                onClick={(e) => handleReorder(order, e)}
+                                disabled={reordering}
+                                className="lx-focus"
+                                aria-label="Reorder this order"
+                                style={{
+                                  width: 40, height: 40, borderRadius: 999,
+                                  border: `1.5px solid ${T.border}`, background: T.surface,
+                                  color: T.inkMid, display: "flex", alignItems: "center", justifyContent: "center",
+                                  cursor: reordering ? "not-allowed" : "pointer",
+                                  transition: "all 0.2s", opacity: reordering ? 0.55 : 1,
+                                }}
+                                onMouseEnter={e => { if (!reordering) { e.currentTarget.style.background = T.tealGlow; e.currentTarget.style.borderColor = T.teal; e.currentTarget.style.color = T.teal; } }}
+                                onMouseLeave={e => { e.currentTarget.style.background = T.surface; e.currentTarget.style.borderColor = T.border; e.currentTarget.style.color = T.inkMid; }}
+                              >
+                                {reordering ? <Spinner /> : <FiRotateCcw size={16} />}
+                              </motion.button>
+                            )}
+                            <button
+                              onClick={() => navigate(`/orders/${order._id}`)}
+                              className="lx-focus"
+                              style={{
+                                padding: "10px 20px",
+                                borderRadius: 999,
+                                border: "none",
+                                background: T.teal,
+                                color: "#fff",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                transition: "all 0.2s",
+                                boxShadow: "0 4px 14px rgba(0,113,227,0.25)",
+                                fontSize: 14,
+                                fontFamily: "'DM Sans', sans-serif"
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,113,227,0.4)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(0,113,227,0.25)"; }}
+                            >
+                              View Order
+                            </button>
+                          </div>
                         </div>
                       </motion.div>
                     );
                   })}
                 </motion.div>
-              )}
+
+                {/* Show More Pagination */}
+                {filtered.length > visibleCount && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    style={{ textAlign: "center", paddingTop: 8 }}
+                  >
+                    <button
+                      onClick={() => setVisibleCount(c => c + 10)}
+                      className="lx-focus"
+                      style={{
+                        padding: "12px 32px", borderRadius: 999,
+                        border: `1.5px solid ${T.border}`, background: T.surface,
+                        color: T.ink, fontWeight: 600, fontSize: 14,
+                        cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.background = "#f5f5f5"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = T.surface; }}
+                    >
+                      Show More ({filtered.length - visibleCount} remaining)
+                    </button>
+                  </motion.div>
+                )}
+              </>)}
             </div>
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }
 
