@@ -1226,7 +1226,7 @@ export default function Order() {
                           <span style={{
                             fontSize: 13,
                             fontWeight: 600,
-                            color: cancelled ? T.coralBg : sc.color,
+                            color: order.status?.includes("Cancelled") ? T.coralBg : sc.color,
                             background: sc.bg,
                             padding: "4px 12px",
                             borderRadius: T.rFull,
