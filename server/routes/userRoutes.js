@@ -61,13 +61,17 @@ router.delete("/address/:id", protect, deleteAddress);
 router.post("/cart", protect, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
-        const { cart } = req.body; // Expecting [{ product: id, qty: n }, ...]
+        const cart = req.body.cart || []; // Default to empty array
+
+        if (!Array.isArray(cart)) {
+            return res.status(400).json({ message: "Invalid cart data" });
+        }
 
         // Simple overwrite sync
         user.cart = cart.map(item => ({
             product: item.product?._id || item.product || item._id, // Handle full object or ID
-            qty: item.qty
-        }));
+            qty: item.qty || 1
+        })).filter(item => item.product != null); // remove any null products
 
         await user.save();
 
@@ -82,7 +86,7 @@ router.post("/cart", protect, async (req, res) => {
         res.json({ message: "Cart synced", cart: user.cart });
     } catch (error) {
         // console.error("Cart sync error:", error);
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: "Server Error", error: error.message });
     }
 });
 
@@ -90,10 +94,10 @@ router.get("/cart", protect, async (req, res) => {
     try {
         const user = await User.findById(req.user._id).populate("cart.product");
         // Filter out null products (if deleted)
-        const validCart = user.cart.filter(item => item.product);
+        const validCart = (user.cart || []).filter(item => item.product);
         res.json(validCart);
     } catch (error) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: "Server Error", error: error.message });
     }
 });
 
