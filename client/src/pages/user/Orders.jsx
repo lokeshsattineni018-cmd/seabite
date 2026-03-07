@@ -699,6 +699,24 @@ export default function Order() {
     return new Set(Object.keys(counts).filter(id => counts[id] >= 3));
   }, [orders]);
 
+  // ── Frequently ordered items (for rendering)
+  const frequentItems = useMemo(() => {
+    const itemMap = {};
+    orders.forEach(o => {
+      (o.items || []).forEach(item => {
+        const id = item.productId
+          ? (typeof item.productId === "object" ? item.productId._id : item.productId)
+          : item.product
+            ? (typeof item.product === "object" ? item.product._id : item.product)
+            : item._id;
+        if (id && frequentIds.has(id) && !itemMap[id]) {
+          itemMap[id] = { id, name: item.name, image: item.image, price: item.price };
+        }
+      });
+    });
+    return Object.values(itemMap).slice(0, 8);
+  }, [orders, frequentIds]);
+
   // ── Derived data ──────────────────────────────────────────
   const filtered = useMemo(() => {
     let r = [...orders];
