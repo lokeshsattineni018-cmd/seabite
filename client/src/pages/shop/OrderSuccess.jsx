@@ -4,10 +4,17 @@ import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import {
-  FiCheck, FiShoppingBag, FiCopy, FiTruck,
-  FiDownload, FiChevronRight, FiMapPin, FiTag,
+  FiCheck,
+  FiShoppingBag,
+  FiCopy,
+  FiTruck,
+  FiDownload,
+  FiChevronRight,
+  FiMapPin,
+  FiTag,
 } from "react-icons/fi";
 import { generateInvoicePDF } from "../../utils/pdfGenerator";
+import StripeButton from "../../components/common/StripeButton";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -158,17 +165,20 @@ export default function OrderSuccess() {
   ];
 
   return (
-    <div style={{
-      height: "100vh",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      background: T.bg,
-      fontFamily: "'Plus Jakarta Sans', sans-serif",
-      overflow: "hidden",
-      position: "relative",
-    }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: T.bg,
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
+        overflow: "hidden",
+        position: "relative",
+        padding: "40px 16px",
+      }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
@@ -179,10 +189,12 @@ export default function OrderSuccess() {
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "55%", background: "linear-gradient(180deg, rgba(91,168,160,0.08) 0%, transparent 100%)" }} />
       </div>
 
-      {/* Floating particles */}
-      <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-        {particles.map((p, i) => <Particle key={i} {...p} />)}
-      </div>
+        {/* Floating particles */}
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+          {particles.map((p, i) => (
+            <Particle key={i} {...p} />
+          ))}
+        </div>
 
       {/* ── MAIN CARD ── */}
       <motion.div
@@ -193,7 +205,7 @@ export default function OrderSuccess() {
           position: "relative",
           zIndex: 1,
           width: "100%",
-          maxWidth: 480,
+          maxWidth: 520,
           padding: "0 20px",
         }}
       >
@@ -382,41 +394,34 @@ export default function OrderSuccess() {
           transition={{ delay: 0.76, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           style={{ display: "flex", gap: 8, marginBottom: 14 }}
         >
-          <motion.button
-            whileHover={{ scale: 1.02, y: -1 }}
-            whileTap={{ scale: 0.97 }}
+          <StripeButton
+            variant="primary"
+            size="md"
+            fullWidth
             onClick={() => navigate(`/orders/${dbId}`)}
             style={{
-              flex: 1, padding: "12px 16px", borderRadius: 48, border: "none", cursor: "pointer",
-              background: `linear-gradient(135deg, ${T.primary}, ${T.sky})`,
-              color: "#fff", fontSize: 13, fontWeight: 700,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              boxShadow: "0 8px 24px rgba(91,168,160,0.30)",
-              letterSpacing: "-0.01em",
+              borderRadius: 999,
+              paddingInline: 18,
+              fontSize: 13,
             }}
           >
-            <FiTruck size={14} /> Track Order
-          </motion.button>
+            <FiTruck size={14} /> Track order
+          </StripeButton>
 
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.97 }}
+          <StripeButton
+            variant="secondary"
+            size="md"
+            fullWidth
             onClick={() => order && generateInvoicePDF(order)}
             style={{
-              flex: 1, padding: "12px 16px", borderRadius: 48,
-              border: `1.5px solid ${T.border}`, cursor: "pointer",
-              background: T.surface, color: T.textMid,
-              fontSize: 13, fontWeight: 700,
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              letterSpacing: "-0.01em", transition: "border-color 0.18s, color 0.18s",
+              borderRadius: 999,
+              paddingInline: 18,
+              fontSize: 13,
+              borderColor: T.border,
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = T.primary; e.currentTarget.style.color = T.primary; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = T.border; e.currentTarget.style.color = T.textMid; }}
           >
             <FiDownload size={14} /> Invoice
-          </motion.button>
+          </StripeButton>
         </motion.div>
 
         {/* ── FOOTER ── */}

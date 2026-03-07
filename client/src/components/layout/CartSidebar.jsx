@@ -2,11 +2,18 @@ import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiX, FiMinus, FiPlus, FiTrash2, FiShoppingBag,
-  FiArrowRight, FiPackage, FiLock,
+  FiX,
+  FiMinus,
+  FiPlus,
+  FiTrash2,
+  FiShoppingBag,
+  FiArrowRight,
+  FiPackage,
+  FiLock,
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { removeFromCart, updateQty } from "../../utils/cartStorage";
+import StripeButton from "../common/StripeButton";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -69,61 +76,104 @@ export default function CartSidebar({ isOpen, onClose }) {
             exit={{ x: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 30, stiffness: 260, mass: 0.8 }}
             style={{
-              position: "fixed", top: 0, right: 0, height: "100%",
-              width: "100%", maxWidth: 440,
-              background: T.surface, zIndex: 1010,
-              display: "flex", flexDirection: "column",
+              position: "fixed",
+              top: 0,
+              right: 0,
+              height: "100%",
+              width: "100%",
+              maxWidth: 420,
+              background: T.bg,
+              zIndex: 1010,
+              display: "flex",
+              flexDirection: "column",
               borderLeft: `1px solid ${T.border}`,
-              boxShadow: "-8px 0 48px rgba(26,43,53,0.10)",
+              boxShadow: "-12px 0 40px rgba(10,24,36,0.35)",
               fontFamily: font,
             }}
           >
             {/* ── HEADER ── */}
-            <div style={{
-              padding: "20px 24px", borderBottom: `1px solid ${T.border}`,
-              display: "flex", flexDirection: "column", gap: 16,
-              background: T.surface,
-            }}>
+            <div
+              style={{
+                padding: "18px 20px 16px",
+                borderBottom: `1px solid ${T.border}`,
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+                background: T.surface,
+              }}
+            >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <motion.div
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.1 }}
+                    transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.05 }}
                     style={{
-                      width: 40, height: 40, borderRadius: 12,
+                      width: 36,
+                      height: 36,
+                      borderRadius: 999,
                       background: "linear-gradient(135deg, #5BA8A0, #89C2D9)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#fff", boxShadow: "0 4px 16px rgba(91,168,160,0.28)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      boxShadow: "0 8px 24px rgba(91,168,160,0.35)",
                     }}
                   >
                     <FiShoppingBag size={18} />
                   </motion.div>
                   <div>
-                    <h2 style={{ fontSize: 17, fontWeight: 800, color: T.textDark, margin: 0, letterSpacing: "-0.02em" }}>Your Cart</h2>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>
+                    <h2
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 800,
+                        color: T.textDark,
+                        margin: 0,
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      Order summary
+                    </h2>
+                    <p
+                      style={{
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: T.textLite,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.12em",
+                        margin: 0,
+                      }}
+                    >
                       {cartCount} {cartCount === 1 ? "item" : "items"}
                     </p>
                   </div>
                 </div>
-                <motion.button
-                  whileHover={{ rotate: 90, scale: 1.1 }}
-                  whileTap={{ scale: 0.85 }}
+                <StripeButton
+                  variant="ghost"
+                  size="sm"
+                  aria-label="Close cart"
                   onClick={onClose}
                   style={{
-                    width: 36, height: 36, borderRadius: "50%",
-                    background: T.bg, border: `1px solid ${T.border}`,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: T.textLite, cursor: "pointer",
+                    borderRadius: 999,
+                    width: 32,
+                    height: 32,
+                    padding: 0,
+                    borderColor: T.border,
+                    color: T.textLite,
+                    boxShadow: "none",
                   }}
                 >
-                  <FiX size={16} />
-                </motion.button>
+                  <FiX size={14} />
+                </StripeButton>
               </div>
 
               {/* Free delivery progress */}
               {cartItems.length > 0 && (
-                <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.16, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                >
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
                     <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.1em" }}>
                       Free Delivery
@@ -132,12 +182,23 @@ export default function CartSidebar({ isOpen, onClose }) {
                       {remaining > 0 ? `₹${remaining.toFixed(0)} more` : "🎉 Unlocked!"}
                     </span>
                   </div>
-                  <div style={{ height: 5, background: "#EEF5F4", borderRadius: 4, overflow: "hidden" }}>
+                  <div
+                    style={{
+                      height: 4,
+                      background: "#EEF5F4",
+                      borderRadius: 999,
+                      overflow: "hidden",
+                    }}
+                  >
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${deliveryProgress}%` }}
-                      transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                      style={{ height: "100%", background: "linear-gradient(90deg, #5BA8A0, #89C2D9)", borderRadius: 4 }}
+                      transition={{ duration: 0.55, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                      style={{
+                        height: "100%",
+                        background: "linear-gradient(90deg, #5BA8A0, #89C2D9)",
+                        borderRadius: 999,
+                      }}
                     />
                   </div>
                 </motion.div>
@@ -145,7 +206,17 @@ export default function CartSidebar({ isOpen, onClose }) {
             </div>
 
             {/* ── ITEMS ── */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: T.bg, display: "flex", flexDirection: "column", gap: 10 }}>
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "16px 18px 18px",
+                background: T.bg,
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+              }}
+            >
               {cartItems.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0, scale: 0.94 }}
@@ -160,20 +231,16 @@ export default function CartSidebar({ isOpen, onClose }) {
                   >
                     <FiPackage size={28} style={{ color: T.border }} />
                   </motion.div>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, color: T.textDark, marginBottom: 8 }}>Your cart is empty</h3>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: T.textDark, marginBottom: 6 }}>Your cart is empty</h3>
                   <p style={{ fontSize: 13, color: T.textLite, maxWidth: 220, lineHeight: 1.7, marginBottom: 24 }}>Add some fresh catch to get started.</p>
-                  <motion.button
-                    whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.22)" }}
-                    whileTap={{ scale: 0.97 }}
+                  <StripeButton
+                    variant="primary"
+                    size="md"
                     onClick={onClose}
-                    style={{
-                      padding: "12px 24px", borderRadius: 12, background: T.primary,
-                      color: "#fff", fontWeight: 700, fontSize: 13, border: "none",
-                      cursor: "pointer", fontFamily: font,
-                    }}
+                    style={{ borderRadius: 12, paddingInline: 22 }}
                   >
-                    Browse Products
-                  </motion.button>
+                    Browse products
+                  </StripeButton>
                 </motion.div>
               ) : (
                 <AnimatePresence mode="popLayout">
@@ -184,22 +251,34 @@ export default function CartSidebar({ isOpen, onClose }) {
                       initial={{ opacity: 0, x: 40 }}
                       animate={{ opacity: 1, x: 0, transition: { delay: index * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] } }}
                       exit={{ opacity: 0, x: -40, scale: 0.94, transition: { duration: 0.25 } }}
-                      whileHover={{ boxShadow: "0 4px 20px rgba(91,168,160,0.10)" }}
+                      whileHover={{ boxShadow: "0 4px 20px rgba(91,168,160,0.10)", y: -1 }}
                       style={{
-                        display: "flex", gap: 12, padding: "12px 14px",
-                        borderRadius: 14, background: T.surface,
+                        display: "flex",
+                        gap: 12,
+                        padding: "10px 12px",
+                        borderRadius: 12,
+                        background: T.surface,
                         border: `1px solid ${T.border}`,
                         boxShadow: "0 1px 4px rgba(26,43,53,0.04)",
-                        transition: "box-shadow 0.2s",
+                        transition: "box-shadow 0.18s ease, transform 0.18s ease",
                       }}
                     >
                       {/* Image */}
-                      <div style={{
-                        width: 64, height: 64, borderRadius: 10, flexShrink: 0,
-                        background: T.bg, border: `1px solid ${T.border}`,
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        padding: 6, overflow: "hidden",
-                      }}>
+                      <div
+                        style={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: 10,
+                          flexShrink: 0,
+                          background: T.bg,
+                          border: `1px solid ${T.border}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: 6,
+                          overflow: "hidden",
+                        }}
+                      >
                         <motion.img
                           src={getFullImageUrl(item.image)}
                           alt={item.name}
@@ -210,27 +289,33 @@ export default function CartSidebar({ isOpen, onClose }) {
 
                       {/* Details */}
                       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
                           <h4 style={{ fontSize: 13, fontWeight: 700, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>
                             {item.name}
                           </h4>
-                          <motion.button
-                            whileHover={{ scale: 1.2, color: T.coral }}
-                            whileTap={{ scale: 0.8 }}
+                          <StripeButton
+                            variant="link"
+                            size="sm"
                             onClick={() => handleRemove(item._id)}
-                            style={{ color: T.border, background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0 }}
+                            style={{ color: T.textLite, fontSize: 10 }}
                           >
-                            <FiTrash2 size={13} />
-                          </motion.button>
+                            <FiTrash2 size={11} />
+                          </StripeButton>
                         </div>
 
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
                           {/* Qty stepper */}
-                          <div style={{
-                            display: "flex", alignItems: "center", gap: 0,
-                            background: T.bg, borderRadius: 9, border: `1px solid ${T.border}`,
-                            overflow: "hidden",
-                          }}>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0,
+                              background: T.bg,
+                              borderRadius: 999,
+                              border: `1px solid ${T.border}`,
+                              overflow: "hidden",
+                            }}
+                          >
                             <motion.button
                               whileTap={{ scale: 0.85 }}
                               onClick={() => handleUpdate(item, item.qty - 1)}
@@ -272,52 +357,95 @@ export default function CartSidebar({ isOpen, onClose }) {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.18, duration: 0.4 }}
-                style={{ padding: "20px 24px", background: T.surface, borderTop: `1px solid ${T.border}` }}
+                style={{
+                  padding: "18px 20px 20px",
+                  background: T.surface,
+                  borderTop: `1px solid ${T.border}`,
+                }}
               >
                 {/* Total */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    marginBottom: 14,
+                  }}
+                >
                   <div>
-                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: T.textLite, margin: "0 0 2px" }}>Total Amount</p>
+                    <p
+                      style={{
+                        fontSize: 9,
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.12em",
+                        color: T.textLite,
+                        margin: "0 0 2px",
+                      }}
+                    >
+                      Total due
+                    </p>
                     <motion.p
                       key={subtotal}
-                      initial={{ opacity: 0, y: 6 }}
+                      initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
-                      style={{ fontSize: 26, fontWeight: 800, color: T.textDark, margin: 0, letterSpacing: "-0.03em" }}
+                      style={{
+                        fontSize: 24,
+                        fontWeight: 800,
+                        color: T.textDark,
+                        margin: 0,
+                        letterSpacing: "-0.03em",
+                      }}
                     >
                       ₹{subtotal.toLocaleString()}
                     </motion.p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <p style={{ fontSize: 10, color: T.textLite, margin: 0 }}>
+                    <p
+                      style={{
+                        fontSize: 10,
+                        color: T.textLite,
+                        margin: 0,
+                      }}
+                    >
                       {cartCount} {cartCount === 1 ? "item" : "items"}
                     </p>
                   </div>
                 </div>
 
                 {/* Checkout button */}
-                <motion.button
-                  whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(91,168,160,0.30)" }}
-                  whileTap={{ scale: 0.97 }}
+                <StripeButton
+                  variant="primary"
+                  size="lg"
+                  fullWidth
                   onClick={handleCheckout}
                   style={{
-                    width: "100%", padding: "15px 20px", borderRadius: 14,
-                    background: T.primary, color: "#fff", border: "none",
-                    fontSize: 14, fontWeight: 700, cursor: "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-                    fontFamily: font, boxShadow: "0 4px 20px rgba(91,168,160,0.24)",
-                    letterSpacing: "-0.01em",
+                    borderRadius: 14,
+                    fontSize: 14,
                   }}
                 >
-                  Checkout Now
+                  Checkout now
                   <motion.span
                     animate={{ x: [0, 4, 0] }}
                     transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
+                    style={{ display: "flex", alignItems: "center" }}
                   >
                     <FiArrowRight size={16} />
                   </motion.span>
-                </motion.button>
+                </StripeButton>
 
-                <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
+                <p
+                  style={{
+                    textAlign: "center",
+                    fontSize: 10,
+                    color: T.textLite,
+                    marginTop: 10,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 5,
+                  }}
+                >
                   <FiLock size={10} /> Secured checkout
                 </p>
               </motion.div>
