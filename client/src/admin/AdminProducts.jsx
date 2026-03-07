@@ -273,6 +273,17 @@ export default function AdminProducts() {
                       </Link>
                       <button onClick={() => deleteProduct(p._id)} className="w-8 h-8 rounded-full bg-white shadow-sm border border-stone-100 flex items-center justify-center text-stone-400 hover:text-rose-600 hover:border-rose-200 transition-all"><FiTrash2 size={12} /></button>
                     </div>
+                    <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+                      {p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0) ? (
+                        <span className="bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg shadow-sm">
+                          Out ({p.countInStock || 0})
+                        </span>
+                      ) : (
+                        <span className="bg-white/90 backdrop-blur-md text-emerald-600 text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg shadow-sm border border-emerald-100 flex items-center gap-1">
+                          <FiCheck size={10} /> {p.countInStock} Left
+                        </span>
+                      )}
+                    </div>
                     {(() => {
                       const isOut = p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0);
                       return (
@@ -338,17 +349,17 @@ export default function AdminProducts() {
                         <td className="px-6 py-4"><span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-stone-100 text-stone-600 uppercase tracking-wide">{p.category}</span></td>
                         <td className="px-6 py-4 font-mono text-sm text-stone-700">{formatPrice(p.basePrice)}</td>
                         <td className="px-6 py-4">
-                          {(() => {
-                            const isOut = p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0);
-                            return (
-                              <div className="flex items-center gap-2">
-                                <span className={`w-1.5 h-1.5 rounded-full ${!isOut ? "bg-emerald-500" : "bg-rose-500"}`} />
-                                <span className={`text-xs font-medium ${!isOut ? "text-emerald-700" : "text-rose-700"}`}>
-                                  {!isOut ? "In Stock" : "Out of Stock"}
-                                </span>
-                              </div>
-                            );
-                          })()}
+                          <div className="text-sm font-bold text-stone-900">
+                            {p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0) ? (
+                              <span className="flex items-center gap-1.5 text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full text-[10px] uppercase font-black tracking-wider w-fit">
+                                <FiX size={12} /> Out ({p.countInStock || 0})
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-1.5 text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] uppercase font-black tracking-wider w-fit">
+                                <FiCheck size={12} /> {p.countInStock} left
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

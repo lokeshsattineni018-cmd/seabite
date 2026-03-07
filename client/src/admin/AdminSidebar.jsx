@@ -17,6 +17,7 @@ const LINKS = [
   { name: "POS Terminal", path: "/admin/pos", icon: <FiCreditCard size={18} /> },
   { name: "Customers", path: "/admin/users", icon: <FiUsers size={18} /> },
   { name: "Messages", path: "/admin/messages", icon: <FiMail size={18} /> },
+  { name: "Complaints", path: "/admin/complaints", icon: <FiMessageSquare size={18} /> }, // 🟢 Added
   { name: "Reviews", path: "/admin/reviews", icon: <FiStar size={18} /> },
   { name: "Coupons", path: "/admin/coupons", icon: <FiTag size={18} /> },
   { name: "Flash Sales", path: "/admin/flash-sale", icon: <FiZap size={18} /> },
