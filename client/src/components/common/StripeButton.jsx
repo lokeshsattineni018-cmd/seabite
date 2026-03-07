@@ -78,15 +78,15 @@ const disabledStyle = {
   boxShadow: "none",
 };
 
-function Spinner() {
+function Spinner({ light }) {
   return (
     <span
       style={{
         width: 14,
         height: 14,
         borderRadius: "50%",
-        border: "2px solid rgba(255,255,255,0.4)",
-        borderTopColor: "#fff",
+        border: `2px solid ${light ? "rgba(255,255,255,0.4)" : "rgba(91,168,160,0.3)"}`,
+        borderTopColor: light ? "#fff" : COLORS.primaryDark,
         animation: "sb_spin 0.8s linear infinite",
       }}
     />
@@ -100,7 +100,8 @@ function Spinner() {
  * - variant: "primary" | "secondary" | "ghost" | "link"
  * - size: "sm" | "md" | "lg"
  * - fullWidth: boolean
- * - loading: boolean
+ * - loading: boolean (shows animated loader and locks interactions)
+ * - loadingLabel: optional string label shown next to the loader
  * - disabled: boolean
  * - children: ReactNode
  */
@@ -109,6 +110,7 @@ export default function StripeButton({
   size = "md",
   fullWidth = false,
   loading = false,
+  loadingLabel,
   disabled = false,
   children,
   style = {},
@@ -152,7 +154,31 @@ export default function StripeButton({
         }}
         {...rest}
       >
-        {loading && variant !== "link" ? <Spinner /> : children}
+        {loading && variant !== "link" ? (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+            }}
+          >
+            <Spinner light={variant === "primary"} />
+            {loadingLabel && (
+              <span
+                style={{
+                  fontSize: size === "sm" ? 11 : 12,
+                  fontWeight: 600,
+                  opacity: 0.9,
+                }}
+              >
+                {loadingLabel}
+              </span>
+            )}
+          </span>
+        ) : (
+          children
+        )}
       </motion.button>
       <style>{`
         @keyframes sb_spin {

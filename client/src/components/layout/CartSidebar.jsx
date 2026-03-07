@@ -357,95 +357,52 @@ export default function CartSidebar({ isOpen, onClose }) {
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.18, duration: 0.4 }}
-                style={{
-                  padding: "18px 20px 20px",
-                  background: T.surface,
-                  borderTop: `1px solid ${T.border}`,
-                }}
+                style={{ padding: "20px 24px", background: T.surface, borderTop: `1px solid ${T.border}` }}
               >
                 {/* Total */}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: 14,
-                  }}
-                >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div>
-                    <p
-                      style={{
-                        fontSize: 9,
-                        fontWeight: 700,
-                        textTransform: "uppercase",
-                        letterSpacing: "0.12em",
-                        color: T.textLite,
-                        margin: "0 0 2px",
-                      }}
-                    >
-                      Total due
-                    </p>
+                    <p style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.12em", color: T.textLite, margin: "0 0 2px" }}>Total Amount</p>
                     <motion.p
                       key={subtotal}
-                      initial={{ opacity: 0, y: 4 }}
+                      initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
-                      style={{
-                        fontSize: 24,
-                        fontWeight: 800,
-                        color: T.textDark,
-                        margin: 0,
-                        letterSpacing: "-0.03em",
-                      }}
+                      style={{ fontSize: 26, fontWeight: 800, color: T.textDark, margin: 0, letterSpacing: "-0.03em" }}
                     >
                       ₹{subtotal.toLocaleString()}
                     </motion.p>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <p
-                      style={{
-                        fontSize: 10,
-                        color: T.textLite,
-                        margin: 0,
-                      }}
-                    >
+                    <p style={{ fontSize: 10, color: T.textLite, margin: 0 }}>
                       {cartCount} {cartCount === 1 ? "item" : "items"}
                     </p>
                   </div>
                 </div>
 
                 {/* Checkout button */}
-                <StripeButton
-                  variant="primary"
-                  size="lg"
-                  fullWidth
+                <motion.button
+                  whileHover={{ y: -2, boxShadow: "0 12px 32px rgba(91,168,160,0.30)" }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={handleCheckout}
                   style={{
-                    borderRadius: 14,
-                    fontSize: 14,
+                    width: "100%", padding: "15px 20px", borderRadius: 14,
+                    background: T.primary, color: "#fff", border: "none",
+                    fontSize: 14, fontWeight: 700, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+                    fontFamily: font, boxShadow: "0 4px 20px rgba(91,168,160,0.24)",
+                    letterSpacing: "-0.01em",
                   }}
                 >
-                  Checkout now
+                  Checkout Now
                   <motion.span
                     animate={{ x: [0, 4, 0] }}
                     transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
-                    style={{ display: "flex", alignItems: "center" }}
                   >
                     <FiArrowRight size={16} />
                   </motion.span>
-                </StripeButton>
+                </motion.button>
 
-                <p
-                  style={{
-                    textAlign: "center",
-                    fontSize: 10,
-                    color: T.textLite,
-                    marginTop: 10,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 5,
-                  }}
-                >
+                <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
                   <FiLock size={10} /> Secured checkout
                 </p>
               </motion.div>
