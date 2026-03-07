@@ -129,7 +129,11 @@ export default function AdminProducts() {
 
   const categories = ["All", ...new Set(products.map(p => p.category).filter(Boolean))];
   const filteredProducts = categoryFilter === "All" ? products : products.filter(p => p.category === categoryFilter);
-  const inStock = products.filter((p) => p.stock === "in").length;
+
+  const inStock = products.filter((p) => {
+    const isOut = p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0);
+    return !isOut;
+  }).length;
 
   return (
     <motion.div
@@ -269,7 +273,12 @@ export default function AdminProducts() {
                       </Link>
                       <button onClick={() => deleteProduct(p._id)} className="w-8 h-8 rounded-full bg-white shadow-sm border border-stone-100 flex items-center justify-center text-stone-400 hover:text-rose-600 hover:border-rose-200 transition-all"><FiTrash2 size={12} /></button>
                     </div>
-                    <div className={`absolute top-3 left-3 w-2 h-2 rounded-full ring-2 ring-white ${p.stock === "in" ? "bg-emerald-500" : "bg-rose-500"}`} />
+                    {(() => {
+                      const isOut = p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0);
+                      return (
+                        <div className={`absolute top-3 left-3 w-2 h-2 rounded-full ring-2 ring-white ${!isOut ? "bg-emerald-500" : "bg-rose-500"}`} />
+                      );
+                    })()}
                   </div>
                   <div className="p-5">
                     <p className="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">{p.category}</p>
@@ -329,10 +338,17 @@ export default function AdminProducts() {
                         <td className="px-6 py-4"><span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-stone-100 text-stone-600 uppercase tracking-wide">{p.category}</span></td>
                         <td className="px-6 py-4 font-mono text-sm text-stone-700">{formatPrice(p.basePrice)}</td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <span className={`w-1.5 h-1.5 rounded-full ${p.stock === "in" ? "bg-emerald-500" : "bg-rose-500"}`} />
-                            <span className={`text-xs font-medium ${p.stock === "in" ? "text-emerald-700" : "text-rose-700"}`}>{p.stock === "in" ? "In Stock" : "Out"}</span>
-                          </div>
+                          {(() => {
+                            const isOut = p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0);
+                            return (
+                              <div className="flex items-center gap-2">
+                                <span className={`w-1.5 h-1.5 rounded-full ${!isOut ? "bg-emerald-500" : "bg-rose-500"}`} />
+                                <span className={`text-xs font-medium ${!isOut ? "text-emerald-700" : "text-rose-700"}`}>
+                                  {!isOut ? "In Stock" : "Out of Stock"}
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

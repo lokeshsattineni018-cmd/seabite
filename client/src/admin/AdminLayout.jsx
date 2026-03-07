@@ -31,6 +31,8 @@ export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [settings, setSettings] = useState({ isMaintenanceMode: false, maintenanceMessage: "", banner: { active: false, image: "", text: "" } });
+  const [notifications, setNotifications] = useState([]); // 🟢 Added
+  const [unreadCount, setUnreadCount] = useState(0); // 🟢 Added
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -46,6 +48,33 @@ export default function AdminLayout() {
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
+
+  // 🟢 NEW: Fetch Notifications
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const { data } = await axios.get("/api/admin/notifications", { withCredentials: true });
+      setNotifications(data);
+      setUnreadCount(data.filter(n => !n.read).length);
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  const markAllAsRead = async () => {
+    try {
+      await axios.put("/api/admin/notifications/read-all", {}, { withCredentials: true });
+      fetchNotifications();
+      toast.success("All marked as read");
+    } catch (err) {
+      toast.error("Update failed");
+    }
+  };
 
   const { socket } = useSocket();
 
@@ -139,7 +168,11 @@ export default function AdminLayout() {
                 className={`relative p-3 bg-white border rounded-2xl transition-all shadow-sm active:scale-95 ${showNotifications ? "text-stone-900 border-stone-300 ring-4 ring-stone-100" : "text-stone-400 border-stone-200/80 hover:text-stone-900 hover:border-stone-300"}`}
               >
                 <FiBell size={20} />
-                <span className="absolute top-2.5 right-3 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-2.5 right-3 w-4 h-4 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center text-[8px] font-bold text-white">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
 
               <AnimatePresence>
@@ -154,24 +187,44 @@ export default function AdminLayout() {
                     >
                       <div className="px-4 py-3 border-b border-stone-50 flex justify-between items-center">
                         <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Notifications</span>
-                        <span className="text-[10px] font-bold text-stone-900 cursor-pointer hover:underline">Mark read</span>
+                        <button onClick={markAllAsRead} className="text-[10px] font-bold text-stone-900 cursor-pointer hover:underline disabled:opacity-50" disabled={unreadCount === 0}>
+                          Mark all read
+                        </button>
                       </div>
-                      <div className="max-h-60 overflow-y-auto">
-                        <div className="p-6 text-center">
-                          <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-3 text-stone-300">
-                            <FiBell size={20} />
+                      <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                        {notifications.length === 0 ? (
+                          <div className="p-6 text-center">
+                            <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-3 text-stone-300">
+                              <FiBell size={20} />
+                            </div>
+                            <p className="text-xs text-stone-400 font-bold uppercase tracking-wider">No new alerts</p>
                           </div>
-                          <p className="text-xs text-stone-400 font-bold uppercase tracking-wider">No new alerts</p>
-                        </div>
+                        ) : (
+                          <div className="divide-y divide-stone-50">
+                            {notifications.map((notif) => (
+                              <div key={notif._id} className={`p-4 hover:bg-stone-50 transition-all ${!notif.read ? 'bg-stone-50/50' : ''}`}>
+                                <div className="flex justify-between items-start gap-3">
+                                  <p className={`text-xs ${!notif.read ? 'font-bold text-stone-900' : 'text-stone-500'}`}>
+                                    {notif.message}
+                                  </p>
+                                  {!notif.read && <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1" />}
+                                </div>
+                                <p className="text-[10px] text-stone-400 mt-1">
+                                  {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </motion.div>
+                    </motion.div >
                   </>
                 )}
-              </AnimatePresence>
-            </div>
+              </AnimatePresence >
+            </div >
 
             {/* Profile Avatar */}
-            <div className="flex items-center gap-3 pl-4 border-l border-stone-200">
+            < div className="flex items-center gap-3 pl-4 border-l border-stone-200" >
               <div
                 onClick={() => navigate("/profile")}
                 className="w-10 h-10 rounded-2xl bg-stone-900 p-0.5 shadow-lg shadow-stone-200 cursor-pointer hover:scale-105 transition-transform"
@@ -180,19 +233,19 @@ export default function AdminLayout() {
                   {user?.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "AD"}
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
+            </div >
+          </div >
+        </div >
 
         <div className="px-4 md:px-8 pb-6 min-h-full">
           <Suspense fallback={<AdminPageLoader />}>
             <Outlet context={{ settings, setSettings, fetchSettings }} />
           </Suspense>
         </div>
-      </main>
+      </main >
 
       {/* 🟢 Mobile Sidebar Drawer */}
-      <AnimatePresence>
+      < AnimatePresence >
         {isSidebarOpen && (
           <>
             <motion.div
@@ -223,7 +276,7 @@ export default function AdminLayout() {
             </motion.aside>
           </>
         )}
-      </AnimatePresence>
-    </div>
+      </AnimatePresence >
+    </div >
   );
 }
