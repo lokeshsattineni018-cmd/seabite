@@ -115,7 +115,7 @@ export default function AdminLayout() {
       {/* 🟢 Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-stone-200/60 z-40 flex items-center justify-between px-6">
         <div className="flex items-center gap-3">
-          <img src="/round-logo.png" alt="SeaBite" className="h-8 w-auto mix-blend-multiply" />
+          <img src="/roundlogo.png" alt="SeaBite" className="h-8 w-auto mix-blend-multiply" />
           <span className="font-bold text-lg tracking-tight text-stone-800">Admin</span>
         </div>
         <button
