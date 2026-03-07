@@ -12,7 +12,7 @@ export const SocketProvider = ({ children }) => {
 
     useEffect(() => {
         // Determine URL: Use specific URL if in production, else auto-detect (for proxy)
-        const socketUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        const socketUrl = import.meta.env.VITE_API_URL || "https://seabite-server.vercel.app";
 
         // console.log("🔌 Initializing Socket Connection to:", socketUrl);
 
