@@ -925,7 +925,7 @@ export default function OrderDetails() {
             transition={{ duration: 0.48, delay: 0.1, ease: T.ease }}
             style={{ marginBottom: 24 }}
           >
-            <SectionCard accent={`linear-gradient(90deg, ${T.teal}, ${T.sky})`}>
+            <AppleSection accent={`linear-gradient(90deg, ${T.teal}, ${T.sky})`}>
               {/* ETA + tracking */}
               {!delivered && (
                 <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 24 }}>
@@ -974,7 +974,7 @@ export default function OrderDetails() {
               <div className="lx-track-v" style={{ display: "none" }}>
                 <VerticalTracker currentStepIndex={stepIdx} reduced={reduced} />
               </div>
-            </SectionCard>
+            </AppleSection>
           </motion.div>
         )}
 
