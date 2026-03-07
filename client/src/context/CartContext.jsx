@@ -66,6 +66,7 @@ export const CartProvider = ({ children }) => {
         deliveryFee: '0.00',
         globalDiscount: 0,
     });
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     const [storeSettings, setStoreSettings] = useState({
         taxRate: 5,
@@ -211,6 +212,8 @@ export const CartProvider = ({ children }) => {
         removeFromCart,
         updateQuantity,
         clearCart,
+        isCartOpen,
+        setIsCartOpen,
         cartItems: cartState.cartItems
     };
 

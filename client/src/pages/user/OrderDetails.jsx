@@ -588,7 +588,7 @@ function PriceRow({ label, value, color, bold, borderTop }) {
 export default function OrderDetails() {
   const { orderId } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useContext(CartContext);
+  const { addToCart, setIsCartOpen } = useContext(CartContext);
   const reduced = useReducedMotion();
 
   const [order, setOrder] = useState(null);
@@ -687,14 +687,14 @@ export default function OrderDetails() {
 
       toast.success(`${order.items.length} item${order.items.length > 1 ? "s" : ""} added!`, { icon: "🛒" });
 
-      // Briefly show success before navigating
-      setTimeout(() => navigate("/cart"), 800);
+      // Open the sidebar instead of navigating to a 404 page
+      setIsCartOpen(true);
     } catch (err) {
       toast.error("Failed to reorder items");
     } finally {
       setReordering(false);
     }
-  }, [order, navigate, addToCart]);
+  }, [order, setIsCartOpen, addToCart]);
 
   // ── Review modal ──────────────────────────────────────────
   const openReview = useCallback(item => {
@@ -1224,9 +1224,13 @@ export default function OrderDetails() {
               {/* Price breakdown */}
               <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink, margin: "0 0 16px" }}>Order Summary</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <PriceRow label="Subtotal" value={`₹${order.itemsPrice}`} />
-                <PriceRow label="Shipping" value={order.shippingPrice === 0 ? "Free" : `₹${order.shippingPrice}`} color={order.shippingPrice === 0 ? T.ink : undefined} />
-                <PriceRow label="Tax" value={`₹${order.taxPrice}`} />
+                <PriceRow label="Subtotal" value={`₹${order.itemsPrice || order.items.reduce((acc, item) => acc + (item.price * item.qty), 0)}`} />
+                <PriceRow
+                  label="Shipping"
+                  value={order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000) ? "Free" : `₹${order.shippingPrice || 99}`}
+                  color={(order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000)) ? T.ink : undefined}
+                />
+                <PriceRow label="Tax" value={`₹${order.taxPrice || Math.round(((order.itemsPrice || 0) - (order.discount || 0)) * 0.05)}`} />
                 {order.discount > 0 && (
                   <PriceRow label="Discount" value={`-₹${order.discount}`} color={T.teal} />
                 )}

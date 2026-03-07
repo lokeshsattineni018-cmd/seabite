@@ -76,13 +76,12 @@ axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
 function MainLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
-  const [isCartOpen, setIsCartOpen] = useState(false);
   const [maintenance, setMaintenance] = useState({ active: false, message: "" });
   const [announcement, setAnnouncement] = useState(null); // 🟢 Added
   const [spinWheelEnabled, setSpinWheelEnabled] = useState(false);
   const [isSpinOpen, setIsSpinOpen] = useState(false);
 
-  const openCart = () => setIsCartOpen(true);
+
 
   // ✅ Axios Interceptor for Maintenance Mode
   useEffect(() => {
@@ -191,13 +190,10 @@ function MainLayout() {
         <Maintenance message={maintenance.message} />
       ) : (
         <>
-          {!isAdminRoute && <Navbar openCart={openCart} announcementActive={!!announcement?.active} />}
+          {!isAdminRoute && <Navbar announcementActive={!!announcement?.active} />}
           {!isAdminRoute && (
             <>
-              <CartSidebar
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-              />
+              <CartSidebar />
               <Spin isOpen={isSpinOpen} onClose={() => setIsSpinOpen(false)} />
             </>
           )}

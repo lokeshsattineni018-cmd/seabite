@@ -21,8 +21,8 @@ const NAV_LINKS = [
   { label: "Crabs", path: "/products?category=Crab" },
 ];
 
-export default function Navbar({ openCart, announcementActive = false }) {
-  const { cartCount } = useContext(CartContext);
+export default function Navbar({ announcementActive = false }) {
+  const { cartCount, setIsCartOpen } = useContext(CartContext);
   const { user, setUser, refreshMe } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -337,7 +337,7 @@ export default function Navbar({ openCart, announcementActive = false }) {
             )}
 
             {/* Cart */}
-            <motion.button whileTap={{ scale: 0.88 }} onClick={openCart} data-cart-icon className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
+            <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} data-cart-icon className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
               <motion.div key={`cart-icon-${cartCount}`} animate={{ scale: [1, 1.25, 1], rotate: [0, -10, 10, 0] }} transition={{ duration: 0.4 }}>
                 <FiShoppingBag size={15} />
               </motion.div>

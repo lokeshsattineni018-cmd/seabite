@@ -1,7 +1,7 @@
 import express from "express";
 import Order from "../models/Order.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
-import { cancelOrder, updateOrderStatus, deleteOrder } from "../controllers/orderController.js";
+import { cancelOrder, updateOrderStatus, deleteOrder, createComplaint } from "../controllers/orderController.js";
 // 🟢 ADDED: Import the email service to trigger the confirmation mail
 import { sendOrderPlacedEmail } from "../utils/emailService.js";
 
@@ -46,7 +46,17 @@ router.get("/:orderId", protect, async (req, res) => {
       .populate("items.productId", "name image reviews");
 
     if (!order) return res.status(404).json({ message: "Order not found" });
-    res.status(200).json(order);
+
+    // 🔐 ENHANCEMENT: Fallback calculation for legacy orders missing summary fields
+    const orderObj = order.toObject();
+    if (!orderObj.itemsPrice || orderObj.itemsPrice === 0) {
+      orderObj.itemsPrice = orderObj.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      orderObj.shippingPrice = orderObj.itemsPrice < 1000 ? 99 : 0;
+      orderObj.taxPrice = Math.round((orderObj.itemsPrice - (orderObj.discount || 0)) * 0.05);
+      // We don't save back to DB here to avoid side effects on GET, just return for display
+    }
+
+    res.status(200).json(orderObj);
   } catch (error) {
     res.status(500).json({ message: "Invalid Order ID format" });
   }
@@ -57,6 +67,9 @@ router.put("/:id/status", protect, admin, updateOrderStatus);
 
 // --- USER CANCEL ORDER ---
 router.put("/:id/cancel", protect, cancelOrder);
+
+// --- USER SUBMIT COMPLAINT ---
+router.post("/:id/complaint", protect, createComplaint);
 
 // --- ADMIN DELETE ORDER ---
 router.delete("/:id", protect, admin, deleteOrder);
