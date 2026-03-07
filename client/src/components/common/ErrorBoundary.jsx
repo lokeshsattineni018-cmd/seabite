@@ -307,7 +307,7 @@ export function SeaBiteError() {
                             ↺ Refresh Page
                         </button>
 
-                        <button className="pill-btn" onClick={() => { }} style={{
+                        <button className="pill-btn" onClick={() => { window.location.href = '/'; }} style={{
                             display: "inline-flex", alignItems: "center", gap: "8px",
                             padding: "10px 22px", borderRadius: "999px",
                             background: pillBg,
