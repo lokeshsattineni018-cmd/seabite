@@ -91,8 +91,18 @@ router.put("/:id", adminAuth, async (req, res) => {
     const oldProduct = await Product.findById(req.params.id);
     if (!oldProduct) return res.status(404).json({ message: "Product not found" });
 
-    const wasOutOfStock = oldProduct.stock === "out" || oldProduct.countInStock === 0;
-    const isNowInStock = stock === "in" || (countInStock !== undefined && Number(countInStock) > 0);
+    const wasOutOfStock = oldProduct.stock === "out" || (oldProduct.countInStock !== undefined && oldProduct.countInStock <= 0);
+
+    // 🟢 Smart Sync: If admin sets to 'in' but count is 0, default to 10 to avoid ghost out-of-stock
+    let finalCount = countInStock !== undefined ? Number(countInStock) : oldProduct.countInStock;
+    let finalStock = stock;
+    if (stock === "in" && finalCount <= 0) {
+      finalCount = 10;
+    } else if (finalCount <= 0) {
+      finalStock = "out";
+    }
+
+    const isNowInStock = finalStock === "in" && finalCount > 0;
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
@@ -102,12 +112,12 @@ router.put("/:id", adminAuth, async (req, res) => {
           category,
           desc,
           trending,
-          stock,
+          stock: finalStock,
           image,
           basePrice: Number(basePrice),
           buyingPrice: Number(req.body.buyingPrice || 0), // 🟢 NEW
           unit,
-          countInStock: countInStock !== undefined ? Number(countInStock) : oldProduct.countInStock
+          countInStock: finalCount
         }
       },
       { returnDocument: "after", runValidators: true }

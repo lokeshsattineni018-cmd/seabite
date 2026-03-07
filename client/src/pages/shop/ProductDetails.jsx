@@ -511,7 +511,7 @@ export default function ProductDetails() {
 
               {/* Stock status */}
               <div style={{ marginBottom: "28px" }}>
-                {product.stock === "out" ? (
+                {(product.stock === "out" || (product.countInStock !== undefined && product.countInStock <= 0)) ? (
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", background: "#FEF2F2", borderRadius: "20px", border: "1px solid #FECACA", fontSize: "11px", fontWeight: "700", color: "#DC2626", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                       <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#DC2626" }} />
