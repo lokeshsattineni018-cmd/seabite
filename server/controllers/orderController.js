@@ -304,6 +304,47 @@ export const migrateOldOrderDiscounts = async (req, res) => {
 };
 
 /**
+ * @desc    Create a quality complaint for an order
+ * @route   POST /api/orders/:id/complaint
+ * @access  Private
+ */
+export const createComplaint = async (req, res) => {
+    try {
+        const { issueType, description } = req.body;
+        const order = await Order.findById(req.params.id);
+
+        if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        // Authorization check
+        if (order.user.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
+        // 🔐 AUDIT TRAIL: Log complaint
+        await ActivityLog.create({
+            user: req.user._id,
+            action: `ORDER_COMPLAINT`,
+            details: `User reported an issue: ${issueType}. Details: ${description || 'None'}`,
+            meta: { orderId: order._id, issueType, description }
+        });
+
+        logger.warn("Order Complaint Received", { orderId: order.orderId, user: req.user.email, issueType });
+
+        // Sync with internal dashboard notifications
+        await Notification.create({
+            user: req.user._id,
+            message: `⚠️ Complaint for Order #${order.orderId || order._id}: ${issueType}`,
+            orderId: order._id,
+            statusType: "Pending" // Complaint needs review
+        });
+
+        res.status(200).json({ message: "Issue reported successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+/**
  * @desc    Delete an order (ADMIN ONLY)
  * @route   DELETE /api/orders/:id
  * @access  Private/Admin

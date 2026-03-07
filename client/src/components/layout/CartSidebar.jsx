@@ -18,12 +18,16 @@ const T = {
 
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return null;
+  if (imagePath.startsWith("http")) return imagePath; // Return absolute URLs as-is
   return `${API_URL}${imagePath.startsWith("/") ? imagePath : `/${imagePath}`}`;
 };
 
-export default function CartSidebar({ isOpen, onClose }) {
-  const { cartCount, refreshCartCount, cartItems, subtotal: subtotalStr, storeSettings } = useContext(CartContext);
+export default function CartSidebar({ onClose }) {
+  const { cartCount, refreshCartCount, cartItems, subtotal: subtotalStr, storeSettings, isCartOpen, setIsCartOpen } = useContext(CartContext);
   const navigate = useNavigate();
+
+  // Use eitherprop onClose OR context setIsCartOpen(false)
+  const closeCart = onClose || (() => setIsCartOpen(false));
 
   const subtotal = parseFloat(subtotalStr || "0");
   const FREE_DELIVERY_THRESHOLD = storeSettings?.freeDeliveryThreshold || 1000;
@@ -50,7 +54,7 @@ export default function CartSidebar({ isOpen, onClose }) {
 
   return (
     <AnimatePresence>
-      {isOpen && (
+      {isCartOpen && (
         <>
           {/* BACKDROP */}
           <motion.div
@@ -58,7 +62,7 @@ export default function CartSidebar({ isOpen, onClose }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.28 }}
-            onClick={onClose}
+            onClick={closeCart}
             style={{ position: "fixed", inset: 0, background: "rgba(26,43,53,0.32)", backdropFilter: "blur(6px)", zIndex: 1000 }}
           />
 
@@ -165,7 +169,7 @@ export default function CartSidebar({ isOpen, onClose }) {
                   <motion.button
                     whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.22)" }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={onClose}
+                    onClick={closeCart}
                     style={{
                       padding: "12px 24px", borderRadius: 12, background: T.primary,
                       color: "#fff", fontWeight: 700, fontSize: 13, border: "none",

@@ -633,7 +633,7 @@ export default function Order() {
   const [visibleCount, setVisibleCount] = useState(10);
 
   const navigate = useNavigate();
-  const { addToCart } = useContext(CartContext);
+  const { addToCart, setIsCartOpen } = useContext(CartContext);
   const searchRef = useRef(null);
   const reduced = useReducedMotion();
 
@@ -807,14 +807,14 @@ export default function Order() {
         { icon: "🛒", style: { fontFamily: "'DM Sans', sans-serif" } }
       );
 
-      // Briefly show success before navigating
-      setTimeout(() => navigate("/cart"), 800);
+      // Open the sidebar instead of navigating to a 404 page
+      setIsCartOpen(true);
     } catch (err) {
       toast.error("Failed to reorder items");
     } finally {
       setReorderingId(null);
     }
-  }, [navigate, addToCart]);
+  }, [setIsCartOpen, addToCart]);
 
   const isFiltered = activeTab !== "All" || searchQuery.trim() !== "" || sortBy !== "newest";
 
