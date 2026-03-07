@@ -8,6 +8,7 @@ import SearchInsight from "../models/SearchInsight.js";
 import ActivityLog from "../models/ActivityLog.js"; // 🟢 Added
 import Coupon from "../models/Coupon.js"; // 🟢 Added
 import Contact from "../models/Contact.js"; // 🟢 Added
+import Notification from "../models/notification.js"; // 🟢 Added
 import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail, sendEmail, sendWinBackEmail } from "../utils/emailService.js";
 import logger from "../utils/logger.js";
 
@@ -804,36 +805,25 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
     // 1. Find or Create User
     let user = await User.findOne({ phone: customer.phone });
     if (!user) {
-      // Create a guest user for POS
-      // Use a unique email if not provided to avoid duplicate key errors if email schema is unique
       const guestEmail = customer.email || `pos_guest_${customer.phone}_${Date.now()}@seabite.local`;
-
       try {
         user = await User.create({
           name: customer.name,
           phone: customer.phone,
           email: guestEmail,
-          password: "pos_guest_user", // Placeholder
+          password: "pos_guest_user",
           role: "user"
         });
       } catch (userErr) {
-        console.error("User Creation Error in POS:", userErr);
-        // Fallback: try to find user again in case of race condition or just use a generic 'Guest' ID if absolutely necessary (not recommended for data integrity, better to fail or handle gracefully)
-        // For now, if unique email fails, we might try another random one or error out.
         return res.status(500).json({ message: "Failed to register customer record." });
       }
     }
 
-    // Determine Status
     const isDelivery = deliveryType === "Delivery";
-    // POS orders are usually "Delivered" immediately if Walk-in, or "Pending" if Delivery
     const status = isDelivery ? "Pending" : "Delivered";
     const isDelivered = !isDelivery;
     const deliveredAt = isDelivery ? null : Date.now();
 
-    // Construct Address
-    // If Walk-in, we can use a placeholder address structure or just omit if schema allows. 
-    // Assuming Schema requires some address fields based on previous code.
     const shippingAddress = isDelivery ? {
       fullName: customer.name,
       phone: customer.phone,
@@ -854,7 +844,6 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
       country: "India"
     };
 
-    // 2. Create Order
     const order = await Order.create({
       user: user._id,
       items: items.map(i => ({
@@ -868,7 +857,7 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
       shippingAddress,
       paymentMethod: paymentMethod || "Cash",
       totalAmount: Number(totalAmount),
-      isPaid: true, // POS orders are typically paid immediately (Cash/Card)
+      isPaid: true,
       paidAt: Date.now(),
       isDelivered,
       deliveredAt,
@@ -879,7 +868,39 @@ router.post("/orders/manual", adminAuth, async (req, res) => {
     res.status(201).json({ message: "Order created successfully", order });
   } catch (err) {
     console.error("POS Order Error:", err);
-    res.status(500).json({ message: "Failed to create manual order", error: err.message });
+    res.status(500).json({ message: "Manual order failed", error: err.message });
+  }
+});
+
+// 🟢 2.0 NOTIFICATIONS MANAGEMENT (GET /api/admin/notifications)
+router.get("/notifications", adminAuth, async (req, res) => {
+  try {
+    const notifications = await Notification.find({})
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(notifications);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch notifications" });
+  }
+});
+
+// 🟢 2.1 MARK ALL READ (PUT /api/admin/notifications/read-all)
+router.put("/notifications/read-all", adminAuth, async (req, res) => {
+  try {
+    await Notification.updateMany({ read: false }, { read: true });
+    res.json({ message: "All notifications marked as read" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to update notifications" });
+  }
+});
+
+// 🟢 2.2 DELETE NOTIFICATION (DELETE /api/admin/notifications/:id)
+router.delete("/notifications/:id", adminAuth, async (req, res) => {
+  try {
+    await Notification.findByIdAndDelete(req.params.id);
+    res.json({ message: "Notification deleted" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to delete notification" });
   }
 });
 
