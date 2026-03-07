@@ -42,7 +42,7 @@ router.post(
   upload.single("image"),
   async (req, res) => {
 
-    const { name, category, desc, trending, stock, basePrice, unit } = req.body;
+    const { name, category, desc, trending, stock, basePrice, unit, countInStock } = req.body;
 
     try {
       if (!req.file) {
@@ -73,6 +73,7 @@ router.post(
         basePrice: Number(basePrice),
         buyingPrice: Number(req.body.buyingPrice || 0), // 🟢 NEW
         unit: unit,
+        countInStock: countInStock !== undefined ? Number(countInStock) : (stock === "out" ? 0 : 10),
       });
 
       res.status(201).json(product);

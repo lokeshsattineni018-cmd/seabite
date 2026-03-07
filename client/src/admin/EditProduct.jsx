@@ -25,7 +25,7 @@ export default function EditProduct() {
   const backendBase = import.meta.env.VITE_API_URL || "";
 
   const [form, setForm] = useState({
-    name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", image: "", trending: false, stock: "in",
+    name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", image: "", trending: false, stock: "in", countInStock: 0,
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -43,7 +43,7 @@ export default function EditProduct() {
       .get(`${backendBase}/api/admin/products/${id}`, { withCredentials: true })
       .then((res) => {
         const data = res.data || {};
-        setForm({ ...data, basePrice: data.basePrice || "", buyingPrice: data.buyingPrice || "", unit: data.unit || "kg", stock: data.stock || "in" });
+        setForm({ ...data, basePrice: data.basePrice || "", buyingPrice: data.buyingPrice || "", unit: data.unit || "kg", stock: data.stock || "in", countInStock: data.countInStock || 0 });
         setLoading(false);
       })
       .catch((err) => {
@@ -88,7 +88,7 @@ export default function EditProduct() {
     try {
       await axios.put(`${backendBase}/api/admin/products/${id}`, {
         name: form.name, category: form.category, basePrice: Number(form.basePrice), buyingPrice: Number(form.buyingPrice),
-        unit: form.unit, desc: form.desc, image: form.image, trending: form.trending, stock: form.stock,
+        unit: form.unit, desc: form.desc, image: form.image, trending: form.trending, stock: form.stock, countInStock: Number(form.countInStock),
       }, { withCredentials: true });
       setModal({ show: true, message: "Product updated successfully!", type: "success" });
       setTimeout(() => navigate("/admin/products"), 1500);
@@ -226,12 +226,24 @@ export default function EditProduct() {
               </div>
 
               <div className="space-y-4">
-                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Inventory Status</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Inventory status & Count</label>
+                  <div className="flex items-center gap-2">
+                    <FiBox className="text-stone-400" size={14} />
+                    <input
+                      type="number"
+                      name="countInStock"
+                      value={form.countInStock}
+                      onChange={handleChange}
+                      className="w-20 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1 text-xs font-bold text-stone-900 focus:bg-white outline-none"
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <motion.div whileTap={{ scale: 0.98 }} onClick={() => setForm({ ...form, stock: "in" })} className={`cursor-pointer rounded-2xl p-4 border-2 flex items-center justify-center gap-3 transition-all ${form.stock === "in" ? "border-emerald-500 bg-emerald-50 text-emerald-800" : "border-stone-100 bg-stone-50 text-stone-400 hover:border-stone-200"}`}>
                     <span className="text-sm font-bold">In Stock</span>{form.stock === "in" && <FiCheck size={18} />}
                   </motion.div>
-                  <motion.div whileTap={{ scale: 0.98 }} onClick={() => setForm({ ...form, stock: "out" })} className={`cursor-pointer rounded-2xl p-4 border-2 flex items-center justify-center gap-3 transition-all ${form.stock === "out" ? "border-rose-500 bg-rose-50 text-rose-800" : "border-stone-100 bg-stone-50 text-stone-400 hover:border-stone-200"}`}>
+                  <motion.div whileTap={{ scale: 0.98 }} onClick={() => setForm({ ...form, stock: "out", countInStock: 0 })} className={`cursor-pointer rounded-2xl p-4 border-2 flex items-center justify-center gap-3 transition-all ${form.stock === "out" ? "border-rose-500 bg-rose-50 text-rose-800" : "border-stone-100 bg-stone-50 text-stone-400 hover:border-stone-200"}`}>
                     <span className="text-sm font-bold">Out of Stock</span>{form.stock === "out" && <FiCheck size={18} />}
                   </motion.div>
                 </div>

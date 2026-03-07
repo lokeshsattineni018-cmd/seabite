@@ -6,6 +6,7 @@ import logger from "../utils/logger.js";
 import Order from "../models/Order.js";
 import ActivityLog from "../models/ActivityLog.js";
 import Notification from "../models/notification.js";
+import Complaint from "../models/Complaint.js"; // 🟢 Added
 import mongoose from "mongoose";
 
 /**
@@ -320,12 +321,20 @@ export const createComplaint = async (req, res) => {
             return res.status(401).json({ message: 'Not authorized' });
         }
 
+        // 🟢 NEW: Create structured complaint record
+        const complaint = await Complaint.create({
+            order: order._id,
+            user: req.user._id,
+            issueType,
+            description: description || "No description"
+        });
+
         // 🔐 AUDIT TRAIL: Log complaint
         await ActivityLog.create({
             user: req.user._id,
             action: `ORDER_COMPLAINT`,
             details: `User reported an issue: ${issueType}. Details: ${description || 'None'}`,
-            meta: { orderId: order._id, issueType, description }
+            meta: { orderId: order._id, complaintId: complaint._id, issueType, description }
         });
 
         logger.warn("Order Complaint Received", { orderId: order.orderId, user: req.user.email, issueType });
@@ -335,10 +344,11 @@ export const createComplaint = async (req, res) => {
             user: req.user._id,
             message: `⚠️ Complaint for Order #${order.orderId || order._id}: ${issueType}`,
             orderId: order._id,
+            complaintId: complaint._id, // 🟢 NEW: Direct link for admin
             statusType: "Pending" // Complaint needs review
         });
 
-        res.status(200).json({ message: "Issue reported successfully" });
+        res.status(200).json({ message: "Issue reported successfully", complaintId: complaint._id });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -14,6 +14,10 @@ const notificationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order",
   },
+  complaintId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Complaint",
+  },
   statusType: {
     type: String,
     enum: ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"],

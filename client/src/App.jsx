@@ -60,6 +60,7 @@ const AdminAnalytics = lazy(() => import("./admin/AdminAnalytics"));
 const AdminIAM = lazy(() => import("./admin/AdminIAM"));
 const AdminRegistry = lazy(() => import("./admin/AdminRegistry"));
 const AdminSearchDiscovery = lazy(() => import("./admin/AdminSearchDiscovery"));
+const AdminComplaints = lazy(() => import("./admin/AdminComplaints")); // 🟢 Added
 
 // Context
 import { CartProvider } from "./context/CartContext";
@@ -223,6 +224,7 @@ function MainLayout() {
                     <Route path="iam" element={<AdminIAM />} />
                     <Route path="registry" element={<AdminRegistry />} />
                     <Route path="discovery" element={<AdminSearchDiscovery />} />
+                    <Route path="complaints" element={<AdminComplaints />} /> {/* 🟢 Added */}
                   </Route>
                 </Routes>
               ) : (

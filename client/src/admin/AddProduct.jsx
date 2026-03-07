@@ -21,7 +21,7 @@ const fadeUp = {
 
 export default function AddProduct() {
   const [form, setForm] = useState({
-    name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in",
+    name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in", countInStock: 10,
   });
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -77,7 +77,7 @@ export default function AddProduct() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setModal({ show: true, message: "Product added successfully", type: "success" });
-      setForm({ name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in" });
+      setForm({ name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in", countInStock: 10 });
       removeImage();
     } catch (err) {
       setModal({ show: true, message: "Failed to add product", type: "error" });
@@ -233,14 +233,26 @@ export default function AddProduct() {
                 <textarea name="desc" value={form.desc} onChange={handleChange} rows="4" placeholder="Detail the cut breakdown, freshness, and origin..." className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 outline-none focus:border-stone-400 focus:bg-white transition-all text-sm leading-relaxed text-stone-700 resize-none" />
               </div>
 
-              {/* Stock Status */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Availability</label>
+              {/* Inventory Status */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Availability</label>
+                  <div className="flex items-center gap-2">
+                    <FiBox className="text-stone-400" size={14} />
+                    <input
+                      type="number"
+                      name="countInStock"
+                      value={form.countInStock}
+                      onChange={handleChange}
+                      className="w-20 bg-stone-50 border border-stone-200 rounded-lg px-2 py-1 text-xs font-bold text-stone-900 focus:bg-white outline-none"
+                    />
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <button type="button" onClick={() => setForm({ ...form, stock: "in" })} className={`py-3 rounded-xl border-2 font-bold text-xs uppercase flex items-center justify-center gap-2 transition-all ${form.stock === "in" ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-stone-100 text-stone-400 hover:border-stone-200"}`}>
                     In Stock {form.stock === "in" && <FiCheck />}
                   </button>
-                  <button type="button" onClick={() => setForm({ ...form, stock: "out" })} className={`py-3 rounded-xl border-2 font-bold text-xs uppercase flex items-center justify-center gap-2 transition-all ${form.stock === "out" ? "border-rose-500 bg-rose-50 text-rose-700" : "border-stone-100 text-stone-400 hover:border-stone-200"}`}>
+                  <button type="button" onClick={() => setForm({ ...form, stock: "out", countInStock: 0 })} className={`py-3 rounded-xl border-2 font-bold text-xs uppercase flex items-center justify-center gap-2 transition-all ${form.stock === "out" ? "border-rose-500 bg-rose-50 text-rose-700" : "border-stone-100 text-stone-400 hover:border-stone-200"}`}>
                     Out of Stock {form.stock === "out" && <FiCheck />}
                   </button>
                 </div>

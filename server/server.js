@@ -24,6 +24,7 @@ import spinRoutes from "./routes/spinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import watchtowerRoutes from "./routes/watchtowerRoutes.js";
+import complaintRoutes from "./routes/complaintRoutes.js"; // 🟢 Added
 import checkMaintenance from "./middleware/checkMaintenance.js";
 import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
@@ -303,6 +304,7 @@ app.use("/api/spin", spinRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/admin/watchtower", watchtowerRoutes);
+app.use("/api/admin/complaints", complaintRoutes); // 🟢 Added
 
 app.get("/health", async (req, res) => {
   const start = Date.now();
