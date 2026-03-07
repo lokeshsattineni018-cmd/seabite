@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FiMapPin, FiNavigation, FiCheck, FiX, FiLoader, FiHome, FiSmartphone, FiUser, FiMap, FiHash } from "react-icons/fi";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import StripeInput from "../stripe/StripeInput";
 
 const T = {
     bg: "#F4F9F8", surface: "#ffffff", border: "#E2EEEC",
@@ -105,17 +106,10 @@ export default function AddressForm({ onSave, onCancel, initialData = {} }) {
 
     const Field = ({ label, error, children }) => (
         <div style={{ display: "flex", flexDirection: "column" }}>
-            <label style={labelStyle}>{label}</label>
+            {label && <label style={labelStyle}>{label}</label>}
             {children}
             {error && <p style={{ fontSize: 10, color: T.coral, marginTop: 4, fontWeight: 600 }}>{error}</p>}
         </div>
-    );
-
-    const IconWrap = ({ children }) => (
-        <span style={{
-            position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)",
-            color: T.textLite, pointerEvents: "none", display: "flex", alignItems: "center",
-        }}>{children}</span>
     );
 
     return (
@@ -165,58 +159,67 @@ export default function AddressForm({ onSave, onCancel, initialData = {} }) {
 
                 {/* Name + Phone */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    <Field label="Full Name" error={errors.name}>
-                        <div style={{ position: "relative" }}>
-                            <IconWrap><FiUser size={13} /></IconWrap>
-                            <input type="text" placeholder="Lokesh" value={formData.name}
-                                onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                style={inputStyle(errors.name)} />
-                        </div>
+                    <Field error={errors.name}>
+                        <StripeInput
+                            label="Full Name"
+                            Icon={FiUser}
+                            value={formData.name}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            style={{ borderColor: errors.name ? T.coral : undefined }}
+                        />
                     </Field>
-                    <Field label="Phone Number" error={errors.phone}>
-                        <div style={{ position: "relative" }}>
-                            <IconWrap><FiSmartphone size={13} /></IconWrap>
-                            <input type="tel" placeholder="9876543210" value={formData.phone}
-                                onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                                style={inputStyle(errors.phone)} />
-                        </div>
+                    <Field error={errors.phone}>
+                        <StripeInput
+                            label="Phone Number"
+                            Icon={FiSmartphone}
+                            type="tel"
+                            value={formData.phone}
+                            onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
+                            style={{ borderColor: errors.phone ? T.coral : undefined }}
+                        />
                     </Field>
                 </div>
 
                 {/* House No */}
-                <Field label="House No / Flat / Building" error={errors.houseNo}>
-                    <div style={{ position: "relative" }}>
-                        <IconWrap><FiHome size={13} /></IconWrap>
-                        <input type="text" placeholder="Flat 101, Sea View Apartments" value={formData.houseNo}
-                            onChange={e => setFormData({ ...formData, houseNo: e.target.value })}
-                            style={inputStyle(errors.houseNo)} />
-                    </div>
+                <Field error={errors.houseNo}>
+                    <StripeInput
+                        label="House No / Flat / Building"
+                        Icon={FiHome}
+                        value={formData.houseNo}
+                        onChange={e => setFormData({ ...formData, houseNo: e.target.value })}
+                        style={{ borderColor: errors.houseNo ? T.coral : undefined }}
+                    />
                 </Field>
 
                 {/* Street */}
-                <Field label="Street / Area / Colony" error={errors.street}>
-                    <div style={{ position: "relative" }}>
-                        <IconWrap><FiMap size={13} /></IconWrap>
-                        <input type="text" placeholder="Main Road, Near Clock Tower" value={formData.street}
-                            onChange={e => setFormData({ ...formData, street: e.target.value })}
-                            style={inputStyle(errors.street)} />
-                    </div>
+                <Field error={errors.street}>
+                    <StripeInput
+                        label="Street / Area / Colony"
+                        Icon={FiMap}
+                        value={formData.street}
+                        onChange={e => setFormData({ ...formData, street: e.target.value })}
+                        style={{ borderColor: errors.street ? T.coral : undefined }}
+                    />
                 </Field>
 
                 {/* City + Pincode */}
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    <Field label="City" error={errors.city}>
-                        <input type="text" placeholder="Visakhapatnam" value={formData.city}
+                    <Field error={errors.city}>
+                        <StripeInput
+                            label="City"
+                            value={formData.city}
                             onChange={e => setFormData({ ...formData, city: e.target.value })}
-                            style={inputNoPadStyle(errors.city)} />
+                            style={{ borderColor: errors.city ? T.coral : undefined }}
+                        />
                     </Field>
-                    <Field label="Pincode" error={errors.postalCode}>
-                        <div style={{ position: "relative" }}>
-                            <IconWrap><FiHash size={13} /></IconWrap>
-                            <input type="text" placeholder="530001" value={formData.postalCode}
-                                onChange={e => setFormData({ ...formData, postalCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
-                                style={inputStyle(errors.postalCode)} />
-                        </div>
+                    <Field error={errors.postalCode}>
+                        <StripeInput
+                            label="Pincode"
+                            Icon={FiHash}
+                            value={formData.postalCode}
+                            onChange={e => setFormData({ ...formData, postalCode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                            style={{ borderColor: errors.postalCode ? T.coral : undefined }}
+                        />
                     </Field>
                 </div>
 

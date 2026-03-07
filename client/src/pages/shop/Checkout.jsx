@@ -13,6 +13,9 @@ import PopupModal from "../../components/common/PopupModal";
 import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
+import StripeCard from "../../components/stripe/StripeCard";
+import StripeButton from "../../components/stripe/StripeButton";
+import StripeInput from "../../components/stripe/StripeInput";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -74,19 +77,6 @@ function StepsBar({ currentStep }) {
         );
       })}
     </motion.div>
-  );
-}
-
-// Section card wrapper
-function SectionCard({ children, style = {} }) {
-  return (
-    <div style={{
-      background: T.surface, borderRadius: 18, border: `1px solid ${T.border}`,
-      boxShadow: "0 2px 16px rgba(91,168,160,0.07)", padding: "24px 26px",
-      ...style
-    }}>
-      {children}
-    </div>
   );
 }
 
@@ -308,10 +298,10 @@ export default function Checkout() {
   const currentStep = deliveryAddress._id ? (paymentMethod ? 3 : 2) : 1;
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: font, padding: "100px 20px 60px", overflowX: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "Inter, system-ui, sans-serif", padding: "80px 20px 60px", overflowX: "hidden" }}>
       {/* Ambient */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 400, background: "linear-gradient(180deg, rgba(91,168,160,0.06) 0%, transparent 100%)" }} />
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 400, background: "linear-gradient(180deg, rgba(99,91,255,0.04) 0%, transparent 100%)" }} />
       </div>
 
       <PopupModal show={modal.show} message={modal.message} type={modal.type} onClose={() => setModal({ ...modal, show: false })} />
@@ -341,13 +331,13 @@ export default function Checkout() {
           </h1>
         </motion.div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr min(390px, 40%)", gap: 20 }} className="checkout-grid">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: 40, maxWidth: 1100, margin: "auto" }} className="checkout-grid stripe-grid">
           {/* LEFT */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
 
             {/* ── ADDRESS ── */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease }}>
-              <SectionCard>
+              <StripeCard>
                 <SectionHead
                   icon={<FiMapPin size={16} />}
                   title="Delivery Address"
@@ -380,7 +370,7 @@ export default function Checkout() {
                       return (
                         <motion.div
                           key={addr._id}
-                          whileHover={{ boxShadow: "0 4px 20px rgba(91,168,160,0.12)" }}
+                          whileHover={{ y: -2, boxShadow: "0 10px 24px rgba(0,0,0,0.08)" }}
                           onClick={() => setDeliveryAddress(addr)}
                           style={{
                             padding: "14px 16px", borderRadius: 14, cursor: "pointer",
@@ -419,12 +409,12 @@ export default function Checkout() {
                     <FiCheckCircle size={12} /> Delivering to: {deliveryAddress.city}, {deliveryAddress.state}
                   </div>
                 )}
-              </SectionCard>
+              </StripeCard>
             </motion.div>
 
             {/* ── PAYMENT METHOD ── */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18, duration: 0.5, ease }}>
-              <SectionCard>
+              <StripeCard>
                 <SectionHead icon={<FiCreditCard size={16} />} title="Payment Method" />
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                   {/* Prepaid - disabled */}
@@ -440,7 +430,8 @@ export default function Checkout() {
 
                   {/* COD */}
                   <motion.div
-                    whileTap={{ scale: 0.98 }}
+                    whileHover={{ y: -2, boxShadow: "0 10px 24px rgba(0,0,0,0.08)" }}
+                    whileTap={{ scale: 0.96 }}
                     onClick={() => setPaymentMethod("COD")}
                     style={{
                       padding: "14px 16px", borderRadius: 12, cursor: "pointer",
@@ -458,12 +449,12 @@ export default function Checkout() {
                     </div>
                   </motion.div>
                 </div>
-              </SectionCard>
+              </StripeCard>
             </motion.div>
 
             {/* ── CART ITEMS ── */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26, duration: 0.5, ease }}>
-              <SectionCard>
+              <StripeCard>
                 <SectionHead
                   icon={<FiShoppingBag size={16} />}
                   title="Your Items"
@@ -508,14 +499,14 @@ export default function Checkout() {
                     ))}
                   </AnimatePresence>
                 </div>
-              </SectionCard>
+              </StripeCard>
             </motion.div>
           </div>
 
           {/* RIGHT - ORDER SUMMARY */}
           <div style={{ position: "sticky", top: 96, alignSelf: "flex-start" }}>
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5, ease }}>
-              <SectionCard>
+              <StripeCard>
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: T.textDark, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
                   <FiCreditCard size={14} style={{ color: T.primary }} /> Payment Details
                 </h3>
@@ -611,24 +602,20 @@ export default function Checkout() {
                     </AnimatePresence>
 
                     {/* Manual input row */}
-                    <div style={{ display: "flex", gap: 8 }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                       <div style={{ flex: 1, position: "relative" }}>
-                        <FiTag size={12} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: T.textLite }} />
-                        <input
-                          type="text" placeholder="Enter code" value={couponCode}
-                          onChange={e => setCouponCode(e.target.value)}
+                        <StripeInput
+                          label="Promo Code"
+                          value={couponCode}
+                          onChange={e => setCouponCode(e.target.value.toUpperCase())}
                           onKeyDown={e => e.key === "Enter" && handleApplyCoupon()}
                           disabled={!!appliedCoupon || verifyingCoupon}
-                          style={{
-                            width: "100%", paddingLeft: 34, paddingRight: appliedCoupon ? 34 : 12, paddingTop: 11, paddingBottom: 11,
-                            borderRadius: 11, border: `1px solid ${appliedCoupon ? T.primary : T.border}`, background: T.bg,
-                            fontSize: 12, fontWeight: 700, color: T.textDark, outline: "none",
-                            textTransform: "uppercase", fontFamily: font, boxSizing: "border-box",
-                          }}
+                          Icon={FiTag}
+                          style={{ textTransform: "uppercase" }}
                         />
                         {appliedCoupon && (
                           <motion.button whileTap={{ scale: 0.85 }} onClick={clearCoupon}
-                            style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: T.textLite, background: "none", border: "none", cursor: "pointer" }}>
+                            style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: T.textLite, background: "none", border: "none", cursor: "pointer", zIndex: 10 }}>
                             <FiX size={12} />
                           </motion.button>
                         )}
@@ -732,28 +719,14 @@ export default function Checkout() {
                 )}
 
                 {/* Place Order */}
-                <motion.button
-                  whileHover={{ y: -2, boxShadow: "0 10px 30px rgba(91,168,160,0.28)" }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={placeOrder}
-                  disabled={loading}
-                  style={{
-                    width: "100%", padding: "15px 20px", borderRadius: 14,
-                    background: T.primary, color: "#fff", border: "none",
-                    fontSize: 13, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
-                    fontFamily: font, boxShadow: "0 4px 20px rgba(91,168,160,0.22)",
-                    opacity: loading ? 0.75 : 1, transition: "all 0.2s",
-                  }}
-                >
-                  {loading ? (
-                    <><SeaBiteLoader small /> Processing...</>
-                  ) : paymentMethod === "COD" ? (
-                    <>Place COD Order</>
-                  ) : (
-                    <><FiCreditCard size={15} /> Pay & Place Order</>
-                  )}
-                </motion.button>
+                <div style={{ marginTop: 20 }}>
+                  <StripeButton
+                    loading={loading}
+                    onClick={placeOrder}
+                  >
+                    Pay ₹{grandTotal.toFixed(2)}
+                  </StripeButton>
+                </div>
 
                 {/* Delivery estimate */}
                 {deliveryAddress.street && (
@@ -775,7 +748,7 @@ export default function Checkout() {
                 <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
                   <FiShield size={10} style={{ color: T.primary }} /> Secure 256-bit SSL Encryption
                 </p>
-              </SectionCard>
+              </StripeCard>
             </motion.div>
           </div>
         </div>
