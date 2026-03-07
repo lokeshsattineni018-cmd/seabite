@@ -52,7 +52,7 @@ function Card({ p, onOpen, onRemove, onAdd, idx }) {
             {/* ── image ── */}
             <div style={{ position: "relative", overflow: "hidden", background: "#f5f4f2", aspectRatio: "3/4" }}>
                 <img
-                    src={p.images?.[0]}
+                    src={p.image && (p.image.startsWith('http') ? p.image : `${API_URL}${p.image.startsWith('/') ? '' : '/'}${p.image}`)}
                     alt={p.name}
                     style={{
                         width: "100%", height: "100%", objectFit: "cover", display: "block",
@@ -117,16 +117,18 @@ function Card({ p, onOpen, onRemove, onAdd, idx }) {
                     onClick={handleAdd}
                     style={{
                         marginTop: 11, width: "100%", padding: "9px 0",
-                        background: added ? "#111" : "transparent",
+                        background: added ? "#5BA8A0" : "transparent",
                         color: added ? "#fff" : "#111",
                         border: "1px solid",
-                        borderColor: added ? "#111" : "#ddd",
+                        borderColor: added ? "#5BA8A0" : "#ddd",
                         borderRadius: 4, fontFamily: "inherit",
                         fontSize: 10, fontWeight: 600,
                         letterSpacing: "0.14em", textTransform: "uppercase",
                         cursor: "pointer",
                         transition: "background .25s, color .25s, border-color .25s",
                     }}
+                    onMouseEnter={e => { if (!added) { e.currentTarget.style.background = "#5BA8A0"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#5BA8A0"; } }}
+                    onMouseLeave={e => { if (!added) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#111"; e.currentTarget.style.borderColor = "#ddd"; } }}
                 >
                     {added ? "Added ✓" : "Add to Cart"}
                 </button>
@@ -174,7 +176,7 @@ function Modal({ p, onClose, onAdd }) {
                 <div style={{ display: "flex" }}>
                     {/* image */}
                     <div style={{ width: 240, flexShrink: 0, background: "#f5f4f2", position: "relative" }}>
-                        <img src={p.images?.[0]} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover", minHeight: 340, display: "block" }} />
+                        <img src={p.image && (p.image.startsWith('http') ? p.image : `${API_URL}${p.image.startsWith('/') ? '' : '/'}${p.image}`)} alt={p.name} style={{ width: "100%", height: "100%", objectFit: "cover", minHeight: 340, display: "block" }} />
                         {pct > 0 && (
                             <div style={{ position: "absolute", top: 12, left: 12, background: "#111", color: "#fff", fontSize: 9, fontWeight: 600, letterSpacing: "0.12em", textTransform: "uppercase", padding: "4px 10px", borderRadius: 3 }}>
                                 {pct}% off
@@ -197,15 +199,15 @@ function Modal({ p, onClose, onAdd }) {
                         <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
                             <button
                                 onClick={() => { onAdd(p._id); close(); }}
+                                onMouseEnter={e => e.currentTarget.style.background = "#3D8C85"}
+                                onMouseLeave={e => e.currentTarget.style.background = "#5BA8A0"}
                                 style={{
-                                    padding: "13px 0", background: "#111", color: "#fff",
+                                    padding: "13px 0", background: "#5BA8A0", color: "#fff",
                                     border: "none", borderRadius: 6, fontFamily: "inherit",
                                     fontSize: 10, fontWeight: 600, letterSpacing: "0.16em",
                                     textTransform: "uppercase", cursor: "pointer",
                                     transition: "background .2s",
                                 }}
-                                onMouseEnter={e => e.currentTarget.style.background = "#333"}
-                                onMouseLeave={e => e.currentTarget.style.background = "#111"}
                             >Add to Cart</button>
                             <button
                                 onClick={close}

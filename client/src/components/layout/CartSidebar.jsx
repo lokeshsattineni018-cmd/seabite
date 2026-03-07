@@ -46,7 +46,7 @@ export default function CartSidebar({ onClose }) {
   };
 
   const handleCheckout = () => {
-    onClose();
+    closeCart();
     navigate("/checkout");
   };
 
@@ -113,7 +113,7 @@ export default function CartSidebar({ onClose }) {
                 <motion.button
                   whileHover={{ rotate: 90, scale: 1.1 }}
                   whileTap={{ scale: 0.85 }}
-                  onClick={onClose}
+                  onClick={closeCart}
                   style={{
                     width: 36, height: 36, borderRadius: "50%",
                     background: T.bg, border: `1px solid ${T.border}`,
