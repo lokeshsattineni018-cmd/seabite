@@ -19,7 +19,7 @@
  */
 
 import React, {
-  useEffect, useState, useCallback, useRef,
+  useEffect, useState, useCallback, useRef, useContext,
 } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -32,6 +32,7 @@ import {
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import ReviewModal from "../../components/common/ReviewModal";
+import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
 import { generateInvoicePDF } from "../../utils/pdfGenerator";
 
@@ -587,6 +588,7 @@ function PriceRow({ label, value, color, bold, borderTop }) {
 export default function OrderDetails() {
   const { orderId } = useParams();
   const navigate = useNavigate();
+  const { addToCart } = useContext(CartContext);
   const reduced = useReducedMotion();
 
   const [order, setOrder] = useState(null);
@@ -670,24 +672,29 @@ export default function OrderDetails() {
     if (!order) return;
     setReordering(true);
     try {
-      await Promise.all(
-        order.items.map(item => {
-          const pid = item.productId
-            ? (typeof item.productId === "object" ? item.productId._id : item.productId)
-            : item.product
-              ? (typeof item.product === "object" ? item.product._id : item.product)
-              : item._id;
-          return axios.post(`${API_URL}/api/cart`, { productId: pid, qty: item.qty }, { withCredentials: true });
-        })
-      );
-      toast.success(`${order.items.length} item${order.items.length > 1 ? "s" : ""} added to cart!`, { icon: "🛒" });
-      navigate("/cart");
+      // Use the context's addToCart for each item
+      order.items.forEach(item => {
+        // Build product object compatible with addToCart expectations
+        const product = {
+          _id: (item.productId?._id || item.productId || item.product?._id || item.product || item._id),
+          name: item.name,
+          image: item.image,
+          price: item.price,
+          quantity: item.qty
+        };
+        addToCart(product);
+      });
+
+      toast.success(`${order.items.length} item${order.items.length > 1 ? "s" : ""} added!`, { icon: "🛒" });
+
+      // Briefly show success before navigating
+      setTimeout(() => navigate("/cart"), 800);
     } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to add items to cart.");
+      toast.error("Failed to reorder items");
     } finally {
       setReordering(false);
     }
-  }, [order, navigate]);
+  }, [order, navigate, addToCart]);
 
   // ── Review modal ──────────────────────────────────────────
   const openReview = useCallback(item => {
