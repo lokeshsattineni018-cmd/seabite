@@ -95,7 +95,14 @@ const EnhancedProductCard = ({
     try {
       const btn = e.currentTarget;
       const btnRect = btn.getBoundingClientRect();
-      const cartIconEl = document.querySelector('[data-cart-icon]');
+      
+      // Select the strictly VISIBLE cart icon (prevents flying to a hidden mobile/desktop icon)
+      const cartIcons = Array.from(document.querySelectorAll('[data-cart-icon]'));
+      const cartIconEl = cartIcons.find(icon => {
+        const r = icon.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      });
+
       const cardEl = btn.closest('.product-card-hover');
       const imgEl = cardEl?.querySelector('.product-image');
       
@@ -116,18 +123,16 @@ const EnhancedProductCard = ({
         flyerX.style.pointerEvents = "none";
         flyerX.style.transition = "left 1.2s linear"; 
 
-        // Y-Axis Container (Moves vertically with an upward arc bezier)
+        // Y-Axis Container (Moves vertically with an upward arc)
         const flyerY = document.createElement("div");
         flyerY.style.position = "absolute";
         flyerY.style.left = "0px";
         flyerY.style.top = `${startY}px`;
-        // cubic-bezier(0.2, -0.6, 0.7, 1) creates an overshoot (upward arc) before falling
         flyerY.style.transition = "top 1.2s cubic-bezier(0.3, -0.4, 0.7, 1), transform 1.2s ease-in, opacity 1.2s ease-in";
 
         // Image Clone
         const imgClone = document.createElement("img");
         imgClone.src = imgEl.src;
-        // Keep it rectangular to look exactly like the product image
         imgClone.style.width = "60px";
         imgClone.style.height = "60px";
         imgClone.style.objectFit = "cover";
@@ -138,15 +143,14 @@ const EnhancedProductCard = ({
         flyerX.appendChild(flyerY);
         document.body.appendChild(flyerX);
 
-        // Force browser reflow to register starting positions securely
+        // Safely trigger transition in the next frame
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (!document.body.contains(flyerX)) return;
-            // Trigger animations
             flyerX.style.left = `${endX}px`;
             flyerY.style.top = `${endY}px`;
-            flyerY.style.transform = `scale(0.2) rotate(360deg)`;
-            flyerY.style.opacity = `0`;
+            flyerY.style.transform = `scale(0.2) rotate(180deg)`; // Less rotation for clean look
+            flyerY.style.opacity = `0`; 
           });
         });
 
