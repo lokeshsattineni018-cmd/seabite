@@ -85,6 +85,8 @@ const EnhancedProductCard = ({
     return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
   };
 
+  const imgRef = useRef(null);
+
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -103,11 +105,13 @@ const EnhancedProductCard = ({
         return r.width > 0 && r.height > 0;
       });
 
-      const cardEl = btn.closest('.product-card-hover');
-      const imgEl = cardEl?.querySelector('.product-image');
+      const imgEl = imgRef.current; // Use React ref instead of fragile DOM query
       
-      if (cartIconEl && imgEl) {
-        const cartRect = cartIconEl.getBoundingClientRect();
+      if (imgEl) {
+        // Fallback to top-right corner if the cart icon is completely hidden or unmounted
+        const cartRect = cartIconEl 
+            ? cartIconEl.getBoundingClientRect() 
+            : { left: window.innerWidth - 40, top: 20, width: 30, height: 30 };
         
         const startX = btnRect.left + btnRect.width / 2 - 25;
         const startY = btnRect.top + btnRect.height / 2 - 25;
@@ -155,14 +159,16 @@ const EnhancedProductCard = ({
         // Wait for animation to finish
         animY.onfinish = () => {
           flyerX.remove();
-          // Bounce the actual cart icon
-          cartIconEl.animate([
-            { transform: "scale(1)" },
-            { transform: "scale(1.5)" }, // prominent bounce
-            { transform: "scale(0.9)" },
-            { transform: "scale(1.1)" },
-            { transform: "scale(1)" }
-          ], { duration: 500, easing: "ease-out" });
+          // Bounce the actual cart icon only if we found it
+          if (cartIconEl) {
+            cartIconEl.animate([
+              { transform: "scale(1)" },
+              { transform: "scale(1.5)" }, 
+              { transform: "scale(0.9)" },
+              { transform: "scale(1.1)" },
+              { transform: "scale(1)" }
+            ], { duration: 500, easing: "ease-out" });
+          }
         };
       }
     } catch (err) { 
@@ -314,13 +320,16 @@ const EnhancedProductCard = ({
           </div>
         )}
         <img
+          ref={imgRef}
           src={getImageUrl(product.image)}
           alt={product.name}
           style={{
-            width: "100%", height: "100%", objectFit: "contain",
-            transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
-            filter: isOutOfStock ? "grayscale(0.4) opacity(0.6)" : "none",
-            opacity: imageLoaded ? 1 : 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            transition: "all 0.4s ease",
+            transform: imageLoaded ? "scale(1)" : "scale(1.05)",
+            opacity: imageLoaded ? 1 : 0
           }}
           onLoad={() => setImageLoaded(true)}
           className="group-hover:scale-105 product-image"
