@@ -35,6 +35,7 @@ import ReviewModal from "../../components/common/ReviewModal";
 import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
 import { generateInvoicePDF } from "../../utils/pdfGenerator";
+import OrderTrackerMap from "../../components/orders/OrderTrackerMap";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -1094,6 +1095,17 @@ export default function OrderDetails() {
                 </div>
                 <div className="lx-mobile-only">
                   <VerticalTracker currentStepIndex={stepIdx} reduced={reduced} />
+                </div>
+
+                {/* ── Live Delivery Map ── */}
+                <div style={{ marginTop: 32 }}>
+                  <p style={{
+                    fontFamily: "'Sora', sans-serif", fontSize: 13, fontWeight: 700, 
+                    color: T.inkMid, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em"
+                  }}>
+                    Live Delivery Route
+                  </p>
+                  <OrderTrackerMap orderStatus={order.status} />
                 </div>
               </AppleSection>
             )}

@@ -88,7 +88,66 @@ const EnhancedProductCard = ({
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isAdding) return;
     setIsAdding(true);
+
+    // ── PREMIUM FLY-TO-CART ANIMATION ──
+    try {
+      const cardEl = e.currentTarget.closest('.product-card-hover');
+      const imgEl = cardEl?.querySelector('.product-image');
+      const cartIconEl = document.querySelector('[data-cart-icon]');
+      
+      if (imgEl && cartIconEl) {
+        const imgRect = imgEl.getBoundingClientRect();
+        const cartRect = cartIconEl.getBoundingClientRect();
+        
+        const flyingImg = document.createElement('img');
+        flyingImg.src = imgEl.src;
+        flyingImg.style.position = 'fixed';
+        flyingImg.style.top = `${imgRect.top}px`;
+        flyingImg.style.left = `${imgRect.left}px`;
+        flyingImg.style.width = `${imgRect.width}px`;
+        flyingImg.style.height = `${imgRect.height}px`;
+        flyingImg.style.borderRadius = '12px';
+        flyingImg.style.objectFit = 'cover';
+        flyingImg.style.pointerEvents = 'none';
+        flyingImg.style.zIndex = '9999';
+        flyingImg.style.boxShadow = '0 12px 30px rgba(0,0,0,0.15)';
+        document.body.appendChild(flyingImg);
+        
+        const targetX = cartRect.left + cartRect.width / 2 - imgRect.width / 2 - imgRect.left;
+        const targetY = cartRect.top + cartRect.height / 2 - imgRect.height / 2 - imgRect.top;
+        
+        const animation = flyingImg.animate([
+          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
+          { transform: `translate(${targetX * 0.5}px, ${targetY - 50}px) scale(0.6)`, opacity: 0.9, offset: 0.5 },
+          { transform: `translate(${targetX}px, ${targetY}px) scale(0.1)`, opacity: 0 }
+        ], {
+          duration: 700,
+          easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+        });
+        
+        animation.onfinish = () => flyingImg.remove();
+      }
+    } catch (err) { }
+
+    // ── BUTTON RIPPLE EFFECT ──
+    const btn = e.currentTarget;
+    const ripple = document.createElement("span");
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+    
+    ripple.style.width = ripple.style.height = `${size}px`;
+    ripple.style.left = `${x}px`;
+    ripple.style.top = `${y}px`;
+    ripple.classList.add("lx-ripple");
+    
+    // Append ripple and remove after animation
+    btn.appendChild(ripple);
+    setTimeout(() => document.body.contains(btn) && ripple.remove(), 600);
+
     setTimeout(() => {
       addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
       toast.success(`${product.name} added`, {
@@ -97,7 +156,7 @@ const EnhancedProductCard = ({
       });
       setIsAdding(false);
       if (onAddToCart) onAddToCart(product._id);
-    }, 500);
+    }, 600);
   };
 
   const handleWishlistToggle = async (e) => {
@@ -243,7 +302,7 @@ const EnhancedProductCard = ({
             opacity: imageLoaded ? 1 : 0,
           }}
           onLoad={() => setImageLoaded(true)}
-          className="group-hover:scale-105"
+          className="group-hover:scale-105 product-image"
           loading="lazy"
         />
       </Link>
@@ -326,6 +385,19 @@ const EnhancedProductCard = ({
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        .cart-btn-wave { position: relative; overflow: hidden; }
+        .cart-btn-wave:active { transform: scale(0.97); }
+        .lx-ripple {
+          position: absolute;
+          border-radius: 50%;
+          transform: scale(0);
+          animation: ripple-animation 0.6s linear;
+          background: rgba(255, 255, 255, 0.4);
+          pointer-events: none;
+        }
+        @keyframes ripple-animation {
+          to { transform: scale(3.5); opacity: 0; }
+        }
       `}</style>
     </div>
   );
