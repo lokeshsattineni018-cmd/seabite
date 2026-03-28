@@ -13,6 +13,7 @@ import PopupModal from "../../components/common/PopupModal";
 import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
+import OrderSlider from "../../components/common/OrderSlider"; // 🦐 Slide to Order
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -731,29 +732,14 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {/* Place Order */}
-                <motion.button
-                  whileHover={{ y: -2, boxShadow: "0 10px 30px rgba(91,168,160,0.28)" }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={placeOrder}
-                  disabled={loading}
-                  style={{
-                    width: "100%", padding: "15px 20px", borderRadius: 14,
-                    background: T.primary, color: "#fff", border: "none",
-                    fontSize: 13, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 9,
-                    fontFamily: font, boxShadow: "0 4px 20px rgba(91,168,160,0.22)",
-                    opacity: loading ? 0.75 : 1, transition: "all 0.2s",
-                  }}
-                >
-                  {loading ? (
-                    <><SeaBiteLoader small /> Processing...</>
-                  ) : paymentMethod === "COD" ? (
-                    <>Place COD Order</>
-                  ) : (
-                    <><FiCreditCard size={15} /> Pay & Place Order</>
-                  )}
-                </motion.button>
+                {/* Place Order - Slide to Secure */}
+                <div style={{ marginTop: 8 }}>
+                  <OrderSlider 
+                    onConfirm={placeOrder} 
+                    disabled={loading} 
+                    text={loading ? "Securing..." : "Slide to Secure Your Catch"}
+                  />
+                </div>
 
                 {/* Delivery estimate */}
                 {deliveryAddress.street && (

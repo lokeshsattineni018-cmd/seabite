@@ -11,6 +11,7 @@ import { CartContext } from "../../context/CartContext";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import FilterSidebar from "../../components/layout/FilterSidebar";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
+import PullToRefresh from "../../components/common/PullToRefresh"; // 🎣 Pull to Refresh
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -115,8 +116,13 @@ export default function Products() {
     filters.minPrice, filters.maxPrice, filters.inStock,
   ].filter(Boolean).length;
 
+  const handleRefresh = async () => {
+    return fetchProducts();
+  };
+
   return (
-    <>
+    <PullToRefresh onRefresh={handleRefresh}>
+      <>
       <Helmet>
         <title>{meta.label} | SeaBite - Fresh Coastal Seafood Delivery</title>
         <meta name="description" content={`Buy fresh ${meta.label.toLowerCase()} online. ${meta.tagline} Chemical-free, traceable seafood delivered from Mogalthur every day.`} />
@@ -399,6 +405,7 @@ export default function Products() {
           </div>
         </div>
       </div>
-    </>
+      </>
+    </PullToRefresh>
   );
 }
