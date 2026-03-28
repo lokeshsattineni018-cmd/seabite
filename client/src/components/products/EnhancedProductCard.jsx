@@ -147,7 +147,7 @@ const EnhancedProductCard = ({
           { transform: `translate(${targetX * 0.4}px, ${targetY - 120}px) scale(1.2)`, opacity: 1, offset: 0.4 }, // Arc up
           { transform: `translate(${targetX}px, ${targetY}px) scale(0.3)`, opacity: 0 } // Drop into cart
         ], {
-          duration: 800,
+          duration: 1500, // Slower, graceful flight
           easing: "cubic-bezier(0.25, 1, 0.5, 1)",
         });
 
@@ -156,11 +156,11 @@ const EnhancedProductCard = ({
           // Bounce the actual cart icon
           cartIconEl.animate([
             { transform: "scale(1)" },
-            { transform: "scale(1.4)" },
+            { transform: "scale(1.5)" }, // prominent bounce
             { transform: "scale(0.9)" },
             { transform: "scale(1.1)" },
             { transform: "scale(1)" }
-          ], { duration: 400, easing: "ease-out" });
+          ], { duration: 500, easing: "ease-out" });
         };
       }
     } catch (err) { }
@@ -173,7 +173,7 @@ const EnhancedProductCard = ({
       });
       setIsAdding(false);
       if (onAddToCart) onAddToCart(product._id);
-    }, 800); // Wait for animation to finish
+    }, 1400); // Wait for the animation to almost cover the distance before firing the cart update
   };
 
   const handleWishlistToggle = async (e) => {
