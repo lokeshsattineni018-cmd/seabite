@@ -91,21 +91,36 @@ const EnhancedProductCard = ({
     if (isAdding) return;
     setIsAdding(true);
 
-    // ── BUTTON RIPPLE EFFECT ──
+    // ── PREMIUM BUBBLE BURST EFFECT ──
     const btn = e.currentTarget;
-    const ripple = document.createElement("span");
     const rect = btn.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const x = e.clientX - rect.left - size / 2;
-    const y = e.clientY - rect.top - size / 2;
+    const colors = ["#ffffff", "#5BBFB5", "#7EB8D4", "rgba(255,255,255,0.5)"];
     
-    ripple.style.width = ripple.style.height = `${size}px`;
-    ripple.style.left = `${x}px`;
-    ripple.style.top = `${y}px`;
-    ripple.classList.add("lx-ripple");
-    
-    btn.appendChild(ripple);
-    setTimeout(() => document.body.contains(btn) && ripple.remove(), 600);
+    // Spawn 8-10 internal bubbles
+    for (let i = 0; i < 10; i++) {
+      const bubble = document.createElement("span");
+      bubble.classList.add("lx-bubble");
+      
+      const size = Math.random() * 14 + 6; 
+      // Scatter from where they clicked
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      
+      const destX = (Math.random() - 0.5) * 80; // drift left/right
+      const destY = -Math.random() * 60 - 20;   // float up
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      
+      bubble.style.width = `${size}px`;
+      bubble.style.height = `${size}px`;
+      bubble.style.background = color;
+      bubble.style.left = `${clickX}px`;
+      bubble.style.top = `${clickY}px`;
+      bubble.style.setProperty('--dx', `${destX}px`);
+      bubble.style.setProperty('--dy', `${destY}px`);
+      
+      btn.appendChild(bubble);
+      setTimeout(() => document.body.contains(btn) && bubble.remove(), 700);
+    }
 
     setTimeout(() => {
       addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
@@ -346,16 +361,17 @@ const EnhancedProductCard = ({
         @keyframes spin { to { transform: rotate(360deg); } }
         .cart-btn-wave { position: relative; overflow: hidden; }
         .cart-btn-wave:active { transform: scale(0.97); }
-        .lx-ripple {
+        .lx-bubble {
           position: absolute;
           border-radius: 50%;
-          transform: scale(0);
-          animation: ripple-animation 0.6s linear;
-          background: rgba(255, 255, 255, 0.4);
           pointer-events: none;
+          transform: translate(-50%, -50%) scale(0);
+          animation: bubble-rise 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+          box-shadow: inset 0 0 4px rgba(255,255,255,0.7);
         }
-        @keyframes ripple-animation {
-          to { transform: scale(3.5); opacity: 0; }
+        @keyframes bubble-rise {
+          0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
+          100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0); opacity: 0; }
         }
       `}</style>
     </div>
