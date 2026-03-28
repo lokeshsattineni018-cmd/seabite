@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
+import PullToRefresh from "../../components/common/PullToRefresh"; // 🎣 Pull to Refresh
 import {
   motion,
   useScroll,
@@ -619,44 +620,53 @@ const ScrollTop = () => {
 //  PAGE EXPORT
 // ══════════════════════════════════════════════
 export default function Home() {
+  const handleRefresh = async () => {
+    // Simulate data refetch or just reload
+    return new Promise(resolve => setTimeout(resolve, 1500)).then(() => {
+      window.location.reload();
+    });
+  };
+
   return (
-    <div className="bg-[#F8FAFB] min-h-screen text-[#1A2B35] selection:bg-[#C5E6E4] selection:text-[#1A2B35] antialiased" style={{ fontFamily: "'Plus Jakarta Sans', 'Manrope', sans-serif" }}>
-      <Helmet>
-        <title>SeaBite - Premium Ocean-Fresh Seafood Delivered</title>
-        <meta name="description" content="Shop premium fish, prawns, and crabs sourced daily from Mogalthur. Cold-chain delivered ocean-fresh seafood directly to your doorstep. Experience the SeaBite quality." />
-        <meta property="og:title" content="SeaBite - Fresh Coastal Catch Delivered" />
-        <meta property="og:description" content="Premium seafood sourced daily at 4 AM and delivered fresh by noon. Chemical-free and 100% traceable coastal catch from SeaBite." />
-        <meta property="og:image" content="/fisherman.jpg" />
-        <meta name="twitter:card" content="summary_large_image" />
-      </Helmet>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
-        * { -webkit-font-smoothing: antialiased; }
-      `}</style>
-
-      <div className="bg-[#1A2B35]">
-        <Hero />
-        <WaveTicker />
-      </div>
-
-      <CategorySection />
-      <FlashSale />
-      <CategoryRow title="Fresh From The Nets" filterType="Fish" />
-      <CategoryRow title="Shellfish Specials" filterType="Shellfish" />
-
-      <section className="py-4 px-6 md:px-12 bg-white">
-        <div className="max-w-7xl mx-auto">
-          <Reveal>
-            <SectionLabel>Trending</SectionLabel>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] mb-8" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>Customer Favorites</h2>
-          </Reveal>
-          <TrendingProducts />
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="bg-[#F8FAFB] min-h-screen text-[#1A2B35] selection:bg-[#C5E6E4] selection:text-[#1A2B35] antialiased" style={{ fontFamily: "'Plus Jakarta Sans', 'Manrope', sans-serif" }}>
+        <Helmet>
+          <title>SeaBite - Premium Ocean-Fresh Seafood Delivered</title>
+          <meta name="description" content="Shop premium fish, prawns, and crabs sourced daily from Mogalthur. Cold-chain delivered ocean-fresh seafood directly to your doorstep. Experience the SeaBite quality." />
+          <meta property="og:title" content="SeaBite - Fresh Coastal Catch Delivered" />
+          <meta property="og:description" content="Premium seafood sourced daily at 4 AM and delivered fresh by noon. Chemical-free and 100% traceable coastal catch from SeaBite." />
+          <meta property="og:image" content="/fisherman.jpg" />
+          <meta name="twitter:card" content="summary_large_image" />
+        </Helmet>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+          * { -webkit-font-smoothing: antialiased; }
+        `}</style>
+  
+        <div className="bg-[#1A2B35]">
+          <Hero />
+          <WaveTicker />
         </div>
-      </section>
-
-      <Reviews />
-      <WhySeaBite />
-      <ScrollTop />
-    </div>
+  
+        <CategorySection />
+        <FlashSale />
+        <CategoryRow title="Fresh From The Nets" filterType="Fish" />
+        <CategoryRow title="Shellfish Specials" filterType="Shellfish" />
+  
+        <section className="py-4 px-6 md:px-12 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <Reveal>
+              <SectionLabel>Trending</SectionLabel>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] mb-8" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>Customer Favorites</h2>
+            </Reveal>
+            <TrendingProducts />
+          </div>
+        </section>
+  
+        <Reviews />
+        <WhySeaBite />
+        <ScrollTop />
+      </div>
+    </PullToRefresh>
   );
 }
