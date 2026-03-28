@@ -1,4 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import { useContext, useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
@@ -418,34 +419,37 @@ export default function ProductDetails() {
 
 
       {/* Framer Motion Parabolic Flight Animation (Immune to iOS Battery Saver) */}
-      {flyItems.map((item) => (
-        <motion.div
-          key={item.id}
-          initial={{ left: item.startX, top: item.startY, opacity: 1, scale: 1, rotate: 0 }}
-          animate={{ left: item.endX, top: item.endY, opacity: 0.6, scale: 0.2, rotate: 90 }}
-          transition={{ 
-            duration: 1.1,
-            // X-axis linear, Y-axis cubic-bezier for the perfect parabolic upward arc
-            left: { ease: "linear", duration: 1.1 },
-            top: { ease: [0.3, -0.4, 0.7, 1], duration: 1.1 },
-            scale: { ease: "easeOut", duration: 1.1 },
-            rotate: { ease: "easeOut", duration: 1.1 },
-          }}
-          onAnimationComplete={() => handleFlyComplete(item.id)}
-          style={{ 
-            position: "fixed", 
-            width: "60px", 
-            height: "60px", 
-            zIndex: 99999999, 
-            pointerEvents: "none",
-            borderRadius: "12px",
-            overflow: "hidden",
-            boxShadow: "0 10px 25px rgba(0,0,0,0.3)"
-          }}
-        >
-          <img src={item.image} alt="Flying item" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-        </motion.div>
-      ))}
+      {typeof document !== "undefined" && createPortal(
+        flyItems.map((item) => (
+          <motion.div
+            key={item.id}
+            initial={{ left: item.startX, top: item.startY, opacity: 1, scale: 1, rotate: 0 }}
+            animate={{ left: item.endX, top: item.endY, opacity: 0.6, scale: 0.2, rotate: 90 }}
+            transition={{ 
+              duration: 1.1,
+              // X-axis linear, Y-axis cubic-bezier for the perfect parabolic upward arc
+              left: { ease: "linear", duration: 1.1 },
+              top: { ease: [0.3, -0.4, 0.7, 1], duration: 1.1 },
+              scale: { ease: "easeOut", duration: 1.1 },
+              rotate: { ease: "easeOut", duration: 1.1 },
+            }}
+            onAnimationComplete={() => handleFlyComplete(item.id)}
+            style={{ 
+              position: "fixed", 
+              width: "60px", 
+              height: "60px", 
+              zIndex: 99999999, 
+              pointerEvents: "none",
+              borderRadius: "12px",
+              overflow: "hidden",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.3)"
+            }}
+          >
+            <img src={item.image} alt="Flying item" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </motion.div>
+        )),
+        document.body
+      )}
 
       <div
         className="detail-root"
