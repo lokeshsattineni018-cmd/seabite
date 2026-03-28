@@ -1,5 +1,6 @@
-import { useState, useContext, useEffect, useRef } from "react";
+import { useState, useContext, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
@@ -35,6 +36,9 @@ const EnhancedProductCard = ({
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [timeLeft, setTimeLeft] = useState("");
   const [imageLoaded, setImageLoaded] = useState(false);
+  
+  const [flyItems, setFlyItems] = useState([]);
+  const flyIdRef = useRef(0);
 
   const isActiveFlashSale =
     product.flashSale?.isFlashSale &&
@@ -113,48 +117,15 @@ const EnhancedProductCard = ({
       const endX = cartRect.left + cartRect.width / 2 - 10;
       const endY = cartRect.top + cartRect.height / 2 - 10;
 
-      // X-Axis Container (Moves horizontally)
-      const flyerX = document.createElement("div");
-      flyerX.style.position = "fixed";
-      flyerX.style.left = `${startX}px`;
-      flyerX.style.top = `0px`; 
-      flyerX.style.zIndex = "99999999";
-      flyerX.style.pointerEvents = "none";
-
-      // Y-Axis Container (Moves vertically with an upward arc)
-      const flyerY = document.createElement("div");
-      flyerY.style.position = "absolute";
-      flyerY.style.left = "0px";
-      flyerY.style.top = `${startY}px`;
-
-      // Image Clone using raw variable instead of DOM ref
-      const imgClone = document.createElement("img");
-      imgClone.src = getImageUrl(product.image);
-      imgClone.style.width = "60px";
-      imgClone.style.height = "60px";
-      imgClone.style.objectFit = "cover";
-      imgClone.style.borderRadius = "12px"; 
-      imgClone.style.boxShadow = "0 10px 25px rgba(0,0,0,0.3)";
+      // Add flight data entirely to React state for Framer Motion to handle
+      setFlyItems(prev => [...prev, {
+        id: ++flyIdRef.current,
+        startX, startY, endX, endY,
+        image: getImageUrl(product.image)
+      }]);
       
-      flyerY.appendChild(imgClone);
-      flyerX.appendChild(flyerY);
-      document.body.appendChild(flyerX);
-
-      // WAAPI guarantees play without browser reflow racing
-      flyerX.animate([
-          { left: `${startX}px` },
-          { left: `${endX}px` }
-      ], { duration: 1100, easing: 'linear', fill: 'forwards' });
-
-      const animY = flyerY.animate([
-          { top: `${startY}px`, transform: `scale(1) rotate(0deg)`, opacity: 1 },
-          { top: `${endY}px`, transform: `scale(0.2) rotate(90deg)`, opacity: 0.6 } // Less fade to keep it visible
-      ], { duration: 1100, easing: 'cubic-bezier(0.3, -0.4, 0.7, 1)', fill: 'forwards' });
-
-      // Wait for animation to finish
-      animY.onfinish = () => {
-        flyerX.remove();
-        // Bounce the actual cart icon only if we found it
+      // Delay visual bounce of cart icon to match animation time
+      setTimeout(() => {
         if (cartIconEl) {
           cartIconEl.animate([
             { transform: "scale(1)" },
@@ -164,13 +135,15 @@ const EnhancedProductCard = ({
             { transform: "scale(1)" }
           ], { duration: 500, easing: "ease-out" });
         }
-      };
+      }, 1100);
+
     } catch (err) { 
-      console.error("Cart animation failed: ", err);
+      console.error("Cart animation computation failed: ", err);
     }
 
     setTimeout(() => {
       addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
+      refreshCartCount();
       toast.success(`${product.name} added`, {
         style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
         icon: "🛒",
@@ -179,6 +152,10 @@ const EnhancedProductCard = ({
       if (onAddToCart) onAddToCart(product._id);
     }, 1100); 
   };
+
+  const handleFlyComplete = useCallback((fId) => {
+    setFlyItems((prev) => prev.filter((item) => item.id !== fId));
+  }, []);
 
   const handleWishlistToggle = async (e) => {
     e.preventDefault();
@@ -238,6 +215,35 @@ const EnhancedProductCard = ({
           border-color: #5BBFB5 !important;
         }
       `}</style>
+      
+      {/* Framer Motion Parabolic Flight Animation (Immune to iOS Battery Saver) */}
+      {flyItems.map((item) => (
+        <motion.div
+          key={item.id}
+          initial={{ left: item.startX, top: item.startY, opacity: 1, scale: 1, rotate: 0 }}
+          animate={{ left: item.endX, top: item.endY, opacity: 0.6, scale: 0.2, rotate: 90 }}
+          transition={{ 
+            duration: 1.1,
+            left: { ease: "linear", duration: 1.1 },
+            top: { ease: [0.3, -0.4, 0.7, 1], duration: 1.1 },
+            scale: { ease: "easeOut", duration: 1.1 },
+            rotate: { ease: "easeOut", duration: 1.1 },
+          }}
+          onAnimationComplete={() => handleFlyComplete(item.id)}
+          style={{ 
+            position: "fixed", 
+            width: "60px", 
+            height: "60px", 
+            zIndex: 99999999, 
+            pointerEvents: "none",
+            borderRadius: "12px",
+            overflow: "hidden",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.3)"
+          }}
+        >
+          <img src={item.image} alt="Flying item" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </motion.div>
+      ))}
 
       {/* Badge Row */}
       <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "4px", zIndex: 10 }}>
