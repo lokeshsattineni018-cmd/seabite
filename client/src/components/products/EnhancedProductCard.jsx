@@ -224,6 +224,28 @@ const EnhancedProductCard = ({
           color: white !important;
           border-color: #5BBFB5 !important;
         }
+        
+        .shimmer-badge {
+          position: relative;
+          overflow: hidden;
+        }
+        .shimmer-badge::after {
+          content: "";
+          position: absolute;
+          top: -50%;
+          left: -60%;
+          width: 20%;
+          height: 200%;
+          background: rgba(255, 255, 255, 0.4);
+          transform: rotate(30deg);
+          animation: shimmerSweep 3s infinite cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        @keyframes shimmerSweep {
+          0% { left: -60%; opacity: 0; }
+          10% { opacity: 0.5; }
+          20% { left: 140%; opacity: 0; }
+          100% { left: 140%; opacity: 0; }
+        }
       `}</style>
       
       {/* Framer Motion Parabolic Flight Animation (Immune to iOS Battery Saver) */}
@@ -261,7 +283,20 @@ const EnhancedProductCard = ({
       {/* Badge Row */}
       <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "4px", zIndex: 10 }}>
         {product.trending && (
-          <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+          <span 
+            className="shimmer-badge"
+            style={{ 
+              background: "#1A2E2C", // Dark obsidian for more premium 'HOT' feel
+              color: "#FFD700", // Gold text
+              fontSize: "9px", 
+              fontWeight: "900", 
+              padding: "4px 10px", 
+              borderRadius: "6px", 
+              letterSpacing: "0.1em", 
+              textTransform: "uppercase",
+              boxShadow: "0 2px 10px rgba(26,46,44,0.15)"
+            }}
+          >
             HOT
           </span>
         )}
