@@ -6,6 +6,7 @@ import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import toast from "../../utils/toast"; // Custom SeaBite toast
+import triggerHaptic from "../../utils/haptics"; // 📱 Haptic feedback
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -146,6 +147,7 @@ const EnhancedProductCard = ({
 
     setTimeout(() => {
       try {
+        triggerHaptic("medium"); // 📳 Haptic vibration
         addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
         refreshCartCount();
         toast.success(`${product.name} added`, {
@@ -166,7 +168,9 @@ const EnhancedProductCard = ({
   const handleWishlistToggle = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!user) { toast.error("Login to save items"); return navigate("/login"); }
+    triggerHaptic("soft"); // 📳 Haptic vibration
+    if (!user) {
+      toast.error("Please login to save items"); return navigate("/login"); }
     const prev = isWishlisted;
     setIsWishlisted(!prev);
     setLoadingWishlist(true);
