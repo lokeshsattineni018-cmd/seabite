@@ -177,9 +177,10 @@ export default function ProductDetails() {
   const [isAdded, setIsAdded] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [loadingWishlist, setLoadingWishlist] = useState(false);
-  const [canReview, setCanReview] = useState(false);
   const [isWaitlisting, setIsWaitlisting] = useState(false);
   const [isJoinedWaitlist, setIsJoinedWaitlist] = useState(false);
+  const [flyItems, setFlyItems] = useState([]);
+  const flyIdRef = useRef(0);
 
   const isWishlisted = user?.wishlist?.some(
     (item) => (typeof item === "string" ? item : item._id) === id
@@ -239,7 +240,6 @@ export default function ProductDetails() {
   const handleAddToCart = (e) => {
     if (!product || isAdded) return;
     
-    // Stop propagation just in case
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -259,7 +259,7 @@ export default function ProductDetails() {
           return r.width > 0 && r.height > 0;
         });
 
-        // Fallback to top-right corner if hidden on mobile
+        // Fallback
         const cartRect = cartIconEl 
             ? cartIconEl.getBoundingClientRect() 
             : { left: window.innerWidth - 40, top: 20, width: 30, height: 30 };
@@ -269,62 +269,31 @@ export default function ProductDetails() {
         const endX = cartRect.left + cartRect.width / 2 - 15;
         const endY = cartRect.top + cartRect.height / 2 - 15;
 
-        // X-Axis Container
-        const flyerX = document.createElement("div");
-        flyerX.style.position = "fixed";
-        flyerX.style.left = `${startX}px`;
-        flyerX.style.top = `0px`; 
-        flyerX.style.zIndex = "99999999";
-        flyerX.style.pointerEvents = "none";
-
-        // Y-Axis Container
-        const flyerY = document.createElement("div");
-        flyerY.style.position = "absolute";
-        flyerY.style.left = "0px";
-        flyerY.style.top = `${startY}px`;
-
-        // Exact Product Image clone without lollipop styles (raw image)
-        const imgClone = document.createElement("img");
-        imgClone.src = getFullImageUrl(product.image);
-        imgClone.style.width = "60px";
-        imgClone.style.height = "60px";
-        imgClone.style.objectFit = "cover";
-        imgClone.style.borderRadius = "12px"; 
-        imgClone.style.boxShadow = "0 10px 25px rgba(0,0,0,0.3)";
+        // Add to React state for Framer Motion to render
+        setFlyItems(prev => [...prev, {
+          id: ++flyIdRef.current,
+          startX, startY, endX, endY,
+          image: getFullImageUrl(product.image)
+        }]);
         
-        flyerY.appendChild(imgClone);
-        flyerX.appendChild(flyerY);
-        document.body.appendChild(flyerX);
-
-        // Natively hardware-accelerated Bezier Curve
-        flyerX.animate([
-            { left: `${startX}px` },
-            { left: `${endX}px` }
-        ], { duration: 1100, easing: 'linear', fill: 'forwards' });
-
-        const animY = flyerY.animate([
-            { top: `${startY}px`, transform: `scale(1) rotate(0deg)`, opacity: 1 },
-            { top: `${endY}px`, transform: `scale(0.2) rotate(90deg)`, opacity: 0.6 }
-        ], { duration: 1100, easing: 'cubic-bezier(0.3, -0.4, 0.7, 1)', fill: 'forwards' });
-
-        animY.onfinish = () => {
-          flyerX.remove();
-          if (cartIconEl) {
-            cartIconEl.animate([
-              { transform: "scale(1)" },
-              { transform: "scale(1.5)" }, 
-              { transform: "scale(0.9)" },
-              { transform: "scale(1.1)" },
-              { transform: "scale(1)" }
-            ], { duration: 500, easing: "ease-out" });
-          }
-        };
+        // Bounce cart icon (optional visual flair)
+        setTimeout(() => {
+            if (cartIconEl) {
+                cartIconEl.animate([
+                  { transform: "scale(1)" },
+                  { transform: "scale(1.5)" }, 
+                  { transform: "scale(0.9)" },
+                  { transform: "scale(1.1)" },
+                  { transform: "scale(1)" }
+                ], { duration: 500, easing: "ease-out" });
+            }
+        }, 1100);
       }
     } catch (err) {
-      console.error("Cart animation failed: ", err);
+      console.error("Cart animation computation failed: ", err);
     }
 
-    // Wait for the visual flight before logically adding to cart
+    // Wait for the visual flight (1.1s) before logically adding to cart
     setTimeout(() => {
       addToCart({ ...product, qty, price: parseFloat(totalPrice) });
       refreshCartCount();
@@ -335,6 +304,10 @@ export default function ProductDetails() {
       setTimeout(() => setIsAdded(false), 2000);
     }, 1100);
   };
+
+  const handleFlyComplete = useCallback((fId) => {
+    setFlyItems((prev) => prev.filter((item) => item.id !== fId));
+  }, []);
 
   const handleWishlistToggle = async () => {
     if (!user) { toast.error("Please login to save items"); return navigate("/login"); }
@@ -443,6 +416,36 @@ export default function ProductDetails() {
       `}</style>
 
 
+
+      {/* Framer Motion Parabolic Flight Animation (Immune to iOS Battery Saver) */}
+      {flyItems.map((item) => (
+        <motion.div
+          key={item.id}
+          initial={{ left: item.startX, top: item.startY, opacity: 1, scale: 1, rotate: 0 }}
+          animate={{ left: item.endX, top: item.endY, opacity: 0.6, scale: 0.2, rotate: 90 }}
+          transition={{ 
+            duration: 1.1,
+            // X-axis linear, Y-axis cubic-bezier for the perfect parabolic upward arc
+            left: { ease: "linear", duration: 1.1 },
+            top: { ease: [0.3, -0.4, 0.7, 1], duration: 1.1 },
+            scale: { ease: "easeOut", duration: 1.1 },
+            rotate: { ease: "easeOut", duration: 1.1 },
+          }}
+          onAnimationComplete={() => handleFlyComplete(item.id)}
+          style={{ 
+            position: "fixed", 
+            width: "60px", 
+            height: "60px", 
+            zIndex: 99999999, 
+            pointerEvents: "none",
+            borderRadius: "12px",
+            overflow: "hidden",
+            boxShadow: "0 10px 25px rgba(0,0,0,0.3)"
+          }}
+        >
+          <img src={item.image} alt="Flying item" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        </motion.div>
+      ))}
 
       <div
         className="detail-root"
