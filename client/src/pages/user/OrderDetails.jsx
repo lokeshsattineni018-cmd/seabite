@@ -1105,7 +1105,7 @@ export default function OrderDetails() {
                   }}>
                     Live Delivery Route
                   </p>
-                  <OrderTrackerMap orderStatus={order.status} />
+                  <OrderTrackerMap orderStatus={order.status} shippingAddress={order.shippingAddress} />
                 </div>
               </AppleSection>
             )}

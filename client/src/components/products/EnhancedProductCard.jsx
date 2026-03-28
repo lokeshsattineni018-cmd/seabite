@@ -91,46 +91,6 @@ const EnhancedProductCard = ({
     if (isAdding) return;
     setIsAdding(true);
 
-    // ── PREMIUM FLY-TO-CART ANIMATION ──
-    try {
-      const cardEl = e.currentTarget.closest('.product-card-hover');
-      const imgEl = cardEl?.querySelector('.product-image');
-      const cartIconEl = document.querySelector('[data-cart-icon]');
-      
-      if (imgEl && cartIconEl) {
-        const imgRect = imgEl.getBoundingClientRect();
-        const cartRect = cartIconEl.getBoundingClientRect();
-        
-        const flyingImg = document.createElement('img');
-        flyingImg.src = imgEl.src;
-        flyingImg.style.position = 'fixed';
-        flyingImg.style.top = `${imgRect.top}px`;
-        flyingImg.style.left = `${imgRect.left}px`;
-        flyingImg.style.width = `${imgRect.width}px`;
-        flyingImg.style.height = `${imgRect.height}px`;
-        flyingImg.style.borderRadius = '12px';
-        flyingImg.style.objectFit = 'cover';
-        flyingImg.style.pointerEvents = 'none';
-        flyingImg.style.zIndex = '9999';
-        flyingImg.style.boxShadow = '0 12px 30px rgba(0,0,0,0.15)';
-        document.body.appendChild(flyingImg);
-        
-        const targetX = cartRect.left + cartRect.width / 2 - imgRect.width / 2 - imgRect.left;
-        const targetY = cartRect.top + cartRect.height / 2 - imgRect.height / 2 - imgRect.top;
-        
-        const animation = flyingImg.animate([
-          { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-          { transform: `translate(${targetX * 0.5}px, ${targetY - 50}px) scale(0.6)`, opacity: 0.9, offset: 0.5 },
-          { transform: `translate(${targetX}px, ${targetY}px) scale(0.1)`, opacity: 0 }
-        ], {
-          duration: 700,
-          easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
-        });
-        
-        animation.onfinish = () => flyingImg.remove();
-      }
-    } catch (err) { }
-
     // ── BUTTON RIPPLE EFFECT ──
     const btn = e.currentTarget;
     const ripple = document.createElement("span");
@@ -144,7 +104,6 @@ const EnhancedProductCard = ({
     ripple.style.top = `${y}px`;
     ripple.classList.add("lx-ripple");
     
-    // Append ripple and remove after animation
     btn.appendChild(ripple);
     setTimeout(() => document.body.contains(btn) && ripple.remove(), 600);
 
@@ -156,7 +115,7 @@ const EnhancedProductCard = ({
       });
       setIsAdding(false);
       if (onAddToCart) onAddToCart(product._id);
-    }, 600);
+    }, 400); // reduced timeout to feel snappier
   };
 
   const handleWishlistToggle = async (e) => {
