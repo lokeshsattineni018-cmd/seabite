@@ -81,7 +81,7 @@ export default function Wishlist() {
             <div style={{
                 fontFamily: "'Manrope', sans-serif",
                 background: "#F4F9F8",
-                minHeight: "100vh",
+                minHeight: "100vh",//f
                 paddingTop: 96,
                 paddingBottom: 100,
                 paddingLeft: 28,
