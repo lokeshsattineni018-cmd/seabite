@@ -350,7 +350,14 @@ export default class ErrorBoundary extends React.Component {
     }
 
     static getDerivedStateFromError(error) {
-        return { hasError: true, error };
+        // ✅ Detect ChunkLoadError / Dynamic Import Failure
+        const errorString = error?.message || error?.toString?.() || "";
+        const isChunkError = 
+            error.name === "ChunkLoadError" || 
+            errorString.includes("Failed to fetch dynamically imported module") ||
+            errorString.includes("loading chunk");
+
+        return { hasError: true, error, isChunkError };
     }
 
     componentDidCatch(error, errorInfo) {
@@ -359,6 +366,18 @@ export default class ErrorBoundary extends React.Component {
 
     render() {
         if (this.state.hasError) {
+            // ✅ Stability: If it's a chunk error, try to reload once
+            if (this.state.isChunkError) {
+                const lastReload = localStorage.getItem("seabite_last_chunk_reload");
+                const now = Date.now();
+                
+                // Only auto-reload if we haven't reloaded in the last 10 seconds (prevent loops)
+                if (!lastReload || now - parseInt(lastReload) > 10000) {
+                    localStorage.setItem("seabite_last_chunk_reload", now.toString());
+                    window.location.reload();
+                    return null;
+                }
+            }
             return <SeaBiteError />;
         }
         return this.props.children;
