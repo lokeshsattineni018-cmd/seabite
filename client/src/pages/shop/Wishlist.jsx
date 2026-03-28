@@ -26,7 +26,7 @@ export default function Wishlist() {
             console.error("Failed to fetch wishlist", err);
         } finally {
             setLoading(false);
-        }
+        }//s
     };
 
     const handleWishlistRemove = (productId) => {
