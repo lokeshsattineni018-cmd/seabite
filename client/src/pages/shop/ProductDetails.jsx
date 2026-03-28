@@ -180,8 +180,6 @@ export default function ProductDetails() {
   const [canReview, setCanReview] = useState(false);
   const [isWaitlisting, setIsWaitlisting] = useState(false);
   const [isJoinedWaitlist, setIsJoinedWaitlist] = useState(false);
-  const addBtnRef = useRef(null);
-  const imgRef = useRef(null);
 
   const isWishlisted = user?.wishlist?.some(
     (item) => (typeof item === "string" ? item : item._id) === id
@@ -238,13 +236,21 @@ export default function ProductDetails() {
     }
   }, [user, product]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e) => {
     if (!product || isAdded) return;
+    
+    // Stop propagation just in case
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     setIsAdded(true);
 
     try {
-      if (addBtnRef.current && imgRef.current) {
-        const btnRect = addBtnRef.current.getBoundingClientRect();
+      const btn = e ? e.currentTarget : null;
+      if (btn) {
+        const btnRect = btn.getBoundingClientRect();
         
         // Find visible cart icon
         const cartIcons = Array.from(document.querySelectorAll('[data-cart-icon]'));
@@ -279,10 +285,10 @@ export default function ProductDetails() {
 
         // Exact Product Image clone without lollipop styles (raw image)
         const imgClone = document.createElement("img");
-        imgClone.src = imgRef.current.src;
+        imgClone.src = getFullImageUrl(product.image);
         imgClone.style.width = "60px";
         imgClone.style.height = "60px";
-        imgClone.style.objectFit = "contain";
+        imgClone.style.objectFit = "cover";
         imgClone.style.borderRadius = "12px"; 
         imgClone.style.boxShadow = "0 10px 25px rgba(0,0,0,0.3)";
         
@@ -499,7 +505,6 @@ export default function ProductDetails() {
                 </div>
 
                 <motion.img
-                  ref={imgRef}
                   layoutId={`product-image-${product._id}`}
                   layout="position"
                   initial={{ scale: 0.88, opacity: 0 }}
@@ -735,7 +740,6 @@ export default function ProductDetails() {
 
                 {/* Add to cart */}
                 <motion.button
-                  ref={addBtnRef}
                   className={`add-btn ${!isAdded && product.stock !== "out" ? "liquid-cta" : ""}`}
                   whileTap={!isAdded && product.stock !== "out" ? { scale: 0.97 } : {}}
                   onClick={handleAddToCart}

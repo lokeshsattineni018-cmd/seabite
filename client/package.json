@@ -29,6 +29,7 @@
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.561.0",
     "multer": "^2.0.2",
+    "playwright": "^1.58.2",
     "react": "^18.2.0",
     "react-chatbotify": "^2.5.0",
     "react-dom": "^18.2.0",
