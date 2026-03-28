@@ -22,13 +22,6 @@ const CATEGORY_META = {
   Crab: { emoji: "🦀", label: "Live Crabs", tagline: "Soft-shell & market-fresh." },
 };
 
-const SORT_OPTIONS = [
-  { value: "newest", label: "Newest First" },
-  { value: "price_asc", label: "Price: Low → High" },
-  { value: "price_desc", label: "Price: High → Low" },
-  { value: "popular", label: "Most Popular" },
-];
-
 export default function Products() {
   const { refreshCartCount } = useContext(CartContext);
   const location = useLocation();
@@ -39,8 +32,6 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [sortOpen, setSortOpen] = useState(false);
-  const sortRef = useRef(null);
 
   const [filters, setFilters] = useState({
     category: "All",
@@ -53,18 +44,6 @@ export default function Products() {
 
   const categories = ["All", "Fish", "Crab", "Prawn"];
   const meta = CATEGORY_META[filters.category] || CATEGORY_META.All;
-  const activeSort = SORT_OPTIONS.find((o) => o.value === filters.sort);
-
-  // Outside click for sort dropdown
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (sortRef.current && !sortRef.current.contains(event.target)) {
-        setSortOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -250,60 +229,7 @@ export default function Products() {
                       <FiX size={13} />
                     </button>
                   )}
-                </div>
-
-                <div style={{ position: "relative" }} ref={sortRef}>
-                  <button
-                    onClick={() => setSortOpen((o) => !o)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: "6px",
-                      padding: "9px 14px", borderRadius: "10px",
-                      border: "1.5px solid #E2EEEC", background: "#fff",
-                      color: "#6B8F8A", fontSize: "13px", fontWeight: "600",
-                      cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    <FiFilter size={13} />
-                    {activeSort?.label}
-                    <FiChevronDown size={12} style={{ transition: "transform 0.2s", transform: sortOpen ? "rotate(180deg)" : "none" }} />
-                  </button>
-
-                  <AnimatePresence>
-                    {sortOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -8 }}
-                        transition={{ duration: 0.15 }}
-                        style={{
-                          position: "absolute", top: "calc(100% + 6px)", right: 0,
-                          background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "12px",
-                          padding: "6px", zIndex: 50, minWidth: "180px",
-                          boxShadow: "0 8px 24px rgba(26,46,44,0.08)",
-                        }}
-                      >
-                        {SORT_OPTIONS.map((opt) => (
-                          <button
-                            key={opt.value}
-                            onClick={() => { setFilters((p) => ({ ...p, sort: opt.value })); setSortOpen(false); }}
-                            style={{
-                              display: "block", width: "100%", textAlign: "left",
-                              padding: "8px 12px", borderRadius: "8px", border: "none",
-                              background: filters.sort === opt.value ? "#F4F9F8" : "transparent",
-                              color: filters.sort === opt.value ? "#5BBFB5" : "#1A2E2C",
-                              fontSize: "13px", fontWeight: filters.sort === opt.value ? "700" : "500",
-                              cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                              transition: "background 0.15s",
-                            }}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                  </div>
               </div>
             </div>
           </motion.div>
