@@ -1,4 +1,5 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { lazyWithRetry as lazy } from "./utils/lazyWithRetry"; // 🛠️ Stability: Auto-retry on deployment chunks
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -69,9 +70,17 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 
-// ✅ Axios global config
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
+
+// ✅ Header-based Session Fallback (Mobile stability)
+axios.interceptors.request.use((config) => {
+  const sessionId = localStorage.getItem("seabite_session_id");
+  if (sessionId) {
+    config.headers.Authorization = `Bearer ${sessionId}`;
+  }
+  return config;
+});
 
 
 

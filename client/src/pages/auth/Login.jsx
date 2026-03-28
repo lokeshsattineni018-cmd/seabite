@@ -28,6 +28,12 @@ export default function Login() {
           { token: tokenResponse.access_token },
           { withCredentials: true, headers: { "Content-Type": "application/json" } }
         );
+        
+        // ✅ Stability: Store sessionId for mobile header fallback
+        if (res.data.sessionId) {
+          localStorage.setItem("seabite_session_id", res.data.sessionId);
+        }
+
         setUser(res.data.user);
         setModal({ show: true, message: "Login Successful! Redirecting...", type: "success" });
         setTimeout(async () => {

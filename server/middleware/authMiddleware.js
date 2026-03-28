@@ -49,6 +49,32 @@ export const protect = async (req, res, next) => {
       return next();
     }
 
+    // ✅ Header-based session recovery (Mobile/Cross-Origin fallback)
+    const authHeader = req.headers.authorization;
+    if (!req.session?.user && authHeader && authHeader.startsWith("Bearer ")) {
+      const sessionId = authHeader.split(" ")[1];
+      console.log("🔑 Attempting session recovery from header SID:", sessionId);
+      
+      return new Promise((resolve) => {
+        req.sessionStore.get(sessionId, async (err, session) => {
+          if (err || !session || !session.user) {
+            console.log("❌ Header session recovery failed:", err?.message || "No session found");
+            return resolve(res.status(401).json({ message: "Invalid or expired session token" }));
+          }
+
+          console.log("✅ Header session recovered for:", session.user.email);
+          req.user = {
+            _id: session.user.id,
+            id: session.user.id,
+            name: session.user.name,
+            email: session.user.email,
+            role: session.user.role
+          };
+          resolve(next());
+        });
+      });
+    }
+
     console.log("❌ Protect: No active session found");
     return res.status(401).json({ message: "Not authenticated" });
   } catch (err) {
