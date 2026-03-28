@@ -18,7 +18,7 @@ import BannerPopup from "./components/layout/BannerPopup";
 import AnnouncementBar from "./components/layout/AnnouncementBar";
 import SeaBiteLoader from "./components/common/SeaBiteLoader"; // 🟢 Added Custom Loader
 import CookieConsent from "./components/common/CookieConsent"; // 🟢 Cookie Consent
-import MobileNav from "./components/layout/MobileNav"; // 📱 Mobile Navigation
+// import MobileNav from "./components/layout/MobileNav"; // 📱 Mobile Navigation (Removed per user request)
 
 // Lazy Imports for Critical Pages
 const Home = lazy(() => import("./pages/shop/Home"));
@@ -197,8 +197,7 @@ function MainLayout() {
       {/* 🟢 Cookie Consent */}
       <CookieConsent />
 
-      {/* 📱 Mobile Navigation */}
-      <MobileNav />
+      {/* 📱 Mobile Navigation Removed */}
 
       {maintenance.active && !isAdminRoute && location.pathname !== "/login" ? (
         <Maintenance message={maintenance.message} />
