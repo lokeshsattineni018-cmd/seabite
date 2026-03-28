@@ -91,36 +91,79 @@ const EnhancedProductCard = ({
     if (isAdding) return;
     setIsAdding(true);
 
-    // ── PREMIUM BUBBLE BURST EFFECT ──
-    const btn = e.currentTarget;
-    const rect = btn.getBoundingClientRect();
-    const colors = ["#ffffff", "#5BBFB5", "#7EB8D4", "rgba(255,255,255,0.5)"];
-    
-    // Spawn 8-10 internal bubbles
-    for (let i = 0; i < 10; i++) {
-      const bubble = document.createElement("span");
-      bubble.classList.add("lx-bubble");
+    // ── HIGHLY VISIBLE FLY-TO-CART ANIMATION ──
+    try {
+      const btn = e.currentTarget;
+      const btnRect = btn.getBoundingClientRect();
+      const cartIconEl = document.querySelector('[data-cart-icon]');
+      const cardEl = btn.closest('.product-card-hover');
+      const imgEl = cardEl?.querySelector('.product-image');
       
-      const size = Math.random() * 14 + 6; 
-      // Scatter from where they clicked
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
-      
-      const destX = (Math.random() - 0.5) * 80; // drift left/right
-      const destY = -Math.random() * 60 - 20;   // float up
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      
-      bubble.style.width = `${size}px`;
-      bubble.style.height = `${size}px`;
-      bubble.style.background = color;
-      bubble.style.left = `${clickX}px`;
-      bubble.style.top = `${clickY}px`;
-      bubble.style.setProperty('--dx', `${destX}px`);
-      bubble.style.setProperty('--dy', `${destY}px`);
-      
-      btn.appendChild(bubble);
-      setTimeout(() => document.body.contains(btn) && bubble.remove(), 700);
-    }
+      if (cartIconEl && imgEl) {
+        const cartRect = cartIconEl.getBoundingClientRect();
+        
+        // Create wrapper for parabolic path (X linear, Y ease)
+        const flyer = document.createElement("div");
+        flyer.style.position = "fixed";
+        flyer.style.left = `${btnRect.left + btnRect.width / 2 - 25}px`; // Center over button
+        flyer.style.top = `${btnRect.top + btnRect.height / 2 - 25}px`;
+        flyer.style.width = "50px";
+        flyer.style.height = "50px";
+        flyer.style.zIndex = "999999";
+        flyer.style.pointerEvents = "none";
+        // Create the image inside
+        const imgClone = document.createElement("img");
+        imgClone.src = imgEl.src;
+        imgClone.style.width = "100%";
+        imgClone.style.height = "100%";
+        imgClone.style.objectFit = "cover";
+        imgClone.style.borderRadius = "50%";
+        imgClone.style.border = "2px solid #5BBFB5";
+        imgClone.style.boxShadow = "0 10px 25px rgba(91,191,181,0.5)";
+        
+        // Add a cute +1 badge
+        const badge = document.createElement("span");
+        badge.innerText = "+1";
+        badge.style.position = "absolute";
+        badge.style.top = "-5px";
+        badge.style.right = "-10px";
+        badge.style.background = "#F07468";
+        badge.style.color = "#fff";
+        badge.style.fontSize = "12px";
+        badge.style.fontWeight = "bold";
+        badge.style.padding = "2px 6px";
+        badge.style.borderRadius = "10px";
+        
+        flyer.appendChild(imgClone);
+        flyer.appendChild(badge);
+        document.body.appendChild(flyer);
+
+        // WAAPI animation for the arc
+        const targetX = cartRect.left + cartRect.width / 2 - btnRect.left - btnRect.width / 2;
+        const targetY = cartRect.top + cartRect.height / 2 - btnRect.top - btnRect.height / 2;
+
+        const anim = flyer.animate([
+          { transform: `translate(0px, 0px) scale(1)`, opacity: 1 },
+          { transform: `translate(${targetX * 0.4}px, ${targetY - 120}px) scale(1.2)`, opacity: 1, offset: 0.4 }, // Arc up
+          { transform: `translate(${targetX}px, ${targetY}px) scale(0.3)`, opacity: 0 } // Drop into cart
+        ], {
+          duration: 800,
+          easing: "cubic-bezier(0.25, 1, 0.5, 1)",
+        });
+
+        anim.onfinish = () => {
+          flyer.remove();
+          // Bounce the actual cart icon
+          cartIconEl.animate([
+            { transform: "scale(1)" },
+            { transform: "scale(1.4)" },
+            { transform: "scale(0.9)" },
+            { transform: "scale(1.1)" },
+            { transform: "scale(1)" }
+          ], { duration: 400, easing: "ease-out" });
+        };
+      }
+    } catch (err) { }
 
     setTimeout(() => {
       addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
@@ -130,7 +173,7 @@ const EnhancedProductCard = ({
       });
       setIsAdding(false);
       if (onAddToCart) onAddToCart(product._id);
-    }, 400); // reduced timeout to feel snappier
+    }, 800); // Wait for animation to finish
   };
 
   const handleWishlistToggle = async (e) => {
@@ -361,18 +404,6 @@ const EnhancedProductCard = ({
         @keyframes spin { to { transform: rotate(360deg); } }
         .cart-btn-wave { position: relative; overflow: hidden; }
         .cart-btn-wave:active { transform: scale(0.97); }
-        .lx-bubble {
-          position: absolute;
-          border-radius: 50%;
-          pointer-events: none;
-          transform: translate(-50%, -50%) scale(0);
-          animation: bubble-rise 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-          box-shadow: inset 0 0 4px rgba(255,255,255,0.7);
-        }
-        @keyframes bubble-rise {
-          0% { transform: translate(-50%, -50%) scale(1); opacity: 0.8; }
-          100% { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0); opacity: 0; }
-        }
       `}</style>
     </div>
   );
