@@ -19,9 +19,15 @@ export const SocketProvider = ({ children }) => {
         // Force polling on Vercel due to Serverless limitations on WebSockets
         const isVercel = socketUrl.includes('vercel.app') || window.location.hostname.includes('seabite.co.in');
 
+        // ⚠️ DISABLE SOCKET ON VERCEL: Vercel serverless functions don't support persistent socket connections.
+        if (isVercel) {
+            // console.warn("🔌 Socket.io disabled on Vercel/Production to prevent 404 spam.");
+            return;
+        }
+
         const newSocket = io(socketUrl, {
             withCredentials: true,
-            transports: isVercel ? ['polling'] : ['websocket', 'polling'], // Fallback options
+            transports: ['websocket', 'polling'], 
             reconnectionAttempts: 5,
         });
 
