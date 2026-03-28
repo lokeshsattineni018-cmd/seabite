@@ -85,7 +85,7 @@ export default function Wishlist() {
                 paddingTop: 96,
                 paddingBottom: 100,
                 paddingLeft: 28,
-                paddingRight: 28,
+                paddingRight: 28,//sdd
             }}>
                 <div style={{ maxWidth: 1200, margin: "0 auto" }}>
 
