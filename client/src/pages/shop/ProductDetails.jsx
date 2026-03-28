@@ -180,9 +180,8 @@ export default function ProductDetails() {
   const [canReview, setCanReview] = useState(false);
   const [isWaitlisting, setIsWaitlisting] = useState(false);
   const [isJoinedWaitlist, setIsJoinedWaitlist] = useState(false);
-  const [flyItems, setFlyItems] = useState([]);
-  const flyIdRef = useRef(0);
   const addBtnRef = useRef(null);
+  const imgRef = useRef(null);
 
   const isWishlisted = user?.wishlist?.some(
     (item) => (typeof item === "string" ? item : item._id) === id
@@ -240,24 +239,95 @@ export default function ProductDetails() {
   }, [user, product]);
 
   const handleAddToCart = () => {
-    if (!product) return;
-    if (addBtnRef.current) {
-      const rect = addBtnRef.current.getBoundingClientRect();
-      const cartEl = document.querySelector("[data-cart-icon]");
-      const cartRect = cartEl?.getBoundingClientRect() ?? { left: window.innerWidth - 60, top: 20 };
-      setFlyItems((prev) => [...prev, {
-        id: ++flyIdRef.current,
-        startX: rect.left + rect.width / 2 - 28,
-        startY: rect.top - 28,
-        endX: cartRect.left,
-        endY: cartRect.top,
-        image: getFullImageUrl(product.image),
-      }]);
-    }
-    addToCart({ ...product, qty, price: parseFloat(totalPrice) });
-    refreshCartCount();
+    if (!product || isAdded) return;
     setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2000);
+
+    try {
+      if (addBtnRef.current && imgRef.current) {
+        const btnRect = addBtnRef.current.getBoundingClientRect();
+        
+        // Find visible cart icon
+        const cartIcons = Array.from(document.querySelectorAll('[data-cart-icon]'));
+        const cartIconEl = cartIcons.find(icon => {
+          const r = icon.getBoundingClientRect();
+          return r.width > 0 && r.height > 0;
+        });
+
+        // Fallback to top-right corner if hidden on mobile
+        const cartRect = cartIconEl 
+            ? cartIconEl.getBoundingClientRect() 
+            : { left: window.innerWidth - 40, top: 20, width: 30, height: 30 };
+
+        const startX = btnRect.left + btnRect.width / 2 - 30;
+        const startY = btnRect.top + btnRect.height / 2 - 30;
+        const endX = cartRect.left + cartRect.width / 2 - 15;
+        const endY = cartRect.top + cartRect.height / 2 - 15;
+
+        // X-Axis Container
+        const flyerX = document.createElement("div");
+        flyerX.style.position = "fixed";
+        flyerX.style.left = `${startX}px`;
+        flyerX.style.top = `0px`; 
+        flyerX.style.zIndex = "99999999";
+        flyerX.style.pointerEvents = "none";
+
+        // Y-Axis Container
+        const flyerY = document.createElement("div");
+        flyerY.style.position = "absolute";
+        flyerY.style.left = "0px";
+        flyerY.style.top = `${startY}px`;
+
+        // Exact Product Image clone without lollipop styles (raw image)
+        const imgClone = document.createElement("img");
+        imgClone.src = imgRef.current.src;
+        imgClone.style.width = "60px";
+        imgClone.style.height = "60px";
+        imgClone.style.objectFit = "contain";
+        imgClone.style.borderRadius = "12px"; 
+        imgClone.style.boxShadow = "0 10px 25px rgba(0,0,0,0.3)";
+        
+        flyerY.appendChild(imgClone);
+        flyerX.appendChild(flyerY);
+        document.body.appendChild(flyerX);
+
+        // Natively hardware-accelerated Bezier Curve
+        flyerX.animate([
+            { left: `${startX}px` },
+            { left: `${endX}px` }
+        ], { duration: 1100, easing: 'linear', fill: 'forwards' });
+
+        const animY = flyerY.animate([
+            { top: `${startY}px`, transform: `scale(1) rotate(0deg)`, opacity: 1 },
+            { top: `${endY}px`, transform: `scale(0.2) rotate(90deg)`, opacity: 0.6 }
+        ], { duration: 1100, easing: 'cubic-bezier(0.3, -0.4, 0.7, 1)', fill: 'forwards' });
+
+        animY.onfinish = () => {
+          flyerX.remove();
+          if (cartIconEl) {
+            cartIconEl.animate([
+              { transform: "scale(1)" },
+              { transform: "scale(1.5)" }, 
+              { transform: "scale(0.9)" },
+              { transform: "scale(1.1)" },
+              { transform: "scale(1)" }
+            ], { duration: 500, easing: "ease-out" });
+          }
+        };
+      }
+    } catch (err) {
+      console.error("Cart animation failed: ", err);
+    }
+
+    // Wait for the visual flight before logically adding to cart
+    setTimeout(() => {
+      addToCart({ ...product, qty, price: parseFloat(totalPrice) });
+      refreshCartCount();
+      toast.success(`${product.name} added`, {
+        style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
+        icon: "🛒",
+      });
+      setTimeout(() => setIsAdded(false), 2000);
+    }, 1100);
   };
 
   const handleWishlistToggle = async () => {
@@ -282,9 +352,7 @@ export default function ProductDetails() {
     finally { setIsWaitlisting(false); }
   };
 
-  const handleFlyComplete = useCallback((fId) => {
-    setFlyItems((prev) => prev.filter((item) => item.id !== fId));
-  }, []);
+
 
   // ── Loading ────────────────────────────────────────────
   if (loading) {
@@ -368,19 +436,7 @@ export default function ProductDetails() {
         }
       `}</style>
 
-      {/* Flying item animation */}
-      {flyItems.map((item) => (
-        <motion.div
-          key={item.id}
-          initial={{ position: "fixed", left: item.startX, top: item.startY, width: 56, height: 56, zIndex: 9999, opacity: 1, scale: 1, borderRadius: "50%", pointerEvents: "none" }}
-          animate={{ left: item.endX, top: item.endY, width: 16, height: 16, opacity: [1, 1, 0], scale: [1, 1.1, 0.2] }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          onAnimationComplete={() => handleFlyComplete(item.id)}
-          style={{ position: "fixed", borderRadius: "50%", overflow: "hidden", border: "2px solid #fff", boxShadow: "0 4px 16px rgba(91,191,181,0.3)" }}
-        >
-          <img src={item.image} alt="" style={{ width: "100%", height: "100%", objectFit: "contain", background: "#F4F9F8", padding: "4px" }} />
-        </motion.div>
-      ))}
+
 
       <div
         className="detail-root"
@@ -443,6 +499,7 @@ export default function ProductDetails() {
                 </div>
 
                 <motion.img
+                  ref={imgRef}
                   layoutId={`product-image-${product._id}`}
                   layout="position"
                   initial={{ scale: 0.88, opacity: 0 }}
