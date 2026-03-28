@@ -127,28 +127,14 @@ const EnhancedProductCard = ({
         // Image Clone
         const imgClone = document.createElement("img");
         imgClone.src = imgEl.src;
-        imgClone.style.width = "50px";
-        imgClone.style.height = "50px";
+        // Keep it rectangular to look exactly like the product image
+        imgClone.style.width = "60px";
+        imgClone.style.height = "60px";
         imgClone.style.objectFit = "cover";
-        imgClone.style.borderRadius = "50%";
-        imgClone.style.border = "2px solid #5BBFB5";
-        imgClone.style.boxShadow = "0 10px 25px rgba(91,191,181,0.5)";
-        
-        // Cute Badge
-        const badge = document.createElement("span");
-        badge.innerText = "+1";
-        badge.style.position = "absolute";
-        badge.style.top = "-5px";
-        badge.style.right = "-10px";
-        badge.style.background = "#F07468";
-        badge.style.color = "#fff";
-        badge.style.fontSize = "12px";
-        badge.style.fontWeight = "bold";
-        badge.style.padding = "2px 6px";
-        badge.style.borderRadius = "10px";
+        imgClone.style.borderRadius = "12px"; 
+        imgClone.style.boxShadow = "0 10px 25px rgba(0,0,0,0.2)";
         
         flyerY.appendChild(imgClone);
-        flyerY.appendChild(badge);
         flyerX.appendChild(flyerY);
         document.body.appendChild(flyerX);
 
