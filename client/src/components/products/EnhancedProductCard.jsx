@@ -85,8 +85,6 @@ const EnhancedProductCard = ({
     return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
   };
 
-  const imgRef = useRef(null);
-
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -98,79 +96,75 @@ const EnhancedProductCard = ({
       const btn = e.currentTarget;
       const btnRect = btn.getBoundingClientRect();
       
-      // Select the strictly VISIBLE cart icon (prevents flying to a hidden mobile/desktop icon)
+      // Select the strictly VISIBLE cart icon
       const cartIcons = Array.from(document.querySelectorAll('[data-cart-icon]'));
       const cartIconEl = cartIcons.find(icon => {
         const r = icon.getBoundingClientRect();
         return r.width > 0 && r.height > 0;
       });
 
-      const imgEl = imgRef.current; // Use React ref instead of fragile DOM query
+      // Fallback to top-right corner if the cart icon is completely hidden or unmounted
+      const cartRect = cartIconEl 
+          ? cartIconEl.getBoundingClientRect() 
+          : { left: window.innerWidth - 40, top: 20, width: 30, height: 30 };
       
-      if (imgEl) {
-        // Fallback to top-right corner if the cart icon is completely hidden or unmounted
-        const cartRect = cartIconEl 
-            ? cartIconEl.getBoundingClientRect() 
-            : { left: window.innerWidth - 40, top: 20, width: 30, height: 30 };
-        
-        const startX = btnRect.left + btnRect.width / 2 - 25;
-        const startY = btnRect.top + btnRect.height / 2 - 25;
-        const endX = cartRect.left + cartRect.width / 2 - 10;
-        const endY = cartRect.top + cartRect.height / 2 - 10;
+      const startX = btnRect.left + btnRect.width / 2 - 25;
+      const startY = btnRect.top + btnRect.height / 2 - 25;
+      const endX = cartRect.left + cartRect.width / 2 - 10;
+      const endY = cartRect.top + cartRect.height / 2 - 10;
 
-        // X-Axis Container (Moves horizontally)
-        const flyerX = document.createElement("div");
-        flyerX.style.position = "fixed";
-        flyerX.style.left = `${startX}px`;
-        flyerX.style.top = `0px`; 
-        flyerX.style.zIndex = "99999999";
-        flyerX.style.pointerEvents = "none";
+      // X-Axis Container (Moves horizontally)
+      const flyerX = document.createElement("div");
+      flyerX.style.position = "fixed";
+      flyerX.style.left = `${startX}px`;
+      flyerX.style.top = `0px`; 
+      flyerX.style.zIndex = "99999999";
+      flyerX.style.pointerEvents = "none";
 
-        // Y-Axis Container (Moves vertically with an upward arc)
-        const flyerY = document.createElement("div");
-        flyerY.style.position = "absolute";
-        flyerY.style.left = "0px";
-        flyerY.style.top = `${startY}px`;
+      // Y-Axis Container (Moves vertically with an upward arc)
+      const flyerY = document.createElement("div");
+      flyerY.style.position = "absolute";
+      flyerY.style.left = "0px";
+      flyerY.style.top = `${startY}px`;
 
-        // Image Clone
-        const imgClone = document.createElement("img");
-        imgClone.src = imgEl.src;
-        imgClone.style.width = "60px";
-        imgClone.style.height = "60px";
-        imgClone.style.objectFit = "cover";
-        imgClone.style.borderRadius = "12px"; 
-        imgClone.style.boxShadow = "0 10px 25px rgba(0,0,0,0.3)";
-        
-        flyerY.appendChild(imgClone);
-        flyerX.appendChild(flyerY);
-        document.body.appendChild(flyerX);
+      // Image Clone using raw variable instead of DOM ref
+      const imgClone = document.createElement("img");
+      imgClone.src = getImageUrl(product.image);
+      imgClone.style.width = "60px";
+      imgClone.style.height = "60px";
+      imgClone.style.objectFit = "cover";
+      imgClone.style.borderRadius = "12px"; 
+      imgClone.style.boxShadow = "0 10px 25px rgba(0,0,0,0.3)";
+      
+      flyerY.appendChild(imgClone);
+      flyerX.appendChild(flyerY);
+      document.body.appendChild(flyerX);
 
-        // WAAPI guarantees play without browser reflow racing
-        flyerX.animate([
-            { left: `${startX}px` },
-            { left: `${endX}px` }
-        ], { duration: 1100, easing: 'linear', fill: 'forwards' });
+      // WAAPI guarantees play without browser reflow racing
+      flyerX.animate([
+          { left: `${startX}px` },
+          { left: `${endX}px` }
+      ], { duration: 1100, easing: 'linear', fill: 'forwards' });
 
-        const animY = flyerY.animate([
-            { top: `${startY}px`, transform: `scale(1) rotate(0deg)`, opacity: 1 },
-            { top: `${endY}px`, transform: `scale(0.2) rotate(90deg)`, opacity: 0.6 } // Less fade to keep it visible
-        ], { duration: 1100, easing: 'cubic-bezier(0.3, -0.4, 0.7, 1)', fill: 'forwards' });
+      const animY = flyerY.animate([
+          { top: `${startY}px`, transform: `scale(1) rotate(0deg)`, opacity: 1 },
+          { top: `${endY}px`, transform: `scale(0.2) rotate(90deg)`, opacity: 0.6 } // Less fade to keep it visible
+      ], { duration: 1100, easing: 'cubic-bezier(0.3, -0.4, 0.7, 1)', fill: 'forwards' });
 
-        // Wait for animation to finish
-        animY.onfinish = () => {
-          flyerX.remove();
-          // Bounce the actual cart icon only if we found it
-          if (cartIconEl) {
-            cartIconEl.animate([
-              { transform: "scale(1)" },
-              { transform: "scale(1.5)" }, 
-              { transform: "scale(0.9)" },
-              { transform: "scale(1.1)" },
-              { transform: "scale(1)" }
-            ], { duration: 500, easing: "ease-out" });
-          }
-        };
-      }
+      // Wait for animation to finish
+      animY.onfinish = () => {
+        flyerX.remove();
+        // Bounce the actual cart icon only if we found it
+        if (cartIconEl) {
+          cartIconEl.animate([
+            { transform: "scale(1)" },
+            { transform: "scale(1.5)" }, 
+            { transform: "scale(0.9)" },
+            { transform: "scale(1.1)" },
+            { transform: "scale(1)" }
+          ], { duration: 500, easing: "ease-out" });
+        }
+      };
     } catch (err) { 
       console.error("Cart animation failed: ", err);
     }
@@ -320,7 +314,6 @@ const EnhancedProductCard = ({
           </div>
         )}
         <img
-          ref={imgRef}
           src={getImageUrl(product.image)}
           alt={product.name}
           style={{
