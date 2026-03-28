@@ -91,7 +91,7 @@ const EnhancedProductCard = ({
     if (isAdding) return;
     setIsAdding(true);
 
-    // ── HIGHLY VISIBLE FLY-TO-CART ANIMATION ──
+    // ── PERFECT PARABOLIC FLY-TO-CART ANIMATION ──
     try {
       const btn = e.currentTarget;
       const btnRect = btn.getBoundingClientRect();
@@ -102,26 +102,39 @@ const EnhancedProductCard = ({
       if (cartIconEl && imgEl) {
         const cartRect = cartIconEl.getBoundingClientRect();
         
-        // Create wrapper for parabolic path (X linear, Y ease)
-        const flyer = document.createElement("div");
-        flyer.style.position = "fixed";
-        flyer.style.left = `${btnRect.left + btnRect.width / 2 - 25}px`; // Center over button
-        flyer.style.top = `${btnRect.top + btnRect.height / 2 - 25}px`;
-        flyer.style.width = "50px";
-        flyer.style.height = "50px";
-        flyer.style.zIndex = "999999";
-        flyer.style.pointerEvents = "none";
-        // Create the image inside
+        const startX = btnRect.left + btnRect.width / 2 - 25;
+        const startY = btnRect.top + btnRect.height / 2 - 25;
+        const endX = cartRect.left + cartRect.width / 2 - 10;
+        const endY = cartRect.top + cartRect.height / 2 - 10;
+
+        // X-Axis Container (Moves horizontally)
+        const flyerX = document.createElement("div");
+        flyerX.style.position = "fixed";
+        flyerX.style.left = `${startX}px`;
+        flyerX.style.top = `0px`; 
+        flyerX.style.zIndex = "999999";
+        flyerX.style.pointerEvents = "none";
+        flyerX.style.transition = "left 1.2s linear"; 
+
+        // Y-Axis Container (Moves vertically with an upward arc bezier)
+        const flyerY = document.createElement("div");
+        flyerY.style.position = "absolute";
+        flyerY.style.left = "0px";
+        flyerY.style.top = `${startY}px`;
+        // cubic-bezier(0.2, -0.6, 0.7, 1) creates an overshoot (upward arc) before falling
+        flyerY.style.transition = "top 1.2s cubic-bezier(0.3, -0.4, 0.7, 1), transform 1.2s ease-in, opacity 1.2s ease-in";
+
+        // Image Clone
         const imgClone = document.createElement("img");
         imgClone.src = imgEl.src;
-        imgClone.style.width = "100%";
-        imgClone.style.height = "100%";
+        imgClone.style.width = "50px";
+        imgClone.style.height = "50px";
         imgClone.style.objectFit = "cover";
         imgClone.style.borderRadius = "50%";
         imgClone.style.border = "2px solid #5BBFB5";
         imgClone.style.boxShadow = "0 10px 25px rgba(91,191,181,0.5)";
         
-        // Add a cute +1 badge
+        // Cute Badge
         const badge = document.createElement("span");
         badge.innerText = "+1";
         badge.style.position = "absolute";
@@ -134,25 +147,23 @@ const EnhancedProductCard = ({
         badge.style.padding = "2px 6px";
         badge.style.borderRadius = "10px";
         
-        flyer.appendChild(imgClone);
-        flyer.appendChild(badge);
-        document.body.appendChild(flyer);
+        flyerY.appendChild(imgClone);
+        flyerY.appendChild(badge);
+        flyerX.appendChild(flyerY);
+        document.body.appendChild(flyerX);
 
-        // WAAPI animation for the arc
-        const targetX = cartRect.left + cartRect.width / 2 - btnRect.left - btnRect.width / 2;
-        const targetY = cartRect.top + cartRect.height / 2 - btnRect.top - btnRect.height / 2;
+        // Force browser reflow to register starting positions
+        flyerX.getBoundingClientRect();
 
-        const anim = flyer.animate([
-          { transform: `translate(0px, 0px) scale(1)`, opacity: 1 },
-          { transform: `translate(${targetX * 0.4}px, ${targetY - 120}px) scale(1.2)`, opacity: 1, offset: 0.4 }, // Arc up
-          { transform: `translate(${targetX}px, ${targetY}px) scale(0.3)`, opacity: 0 } // Drop into cart
-        ], {
-          duration: 1500, // Slower, graceful flight
-          easing: "cubic-bezier(0.25, 1, 0.5, 1)",
-        });
+        // Trigger animations
+        flyerX.style.left = `${endX}px`;
+        flyerY.style.top = `${endY}px`;
+        flyerY.style.transform = `scale(0.2) rotate(360deg)`;
+        flyerY.style.opacity = `0`;
 
-        anim.onfinish = () => {
-          flyer.remove();
+        // Wait for animation to finish
+        setTimeout(() => {
+          flyerX.remove();
           // Bounce the actual cart icon
           cartIconEl.animate([
             { transform: "scale(1)" },
@@ -161,7 +172,7 @@ const EnhancedProductCard = ({
             { transform: "scale(1.1)" },
             { transform: "scale(1)" }
           ], { duration: 500, easing: "ease-out" });
-        };
+        }, 1200);
       }
     } catch (err) { }
 
@@ -173,7 +184,7 @@ const EnhancedProductCard = ({
       });
       setIsAdding(false);
       if (onAddToCart) onAddToCart(product._id);
-    }, 1400); // Wait for the animation to almost cover the distance before firing the cart update
+    }, 1100); 
   };
 
   const handleWishlistToggle = async (e) => {
