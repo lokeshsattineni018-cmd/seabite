@@ -4,6 +4,7 @@ import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
 import toast from "../../utils/toast"; // Custom SeaBite toast
+import triggerHaptic from "../../utils/haptics"; // 📱 Haptic feedback
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 
@@ -33,8 +34,9 @@ export default function Wishlist() {
         setWishlist(prev => prev.filter(p => p._id !== productId));
     };
 
-    const handleAddToCart = (productId) => {
-        const product = wishlist.find(p => p._id === productId);
+    const handleMoveToCart = (productId) => {
+        triggerHaptic("medium"); // 📳 Haptic vibration
+        const product = wishlist.find((p) => p._id === productId);
         if (!product) return;
         handleWishlistRemove(productId);
         toast.success(`${product.name} moved to cart`, {
@@ -42,7 +44,8 @@ export default function Wishlist() {
         });
     };
 
-    const addAll = () => {
+    const handleMoveAllToCart = () => {
+        triggerHaptic("heavy"); // 📳 Heavy haptic for bulk action
         const n = wishlist.length;
         if (!n) return;
         wishlist.forEach(product => {

@@ -15,6 +15,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import toast from "../../utils/toast"; // Custom SeaBite toast
+import triggerHaptic from "../../utils/haptics"; // 📱 Haptic feedback
 import ReviewModal from "../../components/common/ReviewModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -295,6 +296,7 @@ export default function ProductDetails() {
 
     setTimeout(() => {
       try {
+        triggerHaptic("medium"); // 📳 Haptic vibration
         addToCart({ ...product, qty, price: parseFloat(totalPrice) });
         refreshCartCount();
         toast.success(`${product.name} added`, {
@@ -314,6 +316,7 @@ export default function ProductDetails() {
   }, []);
 
   const handleWishlistToggle = async () => {
+    triggerHaptic("soft"); // 📳 Haptic vibration
     if (!user) { toast.error("Please login to save items"); return navigate("/login"); }
     setLoadingWishlist(true);
     try {
