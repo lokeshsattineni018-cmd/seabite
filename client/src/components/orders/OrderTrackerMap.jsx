@@ -24,9 +24,9 @@ export default function OrderTrackerMap({ orderStatus, shippingAddress }) {
     }
 
     const initMap = async () => {
-      // Default SeaBite Hub
-      const storeLocation = [19.0760, 72.8777];
-      let customerLocation = [19.1020, 72.8900]; // Fallback
+      // SeaBite Hub - Mogalthur, Andhra Pradesh
+      const storeLocation = [16.4170, 81.6050];
+      let customerLocation = [16.6000, 81.5000]; // Fallback to nearby if geocoding fails
 
       // Dynamically Geocode actual address using OSM's free Nominatim API
       if (shippingAddress) {
