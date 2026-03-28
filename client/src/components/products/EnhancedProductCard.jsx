@@ -119,16 +119,14 @@ const EnhancedProductCard = ({
         flyerX.style.position = "fixed";
         flyerX.style.left = `${startX}px`;
         flyerX.style.top = `0px`; 
-        flyerX.style.zIndex = "999999";
+        flyerX.style.zIndex = "99999999";
         flyerX.style.pointerEvents = "none";
-        flyerX.style.transition = "left 1.2s linear"; 
 
         // Y-Axis Container (Moves vertically with an upward arc)
         const flyerY = document.createElement("div");
         flyerY.style.position = "absolute";
         flyerY.style.left = "0px";
         flyerY.style.top = `${startY}px`;
-        flyerY.style.transition = "top 1.2s cubic-bezier(0.3, -0.4, 0.7, 1), transform 1.2s ease-in, opacity 1.2s ease-in";
 
         // Image Clone
         const imgClone = document.createElement("img");
@@ -137,25 +135,25 @@ const EnhancedProductCard = ({
         imgClone.style.height = "60px";
         imgClone.style.objectFit = "cover";
         imgClone.style.borderRadius = "12px"; 
-        imgClone.style.boxShadow = "0 10px 25px rgba(0,0,0,0.2)";
+        imgClone.style.boxShadow = "0 10px 25px rgba(0,0,0,0.3)";
         
         flyerY.appendChild(imgClone);
         flyerX.appendChild(flyerY);
         document.body.appendChild(flyerX);
 
-        // Safely trigger transition in the next frame
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            if (!document.body.contains(flyerX)) return;
-            flyerX.style.left = `${endX}px`;
-            flyerY.style.top = `${endY}px`;
-            flyerY.style.transform = `scale(0.2) rotate(180deg)`; // Less rotation for clean look
-            flyerY.style.opacity = `0`; 
-          });
-        });
+        // WAAPI guarantees play without browser reflow racing
+        flyerX.animate([
+            { left: `${startX}px` },
+            { left: `${endX}px` }
+        ], { duration: 1100, easing: 'linear', fill: 'forwards' });
+
+        const animY = flyerY.animate([
+            { top: `${startY}px`, transform: `scale(1) rotate(0deg)`, opacity: 1 },
+            { top: `${endY}px`, transform: `scale(0.2) rotate(90deg)`, opacity: 0.6 } // Less fade to keep it visible
+        ], { duration: 1100, easing: 'cubic-bezier(0.3, -0.4, 0.7, 1)', fill: 'forwards' });
 
         // Wait for animation to finish
-        setTimeout(() => {
+        animY.onfinish = () => {
           flyerX.remove();
           // Bounce the actual cart icon
           cartIconEl.animate([
@@ -165,7 +163,7 @@ const EnhancedProductCard = ({
             { transform: "scale(1.1)" },
             { transform: "scale(1)" }
           ], { duration: 500, easing: "ease-out" });
-        }, 1200);
+        };
       }
     } catch (err) { 
       console.error("Cart animation failed: ", err);
