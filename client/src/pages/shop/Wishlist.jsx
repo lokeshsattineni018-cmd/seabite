@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
-import toast from "react-hot-toast";
+import toast from "../../utils/toast"; // Custom SeaBite toast
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 
@@ -38,7 +38,6 @@ export default function Wishlist() {
         if (!product) return;
         handleWishlistRemove(productId);
         toast.success(`${product.name} moved to cart`, {
-            style: { background: "#5BBFB5", color: "#fff", borderRadius: "12px", fontSize: "13px" },
             icon: "🛒",
         });
     };
@@ -54,7 +53,6 @@ export default function Wishlist() {
         });
         setWishlist([]);
         toast.success(`${n} items moved to cart`, {
-            style: { background: "#5BBFB5", color: "#fff", borderRadius: "12px", fontSize: "13px" },
             icon: "🛒",
         });
     };

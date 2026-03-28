@@ -14,7 +14,7 @@ import {
   FiHeart, FiZap, FiChevronRight, FiBox,
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
-import toast from "react-hot-toast";
+import toast from "../../utils/toast"; // Custom SeaBite toast
 import ReviewModal from "../../components/common/ReviewModal";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -297,7 +297,6 @@ export default function ProductDetails() {
         addToCart({ ...product, qty, price: parseFloat(totalPrice) });
         refreshCartCount();
         toast.success(`${product.name} added`, {
-          style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
           icon: "🛒",
         });
       } finally {
@@ -318,7 +317,7 @@ export default function ProductDetails() {
     setLoadingWishlist(true);
     try {
       const res = await axios.post(`${API_URL}/api/user/wishlist/${product._id}`, {}, { withCredentials: true });
-      toast.success(res.data.message, { style: { borderRadius: "12px", fontSize: "13px" }, icon: "❤️" });
+      toast.success(res.data.message, { icon: "❤️" });
       await refreshMe();
     } catch { toast.error("Failed to update wishlist"); }
     finally { setLoadingWishlist(false); }
@@ -329,7 +328,7 @@ export default function ProductDetails() {
     setIsWaitlisting(true);
     try {
       const res = await axios.post(`${API_URL}/api/products/${product._id}/waitlist`, {}, { withCredentials: true });
-      toast.success(res.data.message, { style: { borderRadius: "12px", fontSize: "13px" }, icon: "📧" });
+      toast.success(res.data.message, { icon: "📧" });
       setIsJoinedWaitlist(true);
     } catch (err) { toast.error(err.response?.data?.message || "Failed to join waitlist"); }
     finally { setIsWaitlisting(false); }

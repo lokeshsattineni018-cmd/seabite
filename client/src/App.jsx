@@ -149,7 +149,7 @@ function MainLayout() {
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 2500,
+          duration: 4500,
           style: {
             background: '#1A2B35',
             color: '#fff',

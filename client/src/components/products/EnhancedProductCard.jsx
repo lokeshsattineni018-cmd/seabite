@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
-import toast from "react-hot-toast";
+import toast from "../../utils/toast"; // Custom SeaBite toast
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -149,7 +149,6 @@ const EnhancedProductCard = ({
         addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
         refreshCartCount();
         toast.success(`${product.name} added`, {
-          style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
           icon: "🛒",
         });
         if (onAddToCart) onAddToCart(product._id);
