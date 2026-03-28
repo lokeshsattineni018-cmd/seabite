@@ -180,6 +180,7 @@ export default function ProductDetails() {
   const [loadingWishlist, setLoadingWishlist] = useState(false);
   const [isWaitlisting, setIsWaitlisting] = useState(false);
   const [isJoinedWaitlist, setIsJoinedWaitlist] = useState(false);
+  const [canReview, setCanReview] = useState(false);
   const [flyItems, setFlyItems] = useState([]);
   const flyIdRef = useRef(0);
 
