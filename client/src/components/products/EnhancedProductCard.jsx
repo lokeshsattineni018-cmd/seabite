@@ -28,7 +28,7 @@ const EnhancedProductCard = ({
   isWishlistMode = false,
   globalDiscount = 0,
 }) => {
-  const { addToCart } = useContext(CartContext);
+  const { addToCart, refreshCartCount } = useContext(CartContext);
   const { user, refreshMe } = useContext(AuthContext);
   const navigate = useNavigate();
 
@@ -87,7 +87,11 @@ const EnhancedProductCard = ({
 
   const getImageUrl = (path) => {
     if (!path) return "https://placehold.co/400?text=No+Image";
-    return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
+    if (path.startsWith("http")) return path;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return cleanPath.startsWith("/uploads")
+      ? `${API_URL}${cleanPath}`
+      : `${API_URL}/uploads${cleanPath}`;
   };
 
   const handleAddToCart = (e) => {
@@ -96,19 +100,19 @@ const EnhancedProductCard = ({
     if (isAdding) return;
     setIsAdding(true);
 
-    // ── PERFECT PARABOLIC FLY-TO-CART ANIMATION ──
+    // Safety reset: if anything hangs, ensure we go back to "Add to Cart" after 4s
+    const safetyTimer = setTimeout(() => setIsAdding(false), 4000);
+
     try {
       const btn = e.currentTarget;
       const btnRect = btn.getBoundingClientRect();
       
-      // Select the strictly VISIBLE cart icon
       const cartIcons = Array.from(document.querySelectorAll('[data-cart-icon]'));
       const cartIconEl = cartIcons.find(icon => {
         const r = icon.getBoundingClientRect();
         return r.width > 0 && r.height > 0;
       });
 
-      // Fallback to top-right corner if the cart icon is completely hidden or unmounted
       const cartRect = cartIconEl 
           ? cartIconEl.getBoundingClientRect() 
           : { left: window.innerWidth - 40, top: 20, width: 30, height: 30 };
@@ -118,39 +122,41 @@ const EnhancedProductCard = ({
       const endX = cartRect.left + cartRect.width / 2 - 10;
       const endY = cartRect.top + cartRect.height / 2 - 10;
 
-      // Add flight data entirely to React state for Framer Motion to handle
+      const flyId = ++flyIdRef.current;
       setFlyItems(prev => [...prev, {
-        id: ++flyIdRef.current,
+        id: flyId,
         startX, startY, endX, endY,
         image: getImageUrl(product.image)
       }]);
       
-      // Delay visual bounce of cart icon to match animation time
       setTimeout(() => {
         if (cartIconEl) {
           cartIconEl.animate([
-            { transform: "scale(1)" },
-            { transform: "scale(1.5)" }, 
-            { transform: "scale(0.9)" },
-            { transform: "scale(1.1)" },
-            { transform: "scale(1)" }
+            { transform: "scale(1)" }, { transform: "scale(1.5)" }, 
+            { transform: "scale(0.9)" }, { transform: "scale(1.1)" }, { transform: "scale(1)" }
           ], { duration: 500, easing: "ease-out" });
         }
       }, 1100);
 
     } catch (err) { 
       console.error("Cart animation computation failed: ", err);
+      setIsAdding(false);
+      clearTimeout(safetyTimer);
     }
 
     setTimeout(() => {
-      addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
-      refreshCartCount();
-      toast.success(`${product.name} added`, {
-        style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
-        icon: "🛒",
-      });
-      setIsAdding(false);
-      if (onAddToCart) onAddToCart(product._id);
+      try {
+        addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
+        refreshCartCount();
+        toast.success(`${product.name} added`, {
+          style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
+          icon: "🛒",
+        });
+        if (onAddToCart) onAddToCart(product._id);
+      } finally {
+        setIsAdding(false);
+        clearTimeout(safetyTimer);
+      }
     }, 1100); 
   };
 

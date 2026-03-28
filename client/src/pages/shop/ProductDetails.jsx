@@ -247,20 +247,20 @@ export default function ProductDetails() {
     }
     
     setIsAdded(true);
+    // Safety reset to ensure button always reverts
+    const safetyTimer = setTimeout(() => setIsAdded(false), 4500);
 
     try {
       const btn = e ? e.currentTarget : null;
       if (btn) {
         const btnRect = btn.getBoundingClientRect();
         
-        // Find visible cart icon
         const cartIcons = Array.from(document.querySelectorAll('[data-cart-icon]'));
         const cartIconEl = cartIcons.find(icon => {
           const r = icon.getBoundingClientRect();
           return r.width > 0 && r.height > 0;
         });
 
-        // Fallback
         const cartRect = cartIconEl 
             ? cartIconEl.getBoundingClientRect() 
             : { left: window.innerWidth - 40, top: 20, width: 30, height: 30 };
@@ -270,39 +270,42 @@ export default function ProductDetails() {
         const endX = cartRect.left + cartRect.width / 2 - 15;
         const endY = cartRect.top + cartRect.height / 2 - 15;
 
-        // Add to React state for Framer Motion to render
+        const flyId = ++flyIdRef.current;
         setFlyItems(prev => [...prev, {
-          id: ++flyIdRef.current,
+          id: flyId,
           startX, startY, endX, endY,
           image: getFullImageUrl(product.image)
         }]);
         
-        // Bounce cart icon (optional visual flair)
         setTimeout(() => {
             if (cartIconEl) {
                 cartIconEl.animate([
-                  { transform: "scale(1)" },
-                  { transform: "scale(1.5)" }, 
-                  { transform: "scale(0.9)" },
-                  { transform: "scale(1.1)" },
-                  { transform: "scale(1)" }
+                  { transform: "scale(1)" }, { transform: "scale(1.5)" }, 
+                  { transform: "scale(0.9)" }, { transform: "scale(1.1)" }, { transform: "scale(1)" }
                 ], { duration: 500, easing: "ease-out" });
             }
         }, 1100);
       }
     } catch (err) {
       console.error("Cart animation computation failed: ", err);
+      setIsAdded(false);
+      clearTimeout(safetyTimer);
     }
 
-    // Wait for the visual flight (1.1s) before logically adding to cart
     setTimeout(() => {
-      addToCart({ ...product, qty, price: parseFloat(totalPrice) });
-      refreshCartCount();
-      toast.success(`${product.name} added`, {
-        style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
-        icon: "🛒",
-      });
-      setTimeout(() => setIsAdded(false), 2000);
+      try {
+        addToCart({ ...product, qty, price: parseFloat(totalPrice) });
+        refreshCartCount();
+        toast.success(`${product.name} added`, {
+          style: { background: "#5BBFB5", color: "#fff", fontSize: "13px", borderRadius: "12px" },
+          icon: "🛒",
+        });
+      } finally {
+        setTimeout(() => {
+          setIsAdded(false);
+          clearTimeout(safetyTimer);
+        }, 2000);
+      }
     }, 1100);
   };
 
