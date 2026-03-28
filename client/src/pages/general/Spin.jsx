@@ -13,6 +13,7 @@ const Spin = ({ isOpen, onClose }) => {
   const canvasRef = useRef(null);
   const show = isOpen; // Simplified: if isOpen is passed, use it. If not, it's a page.
 
+  const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
 
   const prizes = [

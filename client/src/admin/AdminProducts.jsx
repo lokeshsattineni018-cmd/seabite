@@ -5,8 +5,10 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiEdit2, FiTrash2, FiPlus, FiPackage,
-  FiRefreshCw, FiGrid, FiList, FiFilter, FiMoreHorizontal
+  FiRefreshCw, FiGrid, FiList, FiFilter, FiMoreHorizontal,
+  FiCheck, FiX
 } from "react-icons/fi";
+import toast from "react-hot-toast";
 import PopupModal from "../components/common/PopupModal";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
