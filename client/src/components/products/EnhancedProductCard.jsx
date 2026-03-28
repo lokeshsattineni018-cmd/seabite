@@ -138,14 +138,17 @@ const EnhancedProductCard = ({
         flyerX.appendChild(flyerY);
         document.body.appendChild(flyerX);
 
-        // Force browser reflow to register starting positions
-        flyerX.getBoundingClientRect();
-
-        // Trigger animations
-        flyerX.style.left = `${endX}px`;
-        flyerY.style.top = `${endY}px`;
-        flyerY.style.transform = `scale(0.2) rotate(360deg)`;
-        flyerY.style.opacity = `0`;
+        // Force browser reflow to register starting positions securely
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (!document.body.contains(flyerX)) return;
+            // Trigger animations
+            flyerX.style.left = `${endX}px`;
+            flyerY.style.top = `${endY}px`;
+            flyerY.style.transform = `scale(0.2) rotate(360deg)`;
+            flyerY.style.opacity = `0`;
+          });
+        });
 
         // Wait for animation to finish
         setTimeout(() => {
@@ -160,7 +163,9 @@ const EnhancedProductCard = ({
           ], { duration: 500, easing: "ease-out" });
         }, 1200);
       }
-    } catch (err) { }
+    } catch (err) { 
+      console.error("Cart animation failed: ", err);
+    }
 
     setTimeout(() => {
       addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
