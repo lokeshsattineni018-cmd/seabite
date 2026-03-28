@@ -159,13 +159,13 @@ function MainLayout() {
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 4500,
+          duration: 3000,
           style: {
             background: '#1A2B35',
             color: '#fff',
             borderRadius: '12px',
-            padding: '12px 20px',
-            fontSize: '13px',
+            padding: '8px 16px',
+            fontSize: '12px',
             fontWeight: '600',
             border: '1px solid rgba(255,255,255,0.1)',
             boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
