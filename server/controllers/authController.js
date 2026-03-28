@@ -10,15 +10,17 @@ import logger from "../utils/logger.js";
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const googleLogin = async (req, res) => {
-  const { token } = req.body;
-
   console.log("🔐 Google Login: Request received");
+  console.log("📦 Request Body Keys:", Object.keys(req.body || {}));
+  console.log("📦 Full Body (Truncated):", JSON.stringify(req.body).substring(0, 100));
+  
+  const { token } = req.body;
   console.log("📱 User-Agent:", req.headers["user-agent"]);
   console.log("🌐 Origin:", req.headers.origin);
   console.log("🍪 Has Cookie Header:", !!req.headers.cookie);
 
   if (!token) {
-    console.log("❌ No token provided");
+    console.log("❌ No token provided in Body");
     return res.status(400).json({ message: "No token provided" });
   }
 

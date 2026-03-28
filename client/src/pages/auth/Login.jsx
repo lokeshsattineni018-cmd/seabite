@@ -22,6 +22,13 @@ export default function Login() {
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      console.log("🔑 Google Token Response received:", !!tokenResponse.access_token);
+      
+      if (!tokenResponse.access_token) {
+        setModal({ show: true, message: "No access token received from Google. Please try again.", type: "error" });
+        return;
+      }
+
       try {
         const res = await axios.post(
           `${API_URL}/api/auth/google`,
@@ -48,7 +55,7 @@ export default function Login() {
       }
     },
     onError: () => setModal({ show: true, message: "Google login was unsuccessful.", type: "error" }),
-    flow: windowWidth < 768 ? "redirect" : "implicit",
+    flow: "implicit", // ✅ Force implicit popup flow for consistency across devices
   });
 
   return (
