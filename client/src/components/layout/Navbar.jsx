@@ -1,6 +1,6 @@
 // src/components/Navbar.jsx
 import { useState, useContext, useEffect, useRef, Suspense } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiUser, FiShoppingBag, FiSearch, FiLogOut, FiPackage,
@@ -41,6 +41,7 @@ export default function Navbar({ announcementActive = false }) {
   const { user, setUser, refreshMe } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [showProfile, setShowProfile] = useState(false);
   const [showShop, setShowShop] = useState(false);
@@ -72,6 +73,21 @@ export default function Navbar({ announcementActive = false }) {
 
   const isHome = location.pathname === "/";
   const isTransparent = isHome && !scrolled;
+
+  useEffect(() => {
+    const authType = searchParams.get("auth");
+    if (authType === "login") {
+      setAuthMode("LOGIN");
+      setIsLoginOpen(true);
+      searchParams.delete("auth");
+      setSearchParams(searchParams);
+    } else if (authType === "signup") {
+      setAuthMode("SIGNUP");
+      setIsLoginOpen(true);
+      searchParams.delete("auth");
+      setSearchParams(searchParams);
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     setScrolled(window.scrollY > 24);
