@@ -76,6 +76,8 @@ export default function AdminWatchtower() {
     const [traceFilter, setTraceFilter] = useState(null);
     const [activeUsers, setActiveUsers] = useState(0);
 
+    const [systemPulse, setSystemPulse] = useState(null);
+
     // Initial Fetch & Periodic Metrics
     useEffect(() => {
         const fetchData = async () => {
@@ -105,9 +107,11 @@ export default function AdminWatchtower() {
         };
 
         socket.on('WATCHTOWER_LOG', handleLog);
+        socket.on('SYSTEM_PULSE', setSystemPulse);
 
         return () => {
             socket.off('WATCHTOWER_LOG', handleLog);
+            socket.off('SYSTEM_PULSE', setSystemPulse);
         };
     }, [socket]);
 
@@ -129,6 +133,16 @@ export default function AdminWatchtower() {
         return new Date(iso).toLocaleTimeString('en-US', { hour12: true, hour: "numeric", minute: "2-digit", second: "2-digit" });
     };
 
+    const parseCartLog = (log) => {
+        if (log.action === "CART_UPDATE" && log.meta?.items) {
+           const itemCount = log.meta.items.reduce((acc, item) => acc + item.qty, 0);
+           const totalVal = log.meta.items.reduce((acc, item) => acc + (item.qty * item.basePrice), 0);
+           const itemNames = log.meta.items.map(i => \`\${i.qty}x \${i.name}\`).join(", ");
+           return \`\${log.user?.name || 'Guest'} updated cart: \${itemNames} (Total: ₹\${totalVal})\`;
+        }
+        return log.details;
+    };
+
     return (
         <>
             <GS />
@@ -148,7 +162,13 @@ export default function AdminWatchtower() {
                         <p style={{ fontSize: 13, color: T.textSoft, fontWeight: 400 }}>Real-time visibility into user activity and system health.</p>
                     </div>
 
-                    <div style={{ display: "flex", gap: 12 }}>
+                    <div style={{ display: "flex", gap: 12, alignItems: 'center' }}>
+                        {systemPulse && (
+                            <div style={{ padding: "8px 16px", borderRadius: 12, background: systemPulse.reqCount > 50 ? T.roseL : T.surfaceMid, border: `1px solid ${systemPulse.reqCount > 50 ? T.rose : T.border}`, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <FiActivity size={14} className={systemPulse.reqCount > 0 ? "animate-pulse" : ""} style={{ color: systemPulse.reqCount > 50 ? T.rose : T.teal }} />
+                                <span style={{ fontSize: 11, fontWeight: 700, color: systemPulse.reqCount > 50 ? T.rose : T.text }}>{systemPulse.reqCount} REQ / 5S</span>
+                            </div>
+                        )}
                         <Card style={{ padding: "12px 20px", borderRadius: 16 }}>
                             <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>Active Users</div>
                             <div style={{ fontSize: 24, fontWeight: 600, color: T.teal, display: "flex", alignItems: "center", gap: 8 }}>
@@ -160,19 +180,19 @@ export default function AdminWatchtower() {
 
                 {/* ── METRICS BAR (NEW) ─────────────────────────── */}
                 <motion.div variants={fadeUp} style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
-                    <Card style={{ padding: 16 }}>
+                    <Card style={{ padding: 16, border: systemPulse?.latency > 200 ? \`1.5px solid \${T.warning}\` : undefined, boxShadow: systemPulse?.latency > 200 ? \`0 0 16px \${T.warning}33\` : undefined }}>
                         <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>DB Latency</div>
-                        <div style={{ fontSize: 18, fontWeight: 600, color: (metrics?.database?.latency?.replace('ms', '') > 100) ? T.warning : T.teal }}>
-                            {metrics?.database?.latency || "---"}
+                        <div style={{ fontSize: 18, fontWeight: 600, color: (systemPulse?.latency > 200) ? T.warning : T.teal }}>
+                            {systemPulse ? \`\${systemPulse.latency}ms\` : (metrics?.database?.latency || "---")}
                         </div>
                     </Card>
-                    <Card style={{ padding: 16 }}>
-                        <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>Server RAM</div>
-                        <div style={{ fontSize: 18, fontWeight: 600 }}>{metrics?.memory?.heapUsed || "---"}</div>
+                    <Card style={{ padding: 16, border: systemPulse?.cpu > 0.8 ? \`1.5px solid \${T.warning}\` : undefined, boxShadow: systemPulse?.cpu > 0.8 ? \`0 0 16px \${T.warning}33\` : undefined }}>
+                        <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>CPU Load</div>
+                        <div style={{ fontSize: 18, fontWeight: 600 }}>{systemPulse ? \`\${(systemPulse.cpu * 100).toFixed(1)}%\` : "---"}</div>
                     </Card>
                     <Card style={{ padding: 16 }}>
-                        <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>System Load</div>
-                        <div style={{ fontSize: 18, fontWeight: 600 }}>{metrics?.system?.load?.[0]?.toFixed(2) || "0.00"}</div>
+                        <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>Free RAM</div>
+                        <div style={{ fontSize: 18, fontWeight: 600 }}>{systemPulse ? \`\${Math.round(systemPulse.freeRam)}MB\` : "---"}</div>
                     </Card>
                     <Card style={{ padding: 16 }}>
                         <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>Uptime</div>
@@ -231,7 +251,7 @@ export default function AdminWatchtower() {
                                                                 </div>
                                                             </td>
                                                             <td style={{ padding: "16px 12px" }}>
-                                                                <div style={{ fontWeight: 500, color: T.text, marginBottom: 2 }}>{log.details}</div>
+                                                                <div style={{ fontWeight: 500, color: T.text, marginBottom: 2 }}>{parseCartLog(log)}</div>
                                                                 <div style={{ fontSize: 11, color: T.textSoft, display: "flex", gap: 6, alignItems: "center" }}>
                                                                     <span style={{ fontWeight: 600, color: style.color }}>{log.action}</span>
                                                                     {log.meta?.traceId && (
@@ -247,17 +267,19 @@ export default function AdminWatchtower() {
                                                                             TRACE: {log.meta.traceId.slice(0, 8)}
                                                                         </button>
                                                                     )}
-                                                                    {log.meta && Object.keys(log.meta).filter(k => k !== 'traceId').length > 0 && (
-                                                                        <><span>•</span> <span>{JSON.stringify(Object.fromEntries(Object.entries(log.meta).filter(([k]) => k !== 'traceId')))}</span></>
+                                                                    {log.meta && Object.keys(log.meta).filter(k => k !== 'traceId' && k !== 'items').length > 0 && (
+                                                                        <><span>•</span> <span>{JSON.stringify(Object.fromEntries(Object.entries(log.meta).filter(([k]) => k !== 'traceId' && k !== 'items')))}</span></>
                                                                     )}
                                                                 </div>
                                                             </td>
                                                             <td style={{ padding: "16px 24px", textAlign: "right" }}>
                                                                 {log.user ? (
-                                                                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.surfaceWarm, padding: "4px 8px", borderRadius: 6, border: `1px solid ${T.border}` }}>
-                                                                        <FiUser size={10} style={{ color: T.textSoft }} />
-                                                                        <span style={{ fontSize: 11, fontWeight: 500, color: T.text }}>{log.user.name}</span>
-                                                                    </div>
+                                                                    <a href={`/admin/users/${typeof log.user === 'object' ? log.user._id : log.user}`} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+                                                                        <div style={{ display: "inline-flex", alignItems: "center", gap: 6, background: T.surfaceWarm, padding: "4px 8px", borderRadius: 6, border: `1px solid ${T.border}`, cursor: "pointer" }} className="hover:bg-stone-200 transition-colors">
+                                                                            <FiUser size={10} style={{ color: T.textSoft }} />
+                                                                            <span style={{ fontSize: 11, fontWeight: 500, color: T.text }}>{log.user.name}</span>
+                                                                        </div>
+                                                                    </a>
                                                                 ) : (
                                                                     <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px" }}>
                                                                         <span style={{ fontSize: 11, fontWeight: 500, color: T.textGhost }}>Guest</span>
