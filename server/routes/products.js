@@ -179,6 +179,19 @@ router.get("/search/suggest", async (req, res) => {
   }
 });
 
+// 🟢 GET TRENDING SEARCHES
+router.get("/search/trending", async (req, res) => {
+  try {
+    const trending = await SearchInsight.find({ found: true })
+      .sort({ count: -1 })
+      .limit(6)
+      .select("query");
+    res.json(trending.map(t => t.query));
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch trending searches" });
+  }
+});
+
 // --- GET SINGLE PRODUCT ---
 // --- GET SINGLE PRODUCT WITH RELATED ITEMS ---
 router.get("/:id", async (req, res) => {

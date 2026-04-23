@@ -40,6 +40,8 @@ export default function Navbar({ announcementActive = false }) {
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showSpinWheel, setShowSpinWheel] = useState(false);
+  const [trendingSearched, setTrendingSearched] = useState([]);
+  const [recentSearches, setRecentSearches] = useState([]);
   const lastScrollY = useRef(0);
   const searchRef = useRef(null);
   const debounceRef = useRef(null);
@@ -75,11 +77,22 @@ export default function Navbar({ announcementActive = false }) {
       .catch(() => { });
   }, [user]);
 
+  useEffect(() => {
+    // Load recent searches from localStorage
+    const saved = localStorage.getItem("seabite_recent_searches");
+    if (saved) setRecentSearches(JSON.parse(saved));
+
+    // Fetch trending searches
+    axios.get(`${API_URL}/api/products/search/trending`)
+      .then(res => setTrendingSearched(res.data))
+      .catch(() => { });
+  }, []);
+
   const handleSearchInput = (val) => {
     setSearchTerm(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (val.length < 2) {
+    if (val.trim().length === 0) {
       setSuggestions([]);
       return;
     }
@@ -92,12 +105,36 @@ export default function Navbar({ announcementActive = false }) {
     }, 300);
   };
 
+  const saveRecentSearch = (term) => {
+    if (!term.trim()) return;
+    const newRecents = [term.trim(), ...recentSearches.filter(s => s !== term.trim())].slice(0, 5);
+    setRecentSearches(newRecents);
+    localStorage.setItem("seabite_recent_searches", JSON.stringify(newRecents));
+  };
+
   const handleSearchSubmit = (e) => {
     if (e.key === "Enter" && searchTerm.trim()) {
+      saveRecentSearch(searchTerm);
       navigate(`/products?search=${encodeURIComponent(searchTerm)}`);
       setSearchTerm(""); setSuggestions([]); setSearchExpanded(false);
       if (mobileOpen) setMobileOpen(false);
     }
+  };
+
+  const handleSuggestionClick = (item) => {
+    saveRecentSearch(item.name);
+    navigate(`/products/${item._id}`);
+    setSearchExpanded(false);
+    setSuggestions([]);
+    setSearchTerm("");
+  };
+
+  const handleRecentTrendingClick = (term) => {
+    setSearchTerm(term);
+    saveRecentSearch(term);
+    navigate(`/products?search=${encodeURIComponent(term)}`);
+    setSearchExpanded(false);
+    setSuggestions([]);
   };
 
   const handleLogout = async () => {
@@ -289,25 +326,74 @@ export default function Navbar({ announcementActive = false }) {
                )}
              </div>
              
-             <AnimatePresence>
-                {suggestions.length > 0 && searchExpanded && (
+              <AnimatePresence>
+                {searchExpanded && (
                   <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }}
                     style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", overflow: "hidden", zIndex: 300, boxShadow: "0 12px 40px rgba(26,46,44,0.10)" }}>
-                    {suggestions.map(item => (
-                      <div key={item._id} className="prof-item"
-                        onClick={() => { navigate(`/products/${item._id}`); setSearchExpanded(false); setSuggestions([]); }}
-                        style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #F4F9F8", transition: "background 0.15s" }}>
-                        <img src={item.image.startsWith("http") ? item.image : `${API_URL}${item.image}`} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover", background: "#F4F9F8" }} />
-                        <div style={{ flex: 1 }}>
-                          <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{item.name}</p>
-                          <p style={{ fontSize: "11px", color: "#6B8F8A", margin: "1px 0 0", textTransform: "capitalize" }}>{item.category}</p>
-                        </div>
-                        <span style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.basePrice}</span>
+                    
+                    {searchTerm.trim().length === 0 ? (
+                      <div style={{ padding: "16px" }}>
+                        {recentSearches.length > 0 && (
+                          <div style={{ marginBottom: "20px" }}>
+                            <p style={{ fontSize: "11px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
+                              Recent Searches
+                            </p>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                              {recentSearches.map((term, i) => (
+                                <button key={i} onClick={() => handleRecentTrendingClick(term)} style={{ padding: "6px 12px", background: "#F4F9F8", border: "1px solid #E2EEEC", borderRadius: "20px", fontSize: "12px", fontWeight: "600", color: "#4A7570", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={e => e.currentTarget.style.borderColor = "#5BBFB5"} onMouseOut={e => e.currentTarget.style.borderColor = "#E2EEEC"}>
+                                  {term}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {trendingSearched.length > 0 && (
+                          <div>
+                            <p style={{ fontSize: "11px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
+                              Trending Now
+                            </p>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                              {trendingSearched.map((term, i) => (
+                                <button key={i} onClick={() => handleRecentTrendingClick(term)} style={{ padding: "6px 12px", background: "#EAF6F5", border: "1px solid #D1E9E6", borderRadius: "20px", fontSize: "12px", fontWeight: "600", color: "#3D8C85", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={e => e.currentTarget.style.background = "#D1E9E6"} onMouseOut={e => e.currentTarget.style.background = "#EAF6F5"}>
+                                  🔥 {term}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {recentSearches.length === 0 && trendingSearched.length === 0 && (
+                          <p style={{ fontSize: "13px", color: "#6B8F8A", textAlign: "center", margin: "10px 0" }}>
+                            Start typing to search for fresh catch...
+                          </p>
+                        )}
                       </div>
-                    ))}
+                    ) : (
+                      <>
+                        {suggestions.length > 0 ? (
+                          suggestions.map(item => (
+                            <div key={item._id} className="prof-item"
+                              onClick={() => handleSuggestionClick(item)}
+                              style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #F4F9F8", transition: "background 0.15s" }}>
+                              <img src={item.image.startsWith("http") ? item.image : `${API_URL}${item.image}`} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover", background: "#F4F9F8" }} />
+                              <div style={{ flex: 1 }}>
+                                <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{item.name}</p>
+                                <p style={{ fontSize: "11px", color: "#6B8F8A", margin: "1px 0 0", textTransform: "capitalize" }}>{item.category}</p>
+                              </div>
+                              <span style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.basePrice}</span>
+                            </div>
+                          ))
+                        ) : (
+                          <div style={{ padding: "20px", textAlign: "center" }}>
+                            <p style={{ fontSize: "13px", color: "#6B8F8A", margin: 0 }}>No results found for "{searchTerm}"</p>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </motion.div>
                 )}
-             </AnimatePresence>
+              </AnimatePresence>
           </div>
 
           {/* ── Right controls ── */}
