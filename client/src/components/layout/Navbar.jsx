@@ -15,10 +15,10 @@ import toast from "react-hot-toast";
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 const NAV_LINKS = [
-  { label: "Shop All", path: "/products" },
   { label: "Fish", path: "/products?category=Fish" },
   { label: "Prawns", path: "/products?category=Prawn" },
   { label: "Crabs", path: "/products?category=Crab" },
+  { label: "Mussels", path: "/products?category=Mussel" },
 ];
 
 export default function Navbar({ announcementActive = false }) {
@@ -214,13 +214,13 @@ export default function Navbar({ announcementActive = false }) {
 
   const T = {
     navBg: isTransparent ? "transparent" : "rgba(255,255,255,0.98)",
-    navBorder: isTransparent ? "transparent" : "rgba(226,238,236,0.8)",
-    navShadow: isTransparent ? "none" : "0 4px 20px rgba(26,46,44,0.06)",
+    navBorder: isTransparent ? "transparent" : "rgba(226,238,236,0.3)",
+    navShadow: isTransparent ? "none" : "0 4px 30px rgba(26,46,44,0.04)",
     link: isTransparent ? "#fff" : "#1A2E2C",
     linkActive: "#5BBFB5",
     iconColor: isTransparent ? "#fff" : "#1A2E2C",
-    searchBg: isTransparent ? "rgba(255,255,255,0.15)" : "#F4F9F8",
-    searchBorder: isTransparent ? "rgba(255,255,255,0.2)" : "#E2EEEC",
+    searchBg: isTransparent ? "rgba(255,255,255,0.12)" : "#F0F5F4",
+    searchBorder: "transparent",
   };
 
   const AuthInput = ({ label, type = "text", value, onChange, placeholder, icon: Icon, required = true }) => (
@@ -240,10 +240,8 @@ export default function Navbar({ announcementActive = false }) {
   return (
     <>
       <style>{`
-        .si:focus { outline: none; }
+        .si::placeholder { color: ${isTransparent ? "rgba(255,255,255,0.6)" : "#A8C5C0"}; }
         .nav-link:hover { color: #5BBFB5 !important; }
-        .nav-link::after { content: ''; display: block; width: 0; height: 2px; background: #5BBFB5; transition: width .3s; }
-        .nav-link-active::after { width: 100%; }
         .prof-item:hover { background: #F4F9F8; }
         .drawer-scrollbar::-webkit-scrollbar { width: 4px; }
         .drawer-scrollbar::-webkit-scrollbar-thumb { background: #E2EEEC; border-radius: 10px; }
@@ -261,141 +259,120 @@ export default function Navbar({ announcementActive = false }) {
       `}</style>
 
       <motion.nav
-        className="nav-root"
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: hidden ? -80 : 0, opacity: hidden ? 0 : 1 }}
         style={{
           position: "fixed", top: announcementActive ? 40 : 0, left: 0, right: 0, zIndex: 100,
-          background: T.navBg, backdropFilter: isTransparent ? "none" : "blur(20px)",
+          background: T.navBg, backdropFilter: isTransparent ? "none" : "blur(25px)",
           borderBottom: `1px solid ${T.navBorder}`, boxShadow: T.navShadow,
-          padding: isTransparent ? "16px 0" : "10px 0",
-          transition: "all 0.3s ease"
+          padding: isTransparent ? "20px 0" : "12px 0",
+          transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)"
         }}
       >
-        <div style={{ maxWidth: "1440px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: "1600px", margin: "0 auto", padding: "0 40px", display: "flex", alignItems: "center" }}>
           
-          <Link to="/" style={{ textDecoration: "none", marginRight: "40px", display: "flex", alignItems: "center", gap: "12px" }}>
-            <img src="/logo.png" alt="SeaBite" style={{ height: "34px", width: "auto", filter: isTransparent ? "brightness(0) invert(1)" : "none" }} />
-            <span style={{ fontSize: "22px", fontWeight: "800", color: T.link, letterSpacing: "-0.5px", fontFamily: "'Bricolage Grotesque', sans-serif" }}>SeaBite</span>
-          </Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
+            <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
+              <img src="/logo.png" alt="SeaBite" style={{ height: "30px", width: "auto", filter: isTransparent ? "brightness(0) invert(1)" : "none" }} />
+              <span style={{ fontSize: "24px", fontWeight: "900", color: T.link, letterSpacing: "-1px", fontFamily: "'Bricolage Grotesque', sans-serif" }}>SeaBite</span>
+            </Link>
 
-          {/* Desktop Nav Links */}
-          <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-             <div style={{ position: "relative" }} onMouseEnter={() => setShowShop(true)} onMouseLeave={() => setShowShop(false)}>
-               <button style={{ background: "none", border: "none", color: T.link, fontSize: "14px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
-                 Shop <FiChevronDown size={14} />
-               </button>
-               <AnimatePresence>
-                 {showShop && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                      style={{ position: "absolute", top: "100%", left: 0, paddingTop: "10px", width: "180px", zIndex: 101 }}>
-                      <div style={{ background: "#fff", borderRadius: "14px", border: "1px solid #E2EEEC", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", overflow: "hidden" }}>
-                        {NAV_LINKS.map(l => (
-                          <Link key={l.path} to={l.path} onClick={() => setShowShop(false)} style={{ display: "block", padding: "12px 16px", textDecoration: "none", color: "#1A2E2C", fontSize: "13px", fontWeight: "600" }} className="prof-item">{l.label}</Link>
-                        ))}
-                      </div>
-                    </motion.div>
-                 )}
-               </AnimatePresence>
-             </div>
-             <Link to="/about" className={`nav-link ${isActive("/about") ? "nav-link-active" : ""}`} style={{ textDecoration: "none", color: isActive("/about") ? T.linkActive : T.link, fontSize: "14px", fontWeight: "700" }}>About</Link>
-             <Link to="/orders" className={`nav-link ${isActive("/orders") ? "nav-link-active" : ""}`} style={{ textDecoration: "none", color: isActive("/orders") ? T.linkActive : T.link, fontSize: "14px", fontWeight: "700" }}>Account</Link>
+            <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "32px" }}>
+               <div style={{ position: "relative" }} onMouseEnter={() => setShowShop(true)} onMouseLeave={() => setShowShop(false)}>
+                 <button style={{ background: "none", border: "none", color: T.link, fontSize: "15px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
+                   Shop <FiChevronDown size={14} />
+                 </button>
+                 <AnimatePresence>
+                   {showShop && (
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                        style={{ position: "absolute", top: "100%", left: 0, paddingTop: "15px", width: "200px", zIndex: 101 }}>
+                        <div style={{ background: "#fff", borderRadius: "16px", border: "1px solid #E2EEEC", boxShadow: "0 20px 50px rgba(0,0,0,0.12)", overflow: "hidden", padding: "8px" }}>
+                          {NAV_LINKS.map(l => (
+                            <Link key={l.path} to={l.path} onClick={() => setShowShop(false)} style={{ display: "block", padding: "12px 16px", textDecoration: "none", color: "#1A2E2C", fontSize: "14px", fontWeight: "600", borderRadius: "10px" }} className="prof-item">{l.label}</Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                   )}
+                 </AnimatePresence>
+               </div>
+               <Link to="/about" className="nav-link" style={{ textDecoration: "none", color: T.link, fontSize: "15px", fontWeight: "600" }}>About</Link>
+               <Link to="/orders" className="nav-link" style={{ textDecoration: "none", color: T.link, fontSize: "15px", fontWeight: "600" }}>Account</Link>
+            </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="hidden-mobile" style={{ flex: 1, display: "flex", justifyContent: "center", padding: "0 40px" }}>
-            <div style={{ position: "relative", width: "100%", maxWidth: "420px" }}>
+          {/* Search Bar - Precisely Centered */}
+          <div className="hidden-mobile" style={{ flex: 1, display: "flex", justifyContent: "center", padding: "0 60px" }}>
+            <div style={{ position: "relative", width: "100%", maxWidth: "580px" }}>
                <div style={{ 
-                 display: "flex", alignItems: "center", gap: "10px", 
-                 background: T.searchBg, border: `1.5px solid ${searchExpanded ? "#5BBFB5" : T.searchBorder}`, 
-                 borderRadius: "12px", padding: "8px 16px", transition: "all 0.2s" 
+                 display: "flex", alignItems: "center", gap: "12px", 
+                 background: T.searchBg, border: `1px solid ${T.searchBorder}`, 
+                 borderRadius: "100px", padding: "10px 20px", transition: "all 0.3s ease" 
                }}>
-                 <FiSearch size={16} style={{ color: searchExpanded ? "#5BBFB5" : (isTransparent ? "rgba(255,255,255,0.7)" : "#6B8F8A") }} />
+                 <FiSearch size={18} style={{ color: isTransparent ? "rgba(255,255,255,0.7)" : "#6B8F8A" }} />
                  <input
                    ref={searchRef} className="si" value={searchTerm}
                    onChange={e => handleSearchInput(e.target.value)} onKeyDown={handleSearchSubmit}
                    onFocus={() => setSearchExpanded(true)}
                    onBlur={() => setTimeout(() => { setSearchExpanded(false); setSuggestions([]); }, 200)}
                    placeholder="Search for fresh seafood..."
-                   style={{ border: "none", background: "none", fontSize: "14px", color: isTransparent ? "#fff" : "#1A2E2C", width: "100%", outline: "none", fontWeight: "500" }}
+                   style={{ border: "none", background: "none", fontSize: "15px", color: isTransparent ? "#fff" : "#1A2E2C", width: "100%", outline: "none", fontWeight: "500" }}
                  />
                </div>
                <AnimatePresence>
-                 {searchExpanded && (
+                 {searchExpanded && suggestions.length > 0 && (
                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                     style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: "10px", background: "#fff", borderRadius: "16px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", overflow: "hidden", zIndex: 101, border: "1px solid #E2EEEC" }}>
-                     {searchTerm.length === 0 ? (
-                       <div style={{ padding: "16px" }}>
-                         {recentSearches.length > 0 && (
-                           <div style={{ marginBottom: "16px" }}>
-                             <p style={{ fontSize: "11px", fontWeight: "700", color: "#B8CFCC", textTransform: "uppercase", marginBottom: "8px" }}>Recent</p>
-                             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                               {recentSearches.map((s, i) => <button key={i} onClick={() => handleRecentTrendingClick(s)} style={{ padding: "4px 10px", borderRadius: "20px", background: "#F4F9F8", border: "1px solid #E2EEEC", fontSize: "12px", color: "#4A7570", cursor: "pointer" }}>{s}</button>)}
-                             </div>
-                           </div>
-                         )}
-                         {trendingSearched.length > 0 && (
-                           <div>
-                             <p style={{ fontSize: "11px", fontWeight: "700", color: "#B8CFCC", textTransform: "uppercase", marginBottom: "8px" }}>Trending</p>
-                             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                               {trendingSearched.map((s, i) => <button key={i} onClick={() => handleRecentTrendingClick(s)} style={{ padding: "4px 10px", borderRadius: "20px", background: "#EAF6F5", border: "1px solid #D1E9E6", fontSize: "12px", color: "#3D8C85", cursor: "pointer" }}>🔥 {s}</button>)}
-                             </div>
-                           </div>
-                         )}
-                       </div>
-                     ) : (
-                       <div style={{ maxHeight: "400px", overflowY: "auto" }}>
-                         {suggestions.map(item => (
-                           <div key={item._id} className="prof-item" onClick={() => handleSuggestionClick(item)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid #F4F9F8" }}>
-                             <img src={item.image} alt={item.name} style={{ width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover" }} />
-                             <div style={{ flex: 1 }}>
-                               <p style={{ fontSize: "14px", fontWeight: "600", color: "#1A2E2C", margin: 0 }}>{item.name}</p>
-                               <p style={{ fontSize: "12px", color: "#6B8F8A", margin: 0 }}>{item.category}</p>
-                             </div>
-                             <span style={{ fontWeight: "700", color: "#5BBFB5" }}>₹{item.basePrice}</span>
-                           </div>
-                         ))}
-                       </div>
-                     )}
+                     style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: "12px", background: "#fff", borderRadius: "20px", boxShadow: "0 25px 60px rgba(0,0,0,0.15)", overflow: "hidden", zIndex: 101, border: "1px solid #E2EEEC" }}>
+                      <div style={{ maxHeight: "400px", overflowY: "auto", padding: "8px" }}>
+                        {suggestions.map(item => (
+                          <div key={item._id} className="prof-item" onClick={() => handleSuggestionClick(item)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", cursor: "pointer", borderRadius: "12px" }}>
+                            <img src={item.image} alt={item.name} style={{ width: "44px", height: "44px", borderRadius: "10px", objectFit: "cover" }} />
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{item.name}</p>
+                              <p style={{ fontSize: "12px", color: "#6B8F8A", margin: 0 }}>{item.category}</p>
+                            </div>
+                            <span style={{ fontWeight: "800", color: "#5BBFB5", fontSize: "14px" }}>₹{item.basePrice}</span>
+                          </div>
+                        ))}
+                      </div>
                    </motion.div>
                  )}
                </AnimatePresence>
             </div>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginLeft: "auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
             <motion.button whileTap={{ scale: 0.9 }} onClick={() => setIsCartOpen(true)} style={{ background: "none", border: "none", color: T.iconColor, cursor: "pointer", padding: "8px", position: "relative" }}>
-              <FiShoppingBag size={22} />
-              {cartCount > 0 && <span style={{ position: "absolute", top: "0", right: "0", background: "#5BBFB5", color: "#fff", fontSize: "10px", fontWeight: "800", width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{cartCount}</span>}
+              <FiShoppingBag size={24} />
+              {cartCount > 0 && <span style={{ position: "absolute", top: "0", right: "0", background: "#5BBFB5", color: "#fff", fontSize: "10px", fontWeight: "900", width: "20px", height: "20px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", border: "2.5px solid #fff" }}>{cartCount}</span>}
             </motion.button>
 
             {user ? (
               <div style={{ position: "relative" }} onMouseEnter={() => setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
-                <motion.button style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 12px", borderRadius: "20px", background: isTransparent ? "rgba(255,255,255,0.1)" : "#F4F9F8", border: `1px solid ${T.searchBorder}`, cursor: "pointer" }}>
-                  <div style={{ width: "26px", height: "26px", borderRadius: "50%", background: "#5BBFB5", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "800" }}>{user.name[0]}</div>
+                <motion.button style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 16px", borderRadius: "100px", background: isTransparent ? "rgba(255,255,255,0.12)" : "#F0F5F4", border: "none", cursor: "pointer" }}>
+                  <div style={{ width: "28px", height: "28px", borderRadius: "50%", background: "#5BBFB5", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: "900" }}>{user.name[0]}</div>
                   <span style={{ fontSize: "14px", fontWeight: "700", color: T.link }} className="hidden-mobile">{user.name.split(" ")[0]}</span>
                 </motion.button>
                 <AnimatePresence>
                   {showProfile && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                      style={{ position: "absolute", top: "100%", right: 0, marginTop: "10px", width: "220px", background: "#fff", borderRadius: "16px", boxShadow: "0 10px 40px rgba(0,0,0,0.15)", padding: "8px", border: "1px solid #E2EEEC" }}>
-                      <button onClick={() => navigate("/profile")} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C" }}><FiUser size={16}/> Profile</button>
-                      <button onClick={() => navigate("/orders")} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C" }}><FiPackage size={16}/> Orders</button>
-                      <hr style={{ margin: "6px 0", border: "none", borderTop: "1px solid #F0F5F4" }} />
-                      <button onClick={handleLogout} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#F07468" }}><FiLogOut size={16}/> Logout</button>
+                      style={{ position: "absolute", top: "100%", right: 0, marginTop: "12px", width: "240px", background: "#fff", borderRadius: "20px", boxShadow: "0 25px 60px rgba(0,0,0,0.15)", padding: "8px", border: "1px solid #E2EEEC" }}>
+                      <button onClick={() => navigate("/profile")} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "14px", border: "none", background: "none", borderRadius: "12px", cursor: "pointer", fontSize: "14px", fontWeight: "700", color: "#1A2E2C" }}><FiUser size={18}/> Profile</button>
+                      <button onClick={() => navigate("/orders")} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "14px", border: "none", background: "none", borderRadius: "12px", cursor: "pointer", fontSize: "14px", fontWeight: "700", color: "#1A2E2C" }}><FiPackage size={18}/> Orders</button>
+                      <hr style={{ margin: "8px 0", border: "none", borderTop: "1px solid #F0F5F4" }} />
+                      <button onClick={handleLogout} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "14px", border: "none", background: "none", borderRadius: "12px", cursor: "pointer", fontSize: "14px", fontWeight: "700", color: "#F07468" }}><FiLogOut size={18}/> Logout</button>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             ) : (
-              <motion.button whileTap={{ scale: 0.9 }} onClick={() => setIsLoginOpen(true)}
-                style={{ background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "12px", padding: "10px 24px", fontSize: "14px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 12px rgba(26,46,44,0.15)" }}>
+              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsLoginOpen(true)}
+                style={{ background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "100px", padding: "12px 32px", fontSize: "15px", fontWeight: "700", cursor: "pointer", boxShadow: "0 10px 25px rgba(26,46,44,0.15)" }}>
                 Login
               </motion.button>
             )}
 
             <motion.button whileTap={{ scale: 0.9 }} onClick={() => setMobileOpen(true)} className="show-mobile" style={{ background: "none", border: "none", color: T.iconColor, cursor: "pointer", padding: "8px" }}>
-              <FiMenu size={24} />
+              <FiMenu size={28} />
             </motion.button>
           </div>
         </div>
