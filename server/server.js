@@ -31,6 +31,12 @@ import traceMiddleware from "./middleware/traceMiddleware.js";
 import logger from "./utils/logger.js";
 import os from "os";
 import osUtils from "os-utils";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import mongoSanitize from "express-mongo-sanitize";
+import xss from "xss-clean";
+import hpp from "hpp";
+import compression from "compression";
 
 // 🟢 Import Cron Workers
 import { initAbandonedCartWorker } from "./cron/abandonedCartWorker.js";
@@ -117,12 +123,6 @@ app.use((req, res, next) => {
 });
 
 /* --- SECURITY HARDENING (Phase 25) --- */
-import helmet from "helmet";
-import rateLimit from "express-rate-limit";
-import mongoSanitize from "express-mongo-sanitize";
-import xss from "xss-clean";
-import hpp from "hpp";
-import compression from "compression";
 
 // 0. Compress all responses
 app.use(compression());

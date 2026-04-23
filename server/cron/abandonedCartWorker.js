@@ -26,7 +26,7 @@ export const initAbandonedCartWorker = () => {
           await sendAbandonedCartEmail(user.email, user.name, user.cart);
           user.abandonedCartEmailSent = true;
           await user.save();
-          logger.info(\`Abandoned cart email sent to \${user.email}\`);
+          logger.info(`Abandoned cart email sent to ${user.email}`);
         } catch (emailErr) {
           logger.error("Failed to send abandoned cart email", { error: emailErr.message });
         }
