@@ -22,6 +22,7 @@ const T = {
     sky: "#0284C7", skyL: "#F0F9FF",
     purple: "#7C3AED", purpleL: "#F5F3FF",
     warning: "#D97706", warningL: "#FFFBEB",
+    rose: "#E11D48", roseL: "#FFF1F2",
     text: "#1C1917",
     textMid: "#57534E",
     textSoft: "#A8A29E",
@@ -251,7 +252,14 @@ export default function AdminWatchtower() {
                                                                 </div>
                                                             </td>
                                                             <td style={{ padding: "16px 12px" }}>
-                                                                <div style={{ fontWeight: 500, color: T.text, marginBottom: 2 }}>{parseCartLog(log)}</div>
+                                                                <div style={{ fontWeight: 500, color: T.text, marginBottom: 2, display: "flex", alignItems: "center", gap: 8 }}>
+                                                                    {parseCartLog(log)}
+                                                                    {log.meta?.orderNumber && (
+                                                                        <a href={`/admin/orders/${log.meta.orderId}`} target="_blank" rel="noreferrer" style={{ fontSize: 10, background: T.skyL, color: T.sky, padding: "2px 6px", borderRadius: 4, textDecoration: "none", fontWeight: 700 }}>
+                                                                            VIEW ORDER #{log.meta.orderNumber}
+                                                                        </a>
+                                                                    )}
+                                                                </div>
                                                                 <div style={{ fontSize: 11, color: T.textSoft, display: "flex", gap: 6, alignItems: "center" }}>
                                                                     <span style={{ fontWeight: 600, color: style.color }}>{log.action}</span>
                                                                     {log.meta?.traceId && (
@@ -267,8 +275,8 @@ export default function AdminWatchtower() {
                                                                             TRACE: {log.meta.traceId.slice(0, 8)}
                                                                         </button>
                                                                     )}
-                                                                    {log.meta && Object.keys(log.meta).filter(k => k !== 'traceId' && k !== 'items').length > 0 && (
-                                                                        <><span>•</span> <span>{JSON.stringify(Object.fromEntries(Object.entries(log.meta).filter(([k]) => k !== 'traceId' && k !== 'items')))}</span></>
+                                                                    {log.meta && Object.keys(log.meta).filter(k => !['traceId', 'items', 'orderId', 'orderNumber'].includes(k)).length > 0 && (
+                                                                        <><span>•</span> <span>{JSON.stringify(Object.fromEntries(Object.entries(log.meta).filter(([k]) => !['traceId', 'items', 'orderId', 'orderNumber'].includes(k))))}</span></>
                                                                     )}
                                                                 </div>
                                                             </td>
@@ -357,6 +365,21 @@ export default function AdminWatchtower() {
                                 </p>
                             </Card>
                         </motion.div>
+
+                        {/* Predictive Alert: Delivery Pressure */}
+                        {activeUsers > 50 && (
+                            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: "spring" }}>
+                                <Card style={{ padding: 20, background: T.roseL, border: `1px solid ${T.rose}` }}>
+                                    <div style={{ display: 'flex', gap: 12 }}>
+                                        <FiZap color={T.rose} size={18} />
+                                        <div>
+                                            <h4 style={{ fontSize: 12, fontWeight: 700, color: T.rose, marginBottom: 4 }}>High Traffic Alert</h4>
+                                            <p style={{ fontSize: 11, color: T.text, lineHeight: 1.4 }}>Unusually high user activity detected. Recommend checking logistics capacity.</p>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </motion.div>
+                        )}
                     </div>
 
                 </div>

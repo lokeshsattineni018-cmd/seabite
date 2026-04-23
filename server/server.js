@@ -24,7 +24,7 @@ import spinRoutes from "./routes/spinRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import watchtowerRoutes from "./routes/watchtowerRoutes.js";
-import complaintRoutes from "./routes/complaintRoutes.js"; // 🟢 Added
+import complaintRoutes from "./routes/complaintRoutes.js"; // [Added]
 import checkMaintenance from "./middleware/checkMaintenance.js";
 import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
@@ -38,20 +38,20 @@ import xss from "xss-clean";
 import hpp from "hpp";
 import compression from "compression";
 
-// 🟢 Import Cron Workers
+// [Import Cron Workers]
 import { initAbandonedCartWorker } from "./cron/abandonedCartWorker.js";
 
 const app = express();
 app.disable("x-powered-by");
 
-// 🛡️ Enterprise: Global Process Handlers
+// Enterprise: Global Process Handlers
 process.on("uncaughtException", (err) => {
-  logger.error("UNCAUGHT EXCEPTION! 💥 Shutting down...", { error: err.message, stack: err.stack });
+  logger.error("UNCAUGHT EXCEPTION! [CRITICAL] Shutting down...", { error: err.message, stack: err.stack });
   process.exit(1);
 });
 
 process.on("unhandledRejection", (err) => {
-  logger.error("UNHANDLED REJECTION! 💥 Shutting down...", { error: err.message, stack: err.stack });
+  logger.error("UNHANDLED REJECTION! [CRITICAL] Shutting down...", { error: err.message, stack: err.stack });
   process.exit(1);
 });
 

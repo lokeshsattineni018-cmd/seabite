@@ -285,7 +285,7 @@ export default function AdminDashboard() {
             icon={<FiDollarSign size={20} />}
             color="from-amber-50 to-orange-50"
             index={0}
-            subtitle={`Total: ₹${stats.totalRevenue?.toLocaleString() || 0}`}
+            subtitle={`Total: ₹${stats.totalRevenue?.toLocaleString() || 0} | Profit: ₹${stats.netProfit?.toLocaleString() || 0}`}
           />
           <StatCard
             title="Orders"

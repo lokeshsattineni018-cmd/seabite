@@ -328,14 +328,14 @@ export default function AdminLayout() {
                           </div>
                         )}
                       </div>
-                    </motion.div >
+                    </motion.div>
                   </>
                 )}
-              </AnimatePresence >
-            </div >
+              </AnimatePresence>
+            </div>
 
             {/* Profile Avatar */}
-            < div className="flex items-center gap-3 pl-4 border-l border-stone-200" >
+            <div className="flex items-center gap-3 pl-4 border-l border-stone-200">
               <div
                 onClick={() => navigate("/profile")}
                 className="w-10 h-10 rounded-2xl bg-stone-900 p-0.5 shadow-lg shadow-stone-200 cursor-pointer hover:scale-105 transition-transform"
@@ -344,19 +344,19 @@ export default function AdminLayout() {
                   {user?.name ? user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) : "AD"}
                 </div>
               </div>
-            </div >
-          </div >
-        </div >
+            </div>
+          </div>
+        </div>
 
         <div className="px-4 md:px-8 pb-6 min-h-full">
           <Suspense fallback={<AdminPageLoader />}>
             <Outlet context={{ settings, setSettings, fetchSettings }} />
           </Suspense>
         </div>
-      </main >
+      </main>
 
       {/* 🟢 Mobile Sidebar Drawer */}
-      < AnimatePresence >
+      <AnimatePresence>
         {isSidebarOpen && (
           <>
             <motion.div
@@ -387,7 +387,7 @@ export default function AdminLayout() {
             </motion.aside>
           </>
         )}
-      </AnimatePresence >
-    </div >
+      </AnimatePresence>
+    </div>
   );
 }
