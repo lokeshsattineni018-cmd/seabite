@@ -21,6 +21,20 @@ const NAV_LINKS = [
   { label: "Mussels", path: "/products?category=Mussel" },
 ];
 
+const AuthInput = ({ label, type = "text", value, onChange, placeholder, icon: Icon, required = true }) => (
+  <div style={{ marginBottom: "20px" }}>
+    <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{label}</label>
+    <div style={{ position: "relative" }}>
+      {Icon && <Icon style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#6B8F8A" }} />}
+      <input
+        type={type} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+        style={{ width: "100%", padding: `14px 16px ${Icon ? '14px 42px' : '14px 16px'}`, paddingLeft: Icon ? "42px" : "16px", borderRadius: "14px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", outline: "none", fontSize: "14px", transition: "all 0.2s" }}
+        className="auth-input"
+      />
+    </div>
+  </div>
+);
+
 export default function Navbar({ announcementActive = false }) {
   const { cartCount, setIsCartOpen } = useContext(CartContext);
   const { user, setUser, refreshMe } = useAuth();
@@ -236,20 +250,6 @@ export default function Navbar({ announcementActive = false }) {
     cursor: "pointer", flexShrink: 0, transition: "background 0.25s, color 0.25s, border-color 0.25s",
   };
 
-  const AuthInput = ({ label, type = "text", value, onChange, placeholder, icon: Icon, required = true }) => (
-    <div style={{ marginBottom: "20px" }}>
-      <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{label}</label>
-      <div style={{ position: "relative" }}>
-        {Icon && <Icon style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#6B8F8A" }} />}
-        <input
-          type={type} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          style={{ width: "100%", padding: `14px 16px ${Icon ? '14px 42px' : '14px 16px'}`, paddingLeft: Icon ? "42px" : "16px", borderRadius: "14px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", outline: "none", fontSize: "14px", transition: "all 0.2s" }}
-          className="auth-input"
-        />
-      </div>
-    </div>
-  );
-
   return (
     <>
       <style>{`
@@ -308,10 +308,8 @@ export default function Navbar({ announcementActive = false }) {
             <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "600", color: T.link }}>Orders</Link>
           </div>
 
-          {/* Right controls - Search bar here */}
           <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
             
-            {/* Search */}
             <div style={{ position: "relative" }} className="hidden-mobile">
               <AnimatePresence>
                 {searchExpanded ? (
@@ -339,7 +337,6 @@ export default function Navbar({ announcementActive = false }) {
               </AnimatePresence>
             </div>
 
-            {/* Heart */}
             {user && (
               <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate("/wishlist")} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
                 <FiHeart size={15} />
@@ -347,13 +344,11 @@ export default function Navbar({ announcementActive = false }) {
               </motion.button>
             )}
 
-            {/* Cart */}
             <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
               <FiShoppingBag size={15} />
               {cartCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{cartCount}</span>}
             </motion.button>
 
-            {/* Profile / Login */}
             <div className="hidden-mobile">
               {user ? (
                 <div style={{ position: "relative", marginLeft: "4px" }} onMouseEnter={() => setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
@@ -393,7 +388,6 @@ export default function Navbar({ announcementActive = false }) {
         </div>
       </motion.nav>
 
-      {/* Auth Drawer */}
       <AnimatePresence>
         {isLoginOpen && (
           <>
