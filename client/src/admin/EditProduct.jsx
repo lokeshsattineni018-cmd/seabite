@@ -25,7 +25,7 @@ export default function EditProduct() {
   const backendBase = import.meta.env.VITE_API_URL || "";
 
   const [form, setForm] = useState({
-    name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", image: "", trending: false, stock: "in", countInStock: 0,
+    name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", image: "", images: [], trending: false, stock: "in", countInStock: 0,
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -43,7 +43,15 @@ export default function EditProduct() {
       .get(`${backendBase}/api/admin/products/${id}`, { withCredentials: true })
       .then((res) => {
         const data = res.data || {};
-        setForm({ ...data, basePrice: data.basePrice || "", buyingPrice: data.buyingPrice || "", unit: data.unit || "kg", stock: data.stock || "in", countInStock: data.countInStock || 0 });
+        setForm({ 
+          ...data, 
+          basePrice: data.basePrice || "", 
+          buyingPrice: data.buyingPrice || "", 
+          unit: data.unit || "kg", 
+          stock: data.stock || "in", 
+          countInStock: data.countInStock || 0,
+          images: data.images || []
+        });
         setLoading(false);
       })
       .catch((err) => {
@@ -56,25 +64,57 @@ export default function EditProduct() {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
+    setSubmitting(true);
     const formData = new FormData();
     formData.append("image", file);
-
-    setSubmitting(true);
-    const toastId = toast.loading("Uploading image...");
-
     try {
       const { data } = await axios.post(`${backendBase}/api/upload`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true
       });
-      setForm(prev => ({ ...prev, image: data.file || data.url }));
-      toast.success("Image uploaded", { id: toastId });
+      setForm({ ...form, image: data.file || data.url });
+      setModal({ show: true, message: "Main image uploaded!", type: "success" });
+    } catch (err) {
+      setModal({ show: true, message: "Image upload failed.", type: "error" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (form.images.length + files.length > 5) {
+      toast.error("Max 5 gallery images allowed");
+      return;
+    }
+
+    setSubmitting(true);
+    const toastId = toast.loading("Uploading gallery images...");
+
+    try {
+      const uploadedUrls = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("image", file);
+        const { data } = await axios.post(`${backendBase}/api/upload`, formData, {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true
+        });
+        uploadedUrls.push(data.file || data.url);
+      }
+      setForm(prev => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
+      toast.success("Gallery updated", { id: toastId });
     } catch (err) {
       toast.error("Upload failed", { id: toastId });
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const removeGalleryImage = (index) => {
+    const newImages = [...form.images];
+    newImages.splice(index, 1);
+    setForm({ ...form, images: newImages });
   };
 
   const handleChange = (e) => {
@@ -88,7 +128,7 @@ export default function EditProduct() {
     try {
       await axios.put(`${backendBase}/api/admin/products/${id}`, {
         name: form.name, category: form.category, basePrice: Number(form.basePrice), buyingPrice: Number(form.buyingPrice),
-        unit: form.unit, desc: form.desc, image: form.image, trending: form.trending, stock: form.stock, countInStock: Number(form.countInStock),
+        unit: form.unit, desc: form.desc, image: form.image, images: form.images, trending: form.trending, stock: form.stock, countInStock: Number(form.countInStock),
       }, { withCredentials: true });
       setModal({ show: true, message: "Product updated successfully!", type: "success" });
       setTimeout(() => navigate("/admin/products"), 1500);
@@ -125,7 +165,7 @@ export default function EditProduct() {
           {/* Left Column - Visuals */}
           <motion.div variants={fadeUp} custom={1} className="lg:col-span-1 space-y-6">
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60">
-              <label className="block text-[10px] font-bold text-stone-400 mb-4 uppercase tracking-widest">Product Visual</label>
+              <label className="block text-[10px] font-bold text-stone-400 mb-4 uppercase tracking-widest">Main Image</label>
               <div className="relative aspect-square rounded-2xl bg-stone-50 overflow-hidden border border-stone-100 mb-6 flex items-center justify-center p-6 group">
                 {form.image ? (
                   <img src={getFullImageUrl(form.image)} alt="Preview" className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
@@ -146,6 +186,32 @@ export default function EditProduct() {
                   className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 text-xs font-bold text-stone-500 outline-none group-hover:border-stone-300 transition-all"
                   readOnly
                 />
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60">
+              <label className="block text-[10px] font-bold text-stone-400 mb-4 uppercase tracking-widest">Product Gallery (Max 5)</label>
+              <div className="grid grid-cols-2 gap-3">
+                {form.images?.map((img, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-xl border border-stone-100 overflow-hidden group">
+                    <img src={getFullImageUrl(img)} className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removeGalleryImage(idx)} className="absolute top-1 right-1 bg-white/80 backdrop-blur p-1.5 rounded-full text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <FiX size={14} />
+                    </button>
+                  </div>
+                ))}
+                {form.images?.length < 5 && (
+                  <div className="relative aspect-square rounded-xl border-2 border-dashed border-stone-200 hover:border-stone-300 hover:bg-stone-50 flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <FiPlus size={20} className="text-stone-400" />
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleGalleryUpload}
+                      className="absolute inset-0 opacity-0 cursor-pointer"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 

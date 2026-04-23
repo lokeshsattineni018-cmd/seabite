@@ -90,12 +90,12 @@ const SeaBiteLoader = ({ fullScreen = false, small = false }) => {
         }
       `}</style>
 
-      <div className="sb-loader-wrapper" style={{ transform: `scale(${scale})` }}>
+      <div className="sb-loader-wrapper" style={{ transform: `scale(${scale})` }} role="status" aria-label="Loading">
         <div className="sb-ring"></div>
         <div className="sb-inner">
-          <div className="sb-creature sb-fish">🐠</div>
-          <div className="sb-creature sb-prawn">🦐</div>
-          <div className="sb-creature sb-crab">🦀</div>
+          <div className="sb-creature sb-fish" aria-hidden="true">🐠</div>
+          <div className="sb-creature sb-prawn" aria-hidden="true">🦐</div>
+          <div className="sb-creature sb-crab" aria-hidden="true">🦀</div>
         </div>
       </div>
     </div>

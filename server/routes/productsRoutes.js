@@ -144,4 +144,23 @@ router.post("/:id/waitlist", protect, async (req, res) => {
   }
 });
 
+// 🔍 GLOBAL SEARCH SUGGESTIONS
+router.get("/search/suggest", async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json([]);
+
+    const products = await Product.find({
+      name: { $regex: q, $options: "i" },
+      active: true
+    })
+    .select("name image")
+    .limit(5);
+
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: "Search suggestion failed" });
+  }
+});
+
 export default router;

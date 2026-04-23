@@ -25,6 +25,7 @@ import userRoutes from "./routes/userRoutes.js";
 import settingsRoutes from "./routes/settingsRoutes.js";
 import watchtowerRoutes from "./routes/watchtowerRoutes.js";
 import complaintRoutes from "./routes/complaintRoutes.js"; // [Added]
+import deliveryRoutes from "./routes/deliveryRoutes.js"; // [New: Delivery Management]
 import checkMaintenance from "./middleware/checkMaintenance.js";
 import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
@@ -300,6 +301,7 @@ app.use(checkMaintenance);
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
 app.use("/api/orders", orderRoutes);
+app.use("/api/delivery", deliveryRoutes); // [Delivery Management]
 app.use("/api/admin", adminRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin/products", adminProductRoutes);

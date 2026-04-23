@@ -384,10 +384,52 @@ router.get("/analytics/advanced", adminAuth, async (req, res) => {
       { $sort: { "_id.day": 1, "_id.hour": 1 } }
     ]);
 
+    // 5. Delivery Performance
+    const totalOrdersCount = await Order.countDocuments();
+    const deliveredOrdersCount = await Order.countDocuments({ status: "Delivered" });
+    const deliveryRate = totalOrdersCount ? Math.round((deliveredOrdersCount / totalOrdersCount) * 100) : 0;
+
+    const partnerPerformance = await Order.aggregate([
+      { $match: { deliveryPartner: { $exists: true, $ne: null } } },
+      {
+        $group: {
+          _id: "$deliveryPartner",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $lookup: {
+          from: "deliverypartners",
+          localField: "_id",
+          foreignField: "_id",
+          as: "partner"
+        }
+      },
+      { $unwind: "$partner" },
+      {
+        $project: {
+          name: "$partner.name",
+          count: 1
+        }
+      },
+      { $sort: { count: -1 } }
+    ]);
+
     res.json({
       deadStock,
       retention: { repeat: repeatCustomers, total: totalCustomers, rate: retentionRate },
-      heatmap
+      heatmap,
+      referral: {
+        totalReferrals,
+        totalCashIssued: totalCashIssued[0]?.total || 0,
+        uniqueReferrers: uniqueReferrers.filter(Boolean).length
+      },
+      delivery: {
+        total: totalOrdersCount,
+        delivered: deliveredOrdersCount,
+        rate: deliveryRate,
+        partners: partnerPerformance
+      }
     });
 
   } catch (err) {

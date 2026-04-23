@@ -25,6 +25,7 @@ const productSchema = new mongoose.Schema(
     category: String,
     desc: String,
     image: String,
+    images: [{ type: String }], // Multi-image gallery support
     trending: { type: Boolean, default: false },
     stock: { type: String, default: "in" },
     countInStock: { type: Number, default: 10, required: true },

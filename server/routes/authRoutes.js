@@ -7,8 +7,13 @@ import {
   googleLogin,
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { sendOtpEmail } from "../utils/emailService.js";
+import generateToken from "../utils/generateToken.js";
 
 const router = express.Router();
+
+// Memory store for OTPs (in production, use Redis or DB with TTL)
+const otpStore = new Map();
 
 // ================= LOGIN & REGISTER REMOVED =================
 // Security Hardening (Phase 26): Email/Password auth disabled in favor of Google OAuth only.
@@ -36,6 +41,81 @@ router.post("/logout", (req, res) => {
 
 // ================= THIRD PARTY LOGIN =================
 router.post("/google", googleLogin);
+
+// ================= OTP SIGNUP =================
+router.post("/send-otp", async (req, res) => {
+  const { email, name } = req.body;
+  if (!email) return res.status(400).json({ message: "Email is required" });
+  
+  const existingUser = await User.findOne({ email });
+  if (existingUser) return res.status(400).json({ message: "Email already registered. Please login." });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min expiry
+
+  try {
+    await sendOtpEmail(email, otp);
+    res.json({ message: "OTP sent successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to send OTP email" });
+  }
+});
+
+router.post("/verify-otp-signup", async (req, res) => {
+  const { name, email, phone, password, otp, referralCode } = req.body;
+  
+  const storedOtpData = otpStore.get(email);
+  if (!storedOtpData || storedOtpData.otp !== otp || storedOtpData.expiresAt < Date.now()) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+  }
+
+  const existingUser = await User.findOne({ email });
+  if (existingUser) return res.status(400).json({ message: "User already exists" });
+
+  let referrerId = null;
+  let initialWalletBalance = 0;
+
+  if (referralCode) {
+    const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
+    if (referrer) {
+      referrerId = referrer._id;
+      initialWalletBalance = 100; // New user gets ₹100 off their first order via wallet
+    }
+  }
+
+  try {
+    const user = await User.create({
+      name,
+      email,
+      phone,
+      password,
+      referredBy: referrerId,
+      walletBalance: initialWalletBalance
+    });
+
+    otpStore.delete(email);
+
+    // Create session
+    req.session.userId = user._id;
+    req.session.role = user.role;
+    
+    generateToken(res, user._id);
+
+    res.status(201).json({
+      message: "Registration successful",
+      sessionId: req.sessionID,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        phone: user.phone,
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error creating user" });
+  }
+});
 
 // ================= CURRENT USER =================
 router

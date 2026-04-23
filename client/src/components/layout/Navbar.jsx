@@ -11,6 +11,8 @@ import axios from "axios";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../../context/AuthContext";
 import Spin from "../../pages/general/Spin";
+import { useTranslation } from "react-i18next";
+import { FiGlobe } from "react-icons/fi";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -22,6 +24,7 @@ const NAV_LINKS = [
 ];
 
 export default function Navbar({ announcementActive = false }) {
+  const { t, i18n } = useTranslation();
   const { cartCount, setIsCartOpen } = useContext(CartContext);
   const { user, setUser, refreshMe } = useAuth();
   const navigate = useNavigate();
@@ -113,6 +116,13 @@ export default function Navbar({ announcementActive = false }) {
   });
 
   const isActive = (p) => location.pathname + location.search === p;
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "te" : "en";
+    i18n.changeLanguage(newLang);
+    localStorage.setItem("language", newLang);
+    toast.success(`Language changed to ${newLang === "en" ? "English" : "తెలుగు"}`, { duration: 2000 });
+  };
 
   // ── TOKEN TABLE ────────────────────────────────────────────────────────────
   // isTransparent → home page, above fold (dark video behind navbar)
@@ -220,7 +230,7 @@ export default function Navbar({ announcementActive = false }) {
           </div>
 
           {/* ── Desktop nav links ── */}
-          <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+          <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
 
             {/* Shop dropdown */}
             <div style={{ position: "relative" }}
@@ -259,7 +269,7 @@ export default function Navbar({ announcementActive = false }) {
               </AnimatePresence>
             </div>
 
-            {[{ label: "About", path: "/about" }, { label: "Orders", path: "/orders" }].map(link => (
+            {[{ label: t("nav.about"), path: "/about" }, { label: t("nav.account"), path: "/orders" }].map(link => (
               <Link key={link.path} to={link.path}
                 className={`nav-ul ${isActive(link.path) ? "nav-ul-active" : ""}`}
                 style={{ padding: "6px 12px", borderRadius: "8px", fontSize: "15px", fontWeight: "600", color: isActive(link.path) ? T.linkActive : T.link, textDecoration: "none", transition: "color 0.3s" }}>
@@ -268,47 +278,37 @@ export default function Navbar({ announcementActive = false }) {
             ))}
           </div>
 
-          {/* ── Right controls ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginLeft: "auto" }}>
-
-            {/* Search */}
-            <div style={{ position: "relative" }} className="hidden-mobile">
-              <AnimatePresence>
-                {searchExpanded ? (
-                  <motion.div key="open"
-                    initial={{ width: 36, opacity: 0.4 }} animate={{ width: 230, opacity: 1 }} exit={{ width: 36, opacity: 0 }}
-                    transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-                    style={{ display: "flex", alignItems: "center", gap: "8px", background: "#fff", border: "1.5px solid #5BBFB5", borderRadius: "10px", padding: "7px 12px", boxShadow: "0 0 0 3px rgba(91,191,181,0.10)" }}>
-                    <FiSearch size={13} style={{ color: "#5BBFB5", flexShrink: 0 }} />
-                    <input ref={searchRef} autoFocus className="si"
-                      value={searchTerm} onChange={e => handleSearchInput(e.target.value)}
-                      onKeyDown={handleSearchSubmit}
-                      onBlur={() => setTimeout(() => { setSearchExpanded(false); setSuggestions([]); }, 180)}
-                      placeholder="Search fresh catch…"
-                      style={{ border: "none", background: "none", fontSize: "13px", color: "#1A2E2C", width: "100%", fontFamily: "'Manrope', sans-serif" }}
-                    />
-                    {searchTerm && (
-                      <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", padding: 0 }}>
-                        <FiX size={12} />
-                      </button>
-                    )}
-                  </motion.div>
-                ) : (
-                  <motion.button key="icon" whileTap={{ scale: 0.88 }} onClick={() => setSearchExpanded(true)} className="nav-ib" style={iconBtn}>
-                    <FiSearch size={15} />
-                  </motion.button>
-                )}
-              </AnimatePresence>
-
-              <AnimatePresence>
+          {/* ── Global Desktop Search ── */}
+          <div className="hidden-mobile" style={{ flex: 1, maxWidth: "480px", margin: "0 24px", position: "relative" }}>
+             <div style={{ display: "flex", alignItems: "center", gap: "8px", background: isTransparent && !searchExpanded ? "rgba(255,255,255,0.15)" : "#F4F9F8", border: `1.5px solid ${isTransparent && !searchExpanded ? "transparent" : "#E2EEEC"}`, borderRadius: "10px", padding: "8px 14px", transition: "all 0.2s", boxShadow: searchExpanded ? "0 0 0 3px rgba(91,191,181,0.15)" : "none", borderColor: searchExpanded ? "#5BBFB5" : (isTransparent ? "transparent" : "#E2EEEC") }}>
+               <FiSearch size={15} style={{ color: searchExpanded ? "#5BBFB5" : (isTransparent && !searchExpanded ? "rgba(255,255,255,0.8)" : "#6B8F8A") }} />
+               <input
+                  ref={searchRef}
+                  className="si"
+                  value={searchTerm}
+                  onChange={e => handleSearchInput(e.target.value)}
+                  onKeyDown={handleSearchSubmit}
+                  onFocus={() => setSearchExpanded(true)}
+                  onBlur={() => setTimeout(() => { setSearchExpanded(false); setSuggestions([]); }, 200)}
+                  placeholder="Search for fresh catch (e.g. Salmon, Prawns)..."
+                  style={{ border: "none", background: "none", fontSize: "14px", color: isTransparent && !searchExpanded ? "#fff" : "#1A2E2C", width: "100%", outline: "none", fontFamily: "'Manrope', sans-serif" }}
+               />
+               {searchTerm && (
+                 <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", padding: 0 }}>
+                   <FiX size={14} />
+                 </button>
+               )}
+             </div>
+             
+             <AnimatePresence>
                 {suggestions.length > 0 && searchExpanded && (
                   <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }}
-                    style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", overflow: "hidden", zIndex: 300, minWidth: "240px", boxShadow: "0 12px 40px rgba(26,46,44,0.10)" }}>
+                    style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", overflow: "hidden", zIndex: 300, boxShadow: "0 12px 40px rgba(26,46,44,0.10)" }}>
                     {suggestions.map(item => (
                       <div key={item._id} className="prof-item"
                         onClick={() => { navigate(`/products/${item._id}`); setSearchExpanded(false); setSuggestions([]); }}
                         style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #F4F9F8", transition: "background 0.15s" }}>
-                        <img src={`${API_URL}${item.image}`} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover", background: "#F4F9F8" }} />
+                        <img src={item.image.startsWith("http") ? item.image : `${API_URL}${item.image}`} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover", background: "#F4F9F8" }} />
                         <div style={{ flex: 1 }}>
                           <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{item.name}</p>
                           <p style={{ fontSize: "11px", color: "#6B8F8A", margin: "1px 0 0", textTransform: "capitalize" }}>{item.category}</p>
@@ -318,8 +318,24 @@ export default function Navbar({ announcementActive = false }) {
                     ))}
                   </motion.div>
                 )}
-              </AnimatePresence>
-            </div>
+             </AnimatePresence>
+          </div>
+
+          {/* ── Right controls ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginLeft: "auto" }}>
+
+
+
+            {/* Language Toggle */}
+            <motion.button 
+              whileTap={{ scale: 0.88 }} 
+              onClick={toggleLanguage} 
+              className="nav-ib" 
+              style={{ ...iconBtn, fontSize: "10px", fontWeight: "800", textTransform: "uppercase" }}
+              title="Change Language"
+            >
+              {i18n.language === "en" ? "TE" : "EN"}
+            </motion.button>
 
             {/* Wishlist */}
             {user && (

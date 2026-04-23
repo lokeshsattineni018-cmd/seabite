@@ -70,9 +70,23 @@ const userSchema = new mongoose.Schema(
 
     // 🔐 Enterprise IAM: Brute-Force Protection
     loginAttempts: { type: Number, required: true, default: 0 },
-    lockUntil: { type: Date }
+    lockUntil: { type: Date },
+
+    // 🎁 Referral & Loyalty System
+    referralCode: { type: String, unique: true, sparse: true },
+    referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    walletBalance: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
+
+userSchema.pre("save", function (next) {
+  if (this.isNew && !this.referralCode) {
+    const base = this.name ? this.name.substring(0, 3).replace(/[^a-zA-Z]/g, '').toUpperCase() : "SB";
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    this.referralCode = `${base}${random}`;
+  }
+  next();
+});
 
 export default mongoose.model("User", userSchema);

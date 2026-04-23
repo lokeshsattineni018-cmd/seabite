@@ -62,8 +62,15 @@ const orderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      default: "Pending", // Options: Pending, Shipped, Delivered, Cancelled
+      default: "Pending", // Options: Pending, Processing, Packed, Shipped, Out for Delivery, Delivered, Cancelled
     },
+    statusHistory: [
+      {
+        status: { type: String },
+        timestamp: { type: Date, default: Date.now },
+        message: { type: String }
+      }
+    ],
     refundStatus: {
       type: String,
       default: "None"
@@ -71,6 +78,15 @@ const orderSchema = new mongoose.Schema(
     cancelReason: {
       type: String,
       default: "",
+    },
+    deliveryPartner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "DeliveryPartner"
+    },
+    deliveryStatus: {
+      type: String,
+      enum: ["Unassigned", "Assigned", "Picked Up", "Arriving", "Delivered", "Failed"],
+      default: "Unassigned"
     },
     // 🔐 Enterprise Idempotency (Prevent Duplicate Orders)
     idempotencyKey: {
