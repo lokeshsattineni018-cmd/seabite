@@ -240,10 +240,12 @@ const PincodeChecker = () => {
     if (pincode.length !== 6) return setStatus("error");
     setStatus("loading");
     setTimeout(() => {
-      if (pincode.startsWith("53") || pincode.startsWith("50")) {
+      // AP & TS pin codes: 500001–535999 (prefixes 50, 51, 52, 53)
+      const num = parseInt(pincode, 10);
+      if (num >= 500001 && num <= 535999) {
         setStatus("success");
       } else {
-        setStatus("error");
+        setStatus("unavailable");
       }
     }, 600);
   };
@@ -276,9 +278,9 @@ const PincodeChecker = () => {
             <FiCheck /> Express delivery available: Get it by 2 PM today.
           </motion.div>
         )}
-        {status === 'error' && pincode.length === 6 && (
+        {status === 'unavailable' && pincode.length === 6 && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: "12px", fontSize: "12px", color: "#DC2626", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
-            <FiX /> Standard delivery: 2-3 days for your area.
+            <FiX /> Sorry, we currently deliver only in Andhra Pradesh & Telangana.
           </motion.div>
         )}
       </AnimatePresence>

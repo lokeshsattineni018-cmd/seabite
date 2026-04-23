@@ -81,8 +81,10 @@ export default function LocationPicker({ onClose, onSave, currentAddress }) {
             zip: addr.postcode || "",
         };
         setForm(newAddress);
-        const deliverable = ALLOWED_STATES.some(s => newAddress.state.toLowerCase().includes(s.toLowerCase()));
-        setIsDeliverable(deliverable);
+        const stateOk = ALLOWED_STATES.some(s => newAddress.state.toLowerCase().includes(s.toLowerCase()));
+        const pinNum = parseInt(newAddress.zip, 10);
+        const pinOk = !isNaN(pinNum) && pinNum >= 500001 && pinNum <= 535999;
+        setIsDeliverable(stateOk && pinOk);
     };
 
     const detectLocation = () => {

@@ -91,7 +91,14 @@ export default function AddressForm({ onSave, onCancel, initialData = {} }) {
         if (!formData.houseNo) newErrors.houseNo = "House No is required";
         if (!formData.street) newErrors.street = "Street/Area is required";
         if (!formData.city) newErrors.city = "City is required";
-        if (!formData.postalCode) newErrors.postalCode = "Pincode is required";
+        if (!formData.postalCode) {
+            newErrors.postalCode = "Pincode is required";
+        } else {
+            const pin = parseInt(formData.postalCode, 10);
+            if (formData.postalCode.length !== 6 || isNaN(pin) || pin < 500001 || pin > 535999) {
+                newErrors.postalCode = "We deliver only in AP & TS (500001–535999)";
+            }
+        }
         const isAllowed = ALLOWED_STATES.some(s => formData.state.toLowerCase().includes(s.toLowerCase()));
         if (!isAllowed) newErrors.state = "Delivery only in AP & Telangana";
         setErrors(newErrors);
