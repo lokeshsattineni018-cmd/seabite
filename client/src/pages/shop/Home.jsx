@@ -32,7 +32,7 @@ import {
 } from "lucide-react";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import TrendingProducts from "../../components/products/TrendingProducts";
-import { useTranslation } from "react-i18next";
+
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -137,7 +137,6 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
 //  HERO CAROUSEL
 // ══════════════════════════════════════════════
 const Hero = () => {
-  const { t } = useTranslation();
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 700], [0, 140]);
@@ -176,24 +175,24 @@ const Hero = () => {
             className="space-y-8"
           >
             <div>
-              <Chip color="teal"><Waves size={11} /> {t("hero.slide1.tag")}</Chip>
+              <Chip color="teal"><Waves size={11} /> Every Day Fresh Catch</Chip>
             </div>
 
             <h1
               className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
               style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
             >
-              {t("hero.slide1.title", { returnObjects: true })[0]}<br />
-              <span style={{ color: "#5BA8A0" }}>{t("hero.slide1.title", { returnObjects: true })[1]}</span><br />
-              {t("hero.slide1.title", { returnObjects: true })[2]}
+              Premium Fresh<br />
+              <span style={{ color: "#5BA8A0" }}>Seafood</span><br />
+              Delivered Home.
             </h1>
 
             <p className="text-white/75 text-lg leading-relaxed max-w-md">
-              {t("hero.slide1.desc")}
+              Experience the finest quality seafood sourced daily at 4 AM and delivered fresh by noon. Chemical-free and 100% traceable.
             </p>
 
             <div className="flex flex-wrap gap-3">
-              <CTAButton to="/products" variant="primary">{t("hero.slide1.cta")} <ArrowRight size={15} /></CTAButton>
+              <CTAButton to="/products" variant="primary">Shop Now <ArrowRight size={15} /></CTAButton>
               <Link to="/products">
                 <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
                   className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full border border-white/25 text-white/80 hover:border-white/60 hover:text-white bg-white/10 backdrop-blur-sm transition-all duration-300"

@@ -204,8 +204,9 @@ export default function Navbar({ announcementActive = false }) {
       >
         <div style={{ maxWidth: "1440px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center" }}>
           
-          <Link to="/" style={{ textDecoration: "none", marginRight: "40px" }}>
-            <img src="/logo.png" alt="SeaBite" style={{ height: "40px", width: "auto", filter: isTransparent ? "brightness(0) invert(1)" : "none" }} />
+          <Link to="/" style={{ textDecoration: "none", marginRight: "40px", display: "flex", alignItems: "center", gap: "12px" }}>
+            <img src="/logo.png" alt="SeaBite" style={{ height: "34px", width: "auto", filter: isTransparent ? "brightness(0) invert(1)" : "none" }} />
+            <span style={{ fontSize: "22px", fontWeight: "800", color: T.link, letterSpacing: "-0.5px", fontFamily: "'Bricolage Grotesque', sans-serif" }}>SeaBite</span>
           </Link>
 
           {/* Desktop Nav Links */}
