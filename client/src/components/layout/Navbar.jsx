@@ -26,15 +26,14 @@ const NAV_LINKS = [
 export default function Navbar({ announcementActive = false }) {
   const { t, i18n } = useTranslation();
   const { cartCount, setIsCartOpen } = useContext(CartContext);
-  const { user, setUser, refreshMe } = useAuth();
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const [showProfile, setShowProfile] = useState(false);
-  const [showShop, setShowShop] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [searchExpanded, setSearchExpanded] = useState(false);
@@ -46,7 +45,6 @@ export default function Navbar({ announcementActive = false }) {
   const searchRef = useRef(null);
   const debounceRef = useRef(null);
 
-  // Only the home page has the dark video hero
   const isHome = location.pathname === "/";
   const isTransparent = isHome && !scrolled;
 
@@ -78,11 +76,8 @@ export default function Navbar({ announcementActive = false }) {
   }, [user]);
 
   useEffect(() => {
-    // Load recent searches from localStorage
     const saved = localStorage.getItem("seabite_recent_searches");
     if (saved) setRecentSearches(JSON.parse(saved));
-
-    // Fetch trending searches
     axios.get(`${API_URL}/api/products/search/trending`)
       .then(res => setTrendingSearched(res.data))
       .catch(() => { });
@@ -91,12 +86,7 @@ export default function Navbar({ announcementActive = false }) {
   const handleSearchInput = (val) => {
     setSearchTerm(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-
-    if (val.trim().length === 0) {
-      setSuggestions([]);
-      return;
-    }
-
+    if (val.trim().length === 0) { setSuggestions([]); return; }
     debounceRef.current = setTimeout(async () => {
       try {
         const r = await axios.get(`${API_URL}/api/products/search/suggest?q=${val}`);
@@ -117,24 +107,20 @@ export default function Navbar({ announcementActive = false }) {
       saveRecentSearch(searchTerm);
       navigate(`/products?search=${encodeURIComponent(searchTerm)}`);
       setSearchTerm(""); setSuggestions([]); setSearchExpanded(false);
-      if (mobileOpen) setMobileOpen(false);
+      setSidebarOpen(false);
     }
   };
 
   const handleSuggestionClick = (item) => {
     saveRecentSearch(item.name);
     navigate(`/products/${item._id}`);
-    setSearchExpanded(false);
-    setSuggestions([]);
-    setSearchTerm("");
+    setSearchExpanded(false); setSuggestions([]); setSearchTerm("");
   };
 
   const handleRecentTrendingClick = (term) => {
-    setSearchTerm(term);
-    saveRecentSearch(term);
+    setSearchTerm(term); saveRecentSearch(term);
     navigate(`/products?search=${encodeURIComponent(term)}`);
-    setSearchExpanded(false);
-    setSuggestions([]);
+    setSearchExpanded(false); setSuggestions([]);
   };
 
   const handleLogout = async () => {
@@ -147,168 +133,62 @@ export default function Navbar({ announcementActive = false }) {
     const newLang = i18n.language === "en" ? "te" : "en";
     i18n.changeLanguage(newLang);
     localStorage.setItem("language", newLang);
-    toast.success(`Language changed to ${newLang === "en" ? "English" : "తెలుగు"}`, { duration: 2000 });
   };
 
-  // ── TOKEN TABLE ────────────────────────────────────────────────────────────
-  // isTransparent → home page, above fold (dark video behind navbar)
-  // !isTransparent → all other pages OR after scrolling
-  // ─────────────────────────────────────────────────────────────────────────
   const T = {
-    // Navbar shell
-    navBg: isTransparent ? "transparent" : "rgba(255,255,255,0.97)",
-    navBlur: isTransparent ? "none" : "blur(24px) saturate(1.6)",
-    navBorder: isTransparent ? "transparent" : "rgba(226,238,236,0.85)",
-    navShadow: isTransparent ? "none" : "0 2px 24px rgba(26,46,44,0.07)",
-    navPy: isTransparent ? "14px 0" : "9px 0",
-
-    // Nav links
-    link: isTransparent ? "rgba(255,255,255,0.88)" : "#2C4A46",
-    linkActive: isTransparent ? "#fff" : "#5BBFB5",
-    underline: isTransparent ? "rgba(255,255,255,0.9)" : "#5BBFB5",
-
-    // ── ICON BUTTONS ─────────────────────────────────────────────────────
-    // Hero: TRANSPARENT bg/border — icons float as bare glyphs over the video
-    // Page: light seafoam tint with subtle border
-    iconBg: isTransparent ? "transparent" : "#F4F9F8",
-    iconBorder: isTransparent ? "none" : "1px solid #E2EEEC",
-    iconColor: isTransparent ? "rgba(255,255,255,0.90)" : "#4A7570",
-
-    // Hover overlay for icon buttons
-    iconHoverBg: isTransparent ? "rgba(255,255,255,0.15)" : "#E8F4F2",
-    iconHoverColor: isTransparent ? "#fff" : "#5BBFB5",
-
-    // Login CTA
-    loginBg: isTransparent ? "#5BBFB5" : "#1A2E2C",
-    loginShadow: isTransparent ? "0 2px 14px rgba(0,0,0,0.20)" : "none",
-
-    // Profile pill
-    pillBg: isTransparent ? "transparent" : "#fff",
-    pillBorder: isTransparent ? "transparent" : "#DDE9E7",
-    pillShadow: "none",
-    pillBlur: "none",
-    pillName: isTransparent ? "#ffffff" : "#1A2E2C",
-    pillChevron: isTransparent ? "#ffffff" : "#A8C5C0",
-  };
-
-  const iconBtn = {
-    width: "36px", height: "36px",
-    borderRadius: "10px",
-    background: T.iconBg,
-    border: T.iconBorder,
-    color: T.iconColor,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", flexShrink: 0,
-    transition: "background 0.25s, color 0.25s, border-color 0.25s",
+    navBg: isTransparent ? "transparent" : "rgba(255,255,255,0.98)",
+    navBorder: isTransparent ? "transparent" : "rgba(226,238,236,0.8)",
+    navShadow: isTransparent ? "none" : "0 4px 20px rgba(26,46,44,0.06)",
+    link: isTransparent ? "#fff" : "#1A2E2C",
+    iconColor: isTransparent ? "#fff" : "#1A2E2C",
+    searchBg: isTransparent ? "rgba(255,255,255,0.15)" : "#F4F9F8",
+    searchBorder: isTransparent ? "rgba(255,255,255,0.2)" : "#E2EEEC",
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@600;700&display=swap');
-        .nav-root * { box-sizing: border-box; }
-
-        /* Animated underline on nav links */
-        .nav-ul::after {
-          content: ''; display: block; height: 1.5px; border-radius: 2px; margin-top: 3px;
-          background: ${T.underline};
-          transform: scaleX(0); transform-origin: left;
-          transition: transform 0.22s ease, background 0.35s;
-        }
-        .nav-ul:hover::after, .nav-ul-active::after { transform: scaleX(1); }
-
-        /* Icon button hover — fully transparent on hero, tinted on page */
-        .nav-ib:hover {
-          background: ${T.iconHoverBg} !important;
-          color: ${T.iconHoverColor} !important;
-        }
-
-        /* Dropdown / profile menu items */
-        .dd-item:hover   { background: #F0F8F7 !important; color: #5BBFB5 !important; }
-        .prof-item:hover { background: #F4F9F8 !important; }
-        .mob-link:hover  { background: #F4F9F8 !important; }
         .si:focus { outline: none; }
+        .nav-root { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-item:hover { background: #F4F9F8; color: #5BBFB5; }
+        .prof-item:hover { background: #F4F9F8; }
       `}</style>
 
       <motion.nav
         className="nav-root"
-        initial={{ y: -72, opacity: 0 }}
-        animate={{ y: hidden ? -72 : 0, opacity: hidden ? 0 : 1 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: hidden ? -80 : 0, opacity: hidden ? 0 : 1 }}
         style={{
           position: "fixed", top: announcementActive ? 40 : 0, left: 0, right: 0, zIndex: 100,
-          fontFamily: "'Manrope', sans-serif",
-          background: T.navBg,
-          backdropFilter: T.navBlur,
-          WebkitBackdropFilter: T.navBlur,
-          borderBottom: `1px solid ${T.navBorder}`,
-          boxShadow: T.navShadow,
-          padding: T.navPy,
-          transition: "background 0.35s, box-shadow 0.35s, padding 0.3s, border-color 0.35s, top 0.3s",
+          background: T.navBg, backdropFilter: isTransparent ? "none" : "blur(20px)",
+          borderBottom: `1px solid ${T.navBorder}`, boxShadow: T.navShadow,
+          padding: isTransparent ? "16px 0" : "10px 0",
         }}
       >
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 28px", display: "flex", alignItems: "center" }}>
-
-          <div style={{ marginRight: "36px", flexShrink: 0 }}>
-            <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "8px" }}>
-              <img src="/logo.png" alt="SeaBite" style={{ height: "44px", width: "auto", objectFit: "contain" }} />
+        <div style={{ maxWidth: "1440px", margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", gap: "20px" }}>
+          
+          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setSidebarOpen(true)}
+              style={{ background: "none", border: "none", color: T.iconColor, cursor: "pointer", display: "flex", alignItems: "center", padding: "8px", borderRadius: "8px", transition: "background 0.2s" }}
+              onMouseOver={e => e.currentTarget.style.background = isTransparent ? "rgba(255,255,255,0.1)" : "#F4F9F8"}
+              onMouseOut={e => e.currentTarget.style.background = "none"}
+            >
+              <FiMenu size={22} />
+            </motion.button>
+            <Link to="/" style={{ textDecoration: "none" }}>
+              <img src="/logo.png" alt="SeaBite" style={{ height: "38px", width: "auto", filter: isTransparent ? "brightness(0) invert(1)" : "none" }} />
             </Link>
           </div>
 
-          {/* ── Desktop nav links ── */}
-          <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-
-            {/* Shop dropdown */}
-            <div style={{ position: "relative" }}
-              onMouseEnter={() => setShowShop(true)}
-              onMouseLeave={() => setShowShop(false)}
-            >
-              <button className="nav-ul" style={{
-                display: "flex", alignItems: "center", gap: "4px",
-                padding: "6px 12px", border: "none", background: "none",
-                fontSize: "15px", fontWeight: "600", color: T.link,
-                cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                borderRadius: "8px", transition: "color 0.3s",
+          <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+            <div style={{ position: "relative", width: "100%", maxWidth: "400px" }}>
+              <div style={{ 
+                display: "flex", alignItems: "center", gap: "10px", 
+                background: T.searchBg, border: `1.5px solid ${searchExpanded ? "#5BBFB5" : T.searchBorder}`, 
+                borderRadius: "12px", padding: "8px 16px", transition: "all 0.2s" 
               }}>
-                Shop
-                <motion.span animate={{ rotate: showShop ? 180 : 0 }} transition={{ duration: 0.22 }} style={{ display: "flex" }}>
-                  <FiChevronDown size={12} />
-                </motion.span>
-              </button>
-
-              <AnimatePresence>
-                {showShop && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.97 }} transition={{ duration: 0.16 }}
-                    style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", padding: "5px", minWidth: "170px", zIndex: 200, boxShadow: "0 12px 40px rgba(26,46,44,0.10)" }}
-                  >
-                    {NAV_LINKS.map(link => (
-                      <button key={link.path} className="dd-item"
-                        onClick={() => { navigate(link.path); setShowShop(false); }}
-                        style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 13px", border: "none", background: "none", borderRadius: "9px", fontSize: "15px", fontWeight: "600", color: "#1A2E2C", cursor: "pointer", fontFamily: "'Manrope', sans-serif", transition: "all 0.15s" }}>
-                        {link.label}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {[{ label: t("nav.about"), path: "/about" }, { label: t("nav.account"), path: "/orders" }].map(link => (
-              <Link key={link.path} to={link.path}
-                className={`nav-ul ${isActive(link.path) ? "nav-ul-active" : ""}`}
-                style={{ padding: "6px 12px", borderRadius: "8px", fontSize: "15px", fontWeight: "600", color: isActive(link.path) ? T.linkActive : T.link, textDecoration: "none", transition: "color 0.3s" }}>
-                {link.label}
-              </Link>
-            ))}
-          </div>
-
-          {/* ── Global Desktop Search ── */}
-          <div className="hidden-mobile" style={{ flex: 1, maxWidth: "480px", margin: "0 24px", position: "relative" }}>
-             <div style={{ display: "flex", alignItems: "center", gap: "8px", background: isTransparent && !searchExpanded ? "rgba(255,255,255,0.15)" : "#F4F9F8", border: `1.5px solid ${isTransparent && !searchExpanded ? "transparent" : "#E2EEEC"}`, borderRadius: "10px", padding: "8px 14px", transition: "all 0.2s", boxShadow: searchExpanded ? "0 0 0 3px rgba(91,191,181,0.15)" : "none", borderColor: searchExpanded ? "#5BBFB5" : (isTransparent ? "transparent" : "#E2EEEC") }}>
-               <FiSearch size={15} style={{ color: searchExpanded ? "#5BBFB5" : (isTransparent && !searchExpanded ? "rgba(255,255,255,0.8)" : "#6B8F8A") }} />
-               <input
+                <FiSearch size={16} style={{ color: searchExpanded ? "#5BBFB5" : (isTransparent ? "rgba(255,255,255,0.7)" : "#6B8F8A") }} />
+                <input
                   ref={searchRef}
                   className="si"
                   value={searchTerm}
@@ -316,299 +196,119 @@ export default function Navbar({ announcementActive = false }) {
                   onKeyDown={handleSearchSubmit}
                   onFocus={() => setSearchExpanded(true)}
                   onBlur={() => setTimeout(() => { setSearchExpanded(false); setSuggestions([]); }, 200)}
-                  placeholder="Search for fresh catch (e.g. Salmon, Prawns)..."
-                  style={{ border: "none", background: "none", fontSize: "14px", color: isTransparent && !searchExpanded ? "#fff" : "#1A2E2C", width: "100%", outline: "none", fontFamily: "'Manrope', sans-serif" }}
-               />
-               {searchTerm && (
-                 <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", padding: 0 }}>
-                   <FiX size={14} />
-                 </button>
-               )}
-             </div>
-             
+                  placeholder="Search SeaBite..."
+                  style={{ border: "none", background: "none", fontSize: "14px", color: isTransparent ? "#fff" : "#1A2E2C", width: "100%", outline: "none" }}
+                />
+              </div>
               <AnimatePresence>
                 {searchExpanded && (
-                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.16 }}
-                    style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", overflow: "hidden", zIndex: 300, boxShadow: "0 12px 40px rgba(26,46,44,0.10)" }}>
-                    
-                    {searchTerm.trim().length === 0 ? (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                    style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: "10px", background: "#fff", borderRadius: "16px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", overflow: "hidden", zIndex: 101, border: "1px solid #E2EEEC" }}>
+                    {searchTerm.length === 0 ? (
                       <div style={{ padding: "16px" }}>
-                        {recentSearches.length > 0 && (
-                          <div style={{ marginBottom: "20px" }}>
-                            <p style={{ fontSize: "11px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px", display: "flex", alignItems: "center", gap: "6px" }}>
-                              Recent Searches
-                            </p>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                              {recentSearches.map((term, i) => (
-                                <button key={i} onClick={() => handleRecentTrendingClick(term)} style={{ padding: "6px 12px", background: "#F4F9F8", border: "1px solid #E2EEEC", borderRadius: "20px", fontSize: "12px", fontWeight: "600", color: "#4A7570", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={e => e.currentTarget.style.borderColor = "#5BBFB5"} onMouseOut={e => e.currentTarget.style.borderColor = "#E2EEEC"}>
-                                  {term}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {trendingSearched.length > 0 && (
-                          <div>
-                            <p style={{ fontSize: "11px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "10px" }}>
-                              Trending Now
-                            </p>
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                              {trendingSearched.map((term, i) => (
-                                <button key={i} onClick={() => handleRecentTrendingClick(term)} style={{ padding: "6px 12px", background: "#EAF6F5", border: "1px solid #D1E9E6", borderRadius: "20px", fontSize: "12px", fontWeight: "600", color: "#3D8C85", cursor: "pointer", transition: "all 0.2s" }} onMouseOver={e => e.currentTarget.style.background = "#D1E9E6"} onMouseOut={e => e.currentTarget.style.background = "#EAF6F5"}>
-                                  🔥 {term}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                        
-                        {recentSearches.length === 0 && trendingSearched.length === 0 && (
-                          <p style={{ fontSize: "13px", color: "#6B8F8A", textAlign: "center", margin: "10px 0" }}>
-                            Start typing to search for fresh catch...
-                          </p>
-                        )}
+                         {recentSearches.length > 0 && (
+                           <div style={{ marginBottom: "16px" }}>
+                             <p style={{ fontSize: "11px", fontWeight: "700", color: "#B8CFCC", textTransform: "uppercase", marginBottom: "8px" }}>Recent</p>
+                             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                               {recentSearches.map((s, i) => <button key={i} onClick={() => handleRecentTrendingClick(s)} style={{ padding: "4px 10px", borderRadius: "20px", background: "#F4F9F8", border: "1px solid #E2EEEC", fontSize: "12px", color: "#4A7570", cursor: "pointer" }}>{s}</button>)}
+                             </div>
+                           </div>
+                         )}
+                         {trendingSearched.length > 0 && (
+                           <div>
+                             <p style={{ fontSize: "11px", fontWeight: "700", color: "#B8CFCC", textTransform: "uppercase", marginBottom: "8px" }}>Trending</p>
+                             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                               {trendingSearched.map((s, i) => <button key={i} onClick={() => handleRecentTrendingClick(s)} style={{ padding: "4px 10px", borderRadius: "20px", background: "#EAF6F5", border: "1px solid #D1E9E6", fontSize: "12px", color: "#3D8C85", cursor: "pointer" }}>🔥 {s}</button>)}
+                             </div>
+                           </div>
+                         )}
                       </div>
                     ) : (
-                      <>
-                        {suggestions.length > 0 ? (
-                          suggestions.map(item => (
-                            <div key={item._id} className="prof-item"
-                              onClick={() => handleSuggestionClick(item)}
-                              style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #F4F9F8", transition: "background 0.15s" }}>
-                              <img src={item.image.startsWith("http") ? item.image : `${API_URL}${item.image}`} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover", background: "#F4F9F8" }} />
-                              <div style={{ flex: 1 }}>
-                                <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{item.name}</p>
-                                <p style={{ fontSize: "11px", color: "#6B8F8A", margin: "1px 0 0", textTransform: "capitalize" }}>{item.category}</p>
-                              </div>
-                              <span style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.basePrice}</span>
+                      <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+                        {suggestions.map(item => (
+                          <div key={item._id} className="prof-item" onClick={() => handleSuggestionClick(item)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid #F4F9F8" }}>
+                            <img src={item.image} alt={item.name} style={{ width: "40px", height: "40px", borderRadius: "8px", objectFit: "cover" }} />
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: "14px", fontWeight: "600", color: "#1A2E2C", margin: 0 }}>{item.name}</p>
+                              <p style={{ fontSize: "12px", color: "#6B8F8A", margin: 0 }}>{item.category}</p>
                             </div>
-                          ))
-                        ) : (
-                          <div style={{ padding: "20px", textAlign: "center" }}>
-                            <p style={{ fontSize: "13px", color: "#6B8F8A", margin: 0 }}>No results found for "{searchTerm}"</p>
+                            <span style={{ fontWeight: "700", color: "#5BBFB5" }}>₹{item.basePrice}</span>
                           </div>
-                        )}
-                      </>
+                        ))}
+                      </div>
                     )}
                   </motion.div>
                 )}
               </AnimatePresence>
+            </div>
           </div>
 
-          {/* ── Right controls ── */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginLeft: "auto" }}>
-
-
-
-            {/* Language Toggle */}
-            <motion.button 
-              whileTap={{ scale: 0.88 }} 
-              onClick={toggleLanguage} 
-              className="nav-ib" 
-              style={{ ...iconBtn, fontSize: "10px", fontWeight: "800", textTransform: "uppercase" }}
-              title="Change Language"
-            >
-              {i18n.language === "en" ? "TE" : "EN"}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={toggleLanguage} style={{ background: "none", border: `1.5px solid ${T.searchBorder}`, borderRadius: "8px", color: T.link, fontSize: "11px", fontWeight: "700", padding: "6px 10px", cursor: "pointer" }}>
+              {i18n.language === "en" ? "EN" : "TE"}
+            </motion.button>
+            
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setIsCartOpen(true)} style={{ position: "relative", background: "none", border: "none", color: T.iconColor, cursor: "pointer", padding: "8px" }}>
+              <FiShoppingBag size={20} />
+              {cartCount > 0 && <span style={{ position: "absolute", top: "0", right: "0", background: "#5BBFB5", color: "#fff", fontSize: "10px", fontWeight: "700", width: "16px", height: "16px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
             </motion.button>
 
-            {/* Wishlist */}
-            {user && (
-              <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate("/wishlist")} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
-                <FiHeart size={15} />
+            {user ? (
+              <div style={{ position: "relative" }} onMouseEnter={() => setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
+                <motion.button style={{ display: "flex", alignItems: "center", gap: "8px", padding: "4px 8px", borderRadius: "20px", background: isTransparent ? "rgba(255,255,255,0.1)" : "#F4F9F8", border: `1px solid ${T.searchBorder}`, cursor: "pointer" }}>
+                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: "#5BBFB5", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "800" }}>{user.name[0]}</div>
+                  <span style={{ fontSize: "13px", fontWeight: "600", color: T.link }} className="hidden-mobile">{user.name.split(" ")[0]}</span>
+                </motion.button>
                 <AnimatePresence>
-                  {user?.wishlist?.length > 0 && (
-                    <motion.span key={user.wishlist.length} initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                      style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      {user.wishlist.length}
-                    </motion.span>
+                  {showProfile && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                      style={{ position: "absolute", top: "100%", right: 0, marginTop: "10px", width: "200px", background: "#fff", borderRadius: "12px", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", padding: "8px", border: "1px solid #E2EEEC" }}>
+                      <button onClick={() => navigate("/profile")} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "10px", border: "none", background: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}><FiUser size={14}/> Profile</button>
+                      <button onClick={() => navigate("/orders")} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "10px", border: "none", background: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}><FiPackage size={14}/> Orders</button>
+                      <hr style={{ margin: "4px 0", border: "none", borderTop: "1px solid #F0F5F4" }} />
+                      <button onClick={handleLogout} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "10px", border: "none", background: "none", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#F07468" }}><FiLogOut size={14}/> Logout</button>
+                    </motion.div>
                   )}
                 </AnimatePresence>
+              </div>
+            ) : (
+              <motion.button whileTap={{ scale: 0.9 }} onClick={() => navigate("/login")} style={{ background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "10px", padding: "8px 18px", fontSize: "13px", fontWeight: "700", cursor: "pointer" }}>
+                Login
               </motion.button>
             )}
-
-            {/* Cart */}
-            <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} data-cart-icon className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
-              <motion.div key={`cart-icon-${cartCount}`} animate={{ scale: [1, 1.25, 1], rotate: [0, -10, 10, 0] }} transition={{ duration: 0.4 }}>
-                <FiShoppingBag size={15} />
-              </motion.div>
-              <AnimatePresence>
-                {cartCount > 0 && (
-                  <motion.span key={cartCount} initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} exit={{ scale: 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 18 }}
-                    style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {cartCount}
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
-
-            {/* Profile / Login */}
-            <div className="hidden-mobile">
-              {user ? (
-                <div style={{ position: "relative", marginLeft: "4px" }}
-                  onMouseEnter={() => setShowProfile(true)}
-                  onMouseLeave={() => setShowProfile(false)}
-                >
-                  <motion.button whileHover={{ scale: 1.03 }} style={{
-                    display: "flex", alignItems: "center", gap: "8px",
-                    padding: "5px 11px 5px 5px",
-                    border: `1.5px solid ${T.pillBorder}`,
-                    borderRadius: "20px",
-                    background: T.pillBg,
-                    backdropFilter: T.pillBlur,
-                    WebkitBackdropFilter: T.pillBlur,
-                    boxShadow: T.pillShadow,
-                    cursor: "pointer", transition: "all 0.3s",
-                  }}>
-                    <div style={{ width: "27px", height: "27px", borderRadius: "50%", background: "linear-gradient(135deg,#5BBFB5,#7EB8D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "800", fontSize: "11px", flexShrink: 0, position: "relative" }}>
-                      {user.name?.charAt(0).toUpperCase()}
-                      {unreadCount > 0 && (
-                        <span style={{ position: "absolute", top: "-1px", right: "-1px", width: "7px", height: "7px", background: "#F07468", borderRadius: "50%", border: "1.5px solid #fff" }} />
-                      )}
-                    </div>
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: T.pillName, transition: "color 0.3s" }}>
-                      {user.name?.split(" ")[0]}
-                    </span>
-                    <FiChevronDown size={11} style={{ color: T.pillChevron, transition: "color 0.3s" }} />
-                  </motion.button>
-
-                  <AnimatePresence>
-                    {showProfile && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -8, scale: 0.97 }} transition={{ duration: 0.16 }}
-                        style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", overflow: "hidden", minWidth: "240px", zIndex: 200, boxShadow: "0 16px 48px rgba(26,46,44,0.10)" }}
-                      >
-                        <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #F0F5F4", background: "#F4F9F8" }}>
-                          <p style={{ fontSize: "10px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 3px" }}>Signed in as</p>
-                          <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{user.email}</p>
-                        </div>
-                        <div style={{ padding: "6px" }}>
-                          {[
-                            { icon: <FiUser size={14} />, label: "My Profile", path: "/profile" },
-                            { icon: <FiHeart size={14} />, label: "Wishlist", path: "/wishlist" },
-                            { icon: <FiPackage size={14} />, label: "My Orders", path: "/orders" },
-                            { icon: <FiBell size={14} />, label: "Notifications", path: "/notifications", badge: unreadCount },
-                            ...(user.role === "admin" ? [{ icon: <FiGrid size={14} />, label: "Admin Dashboard", path: "/admin/dashboard" }] : []),
-                          ].map(item => (
-                            <button key={item.path} className="prof-item"
-                              onClick={() => { navigate(item.path); setShowProfile(false); }}
-                              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontFamily: "'Manrope', sans-serif", transition: "background 0.15s" }}>
-                              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#1A2E2C" }}>
-                                <span style={{ color: "#6B8F8A" }}>{item.icon}</span>
-                                <span style={{ fontSize: "13px", fontWeight: "600" }}>{item.label}</span>
-                              </div>
-                              {item.badge > 0 && (
-                                <span style={{ background: "#F07468", color: "#fff", fontSize: "10px", fontWeight: "800", padding: "2px 8px", borderRadius: "20px" }}>{item.badge}</span>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                        <div style={{ borderTop: "1px solid #FEE2E2", padding: "6px" }}>
-                          <button onClick={handleLogout} className="prof-item"
-                            style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontFamily: "'Manrope', sans-serif", color: "#DC2626", fontSize: "13px", fontWeight: "600", transition: "background 0.15s" }}>
-                            <FiLogOut size={14} /> Logout
-                          </button>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              ) : (
-                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                  onClick={() => navigate("/login")}
-                  style={{ display: "flex", alignItems: "center", gap: "7px", padding: "8px 18px", marginLeft: "4px", background: T.loginBg, color: "#fff", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "'Manrope', sans-serif", boxShadow: T.loginShadow, transition: "all 0.3s" }}>
-                  <FiUser size={13} /> Login
-                </motion.button>
-              )}
-            </div>
-
-            {/* Mobile hamburger */}
-            <motion.button whileTap={{ scale: 0.88 }} onClick={() => setMobileOpen(!mobileOpen)}
-              className="show-mobile nav-ib" style={{ ...iconBtn, display: "none" }}>
-              <AnimatePresence mode="wait">
-                <motion.div key={mobileOpen ? "x" : "m"}
-                  initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}
-                  transition={{ duration: 0.16 }}>
-                  {mobileOpen ? <FiX size={17} /> : <FiMenu size={17} />}
-                </motion.div>
-              </AnimatePresence>
-            </motion.button>
           </div>
         </div>
       </motion.nav>
 
-      {/* ── Mobile drawer ── */}
       <AnimatePresence>
-        {mobileOpen && (
+        {sidebarOpen && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setMobileOpen(false)}
-              style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.22)", backdropFilter: "blur(4px)", zIndex: 190 }} />
-            <motion.div
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 28, stiffness: 240 }}
-              style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(320px,90vw)", background: "#fff", zIndex: 195, overflowY: "auto", padding: "80px 24px 40px", boxShadow: "-16px 0 48px rgba(26,46,44,0.10)", fontFamily: "'Manrope', sans-serif" }}>
-
-              <button onClick={() => setMobileOpen(false)}
-                style={{ position: "absolute", top: "16px", right: "16px", background: "none", border: "1.5px solid #E2EEEC", borderRadius: "8px", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6B8F8A" }}>
-                <FiX size={15} />
-              </button>
-
-              <div style={{ position: "relative", marginBottom: "28px" }}>
-                <FiSearch size={13} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#B8CFCC" }} />
-                <input value={searchTerm} onChange={e => handleSearchInput(e.target.value)} onKeyDown={handleSearchSubmit}
-                  placeholder="Search fresh catch…"
-                  style={{ width: "100%", padding: "10px 12px 10px 36px", border: "1.5px solid #E2EEEC", borderRadius: "10px", fontSize: "13px", color: "#1A2E2C", fontFamily: "'Manrope', sans-serif", background: "#F4F9F8", outline: "none" }}
-                />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSidebarOpen(false)}
+              style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.3)", backdropFilter: "blur(4px)", zIndex: 200 }} />
+            <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "300px", background: "#fff", zIndex: 201, padding: "40px 24px", boxShadow: "10px 0 40px rgba(0,0,0,0.1)" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "40px" }}>
+                <img src="/logo.png" alt="SeaBite" style={{ height: "32px" }} />
+                <button onClick={() => setSidebarOpen(false)} style={{ background: "none", border: "none", color: "#6B8F8A", cursor: "pointer" }}><FiX size={24} /></button>
               </div>
-
-              <p style={{ fontSize: "10px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "10px" }}>Shop</p>
-              <div style={{ marginBottom: "28px" }}>
-                {NAV_LINKS.map((link, i) => (
-                  <motion.div key={link.path} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 + 0.08 }}>
-                    <Link to={link.path} onClick={() => setMobileOpen(false)} className="mob-link"
-                      style={{ display: "block", padding: "11px 13px", borderRadius: "10px", fontSize: "15px", fontWeight: "600", color: "#1A2E2C", textDecoration: "none", marginBottom: "3px", transition: "background 0.15s" }}>
-                      {link.label}
-                    </Link>
-                  </motion.div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <p style={{ fontSize: "11px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Navigation</p>
+                {[{ label: "Home", path: "/" }, { label: "Shop All", path: "/products" }, { label: "About Us", path: "/about" }, { label: "My Account", path: "/profile" }, { label: "Track Orders", path: "/orders" }].map(link => (
+                  <Link key={link.path} to={link.path} onClick={() => setSidebarOpen(false)} className="sidebar-item"
+                    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", borderRadius: "12px", textDecoration: "none", color: "#1A2E2C", fontSize: "15px", fontWeight: "600", transition: "all 0.2s" }}>
+                    {link.label}
+                  </Link>
                 ))}
-              </div>
-
-              <div style={{ height: "1px", background: "#F0F5F4", marginBottom: "24px" }} />
-
-              {user ? (
-                <div>
-                  <p style={{ fontSize: "10px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "10px" }}>Account</p>
-                  {[
-                    { icon: <FiUser size={14} />, label: "My Profile", path: "/profile" },
-                    { icon: <FiHeart size={14} />, label: "Wishlist", path: "/wishlist" },
-                    { icon: <FiPackage size={14} />, label: "Orders", path: "/orders" },
-                    { icon: <FiBell size={14} />, label: "Notifications", path: "/notifications", badge: unreadCount },
-                    ...(user.role === "admin" ? [{ icon: <FiGrid size={14} />, label: "Admin", path: "/admin/dashboard" }] : []),
-                  ].map((item, i) => (
-                    <motion.button key={item.path} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.04 + 0.18 }}
-                      whileTap={{ scale: 0.98 }} onClick={() => { navigate(item.path); setMobileOpen(false); }} className="mob-link"
-                      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "11px 13px", borderRadius: "10px", border: "none", background: "none", cursor: "pointer", fontFamily: "'Manrope', sans-serif", marginBottom: "3px", transition: "background 0.15s" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#1A2E2C", fontSize: "15px", fontWeight: "600" }}>
-                        <span style={{ color: "#6B8F8A" }}>{item.icon}</span>
-                        {item.label}
-                      </div>
-                      {item.badge > 0 && <span style={{ background: "#F07468", color: "#fff", fontSize: "10px", fontWeight: "800", padding: "1px 7px", borderRadius: "20px" }}>{item.badge}</span>}
-                    </motion.button>
-                  ))}
-                  <button onClick={handleLogout}
-                    style={{ width: "100%", marginTop: "14px", padding: "12px 14px", borderRadius: "10px", border: "1.5px solid #FEE2E2", background: "#FFF5F4", color: "#DC2626", fontSize: "14px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", fontFamily: "'Manrope', sans-serif" }}>
-                    <FiLogOut size={14} /> Logout
-                  </button>
+                <div style={{ marginTop: "24px" }}>
+                   <p style={{ fontSize: "11px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Categories</p>
+                   {NAV_LINKS.map(link => (
+                     <Link key={link.path} to={link.path} onClick={() => setSidebarOpen(false)} className="sidebar-item"
+                       style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 16px", borderRadius: "12px", textDecoration: "none", color: "#4A7570", fontSize: "14px", fontWeight: "500" }}>
+                       {link.label}
+                     </Link>
+                   ))}
                 </div>
-              ) : (
-                <button onClick={() => { navigate("/login"); setMobileOpen(false); }}
-                  style={{ width: "100%", padding: "13px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "'Manrope', sans-serif" }}>
-                  Login / Sign Up
-                </button>
-              )}
+              </div>
             </motion.div>
           </>
         )}

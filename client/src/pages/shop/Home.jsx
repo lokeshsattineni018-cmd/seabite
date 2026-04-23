@@ -138,133 +138,73 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
 // ══════════════════════════════════════════════
 const Hero = () => {
   const { t } = useTranslation();
-  const [activeSlide, setActiveSlide] = useState(0);
-
-  const slides = [
-    {
-      type: "video",
-      src: "1.mp4",
-      tag: t("hero.slide1.tag"),
-      title: t("hero.slide1.title", { returnObjects: true }),
-      desc: t("hero.slide1.desc"),
-      cta: t("hero.slide1.cta"),
-      color: "#5BA8A0"
-    },
-    {
-      type: "image",
-      src: "https://images.unsplash.com/photo-1559742811-82410b451b9b?auto=format&fit=crop&q=80&w=2000",
-      tag: t("hero.slide2.tag"),
-      title: t("hero.slide2.title", { returnObjects: true }),
-      desc: t("hero.slide2.desc"),
-      cta: t("hero.slide2.cta"),
-      color: "#E8816A"
-    },
-    {
-      type: "image",
-      src: "https://images.unsplash.com/photo-1514944288352-fffac99f0bdf?auto=format&fit=crop&q=80&w=2000",
-      tag: t("hero.slide3.tag"),
-      title: t("hero.slide3.title", { returnObjects: true }),
-      desc: t("hero.slide3.desc"),
-      cta: t("hero.slide3.cta"),
-      color: "#89C2D9"
-    }
-  ];
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 700], [0, 140]);
   const opacity = useTransform(scrollY, [0, 500], [1, 0.25]);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % slides.length);
-    }, 6000);
-    return () => clearInterval(timer);
-  }, [slides.length]);
-
   return (
     <section className="relative h-screen min-h-[680px] max-h-[960px] overflow-hidden">
-      <AnimatePresence mode="wait">
-        <motion.div 
-          key={activeSlide}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
-          style={{ y, opacity }}
-          className="absolute inset-0 z-0"
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70 z-10" />
-          
-          {slides[activeSlide].type === "video" ? (
-            <>
-              {!isVideoLoaded && (
-                <div className="absolute inset-0 z-40 bg-[#1A2B35] flex items-center justify-center">
-                  <SeaBiteLoader />
-                </div>
-              )}
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                onCanPlayThrough={() => setIsVideoLoaded(true)}
-                src={slides[activeSlide].src}
-                className="w-full h-full object-cover scale-105"
-              />
-            </>
-          ) : (
-            <img 
-              src={slides[activeSlide].src} 
-              className="w-full h-full object-cover scale-105" 
-              alt="Hero background"
-            />
-          )}
-        </motion.div>
-      </AnimatePresence>
+      <motion.div 
+        style={{ y, opacity }}
+        className="absolute inset-0 z-0"
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 z-10" />
+        
+        {!isVideoLoaded && (
+          <div className="absolute inset-0 z-40 bg-[#1A2B35] flex items-center justify-center">
+            <SeaBiteLoader />
+          </div>
+        )}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          onCanPlayThrough={() => setIsVideoLoaded(true)}
+          src="1.mp4"
+          className="w-full h-full object-cover scale-105"
+        />
+      </motion.div>
 
       <div className="relative z-20 h-full flex items-center">
         <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid md:grid-cols-2 gap-12 items-center">
-          <AnimatePresence mode="wait">
-            <motion.div 
-              key={activeSlide}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-              className="space-y-8"
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-8"
+          >
+            <div>
+              <Chip color="teal"><Waves size={11} /> {t("hero.slide1.tag")}</Chip>
+            </div>
+
+            <h1
+              className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
+              style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
             >
-              <div>
-                <Chip color="teal"><Waves size={11} /> {slides[activeSlide].tag}</Chip>
-              </div>
+              {t("hero.slide1.title", { returnObjects: true })[0]}<br />
+              <span style={{ color: "#5BA8A0" }}>{t("hero.slide1.title", { returnObjects: true })[1]}</span><br />
+              {t("hero.slide1.title", { returnObjects: true })[2]}
+            </h1>
 
-              <h1
-                className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
-                style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
-              >
-                {slides[activeSlide].title[0]}<br />
-                <span style={{ color: slides[activeSlide].color }}>{slides[activeSlide].title[1]}</span><br />
-                {slides[activeSlide].title[2]}
-              </h1>
+            <p className="text-white/75 text-lg leading-relaxed max-w-md">
+              {t("hero.slide1.desc")}
+            </p>
 
-              <p className="text-white/75 text-lg leading-relaxed max-w-md">
-                {slides[activeSlide].desc}
-              </p>
-
-              <div className="flex flex-wrap gap-3">
-                <CTAButton to="/products" variant="primary">{slides[activeSlide].cta} <ArrowRight size={15} /></CTAButton>
-                <Link to="/products">
-                  <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                    className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full border border-white/25 text-white/80 hover:border-white/60 hover:text-white bg-white/10 backdrop-blur-sm transition-all duration-300"
-                  >
-                    View All Catch
-                  </motion.button>
-                </Link>
-              </div>
-            </motion.div>
-          </AnimatePresence>
+            <div className="flex flex-wrap gap-3">
+              <CTAButton to="/products" variant="primary">{t("hero.slide1.cta")} <ArrowRight size={15} /></CTAButton>
+              <Link to="/products">
+                <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                  className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full border border-white/25 text-white/80 hover:border-white/60 hover:text-white bg-white/10 backdrop-blur-sm transition-all duration-300"
+                >
+                  View All Catch
+                </motion.button>
+              </Link>
+            </div>
+          </motion.div>
 
           <div className="hidden md:flex justify-center items-center relative h-[420px]">
-            {/* Persistent stats/floating elements that look good with any background */}
             <motion.div animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
               className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.18)] border border-white/60 p-8 text-center w-52"
             >
@@ -284,18 +224,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Slide Indicators */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
-        {slides.map((_, i) => (
-          <button 
-            key={i} 
-            onClick={() => setActiveSlide(i)}
-            className={`h-1.5 rounded-full transition-all duration-500 ${activeSlide === i ? "w-8 bg-[#5BA8A0]" : "w-2 bg-white/30 hover:bg-white/50"}`}
-          />
-        ))}
-      </div>
-
-      {/* Scroll Indicator */}
       <motion.div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }}>
         <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Scroll</span>
         <motion.div animate={{ y: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 1.6 }}>
