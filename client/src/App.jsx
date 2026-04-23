@@ -1,6 +1,6 @@
 import { useState, useEffect, Suspense } from "react";
 import { lazyWithRetry as lazy } from "./utils/lazyWithRetry"; // 🛠️ Stability: Auto-retry on deployment chunks
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { HelmetProvider } from "react-helmet-async";
@@ -261,8 +261,8 @@ function MainLayout() {
                     <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
                     <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
                     <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
+                    <Route path="/signup" element={<Navigate to="/?auth=signup" replace />} />
                     <Route path="/categories" element={<Categories />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
