@@ -15,8 +15,35 @@ const router = express.Router();
 // Memory store for OTPs (in production, use Redis or DB with TTL)
 const otpStore = new Map();
 
-// ================= LOGIN & REGISTER REMOVED =================
-// Security Hardening (Phase 26): Email/Password auth disabled in favor of Google OAuth only.
+// ================= LOGIN =================
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (user && (await user.matchPassword(password))) {
+      req.session.userId = user._id;
+      req.session.role = user.role;
+      generateToken(res, user._id);
+      res.json({
+        sessionId: req.sessionID,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone,
+          wishlist: user.wishlist,
+          walletBalance: user.walletBalance,
+          referralCode: user.referralCode,
+        },
+      });
+    } else {
+      res.status(401).json({ message: "Invalid email or password" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Server error during login" });
+  }
+});
 
 // ================= LOGOUT =================
 router.post("/logout", (req, res) => {

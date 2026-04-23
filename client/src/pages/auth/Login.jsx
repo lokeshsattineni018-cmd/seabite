@@ -13,12 +13,34 @@ export default function Login() {
   const { setUser, refreshMe } = useAuth();
   const navigate = useNavigate();
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/login`, { email, password }, { withCredentials: true });
+      if (res.data.sessionId) localStorage.setItem("seabite_session_id", res.data.sessionId);
+      setUser(res.data.user);
+      setModal({ show: true, message: "Login Successful! Redirecting...", type: "success" });
+      setTimeout(async () => {
+        await refreshMe?.();
+        navigate(res.data.user.role === "admin" ? "/admin/dashboard" : "/");
+      }, 1500);
+    } catch (err) {
+      setModal({ show: true, message: err.response?.data?.message || "Login failed. Please check your credentials.", type: "error" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
@@ -149,34 +171,94 @@ export default function Login() {
             </p>
           </motion.div>
 
+          <AnimatePresence mode="wait">
+            <motion.form 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              onSubmit={handleLogin}
+              style={{ display: "flex", flexDirection: "column", gap: "16px", marginBottom: "24px" }}
+            >
+              <div style={{ position: "relative", textAlign: "left" }}>
+                <label style={{ fontSize: "11px", fontWeight: "700", color: "#A8C5C0", textTransform: "uppercase", letterSpacing: "0.05em", marginLeft: "4px", marginBottom: "6px", display: "block" }}>Email Address</label>
+                <input 
+                  type="email" 
+                  required 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                  style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", color: "#1A2E2C", outline: "none", transition: "all 0.2s" }}
+                  onFocus={(e) => e.target.style.borderColor = "#5BBFB5"}
+                  onBlur={(e) => e.target.style.borderColor = "#E2EEEC"}
+                />
+              </div>
+
+              <div style={{ position: "relative", textAlign: "left" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                  <label style={{ fontSize: "11px", fontWeight: "700", color: "#A8C5C0", textTransform: "uppercase", letterSpacing: "0.05em", marginLeft: "4px" }}>Password</label>
+                  <Link to="/forgot-password" style={{ fontSize: "11px", fontWeight: "700", color: "#5BBFB5", textDecoration: "none" }}>Forgot?</Link>
+                </div>
+                <input 
+                  type="password" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", color: "#1A2E2C", outline: "none", transition: "all 0.2s" }}
+                  onFocus={(e) => e.target.style.borderColor = "#5BBFB5"}
+                  onBlur={(e) => e.target.style.borderColor = "#E2EEEC"}
+                />
+              </div>
+
+              <motion.button
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={loading}
+                style={{ width: "100%", padding: "14px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontSize: "14px", fontWeight: "700", cursor: "pointer", marginTop: "8px", boxShadow: "0 4px 12px rgba(26,46,44,0.12)" }}
+              >
+                {loading ? "Signing in..." : "Sign In"}
+              </motion.button>
+            </motion.form>
+          </AnimatePresence>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+            <div style={{ flex: 1, height: "1px", background: "#E8EEF2" }} />
+            <span style={{ fontSize: "11px", color: "#B8CFCC", fontWeight: "700" }}>OR</span>
+            <div style={{ flex: 1, height: "1px", background: "#E8EEF2" }} />
+          </div>
+
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
-            style={{ marginBottom: 24 }}
+            style={{ marginBottom: "32px" }}
           >
             <motion.button
               onClick={() => login()}
               whileHover={{ y: -2, boxShadow: "0 8px 28px rgba(91,168,160,0.22)" }}
               whileTap={{ scale: 0.97 }}
               style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 12,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "12px",
                 width: "100%", padding: "14px 24px", borderRadius: 14,
-                background: "#1A2B35", color: "#ffffff",
+                background: "#ffffff", color: "#1A2B35",
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-                fontSize: 14, fontWeight: 600, border: "none", cursor: "pointer",
-                boxShadow: "0 2px 16px rgba(26,43,53,0.18)",
+                fontSize: "14px", fontWeight: "700", border: "1.5px solid #E2EEEC", cursor: "pointer",
                 transition: "all 0.2s ease",
               }}
             >
               <img
                 src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png"
-                style={{ width: 20, height: 20, borderRadius: "50%", background: "#fff", padding: 2 }}
+                style={{ width: 18, height: 18 }}
                 alt="google"
               />
               Continue with Google
             </motion.button>
           </motion.div>
+
+          <p style={{ fontSize: "13px", color: "#6B8F8A", marginBottom: "24px" }}>
+            New to SeaBite? <Link to="/signup" style={{ color: "#5BBFB5", fontWeight: "700", textDecoration: "none" }}>Create an account</Link>
+          </p>
 
           {/* Secondary option hint */}
           <motion.div
@@ -184,21 +266,6 @@ export default function Login() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
-            {/* Seafoam accent bar */}
-            <div
-              style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "12px 16px", borderRadius: 12,
-                background: "rgba(91,168,160,0.06)", border: "1px solid rgba(91,168,160,0.15)",
-                marginBottom: 20,
-              }}
-            >
-              <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#5BA8A0", flexShrink: 0 }} />
-              <p style={{ fontSize: 11.5, color: "#5BA8A0", fontWeight: 600, textAlign: "left", lineHeight: 1.5 }}>
-                Secured by Google
-              </p>
-            </div>
-
             <p style={{ fontSize: 11, color: "#9BB5BF", lineHeight: 1.7 }}>
               By continuing, you agree to SeaBite's{" "}
               <Link to="/terms" style={{ color: "#5BA8A0", fontWeight: 600, textDecoration: "none" }}>Terms</Link>

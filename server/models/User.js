@@ -1,18 +1,18 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
 
-// 1️⃣ Address Subdocument Schema
 // 1️⃣ Address Subdocument Schema
 const addressSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     phone: { type: String, required: true },
-    houseNo: { type: String, required: true }, // Added
+    houseNo: { type: String, required: true },
     street: { type: String, required: true },
-    landmark: { type: String }, // Added
+    landmark: { type: String },
     city: { type: String, required: true },
-    state: { type: String, required: true }, // Added (for restriction check)
+    state: { type: String, required: true },
     postalCode: { type: String, required: true },
-    isDefault: { type: Boolean, default: false }, // Added
+    isDefault: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: false },
 
     role: { type: String, default: "user" },
-    isBanned: { type: Boolean, default: false }, // 🟢 NEW
+    isBanned: { type: Boolean, default: false },
 
     // Google OAuth ID
     googleId: { type: String },
@@ -40,7 +40,6 @@ const userSchema = new mongoose.Schema(
       match: [/^\d+$/, "Phone number must contain only digits"],
     },
 
-    // 🆕 Added inside schema properly
     lastSpinTime: {
       type: Date,
       default: null,
@@ -79,6 +78,22 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Match password method
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  if (!this.password) return false;
+  return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Hash password before saving
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
 
 userSchema.pre("save", function (next) {
   if (this.isNew && !this.referralCode) {
