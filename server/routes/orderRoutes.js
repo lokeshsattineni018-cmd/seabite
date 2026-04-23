@@ -97,6 +97,16 @@ router.post("/", protect, async (req, res) => {
       return res.status(400).json({ message: "No items in order" });
     }
 
+    // 🛡️ PIN CODE VALIDATION: Only AP & TS delivery (500001–535999)
+    const zip = deliveryAddress?.zip;
+    if (!zip) {
+      return res.status(400).json({ message: "Pincode is required for delivery" });
+    }
+    const pinNum = parseInt(zip, 10);
+    if (isNaN(pinNum) || pinNum < 500001 || pinNum > 535999) {
+      return res.status(400).json({ message: "Sorry, we currently deliver only in Andhra Pradesh & Telangana (Pincode: 500001–535999)" });
+    }
+
     const newOrder = new Order({
       user: req.user._id,
       items,

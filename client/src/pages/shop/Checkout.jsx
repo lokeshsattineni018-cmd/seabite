@@ -249,6 +249,12 @@ export default function Checkout() {
       setModal({ show: true, message: "Please complete all delivery address fields.", type: "error" });
       return;
     }
+    // 🛡️ PIN CODE GUARD: Only AP & TS delivery (500001–535999)
+    const pinNum = parseInt(deliveryAddress.postalCode, 10);
+    if (isNaN(pinNum) || pinNum < 500001 || pinNum > 535999) {
+      setModal({ show: true, message: "Sorry, we deliver only in Andhra Pradesh & Telangana (PIN: 500001–535999).", type: "error" });
+      return;
+    }
     setLoading(true);
     const orderDetails = {
       amount: grandTotal,
