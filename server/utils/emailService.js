@@ -308,7 +308,7 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
   return await resend.emails.send({
     from: OFFICIAL_SENDER,
     to: email,
-    subject: \`SeaBite | Don't miss out on your fresh catch, \${name}!\`,
+    subject: `SeaBite | Don't miss out on your fresh catch, ${name}!`,
     html: aestheticWrapper(content, "RESERVED CATCH")
   });
 };
