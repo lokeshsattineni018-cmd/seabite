@@ -351,6 +351,14 @@ export default function Navbar({ announcementActive = false }) {
               </AnimatePresence>
             </div>
 
+            {/* Notifications */}
+            {user && (
+              <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate("/notifications")} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
+                <FiBell size={15} />
+                {unreadCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{unreadCount}</span>}
+              </motion.button>
+            )}
+
             <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate(user ? "/wishlist" : "#")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
               <FiHeart size={15} />
               {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{user.wishlist.length}</span>}
@@ -377,6 +385,9 @@ export default function Navbar({ announcementActive = false }) {
                           <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{user.email}</p>
                         </div>
                         <div style={{ padding: "6px" }}>
+                          {user.role === "admin" && (
+                            <button onClick={() => { navigate("/admin/dashboard"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}><FiGrid /> Admin Dashboard</button>
+                          )}
                           {[{ icon: <FiUser />, label: "My Profile", path: "/profile" }, { icon: <FiHeart />, label: "Wishlist", path: "/wishlist" }, { icon: <FiPackage />, label: "My Orders", path: "/orders" }].map(item => (
                             <button key={item.path} onClick={() => { navigate(item.path); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}>{item.icon} {item.label}</button>
                           ))}
