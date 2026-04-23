@@ -3,8 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiUser, FiShoppingBag, FiSearch, FiLogOut, FiPackage,
-  FiGrid, FiBell, FiMenu, FiX, FiChevronDown, FiHeart,
-  FiGlobe, FiMail, FiShoppingCart, FiChevronRight, FiCheckCircle
+  FiMenu, FiX, FiChevronDown, FiMail, FiCheckCircle
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import axios from "axios";
@@ -36,7 +35,6 @@ export default function Navbar({ announcementActive = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [searchExpanded, setSearchExpanded] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
   const [showSpinWheel, setShowSpinWheel] = useState(false);
   const [trendingSearched, setTrendingSearched] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
@@ -46,10 +44,15 @@ export default function Navbar({ announcementActive = false }) {
   const searchRef = useRef(null);
   const debounceRef = useRef(null);
 
-  // Login Form State
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [loginLoading, setLoginLoading] = useState(false);
+  // Auth State
+  const [authMode, setAuthMode] = useState("LOGIN"); // LOGIN, SIGNUP, FORGOT, RESET_PASSWORD, OTP_VERIFY_SIGNUP
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authPhone, setAuthPhone] = useState("");
+  const [authOtp, setAuthOtp] = useState("");
+  const [authReferral, setAuthReferral] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
 
   const isHome = location.pathname === "/";
   const isTransparent = isHome && !scrolled;
@@ -66,13 +69,6 @@ export default function Navbar({ announcementActive = false }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [location.pathname]);
-
-  useEffect(() => {
-    if (!user) return setUnreadCount(0);
-    axios.get(`${API_URL}/api/notifications`, { withCredentials: true })
-      .then(res => setUnreadCount(res.data.filter(n => !n.read).length))
-      .catch(() => { });
-  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -134,10 +130,10 @@ export default function Navbar({ announcementActive = false }) {
   };
 
   const handleLoginSubmit = async (e) => {
-    e.preventDefault();
-    setLoginLoading(true);
+    if (e) e.preventDefault();
+    setAuthLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/api/auth/login`, { email: loginEmail, password: loginPassword }, { withCredentials: true });
+      const res = await axios.post(`${API_URL}/api/auth/login`, { email: authEmail, password: authPassword }, { withCredentials: true });
       if (res.data.sessionId) localStorage.setItem("seabite_session_id", res.data.sessionId);
       setUser(res.data.user);
       toast.success("Welcome back!");
@@ -145,9 +141,60 @@ export default function Navbar({ announcementActive = false }) {
       await refreshMe?.();
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");
-    } finally {
-      setLoginLoading(false);
-    }
+    } finally { setAuthLoading(false); }
+  };
+
+  const handleSignupOtpRequest = async (e) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    try {
+      await axios.post(`${API_URL}/api/auth/send-otp`, { email: authEmail, name: authName });
+      toast.success("OTP sent to your email!");
+      setAuthMode("OTP_VERIFY_SIGNUP");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to send OTP");
+    } finally { setAuthLoading(false); }
+  };
+
+  const handleSignupVerify = async (e) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/auth/verify-otp-signup`, {
+        name: authName, email: authEmail, phone: authPhone, password: authPassword, otp: authOtp, referralCode: authReferral
+      });
+      if (res.data.sessionId) localStorage.setItem("seabite_session_id", res.data.sessionId);
+      setUser(res.data.user);
+      toast.success("Account created successfully!");
+      setIsLoginOpen(false);
+      await refreshMe?.();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Verification failed");
+    } finally { setAuthLoading(false); }
+  };
+
+  const handleForgotOtpRequest = async (e) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    try {
+      await axios.post(`${API_URL}/api/auth/forgot-password-otp`, { email: authEmail });
+      toast.success("Reset OTP sent to your email!");
+      setAuthMode("RESET_PASSWORD");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error sending reset OTP");
+    } finally { setAuthLoading(false); }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    try {
+      await axios.post(`${API_URL}/api/auth/reset-password`, { email: authEmail, otp: authOtp, newPassword: authPassword });
+      toast.success("Password reset successful!");
+      setAuthMode("LOGIN");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Reset failed");
+    } finally { setAuthLoading(false); }
   };
 
   const googleLogin = useGoogleLogin({
@@ -159,9 +206,7 @@ export default function Navbar({ announcementActive = false }) {
         toast.success("Success!");
         setIsLoginOpen(false);
         await refreshMe?.();
-      } catch {
-        toast.error("Google login failed");
-      }
+      } catch { toast.error("Google login failed"); }
     }
   });
 
@@ -178,6 +223,20 @@ export default function Navbar({ announcementActive = false }) {
     searchBorder: isTransparent ? "rgba(255,255,255,0.2)" : "#E2EEEC",
   };
 
+  const AuthInput = ({ label, type = "text", value, onChange, placeholder, icon: Icon, required = true }) => (
+    <div style={{ marginBottom: "20px" }}>
+      <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{label}</label>
+      <div style={{ position: "relative" }}>
+        {Icon && <Icon style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#6B8F8A" }} />}
+        <input
+          type={type} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+          style={{ width: "100%", padding: `14px 16px ${Icon ? '14px 42px' : '14px 16px'}`, paddingLeft: Icon ? "42px" : "16px", borderRadius: "14px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", outline: "none", fontSize: "14px", transition: "all 0.2s" }}
+          className="auth-input"
+        />
+      </div>
+    </div>
+  );
+
   return (
     <>
       <style>{`
@@ -188,6 +247,17 @@ export default function Navbar({ announcementActive = false }) {
         .prof-item:hover { background: #F4F9F8; }
         .drawer-scrollbar::-webkit-scrollbar { width: 4px; }
         .drawer-scrollbar::-webkit-scrollbar-thumb { background: #E2EEEC; border-radius: 10px; }
+        .auth-input:focus { border-color: #5BBFB5 !important; background: #fff !important; box-shadow: 0 0 0 4px rgba(91,191,181,0.1); }
+        .loading-spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: auth-spin 0.8s linear infinite; }
+        @keyframes auth-spin { to { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+          .hidden-mobile { display: none !important; }
+          .show-mobile   { display: flex !important; }
+        }
+        @media (min-width: 769px) {
+          .show-mobile   { display: none !important; }
+          .hidden-mobile { display: flex !important; }
+        }
       `}</style>
 
       <motion.nav
@@ -217,14 +287,14 @@ export default function Navbar({ announcementActive = false }) {
                </button>
                <AnimatePresence>
                  {showShop && (
-                   <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                     style={{ position: "absolute", top: "100%", left: 0, paddingTop: "10px", width: "180px", zIndex: 101 }}>
-                     <div style={{ background: "#fff", borderRadius: "14px", border: "1px solid #E2EEEC", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", overflow: "hidden" }}>
-                       {NAV_LINKS.map(l => (
-                         <Link key={l.path} to={l.path} onClick={() => setShowShop(false)} style={{ display: "block", padding: "12px 16px", textDecoration: "none", color: "#1A2E2C", fontSize: "13px", fontWeight: "600" }} className="prof-item">{l.label}</Link>
-                       ))}
-                     </div>
-                   </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                      style={{ position: "absolute", top: "100%", left: 0, paddingTop: "10px", width: "180px", zIndex: 101 }}>
+                      <div style={{ background: "#fff", borderRadius: "14px", border: "1px solid #E2EEEC", boxShadow: "0 10px 40px rgba(0,0,0,0.1)", overflow: "hidden" }}>
+                        {NAV_LINKS.map(l => (
+                          <Link key={l.path} to={l.path} onClick={() => setShowShop(false)} style={{ display: "block", padding: "12px 16px", textDecoration: "none", color: "#1A2E2C", fontSize: "13px", fontWeight: "600" }} className="prof-item">{l.label}</Link>
+                        ))}
+                      </div>
+                    </motion.div>
                  )}
                </AnimatePresence>
              </div>
@@ -331,66 +401,151 @@ export default function Navbar({ announcementActive = false }) {
         </div>
       </motion.nav>
 
-      {/* Login Drawer */}
+      {/* High-Fidelity Auth Drawer */}
       <AnimatePresence>
         {isLoginOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsLoginOpen(false)}
-              style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.4)", backdropFilter: "blur(8px)", zIndex: 1000 }} />
-            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(400px, 100vw)", background: "#fff", zIndex: 1001, boxShadow: "-10px 0 50px rgba(0,0,0,0.15)", display: "flex", flexDirection: "column" }}>
-              <div style={{ padding: "24px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid #F0F5F4" }}>
-                <h2 style={{ fontSize: "20px", fontWeight: "800", color: "#1A2E2C" }}>Welcome Back</h2>
-                <button onClick={() => setIsLoginOpen(false)} style={{ background: "#F4F9F8", border: "none", borderRadius: "50%", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6B8F8A" }}><FiX size={20}/></button>
-              </div>
+              style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.4)", backdropFilter: "blur(12px)", zIndex: 1000 }} />
+            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 220 }}
+              style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(420px, 100vw)", background: "#fff", zIndex: 1001, boxShadow: "-10px 0 60px rgba(0,0,0,0.15)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
               
-              <div className="drawer-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "32px 24px" }}>
-                <img src="/logo.png" alt="SeaBite" style={{ height: "48px", marginBottom: "32px", objectFit: "contain" }} />
-                <p style={{ color: "#6B8F8A", fontSize: "14px", marginBottom: "32px", lineHeight: "1.6" }}>Sign in to access your orders, wishlist, and fresh coastal catch delivered to your doorstep.</p>
-
-                <form onSubmit={handleLoginSubmit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#A8C5C0", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>Email Address</label>
-                    <input type="email" required value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="name@example.com"
-                      style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", outline: "none", fontSize: "14px" }} />
-                  </div>
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <label style={{ fontSize: "11px", fontWeight: "800", color: "#A8C5C0", textTransform: "uppercase", letterSpacing: "1px" }}>Password</label>
-                      <Link to="/forgot-password" onClick={() => setIsLoginOpen(false)} style={{ fontSize: "11px", fontWeight: "800", color: "#5BBFB5", textDecoration: "none" }}>Forgot Password?</Link>
-                    </div>
-                    <input type="password" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} placeholder="••••••••"
-                      style={{ width: "100%", padding: "14px 16px", borderRadius: "12px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", outline: "none", fontSize: "14px" }} />
-                  </div>
-                  <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} disabled={loginLoading} type="submit"
-                    style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", fontSize: "15px", cursor: "pointer", marginTop: "8px" }}>
-                    {loginLoading ? "Authenticating..." : "Sign In to SeaBite"}
-                  </motion.button>
-                </form>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "24px 0" }}>
-                  <div style={{ flex: 1, height: "1px", background: "#F0F5F4" }} />
-                  <span style={{ fontSize: "11px", color: "#B8CFCC", fontWeight: "800" }}>OR CONTINUE WITH</span>
-                  <div style={{ flex: 1, height: "1px", background: "#F0F5F4" }} />
+              {/* Header Gradient */}
+              <div style={{ height: "180px", background: "linear-gradient(135deg, #1A2E2C 0%, #2D4F4B 100%)", padding: "40px 32px", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "140px", height: "140px", borderRadius: "50%", background: "rgba(91,191,181,0.15)", filter: "blur(40px)" }} />
+                <div style={{ position: "absolute", bottom: "-30px", left: "-10px", width: "100px", height: "100px", borderRadius: "50%", background: "rgba(232,129,106,0.1)", filter: "blur(30px)" }} />
+                
+                <div style={{ position: "absolute", top: "24px", right: "24px", zIndex: 2 }}>
+                  <button onClick={() => setIsLoginOpen(false)} style={{ background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#fff", backdropFilter: "blur(4px)" }}><FiX size={20}/></button>
                 </div>
 
-                <motion.button onClick={() => googleLogin()} whileHover={{ y: -2, background: "#F4F9F8" }} whileTap={{ scale: 0.98 }}
-                  style={{ width: "100%", padding: "14px", border: "1.5px solid #E2EEEC", borderRadius: "14px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
-                  <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" style={{ width: "18px" }} alt="Google" />
-                  Google Account
-                </motion.button>
-
-                <div style={{ marginTop: "40px", padding: "24px", background: "#F4F9F8", borderRadius: "16px", textAlign: "center" }}>
-                  <p style={{ fontSize: "14px", color: "#6B8F8A", marginBottom: "12px" }}>Don't have an account yet?</p>
-                  <Link to="/signup" onClick={() => setIsLoginOpen(false)}
-                    style={{ display: "block", width: "100%", padding: "12px", background: "#fff", color: "#5BBFB5", border: "1.5px solid #5BBFB5", borderRadius: "12px", fontWeight: "700", textDecoration: "none" }}>
-                    Create Account
-                  </Link>
-                </div>
+                <motion.div key={authMode} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+                  <h2 style={{ fontSize: "28px", fontWeight: "800", color: "#fff", margin: 0, fontFamily: "'Bricolage Grotesque', sans-serif" }}>
+                    {authMode === "LOGIN" && "Welcome Back"}
+                    {authMode === "SIGNUP" && "Join SeaBite"}
+                    {authMode === "FORGOT" && "Reset Password"}
+                    {authMode === "OTP_VERIFY_SIGNUP" && "Verify Email"}
+                    {authMode === "RESET_PASSWORD" && "Set New Password"}
+                  </h2>
+                  <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "14px", marginTop: "4px", fontWeight: "500" }}>
+                    {authMode === "LOGIN" && "Sign in to explore ocean-fresh seafood."}
+                    {authMode === "SIGNUP" && "Create an account for fresh coastal delivery."}
+                    {authMode === "FORGOT" && "Enter your email to receive a secure OTP."}
+                    {authMode === "OTP_VERIFY_SIGNUP" && "We've sent an OTP to your email."}
+                    {authMode === "RESET_PASSWORD" && "Enter the OTP sent to your email."}
+                  </p>
+                </motion.div>
               </div>
 
-              <div style={{ padding: "20px 24px", borderTop: "1px solid #F0F5F4", background: "#F4F9F8", textAlign: "center" }}>
-                <p style={{ fontSize: "11px", color: "#A8C5C0", lineHeight: "1.6" }}>Secure login powered by SeaBite. Your data is encrypted and protected.</p>
+              <div className="drawer-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "32px" }}>
+                <AnimatePresence mode="wait">
+                  <motion.div key={authMode} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                    
+                    {authMode === "LOGIN" && (
+                      <form onSubmit={handleLoginSubmit}>
+                        <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" icon={FiMail} />
+                        <div style={{ marginBottom: "12px" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                            <label style={{ fontSize: "11px", fontWeight: "800", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "1px" }}>Password</label>
+                            <button type="button" onClick={() => setAuthMode("FORGOT")} style={{ background: "none", border: "none", fontSize: "11px", fontWeight: "800", color: "#5BBFB5", cursor: "pointer", padding: 0 }}>Forgot Password?</button>
+                          </div>
+                          <input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} placeholder="••••••••" className="auth-input"
+                            style={{ width: "100%", padding: "14px 16px", borderRadius: "14px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", outline: "none", fontSize: "14px" }} />
+                        </div>
+                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} disabled={authLoading} type="submit"
+                          style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", fontSize: "15px", cursor: "pointer", marginTop: "24px", boxShadow: "0 10px 25px rgba(26,46,44,0.15)" }}>
+                          {authLoading ? <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}><div className="loading-spinner" /> Signing in...</div> : "Sign In to SeaBite"}
+                        </motion.button>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "12px", margin: "32px 0" }}>
+                          <div style={{ flex: 1, height: "1px", background: "#F0F5F4" }} />
+                          <span style={{ fontSize: "11px", color: "#B8CFCC", fontWeight: "800" }}>SECURE CONNECT</span>
+                          <div style={{ flex: 1, height: "1px", background: "#F0F5F4" }} />
+                        </div>
+
+                        <motion.button type="button" onClick={() => googleLogin()} whileHover={{ y: -2, background: "#F4F9F8" }} whileTap={{ scale: 0.98 }}
+                          style={{ width: "100%", padding: "14px", border: "1.5px solid #E2EEEC", borderRadius: "14px", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}>
+                          <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" style={{ width: "18px" }} alt="Google" />
+                          Continue with Google
+                        </motion.button>
+
+                        <div style={{ marginTop: "40px", textAlign: "center" }}>
+                          <p style={{ fontSize: "14px", color: "#6B8F8A" }}>New to SeaBite? <button type="button" onClick={() => setAuthMode("SIGNUP")} style={{ background: "none", border: "none", fontWeight: "800", color: "#5BBFB5", cursor: "pointer", padding: 0 }}>Create Account</button></p>
+                        </div>
+                      </form>
+                    )}
+
+                    {authMode === "SIGNUP" && (
+                      <form onSubmit={handleSignupOtpRequest}>
+                        <AuthInput label="Full Name" value={authName} onChange={setAuthName} placeholder="John Doe" icon={FiUser} />
+                        <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" icon={FiMail} />
+                        <AuthInput label="Phone Number" value={authPhone} onChange={setAuthPhone} placeholder="+91 00000 00000" />
+                        <AuthInput label="Set Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
+                        <AuthInput label="Referral Code (Optional)" value={authReferral} onChange={setAuthReferral} placeholder="SB-XXXX" required={false} />
+                        
+                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} disabled={authLoading} type="submit"
+                          style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", fontSize: "15px", cursor: "pointer", marginTop: "12px" }}>
+                          {authLoading ? "Sending OTP..." : "Get Started"}
+                        </motion.button>
+
+                        <div style={{ marginTop: "32px", textAlign: "center" }}>
+                          <p style={{ fontSize: "14px", color: "#6B8F8A" }}>Already have an account? <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontWeight: "800", color: "#5BBFB5", cursor: "pointer", padding: 0 }}>Log In</button></p>
+                        </div>
+                      </form>
+                    )}
+
+                    {authMode === "FORGOT" && (
+                      <form onSubmit={handleForgotOtpRequest}>
+                        <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" icon={FiMail} />
+                        <p style={{ fontSize: "12px", color: "#6B8F8A", marginBottom: "24px", lineHeight: "1.6" }}>If you're registered, we'll send a 6-digit secure code to reset your password.</p>
+                        
+                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} disabled={authLoading} type="submit"
+                          style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", fontSize: "15px", cursor: "pointer" }}>
+                          {authLoading ? "Checking email..." : "Send Verification OTP"}
+                        </motion.button>
+
+                        <div style={{ marginTop: "32px", textAlign: "center" }}>
+                          <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontWeight: "800", color: "#5BBFB5", cursor: "pointer", padding: 0 }}>Back to Login</button>
+                        </div>
+                      </form>
+                    )}
+
+                    {authMode === "OTP_VERIFY_SIGNUP" && (
+                      <form onSubmit={handleSignupVerify}>
+                        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+                           <div style={{ width: "64px", height: "64px", borderRadius: "20px", background: "#EAF6F5", color: "#5BBFB5", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
+                             <FiCheckCircle size={32} />
+                           </div>
+                           <p style={{ fontSize: "14px", color: "#6B8F8A" }}>A 6-digit code has been sent to<br/><strong style={{ color: "#1A2E2C" }}>{authEmail}</strong></p>
+                        </div>
+                        <AuthInput label="Enter 6-Digit OTP" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
+                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} disabled={authLoading} type="submit"
+                          style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", fontSize: "15px", cursor: "pointer" }}>
+                          {authLoading ? "Verifying..." : "Verify & Complete Signup"}
+                        </motion.button>
+                        <div style={{ marginTop: "24px", textAlign: "center" }}>
+                          <button type="button" onClick={() => setAuthMode("SIGNUP")} style={{ background: "none", border: "none", fontWeight: "600", color: "#8BA5B3", fontSize: "13px", cursor: "pointer" }}>Change Email</button>
+                        </div>
+                      </form>
+                    )}
+
+                    {authMode === "RESET_PASSWORD" && (
+                      <form onSubmit={handleResetPassword}>
+                        <AuthInput label="Enter 6-Digit OTP" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
+                        <AuthInput label="New Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
+                        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.98 }} disabled={authLoading} type="submit"
+                          style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", fontSize: "15px", cursor: "pointer" }}>
+                          {authLoading ? "Resetting..." : "Reset Password"}
+                        </motion.button>
+                      </form>
+                    )}
+
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              <div style={{ padding: "24px 32px", borderTop: "1px solid #F0F5F4", background: "#F8FAFB", textAlign: "center" }}>
+                <p style={{ fontSize: "12px", color: "#8BA5B3", margin: 0, fontWeight: "500" }}>Protected by SeaBite Secure Vault.</p>
               </div>
             </motion.div>
           </>
@@ -400,17 +555,6 @@ export default function Navbar({ announcementActive = false }) {
       <Suspense fallback={null}>
         {showSpinWheel && <Spin isOpen={showSpinWheel} onClose={() => setShowSpinWheel(false)} />}
       </Suspense>
-
-      <style>{`
-        @media (max-width: 768px) {
-          .hidden-mobile { display: none !important; }
-          .show-mobile   { display: flex !important; }
-        }
-        @media (min-width: 769px) {
-          .show-mobile   { display: none !important; }
-          .hidden-mobile { display: flex !important; }
-        }
-      `}</style>
     </>
   );
 }
