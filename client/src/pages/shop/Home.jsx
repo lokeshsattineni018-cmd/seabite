@@ -169,7 +169,6 @@ const Hero = () => {
       color: "#89C2D9"
     }
   ];
-  const [activeSlide, setActiveSlide] = useState(0);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 700], [0, 140]);
