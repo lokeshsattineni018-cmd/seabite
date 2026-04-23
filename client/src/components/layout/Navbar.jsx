@@ -104,17 +104,6 @@ export default function Navbar({ announcementActive = false }) {
     try { await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true }); setUser(null); navigate("/"); } catch { }
   };
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tok) => {
-      try {
-        const r = await axios.post(`${API_URL}/api/auth/google`, { token: tok.access_token }, { withCredentials: true });
-        setUser(r.data.user);
-        if (r.data.user.role === "admin") navigate("/admin/dashboard");
-        refreshMe();
-      } catch { }
-    },
-  });
-
   const isActive = (p) => location.pathname + location.search === p;
 
   const toggleLanguage = () => {
@@ -442,7 +431,7 @@ export default function Navbar({ announcementActive = false }) {
                 </div>
               ) : (
                 <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                  onClick={() => googleLogin()}
+                  onClick={() => navigate("/login")}
                   style={{ display: "flex", alignItems: "center", gap: "7px", padding: "8px 18px", marginLeft: "4px", background: T.loginBg, color: "#fff", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "'Manrope', sans-serif", boxShadow: T.loginShadow, transition: "all 0.3s" }}>
                   <FiUser size={13} /> Login
                 </motion.button>
@@ -529,7 +518,7 @@ export default function Navbar({ announcementActive = false }) {
                   </button>
                 </div>
               ) : (
-                <button onClick={() => { googleLogin(); setMobileOpen(false); }}
+                <button onClick={() => { navigate("/login"); setMobileOpen(false); }}
                   style={{ width: "100%", padding: "13px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "12px", fontSize: "14px", fontWeight: "700", cursor: "pointer", fontFamily: "'Manrope', sans-serif" }}>
                   Login / Sign Up
                 </button>
