@@ -144,6 +144,47 @@ router.post("/verify-otp-signup", async (req, res) => {
   }
 });
 
+// ================= FORGOT PASSWORD =================
+router.post("/forgot-password-otp", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: "Email is required" });
+
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ message: "Not registered in our website" });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000, type: 'FORGOT' });
+
+  try {
+    await sendOtpEmail(email, otp);
+    res.json({ message: "Reset OTP sent to your email" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to send reset OTP" });
+  }
+});
+
+router.post("/reset-password", async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  
+  const storedOtpData = otpStore.get(email);
+  if (!storedOtpData || storedOtpData.otp !== otp || storedOtpData.type !== 'FORGOT' || storedOtpData.expiresAt < Date.now()) {
+    return res.status(400).json({ message: "Invalid or expired OTP" });
+  }
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.password = newPassword;
+    await user.save();
+
+    otpStore.delete(email);
+    res.json({ message: "Password reset successful. Please login." });
+  } catch (err) {
+    res.status(500).json({ message: "Error resetting password" });
+  }
+});
+
 // ================= CURRENT USER =================
 router
   .route("/me")
