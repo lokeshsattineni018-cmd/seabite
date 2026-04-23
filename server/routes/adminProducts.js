@@ -39,28 +39,46 @@ router.get("/:id", adminAuth, async (req, res) => {
 router.post(
   "/",
   adminAuth,
-  upload.single("image"),
+  upload.fields([{ name: "image", maxCount: 1 }, { name: "images", maxCount: 5 }]),
   async (req, res) => {
 
     const { name, category, desc, trending, stock, basePrice, unit, countInStock } = req.body;
 
     try {
-      if (!req.file) {
-        return res.status(400).json({ message: "Image is required" });
+      if (!req.files || (!req.files.image && !req.files.images)) {
+        return res.status(400).json({ message: "At least one image is required" });
       }
 
       if (!basePrice || !unit) {
         return res.status(400).json({ message: "Missing required price details." });
       }
 
-      // ✅ FIXED: Convert Buffer to Cloudinary Data URI
-      const b64 = Buffer.from(req.file.buffer).toString("base64");
-      let dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+      let mainImageUrl = "";
+      if (req.files.image) {
+        const b64 = Buffer.from(req.files.image[0].buffer).toString("base64");
+        let dataURI = "data:" + req.files.image[0].mimetype + ";base64," + b64;
+        const cloudinaryResponse = await cloudinary.uploader.upload(dataURI, {
+          folder: "seabite-products",
+        });
+        mainImageUrl = cloudinaryResponse.secure_url;
+      }
 
-      // ✅ FIXED: Upload to Cloudinary instead of saving to 'uploads/'
-      const cloudinaryResponse = await cloudinary.uploader.upload(dataURI, {
-        folder: "seabite-products",
-      });
+      let galleryImageUrls = [];
+      if (req.files.images) {
+        for (const file of req.files.images) {
+          const b64 = Buffer.from(file.buffer).toString("base64");
+          let dataURI = "data:" + file.mimetype + ";base64," + b64;
+          const cloudinaryResponse = await cloudinary.uploader.upload(dataURI, {
+            folder: "seabite-products",
+          });
+          galleryImageUrls.push(cloudinaryResponse.secure_url);
+        }
+      }
+
+      // If main image wasn't provided but gallery was, use first gallery image as main
+      if (!mainImageUrl && galleryImageUrls.length > 0) {
+        mainImageUrl = galleryImageUrls[0];
+      }
 
       const product = await Product.create({
         name: name,
@@ -69,9 +87,10 @@ router.post(
         trending: trending === "true",
         stock: stock || "in",
         active: true,
-        image: cloudinaryResponse.secure_url, // Use Cloudinary URL
+        image: mainImageUrl, 
+        images: galleryImageUrls,
         basePrice: Number(basePrice),
-        buyingPrice: Number(req.body.buyingPrice || 0), // 🟢 NEW
+        buyingPrice: Number(req.body.buyingPrice || 0),
         unit: unit,
         countInStock: countInStock !== undefined ? Number(countInStock) : (stock === "out" ? 0 : 10),
       });
@@ -87,7 +106,7 @@ router.post(
 
 /* ========== UPDATE PRODUCT (PUT /api/admin/products/:id) ========== */
 router.put("/:id", adminAuth, async (req, res) => {
-  const { name, category, desc, trending, stock, basePrice, unit, image, countInStock } = req.body;
+  const { name, category, desc, trending, stock, basePrice, unit, image, images, countInStock } = req.body;
   try {
     const oldProduct = await Product.findById(req.params.id);
     if (!oldProduct) return res.status(404).json({ message: "Product not found" });
@@ -115,6 +134,7 @@ router.put("/:id", adminAuth, async (req, res) => {
           trending,
           stock: finalStock,
           image,
+          images: Array.isArray(images) ? images : [],
           basePrice: Number(basePrice),
           buyingPrice: Number(req.body.buyingPrice || 0), // 🟢 NEW
           unit,

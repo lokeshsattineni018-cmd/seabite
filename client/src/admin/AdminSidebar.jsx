@@ -14,6 +14,7 @@ const LINKS = [
   { name: "Products", path: "/admin/products", icon: <FiShoppingBag size={18} /> },
   { name: "Add Product", path: "/admin/add-product", icon: <FiPlusSquare size={18} /> },
   { name: "Orders", path: "/admin/orders", icon: <FiClipboard size={18} /> },
+  { name: "Logistics", path: "/admin/delivery", icon: <FiTruck size={18} /> },
   { name: "POS Terminal", path: "/admin/pos", icon: <FiCreditCard size={18} /> },
   { name: "Customers", path: "/admin/users", icon: <FiUsers size={18} /> },
   { name: "Messages", path: "/admin/messages", icon: <FiMail size={18} /> },

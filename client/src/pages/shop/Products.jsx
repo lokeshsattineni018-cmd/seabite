@@ -11,6 +11,7 @@ import { CartContext } from "../../context/CartContext";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import FilterSidebar from "../../components/layout/FilterSidebar";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
+import ProductSkeleton from "../../components/common/ProductSkeleton";
 import PullToRefresh from "../../components/common/PullToRefresh"; // 🎣 Pull to Refresh
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -278,8 +279,16 @@ export default function Products() {
 
               <AnimatePresence mode="wait">
                 {loading ? (
-                  <motion.div key="loader" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <SeaBiteLoader />
+                  <motion.div 
+                    key="loader" 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
+                    exit={{ opacity: 0 }}
+                    style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "20px" }}
+                  >
+                    {[...Array(8)].map((_, i) => (
+                      <ProductSkeleton key={i} />
+                    ))}
                   </motion.div>
                 ) : error ? (
                   <motion.div

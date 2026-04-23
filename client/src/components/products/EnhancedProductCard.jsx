@@ -2,7 +2,8 @@ import { useState, useContext, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck } from "react-icons/fi";
+import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck, FiLayers } from "react-icons/fi";
+import { CompareContext } from "../../context/CompareContext";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import toast from "../../utils/toast"; // Custom SeaBite toast
@@ -31,6 +32,7 @@ const EnhancedProductCard = ({
 }) => {
   const { addToCart, refreshCartCount } = useContext(CartContext);
   const { user, refreshMe } = useContext(AuthContext);
+  const { compareItems, toggleCompare } = useContext(CompareContext);
   const navigate = useNavigate();
 
   const [isAdding, setIsAdding] = useState(false);
@@ -321,6 +323,7 @@ const EnhancedProductCard = ({
       <button
         onClick={handleWishlistToggle}
         disabled={loadingWishlist}
+        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
         style={{
           position: "absolute", top: "12px", right: "12px", zIndex: 20,
           width: "34px", height: "34px",
@@ -409,6 +412,41 @@ const EnhancedProductCard = ({
           )}
         </div>
 
+        {/* Compare Checkbox */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+          <button 
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCompare(product); }}
+            style={{ 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "6px", 
+              background: "none", 
+              border: "none", 
+              padding: 0, 
+              cursor: "pointer", 
+              fontSize: "11px", 
+              fontWeight: "700", 
+              color: compareItems?.find(i => i._id === product._id) ? "#5BBFB5" : "#A8C5C0",
+              transition: "color 0.2s"
+            }}
+          >
+            <div style={{ 
+              width: "14px", 
+              height: "14px", 
+              borderRadius: "4px", 
+              border: `1.5px solid ${compareItems?.find(i => i._id === product._id) ? "#5BBFB5" : "#DDE9E7"}`,
+              background: compareItems?.find(i => i._id === product._id) ? "#5BBFB5" : "transparent",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              transition: "all 0.2s"
+            }}>
+              {compareItems?.find(i => i._id === product._id) && <FiCheck size={10} style={{ color: "#fff" }} />}
+            </div>
+            Compare
+          </button>
+        </div>
+
         {/* Price + CTA */}
         <div style={{ marginTop: "auto" }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "12px" }}>
@@ -429,6 +467,7 @@ const EnhancedProductCard = ({
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
             className="cart-btn-wave"
+            aria-label={isAdding ? "Product added to cart" : isOutOfStock ? "Product sold out" : "Add product to cart"}
             style={{
               width: "100%",
               padding: "10px 0",
@@ -449,13 +488,15 @@ const EnhancedProductCard = ({
               fontFamily: "'Manrope', sans-serif",
             }}
           >
-            {isAdding ? (
-              <><FiCheck size={14} /> Added</>
-            ) : isOutOfStock ? (
-              "Sold Out"
-            ) : (
-              <><FiShoppingCart size={14} /> Add to Cart</>
-            )}
+            <div aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              {isAdding ? (
+                <><FiCheck size={14} /> Added</>
+              ) : isOutOfStock ? (
+                "Sold Out"
+              ) : (
+                <><FiShoppingCart size={14} /> Add to Cart</>
+              )}
+            </div>
           </button>
         </div>
       </div>

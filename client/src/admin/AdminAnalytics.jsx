@@ -47,7 +47,7 @@ export default function AdminAnalytics() {
         </div>
     );
 
-    const { deadStock, retention, heatmap } = data;
+    const { deadStock, retention, heatmap, referral, delivery } = data;
 
     // Transform heatmap for Recharts
     const heatmapData = heatmap.map(h => ({
@@ -163,8 +163,91 @@ export default function AdminAnalytics() {
                         </div>
                     </motion.div>
 
+                    {/* 4. Referral & Loyalty Card */}
+                    <motion.div variants={fadeUp} custom={3} className="bg-white p-8 rounded-3xl border border-stone-200/60 shadow-sm hover:shadow-md transition-shadow lg:col-span-1">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl"><FiUsers size={20} /></div>
+                            <div>
+                                <h2 className="text-lg font-bold text-stone-900">Referral Program</h2>
+                                <p className="text-xs text-stone-400 font-bold uppercase tracking-widest mt-1">Loyalty & Growth</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            <div className="flex justify-between items-end border-b border-stone-50 pb-4">
+                                <div>
+                                    <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Total Referrals</p>
+                                    <p className="text-2xl font-bold text-stone-900">{referral?.totalReferrals || 0}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider">Active Growth</p>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-end border-b border-stone-50 pb-4">
+                                <div>
+                                    <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">SeaBite Cash Issued</p>
+                                    <p className="text-2xl font-bold text-stone-900">₹{referral?.totalCashIssued || 0}</p>
+                                </div>
+                                <div className="text-right text-stone-400">
+                                    <FiTrendingUp size={16} />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between items-end">
+                                <div>
+                                    <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Unique Referrers</p>
+                                    <p className="text-2xl font-bold text-stone-900">{referral?.uniqueReferrers || 0}</p>
+                                </div>
+                                <div className="text-right">
+                                    <span className="text-[10px] bg-stone-100 text-stone-600 font-bold px-2 py-1 rounded-md uppercase">Core Users</span>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    {/* 5. Logistics Performance */}
+                    <motion.div variants={fadeUp} custom={3.5} className="bg-white p-8 rounded-3xl border border-stone-200/60 shadow-sm hover:shadow-md transition-shadow lg:col-span-1">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl"><FiTrendingUp size={20} /></div>
+                            <div>
+                                <h2 className="text-lg font-bold text-stone-900">Logistics</h2>
+                                <p className="text-xs text-stone-400 font-bold uppercase tracking-widest mt-1">Delivery Efficiency</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center bg-stone-50 p-4 rounded-2xl">
+                                <div>
+                                    <p className="text-2xl font-bold text-stone-900">{delivery?.rate}%</p>
+                                    <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Delivery Rate</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-bold text-stone-900">{delivery?.delivered} / {delivery?.total}</p>
+                                    <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Completed</p>
+                                </div>
+                            </div>
+
+                            <div className="pt-2">
+                                <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider mb-3">Partner Performance</p>
+                                <div className="space-y-2">
+                                    {delivery?.partners.length === 0 ? (
+                                        <p className="text-[11px] text-stone-400 italic">No partners assigned yet</p>
+                                    ) : (
+                                        delivery?.partners.slice(0, 3).map(p => (
+                                            <div key={p.name} className="flex justify-between items-center text-sm">
+                                                <span className="text-stone-600 font-medium">{p.name}</span>
+                                                <span className="font-bold text-stone-900">{p.count} orders</span>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+
                     {/* 3. Dead Stock Table */}
-                    <motion.div variants={fadeUp} custom={3} className="bg-white p-8 rounded-3xl border border-stone-200/60 shadow-sm hover:shadow-md transition-shadow lg:col-span-3">
+                    <motion.div variants={fadeUp} custom={4} className="bg-white p-8 rounded-3xl border border-stone-200/60 shadow-sm hover:shadow-md transition-shadow lg:col-span-3">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2.5 bg-rose-50 text-rose-500 rounded-xl"><FiAlertTriangle size={20} /></div>
                             <div>

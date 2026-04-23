@@ -96,7 +96,9 @@ const T = {
 const STEPS = [
   { status: "Pending", label: "Order Placed", icon: <FiCheckCircle /> },
   { status: "Processing", label: "Processing", icon: <FiPackage /> },
+  { status: "Packed", label: "Packed", icon: <FiPackage /> },
   { status: "Shipped", label: "Shipped", icon: <FiTruck /> },
+  { status: "Out for Delivery", label: "Out for Delivery", icon: <FiTruck /> },
   { status: "Delivered", label: "Delivered", icon: <FiMapPin /> },
 ];
 
@@ -303,15 +305,24 @@ function HorizontalTracker({ currentStepIndex, reduced }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// VERTICAL TRACKER (Apple Style)
+// VERTICAL TRACKER (Apple Style with Timestamps)
 // ─────────────────────────────────────────────────────────────
-function VerticalTracker({ currentStepIndex, reduced }) {
+function VerticalTracker({ currentStepIndex, order, reduced }) {
+  const historyMap = {};
+  if (order?.statusHistory) {
+    order.statusHistory.forEach(h => {
+      historyMap[h.status] = h;
+    });
+  }
+
   return (
     <div role="list" aria-label="Order progress" style={{ display: "flex", flexDirection: "column" }}>
       {STEPS.map((step, idx) => {
         const done = idx <= currentStepIndex;
         const current = idx === currentStepIndex;
         const last = idx === STEPS.length - 1;
+        const historyItem = historyMap[step.status];
+        
         return (
           <div
             key={idx} role="listitem"
@@ -326,21 +337,20 @@ function VerticalTracker({ currentStepIndex, reduced }) {
                 transition={reduced ? {} : { duration: 0.35, delay: 0.15 + idx * 0.08 }}
                 style={{
                   width: 32, height: 32, borderRadius: "50%",
-                  background: done ? T.ink : T.surface,
-                  border: `2px solid ${done ? T.ink : T.border}`,
+                  background: done ? T.teal : T.surface,
+                  border: `2px solid ${done ? T.teal : T.border}`,
                   color: done ? T.surface : T.inkGhost,
                   display: "flex", alignItems: "center", justifyContent: "center",
                   transition: "all 0.35s",
                 }}
               >
-                {/* Simplify the icon rendering for a cleaner look */}
                 {React.cloneElement(step.icon, { size: 14 })}
               </motion.div>
               {!last && (
                 <div style={{
-                  width: 2, flex: 1, minHeight: 32, marginTop: 4,
+                  width: 2, flex: 1, minHeight: 48, marginTop: 4,
                   borderRadius: 2,
-                  background: done ? T.ink : T.border,
+                  background: done ? T.teal : T.border,
                   transition: "background 0.35s",
                 }} />
               )}
@@ -356,12 +366,31 @@ function VerticalTracker({ currentStepIndex, reduced }) {
               }}>
                 {step.label}
               </p>
-              {current && (
+              {historyItem && historyItem.timestamp && (
                 <p style={{
-                  fontSize: 13, color: T.inkSoft, margin: "4px 0 0",
+                  fontSize: 12, color: T.inkSoft, margin: "4px 0 0",
+                  fontFamily: "'DM Sans', sans-serif"
+                }}>
+                  {new Date(historyItem.timestamp).toLocaleString("en-GB", { 
+                    day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true 
+                  })}
+                </p>
+              )}
+              {historyItem && historyItem.message && current && (
+                <p style={{
+                  fontSize: 13, color: T.teal, margin: "6px 0 0",
+                  fontWeight: 500, background: T.tealGlow, padding: "6px 10px", borderRadius: 8,
+                  display: "inline-block"
+                }}>
+                  {historyItem.message}
+                </p>
+              )}
+              {!historyItem && current && (
+                <p style={{
+                  fontSize: 13, color: T.teal, margin: "6px 0 0",
                   fontWeight: 500,
                 }}>
-                  Current Status
+                  In Progress
                 </p>
               )}
             </div>
@@ -1088,13 +1117,8 @@ export default function OrderDetails() {
                   </div>
                 )}
 
-                <div className="lx-desktop-only" style={{ overflowX: "auto", paddingBottom: 10 }}>
-                  <div style={{ minWidth: 400 }}>
-                    <HorizontalTracker currentStepIndex={stepIdx} reduced={reduced} />
-                  </div>
-                </div>
-                <div className="lx-mobile-only">
-                  <VerticalTracker currentStepIndex={stepIdx} reduced={reduced} />
+                <div style={{ paddingBottom: 10 }}>
+                  <VerticalTracker currentStepIndex={stepIdx} order={order} reduced={reduced} />
                 </div>
 
                 {/* ── Live Delivery Map ── */}

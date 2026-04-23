@@ -104,4 +104,32 @@ router.get("/cart", protect, async (req, res) => {
     }
 });
 
+// 🤝 REFERRAL SYSTEM (Phase 28)
+router.get("/referrals", protect, async (req, res) => {
+    try {
+        const referredUsers = await User.find({ referredBy: req.user._id })
+            .select("name createdAt walletBalance orderCount")
+            .sort("-createdAt");
+
+        // Simple heuristic: if a user has at least 1 order, they are 'completed'
+        // In a real app, you'd check specific order statuses.
+        const referralList = referredUsers.map(u => ({
+            name: u.name,
+            createdAt: u.createdAt,
+            status: (u.orderCount || 0) > 0 ? 'completed' : 'pending'
+        }));
+
+        const stats = {
+            totalReferrals: referredUsers.length,
+            earnedCredits: referralList.filter(r => r.status === 'completed').length * 100,
+            pendingReferrals: referralList.filter(r => r.status === 'pending').length,
+            referralList
+        };
+
+        res.json(stats);
+    } catch (error) {
+        res.status(500).json({ message: "Server Error", error: error.message });
+    }
+});
+
 export default router;

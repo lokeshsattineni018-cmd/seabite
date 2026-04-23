@@ -350,3 +350,72 @@ export const sendWinBackEmail = async (email, name, couponCode) => {
     html: aestheticWrapper(content, "VIP RETURN PASS")
   });
 };
+
+/**
+ * 🟢 10. LOYALTY: SEABITE CASH CREDIT
+ */
+export const sendLoyaltyCreditEmail = async (email, name, amount, reason) => {
+  if (!resend) return;
+
+  const content = `
+    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
+      You've Earned <span style="color: #10b981;">SeaBite Cash!</span>
+    </h1>
+    <p style="margin-bottom: 25px;">
+      Hello <b>${name}</b>, your loyalty has been rewarded. We've credited your account with <b>₹${amount}</b> in SeaBite Cash.
+    </p>
+
+    <div style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(16, 185, 129, 0.3);">
+      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">CREDIT DETAILS</div>
+      <div style="font-size: 32px; font-weight: 700; color: #10b981; letter-spacing: 2px;">+ ₹${amount}</div>
+      <div style="font-size: 12px; color: #cbd5e1; margin-top: 10px;">REASON: ${reason}</div>
+    </div>
+
+    <p style="font-size: 14px; text-align: center; color: #94a3b8; margin-bottom: 30px;">
+      Use this balance on your next order for an instant discount. No minimum order required.
+    </p>
+
+    <div style="text-align: center;">
+      <a href="https://seabite.co.in/profile" style="background: #10b981; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; letter-spacing: 1px;">VIEW BALANCE</a>
+    </div>
+  `;
+
+  return await resend.emails.send({
+    from: OFFICIAL_SENDER,
+    to: email,
+    subject: `SeaBite Cash Credited: +₹${amount}`,
+    html: aestheticWrapper(content, "LOYALTY REWARD")
+  });
+};
+
+/**
+ * 🟢 11. ADMIN: LOW INVENTORY ALERT
+ */
+export const sendInventoryAlertEmail = async (adminEmail, productName, stockCount) => {
+  if (!resend) return;
+
+  const content = `
+    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
+      Inventory <span style="color: #f43f5e;">Alert</span>
+    </h1>
+    <p style="margin-bottom: 25px;">
+      Critical alert for product: <b>${productName}</b>. Stock levels have dropped below the safety threshold.
+    </p>
+
+    <div style="background: rgba(244, 63, 94, 0.1); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(244, 63, 94, 0.3);">
+      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">CURRENT STOCK</div>
+      <div style="font-size: 32px; font-weight: 700; color: #f43f5e; letter-spacing: 2px;">${stockCount} UNITS</div>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="https://seabite.co.in/admin/products" style="background: #f43f5e; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; letter-spacing: 1px;">RESTOCK NOW</a>
+    </div>
+  `;
+
+  return await resend.emails.send({
+    from: OFFICIAL_SENDER,
+    to: adminEmail,
+    subject: `⚠️ INVENTORY ALERT: ${productName} (${stockCount} left)`,
+    html: aestheticWrapper(content, "SYSTEM ALERT")
+  });
+};

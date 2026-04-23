@@ -37,6 +37,7 @@ export default function AdminOrders() {
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
+  const [partners, setPartners] = useState([]);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
   const fetchOrders = async (isSilent = false) => {
@@ -57,6 +58,13 @@ export default function AdminOrders() {
 
   useEffect(() => {
     fetchOrders();
+    const fetchPartners = async () => {
+      try {
+        const { data } = await axios.get("/api/delivery/partners", { withCredentials: true });
+        setPartners(data.filter(p => p.status === 'Active'));
+      } catch (err) { }
+    };
+    fetchPartners();
   }, []);
 
   const updateStatus = async (id, status) => {
@@ -120,6 +128,24 @@ export default function AdminOrders() {
       fetchOrders(true);
     } catch (err) {
       toast.error("Failed to update some orders", { id: t });
+    } finally {
+      setIsBulkUpdating(false);
+    }
+  };
+
+  const handleBulkAssign = async (partnerId) => {
+    if (selectedOrderIds.length === 0 || !partnerId) return;
+    setIsBulkUpdating(true);
+    const t = toast.loading(`Assigning ${selectedOrderIds.length} orders...`);
+    try {
+      await Promise.all(
+        selectedOrderIds.map(orderId => axios.post("/api/delivery/assign", { orderId, partnerId }, { withCredentials: true }))
+      );
+      toast.success(`Assigned ${selectedOrderIds.length} orders to partner`, { id: t });
+      setSelectedOrderIds([]);
+      fetchOrders(true);
+    } catch (err) {
+      toast.error("Failed to assign some orders", { id: t });
     } finally {
       setIsBulkUpdating(false);
     }
@@ -281,6 +307,16 @@ export default function AdminOrders() {
                 >
                   <option value="" disabled>Update Status to...</option>
                   {STATUS_OPTIONS.filter(s => s !== "All").map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
+
+                <select
+                  disabled={isBulkUpdating || partners.length === 0}
+                  onChange={(e) => handleBulkAssign(e.target.value)}
+                  className="bg-stone-800 border-none text-white text-xs font-bold px-3 py-2 rounded-xl outline-none cursor-pointer hover:bg-stone-700 transition-colors"
+                  value=""
+                >
+                  <option value="" disabled>{partners.length === 0 ? "No active partners" : "Assign to Partner..."}</option>
+                  {partners.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
                 </select>
 
                 <button

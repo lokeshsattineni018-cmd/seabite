@@ -6,12 +6,12 @@ const router = express.Router();
 // 1. POST: User sends a message (Public)
 router.post("/", async (req, res) => {
   try {
-    const { email, message } = req.body;
+    const { name, email, subject, message } = req.body;
     if (!email || !message) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+      return res.status(400).json({ success: false, message: "Email and message are required" });
     }
 
-    await Contact.create({ email, message });
+    await Contact.create({ name, email, subject, message });
     res.status(201).json({ success: true, message: "Message Sent Successfully!" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });

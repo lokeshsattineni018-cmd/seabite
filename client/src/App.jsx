@@ -18,7 +18,8 @@ import BannerPopup from "./components/layout/BannerPopup";
 import AnnouncementBar from "./components/layout/AnnouncementBar";
 import SeaBiteLoader from "./components/common/SeaBiteLoader"; // 🟢 Added Custom Loader
 import CookieConsent from "./components/common/CookieConsent"; // 🟢 Cookie Consent
-// import MobileNav from "./components/layout/MobileNav"; // 📱 Mobile Navigation (Removed per user request)
+import MobileNav from "./components/layout/MobileNav"; // 📱 Mobile Navigation Enabled
+import ComparisonDrawer from "./components/common/ComparisonDrawer"; // 📊 Product Comparison Drawer
 
 // Lazy Imports for Critical Pages
 const Home = lazy(() => import("./pages/shop/Home"));
@@ -39,6 +40,10 @@ const Terms = lazy(() => import("./pages/legal/Terms"));
 const Privacy = lazy(() => import("./pages/legal/Privacy"));
 const Cancellation = lazy(() => import("./pages/legal/Cancellation"));
 const Maintenance = lazy(() => import("./pages/general/Maintenance"));
+const Categories = lazy(() => import("./pages/shop/Categories"));
+const Contact = lazy(() => import("./pages/general/Contact"));
+const Signup = lazy(() => import("./pages/auth/Signup"));
+const ReferEarn = lazy(() => import("./pages/user/ReferEarn"));
 const NotFound = lazy(() => import("./pages/general/NotFound"));
 
 // Admin Lazy Imports
@@ -63,11 +68,12 @@ const AdminIAM = lazy(() => import("./admin/AdminIAM"));
 const AdminRegistry = lazy(() => import("./admin/AdminRegistry"));
 const AdminSearchDiscovery = lazy(() => import("./admin/AdminSearchDiscovery"));
 const AdminComplaints = lazy(() => import("./admin/AdminComplaints")); // 🟢 Added
+const AdminDelivery = lazy(() => import("./admin/AdminDelivery")); // [New: Delivery Management]
 
-// Context
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
+import { CompareProvider } from "./context/CompareContext";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 
 axios.defaults.withCredentials = true;
@@ -206,6 +212,7 @@ function MainLayout() {
           {!isAdminRoute && <Navbar announcementActive={!!announcement?.active} />}
           {!isAdminRoute && (
             <>
+              <MobileNav />
               <CartSidebar />
               <Spin isOpen={isSpinOpen} onClose={() => setIsSpinOpen(false)} />
             </>
@@ -233,6 +240,7 @@ function MainLayout() {
                     <Route path="carts" element={<AdminAbandonedCarts />} />
                     <Route path="settings" element={<AdminSettings />} />
                     <Route path="analytics" element={<AdminAnalytics />} />
+                    <Route path="delivery" element={<AdminDelivery />} />
                     <Route path="iam" element={<AdminIAM />} />
                     <Route path="registry" element={<AdminRegistry />} />
                     <Route path="discovery" element={<AdminSearchDiscovery />} />
@@ -247,13 +255,17 @@ function MainLayout() {
                     <Route path="/products/:id" element={<ProductDetails />} />
                     <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+                    <Route path="/refer-earn" element={<PrivateRoute><ReferEarn /></PrivateRoute>} />
                     <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
                     <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
                     <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
                     <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
                     <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/categories" element={<Categories />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
                     <Route path="/faq" element={<FAQ />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/privacy" element={<Privacy />} />
@@ -268,10 +280,12 @@ function MainLayout() {
 
           {!isAdminRoute && location.pathname !== "/success" && <Footer />}
           {!isAdminRoute && <SupportWidget />}
+          {!isAdminRoute && <MobileNav />}
+          {!isAdminRoute && <ComparisonDrawer />}
         </>
       )
       }
-    </div >
+    </div>
   );
 }
 
@@ -282,7 +296,9 @@ export default function App() {
         <ThemeProvider>
           <AuthProvider>
             <CartProvider>
-              <MainLayout />
+              <CompareProvider>
+                <MainLayout />
+              </CompareProvider>
             </CartProvider>
           </AuthProvider>
         </ThemeProvider>

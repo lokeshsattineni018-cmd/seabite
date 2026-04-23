@@ -17,11 +17,18 @@ const MobileNav = () => {
 
   const navItems = [
     { label: "Home", path: "/", icon: Home },
-    { label: "Shop", path: "/products", icon: ShoppingBag },
+    { label: "Categories", path: "/categories", icon: ShoppingBag },
     { label: "Cart", path: "/checkout", icon: ShoppingCart, isCart: true },
     { label: "Wishlist", path: "/wishlist", icon: Heart },
     { label: "Profile", path: "/profile", icon: User },
   ];
+
+  // Haptic feedback for iOS feel
+  const handleTabClick = () => {
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(10); // Subtle haptic tap
+    }
+  };
 
   // Hide on admin routes
   if (location.pathname.startsWith("/admin")) return null;
@@ -37,10 +44,11 @@ const MobileNav = () => {
             <Link
               key={item.path}
               to={item.path}
+              onClick={handleTabClick}
               className="relative flex flex-col items-center justify-center w-full h-full gap-1 group"
             >
               <motion.div
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.85 }}
                 className={`relative p-1.5 rounded-xl transition-colors ${
                   isActive ? "text-[#5BA8A0]" : "text-[#94A3B8]"
                 }`}

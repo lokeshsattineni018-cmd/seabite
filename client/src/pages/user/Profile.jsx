@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiHome, FiArrowLeft, FiMapPin } from "react-icons/fi";
+import { FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiGift } from "react-icons/fi";
 import { motion, useInView } from "framer-motion";
 import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
@@ -180,10 +180,10 @@ export default function Profile() {
           <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", flexShrink: 0 }}>
             {[
               { label: "Member Since", value: user.createdAt ? new Date(user.createdAt).getFullYear() : "—" },
-              { label: "Account", value: user.role === "admin" ? "Admin" : "Customer" },
+              { label: "Wallet", value: `₹${user.walletBalance || 0}` },
             ].map((stat, i) => (
               <div key={i} style={{ textAlign: "center", minWidth: 60 }}>
-                <p style={{ fontSize: 18, fontWeight: 700, color: "#1A2B35", margin: 0 }}>{stat.value}</p>
+                <p style={{ fontSize: 18, fontWeight: 800, color: stat.label === "Wallet" ? "#5BA8A0" : "#1A2B35", margin: 0 }}>{stat.value}</p>
                 <p style={{ fontSize: 10, color: "#8BA5B3", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{stat.label}</p>
               </div>
             ))}
@@ -222,6 +222,23 @@ export default function Profile() {
               }}
             >
               <FiHome size={15} /> Back to Home
+            </motion.button>
+
+            {/* Refer & Earn */}
+            <motion.button
+              whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.2)" }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => navigate("/refer-earn")}
+              style={{
+                display: "flex", alignItems: "center", gap: 8,
+                padding: "12px 24px", borderRadius: 14,
+                background: "#5BA8A0", border: "none",
+                color: "#ffffff", fontSize: 13, fontWeight: 700,
+                cursor: "pointer", boxShadow: "0 4px 12px rgba(91,168,160,0.3)",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
+            >
+              <FiGift size={15} /> Refer & Earn
             </motion.button>
 
             {/* Sign Out */}

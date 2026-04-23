@@ -1,9 +1,12 @@
 import {
     sendOrderPlacedEmail,
-    sendStatusUpdateEmail
+    sendStatusUpdateEmail,
+    sendInventoryAlertEmail,
+    sendLoyaltyCreditEmail
 } from "../utils/emailService.js";
 import logger from "../utils/logger.js";
 import Order from "../models/Order.js";
+import Product from "../models/Product.js";
 import ActivityLog from "../models/ActivityLog.js";
 import Notification from "../models/notification.js";
 import Complaint from "../models/Complaint.js"; // 🟢 Added
@@ -47,6 +50,13 @@ export const createOrder = async (req, res) => {
             totalAmount,
             discount: discount || 0,
             shippingAddress: deliveryAddress || shippingAddress,
+            statusHistory: [
+                {
+                    status: "Pending",
+                    timestamp: new Date(),
+                    message: "Order placed successfully. We are preparing it."
+                }
+            ]
         };
 
         if (idempotencyKey) {
@@ -56,6 +66,27 @@ export const createOrder = async (req, res) => {
         const order = new Order(orderData);
 
         const createdOrder = await order.save({ session });
+
+        // 📦 Inventory Update & Alerting
+        for (const item of items) {
+            const product = await Product.findById(item.productId).session(session);
+            if (product) {
+                product.countInStock -= item.qty;
+                if (product.countInStock <= 0) {
+                    product.countInStock = 0;
+                    product.stock = "out";
+                }
+                await product.save({ session });
+
+                // Low Stock Alert (Non-blocking)
+                if (product.countInStock <= 5) {
+                    const adminEmail = process.env.ADMIN_EMAIL || "official@seabite.co.in";
+                    sendInventoryAlertEmail(adminEmail, product.name, product.countInStock).catch(e => 
+                        logger.error("Inventory Alert Failed", { error: e.message, productId: product._id })
+                    );
+                }
+            }
+        }
 
         await session.commitTransaction();
         session.endSession();
@@ -105,7 +136,7 @@ export const updateOrderStatus = async (req, res) => {
 
     try {
         // 1. Fetch Order
-        const order = await Order.findById(req.params.id).populate('user', 'name email');
+        const order = await Order.findById(req.params.id).populate('user', 'name email referredBy');
         if (!order) {
             console.warn(`[STATUS_UPDATE] 404 - Order not found: ${req.params.id}`);
             return res.status(404).json({ message: 'Order not found' });
@@ -115,7 +146,45 @@ export const updateOrderStatus = async (req, res) => {
         console.log(`[STATUS_UPDATE] Found order: #${order.orderId} | Current status: ${oldStatus}`);
 
         // 2. Apply Changes
-        if (status) order.status = status;
+        if (status && status !== oldStatus) {
+            order.status = status;
+            
+            // Generate a message based on the status
+            let message = "Order status updated.";
+            if (status === "Processing") message = "Your order is being prepared.";
+            if (status === "Packed") message = "Your order has been packed and is ready to ship.";
+            if (status === "Shipped") message = "Your order has been shipped.";
+            if (status === "Out for Delivery") message = "Your order is out for delivery and will arrive soon.";
+            if (status === "Delivered") message = "Your order has been delivered successfully.";
+            if (status === "Cancelled") message = "Your order was cancelled.";
+            
+            order.statusHistory.push({
+                status,
+                timestamp: new Date(),
+                message
+            });
+
+            // 🎁 Referral System: Reward referrer on first successful delivery
+            if (status === "Delivered" && order.user && order.user.referredBy) {
+                import("../models/User.js").then(async ({ default: User }) => {
+                    const deliveredCount = await Order.countDocuments({ user: order.user._id, status: "Delivered", _id: { $ne: order._id } });
+                    if (deliveredCount === 0) {
+                        // First order delivered! Reward the referrer
+                        const referrer = await User.findById(order.user.referredBy);
+                        if (referrer) {
+                            referrer.walletBalance += 100;
+                            await referrer.save();
+                            console.log(`[REFERRAL] Rewarded user ${referrer.email} with ₹100 for referring ${order.user.name}`);
+                            
+                            // Send reward email
+                            sendLoyaltyCreditEmail(referrer.email, referrer.name, 100, `Referral Reward: ${order.user.name}'s first order!`).catch(e => 
+                                console.error("[REFERRAL] Email failed:", e.message)
+                            );
+                        }
+                    }
+                }).catch(err => console.error("[REFERRAL] Failed to process referral reward:", err));
+            }
+        }
         if (refundStatus) {
             order.refundStatus = refundStatus;
             if (refundStatus === "Success") {

@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import TrendingProducts from "../../components/products/TrendingProducts";
+import { useTranslation } from "react-i18next";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -132,124 +133,171 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
 // ══════════════════════════════════════════════
 //  HERO
 // ══════════════════════════════════════════════
+// ══════════════════════════════════════════════
+//  HERO CAROUSEL
+// ══════════════════════════════════════════════
 const Hero = () => {
-  const { scrollY } = useScroll();
-  const videoY = useTransform(scrollY, [0, 700], [0, 140]);
-  const videoOpacity = useTransform(scrollY, [0, 500], [1, 0.25]);
+  const { t } = useTranslation();
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const slides = [
+    {
+      type: "video",
+      src: "1.mp4",
+      tag: t("hero.slide1.tag"),
+      title: t("hero.slide1.title", { returnObjects: true }),
+      desc: t("hero.slide1.desc"),
+      cta: t("hero.slide1.cta"),
+      color: "#5BA8A0"
+    },
+    {
+      type: "image",
+      src: "https://images.unsplash.com/photo-1559742811-82410b451b9b?auto=format&fit=crop&q=80&w=2000",
+      tag: t("hero.slide2.tag"),
+      title: t("hero.slide2.title", { returnObjects: true }),
+      desc: t("hero.slide2.desc"),
+      cta: t("hero.slide2.cta"),
+      color: "#E8816A"
+    },
+    {
+      type: "image",
+      src: "https://images.unsplash.com/photo-1514944288352-fffac99f0bdf?auto=format&fit=crop&q=80&w=2000",
+      tag: t("hero.slide3.tag"),
+      title: t("hero.slide3.title", { returnObjects: true }),
+      desc: t("hero.slide3.desc"),
+      cta: t("hero.slide3.cta"),
+      color: "#89C2D9"
+    }
+  ];
+  const [activeSlide, setActiveSlide] = useState(0);
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const { scrollY } = useScroll();
+  const y = useTransform(scrollY, [0, 700], [0, 140]);
+  const opacity = useTransform(scrollY, [0, 500], [1, 0.25]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % slides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
 
   return (
     <section className="relative h-screen min-h-[680px] max-h-[960px] overflow-hidden">
-      {!isVideoLoaded && (
-        <div className="absolute inset-0 z-40 bg-[#1A2B35] flex items-center justify-center">
-          <SeaBiteLoader />
-        </div>
-      )}
-      <motion.div style={{ y: videoY, opacity: videoOpacity }} className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60 z-10" />
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          onCanPlayThrough={() => setIsVideoLoaded(true)}
-          poster="/hero-poster.jpg"
-          src="1.mp4"
-          className="w-full h-full object-cover scale-105"
-        />
-      </motion.div>
-
-      <div className="absolute inset-0 z-10 opacity-[0.015]" style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+      <AnimatePresence mode="wait">
+        <motion.div 
+          key={activeSlide}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 1 }}
+          style={{ y, opacity }}
+          className="absolute inset-0 z-0"
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70 z-10" />
+          
+          {slides[activeSlide].type === "video" ? (
+            <>
+              {!isVideoLoaded && (
+                <div className="absolute inset-0 z-40 bg-[#1A2B35] flex items-center justify-center">
+                  <SeaBiteLoader />
+                </div>
+              )}
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                onCanPlayThrough={() => setIsVideoLoaded(true)}
+                src={slides[activeSlide].src}
+                className="w-full h-full object-cover scale-105"
+              />
+            </>
+          ) : (
+            <img 
+              src={slides[activeSlide].src} 
+              className="w-full h-full object-cover scale-105" 
+              alt="Hero background"
+            />
+          )}
+        </motion.div>
+      </AnimatePresence>
 
       <div className="relative z-20 h-full flex items-center">
         <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid md:grid-cols-2 gap-12 items-center">
-          <div className="space-y-8">
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-              <Chip color="teal"><Waves size={11} /> Fresh Catch Daily</Chip>
-            </motion.div>
-
-            <motion.h1
-              initial={{ opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.85, delay: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
-              style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={activeSlide}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              className="space-y-8"
             >
-              Ocean-Fresh<br /><span className="text-[#5BA8A0]">Seafood</span><br />Delivered.
-            </motion.h1>
+              <div>
+                <Chip color="teal"><Waves size={11} /> {slides[activeSlide].tag}</Chip>
+              </div>
 
-            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.55 }} className="text-white/75 text-lg leading-relaxed max-w-md">
-              Premium fish, prawns & crabs — sourced daily from the coast, cold-chain delivered straight to your kitchen.
-            </motion.p>
+              <h1
+                className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
+                style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
+              >
+                {slides[activeSlide].title[0]}<br />
+                <span style={{ color: slides[activeSlide].color }}>{slides[activeSlide].title[1]}</span><br />
+                {slides[activeSlide].title[2]}
+              </h1>
 
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.7 }} className="flex flex-wrap gap-3">
-              <CTAButton to="/products" variant="primary">Shop Now <ArrowRight size={15} /></CTAButton>
-              <Link to="/products">
-                <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
-                  className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full border border-white/25 text-white/80 hover:border-white/60 hover:text-white bg-white/10 backdrop-blur-sm transition-all duration-300"
-                >
-                  View All Catch
-                </motion.button>
-              </Link>
+              <p className="text-white/75 text-lg leading-relaxed max-w-md">
+                {slides[activeSlide].desc}
+              </p>
+
+              <div className="flex flex-wrap gap-3">
+                <CTAButton to="/products" variant="primary">{slides[activeSlide].cta} <ArrowRight size={15} /></CTAButton>
+                <Link to="/products">
+                  <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
+                    className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full border border-white/25 text-white/80 hover:border-white/60 hover:text-white bg-white/10 backdrop-blur-sm transition-all duration-300"
+                  >
+                    View All Catch
+                  </motion.button>
+                </Link>
+              </div>
             </motion.div>
+          </AnimatePresence>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="flex items-center gap-5 pt-2">
-              {[{ n: "500+", label: "Happy Customers" }, { n: "98%", label: "Fresh Score" }, { n: "4.8★", label: "Avg Rating" }].map((s, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  {i > 0 && <div className="w-px h-8 bg-white/15" />}
-                  <div>
-                    <p className="text-sm font-bold text-white">{s.n}</p>
-                    <p className="text-[11px] text-white/50">{s.label}</p>
-                  </div>
-                </div>
-              ))}
-            </motion.div>
-          </div>
-
-          <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="hidden md:flex justify-center items-center relative h-[420px]"
-          >
+          <div className="hidden md:flex justify-center items-center relative h-[420px]">
+            {/* Persistent stats/floating elements that look good with any background */}
             <motion.div animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.18)] border border-white/60 p-8 text-center w-52"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.18)] border border-white/60 p-8 text-center w-52"
             >
               <div className="text-6xl mb-3">🦐</div>
-              <p className="text-sm font-semibold text-[#1A2B35]">Jumbo Prawns</p>
+              <p className="text-sm font-semibold text-[#1A2B35]">Fresh Jumbo Prawns</p>
               <p className="text-xs text-[#8BA5B3] mt-1">Just arrived today</p>
             </motion.div>
 
-            <motion.div animate={{ y: [0, 6, 0] }} transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut", delay: 0.5 }}
-              className="absolute top-8 left-4 bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.14)] border border-white/60 px-4 py-3"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-[#EAF6F5] flex items-center justify-center text-sm">🐟</div>
-                <div>
-                  <p className="text-xs font-semibold text-[#1A2B35]">Fresh Fish</p>
-                  <p className="text-[10px] text-[#5BA8A0] font-medium">Caught this morning</p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 3, ease: "easeInOut", delay: 1 }}
-              className="absolute bottom-12 right-2 bg-white rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.14)] border border-white/60 px-4 py-3"
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-[#FEF0EC] flex items-center justify-center text-sm">🦀</div>
-                <div>
-                  <p className="text-xs font-semibold text-[#1A2B35]">Live Crabs</p>
-                  <p className="text-[10px] text-[#E8816A] font-medium">Limited stock</p>
-                </div>
-              </div>
-            </motion.div>
-
             <motion.div animate={{ y: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.2 }}
-              className="absolute bottom-8 left-8 bg-[#1A2B35] text-white rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-xl"
+              className="absolute bottom-8 left-8 bg-[#1A2B35]/80 backdrop-blur-md text-white rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-xl"
             >
               <Star size={13} className="text-amber-400 fill-amber-400" />
               <span className="text-sm font-semibold">4.9</span>
               <span className="text-[10px] text-white/50">· 200+ reviews</span>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </div>
+
+      {/* Slide Indicators */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+        {slides.map((_, i) => (
+          <button 
+            key={i} 
+            onClick={() => setActiveSlide(i)}
+            className={`h-1.5 rounded-full transition-all duration-500 ${activeSlide === i ? "w-8 bg-[#5BA8A0]" : "w-2 bg-white/30 hover:bg-white/50"}`}
+          />
+        ))}
+      </div>
+    </section>
+  );
+};
 
       <motion.div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center gap-1.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }}>
         <span className="text-[10px] text-white/40 uppercase tracking-[0.2em]">Scroll</span>

@@ -339,6 +339,7 @@ export default function ProductDetails() {
   const [flyItems, setFlyItems] = useState([]);
   const flyIdRef = useRef(0);
   const [recentItems, setRecentItems] = useState([]);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const isWishlisted = user?.wishlist?.some(
     (item) => (typeof item === "string" ? item : item._id) === id
@@ -374,6 +375,7 @@ export default function ProductDetails() {
       .get(`${API_URL}/api/products/${id}`, { withCredentials: true })
       .then((res) => { 
         setProduct(res.data); 
+        setSelectedImage(res.data.image);
         setLoading(false); 
         
         // Save to Recently Viewed
@@ -486,6 +488,13 @@ export default function ProductDetails() {
   const handleFlyComplete = useCallback((fId) => {
     setFlyItems((prev) => prev.filter((item) => item.id !== fId));
   }, []);
+
+  const handleBuyNow = () => {
+    if (!product || product.stock === "out") return;
+    addToCart({ ...product, qty, price: parseFloat(totalPrice) });
+    refreshCartCount();
+    navigate("/checkout");
+  };
 
   const handleWishlistToggle = async () => {
     triggerHaptic("soft");
@@ -674,7 +683,44 @@ export default function ProductDetails() {
                   )}
                 </div>
 
-                <ImageMagnifier src={getFullImageUrl(product.image)} alt={product.name} productId={product._id} />
+                <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
+                    <ImageMagnifier src={getFullImageUrl(selectedImage || product.image)} alt={product.name} productId={product._id} />
+                  </div>
+                  
+                  {product.images && product.images.length > 0 && (
+                    <div style={{ 
+                      display: "flex", 
+                      gap: "10px", 
+                      justifyContent: "center", 
+                      padding: "20px 0 0",
+                      overflowX: "auto",
+                      scrollbarWidth: "none"
+                    }}>
+                      {[product.image, ...product.images].filter(Boolean).map((img, idx) => (
+                        <motion.div
+                          key={idx}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => setSelectedImage(img)}
+                          style={{
+                            width: "50px",
+                            height: "50px",
+                            borderRadius: "10px",
+                            border: `2px solid ${selectedImage === img ? "#5BBFB5" : "#E2EEEC"}`,
+                            background: "#F4F9F8",
+                            padding: "4px",
+                            cursor: "pointer",
+                            flexShrink: 0,
+                            overflow: "hidden"
+                          }}
+                        >
+                          <img src={getFullImageUrl(img)} style={{ width: "100%", height: "100%", objectFit: "contain" }} alt={`Gallery ${idx}`} />
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
 
@@ -808,21 +854,69 @@ export default function ProductDetails() {
 
                   {activeTab === "reviews" && (
                     <motion.div key="reviews" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
-                      style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                      {product.reviews?.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "260px", overflowY: "auto", paddingRight: "4px" }}>
-                          {product.reviews.map((review, i) => (
-                            <div key={i} className="review-card" style={{ background: "#F4F9F8", border: "1.5px solid #E2EEEC", borderRadius: "12px", padding: "14px 16px", transition: "border-color 0.2s" }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-                                <span style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C" }}>{review.name}</span>
-                                <div style={{ display: "flex", gap: "2px" }}>
-                                  {[...Array(5)].map((_, s) => (
-                                    <FiStar key={s} size={11} fill={s < review.rating ? "#F59E0B" : "none"} style={{ color: s < review.rating ? "#F59E0B" : "#E2EEEC" }} />
-                                  ))}
+                      style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      
+                      {/* Star Distribution Histogram */}
+                      {product.reviews?.length > 0 && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "24px", background: "#F4F9F8", padding: "20px", borderRadius: "16px", border: "1.5px solid #E2EEEC" }}>
+                          <div style={{ textAlign: "center", flexShrink: 0 }}>
+                            <div style={{ fontSize: "36px", fontWeight: "800", color: "#1A2E2C", lineHeight: 1 }}>
+                              {product.rating ? product.rating.toFixed(1) : "5.0"}
+                            </div>
+                            <div style={{ display: "flex", gap: "2px", margin: "6px 0 4px" }}>
+                              {[...Array(5)].map((_, s) => (
+                                <FiStar key={s} size={14} fill={s < Math.round(product.rating || 5) ? "#F59E0B" : "none"} style={{ color: s < Math.round(product.rating || 5) ? "#F59E0B" : "#E2EEEC" }} />
+                              ))}
+                            </div>
+                            <div style={{ fontSize: "11px", color: "#6B8F8A", fontWeight: "700" }}>{product.numReviews} Reviews</div>
+                          </div>
+
+                          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
+                            {[5, 4, 3, 2, 1].map(star => {
+                              const count = product.reviews.filter(r => Math.round(r.rating) === star).length;
+                              const percentage = product.numReviews > 0 ? (count / product.numReviews) * 100 : 0;
+                              return (
+                                <div key={star} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                  <span style={{ fontSize: "11px", color: "#1A2E2C", width: "16px", fontWeight: "800", textAlign: "right" }}>{star}</span>
+                                  <FiStar size={10} style={{ color: "#F59E0B", flexShrink: 0 }} fill="#F59E0B" />
+                                  <div style={{ flex: 1, height: "6px", background: "#E2EEEC", borderRadius: "4px", overflow: "hidden" }}>
+                                    <div style={{ width: `${percentage}%`, height: "100%", background: "#F59E0B", borderRadius: "4px", transition: "width 0.5s ease-out" }} />
+                                  </div>
+                                  <span style={{ fontSize: "10px", color: "#6B8F8A", width: "20px", textAlign: "right", fontWeight: "600" }}>{percentage.toFixed(0)}%</span>
                                 </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {product.reviews?.length > 0 ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "14px", maxHeight: "360px", overflowY: "auto", paddingRight: "6px" }}>
+                          {product.reviews.map((review, i) => (
+                            <div key={i} className="review-card" style={{ background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", padding: "16px", transition: "border-color 0.2s", boxShadow: "0 2px 8px rgba(26,46,44,0.02)" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                                <div>
+                                  <span style={{ fontSize: "14px", fontWeight: "800", color: "#1A2E2C", display: "flex", alignItems: "center", gap: "6px" }}>
+                                    {review.name}
+                                    <span style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "10px", color: "#5BBFB5", background: "#F0FBF9", padding: "2px 6px", borderRadius: "4px", fontWeight: "700" }}>
+                                      <FiCheck size={10} /> Verified Purchase
+                                    </span>
+                                  </span>
+                                  <div style={{ display: "flex", gap: "2px", marginTop: "4px" }}>
+                                    {[...Array(5)].map((_, s) => (
+                                      <FiStar key={s} size={11} fill={s < review.rating ? "#F59E0B" : "none"} style={{ color: s < review.rating ? "#F59E0B" : "#E2EEEC" }} />
+                                    ))}
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: "11px", color: "#8BA5B3", fontWeight: "600" }}>{new Date(review.createdAt).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" })}</span>
                               </div>
-                              <p style={{ fontSize: "13px", color: "#6B8F8A", lineHeight: "1.6", marginBottom: "6px" }}>{review.comment}</p>
-                              <span style={{ fontSize: "10px", color: "#B8CFCC", fontWeight: "600" }}>{new Date(review.createdAt).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" })}</span>
+                              <p style={{ fontSize: "14px", color: "#4A6572", lineHeight: "1.6", margin: "8px 0" }}>{review.comment}</p>
+                              
+                              <div style={{ display: "flex", gap: "12px", marginTop: "12px", borderTop: "1px solid #F4F9F8", paddingTop: "12px" }}>
+                                <button style={{ background: "none", border: "none", fontSize: "12px", color: "#6B8F8A", display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", fontWeight: "600" }}>
+                                  👍 Helpful (0)
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -853,7 +947,7 @@ export default function ProductDetails() {
               <div style={{ height: "1px", background: "#F0F5F4", marginBottom: "24px" }} />
 
               {/* ── Action Row ───────────────────────────── */}
-              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "16px" }}>
                 {/* Quantity */}
                 <div style={{
                   display: "flex", alignItems: "center",
@@ -890,7 +984,9 @@ export default function ProductDetails() {
                     : <FiHeart size={18} fill={isWishlisted ? "currentColor" : "none"} />
                   }
                 </button>
+              </div>
 
+              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                 {/* Add to cart */}
                 <motion.button
                   className={`add-btn ${!isAdded && product.stock !== "out" ? "liquid-cta" : ""}`}
@@ -913,16 +1009,37 @@ export default function ProductDetails() {
                   <AnimatePresence mode="wait">
                     {isAdded ? (
                       <motion.span key="added" initial={{ scale: 0.8 }} animate={{ scale: 1 }} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <FiCheck size={15} /> Added to Cart
+                        <FiCheck size={15} /> Added
                       </motion.span>
                     ) : product.stock === "out" ? (
                       <span>Sold Out</span>
                     ) : (
                       <motion.span key="add" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <FiShoppingBag size={15} /> ₹{totalPrice} · Add
+                        <FiShoppingBag size={15} /> Add
                       </motion.span>
                     )}
                   </AnimatePresence>
+                </motion.button>
+                
+                {/* Buy Now */}
+                <motion.button
+                  whileTap={product.stock !== "out" ? { scale: 0.97 } : {}}
+                  onClick={handleBuyNow}
+                  disabled={product.stock === "out"}
+                  style={{
+                    flex: 1, height: "46px",
+                    border: "none", borderRadius: "10px",
+                    background: product.stock === "out" ? "#F0F5F4" : "#E8A365",
+                    color: product.stock === "out" ? "#B8CFCC" : "#1A2E2C",
+                    fontSize: "13px", fontWeight: "800",
+                    cursor: product.stock === "out" ? "not-allowed" : "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
+                    fontFamily: "'Manrope', sans-serif",
+                    transition: "background 0.2s ease",
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  Buy Now
                 </motion.button>
               </div>
             </motion.div>

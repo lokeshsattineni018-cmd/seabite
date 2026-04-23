@@ -25,10 +25,14 @@ export default function AddProduct() {
   });
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [galleryPreviews, setGalleryPreviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isGalleryDragging, setIsGalleryDragging] = useState(false);
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const fileInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
   const backendBase = import.meta.env.VITE_API_URL || "";
 
   const handleChange = (e) => {
@@ -60,6 +64,35 @@ export default function AddProduct() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const handleGalleryImages = (e) => {
+    const files = Array.from(e.target.files);
+    if (galleryImages.length + files.length > 5) {
+      setModal({ show: true, message: "Max 5 gallery images allowed", type: "error" });
+      return;
+    }
+    
+    const newFiles = files.filter(file => {
+      if (!file.type.startsWith("image/")) {
+        setModal({ show: true, message: `${file.name} is not a valid image`, type: "error" });
+        return false;
+      }
+      return true;
+    });
+
+    setGalleryImages([...galleryImages, ...newFiles]);
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+    setGalleryPreviews([...galleryPreviews, ...newPreviews]);
+  };
+
+  const removeGalleryImage = (index) => {
+    const newImages = [...galleryImages];
+    const newPreviews = [...galleryPreviews];
+    newImages.splice(index, 1);
+    newPreviews.splice(index, 1);
+    setGalleryImages(newImages);
+    setGalleryPreviews(newPreviews);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -71,7 +104,8 @@ export default function AddProduct() {
     try {
       const data = new FormData();
       Object.keys(form).forEach(key => data.append(key, form[key]));
-      data.append("image", image);
+      if (image) data.append("image", image);
+      galleryImages.forEach(img => data.append("images", img));
       await axios.post(`${backendBase}/api/admin/products`, data, {
         withCredentials: true,
         headers: { "Content-Type": "multipart/form-data" },
@@ -79,6 +113,8 @@ export default function AddProduct() {
       setModal({ show: true, message: "Product added successfully", type: "success" });
       setForm({ name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in", countInStock: 10 });
       removeImage();
+      setGalleryImages([]);
+      setGalleryPreviews([]);
     } catch (err) {
       setModal({ show: true, message: "Failed to add product", type: "error" });
     } finally {
@@ -130,6 +166,34 @@ export default function AddProduct() {
                     </div>
                   )}
                 </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Gallery Images */}
+            <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-100">
+              <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Product Gallery (Max 5)</label>
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                {galleryPreviews.map((prev, idx) => (
+                  <div key={idx} className="relative aspect-square rounded-xl border border-stone-100 overflow-hidden group">
+                    <img src={prev} className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => removeGalleryImage(idx)} className="absolute top-1 right-1 bg-white/80 backdrop-blur p-1.5 rounded-full text-rose-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <FiX size={14} />
+                    </button>
+                  </div>
+                ))}
+                {galleryPreviews.length < 5 && (
+                  <div 
+                    onClick={() => galleryInputRef.current.click()}
+                    className={`aspect-square rounded-xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer transition-all ${isGalleryDragging ? "border-blue-500 bg-blue-50" : "border-stone-200 hover:border-stone-300 hover:bg-stone-50"}`}
+                    onDragOver={(e) => { e.preventDefault(); setIsGalleryDragging(true); }}
+                    onDragLeave={() => setIsGalleryDragging(false)}
+                    onDrop={(e) => { e.preventDefault(); setIsGalleryDragging(false); handleGalleryImages({ target: { files: e.dataTransfer.files } }); }}
+                  >
+                    <FiPlus size={20} className="text-stone-400" />
+                    <span className="text-[10px] font-bold text-stone-400 mt-1">Add Image</span>
+                    <input ref={galleryInputRef} type="file" multiple accept="image/*" className="hidden" onChange={handleGalleryImages} />
+                  </div>
+                )}
               </div>
             </div>
 
