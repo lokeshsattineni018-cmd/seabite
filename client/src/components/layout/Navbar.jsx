@@ -8,7 +8,6 @@ import {
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import axios from "axios";
-import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "../../context/AuthContext";
 import Spin from "../../pages/general/Spin";
 import toast from "react-hot-toast";
@@ -206,19 +205,6 @@ export default function Navbar({ announcementActive = false }) {
     } finally { setAuthLoading(false); }
   };
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      try {
-        const res = await axios.post(`${API_URL}/api/auth/google`, { token: tokenResponse.access_token }, { withCredentials: true });
-        if (res.data.sessionId) localStorage.setItem("seabite_session_id", res.data.sessionId);
-        setUser(res.data.user);
-        toast.success("Success!");
-        setIsLoginOpen(false);
-        await refreshMe?.();
-      } catch { toast.error("Google login failed"); }
-    }
-  });
-
   const isActive = (p) => location.pathname + location.search === p;
 
   const T = {
@@ -300,7 +286,6 @@ export default function Navbar({ announcementActive = false }) {
           <div style={{ marginRight: "36px", flexShrink: 0 }}>
             <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
               <img src="/logo.png" alt="SeaBite" style={{ height: "44px", width: "auto" }} />
-              <span style={{ fontSize: "22px", fontWeight: "800", color: T.link, letterSpacing: "-0.5px", fontFamily: "'Manrope', sans-serif" }}>SeaBite</span>
             </Link>
           </div>
 
@@ -320,7 +305,7 @@ export default function Navbar({ announcementActive = false }) {
               </AnimatePresence>
             </div>
             <Link to="/about" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "600", color: T.link }}>About</Link>
-            <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "600", color: T.link }}>Account</Link>
+            <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "600", color: T.link }}>Orders</Link>
           </div>
 
           {/* Right controls - Search bar here */}
