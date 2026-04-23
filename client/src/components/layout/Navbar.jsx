@@ -11,6 +11,7 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import Spin from "../../pages/general/Spin";
 import toast from "react-hot-toast";
+import { useGoogleLogin } from "@react-oauth/google";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -219,6 +220,19 @@ export default function Navbar({ announcementActive = false }) {
     } finally { setAuthLoading(false); }
   };
 
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      try {
+        const res = await axios.post(`${API_URL}/api/auth/google`, { token: tokenResponse.access_token }, { withCredentials: true });
+        if (res.data.sessionId) localStorage.setItem("seabite_session_id", res.data.sessionId);
+        setUser(res.data.user);
+        toast.success("Success!");
+        setIsLoginOpen(false);
+        await refreshMe?.();
+      } catch { toast.error("Google login failed"); }
+    }
+  });
+
   const isActive = (p) => location.pathname + location.search === p;
 
   const T = {
@@ -337,12 +351,10 @@ export default function Navbar({ announcementActive = false }) {
               </AnimatePresence>
             </div>
 
-            {user && (
-              <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate("/wishlist")} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
-                <FiHeart size={15} />
-                {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{user.wishlist.length}</span>}
-              </motion.button>
-            )}
+            <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate(user ? "/wishlist" : "#")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
+              <FiHeart size={15} />
+              {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{user.wishlist.length}</span>}
+            </motion.button>
 
             <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
               <FiShoppingBag size={15} />
@@ -406,6 +418,11 @@ export default function Navbar({ announcementActive = false }) {
                         <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
                         <button type="button" onClick={() => setAuthMode("FORGOT")} style={{ background: "none", border: "none", fontSize: "12px", color: "#5BBFB5", fontWeight: "700", marginBottom: "20px", cursor: "pointer" }}>Forgot Password?</button>
                         <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", cursor: "pointer" }}>{authLoading ? "Signing in..." : "Sign In"}</button>
+                        <div style={{ marginTop: "16px" }}>
+                          <button type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", color: "#1A2E2C" }}>
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Sign in with Google
+                          </button>
+                        </div>
                         <div style={{ margin: "24px 0", textAlign: "center" }}><p style={{ fontSize: "14px", color: "#6B8F8A" }}>New? <button type="button" onClick={() => setAuthMode("SIGNUP")} style={{ background: "none", border: "none", fontWeight: "800", color: "#5BBFB5", cursor: "pointer" }}>Create Account</button></p></div>
                       </form>
                     )}
@@ -416,6 +433,11 @@ export default function Navbar({ announcementActive = false }) {
                         <AuthInput label="Phone" value={authPhone} onChange={setAuthPhone} placeholder="+91..." />
                         <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
                         <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", cursor: "pointer" }}>{authLoading ? "Sending OTP..." : "Get Started"}</button>
+                        <div style={{ marginTop: "16px" }}>
+                          <button type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", color: "#1A2E2C" }}>
+                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Sign up with Google
+                          </button>
+                        </div>
                         <div style={{ margin: "24px 0", textAlign: "center" }}><p style={{ fontSize: "14px", color: "#6B8F8A" }}>Joined before? <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontWeight: "800", color: "#5BBFB5", cursor: "pointer" }}>Log In</button></p></div>
                       </form>
                     )}
