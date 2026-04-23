@@ -216,11 +216,11 @@ const ImageMagnifier = ({ src, alt, productId }) => {
               border: "3px solid #5BBFB5",
               borderRadius: "50%",
               backgroundColor: "#fff",
-              backgroundImage: \`url('\${src}')\`,
+              backgroundImage: `url('${src}')`,
               backgroundRepeat: "no-repeat",
-              backgroundSize: \`\${imgSize.w * 2.5}px \${imgSize.h * 2.5}px\`,
-              backgroundPositionX: \`\${-x * 2.5 + 80}px\`,
-              backgroundPositionY: \`\${-y * 2.5 + 80}px\`,
+              backgroundSize: `${imgSize.w * 2.5}px ${imgSize.h * 2.5}px`,
+              backgroundPositionX: `${-x * 2.5 + 80}px`,
+              backgroundPositionY: `${-y * 2.5 + 80}px`,
               boxShadow: "0 12px 30px rgba(26, 46, 44, 0.15)",
               zIndex: 100
             }}

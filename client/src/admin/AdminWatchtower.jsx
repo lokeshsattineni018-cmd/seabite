@@ -137,8 +137,8 @@ export default function AdminWatchtower() {
         if (log.action === "CART_UPDATE" && log.meta?.items) {
            const itemCount = log.meta.items.reduce((acc, item) => acc + item.qty, 0);
            const totalVal = log.meta.items.reduce((acc, item) => acc + (item.qty * item.basePrice), 0);
-           const itemNames = log.meta.items.map(i => \`\${i.qty}x \${i.name}\`).join(", ");
-           return \`\${log.user?.name || 'Guest'} updated cart: \${itemNames} (Total: ₹\${totalVal})\`;
+           const itemNames = log.meta.items.map(i => `${i.qty}x ${i.name}`).join(", ");
+           return `${log.user?.name || 'Guest'} updated cart: ${itemNames} (Total: ₹${totalVal})`;
         }
         return log.details;
     };
@@ -180,19 +180,19 @@ export default function AdminWatchtower() {
 
                 {/* ── METRICS BAR (NEW) ─────────────────────────── */}
                 <motion.div variants={fadeUp} style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginBottom: 24 }}>
-                    <Card style={{ padding: 16, border: systemPulse?.latency > 200 ? \`1.5px solid \${T.warning}\` : undefined, boxShadow: systemPulse?.latency > 200 ? \`0 0 16px \${T.warning}33\` : undefined }}>
+                    <Card style={{ padding: 16, border: systemPulse?.latency > 200 ? `1.5px solid ${T.warning}` : undefined, boxShadow: systemPulse?.latency > 200 ? `0 0 16px ${T.warning}33` : undefined }}>
                         <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>DB Latency</div>
                         <div style={{ fontSize: 18, fontWeight: 600, color: (systemPulse?.latency > 200) ? T.warning : T.teal }}>
-                            {systemPulse ? \`\${systemPulse.latency}ms\` : (metrics?.database?.latency || "---")}
+                            {systemPulse ? `${systemPulse.latency}ms` : (metrics?.database?.latency || "---")}
                         </div>
                     </Card>
-                    <Card style={{ padding: 16, border: systemPulse?.cpu > 0.8 ? \`1.5px solid \${T.warning}\` : undefined, boxShadow: systemPulse?.cpu > 0.8 ? \`0 0 16px \${T.warning}33\` : undefined }}>
+                    <Card style={{ padding: 16, border: systemPulse?.cpu > 0.8 ? `1.5px solid ${T.warning}` : undefined, boxShadow: systemPulse?.cpu > 0.8 ? `0 0 16px ${T.warning}33` : undefined }}>
                         <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>CPU Load</div>
-                        <div style={{ fontSize: 18, fontWeight: 600 }}>{systemPulse ? \`\${(systemPulse.cpu * 100).toFixed(1)}%\` : "---"}</div>
+                        <div style={{ fontSize: 18, fontWeight: 600 }}>{systemPulse ? `${(systemPulse.cpu * 100).toFixed(1)}%` : "---"}</div>
                     </Card>
                     <Card style={{ padding: 16 }}>
                         <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>Free RAM</div>
-                        <div style={{ fontSize: 18, fontWeight: 600 }}>{systemPulse ? \`\${Math.round(systemPulse.freeRam)}MB\` : "---"}</div>
+                        <div style={{ fontSize: 18, fontWeight: 600 }}>{systemPulse ? `${Math.round(systemPulse.freeRam)}MB` : "---"}</div>
                     </Card>
                     <Card style={{ padding: 16 }}>
                         <div style={{ fontSize: 10, color: T.textSoft, textTransform: "uppercase", marginBottom: 4 }}>Uptime</div>
