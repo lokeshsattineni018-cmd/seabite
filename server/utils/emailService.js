@@ -281,7 +281,40 @@ export const sendEmail = async (to, subject, content) => {
   });
 };
 /**
- * 🟢 8. AUTOMATION: WIN-BACK COUPON
+ * 🟢 8. AUTOMATION: ABANDONED CART RECOVERY
+ */
+export const sendAbandonedCartEmail = async (email, name, cartItems) => {
+  if (!resend) return;
+
+  const content = `
+    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
+      You Left Something <span style="color: #38bdf8;">Behind!</span>
+    </h1>
+    <p style="margin-bottom: 25px;">
+      Hello <b>${name}</b>, we noticed you left some premium catch in your cart. 
+      Our fresh supply is limited and moves fast. Secure your order before it's gone!
+    </p>
+
+    <div style="background: rgba(56, 189, 248, 0.1); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(56, 189, 248, 0.3);">
+      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">YOUR CART CONTAINS</div>
+      <div style="color: #f8fafc; font-weight: 500;">${cartItems.length} items waiting for you.</div>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="https://seabite.co.in/cart" style="background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; letter-spacing: 1px;">RETURN TO CART</a>
+    </div>
+  `;
+
+  return await resend.emails.send({
+    from: OFFICIAL_SENDER,
+    to: email,
+    subject: \`SeaBite | Don't miss out on your fresh catch, \${name}!\`,
+    html: aestheticWrapper(content, "RESERVED CATCH")
+  });
+};
+
+/**
+ * 🟢 9. AUTOMATION: WIN-BACK COUPON
  */
 export const sendWinBackEmail = async (email, name, couponCode) => {
   if (!resend) return;

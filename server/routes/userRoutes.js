@@ -73,6 +73,9 @@ router.post("/cart", protect, async (req, res) => {
             qty: item.qty || 1
         })).filter(item => item.product != null); // remove any null products
 
+        user.cartUpdatedAt = new Date();
+        user.abandonedCartEmailSent = false;
+
         await user.save();
 
         // 🟢 WATCHTOWER LOG (Debounce or check if cart not empty)

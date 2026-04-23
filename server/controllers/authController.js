@@ -5,6 +5,7 @@ import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
 import { logActivity } from "../utils/activityLogger.js";
 import logger from "../utils/logger.js";
+import geoip from "geoip-lite";
 
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -112,7 +113,14 @@ export const googleLogin = async (req, res) => {
         logger.warn("Welcome Email Failed", { traceId: req.traceId, error: err.message });
       });
 
-      logActivity("LOGIN", `User Logged In: ${user.name} (${user.email})`, req);
+      // Geofence Anomaly Detection
+      const callerIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+      const geo = geoip.lookup(callerIp);
+      if (geo && geo.country !== "IN") {
+        logActivity("SECURITY", `Geo-Anomaly Login: ${user.email} from ${geo.country} (${callerIp})`, req);
+      } else {
+        logActivity("LOGIN", `User Logged In: ${user.name} (${user.email})`, req);
+      }
 
       res.status(200).json({
         user: req.session.user,

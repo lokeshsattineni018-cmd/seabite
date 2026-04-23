@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowLeft, FiMinus, FiPlus, FiShoppingBag, FiTruck,
   FiInfo, FiCheck, FiPackage, FiStar, FiMessageSquare,
-  FiHeart, FiZap, FiChevronRight, FiBox,
+  FiHeart, FiZap, FiChevronRight, FiBox, FiX
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import toast from "../../utils/toast"; // Custom SeaBite toast
@@ -165,6 +165,158 @@ const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshC
 };
 
 
+// ─── Image Magnifier ───────────────────────────────────────────────────────────
+const ImageMagnifier = ({ src, alt, productId }) => {
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [{ x, y }, setXY] = useState({ x: 0, y: 0 });
+  const [imgSize, setImgSize] = useState({ w: 0, h: 0 });
+
+  return (
+    <div 
+      style={{ position: "relative", width: "100%", height: "100%", zIndex: 1 }}
+      onMouseEnter={(e) => {
+        const { width, height } = e.currentTarget.getBoundingClientRect();
+        setImgSize({ w: width, h: height });
+        setShowMagnifier(true);
+      }}
+      onMouseLeave={() => setShowMagnifier(false)}
+      onMouseMove={(e) => {
+        const elem = e.currentTarget;
+        const { top, left } = elem.getBoundingClientRect();
+        const mouseX = e.pageX - left - window.scrollX;
+        const mouseY = e.pageY - top - window.scrollY;
+        setXY({ x: mouseX, y: mouseY });
+      }}
+    >
+      <motion.img
+        layoutId={`product-image-${productId}`}
+        layout="position"
+        initial={{ scale: 0.88, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        src={src}
+        alt={alt}
+        style={{ width: "100%", height: "100%", objectFit: "contain", cursor: "crosshair", pointerEvents: "none" }}
+      />
+      <AnimatePresence>
+        {showMagnifier && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: "absolute",
+              pointerEvents: "none",
+              height: "160px",
+              width: "160px",
+              top: y - 80,
+              left: x - 80,
+              opacity: 1,
+              border: "3px solid #5BBFB5",
+              borderRadius: "50%",
+              backgroundColor: "#fff",
+              backgroundImage: \`url('\${src}')\`,
+              backgroundRepeat: "no-repeat",
+              backgroundSize: \`\${imgSize.w * 2.5}px \${imgSize.h * 2.5}px\`,
+              backgroundPositionX: \`\${-x * 2.5 + 80}px\`,
+              backgroundPositionY: \`\${-y * 2.5 + 80}px\`,
+              boxShadow: "0 12px 30px rgba(26, 46, 44, 0.15)",
+              zIndex: 100
+            }}
+          />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+// ─── Pincode Checker ───────────────────────────────────────────────────────────
+const PincodeChecker = () => {
+  const [pincode, setPincode] = useState("");
+  const [status, setStatus] = useState(null);
+
+  const checkPincode = () => {
+    if (pincode.length !== 6) return setStatus("error");
+    setStatus("loading");
+    setTimeout(() => {
+      if (pincode.startsWith("53") || pincode.startsWith("50")) {
+        setStatus("success");
+      } else {
+        setStatus("error");
+      }
+    }, 600);
+  };
+
+  return (
+    <div style={{ marginBottom: "24px", padding: "16px", background: "#F4F9F8", border: "1.5px solid #E2EEEC", borderRadius: "12px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+        <FiTruck style={{ color: "#5BBFB5" }} />
+        <span style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C" }}>Check Expected Delivery</span>
+      </div>
+      <div style={{ display: "flex", gap: "8px", height: "42px" }}>
+        <input 
+          maxLength={6} 
+          placeholder="Enter Pincode" 
+          value={pincode} 
+          onChange={(e) => { setPincode(e.target.value.replace(/[^0-9]/g, '')); setStatus(null); }}
+          style={{ flex: 1, padding: "0 14px", border: "1.5px solid #E2EEEC", borderRadius: "8px", fontSize: "13px", color: "#1A2E2C", outline: "none", fontFamily: "'Manrope', sans-serif" }} 
+        />
+        <button 
+          onClick={checkPincode}
+          disabled={pincode.length !== 6 || status === 'loading'}
+          style={{ padding: "0 20px", background: pincode.length === 6 ? "#1A2E2C" : "#DDE9E7", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: pincode.length === 6 ? "pointer" : "not-allowed", fontFamily: "'Manrope', sans-serif", transition: "background 0.2s" }}
+        >
+          {status === 'loading' ? '...' : 'Check'}
+        </button>
+      </div>
+      <AnimatePresence>
+        {status === 'success' && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: "12px", fontSize: "12px", color: "#059669", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
+            <FiCheck /> Express delivery available: Get it by 2 PM today.
+          </motion.div>
+        )}
+        {status === 'error' && pincode.length === 6 && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: "12px", fontSize: "12px", color: "#DC2626", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
+            <FiX /> Standard delivery: 2-3 days for your area.
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+
+// ─── Recently Viewed Component ──────────────────────────────────────────────────
+const RecentlyViewed = ({ items, getFullImageUrl }) => {
+  if (!items || items.length === 0) return null;
+
+  return (
+    <div style={{ marginTop: "48px" }}>
+      <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#1A2E2C", marginBottom: "20px" }}>
+        Recently Viewed
+      </h3>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
+        {items.map(item => (
+          <Link key={item._id} to={`/products/${item._id}`} style={{ textDecoration: "none" }}>
+            <div style={{ 
+              background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", padding: "16px",
+              textAlign: "center", transition: "all 0.2s", cursor: "pointer", height: "100%"
+            }} className="recent-card">
+              <div style={{ width: "100%", aspectRatio: "1/1", background: "#F4F9F8", borderRadius: "12px", padding: "10px", marginBottom: "12px" }}>
+                <img src={getFullImageUrl(item.image)} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+              </div>
+              <p style={{ fontSize: "12px", fontWeight: "700", color: "#1A2E2C", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>{item.name}</p>
+              <p style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.basePrice}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+      <style>{`.recent-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(26,46,44,0.06); border-color: #B8DDD9 !important; }`}</style>
+    </div>
+  );
+};
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ProductDetails() {
   const { id } = useParams();
@@ -184,6 +336,7 @@ export default function ProductDetails() {
   const [canReview, setCanReview] = useState(false);
   const [flyItems, setFlyItems] = useState([]);
   const flyIdRef = useRef(0);
+  const [recentItems, setRecentItems] = useState([]);
 
   const isWishlisted = user?.wishlist?.some(
     (item) => (typeof item === "string" ? item : item._id) === id
@@ -217,7 +370,25 @@ export default function ProductDetails() {
     setLoading(true);
     axios
       .get(`${API_URL}/api/products/${id}`, { withCredentials: true })
-      .then((res) => { setProduct(res.data); setLoading(false); })
+      .then((res) => { 
+        setProduct(res.data); 
+        setLoading(false); 
+        
+        // Save to Recently Viewed
+        try {
+          const recent = JSON.parse(localStorage.getItem("seabite_recent") || "[]");
+          const filtered = recent.filter(p => p._id !== res.data._id);
+          filtered.unshift({
+            _id: res.data._id,
+            name: res.data.name,
+            image: res.data.image,
+            basePrice: res.data.basePrice
+          });
+          const newRecent = filtered.slice(0, 4);
+          localStorage.setItem("seabite_recent", JSON.stringify(newRecent));
+          setRecentItems(newRecent.filter(p => p._id !== res.data._id));
+        } catch {}
+      })
       .catch(() => setLoading(false));
   }, [id]);
 
@@ -249,7 +420,6 @@ export default function ProductDetails() {
     }
     
     setIsAdded(true);
-    // Safety reset to ensure button always reverts
     const safetyTimer = setTimeout(() => setIsAdded(false), 4500);
 
     try {
@@ -296,7 +466,7 @@ export default function ProductDetails() {
 
     setTimeout(() => {
       try {
-        triggerHaptic("medium"); // 📳 Haptic vibration
+        triggerHaptic("medium");
         addToCart({ ...product, qty, price: parseFloat(totalPrice) });
         refreshCartCount();
         toast.success(`${product.name} added`, {
@@ -316,7 +486,7 @@ export default function ProductDetails() {
   }, []);
 
   const handleWishlistToggle = async () => {
-    triggerHaptic("soft"); // 📳 Haptic vibration
+    triggerHaptic("soft");
     if (!user) { toast.error("Please login to save items"); return navigate("/login"); }
     setLoadingWishlist(true);
     try {
@@ -338,14 +508,10 @@ export default function ProductDetails() {
     finally { setIsWaitlisting(false); }
   };
 
-
-
-  // ── Loading ────────────────────────────────────────────
   if (loading) {
     return <SeaBiteLoader fullScreen />;
   }
 
-  // ── Not found ─────────────────────────────────────────
   if (!product) {
     return (
       <div style={{ minHeight: "100vh", background: "#F4F9F8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "24px", fontFamily: "'Manrope', sans-serif" }}>
@@ -422,9 +588,6 @@ export default function ProductDetails() {
         }
       `}</style>
 
-
-
-      {/* Framer Motion Parabolic Flight Animation (Immune to iOS Battery Saver) */}
       {typeof document !== "undefined" && createPortal(
         flyItems.map((item) => (
           <motion.div
@@ -433,7 +596,6 @@ export default function ProductDetails() {
             animate={{ left: item.endX, top: item.endY, opacity: 0.6, scale: 0.2, rotate: 90 }}
             transition={{ 
               duration: 1.1,
-              // X-axis linear, Y-axis cubic-bezier for the perfect parabolic upward arc
               left: { ease: "linear", duration: 1.1 },
               top: { ease: [0.3, -0.4, 0.7, 1], duration: 1.1 },
               scale: { ease: "easeOut", duration: 1.1 },
@@ -461,11 +623,9 @@ export default function ProductDetails() {
         className="detail-root"
         style={{ minHeight: "100vh", background: "#F4F9F8", paddingTop: "88px", paddingBottom: "64px", paddingLeft: "24px", paddingRight: "24px" }}
       >
-        {/* Subtle wave bg */}
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "400px", background: "linear-gradient(180deg, rgba(91,191,181,0.06) 0%, transparent 100%)", pointerEvents: "none", zIndex: 0 }} />
 
         <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}>
-          {/* Breadcrumb */}
           <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} style={{ marginBottom: "28px", display: "flex", alignItems: "center", gap: "6px" }}>
             <Link to="/products" style={{ display: "flex", alignItems: "center", gap: "6px", color: "#6B8F8A", textDecoration: "none", fontSize: "13px", fontWeight: "600", transition: "color 0.2s" }}>
               <FiArrowLeft size={14} />
@@ -475,10 +635,7 @@ export default function ProductDetails() {
             <span style={{ fontSize: "13px", fontWeight: "600", color: "#5BBFB5" }}>{product.name}</span>
           </motion.div>
 
-          {/* ── Main 2-col layout ─────────────────────────── */}
           <div className="product-grid">
-
-            {/* ── LEFT: Image ─────────────────────────────── */}
             <motion.div
               initial={{ opacity: 0, y: 32 }}
               animate={{ opacity: 1, y: 0 }}
@@ -497,10 +654,8 @@ export default function ProductDetails() {
                 position: "relative",
                 overflow: "hidden",
               }}>
-                {/* Soft ocean halo */}
                 <div style={{ position: "absolute", width: "70%", height: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(91,191,181,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
 
-                {/* Badges */}
                 <div style={{ position: "absolute", top: "16px", left: "16px", display: "flex", flexDirection: "column", gap: "6px", zIndex: 10 }}>
                   {product.trending && (
                     <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: "9px", fontWeight: "800", padding: "4px 10px", borderRadius: "20px", textTransform: "uppercase", letterSpacing: "0.08em" }}>🔥 Trending</span>
@@ -517,40 +672,24 @@ export default function ProductDetails() {
                   )}
                 </div>
 
-                <motion.img
-                  layoutId={`product-image-${product._id}`}
-                  layout="position"
-                  initial={{ scale: 0.88, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                  src={getFullImageUrl(product.image)}
-                  alt={product.name}
-                  style={{ width: "100%", height: "100%", objectFit: "contain", position: "relative", zIndex: 1, transition: "transform 0.5s ease" }}
-                  className="product-img-hover"
-                />
+                <ImageMagnifier src={getFullImageUrl(product.image)} alt={product.name} productId={product._id} />
               </div>
-
-              <style>{`.product-img-hover:hover { transform: scale(1.04); }`}</style>
             </motion.div>
 
-            {/* ── RIGHT: Details ───────────────────────────── */}
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
               style={{ paddingTop: "8px" }}
             >
-              {/* Category label */}
               <span style={{ fontSize: "10px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.12em", display: "block", marginBottom: "10px" }}>
                 {product.category || "Fresh Catch"} · Fresh From The Sea
               </span>
 
-              {/* Product name */}
               <h1 style={{ fontFamily: "'Lora', serif", fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "700", color: "#1A2E2C", letterSpacing: "-0.025em", lineHeight: 1.15, marginBottom: "20px" }}>
                 {product.name}
               </h1>
 
-              {/* Rating */}
               {product.rating > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
                   <div style={{ display: "flex", gap: "2px" }}>
@@ -563,10 +702,8 @@ export default function ProductDetails() {
                 </div>
               )}
 
-              {/* Divider */}
               <div style={{ height: "1px", background: "#F0F5F4", marginBottom: "20px" }} />
 
-              {/* Price */}
               <div style={{ marginBottom: "24px" }}>
                 {(isActiveFlashSale || isGlobalDiscount) && (
                   <span style={{ fontSize: "16px", color: "#B8CFCC", textDecoration: "line-through", display: "block", marginBottom: "4px" }}>₹{basePrice.toFixed(0)}</span>
@@ -584,7 +721,8 @@ export default function ProductDetails() {
                 </div>
               </div>
 
-              {/* Stock status */}
+              <PincodeChecker />
+
               <div style={{ marginBottom: "28px" }}>
                 {(product.stock === "out" || (product.countInStock !== undefined && product.countInStock <= 0)) ? (
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
@@ -803,6 +941,11 @@ export default function ProductDetails() {
                 refreshCartCount={refreshCartCount}
               />
             </motion.div>
+          )}
+
+          {/* ── Recently Viewed Section ───────────────────────────── */}
+          {recentItems.length > 0 && (
+            <RecentlyViewed items={recentItems} getFullImageUrl={getFullImageUrl} />
           )}
         </div>
       </div>

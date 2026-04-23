@@ -30,6 +30,10 @@ import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
 import logger from "./utils/logger.js";
 import os from "os";
+import osUtils from "os-utils";
+
+// 🟢 Import Cron Workers
+import { initAbandonedCartWorker } from "./cron/abandonedCartWorker.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -105,7 +109,9 @@ io.on("connection", (socket) => {
 });
 
 // ✅ Attach Real IO to request
+let globalReqCount = 0;
 app.use((req, res, next) => {
+  globalReqCount++;
   req.io = io;
   next();
 });
@@ -155,7 +161,7 @@ app.use("/api", limiter);
 // 3. Stricter Auth Rate Limiting
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit login attempts
+  max: 5, // Limit login attempts to 5 per 15 minutes
   message: "Too many login attempts, please try again later."
 });
 app.use("/api/auth/login", authLimiter);
@@ -254,13 +260,13 @@ const sessionMiddleware = session({
   store: MongoStore.create({
     client: mongoose.connection.getClient(),
     collectionName: "sessions",
-    ttl: 14 * 24 * 60 * 60,
+    ttl: 60 * 60, // 1 hour session TTL in MongoDB
     autoRemove: 'native',
   }),
   name: "seabite.sid",
   proxy: true,
   cookie: {
-    maxAge: 7 * 24 * 60 * 60 * 1000,
+    maxAge: 60 * 60 * 1000, // 1 hour cookie max age
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
@@ -357,6 +363,31 @@ export { io }; // Export real IO
 const PORT = process.env.PORT || 5000;
 const server = httpServer.listen(PORT, () => {
   logger.info(`Server started`, { port: PORT, mode: process.env.NODE_ENV || 'development' });
+  
+  // 🟢 Start Background Workers
+  initAbandonedCartWorker();
+
+  // 🟢 Start System Pulse
+  setInterval(() => {
+    osUtils.cpuUsage(async (cpu) => {
+      let latency = 0;
+      try {
+        const start = Date.now();
+        await mongoose.connection.db.admin().ping();
+        latency = Date.now() - start;
+      } catch (e) {}
+      
+      io.emit("SYSTEM_PULSE", {
+        cpu: cpu,
+        freeRam: osUtils.freemem(),
+        totalRam: osUtils.totalmem(),
+        latency: latency,
+        load: osUtils.loadavg(1),
+        reqCount: globalReqCount
+      });
+      globalReqCount = 0; // Reset every 5s
+    });
+  }, 5000);
 });
 
 // 🛡️ GRACEFUL SHUTDOWN (Phase 27)

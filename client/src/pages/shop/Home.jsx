@@ -8,6 +8,7 @@ import {
   useTransform,
   useInView,
   useSpring,
+  useMotionValueEvent,
   AnimatePresence,
 } from "framer-motion";
 import axios from "axios";
@@ -89,7 +90,7 @@ const Counter = ({ value, suffix = "" }) => {
   const spring = useSpring(0, { stiffness: 60, damping: 22 });
   const [display, setDisplay] = useState(0);
   useEffect(() => { if (isInView) spring.set(value); }, [isInView, value]);
-  useEffect(() => spring.on("change", (v) => setDisplay(Math.round(v))), [spring]);
+  useMotionValueEvent(spring, "change", (v) => setDisplay(Math.round(v)));
   return <span ref={ref}>{display}{suffix}</span>;
 };
 

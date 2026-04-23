@@ -280,11 +280,12 @@ export default function AdminDashboard() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
         >
           <StatCard
-            title="Revenue"
-            value={`₹${stats.totalRevenue?.toLocaleString() || 0}`}
+            title="Today's Gross"
+            value={`₹${stats.todayRevenue?.toLocaleString() || 0}`}
             icon={<FiDollarSign size={20} />}
             color="from-amber-50 to-orange-50"
             index={0}
+            subtitle={`Total: ₹${stats.totalRevenue?.toLocaleString() || 0}`}
           />
           <StatCard
             title="Orders"
@@ -301,12 +302,20 @@ export default function AdminDashboard() {
             index={2}
           />
           <StatCard
-            title="Pending"
+            title="Pending & Dispatch"
             value={stats.pendingOrders || 0}
             icon={<FiClock size={20} />}
             color="from-rose-50 to-pink-50"
             index={3}
-          />
+            subtitle={`Pressure: Awaiting (${stats.awaitingPickup || 0}) vs Out (${stats.outForDelivery || 0})`}
+          >
+             <div className="mt-3">
+                <div className="w-full h-1.5 bg-white/40 rounded-full overflow-hidden flex">
+                   <div style={{ width: `${(stats.awaitingPickup / ((stats.awaitingPickup + stats.outForDelivery) || 1)) * 100}%` }} className="bg-amber-400 h-full transition-all duration-500"></div>
+                   <div style={{ width: `${(stats.outForDelivery / ((stats.awaitingPickup + stats.outForDelivery) || 1)) * 100}%` }} className="bg-emerald-400 h-full transition-all duration-500"></div>
+                </div>
+             </div>
+          </StatCard>
         </motion.div>
 
         {/* Main Content Grid */}
@@ -617,7 +626,7 @@ export default function AdminDashboard() {
 
 // --- Components ---
 
-function StatCard({ title, value, icon, color, index }) {
+function StatCard({ title, value, icon, color, index, subtitle, children }) {
   return (
     <motion.div
       variants={fadeUp}
@@ -631,6 +640,8 @@ function StatCard({ title, value, icon, color, index }) {
         </div>
         <p className="text-xs font-medium uppercase tracking-wide text-stone-500 mb-2">{title}</p>
         <h4 className="text-2xl font-light text-stone-900">{value}</h4>
+        {subtitle && <p className="text-[10px] font-semibold text-stone-500 uppercase mt-1">{subtitle}</p>}
+        {children}
       </div>
     </motion.div>
   );

@@ -105,7 +105,7 @@ export default function Wishlist() {
 
                             {wishlist.length > 0 && (
                                 <button
-                                    onClick={addAll}
+                                    onClick={handleMoveAllToCart}
                                     style={{
                                         padding: "10px 24px", background: "#5BBFB5", color: "#fff",
                                         border: "none", borderRadius: 10, fontFamily: "inherit",
@@ -132,7 +132,7 @@ export default function Wishlist() {
                                     isWishlistMode={true}
                                     globalDiscount={globalDiscount}
                                     onWishlistChange={handleWishlistRemove}
-                                    onAddToCart={handleAddToCart}
+                                    onAddToCart={handleMoveToCart}
                                 />
                             ))}
                         </div>

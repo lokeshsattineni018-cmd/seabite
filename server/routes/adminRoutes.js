@@ -75,13 +75,24 @@ router.get("/", adminAuth, async (req, res) => {
 
     const netProfit = totalRevenue - totalCost;
 
+    // 🟢 NEW: "Today's Gross" & Delivery Pressure Gauge
+    const todayStart = new Date();
+    todayStart.setHours(0,0,0,0);
+    const todayOrders = await Order.find({ createdAt: { $gte: todayStart }});
+    const todayRevenue = todayOrders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
+    const awaitingPickup = await Order.countDocuments({ status: "Cooking" });
+    const outForDelivery = await Order.countDocuments({ status: "Ready" });
+
     const stats = {
       products: await Product.countDocuments(),
       totalOrders: await Order.countDocuments(), // 🟢 Renamed for frontend
       activeUsers: await User.countDocuments(), // 🟢 Renamed for frontend
       pendingOrders: await Order.countDocuments({ status: "Pending" }), // 🟢 Added
       totalRevenue: Math.round(totalRevenue),
-      netProfit: Math.round(netProfit) // 🟢 NEW
+      netProfit: Math.round(netProfit), // 🟢 NEW
+      todayRevenue,
+      awaitingPickup,
+      outForDelivery
     };
 
     // 🕵️ EXTRA INTELLIGENCE: Sales Heatmap (Day of Week & Hour)
@@ -266,6 +277,54 @@ router.get("/insights/search", adminAuth, async (req, res) => {
     res.json(insights);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch insights" });
+  }
+});
+
+// 1.4.1 SEARCH DISCOVERY (GET /api/admin/insights/search-discovery) (For Heatmap)
+router.get("/insights/search-discovery", adminAuth, async (req, res) => {
+  try {
+    const topSearches = await SearchInsight.find({ found: true })
+      .sort({ count: -1, lastSearched: -1 })
+      .limit(10);
+      
+    const zeroResults = await SearchInsight.find({ found: false })
+      .sort({ count: -1, lastSearched: -1 })
+      .limit(10);
+      
+    res.json({ topSearches, zeroResults });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch search discovery" });
+  }
+});
+
+// 1.4.2 UNIVERSAL ADMIN SEARCH (GET /api/admin/universal-search)
+router.get("/universal-search", adminAuth, async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json({ customers: [], products: [], orders: [] });
+
+    // Is it a potential completely numeric Order ID part or exact match?
+    let orders = [];
+    if (!isNaN(q) && q.length >= 4) {
+      // Trying to match suffix or exact orderId
+      orders = await Order.find({ orderId: { $regex: q, $options: "i" } }).limit(5);
+    } else {
+      orders = await Order.find({ _id: { $regex: q, $options: "i" } }).limit(5).catch(() => []); 
+    }
+
+    const products = await Product.find({ name: { $regex: q, $options: "i" } }).select("name countInStock image").limit(5);
+    
+    // Customers (Name or Email)
+    const customers = await User.find({
+       $or: [
+         { name: { $regex: q, $options: "i" } },
+         { email: { $regex: q, $options: "i" } }
+       ]
+    }).select("name email picture _id").limit(5);
+
+    res.json({ products, customers, orders });
+  } catch (err) {
+    res.status(500).json({ message: "Search failed" });
   }
 });
 

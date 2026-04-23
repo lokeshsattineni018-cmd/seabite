@@ -37,6 +37,7 @@ const settingsSchema = new mongoose.Schema({
     spinWheelEnabled: { type: Boolean, default: true },
 
     lastUpdatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    securityLevel: { type: String, enum: ['normal', 'high', 'fortress'], default: 'normal' },
 }, { timestamps: true });
 
 const Settings = mongoose.model("Settings", settingsSchema);

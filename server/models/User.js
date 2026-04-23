@@ -64,6 +64,10 @@ const userSchema = new mongoose.Schema(
       }
     ],
 
+    // 🟢 Cart Sync timestamps for recovery
+    cartUpdatedAt: { type: Date, default: Date.now },
+    abandonedCartEmailSent: { type: Boolean, default: false },
+
     // 🔐 Enterprise IAM: Brute-Force Protection
     loginAttempts: { type: Number, required: true, default: 0 },
     lockUntil: { type: Date }

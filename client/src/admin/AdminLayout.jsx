@@ -33,6 +33,9 @@ export default function AdminLayout() {
   const [settings, setSettings] = useState({ isMaintenanceMode: false, maintenanceMessage: "", banner: { active: false, image: "", text: "" } });
   const [notifications, setNotifications] = useState([]); // 🟢 Added
   const [unreadCount, setUnreadCount] = useState(0); // 🟢 Added
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -109,6 +112,27 @@ export default function AdminLayout() {
     }
   };
 
+  // 🟢 NEW: Universal Search Logic
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchQuery.length >= 2) {
+        setIsSearching(true);
+        try {
+          const { data } = await axios.get(`/api/admin/universal-search?q=${searchQuery}`, { withCredentials: true });
+          setSearchResults(data);
+        } catch (err) {
+          console.error("Search failed", err);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults(null);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
   return (
     <div className="flex h-screen w-full bg-[#fafaf9] font-sans text-stone-900 overflow-hidden selection:bg-stone-200 selection:text-stone-900">
 
@@ -156,9 +180,96 @@ export default function AdminLayout() {
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 group-focus-within:text-stone-600 transition-colors" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Universal Search (Name, Order ID, Product)..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-11 pr-4 py-2.5 bg-white border border-stone-200/80 rounded-2xl text-sm w-64 focus:w-80 transition-all outline-none focus:ring-4 focus:ring-stone-100 focus:border-stone-300 shadow-sm font-medium text-stone-600 placeholder:text-stone-300"
               />
+
+              {/* Universal Search Results Dropdown */}
+              <AnimatePresence>
+                {(searchResults || isSearching) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute top-full left-0 mt-2 w-[400px] bg-white rounded-3xl border border-stone-100 shadow-2xl z-50 p-4 max-h-[500px] overflow-y-auto custom-scrollbar"
+                  >
+                    {isSearching ? (
+                      <div className="py-8 text-center text-stone-400 text-xs font-bold uppercase tracking-widest animate-pulse">Scanning Data...</div>
+                    ) : (
+                      <div className="space-y-6">
+                        {/* Orders Section */}
+                        {searchResults?.orders?.length > 0 && (
+                          <div>
+                            <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3 px-2">Orders</div>
+                            <div className="space-y-2">
+                              {searchResults.orders.map(o => (
+                                <div key={o._id} onClick={() => { navigate(`/admin/orders`); setSearchQuery(""); }} className="p-3 bg-stone-50 hover:bg-stone-100 rounded-2xl cursor-pointer transition-all flex items-center justify-between border border-transparent hover:border-stone-200">
+                                   <div className="flex items-center gap-3">
+                                      <div className="w-8 h-8 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-orange-500">
+                                        <FiShoppingBag size={14} />
+                                      </div>
+                                      <div>
+                                        <div className="text-xs font-bold text-stone-900">#{o.orderId || o._id.slice(-6).toUpperCase()}</div>
+                                        <div className="text-[10px] text-stone-500">{new Date(o.createdAt).toLocaleDateString()}</div>
+                                      </div>
+                                   </div>
+                                   <div className="text-xs font-bold text-stone-900">₹{o.totalAmount}</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Customers Section */}
+                        {searchResults?.customers?.length > 0 && (
+                          <div>
+                            <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3 px-2">Customers</div>
+                            <div className="space-y-2">
+                              {searchResults.customers.map(c => (
+                                <div key={c._id} onClick={() => { navigate(`/admin/users`); setSearchQuery(""); }} className="p-3 bg-stone-50 hover:bg-stone-100 rounded-2xl cursor-pointer transition-all flex items-center gap-3 border border-transparent hover:border-stone-200">
+                                   <div className="w-8 h-8 rounded-full bg-stone-900 flex items-center justify-center text-white text-[10px] font-bold">
+                                      {c.name[0].toUpperCase()}
+                                   </div>
+                                   <div>
+                                      <div className="text-xs font-bold text-stone-900">{c.name}</div>
+                                      <div className="text-[10px] text-stone-500">{c.email}</div>
+                                   </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Products Section */}
+                        {searchResults?.products?.length > 0 && (
+                          <div>
+                            <div className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3 px-2">Products</div>
+                            <div className="space-y-2">
+                              {searchResults.products.map(p => (
+                                <div key={p._id} onClick={() => { navigate(`/admin/products`); setSearchQuery(""); }} className="p-3 bg-stone-50 hover:bg-stone-100 rounded-2xl cursor-pointer transition-all flex items-center justify-between border border-transparent hover:border-stone-200">
+                                   <div className="flex items-center gap-3">
+                                      <img src={p.image.startsWith('/uploads') ? p.image : `/uploads/${p.image.split('/').pop()}`} className="w-8 h-8 rounded-lg object-cover bg-white" alt="" />
+                                      <div>
+                                        <div className="text-xs font-bold text-stone-900">{p.name}</div>
+                                        <div className="text-[10px] text-stone-500">In Stock: {p.countInStock}</div>
+                                      </div>
+                                   </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {!searchResults?.orders.length && !searchResults?.customers.length && !searchResults?.products.length && (
+                          <div className="py-8 text-center text-stone-400 text-xs font-bold uppercase tracking-widest">No Matches Found</div>
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Notifications Dropdown */}
