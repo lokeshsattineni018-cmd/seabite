@@ -104,7 +104,7 @@ export const googleLogin = async (req, res) => {
       role: user.role,
     };
 
-    req.session.save((err) => {
+    req.session.save(async (err) => {
       if (err) {
         logger.error("Session save failed", { traceId: req.traceId, error: err.message });
         return res.status(500).json({ message: "Session save failed" });

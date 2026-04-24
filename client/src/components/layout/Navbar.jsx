@@ -19,8 +19,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 const NAV_LINKS = [
   { label: "Fish", path: "/products?category=Fish" },
   { label: "Prawns", path: "/products?category=Prawn" },
-  { label: "Crabs", path: "/products?category=Crab" },
-  { label: "Mussels", path: "/products?category=Mussel" },
+  { label: "Crabs", path: "/products?category=Crab" }
 ];
 
 const AuthInput = ({ label, type = "text", value, onChange, placeholder, icon: Icon, required = true }) => (
