@@ -12,6 +12,7 @@ import { useAuth } from "../../context/AuthContext";
 import Spin from "../../pages/general/Spin";
 import toast from "react-hot-toast";
 import { useGoogleLogin } from "@react-oauth/google";
+import { io } from "socket.io-client"; // [Real-time Pulse]
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -23,13 +24,13 @@ const NAV_LINKS = [
 ];
 
 const AuthInput = ({ label, type = "text", value, onChange, placeholder, icon: Icon, required = true }) => (
-  <div style={{ marginBottom: "20px" }}>
-    <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "1px", marginBottom: "8px" }}>{label}</label>
+  <div style={{ marginBottom: "22px" }}>
+    <label style={{ display: "block", fontSize: "11px", fontWeight: "800", color: "#4A7570", textTransform: "uppercase", letterSpacing: "1.2px", marginBottom: "8px" }}>{label}</label>
     <div style={{ position: "relative" }}>
-      {Icon && <Icon style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#6B8F8A" }} />}
+      {Icon && <Icon style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#A8C5C0", zIndex: 2 }} />}
       <input
         type={type} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        style={{ width: "100%", padding: `14px 16px ${Icon ? '14px 42px' : '14px 16px'}`, paddingLeft: Icon ? "42px" : "16px", borderRadius: "14px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", outline: "none", fontSize: "14px", transition: "all 0.2s" }}
+        style={{ paddingLeft: Icon ? "46px" : "18px" }}
         className="auth-input"
       />
     </div>
@@ -56,6 +57,7 @@ export default function Navbar({ announcementActive = false }) {
   const [trendingSearched, setTrendingSearched] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [systemAlert, setSystemAlert] = useState(null); // [Pulse State]
 
   const lastScrollY = useRef(0);
   const searchRef = useRef(null);
@@ -109,11 +111,16 @@ export default function Navbar({ announcementActive = false }) {
       .catch(() => { });
   }, [user]);
 
+  }, [user]);
+
   useEffect(() => {
-    if (!user) return;
-    axios.get(`${API_URL}/api/spin/can-spin`, { withCredentials: true })
-      .then(res => { if (res.data.canSpin) setTimeout(() => setShowSpinWheel(true), 2000); })
-      .catch(() => { });
+    if (user?.role !== "admin") return;
+    const socket = io(API_URL);
+    socket.on("SYSTEM_PULSE", (data) => {
+      if (data.alert) setSystemAlert(data.alert);
+      else setSystemAlert(null);
+    });
+    return () => socket.disconnect();
   }, [user]);
 
   useEffect(() => {
@@ -293,9 +300,14 @@ export default function Navbar({ announcementActive = false }) {
         .si:focus { outline: none; }
         .drawer-scrollbar::-webkit-scrollbar { width: 4px; }
         .drawer-scrollbar::-webkit-scrollbar-thumb { background: #E2EEEC; border-radius: 10px; }
-        .auth-input:focus { border-color: #5BBFB5 !important; background: #fff !important; box-shadow: 0 0 0 4px rgba(91,191,181,0.1); }
+        .auth-input { width: 100%; padding: 15px 18px; border-radius: 12px; border: 1.5px solid #E2EEEC; background: #FAFCFC; outline: none; font-size: 14px; transition: all 0.25s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01); color: #1A2E2C; }
+        .auth-input::placeholder { color: #A8C5C0; font-weight: 500; }
+        .auth-input:focus { border-color: #5BBFB5 !important; background: #fff !important; box-shadow: 0 0 0 4px rgba(91,191,181,0.1); transform: translateY(-1px); }
         .loading-spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: auth-spin 0.8s linear infinite; }
         @keyframes auth-spin { to { transform: rotate(360deg); } }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .marquee-container { overflow: hidden; white-space: nowrap; width: 100%; background: #0E1B1A; color: #5BBFB5; padding: 10px 0; font-size: 11px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; border-bottom: 1px solid #1A2E2C; }
+        .marquee-content { display: inline-block; animation: marquee 20s linear infinite; }
         @media (max-width: 768px) { .hidden-mobile { display: none !important; } .show-mobile { display: flex !important; } }
         @media (min-width: 769px) { .show-mobile { display: none !important; } .hidden-mobile { display: flex !important; } }
       `}</style>
@@ -315,7 +327,7 @@ export default function Navbar({ announcementActive = false }) {
 
           <div style={{ marginRight: "36px", flexShrink: 0 }}>
             <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-              <img src="/logo.png" alt="SeaBite" style={{ height: "44px", width: "auto" }} />
+              <img src="/logo.png" alt="SeaBite" style={{ height: "64px", width: "auto" }} />
             </Link>
           </div>
 
@@ -371,18 +383,18 @@ export default function Navbar({ announcementActive = false }) {
             {user && (
               <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate("/notifications")} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
                 <FiBell size={15} />
-                {unreadCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{unreadCount}</span>}
+                {unreadCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount}</span>}
               </motion.button>
             )}
 
             <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate(user ? "/wishlist" : "#")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
               <FiHeart size={15} />
-              {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{user.wishlist.length}</span>}
+              {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{user.wishlist.length}</span>}
             </motion.button>
 
             <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
               <FiShoppingBag size={15} />
-              {cartCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff" }}>{cartCount}</span>}
+              {cartCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
             </motion.button>
 
             <div className="hidden-mobile">
@@ -402,11 +414,21 @@ export default function Navbar({ announcementActive = false }) {
                         </div>
                         <div style={{ padding: "6px" }}>
                           {user.role === "admin" && (
-                            <button onClick={() => { navigate("/admin/dashboard"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}><FiGrid /> Admin Dashboard</button>
+                            <div style={{ padding: "8px 12px", background: systemAlert ? "#FEF2F2" : "#F0FDF4", borderRadius: "10px", marginBottom: "6px", border: `1px solid ${systemAlert ? "#FEE2E2" : "#DCFCE7"}` }}>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: systemAlert ? '#EF4444' : '#22C55E', boxShadow: `0 0 8px ${systemAlert ? '#EF4444' : '#22C55E'}` }}></div>
+                                  <span style={{ fontSize: '11px', fontWeight: '800', color: systemAlert ? '#B91C1C' : '#15803D' }}>
+                                    {systemAlert ? "HIGH PRESSURE" : "SYSTEM HEALTHY"}
+                                  </span>
+                               </div>
+                            </div>
                           )}
-                          {[{ icon: <FiUser />, label: "My Profile", path: "/profile" }, { icon: <FiHeart />, label: "Wishlist", path: "/wishlist" }, { icon: <FiPackage />, label: "My Orders", path: "/orders" }].map(item => (
-                            <button key={item.path} onClick={() => { navigate(item.path); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}>{item.icon} {item.label}</button>
-                          ))}
+                          <button onClick={() => { navigate("/profile"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}><FiUser /> My Profile</button>
+                          <button onClick={() => { navigate("/orders"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}><FiPackage /> My Orders</button>
+                          <button onClick={() => { navigate("/notifications"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}><FiBell /> Notifications</button>
+                          {user.role === "admin" && (
+                            <button onClick={() => { navigate("/admin/dashboard"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "800", color: "#5BBFB5", marginTop: "4px" }}><FiGrid /> Admin Dashboard</button>
+                          )}
                         </div>
                         <div style={{ borderTop: "1px solid #FEE2E2", padding: "6px" }}>
                           <button onClick={handleLogout} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", color: "#DC2626", fontSize: "13px", fontWeight: "600" }}><FiLogOut /> Logout</button>
@@ -431,26 +453,46 @@ export default function Navbar({ announcementActive = false }) {
         {isLoginOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsLoginOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.4)", backdropFilter: "blur(12px)", zIndex: 1000 }} />
-            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 220 }} style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(420px, 100vw)", background: "#fff", zIndex: 1001, boxShadow: "-10px 0 60px rgba(0,0,0,0.15)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              <div style={{ height: "180px", background: "linear-gradient(135deg, #1A2E2C 0%, #2D4F4B 100%)", padding: "40px 32px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "24px", right: "24px", background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: "36px", height: "36px", color: "#fff", cursor: "pointer" }}><FiX size={20}/></button>
-                <h2 style={{ fontSize: "28px", fontWeight: "800", color: "#fff", margin: 0 }}>{authMode === "LOGIN" ? "Welcome Back" : authMode === "SIGNUP" ? "Join SeaBite" : "Reset Password"}</h2>
+            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 220 }} style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(420px, 100vw)", background: "#fff", zIndex: 1001, boxShadow: "-10px 0 60px rgba(0,0,0,0.25)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+              <div className="marquee-container">
+                <div className="marquee-content">
+                  PREMIUM SEAFOOD DELIVERY • CAUGHT AT 4 AM • DELIVERED BY NOON • NO CHEMICALS • 100% TRACEABLE • PREMIUM SEAFOOD DELIVERY • CAUGHT AT 4 AM • DELIVERED BY NOON • NO CHEMICALS • 100% TRACEABLE •
+                </div>
               </div>
-              <div className="drawer-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "32px" }}>
+              <div style={{ height: "220px", background: "url('/auth-banner.png') center/cover no-repeat", position: "relative", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(14,27,26,0.9) 0%, rgba(14,27,26,0.2) 50%, rgba(14,27,26,0.4) 100%)" }} />
+                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "20px", right: "20px", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "50%", width: "36px", height: "36px", color: "#fff", cursor: "pointer", zIndex: 10 }}><FiX size={18}/></button>
+                <div style={{ position: "relative", zIndex: 10, padding: "32px 36px" }}>
+                  <p style={{ fontSize: "11px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "2px", margin: "0 0 8px" }}>SeaBite Premium</p>
+                  <h2 style={{ fontSize: "32px", fontWeight: "800", color: "#fff", margin: 0, letterSpacing: "-0.5px" }}>{authMode === "LOGIN" ? "Welcome Back." : authMode === "SIGNUP" ? "Join the Club." : "Reset Password."}</h2>
+                </div>
+              </div>
+              <div className="drawer-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "36px" }}>
                 <AnimatePresence mode="wait">
-                  <motion.div key={authMode} initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                  <motion.div key={authMode} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
                     {authMode === "LOGIN" && (
                       <form onSubmit={handleLoginSubmit}>
                         <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" icon={FiMail} />
                         <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
-                        <button type="button" onClick={() => setAuthMode("FORGOT")} style={{ background: "none", border: "none", fontSize: "12px", color: "#5BBFB5", fontWeight: "700", marginBottom: "20px", cursor: "pointer" }}>Forgot Password?</button>
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", cursor: "pointer" }}>{authLoading ? "Signing in..." : "Sign In"}</button>
-                        <div style={{ marginTop: "16px" }}>
-                          <button type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", color: "#1A2E2C" }}>
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Sign in with Google
-                          </button>
+                        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "28px", marginTop: "-8px" }}>
+                          <button type="button" onClick={() => setAuthMode("FORGOT")} style={{ background: "none", border: "none", fontSize: "12px", color: "#5BBFB5", fontWeight: "800", cursor: "pointer" }}>Forgot Password?</button>
                         </div>
-                        <div style={{ margin: "24px 0", textAlign: "center" }}><p style={{ fontSize: "14px", color: "#6B8F8A" }}>New? <button type="button" onClick={() => setAuthMode("SIGNUP")} style={{ background: "none", border: "none", fontWeight: "800", color: "#5BBFB5", cursor: "pointer" }}>Create Account</button></p></div>
+                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#0E1B1A", color: "#fff", border: "1px solid #1A2E2C", borderRadius: "12px", fontWeight: "800", fontSize: "14px", letterSpacing: "1px", textTransform: "uppercase", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 24px rgba(14,27,26,0.15)", transition: "all 0.2s" }}>
+                          {authLoading ? <div className="loading-spinner"/> : "Sign In"}
+                        </button>
+                        
+                        <div style={{ position: "relative", margin: "32px 0", textAlign: "center" }}>
+                          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#E2EEEC" }} />
+                          <span style={{ position: "relative", background: "#fff", padding: "0 16px", fontSize: "11px", fontWeight: "800", color: "#A8C5C0", letterSpacing: "1px", textTransform: "uppercase" }}>OR</span>
+                        </div>
+
+                        <button type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "16px", background: "#FAFCFC", border: "1.5px solid #E2EEEC", borderRadius: "12px", fontWeight: "800", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#1A2E2C", transition: "all 0.2s" }}>
+                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "20px" }} /> Continue with Google
+                        </button>
+                        
+                        <div style={{ marginTop: "36px", textAlign: "center" }}>
+                          <p style={{ fontSize: "14px", color: "#6B8F8A", fontWeight: "600" }}>New to SeaBite? <button type="button" onClick={() => setAuthMode("SIGNUP")} style={{ background: "none", border: "none", fontWeight: "800", color: "#5BBFB5", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "4px" }}>Create Account</button></p>
+                        </div>
                       </form>
                     )}
                     {authMode === "SIGNUP" && (
@@ -459,33 +501,61 @@ export default function Navbar({ announcementActive = false }) {
                         <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" icon={FiMail} />
                         <AuthInput label="Phone" value={authPhone} onChange={setAuthPhone} placeholder="+91..." />
                         <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", cursor: "pointer" }}>{authLoading ? "Sending OTP..." : "Get Started"}</button>
-                        <div style={{ marginTop: "16px" }}>
-                          <button type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", color: "#1A2E2C" }}>
-                            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Sign up with Google
-                          </button>
+                        
+                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#0E1B1A", color: "#fff", border: "1px solid #1A2E2C", borderRadius: "12px", fontWeight: "800", fontSize: "14px", letterSpacing: "1px", textTransform: "uppercase", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 24px rgba(14,27,26,0.15)", transition: "all 0.2s", marginTop: "24px" }}>
+                          {authLoading ? <div className="loading-spinner"/> : "Join The Club"}
+                        </button>
+                        
+                        <div style={{ position: "relative", margin: "32px 0", textAlign: "center" }}>
+                          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#E2EEEC" }} />
+                          <span style={{ position: "relative", background: "#fff", padding: "0 16px", fontSize: "11px", fontWeight: "800", color: "#A8C5C0", letterSpacing: "1px", textTransform: "uppercase" }}>OR</span>
                         </div>
-                        <div style={{ margin: "24px 0", textAlign: "center" }}><p style={{ fontSize: "14px", color: "#6B8F8A" }}>Joined before? <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontWeight: "800", color: "#5BBFB5", cursor: "pointer" }}>Log In</button></p></div>
+
+                        <button type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "16px", background: "#FAFCFC", border: "1.5px solid #E2EEEC", borderRadius: "12px", fontWeight: "800", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#1A2E2C", transition: "all 0.2s" }}>
+                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "20px" }} /> Sign up with Google
+                        </button>
+                        
+                        <div style={{ marginTop: "36px", textAlign: "center" }}>
+                          <p style={{ fontSize: "14px", color: "#6B8F8A", fontWeight: "600" }}>Joined before? <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontWeight: "800", color: "#5BBFB5", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "4px" }}>Log In</button></p>
+                        </div>
                       </form>
                     )}
                     {authMode === "OTP_VERIFY_SIGNUP" && (
                       <form onSubmit={handleSignupVerify}>
+                        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+                          <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#1A2E2C", margin: "0 0 8px" }}>Verify Your Email</h3>
+                          <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0 }}>We sent a 6-digit code to {authEmail}</p>
+                        </div>
                         <AuthInput label="Enter OTP" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", cursor: "pointer" }}>{authLoading ? "Verifying..." : "Complete Signup"}</button>
+                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#0E1B1A", color: "#fff", border: "1px solid #1A2E2C", borderRadius: "12px", fontWeight: "800", fontSize: "14px", letterSpacing: "1px", textTransform: "uppercase", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 24px rgba(14,27,26,0.15)", transition: "all 0.2s", marginTop: "24px" }}>
+                          {authLoading ? <div className="loading-spinner"/> : "Complete Signup"}
+                        </button>
                       </form>
                     )}
                     {authMode === "FORGOT" && (
                       <form onSubmit={handleForgotOtpRequest}>
+                        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+                          <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#1A2E2C", margin: "0 0 8px" }}>Recover Account</h3>
+                          <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0 }}>Enter your email to receive a reset code</p>
+                        </div>
                         <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" icon={FiMail} />
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", cursor: "pointer" }}>{authLoading ? "Sending OTP..." : "Send Reset OTP"}</button>
-                        <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ width: "100%", marginTop: "12px", background: "none", border: "none", color: "#5BBFB5", fontWeight: "700", cursor: "pointer" }}>Back to Login</button>
+                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#0E1B1A", color: "#fff", border: "1px solid #1A2E2C", borderRadius: "12px", fontWeight: "800", fontSize: "14px", letterSpacing: "1px", textTransform: "uppercase", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 24px rgba(14,27,26,0.15)", transition: "all 0.2s", marginTop: "24px" }}>
+                          {authLoading ? <div className="loading-spinner"/> : "Send Reset Code"}
+                        </button>
+                        <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ width: "100%", marginTop: "24px", background: "none", border: "none", color: "#5BBFB5", fontWeight: "800", cursor: "pointer" }}>Back to Login</button>
                       </form>
                     )}
                     {authMode === "RESET_PASSWORD" && (
                       <form onSubmit={handleResetPassword}>
-                        <AuthInput label="OTP" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
+                        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+                          <h3 style={{ fontSize: "18px", fontWeight: "800", color: "#1A2E2C", margin: "0 0 8px" }}>Set New Password</h3>
+                          <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0 }}>Code sent to {authEmail}</p>
+                        </div>
+                        <AuthInput label="6-Digit OTP" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
                         <AuthInput label="New Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "14px", fontWeight: "700", cursor: "pointer" }}>{authLoading ? "Resetting..." : "Reset Password"}</button>
+                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#0E1B1A", color: "#fff", border: "1px solid #1A2E2C", borderRadius: "12px", fontWeight: "800", fontSize: "14px", letterSpacing: "1px", textTransform: "uppercase", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 24px rgba(14,27,26,0.15)", transition: "all 0.2s", marginTop: "24px" }}>
+                          {authLoading ? <div className="loading-spinner"/> : "Confirm Reset"}
+                        </button>
                       </form>
                     )}
                   </motion.div>

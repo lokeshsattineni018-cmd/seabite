@@ -72,7 +72,7 @@ const AdminDelivery = lazy(() => import("./admin/AdminDelivery")); // [New: Deli
 
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
-import { AuthProvider } from "./context/AuthContext";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CompareProvider } from "./context/CompareContext";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 
@@ -91,6 +91,7 @@ axios.interceptors.request.use((config) => {
 
 
 function MainLayout() {
+  const { user } = useAuth();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const [maintenance, setMaintenance] = useState({ active: false, message: "" });
@@ -261,8 +262,8 @@ function MainLayout() {
                     <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
                     <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
                     <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
-                    <Route path="/login" element={<Navigate to="/?auth=login" replace />} />
-                    <Route path="/signup" element={<Navigate to="/?auth=signup" replace />} />
+                    <Route path="/login" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=login" replace />} />
+                    <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=signup" replace />} />
                     <Route path="/categories" element={<Categories />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />

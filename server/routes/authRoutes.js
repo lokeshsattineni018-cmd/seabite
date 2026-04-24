@@ -20,7 +20,11 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (user && (await user.matchPassword(password))) {
+    if (user) {
+      if (user.googleId && !user.password) {
+        return res.status(400).json({ message: "You have an account via Google login. Please use Google to sign in." });
+      }
+      if (await user.matchPassword(password)) {
       req.session.userId = user._id;
       req.session.role = user.role;
       generateToken(res, user._id);
@@ -75,7 +79,12 @@ router.post("/send-otp", async (req, res) => {
   if (!email) return res.status(400).json({ message: "Email is required" });
   
   const existingUser = await User.findOne({ email });
-  if (existingUser) return res.status(400).json({ message: "Email already registered. Please login." });
+  if (existingUser) {
+    if (existingUser.googleId && !existingUser.password) {
+      return res.status(400).json({ message: "Email already registered via Google. Please sign in with Google." });
+    }
+    return res.status(400).json({ message: "Email already registered. Please login with your password." });
+  }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min expiry
@@ -151,6 +160,9 @@ router.post("/forgot-password-otp", async (req, res) => {
 
   const user = await User.findOne({ email });
   if (!user) return res.status(404).json({ message: "Not registered in our website" });
+  if (user.googleId && !user.password) {
+    return res.status(400).json({ message: "This email is registered via Google login. Please use Google to sign in." });
+  }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
   otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000, type: 'FORGOT' });
