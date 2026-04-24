@@ -111,8 +111,6 @@ export default function Navbar({ announcementActive = false }) {
       .catch(() => { });
   }, [user]);
 
-  }, [user]);
-
   useEffect(() => {
     if (user?.role !== "admin") return;
     const socket = io(API_URL);
