@@ -68,8 +68,12 @@ export const googleLogin = async (req, res) => {
 
     if (user) {
       if (!user.googleId) {
-        user.googleId = googleId;
-        await user.save();
+        if (user.password) {
+           return res.status(400).json({ message: "You already have an account via Email/Password. Please login with your password." });
+        } else {
+           user.googleId = googleId;
+           await user.save();
+        }
       }
     } else {
       user = new User({ name, email, googleId, role: "user" });
@@ -113,11 +117,19 @@ export const googleLogin = async (req, res) => {
         logger.warn("Welcome Email Failed", { traceId: req.traceId, error: err.message });
       });
 
-      // Geofence Anomaly Detection
+      // 🛡️ [ACCESS SENTINEL] Geofence Anomaly Detection
       const callerIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
       const geo = geoip.lookup(callerIp);
       if (geo && geo.country !== "IN") {
         logActivity("SECURITY", `Geo-Anomaly Login: ${user.email} from ${geo.country} (${callerIp})`, req);
+        
+        // 🔒 CRITICAL: Lock Admin accounts immediately on Geo-Anomaly
+        if (user.role === "admin") {
+          user.lockUntil = Date.now() + 15 * 60 * 1000; // 15 Minute Lock
+          await user.save();
+          logger.security("Admin Account Locked: Geo-Anomaly Detected", { traceId: req.traceId, email: user.email, country: geo.country });
+          return res.status(403).json({ message: "Security Protocol: Account locked due to suspicious login location." });
+        }
       } else {
         logActivity("LOGIN", `User Logged In: ${user.name} (${user.email})`, req);
       }

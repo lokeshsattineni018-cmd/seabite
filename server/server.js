@@ -9,6 +9,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import session from "express-session";
 import MongoStore from "connect-mongo";
+import Order from "./models/Order.js"; // [Operational Intelligence]
 
 /* --- ROUTE IMPORTS --- */
 import authRoutes from "./routes/authRoutes.js";
@@ -301,18 +302,18 @@ app.use(checkMaintenance);
 app.use("/api/auth", authRoutes);
 app.use("/api/products", products);
 app.use("/api/orders", orderRoutes);
-app.use("/api/delivery", deliveryRoutes); // [Delivery Management]
-app.use("/api/admin", adminRoutes);
+app.use("/api/admin", auditTrail, adminRoutes);
+app.use("/api/admin/products", auditTrail, adminProductRoutes);
+app.use("/api/admin/watchtower", auditTrail, watchtowerRoutes);
+app.use("/api/admin/complaints", auditTrail, complaintRoutes); 
+app.use("/api/delivery", deliveryRoutes); 
 app.use("/api/notifications", notificationRoutes);
-app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/settings", settingsRoutes);
-app.use("/api/admin/watchtower", watchtowerRoutes);
-app.use("/api/admin/complaints", complaintRoutes); // 🟢 Added
 
 app.get("/health", async (req, res) => {
   const start = Date.now();
@@ -379,13 +380,21 @@ const server = httpServer.listen(PORT, () => {
         latency = Date.now() - start;
       } catch (e) {}
       
+      // 🟢 Predictive Operational Intelligence: Delivery Pressure
+      let pendingOrders = 0;
+      try {
+        pendingOrders = await Order.countDocuments({ status: { $in: ["Pending", "Cooking", "Ready"] } });
+      } catch (err) {}
+
       io.emit("SYSTEM_PULSE", {
         cpu: cpu,
         freeRam: osUtils.freemem(),
         totalRam: osUtils.totalmem(),
         latency: latency,
         load: osUtils.loadavg(1),
-        reqCount: globalReqCount
+        reqCount: globalReqCount,
+        pendingOrders: pendingOrders, // [New: Delivery Pressure Metric]
+        alert: pendingOrders > 15 ? "HIGH_DELIVERY_PRESSURE" : null
       });
       globalReqCount = 0; // Reset every 5s
     });
