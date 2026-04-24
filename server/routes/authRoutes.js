@@ -20,11 +20,13 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (user) {
-      if (user.googleId && !user.password) {
-        return res.status(400).json({ message: "You have an account via Google login. Please use Google to sign in." });
-      }
-      if (await user.matchPassword(password)) {
+    if (!user) {
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+    if (user.googleId && !user.password) {
+      return res.status(400).json({ message: "You have an account via Google login. Please use Google to sign in." });
+    }
+    if (await user.matchPassword(password)) {
       req.session.userId = user._id;
       req.session.role = user.role;
       generateToken(res, user._id);
