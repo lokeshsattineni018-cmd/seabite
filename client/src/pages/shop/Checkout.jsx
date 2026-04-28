@@ -13,7 +13,6 @@ import PopupModal from "../../components/common/PopupModal";
 import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
-import OrderSlider from "../../components/common/OrderSlider"; // 🦐 Slide to Order
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -738,13 +737,34 @@ export default function Checkout() {
                   </div>
                 )}
 
-                {/* Place Order - Slide to Secure */}
                 <div style={{ marginTop: 8 }}>
-                  <OrderSlider 
-                    onConfirm={placeOrder} 
-                    disabled={loading} 
-                    text={loading ? "Securing..." : "Slide to Secure Your Catch"}
-                  />
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={placeOrder}
+                    disabled={loading}
+                    style={{
+                      width: "100%",
+                      padding: "18px",
+                      borderRadius: "16px",
+                      background: T.primary,
+                      color: "#fff",
+                      fontSize: "15px",
+                      fontWeight: "800",
+                      border: "none",
+                      cursor: loading ? "not-allowed" : "pointer",
+                      boxShadow: loading ? "none" : "0 12px 32px rgba(91,168,160,0.3)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "10px",
+                      fontFamily: font,
+                      transition: "all 0.3s ease"
+                    }}
+                  >
+                    {loading ? <FiLoader size={18} style={{ animation: "spin 1s linear infinite" }} /> : <FiShoppingBag size={18} />}
+                    {loading ? "Processing..." : `Place Order · ₹${grandTotal.toFixed(2)}`}
+                  </motion.button>
                 </div>
 
                 {/* Delivery estimate */}

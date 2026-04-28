@@ -155,6 +155,7 @@ const Hero = () => {
             <SeaBiteLoader />
           </div>
         )}
+
         <video
           autoPlay
           loop
