@@ -40,7 +40,6 @@ const Terms = lazy(() => import("./pages/legal/Terms"));
 const Privacy = lazy(() => import("./pages/legal/Privacy"));
 const Cancellation = lazy(() => import("./pages/legal/Cancellation"));
 const Maintenance = lazy(() => import("./pages/general/Maintenance"));
-const Categories = lazy(() => import("./pages/shop/Categories"));
 const Contact = lazy(() => import("./pages/general/Contact"));
 const Signup = lazy(() => import("./pages/auth/Signup"));
 const ReferEarn = lazy(() => import("./pages/user/ReferEarn"));
@@ -264,7 +263,6 @@ function MainLayout() {
                     <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
                     <Route path="/login" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=login" replace />} />
                     <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=signup" replace />} />
-                    <Route path="/categories" element={<Categories />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/faq" element={<FAQ />} />

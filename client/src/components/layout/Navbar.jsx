@@ -4,7 +4,7 @@ import { Link, useNavigate, useLocation, useSearchParams } from "react-router-do
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiUser, FiShoppingBag, FiSearch, FiLogOut, FiPackage,
-  FiGrid, FiBell, FiMenu, FiX, FiChevronDown, FiHeart, FiMail, FiCheckCircle
+  FiGrid, FiBell, FiMenu, FiX, FiChevronDown, FiHeart, FiMail, FiCheckCircle, FiZap, FiEye, FiEyeOff, FiArrowRight
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import axios from "axios";
@@ -22,19 +22,29 @@ const NAV_LINKS = [
   { label: "Crabs", path: "/products?category=Crab" }
 ];
 
-const AuthInput = ({ label, type = "text", value, onChange, placeholder, icon: Icon, required = true }) => (
-  <div style={{ marginBottom: "20px" }}>
-    <label style={{ display: "block", fontSize: "13px", fontWeight: "700", color: "#1A2E2C", marginBottom: "8px" }}>{label}</label>
-    <div style={{ position: "relative" }}>
-      {Icon && <Icon style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", color: "#5BBFB5", zIndex: 2 }} />}
-      <input
-        type={type} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        style={{ paddingLeft: Icon ? "46px" : "18px" }}
-        className="auth-input"
-      />
+const AuthInput = ({ label, type = "text", value, onChange, placeholder, required = true }) => {
+  const [show, setShow] = useState(false);
+  const isPassword = type === "password";
+  const inputType = isPassword ? (show ? "text" : "password") : type;
+
+  return (
+    <div style={{ marginBottom: "16px" }}>
+      <div style={{ display: "flex", alignItems: "center", border: "1px solid #D1D5DB", borderRadius: "8px", overflow: "hidden", background: "#fff", transition: "border-color 0.2s" }}>
+        <input
+          type={inputType} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || label}
+          style={{ width: "100%", padding: "12px 16px", border: "none", color: "#111827", fontSize: "14px", fontWeight: "500", outline: "none" }}
+          onFocus={e => e.currentTarget.parentElement.style.borderColor = "#3B82F6"}
+          onBlur={e => e.currentTarget.parentElement.style.borderColor = "#D1D5DB"}
+        />
+        {isPassword && (
+          <button type="button" onClick={() => setShow(!show)} style={{ background: "none", border: "none", padding: "0 12px", cursor: "pointer", color: "#9CA3AF", display: "flex", alignItems: "center" }}>
+            {show ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+          </button>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function Navbar({ announcementActive = false }) {
   const { cartCount, setIsCartOpen } = useContext(CartContext);
@@ -71,6 +81,16 @@ export default function Navbar({ announcementActive = false }) {
   const [authOtp, setAuthOtp] = useState("");
   const [authReferral, setAuthReferral] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [authImgIdx, setAuthImgIdx] = useState(0);
+  const authImages = ["/auth-prawn.png", "/auth-fish.png", "/auth-crab.png"];
+
+  useEffect(() => {
+    if (!isLoginOpen) return;
+    const interval = setInterval(() => {
+      setAuthImgIdx(prev => (prev + 1) % authImages.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isLoginOpen]);
 
   const isHome = location.pathname === "/";
   const isTransparent = isHome && !scrolled;
@@ -297,9 +317,9 @@ export default function Navbar({ announcementActive = false }) {
         .si:focus { outline: none; }
         .drawer-scrollbar::-webkit-scrollbar { width: 4px; }
         .drawer-scrollbar::-webkit-scrollbar-thumb { background: #E2EEEC; border-radius: 10px; }
-        .auth-input { width: 100%; padding: 15px 18px; border-radius: 12px; border: 1.5px solid #E2EEEC; background: #fff; outline: none; font-size: 14px; transition: all 0.2s ease; color: #1A2E2C; }
-        .auth-input::placeholder { color: #A8C5C0; font-weight: 500; }
-        .auth-input:focus { border-color: #5BBFB5; box-shadow: 0 0 0 4px rgba(91,191,181,0.15); }
+        .auth-input-veirdo { width: 100%; padding: 14px 16px; border-radius: 0; border: 1.5px solid #E8EEF2; background: #F8FAFB; outline: none; font-size: 14px; font-weight: 600; transition: all 0.2s ease; color: #1A2B35; font-family: 'Manrope', sans-serif; }
+        .auth-input-veirdo::placeholder { color: #A8C5C0; font-weight: 500; }
+        .auth-input-veirdo:focus { border-color: #1A2B35; background: #fff; }
         .loading-spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: auth-spin 0.8s linear infinite; }
         @keyframes auth-spin { to { transform: rotate(360deg); } }
         @media (max-width: 768px) { .hidden-mobile { display: none !important; } .show-mobile { display: flex !important; } }
@@ -319,85 +339,89 @@ export default function Navbar({ announcementActive = false }) {
       >
         <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 28px", display: "flex", alignItems: "center" }}>
 
-          <div style={{ marginRight: "36px", flexShrink: 0 }}>
-            <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-              <img src="/logo.png" alt="SeaBite" style={{ height: "64px", width: "auto" }} />
-            </Link>
-          </div>
-
-          <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div style={{ position: "relative" }} onMouseEnter={() => setShowShop(true)} onMouseLeave={() => setShowShop(false)}>
-              <button className="nav-ul" style={{ display: "flex", alignItems: "center", gap: "4px", padding: "6px 12px", border: "none", background: "none", fontSize: "14px", fontWeight: "600", color: T.link, cursor: "pointer", fontFamily: "'Manrope', sans-serif" }}>
-                Shop <FiChevronDown size={12} style={{ transform: showShop ? "rotate(180deg)" : "none", transition: "all 0.22s" }} />
-              </button>
-              <AnimatePresence>
-                {showShop && (
-                  <motion.div initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.97 }} style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", padding: "5px", minWidth: "170px", zIndex: 200, boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}>
-                    {NAV_LINKS.map(link => (
-                      <button key={link.path} className="dd-item" onClick={() => { navigate(link.path); setShowShop(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 13px", border: "none", background: "none", borderRadius: "9px", fontSize: "13.5px", fontWeight: "600", color: "#1A2E2C", cursor: "pointer" }}>{link.label}</button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            <Link to="/about" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "600", color: T.link }}>About</Link>
-            <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "600", color: T.link }}>Orders</Link>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
-            
-            <div style={{ position: "relative" }} className="hidden-mobile">
-              <AnimatePresence>
-                {searchExpanded ? (
-                  <motion.div key="open" initial={{ width: 36, opacity: 0.4 }} animate={{ width: 230, opacity: 1 }} exit={{ width: 36, opacity: 0 }} transition={{ duration: 0.28 }} style={{ display: "flex", alignItems: "center", gap: "8px", background: "#fff", border: "1.5px solid #5BBFB5", borderRadius: "10px", padding: "7px 12px", boxShadow: "0 0 0 3px rgba(91,191,181,0.10)" }}>
-                    <FiSearch size={13} style={{ color: "#5BBFB5", flexShrink: 0 }} />
-                    <input ref={searchRef} autoFocus className="si" value={searchTerm} onChange={e => handleSearchInput(e.target.value)} onKeyDown={handleSearchSubmit} onBlur={() => setTimeout(() => { setSearchExpanded(false); setSuggestions([]); }, 180)} placeholder="Search fresh catch…" style={{ border: "none", background: "none", fontSize: "13px", color: "#1A2E2C", width: "100%" }} />
-                    {searchTerm && <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", padding: 0 }}><FiX size={12} /></button>}
-                  </motion.div>
-                ) : (
-                  <motion.button key="icon" whileTap={{ scale: 0.88 }} onClick={() => setSearchExpanded(true)} className="nav-ib" style={iconBtn}><FiSearch size={15} /></motion.button>
-                )}
-              </AnimatePresence>
-              <AnimatePresence>
-                {suggestions.length > 0 && searchExpanded && (
-                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", overflow: "hidden", zIndex: 300, minWidth: "240px", boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}>
-                    {suggestions.map(item => (
-                      <div key={item._id} className="prof-item" onClick={() => handleSuggestionClick(item)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #F4F9F8" }}>
-                        <img src={item.image} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover" }} />
-                        <div style={{ flex: 1 }}><p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{item.name}</p></div>
-                        <span style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.basePrice}</span>
-                      </div>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+          {/* --- DESKTOP VIEW --- */}
+          <div className="hidden-mobile" style={{ width: "100%", display: "flex", alignItems: "center" }}>
+            <div style={{ marginRight: "36px", flexShrink: 0 }}>
+              <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
+                <img src="/logo.png" alt="SeaBite" style={{ height: "64px", width: "auto" }} />
+              </Link>
             </div>
 
-            {/* Notifications */}
-            {user && (
-              <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate("/notifications")} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
-                <FiBell size={15} />
-                {unreadCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount}</span>}
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ position: "relative" }} onMouseEnter={() => setShowShop(true)} onMouseLeave={() => setShowShop(false)}>
+                <button className="nav-ul" style={{ display: "flex", alignItems: "center", gap: "4px", padding: "6px 12px", border: "none", background: "none", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link, cursor: "pointer", fontFamily: "'Manrope', sans-serif" }}>
+                  Shop <FiChevronDown size={12} style={{ transform: showShop ? "rotate(180deg)" : "none", transition: "all 0.22s" }} />
+                </button>
+                <AnimatePresence>
+                  {showShop && (
+                    <motion.div initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.97 }} style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", padding: "5px", minWidth: "170px", zIndex: 200, boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}>
+                      {NAV_LINKS.map(link => (
+                        <button key={link.path} className="dd-item" onClick={() => { navigate(link.path); setShowShop(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 13px", border: "none", background: "none", borderRadius: "9px", fontSize: "13.5px", fontWeight: "600", color: "#1A2E2C", cursor: "pointer" }}>{link.label}</button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              <Link to="/about" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>About</Link>
+              <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>Orders</Link>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
+              <div style={{ position: "relative" }}>
+                <AnimatePresence>
+                  {searchExpanded ? (
+                    <motion.div key="open" initial={{ width: 36, opacity: 0.4 }} animate={{ width: 230, opacity: 1 }} exit={{ width: 36, opacity: 0 }} transition={{ duration: 0.28 }} style={{ display: "flex", alignItems: "center", gap: "8px", background: "#fff", border: "1.5px solid #5BBFB5", borderRadius: "10px", padding: "7px 12px", boxShadow: "0 0 0 3px rgba(91,191,181,0.10)" }}>
+                      <FiSearch size={13} style={{ color: "#5BBFB5", flexShrink: 0 }} />
+                      <input ref={searchRef} autoFocus className="si" value={searchTerm} onChange={e => handleSearchInput(e.target.value)} onKeyDown={handleSearchSubmit} onBlur={() => setTimeout(() => { setSearchExpanded(false); setSuggestions([]); }, 180)} placeholder="Search fresh catch…" style={{ border: "none", background: "none", fontSize: "13px", color: "#1A2E2C", width: "100%" }} />
+                      {searchTerm && <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", padding: 0 }}><FiX size={12} /></button>}
+                    </motion.div>
+                  ) : (
+                    <motion.button key="icon" whileTap={{ scale: 0.88 }} onClick={() => setSearchExpanded(true)} className="nav-ib" style={iconBtn}><FiSearch size={15} /></motion.button>
+                  )}
+                </AnimatePresence>
+                <AnimatePresence>
+                  {suggestions.length > 0 && searchExpanded && (
+                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", overflow: "hidden", zIndex: 300, minWidth: "240px", boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}>
+                      {suggestions.map(item => (
+                        <div key={item._id} className="prof-item" onClick={() => handleSuggestionClick(item)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #F4F9F8" }}>
+                          <img src={item.image} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover" }} />
+                          <div style={{ flex: 1 }}><p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{item.name}</p></div>
+                          <span style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.basePrice}</span>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Notifications */}
+              {user && (
+                <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate("/notifications")} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
+                  <FiBell size={15} />
+                  {unreadCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount}</span>}
+                </motion.button>
+              )}
+
+              <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate(user ? "/wishlist" : "#")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
+                <FiHeart size={15} />
+                {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{user.wishlist.length}</span>}
               </motion.button>
-            )}
 
-            <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate(user ? "/wishlist" : "#")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
-              <FiHeart size={15} />
-              {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{user.wishlist.length}</span>}
-            </motion.button>
+              <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
+                <FiShoppingBag size={15} />
+                {cartCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
+              </motion.button>
 
-            <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
-              <FiShoppingBag size={15} />
-              {cartCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
-            </motion.button>
-
-            <div className="hidden-mobile">
               {user ? (
                 <div style={{ position: "relative", marginLeft: "4px" }} onMouseEnter={() => setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
-                  <motion.button whileHover={{ scale: 1.03 }} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 11px 5px 5px", border: `1.5px solid ${T.pillBorder}`, borderRadius: "20px", background: T.pillBg, backdropFilter: T.pillBlur, cursor: "pointer" }}>
+                  <motion.button 
+                    whileHover={{ scale: 1.03 }} 
+                    onClick={() => setShowProfile(!showProfile)}
+                    style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 11px 5px 5px", border: `1.5px solid ${T.pillBorder}`, borderRadius: "20px", background: T.pillBg, backdropFilter: T.pillBlur, cursor: "pointer" }}
+                  >
                     <div style={{ width: "27px", height: "27px", borderRadius: "50%", background: "linear-gradient(135deg,#5BBFB5,#7EB8D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "800", fontSize: "11px" }}>{user.name[0].toUpperCase()}</div>
                     <span style={{ fontSize: "13px", fontWeight: "700", color: T.pillName }}>{user.name.split(" ")[0]}</span>
-                    <FiChevronDown size={11} style={{ color: T.pillChevron }} />
+                    <FiChevronDown size={11} style={{ color: T.pillChevron, transform: showProfile ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
                   </motion.button>
                   <AnimatePresence>
                     {showProfile && (
@@ -417,147 +441,300 @@ export default function Navbar({ announcementActive = false }) {
                                </div>
                             </div>
                           )}
-                          <button onClick={() => { navigate("/profile"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}><FiUser /> My Profile</button>
-                          <button onClick={() => { navigate("/orders"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}><FiPackage /> My Orders</button>
-                          <button onClick={() => { navigate("/notifications"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#1A2E2C" }}><FiBell /> Notifications</button>
+                        </div>
+                        <div style={{ padding: "8px" }}>
+                          <button onClick={() => { navigate("/profile"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textAlign: "left" }}><FiUser size={16}/> Profile</button>
+                          <button onClick={() => { navigate("/orders"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textAlign: "left" }}><FiPackage size={16}/> Orders</button>
+                          <button onClick={() => { navigate("/notifications"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textAlign: "left" }}><FiBell size={16}/> Notifications</button>
                           {user.role === "admin" && (
-                            <button onClick={() => { navigate("/admin/dashboard"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "13px", fontWeight: "800", color: "#5BBFB5", marginTop: "4px" }}><FiGrid /> Admin Dashboard</button>
+                            <button onClick={() => { navigate("/admin/dashboard"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "800", color: "#5BBFB5", marginTop: "4px", textAlign: "left" }}><FiGrid size={16}/> Admin Dashboard</button>
                           )}
                         </div>
-                        <div style={{ borderTop: "1px solid #FEE2E2", padding: "6px" }}>
-                          <button onClick={handleLogout} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "10px", width: "100%", padding: "9px 12px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", color: "#DC2626", fontSize: "13px", fontWeight: "600" }}><FiLogOut /> Logout</button>
+                        <div style={{ borderTop: "1px solid #FEE2E2", padding: "8px" }}>
+                          <button onClick={handleLogout} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", color: "#DC2626", fontSize: "14px", fontWeight: "600", textAlign: "left" }}><FiLogOut size={16}/> Logout</button>
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               ) : (
-                <motion.button whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} onClick={() => setIsLoginOpen(true)} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "8px 18px", marginLeft: "14px", background: T.loginBg, color: "#fff", border: "none", borderRadius: "10px", fontSize: "13px", fontWeight: "700", cursor: "pointer", boxShadow: T.loginShadow }}>
-                  <FiUser size={13} /> Login
+                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setIsLoginOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative", marginLeft: "14px", background: "none", border: "none", padding: 0 }}>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "4px" }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.iconColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                       <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#F97316" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", right: "0px", top: "0px" }}>
+                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                  </div>
                 </motion.button>
               )}
             </div>
-
-            <motion.button whileTap={{ scale: 0.88 }} onClick={() => setMobileOpen(true)} className="show-mobile nav-ib" style={iconBtn}><FiMenu size={22} /></motion.button>
           </div>
+
+          {/* --- MOBILE VIEW (VEIRDO STYLE) --- */}
+          <div className="show-mobile" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              {/* Hamburger Menu Removed as requested */}
+            </div>
+
+            <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
+              <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
+                <img src="/logo.png" alt="SeaBite" style={{ height: "48px", width: "auto" }} />
+              </Link>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative", background: "none", border: "none" }}>
+                <FiShoppingBag size={22} color={T.iconColor} />
+                {cartCount > 0 && <span style={{ position: "absolute", top: "0px", right: "0px", background: "#1A2B35", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
+              </motion.button>
+            </div>
+          </div>
+
         </div>
       </motion.nav>
 
       <AnimatePresence>
         {isLoginOpen && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setIsLoginOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.4)", backdropFilter: "blur(12px)", zIndex: 1000 }} />
-            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 28, stiffness: 220 }} style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(420px, 100vw)", background: "#F4F9F8", zIndex: 1001, boxShadow: "-10px 0 60px rgba(0,0,0,0.15)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-              <div style={{ height: "160px", background: "linear-gradient(135deg, #5BBFB5 0%, #1A2E2C 100%)", padding: "32px", position: "relative", display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "20px", right: "20px", background: "rgba(255,255,255,0.2)", border: "none", borderRadius: "50%", width: "36px", height: "36px", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}><FiX size={18}/></button>
-                <div style={{ position: "relative", zIndex: 10 }}>
-                  <h2 style={{ fontSize: "28px", fontWeight: "800", color: "#fff", margin: 0 }}>
-                    {authMode === "LOGIN" ? "Welcome Back" : authMode === "SIGNUP" ? "Join SeaBite" : "Reset Password"}
-                  </h2>
-                  <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "14px", margin: "4px 0 0" }}>
-                    {authMode === "LOGIN" ? "Sign in to access your orders and wishlist." : authMode === "SIGNUP" ? "Create an account for faster checkout." : "Enter your email to recover your account."}
-                  </p>
-                </div>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(0,0,0,0.4)" }}>
+            <div onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", inset: 0 }} />
+            
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} style={{ position: "relative", background: "#F3F4F6", width: "100%", maxWidth: "760px", borderRadius: "16px", boxShadow: "0 24px 60px rgba(0,0,0,0.2)", display: "flex", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
+                         {/* LEFT SIDE (FEATURES) */}
+              <div className="hidden-mobile" style={{ flex: "0.8", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "32px" }}>
+                 <AnimatePresence mode="wait">
+                    <motion.div
+                       key={authImgIdx}
+                       initial={{ opacity: 0 }}
+                       animate={{ opacity: 1 }}
+                       exit={{ opacity: 0 }}
+                       transition={{ duration: 0.5, ease: "circOut" }}
+                       style={{
+                          position: "absolute", inset: 0,
+                          background: `url(${authImages[authImgIdx]}) center/cover no-repeat`,
+                          zIndex: 0
+                       }}
+                    />
+                 </AnimatePresence>
+
+                 {/* Premium Gradient Overlay */}
+                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0) 100%)", zIndex: 1 }} />
+                 
+                 <div style={{ position: "relative", zIndex: 2, display: "flex", justifyContent: "center", alignItems: "center", width: "100%", paddingTop: "32px" }}>
+                    <img src="/logo.png" style={{ height: "64px", width: "auto", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.2))", objectFit: "contain" }} />
+                 </div>
+                 
+                 <div style={{ position: "relative", zIndex: 2, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "32px", paddingBottom: "60px", textAlign: "left" }}>
+                    <AnimatePresence mode="wait">
+                       <motion.div
+                          key={authImgIdx}
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -12 }}
+                          transition={{ duration: 0.4, delay: 0.2, ease: "circOut" }}
+                       >
+                          <div style={{ display: "inline-block", padding: "4px 12px", borderRadius: "4px", background: "#EAB308", color: "#000", fontSize: "10px", fontWeight: "900", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "16px" }}>
+                             {authImgIdx === 0 ? "FLASH DEAL" : authImgIdx === 1 ? "FREE SHIPPING" : "WELCOME OFFER"}
+                          </div>
+                          
+                          <h2 style={{ color: "#fff", fontSize: "44px", fontWeight: "900", fontFamily: "'Playfair Display', serif", fontStyle: "italic", margin: "0 0 10px", lineHeight: 0.95, letterSpacing: "-0.02em" }}>
+                             {authImgIdx === 0 ? <>10%<br/><span style={{fontSize: "26px"}}>DISCOUNT</span></> : authImgIdx === 1 ? <>FREE<br/><span style={{fontSize: "24px"}}>DELIVERY</span></> : <>FLAT ₹200<br/><span style={{fontSize: "24px"}}>DISCOUNT</span></>}
+                          </h2>
+                          
+                          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: "17px", fontWeight: "600", fontFamily: "'Outfit', sans-serif", margin: 0, maxWidth: "220px", lineHeight: 1.3 }}>
+                             {authImgIdx === 0 ? "On all orders above ₹1699" : authImgIdx === 1 ? "On all orders above ₹999" : "On your very first order"}
+                          </p>
+                       </motion.div>
+                    </AnimatePresence>
+                 </div>
               </div>
-              <div className="drawer-scrollbar" style={{ flex: 1, overflowY: "auto", padding: "32px", background: "#fff", borderTopLeftRadius: "24px", borderTopRightRadius: "24px", marginTop: "-20px", position: "relative" }}>
+
+              {/* RIGHT SIDE (WHITE BOX) */}
+              <div style={{ flex: 1, padding: "8px 8px 8px 0", minHeight: "auto", position: "relative", zIndex: 1 }}>
+                <div style={{ background: "#fff", borderRadius: "12px", height: "100%", padding: "32px 32px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", boxShadow: "0 0 40px rgba(0,0,0,0.05)" }}>
+                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "12px", right: "12px", background: "rgba(0,0,0,0.05)", border: "none", borderRadius: "50%", width: "24px", height: "24px", color: "#111", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background="rgba(0,0,0,0.1)"} onMouseOut={e => e.currentTarget.style.background="rgba(0,0,0,0.05)"}><FiX size={14}/></button>
                 <AnimatePresence mode="wait">
-                  <motion.div key={authMode} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.2 }}>
+                  <motion.div key={authMode} variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } }, exit: { opacity: 0 } }} initial="hidden" animate="show" exit="exit" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    
+                    <div style={{ textAlign: "center", marginBottom: "24px" }}>
+                       <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#111827", margin: "0 0 8px", lineHeight: 1.2 }}>
+                          {authMode === "LOGIN" ? "Unlock\nOcean's Finest" : authMode === "SIGNUP" ? "Join Us For\nExclusive Catch" : "Reset Your\nPassword"}
+                       </h2>
+                       <p style={{ fontSize: "14px", color: "#6B7280", margin: 0, fontWeight: "500" }}>
+                          {authMode === "LOGIN" ? "Enter Email to Continue" : authMode === "SIGNUP" ? "Enter your details below" : "Enter email to reset"}
+                       </p>
+                    </div>
+
                     {authMode === "LOGIN" && (
                       <form onSubmit={handleLoginSubmit}>
-                        <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" icon={FiMail} />
-                        <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
-                        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "20px", marginTop: "-4px" }}>
-                          <button type="button" onClick={() => setAuthMode("FORGOT")} style={{ background: "none", border: "none", fontSize: "13px", color: "#5BBFB5", fontWeight: "700", cursor: "pointer" }}>Forgot Password?</button>
-                        </div>
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#5BBFB5", color: "#fff", border: "none", borderRadius: "12px", fontWeight: "800", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 20px rgba(91,191,181,0.25)", transition: "all 0.2s" }}>
-                          {authLoading ? <div className="loading-spinner"/> : "Sign In"}
-                        </button>
-                        
-                        <div style={{ position: "relative", margin: "28px 0", textAlign: "center" }}>
-                          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#E2EEEC" }} />
-                          <span style={{ position: "relative", background: "#fff", padding: "0 16px", fontSize: "12px", fontWeight: "600", color: "#8BA5B3" }}>or</span>
-                        </div>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                          <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="Enter Email Address" />
+                        </motion.div>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                          <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="Enter Password" />
+                        </motion.div>
 
-                        <button type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "12px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", color: "#1A2E2C", transition: "all 0.2s", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
-                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Continue with Google
-                        </button>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+                          <input type="checkbox" defaultChecked style={{ width: "16px", height: "16px", accentColor: "#5CA8DA", cursor: "pointer" }} />
+                          <span style={{ fontSize: "13px", color: "#4B5563", fontWeight: "500" }}>Notify me for fresh catch updates</span>
+                        </motion.div>
                         
-                        <div style={{ marginTop: "32px", textAlign: "center" }}>
-                          <p style={{ fontSize: "14px", color: "#6B8F8A" }}>Don't have an account? <button type="button" onClick={() => setAuthMode("SIGNUP")} style={{ background: "none", border: "none", fontWeight: "700", color: "#5BBFB5", cursor: "pointer" }}>Sign up</button></p>
-                        </div>
+                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Continue"}
+                        </motion.button>
+
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
+                          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#E5E7EB" }} />
+                          <span style={{ position: "relative", background: "#fff", padding: "0 12px", fontSize: "11px", fontWeight: "700", color: "#6B7280", textTransform: "uppercase" }}>OR</span>
+                        </motion.div>
+
+                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "background 0.2s" }} whileHover={{ background: "#F9FAFB" }}>
+                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Continue with Google
+                        </motion.button>
+                        
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ display: "flex", justifyContent: "space-between", marginTop: "16px" }}>
+                          <button type="button" onClick={() => setAuthMode("FORGOT")} style={{ background: "none", border: "none", fontSize: "12px", color: "#6B7280", fontWeight: "600", cursor: "pointer" }}>Forgot Password?</button>
+                          <button type="button" onClick={() => setAuthMode("SIGNUP")} style={{ background: "none", border: "none", fontSize: "12px", color: "#3B82F6", fontWeight: "600", cursor: "pointer" }}>New here? Create Account</button>
+                        </motion.div>
+                        
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "32px", textAlign: "center" }}>
+                           <p style={{ fontSize: "11px", color: "#9CA3AF", margin: 0, lineHeight: 1.4 }}>
+                             I accept that I have read & understood SeaBite's<br/>
+                             <Link to="/privacy" onClick={() => setIsLoginOpen(false)} style={{ color: "#9CA3AF", textDecoration: "underline" }}>Privacy Policy</Link> and <Link to="/terms" onClick={() => setIsLoginOpen(false)} style={{ color: "#9CA3AF", textDecoration: "underline" }}>T&Cs</Link>.
+                           </p>
+                        </motion.div>
                       </form>
                     )}
+
                     {authMode === "SIGNUP" && (
                       <form onSubmit={handleSignupOtpRequest}>
-                        <AuthInput label="Full Name" value={authName} onChange={setAuthName} placeholder="John Doe" icon={FiUser} />
-                        <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" icon={FiMail} />
-                        <AuthInput label="Phone" value={authPhone} onChange={setAuthPhone} placeholder="+91..." />
-                        <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                          <AuthInput label="Full Name" value={authName} onChange={setAuthName} placeholder="Full Name" />
+                          <AuthInput label="Phone" value={authPhone} onChange={setAuthPhone} placeholder="Phone" />
+                        </motion.div>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                          <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="Email Address" />
+                        </motion.div>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                          <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="Password" />
+                        </motion.div>
                         
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#5BBFB5", color: "#fff", border: "none", borderRadius: "12px", fontWeight: "800", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 20px rgba(91,191,181,0.25)", transition: "all 0.2s", marginTop: "24px" }}>
-                          {authLoading ? <div className="loading-spinner"/> : "Create Account"}
-                        </button>
-                        
-                        <div style={{ position: "relative", margin: "28px 0", textAlign: "center" }}>
-                          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#E2EEEC" }} />
-                          <span style={{ position: "relative", background: "#fff", padding: "0 16px", fontSize: "12px", fontWeight: "600", color: "#8BA5B3" }}>or</span>
-                        </div>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
+                          <input type="checkbox" defaultChecked style={{ width: "16px", height: "16px", accentColor: "#5CA8DA", cursor: "pointer" }} />
+                          <span style={{ fontSize: "13px", color: "#4B5563", fontWeight: "500" }}>Notify me for fresh catch updates</span>
+                        </motion.div>
 
-                        <button type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "12px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", color: "#1A2E2C", transition: "all 0.2s", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Create Account"}
+                        </motion.button>
+
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
+                          <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#E5E7EB" }} />
+                          <span style={{ position: "relative", background: "#fff", padding: "0 12px", fontSize: "11px", fontWeight: "700", color: "#6B7280", textTransform: "uppercase" }}>OR</span>
+                        </motion.div>
+
+                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "background 0.2s" }} whileHover={{ background: "#F9FAFB" }}>
                           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Sign up with Google
-                        </button>
+                        </motion.button>
                         
-                        <div style={{ marginTop: "32px", textAlign: "center" }}>
-                          <p style={{ fontSize: "14px", color: "#6B8F8A" }}>Already have an account? <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontWeight: "700", color: "#5BBFB5", cursor: "pointer" }}>Log In</button></p>
-                        </div>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
+                          <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontSize: "12px", color: "#3B82F6", fontWeight: "600", cursor: "pointer" }}>Already have an account? Sign In</button>
+                        </motion.div>
+                        
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "24px", textAlign: "center" }}>
+                           <p style={{ fontSize: "11px", color: "#9CA3AF", margin: 0, lineHeight: 1.4 }}>
+                             I accept that I have read & understood SeaBite's<br/>
+                             <Link to="/privacy" onClick={() => setIsLoginOpen(false)} style={{ color: "#9CA3AF", textDecoration: "underline" }}>Privacy Policy</Link> and <Link to="/terms" onClick={() => setIsLoginOpen(false)} style={{ color: "#9CA3AF", textDecoration: "underline" }}>T&Cs</Link>.
+                           </p>
+                        </motion.div>
                       </form>
                     )}
+
                     {authMode === "OTP_VERIFY_SIGNUP" && (
                       <form onSubmit={handleSignupVerify}>
-                        <div style={{ textAlign: "center", marginBottom: "28px" }}>
-                          <h3 style={{ fontSize: "20px", fontWeight: "800", color: "#1A2E2C", margin: "0 0 4px" }}>Verify Email</h3>
-                          <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0 }}>Code sent to {authEmail}</p>
-                        </div>
-                        <AuthInput label="Enter OTP" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#5BBFB5", color: "#fff", border: "none", borderRadius: "12px", fontWeight: "800", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 20px rgba(91,191,181,0.25)", transition: "all 0.2s", marginTop: "24px" }}>
-                          {authLoading ? <div className="loading-spinner"/> : "Complete Signup"}
-                        </button>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                          <AuthInput label="Enter 6-Digit Code" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
+                        </motion.div>
+                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
+                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Verify & Join"}
+                        </motion.button>
                       </form>
                     )}
+
                     {authMode === "FORGOT" && (
                       <form onSubmit={handleForgotOtpRequest}>
-                        <div style={{ textAlign: "center", marginBottom: "28px" }}>
-                          <h3 style={{ fontSize: "20px", fontWeight: "800", color: "#1A2E2C", margin: "0 0 4px" }}>Recover Account</h3>
-                          <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0 }}>Enter your email to receive a reset code</p>
-                        </div>
-                        <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" icon={FiMail} />
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#5BBFB5", color: "#fff", border: "none", borderRadius: "12px", fontWeight: "800", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 20px rgba(91,191,181,0.25)", transition: "all 0.2s", marginTop: "24px" }}>
-                          {authLoading ? <div className="loading-spinner"/> : "Send Reset Code"}
-                        </button>
-                        <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ width: "100%", marginTop: "16px", background: "none", border: "none", color: "#5BBFB5", fontWeight: "700", cursor: "pointer" }}>Back to Login</button>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                          <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" />
+                        </motion.div>
+                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
+                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Send Reset Code"}
+                        </motion.button>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
+                          <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontSize: "12px", color: "#3B82F6", fontWeight: "600", cursor: "pointer" }}>Back to Sign In</button>
+                        </motion.div>
                       </form>
                     )}
+
                     {authMode === "RESET_PASSWORD" && (
                       <form onSubmit={handleResetPassword}>
-                        <div style={{ textAlign: "center", marginBottom: "28px" }}>
-                          <h3 style={{ fontSize: "20px", fontWeight: "800", color: "#1A2E2C", margin: "0 0 4px" }}>Set New Password</h3>
-                          <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0 }}>Code sent to {authEmail}</p>
-                        </div>
-                        <AuthInput label="6-Digit OTP" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
-                        <AuthInput label="New Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="••••••••" />
-                        <button type="submit" disabled={authLoading} style={{ width: "100%", padding: "16px", background: "#5BBFB5", color: "#fff", border: "none", borderRadius: "12px", fontWeight: "800", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", gap: "10px", boxShadow: "0 8px 20px rgba(91,191,181,0.25)", transition: "all 0.2s", marginTop: "24px" }}>
-                          {authLoading ? <div className="loading-spinner"/> : "Confirm Reset"}
-                        </button>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                          <AuthInput label="6-Digit Code" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
+                        </motion.div>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                          <AuthInput label="New Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="New Password" />
+                        </motion.div>
+                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
+                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Confirm New Password"}
+                        </motion.button>
                       </form>
                     )}
+
                   </motion.div>
                 </AnimatePresence>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000 }} />
+            <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 28, stiffness: 220 }} style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "85vw", maxWidth: "360px", background: "#fff", zIndex: 1001, display: "flex", flexDirection: "column", fontFamily: "'Manrope', sans-serif" }}>
+              <div style={{ padding: "24px", background: "#1A2B35", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <img src="/logo.png" alt="SeaBite" style={{ height: "36px", filter: "brightness(0) invert(1)" }} />
+                <button onClick={() => setMobileOpen(false)} style={{ background: "none", border: "none", color: "#fff" }}><FiX size={24} /></button>
+              </div>
+              <div style={{ flex: 1, padding: "24px", display: "flex", flexDirection: "column", gap: "16px", overflowY: "auto" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                   {NAV_LINKS.map(link => (
+                     <Link key={link.path} to={link.path} onClick={() => setMobileOpen(false)} style={{ fontSize: "20px", fontWeight: "900", color: "#1A2B35", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #E8EEF2", paddingBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        {link.label} <FiChevronDown style={{ transform: "rotate(-90deg)", color: "#5BBFB5" }} size={20} />
+                     </Link>
+                   ))}
+                </div>
+
+                <div style={{ marginTop: "32px", display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <p style={{ fontSize: "11px", fontWeight: "800", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.1em" }}>My Account</p>
+                  {user ? (
+                    <>
+                      <Link to="/profile" onClick={() => setMobileOpen(false)} style={{ fontSize: "15px", fontWeight: "700", color: "#1A2B35", textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}><FiUser /> Profile</Link>
+                      <Link to="/orders" onClick={() => setMobileOpen(false)} style={{ fontSize: "15px", fontWeight: "700", color: "#1A2B35", textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}><FiPackage /> Orders</Link>
+                      <Link to="/wishlist" onClick={() => setMobileOpen(false)} style={{ fontSize: "15px", fontWeight: "700", color: "#1A2B35", textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}><FiHeart /> Wishlist</Link>
+                      <button onClick={handleLogout} style={{ fontSize: "15px", fontWeight: "700", color: "#E8816A", textDecoration: "none", display: "flex", alignItems: "center", gap: "10px", background: "none", border: "none", padding: 0, cursor: "pointer", marginTop: "16px" }}><FiLogOut /> Logout</button>
+                    </>
+                  ) : (
+                    <button onClick={() => { setMobileOpen(false); setIsLoginOpen(true); }} style={{ width: "100%", padding: "14px", background: "#1A2B35", color: "#fff", border: "none", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", cursor: "pointer" }}>Login / Sign Up</button>
+                  )}
+                </div>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
-
       <Suspense fallback={null}>
         {showSpinWheel && <Spin isOpen={showSpinWheel} onClose={() => setShowSpinWheel(false)} />}
       </Suspense>
