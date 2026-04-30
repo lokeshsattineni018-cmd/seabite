@@ -25,6 +25,7 @@ const LINKS = [
   { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={18} /> },
   { name: "Abandoned Cart", path: "/admin/carts", icon: <FiShoppingCart size={18} /> },
   { name: "Live Ops", path: "/admin/watchtower", icon: <FiActivity size={18} /> },
+  { name: "Live Radar", path: "/admin/radar", icon: <FiActivity size={18} /> },
   { name: "Access Sentinel", path: "/admin/iam", icon: <FiShield size={18} /> },
   { name: "Audit Registry", path: "/admin/registry", icon: <FiArchive size={18} /> },
   { name: "Search Discovery", path: "/admin/discovery", icon: <FiTarget size={18} /> },

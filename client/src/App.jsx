@@ -69,12 +69,14 @@ const AdminRegistry = lazy(() => import("./admin/AdminRegistry"));
 const AdminSearchDiscovery = lazy(() => import("./admin/AdminSearchDiscovery"));
 const AdminComplaints = lazy(() => import("./admin/AdminComplaints")); // 🟢 Added
 const AdminCoupons = lazy(() => import("./admin/AdminCoupons")); // 🏷️ Added
+const AdminLiveRadar = lazy(() => import("./admin/AdminLiveRadar")); // 📡 Added Live Radar
 
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CompareProvider } from "./context/CompareContext";
 import ErrorBoundary from "./components/common/ErrorBoundary";
+import { useTelemetry } from "./hooks/useTelemetry"; // 🟢 Telemetry Tracker
 
 axios.defaults.withCredentials = true;
 axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
@@ -91,6 +93,7 @@ axios.interceptors.request.use((config) => {
 
 
 function MainLayout() {
+  useTelemetry(); // 🟢 Trigger Telemetry
   const { user } = useAuth();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -250,6 +253,7 @@ function MainLayout() {
                     <Route path="discovery" element={<AdminSearchDiscovery />} />
                     <Route path="complaints" element={<AdminComplaints />} />
                     <Route path="fleet" element={<AdminDelivery />} />
+                    <Route path="radar" element={<AdminLiveRadar />} />
                   </Route>
                 </Routes>
               ) : (

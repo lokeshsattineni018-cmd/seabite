@@ -69,7 +69,7 @@ router.get("/", adminAuth, async (req, res) => {
 
     // 🟢 NEW: Calculate Total Cost (Buying Price * Qty)
     const totalCost = allOrders.reduce((acc, order) => {
-      const orderCost = order.items.reduce((sum, item) => sum + ((item.buyingPrice || 0) * item.qty), 0);
+      const orderCost = (order.items || []).reduce((sum, item) => sum + ((item.buyingPrice || 0) * item.qty), 0);
       return acc + orderCost;
     }, 0);
 
@@ -147,6 +147,11 @@ router.get("/", adminAuth, async (req, res) => {
     }).select("name countInStock unit image category");
 
     const alerts = { slaBreaches, stockRisks };
+
+    const recentOrders = await Order.find()
+      .populate("user", "name email")
+      .sort({ createdAt: -1 })
+      .limit(5);
 
     res.json({ stats, graph: finalGraph, recentOrders, popularProducts, heatmapData, topSpenders, alerts });
 
@@ -330,6 +335,19 @@ router.post("/inventory/clearance-reset", adminAuth, async (req, res) => {
     res.json({ message: `Clearance reset complete. ${updatedCount} products restored to base price.` });
   } catch (err) {
     res.status(500).json({ message: "Reset failed" });
+  }
+});
+
+// 🟢 1.3.5 LIVE RADAR TELEMETRY (GET /api/admin/telemetry/active)
+import VisitorLog from "../models/VisitorLog.js"; // Import model for telemetry
+router.get("/telemetry/active", adminAuth, async (req, res) => {
+  try {
+    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const activeVisitors = await VisitorLog.find({ lastActive: { $gte: fifteenMinsAgo } })
+      .sort({ lastActive: -1 });
+    res.json(activeVisitors);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch live telemetry" });
   }
 });
 
