@@ -86,6 +86,7 @@ export default function Navbar({ announcementActive = false }) {
   const [authPhone, setAuthPhone] = useState("");
   const [authOtp, setAuthOtp] = useState("");
   const [authReferral, setAuthReferral] = useState("");
+  const [authConfirmPassword, setAuthConfirmPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [authImgIdx, setAuthImgIdx] = useState(0);
@@ -98,6 +99,7 @@ export default function Navbar({ announcementActive = false }) {
       setAuthOtp("");
       setAuthEmail("");
       setAuthPassword("");
+      setAuthConfirmPassword("");
       setAuthName("");
       setAuthPhone("");
       setAuthReferral("");
@@ -289,11 +291,16 @@ export default function Navbar({ announcementActive = false }) {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
+    if (authPassword !== authConfirmPassword) return toast.error("Passwords do not match");
+    if (authPassword.length < 6) return toast.error("Password must be at least 6 characters");
+    
     setAuthLoading(true);
     try {
       await axios.post(`${API_URL}/api/auth/reset-password`, { email: authEmail, otp: authOtp, newPassword: authPassword });
       toast.success("Password reset successful!");
       setAuthMode("LOGIN");
+      setAuthPassword("");
+      setAuthConfirmPassword("");
     } catch (err) {
       toast.error(err.response?.data?.message || "Reset failed");
     } finally { setAuthLoading(false); }
@@ -760,7 +767,10 @@ export default function Navbar({ announcementActive = false }) {
                           <AuthInput label="6-Digit Code" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
                         </motion.div>
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
-                          <AuthInput label="New Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="New Password" />
+                          <AuthInput label="New Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="New Password" showVisibilityToggle={true} />
+                        </motion.div>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                          <AuthInput label="Confirm Password" type="password" value={authConfirmPassword} onChange={setAuthConfirmPassword} placeholder="Confirm Password" />
                         </motion.div>
                         <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
                           {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Confirm New Password"}
