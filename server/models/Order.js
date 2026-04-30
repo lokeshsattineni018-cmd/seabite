@@ -105,6 +105,15 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// 🟢 Performance Indexes
+orderSchema.index({ status: 1 });
+orderSchema.index({ user: 1 });
+orderSchema.index({ createdAt: -1 });
+orderSchema.index({ "items.productId": 1 });
+orderSchema.index({ isPaid: 1 });
+orderSchema.index({ isDelivered: 1 });
+orderSchema.index({ orderId: 1 });
+
 // Auto-increment logic for Order ID
 orderSchema.pre("save", async function () {
   if (this.isNew && !this.orderId) {

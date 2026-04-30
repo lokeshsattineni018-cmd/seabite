@@ -52,4 +52,10 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// 🟢 Performance Indexes
+productSchema.index({ countInStock: 1 });
+productSchema.index({ active: 1 });
+productSchema.index({ category: 1 });
+productSchema.index({ rating: -1 });
+
 export default mongoose.models.Product || mongoose.model("Product", productSchema);
