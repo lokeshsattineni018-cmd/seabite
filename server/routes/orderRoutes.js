@@ -59,7 +59,14 @@ router.get("/:orderId", protect, async (req, res) => {
       .populate("user", "name email")
       .populate("items.productId", "name image reviews");
 
-    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+    }
+    
+    // Safety check for items
+    if (!order.items || !Array.isArray(order.items)) {
+        order.items = [];
+    }
 
     // 🟢 NEW: Fetch associated complaints for this order
     const complaints = await Complaint.find({ order: order._id }).sort({ createdAt: -1 });

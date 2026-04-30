@@ -69,10 +69,13 @@ router.post("/cart", protect, async (req, res) => {
         }
 
         // Simple overwrite sync
-        user.cart = cart.map(item => ({
-            product: item.product?._id || item.product || item._id, // Handle full object or ID
-            qty: item.qty || 1
-        })).filter(item => item.product != null); // remove any null products
+        user.cart = cart.map(item => {
+            if (!item) return null;
+            return {
+                product: item.product?._id || item.product || item._id, // Handle full object or ID
+                qty: item.qty || 1
+            };
+        }).filter(item => item && item.product != null); // remove any null products
 
         user.cartUpdatedAt = new Date();
         user.abandonedCartEmailSent = false;
@@ -97,8 +100,10 @@ router.post("/cart", protect, async (req, res) => {
 router.get("/cart", protect, async (req, res) => {
     try {
         const user = await User.findById(req.user._id).populate("cart.product");
+        if (!user) return res.status(404).json({ message: "User not found" });
+        
         // Filter out null products (if deleted)
-        const validCart = (user.cart || []).filter(item => item.product);
+        const validCart = (user.cart || []).filter(item => item && item.product);
         res.json(validCart);
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });

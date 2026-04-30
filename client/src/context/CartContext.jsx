@@ -125,18 +125,22 @@ export const CartProvider = ({ children }) => {
                 try {
                     const res = await axios.get(`${API_URL}/api/user/cart`, { withCredentials: true });
                     if (res.data && res.data.length > 0) {
-                        const dbCart = res.data.map(item => ({
-                            ...item.product,
-                            qty: item.qty,
-                            price: item.product.price || item.product.basePrice
-                        }));
+                        const dbCart = res.data
+                            .filter(item => item && item.product)
+                            .map(item => ({
+                                ...item.product,
+                                qty: item.qty,
+                                price: item.product.price || item.product.basePrice
+                            }));
                         localStorage.setItem("cart", JSON.stringify(dbCart));
                         updateCartState();
                     }
                 } catch (err) { }
             } else {
                 try {
-                    const payload = localCart.map(item => ({ product: item._id, qty: item.qty }));
+                    const payload = localCart
+                        .filter(item => item && item._id)
+                        .map(item => ({ product: item._id, qty: item.qty }));
                     await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
                 } catch (err) { }
             }
@@ -149,7 +153,9 @@ export const CartProvider = ({ children }) => {
         const timeout = setTimeout(async () => {
             const localCart = JSON.parse(localStorage.getItem("cart") || "[]");
             try {
-                const payload = localCart.map(item => ({ product: item._id, qty: item.qty }));
+                const payload = localCart
+                    .filter(item => item && item._id)
+                    .map(item => ({ product: item._id, qty: item.qty }));
                 await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
             } catch (err) { }
         }, 2000);
