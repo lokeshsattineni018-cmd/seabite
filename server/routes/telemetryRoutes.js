@@ -42,7 +42,7 @@ router.post("/ping", async (req, res) => {
         city,
         lastActive: new Date()
       },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
 
     res.status(200).json({ success: true, visitor });
