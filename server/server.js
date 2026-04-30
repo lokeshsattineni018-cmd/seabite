@@ -30,6 +30,7 @@ import deliveryRoutes from "./routes/deliveryRoutes.js"; // [New: Delivery Manag
 import checkMaintenance from "./middleware/checkMaintenance.js";
 import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
+import telemetryRoutes from "./routes/telemetryRoutes.js";
 import logger from "./utils/logger.js";
 import os from "os";
 import osUtils from "os-utils";
@@ -334,6 +335,7 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/spin", spinRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/telemetry", telemetryRoutes);
 
 app.get("/health", async (req, res) => {
   const start = Date.now();
