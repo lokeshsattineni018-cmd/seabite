@@ -84,7 +84,7 @@ export default function AdminDashboard() {
     }
 
     try {
-      const results = await Promise.allSettled([
+      const [dashboardRes, messagesRes, reviewsRes, lowStockRes, settingsRes, insightsRes] = await Promise.all([
         axios.get("/api/admin", { params: { range: timeFilter }, withCredentials: true }),
         axios.get("/api/contact", { withCredentials: true }),
         axios.get("/api/admin/reviews/all", { withCredentials: true }),
@@ -93,21 +93,15 @@ export default function AdminDashboard() {
         axios.get("/api/admin/insights/search", { withCredentials: true }),
       ]);
 
-      const [dashboardRes, messagesRes, reviewsRes, lowStockRes, settingsRes, insightsRes] = results.map(r => r.status === 'fulfilled' ? r.value : null);
-
       if (!isMounted.current) return;
 
-      if (dashboardRes) {
-        setStats(dashboardRes.data.stats);
-        setAlerts(dashboardRes.data.alerts);
-        setGraph(dashboardRes.data.graph);
-        setRecentOrders(dashboardRes.data.recentOrders);
-      }
-      if (messagesRes) setRecentMessages(messagesRes.data.slice(0, 5) || []);
-      if (reviewsRes) setAllReviews(reviewsRes.data?.slice(0, 6) || []);
-      if (lowStockRes) setAlerts(prev => ({ ...prev, stockRisks: lowStockRes.data || [] }));
-      if (settingsRes && setSettings) setSettings(settingsRes.data);
-      if (insightsRes) setSearchInsights(insightsRes.data || []);
+      setStats(dashboardRes.data.stats);
+      setAlerts(dashboardRes.data.alerts);
+      setGraph(dashboardRes.data.graph);
+      setRecentOrders(dashboardRes.data.recentOrders);
+      setRecentMessages(messagesRes.data.slice(0, 5));
+      setAllReviews(reviewsRes.data?.slice(0, 6) || []);
+      setSearchInsights(insightsRes.data || []);
 
       setLoading(false);
       setError(null);

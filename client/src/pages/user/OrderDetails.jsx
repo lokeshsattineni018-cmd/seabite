@@ -83,11 +83,6 @@ function QualitySlider({ onConfirm, confirmed }) {
         </div>
         <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#1A2E2C", fontFamily: "'Sora', sans-serif" }}>Quality Confirmed</h4>
         <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6E6E73" }}>Thank you for your feedback!</p>
-        <div style={{ marginTop: 16, paddingTop: 12, borderTop: "1px solid #E2EEEC" }}>
-          <p style={{ fontSize: 11, fontWeight: 600, color: "#5BBFB5", margin: 0 }}>
-            Ready to share more? You can now review your items in the list below.
-          </p>
-        </div>
       </motion.div>
     );
   }
@@ -485,7 +480,7 @@ function VerticalTracker({ currentStepIndex, order, reduced }) {
                   fontSize: 13, color: T.teal, margin: "6px 0 0",
                   fontWeight: 500,
                 }}>
-                  {step.status === "Delivered" ? "Delivered Successfully" : `Order is currently ${step.label.toLowerCase()}`}
+                  In Progress
                 </p>
               )}
             </div>
@@ -929,7 +924,7 @@ export default function OrderDetails() {
 
   const stepIdx = STEPS.findIndex(s => s.status === order.status);
   const cancelled = order.status.includes("Cancelled");
-  const delivered = order.status?.toLowerCase() === "delivered" || order.isDelivered;
+  const delivered = order.status === "Delivered";
   const canCancel = !cancelled && ["Pending", "Processing", "Placed"].includes(order.status);
   const displayId = order.orderId || order._id.slice(-6).toUpperCase();
 
@@ -995,7 +990,7 @@ export default function OrderDetails() {
         onClose={() => setReviewOpen(false)}
         product={reviewProduct}
         existingReview={null}
-        token={localStorage.getItem("seabite_session_id")}
+        token={token}
         API_URL={API_URL}
         onSuccess={() => {
           toast.success("Review saved!");
@@ -1310,20 +1305,17 @@ export default function OrderDetails() {
                           </div>
 
                           {delivered && (
-                            <div style={{ marginTop: 12 }}>
+                            <div style={{ marginTop: 8 }}>
                               <button
                                 onClick={() => openReview(item)}
                                 className="lx-focus"
                                 style={{
-                                  display: "inline-flex", alignItems: "center", gap: 6,
-                                  padding: "6px 12px", border: `1.5px solid ${T.teal}`, 
-                                  background: T.tealGlow, borderRadius: 8,
-                                  color: T.teal, cursor: "pointer", fontSize: 11, fontWeight: 700,
-                                  textTransform: "uppercase", letterSpacing: "0.02em",
-                                  transition: "all 0.2s"
+                                  display: "inline-flex", alignItems: "center", gap: 4,
+                                  padding: 0, border: "none", background: "transparent",
+                                  color: T.teal, cursor: "pointer", fontSize: 12, fontWeight: 600,
                                 }}
                               >
-                                <FiStar size={12} fill="currentColor" /> Write a Review
+                                <FiStar size={12} /> Write a Review
                               </button>
                             </div>
                           )}

@@ -64,22 +64,21 @@ router.get("/", adminAuth, async (req, res) => {
       });
     }
 
-    // 🟢 OPTIMIZED: Calculate Total Revenue & Total Cost using a single pass (Avoid $unwind)
+    // 🟢 OPTIMIZED: Calculate Total Revenue & Total Cost using Aggregation
     const financialTotals = await Order.aggregate([
-      { $match: { status: { $ne: "Cancelled" } } },
+      { $unwind: { path: "$items", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: "$_id",
+          totalAmount: { $first: "$totalAmount" },
+          orderCost: { $sum: { $multiply: [{ $ifNull: ["$items.buyingPrice", 0] }, { $ifNull: ["$items.qty", 0] }] } }
+        }
+      },
       {
         $group: {
           _id: null,
           totalRevenue: { $sum: "$totalAmount" },
-          totalCost: { 
-            $sum: {
-              $reduce: {
-                input: "$items",
-                initialValue: 0,
-                in: { $add: ["$$value", { $multiply: [{ $ifNull: ["$$this.buyingPrice", 0] }, { $ifNull: ["$$this.qty", 0] }] }] }
-              }
-            }
-          }
+          totalCost: { $sum: "$orderCost" }
         }
       }
     ]);

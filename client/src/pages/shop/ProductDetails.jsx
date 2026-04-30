@@ -165,15 +165,8 @@ const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshC
 };
 // ─── Freshness Meter ─────────────────────────────────────────────────────────
 const FreshnessMeter = ({ createdAt }) => {
+  const catchDate = new Date(createdAt);
   const now = new Date();
-  const catchDate = new Date(now);
-  catchDate.setHours(4, 0, 0, 0);
-  
-  // If it's before 4 AM today, the latest catch was at 4 AM yesterday
-  if (now < catchDate) {
-    catchDate.setDate(catchDate.getDate() - 1);
-  }
-
   const hoursSinceCatch = Math.max(0, (now - catchDate) / 3600000);
   
   // Logic: 
