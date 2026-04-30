@@ -549,24 +549,31 @@ export default function Navbar({ announcementActive = false }) {
 
       <AnimatePresence>
         {isLoginOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", justifyContent: "flex-end", background: "rgba(0,0,0,0.4)" }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", justifyContent: "center", alignItems: "center", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", padding: "20px" }}>
             <div onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", inset: 0 }} />
             
             <motion.div 
-              initial={{ x: "100%" }} 
-              animate={{ x: 0 }} 
-              exit={{ x: "100%" }} 
-              transition={{ type: "spring", damping: 35, stiffness: 450, mass: 1 }} 
-              style={{ position: "relative", background: "#fff", width: "100%", maxWidth: "420px", height: "100%", boxShadow: "-10px 0 60px rgba(0,0,0,0.1)", display: "flex", flexDirection: "column", fontFamily: "'Inter', sans-serif", overflowY: "auto" }}
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.9, opacity: 0, y: 20 }} 
+              transition={{ type: "spring", damping: 25, stiffness: 300 }} 
+              style={{ position: "relative", background: "#fff", width: "100%", maxWidth: "900px", minHeight: "600px", borderRadius: "24px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", display: "flex", flexDirection: "row", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}
             >
-                         {/* LEFT SIDE (FEATURES) */}
-              <div className="hidden-mobile" style={{ display: "none" }}>
+              {/* LEFT SIDE (BANNER) */}
+              <div className="hidden-mobile" style={{ flex: 1.1, position: "relative", background: "#111827", display: "flex", flexDirection: "column" }}>
+                <img src="/auth-banner.png" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.7 }} />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(17,24,39,0.2), rgba(17,24,39,0.8))" }} />
+                <div style={{ position: "relative", zIndex: 2, padding: "48px", marginTop: "auto" }}>
+                  <img src="/logo.png" style={{ height: "32px", width: "auto", marginBottom: "24px", filter: "brightness(0) invert(1)" }} />
+                  <h3 style={{ fontSize: "32px", fontWeight: "800", color: "#fff", marginBottom: "16px", lineHeight: 1.1, letterSpacing: "-0.03em" }}>Freshness from the deep, delivered to your doorstep.</h3>
+                  <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "16px", fontWeight: "500", lineHeight: 1.5 }}>Join thousands of seafood lovers who trust SeaBite for the finest catch.</p>
+                </div>
               </div>
 
-              {/* RIGHT SIDE (WHITE BOX) */}
-              <div className="auth-modal-right" style={{ flex: 1, padding: "0", minHeight: "auto", position: "relative", zIndex: 1 }}>
-                <div className="auth-modal-inner" style={{ background: "#fff", height: "100%", padding: "32px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
-                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "20px", right: "20px", background: "rgba(0,0,0,0.05)", border: "none", borderRadius: "50%", width: "32px", height: "32px", color: "#111", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background="rgba(0,0,0,0.1)"} onMouseOut={e => e.currentTarget.style.background="rgba(0,0,0,0.05)"}><FiX size={18}/></button>
+              {/* RIGHT SIDE (FORM) */}
+              <div className="auth-modal-right" style={{ flex: 1, padding: "40px", position: "relative", background: "#fff", overflowY: "auto" }}>
+                <div className="auth-modal-inner" style={{ background: "#fff", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
+                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "0px", right: "0px", background: "rgba(0,0,0,0.05)", border: "none", borderRadius: "50%", width: "32px", height: "32px", color: "#111", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background="rgba(0,0,0,0.1)"} onMouseOut={e => e.currentTarget.style.background="rgba(0,0,0,0.05)"}><FiX size={18}/></button>
                 <AnimatePresence mode="wait">
                   <motion.div key={authMode} variants={{ hidden: { opacity: 0, x: 20 }, show: { opacity: 1, x: 0, transition: { staggerChildren: 0.08 } }, exit: { opacity: 0, x: -20 } }} initial="hidden" animate="show" exit="exit" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                     
