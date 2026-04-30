@@ -511,14 +511,22 @@ router.get("/analytics/advanced", adminAuth, async (req, res) => {
       { $sort: { count: -1 } }
     ]);
 
+    // 6. Referral & Loyalty Stats
+    const totalReferrals = await User.countDocuments({ referredBy: { $exists: true, $ne: null } });
+    const totalCashIssuedRaw = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$walletBalance" } } }
+    ]);
+    const uniqueReferrers = await User.distinct("referredBy");
+    const totalCashIssued = totalCashIssuedRaw[0]?.total || 0;
+
     res.json({
       deadStock,
       retention: { repeat: repeatCustomers, total: totalCustomers, rate: retentionRate },
       heatmap,
       referral: {
         totalReferrals,
-        totalCashIssued: totalCashIssued[0]?.total || 0,
-        uniqueReferrers: uniqueReferrers.filter(Boolean).length
+        totalCashIssued,
+        uniqueReferrersCount: uniqueReferrers.filter(Boolean).length
       },
       delivery: {
         total: totalOrdersCount,
