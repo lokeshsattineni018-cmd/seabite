@@ -29,11 +29,18 @@ const GoogleOneTap = () => {
           return;
         }
 
+        const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+        if (!clientId) {
+          console.warn("Google One Tap: Missing VITE_GOOGLE_CLIENT_ID");
+          return;
+        }
+
         window.google.accounts.id.initialize({
-          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+          client_id: clientId,
           callback: handleOneTapResponse,
           auto_select: false,
           cancel_on_tap_outside: false,
+          use_fedcm_for_prompt: true, // 🟢 FedCM Migration
         });
 
         window.google.accounts.id.prompt((notification) => {

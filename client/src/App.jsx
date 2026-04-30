@@ -44,7 +44,6 @@ const Maintenance = lazy(() => import("./pages/general/Maintenance"));
 const Contact = lazy(() => import("./pages/general/Contact"));
 const Signup = lazy(() => import("./pages/auth/Signup"));
 const ReferEarn = lazy(() => import("./pages/user/ReferEarn"));
-const Recipes = lazy(() => import("./pages/general/Recipes")); // 🥘 Shoppable Recipes
 const NotFound = lazy(() => import("./pages/general/NotFound"));
 
 // Admin Lazy Imports
@@ -267,7 +266,6 @@ function MainLayout() {
                     <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
                     <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
                     <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
-                    <Route path="/recipes" element={<Recipes />} />
                     <Route path="/login" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=login" replace />} />
                     <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=signup" replace />} />
                     <Route path="/about" element={<About />} />

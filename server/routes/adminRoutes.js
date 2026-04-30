@@ -285,19 +285,51 @@ router.post("/inventory/evening-clearance", adminAuth, async (req, res) => {
     });
 
     let updatedCount = 0;
+    const saleEndDate = new Date();
+    saleEndDate.setHours(23, 59, 59, 999); // Ends at midnight
+
     for (const product of products) {
       // Slash price by 15%
       const discountAmount = Math.round(product.basePrice * 0.15);
-      product.price = product.basePrice - discountAmount;
-      product.isFlashSale = true;
-      product.flashSaleDiscount = 15;
+      const newPrice = product.basePrice - discountAmount;
+      
+      product.price = newPrice;
+      product.flashSale = {
+        discountPrice: newPrice,
+        saleEndDate: saleEndDate,
+        isFlashSale: true
+      };
+      
       await product.save();
       updatedCount++;
     }
 
-    res.json({ message: `Clearance engine complete. ${updatedCount} products marked down.` });
+    res.json({ message: `Clearance engine complete. ${updatedCount} products marked down until midnight.` });
   } catch (err) {
     res.status(500).json({ message: "Clearance failed" });
+  }
+});
+
+// 🟢 1.3.4 RESET CLEARANCE (POST /api/admin/inventory/clearance-reset)
+router.post("/inventory/clearance-reset", adminAuth, async (req, res) => {
+  try {
+    const products = await Product.find({ "flashSale.isFlashSale": true });
+
+    let updatedCount = 0;
+    for (const product of products) {
+      product.price = product.basePrice;
+      product.flashSale = {
+        discountPrice: 0,
+        saleEndDate: null,
+        isFlashSale: false
+      };
+      await product.save();
+      updatedCount++;
+    }
+
+    res.json({ message: `Clearance reset complete. ${updatedCount} products restored to base price.` });
+  } catch (err) {
+    res.status(500).json({ message: "Reset failed" });
   }
 });
 
@@ -866,7 +898,7 @@ router.get("/carts/abandoned", adminAuth, async (req, res) => {
     // For demo, just all non-empty carts
     const users = await User.find({ "cart.0": { $exists: true } })
       .select("name email cart updatedAt phone")
-      .populate("cart.product", "name basePrice image"); // 🟢 Fix: basePrice
+      .populate("cart.product", "name basePrice price flashSale image"); // 🟢 Include all price fields
 
     const abandoned = users.map(u => ({
       _id: u._id,
@@ -875,7 +907,11 @@ router.get("/carts/abandoned", adminAuth, async (req, res) => {
       phone: u.phone,
       updatedAt: u.updatedAt,
       cart: u.cart.filter(item => item.product), // Filter nulls
-      total: u.cart.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.qty, 0) // 🟢 Fix: basePrice
+      total: u.cart.reduce((sum, item) => {
+        const p = item.product;
+        const currentPrice = p.flashSale?.isFlashSale ? p.flashSale.discountPrice : (p.price || p.basePrice);
+        return sum + currentPrice * item.qty;
+      }, 0)
     })).filter(u => u.cart.length > 0);
 
     res.json(abandoned);

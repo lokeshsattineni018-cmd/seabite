@@ -1,0 +1,75 @@
+
+> client@0.0.0 build
+> vite build
+
+vite v7.3.1 building client environment for production...
+transforming...
+✓ 3208 modules transformed.
+rendering chunks...
+[plugin vite:reporter] 
+(!) /Users/sattinenilokesh/SeaBite/client/src/pages/general/Spin.jsx is dynamically imported by /Users/sattinenilokesh/SeaBite/client/src/App.jsx but also statically imported by /Users/sattinenilokesh/SeaBite/client/src/components/layout/Navbar.jsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/index.html                                   4.02 kB │ gzip:   1.67 kB
+dist/assets/OrderDetails-Dgihpmma.css            15.04 kB │ gzip:   6.38 kB
+dist/assets/index-mD6B8sBO.css                  105.51 kB │ gzip:  15.77 kB
+dist/assets/Login-B9ntoxLu.js                     0.16 kB │ gzip:   0.16 kB
+dist/assets/Signup-iz56jd1i.js                    0.16 kB │ gzip:   0.16 kB
+dist/assets/haptics-Bsqij5bm.js                   0.29 kB │ gzip:   0.17 kB
+dist/assets/PopupModal-yVeI7dTz.js                1.07 kB │ gzip:   0.58 kB
+dist/assets/PullToRefresh-6OqVUPSy.js             1.69 kB │ gzip:   0.93 kB
+dist/assets/AdminIAM-Cj23vCQ9.js                  3.33 kB │ gzip:   1.40 kB
+dist/assets/pdfGenerator-DjzgM_oi.js              4.04 kB │ gzip:   1.73 kB
+dist/assets/Wishlist-C6Z1OkEW.js                  4.50 kB │ gzip:   1.89 kB
+dist/assets/AdminAbandonedCarts-B4QEyZK8.js       4.82 kB │ gzip:   1.75 kB
+dist/assets/AdminReviews-DK36Toyf.js              5.27 kB │ gzip:   2.01 kB
+dist/assets/AdminSearchDiscovery-CJAPlhaa.js      5.44 kB │ gzip:   1.79 kB
+dist/assets/Recipes-91B9DtxE.js                   5.78 kB │ gzip:   2.23 kB
+dist/assets/ReviewModal-CN7ITwiX.js               5.95 kB │ gzip:   2.30 kB
+dist/assets/AdminRegistry-DyYvuIYn.js             6.18 kB │ gzip:   2.08 kB
+dist/assets/Maintenance-BS1pVw5c.js               6.70 kB │ gzip:   2.27 kB
+dist/assets/AdminCoupons-8VfGg1WL.js              7.25 kB │ gzip:   2.28 kB
+dist/assets/Contact-DnQhEVCT.js                   7.27 kB │ gzip:   2.01 kB
+dist/assets/Terms-C7WBVPjH.js                     7.56 kB │ gzip:   2.91 kB
+dist/assets/ReferEarn-w4wxO5H3.js                 7.67 kB │ gzip:   2.47 kB
+dist/assets/AdminFlashSale-BED4wbdX.js            7.89 kB │ gzip:   2.57 kB
+dist/assets/Privacy-Cc61BsOq.js                   7.92 kB │ gzip:   2.92 kB
+dist/assets/FAQ-BwnNbttm.js                       8.41 kB │ gzip:   3.19 kB
+dist/assets/AdminComplaints-a4ZZHx0t.js           9.18 kB │ gzip:   2.79 kB
+dist/assets/Cancellation-BqusEwsX.js              9.40 kB │ gzip:   3.16 kB
+dist/assets/AddressForm-DXjneLt9.js               9.67 kB │ gzip:   3.63 kB
+dist/assets/Notifications-DIwVaGYL.js            10.45 kB │ gzip:   3.63 kB
+dist/assets/AdminMarketing-BNmOVv3r.js           10.57 kB │ gzip:   3.17 kB
+dist/assets/EnhancedProductCard-sI44TxrK.js      10.95 kB │ gzip:   4.09 kB
+dist/assets/AdminAnalytics-Drs7Dejt.js           11.48 kB │ gzip:   3.17 kB
+dist/assets/AdminDelivery-D7-o1Kj_.js            12.79 kB │ gzip:   3.42 kB
+dist/assets/About-DFAS221q.js                    13.11 kB │ gzip:   3.89 kB
+dist/assets/AdminProducts-Dt3YYL2m.js            13.26 kB │ gzip:   3.85 kB
+dist/assets/AdminUsers-CLb0TnXX.js               13.34 kB │ gzip:   3.77 kB
+dist/assets/OrderSuccess-BPNflELV.js             13.38 kB │ gzip:   4.02 kB
+dist/assets/AdminWatchtower-BZj7aI3w.js          13.55 kB │ gzip:   4.38 kB
+dist/assets/AdminSettings-C63UM7FU.js            13.77 kB │ gzip:   2.77 kB
+dist/assets/AddProduct-5rUExSWH.js               13.81 kB │ gzip:   3.66 kB
+dist/assets/EditProduct-DAAlUMml.js              14.43 kB │ gzip:   3.73 kB
+dist/assets/AdminPOS-b3tFN8r6.js                 14.78 kB │ gzip:   4.33 kB
+dist/assets/Profile-C_Ua8JJY.js                  15.54 kB │ gzip:   4.39 kB
+dist/assets/AdminMessages-D-vDi7Zx.js            16.71 kB │ gzip:   4.76 kB
+dist/assets/AdminLayout-CSrs6iBY.js              17.33 kB │ gzip:   4.81 kB
+dist/assets/Products-M0WgFOXn.js                 17.56 kB │ gzip:   5.37 kB
+dist/assets/NotFound-D8mL4_Vp.js                 17.92 kB │ gzip:   5.06 kB
+dist/assets/purify.es-BjU8njvH.js                22.39 kB │ gzip:   8.59 kB
+dist/assets/Home-Dtxvdfsl.js                     26.54 kB │ gzip:   8.09 kB
+dist/assets/Checkout-D30Mtqd6.js                 29.05 kB │ gzip:   7.77 kB
+dist/assets/AdminDashboard-Cw0e7Y6U.js           36.54 kB │ gzip:   9.10 kB
+dist/assets/Orders-BnzZq7Aj.js                   37.07 kB │ gzip:   9.71 kB
+dist/assets/ProductDetails-D7iiB7zT.js           37.33 kB │ gzip:  10.08 kB
+dist/assets/AdminOrders-Do7CIeGG.js              38.38 kB │ gzip:   9.24 kB
+dist/assets/ui-CsQ8SiN_.js                      151.84 kB │ gzip:  51.45 kB
+dist/assets/index.es-D2uwSdzx.js                158.45 kB │ gzip:  52.92 kB
+dist/assets/OrderDetails-DzafvlwJ.js            188.21 kB │ gzip:  53.21 kB
+dist/assets/html2canvas.esm-DmLBsbfV.js         200.54 kB │ gzip:  47.30 kB
+dist/assets/vendor-B9MeLZ9C.js                  214.57 kB │ gzip:  72.84 kB
+dist/assets/index-BZ1PAYX8.js                   245.35 kB │ gzip:  67.65 kB
+dist/assets/charts-CmfZgaOz.js                  380.41 kB │ gzip: 111.68 kB
+dist/assets/jspdf.plugin.autotable-BAxHn0LB.js  415.06 kB │ gzip: 134.98 kB
+✓ built in 3.32s

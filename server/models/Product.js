@@ -21,6 +21,7 @@ const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     basePrice: { type: Number, required: true },
+    price: { type: Number, default: 0 }, // 🟢 Current Selling Price
     buyingPrice: { type: Number, default: 0 }, // 🟢 NEW: Cost Price for Profit Calc
     unit: { type: String, required: true, default: 'kg' },
     category: String,
