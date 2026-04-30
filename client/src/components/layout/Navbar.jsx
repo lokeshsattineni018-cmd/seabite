@@ -95,7 +95,7 @@ export default function Navbar({ announcementActive = false }) {
     if (!isLoginOpen) return;
     const interval = setInterval(() => {
       setAuthImgIdx(prev => (prev + 1) % authImages.length);
-    }, 4000);
+    }, 3000);
     return () => clearInterval(interval);
   }, [isLoginOpen]);
 
