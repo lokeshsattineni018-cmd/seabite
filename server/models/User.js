@@ -86,22 +86,20 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // Hash password before saving
-userSchema.pre("save", async function (next) {
+userSchema.pre("save", async function () {
   if (!this.isModified("password")) {
-    return next();
+    return;
   }
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-  next();
 });
 
-userSchema.pre("save", function (next) {
+userSchema.pre("save", function () {
   if (this.isNew && !this.referralCode) {
     const base = this.name ? this.name.substring(0, 3).replace(/[^a-zA-Z]/g, '').toUpperCase() : "SB";
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     this.referralCode = `${base}${random}`;
   }
-  next();
 });
 
 export default mongoose.model("User", userSchema);
