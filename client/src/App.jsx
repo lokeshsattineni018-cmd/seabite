@@ -219,7 +219,6 @@ function MainLayout() {
           {!isAdminRoute && <Navbar announcementActive={!!announcement?.active} />}
           {!isAdminRoute && (
             <>
-              <MobileNav />
               <CartSidebar />
               <Spin isOpen={isSpinOpen} onClose={() => setIsSpinOpen(false)} />
             </>

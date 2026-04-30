@@ -65,7 +65,7 @@ export default function Profile() {
       setNewPass("");
       setConfirmPass("");
     } catch (err) {
-      toast.error(err.response?.data?.message || "Update failed");
+      toast.error(err.response?.data?.message || "Incorrect current password");
     } finally {
       setPassLoading(false);
     }
@@ -78,8 +78,9 @@ export default function Profile() {
       console.error("Logout failed", err);
     }
     finally {
-      navigate("/login");
-      window.location.reload();
+      localStorage.removeItem("userInfo");
+      localStorage.removeItem("seabite_session_id");
+      window.location.href = "/?auth=login"; // Redirect and trigger login to show it's cleared
     }
   };
 
@@ -99,22 +100,23 @@ export default function Profile() {
       minHeight: "100vh", background: "#F4F9F8",
       fontFamily: "'Plus Jakarta Sans', sans-serif",
       overflowX: "hidden",
+      paddingBottom: 100, // For mobile nav
     }}>
       {/* ── HERO BANNER ── */}
-      <div style={{ position: "relative", height: 300, overflow: "hidden" }}>
+      <div style={{ position: "relative", height: 260, overflow: "hidden" }}>
         {/* Ocean photo */}
         <motion.img
-          initial={{ scale: 1.06 }}
+          initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
-          transition={{ duration: 1.4, ease: [0.22, 1, 0.36, 1] }}
-          src="https://images.unsplash.com/photo-1468581264429-2548ef9eb732?q=80&w=2000&auto=format&fit=crop"
+          transition={{ duration: 10, repeat: Infinity, repeatType: "mirror", ease: "linear" }}
+          src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000&auto=format&fit=crop"
           alt="Ocean"
-          style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.75 }}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
-        {/* Light overlay — not dark! */}
+        {/* Premium Gradient Overlay */}
         <div style={{
           position: "absolute", inset: 0,
-          background: "linear-gradient(180deg, rgba(244,249,248,0.1) 0%, rgba(244,249,248,0.85) 100%)",
+          background: "linear-gradient(to bottom, rgba(26,43,53,0.4), rgba(244,249,248,1))",
         }} />
 
         {/* Back button */}
@@ -122,183 +124,162 @@ export default function Profile() {
           initial={{ opacity: 0, x: -16 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
-          whileHover={{ y: -1 }}
+          whileHover={{ x: -4 }}
           whileTap={{ scale: 0.96 }}
           onClick={() => navigate("/")}
           style={{
-            position: "absolute", top: 80, left: 24,
+            position: "absolute", top: 40, left: 24,
             display: "flex", alignItems: "center", gap: 8,
-            padding: "8px 16px", borderRadius: 12,
-            background: "rgba(255,255,255,0.85)", backdropFilter: "blur(12px)",
-            border: "1px solid rgba(226,238,236,0.8)",
-            color: "#1A2B35", fontSize: 12, fontWeight: 600,
-            cursor: "pointer", boxShadow: "0 2px 12px rgba(91,168,160,0.12)",
+            padding: "10px 18px", borderRadius: 99,
+            background: "rgba(255,255,255,0.9)", backdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.3)",
+            color: "#1A2B35", fontSize: 13, fontWeight: 700,
+            cursor: "pointer", boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
           }}
         >
-          <FiArrowLeft size={14} />
-          Back to Home
+          <FiArrowLeft size={16} />
+          Back
         </motion.button>
       </div>
 
       {/* ── AVATAR CARD (overlapping banner) ── */}
-      <div style={{ maxWidth: 760, margin: "0 auto", padding: "0 20px" }}>
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "0 20px" }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           style={{
             background: "#ffffff",
-            borderRadius: 20, border: "1px solid #E2EEEC",
-            boxShadow: "0 4px 32px rgba(91,168,160,0.10), 0 1px 4px rgba(26,43,53,0.04)",
-            padding: "24px 28px",
-            marginTop: -8, marginBottom: 20,
-            display: "flex", alignItems: "center", gap: 20,
+            borderRadius: 28, border: "1px solid #E2EEEC",
+            boxShadow: "0 20px 60px rgba(26,43,53,0.08)",
+            padding: "32px",
+            marginTop: -60, marginBottom: 32,
+            display: "flex", alignItems: "center", gap: 24,
             flexWrap: "wrap",
+            position: "relative",
+            zIndex: 10,
           }}
         >
           {/* Avatar */}
           <div style={{ position: "relative", flexShrink: 0 }}>
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt={user.name}
-                style={{
-                  width: 80, height: 80, borderRadius: "50%",
-                  border: "3px solid #E2EEEC", objectFit: "cover",
-                  boxShadow: "0 4px 20px rgba(91,168,160,0.18)",
-                }}
-              />
-            ) : (
-              <div style={{
-                width: 80, height: 80, borderRadius: "50%",
-                background: "linear-gradient(135deg, #5BA8A0, #89C2D9)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 28, fontWeight: 700, color: "#ffffff",
-                border: "3px solid #E2EEEC",
-                boxShadow: "0 4px 20px rgba(91,168,160,0.20)",
-              }}>
-                {avatarLetter}
-              </div>
-            )}
-            {/* Online dot */}
             <div style={{
-              position: "absolute", bottom: 2, right: 2,
-              width: 14, height: 14, borderRadius: "50%",
-              background: "#5BA8A0", border: "2px solid #ffffff",
-            }} />
+              width: 100, height: 100, borderRadius: "50%",
+              background: "linear-gradient(135deg, #5BA8A0, #89C2D9)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              fontSize: 36, fontWeight: 800, color: "#ffffff",
+              border: "4px solid #ffffff",
+              boxShadow: "0 12px 32px rgba(91,168,160,0.3)",
+              overflow: "hidden"
+            }}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt={user.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : avatarLetter}
+            </div>
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              style={{
+                position: "absolute", bottom: 6, right: 6,
+                width: 18, height: 18, borderRadius: "50%",
+                background: "#5BA8A0", border: "3px solid #ffffff",
+              }}
+            />
           </div>
 
           {/* Name + meta */}
-          <div style={{ flex: 1, minWidth: 160 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1A2B35", margin: 0, marginBottom: 4, letterSpacing: "-0.02em" }}>
-              {user.name}
-            </h1>
-            <p style={{ fontSize: 13, color: "#8BA5B3", margin: 0 }}>{user.email}</p>
-            {user.role === "admin" && (
-              <span style={{
-                display: "inline-block", marginTop: 6, padding: "3px 10px",
-                borderRadius: 6, background: "rgba(232,129,106,0.1)",
-                color: "#E8816A", fontSize: 10, fontWeight: 700,
-                letterSpacing: "0.1em", textTransform: "uppercase",
-              }}>
-                Administrator
-              </span>
-            )}
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <h1 style={{ fontSize: 28, fontWeight: 800, color: "#1A2B35", margin: 0, letterSpacing: "-0.03em" }}>
+                {user.name}
+              </h1>
+              {user.role === "admin" && (
+                <span style={{
+                  padding: "4px 10px", borderRadius: 8,
+                  background: "#1A2B35", color: "#FFD700",
+                  fontSize: 10, fontWeight: 800, textTransform: "uppercase",
+                  letterSpacing: "0.1em"
+                }}>Admin</span>
+              )}
+            </div>
+            <p style={{ fontSize: 15, color: "#8BA5B3", fontWeight: 500, margin: 0 }}>{user.email}</p>
           </div>
 
-          {/* Stats */}
-          <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap", justifyContent: "flex-end", flexShrink: 0 }}>
-            {[
-              { label: "Member Since", value: user.createdAt ? new Date(user.createdAt).getFullYear() : "—" },
-              { label: "Wallet", value: `₹${user.walletBalance || 0}` },
-            ].map((stat, i) => (
-              <div key={i} style={{ textAlign: "center", minWidth: 60 }}>
-                <p style={{ fontSize: 18, fontWeight: 800, color: stat.label === "Wallet" ? "#5BA8A0" : "#1A2B35", margin: 0 }}>{stat.value}</p>
-                <p style={{ fontSize: 10, color: "#8BA5B3", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>{stat.label}</p>
-              </div>
-            ))}
+          {/* Wallet / Stats */}
+          <div style={{ display: "flex", gap: 32 }}>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: 24, fontWeight: 900, color: "#1A2B35", margin: 0 }}>₹{user.walletBalance || 0}</p>
+              <p style={{ fontSize: 10, fontWeight: 700, color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 2 }}>Wallet</p>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <p style={{ fontSize: 24, fontWeight: 900, color: "#5BA8A0", margin: 0 }}>{user.totalOrders || 0}</p>
+              <p style={{ fontSize: 10, fontWeight: 700, color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.1em", marginTop: 2 }}>Orders</p>
+            </div>
           </div>
         </motion.div>
 
-        {/* ── USER INFO ── */}
-        <FadeUp delay={0.1}>
-          <UserInfo user={user} />
-        </FadeUp>
+        {/* ── GRID LAYOUT FOR INFO ── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 24, marginBottom: 40 }}>
+          <FadeUp delay={0.1}>
+            <div style={{ background: "#fff", borderRadius: 24, border: "1px solid #E2EEEC", padding: 24, height: "100%" }}>
+              <UserInfo user={user} />
+            </div>
+          </FadeUp>
+          
+          <FadeUp delay={0.2}>
+            <div style={{ background: "#fff", borderRadius: 24, border: "1px solid #E2EEEC", padding: 24, height: "100%" }}>
+              <AddressManager />
+            </div>
+          </FadeUp>
+        </div>
 
-        {/* ── ADDRESS MANAGER ── */}
-        <FadeUp delay={0.2}>
-          <AddressManager />
-        </FadeUp>
-
-        {/* ── ACTION BUTTONS ── */}
-        <FadeUp delay={0.25}>
-          <div style={{
-            display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "center",
-            marginTop: 24, marginBottom: 48, paddingBottom: 8,
-          }}>
-
-            {/* Home */}
-            <motion.button
-              whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(26,43,53,0.10)" }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate("/")}
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "12px 24px", borderRadius: 14,
-                background: "#ffffff", border: "1px solid #E2EEEC",
-                color: "#1A2B35", fontSize: 13, fontWeight: 600,
-                cursor: "pointer", boxShadow: "0 1px 4px rgba(26,43,53,0.06)",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}
-            >
-              <FiHome size={15} /> Back to Home
-            </motion.button>
-
-            {/* Change Password / Google Info */}
-            {user.isGoogleUser ? (
-              <div style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "12px 24px", borderRadius: 14,
-                background: "rgba(66,133,244,0.1)", border: "1px solid rgba(66,133,244,0.2)",
-                color: "#4285F4", fontSize: 13, fontWeight: 700,
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}>
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style={{ width: 16 }} alt="G" />
-                Logged in using Google Gmail
+        {/* ── SECURITY SECTION ── */}
+        <FadeUp delay={0.3}>
+          <div style={{ background: "#fff", borderRadius: 24, border: "1px solid #E2EEEC", padding: 32, marginBottom: 40 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1A2B35", margin: "0 0 4px" }}>Security & Access</h3>
+                <p style={{ fontSize: 14, color: "#8BA5B3", margin: 0 }}>Manage your password and authentication methods.</p>
               </div>
-            ) : (
-              <motion.button
-                whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.2)" }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setShowPassModal(true)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 8,
-                  padding: "12px 24px", borderRadius: 14,
-                  background: "#5BA8A0", border: "none",
-                  color: "#ffffff", fontSize: 13, fontWeight: 700,
-                  cursor: "pointer", boxShadow: "0 4px 12px rgba(91,168,160,0.3)",
-                  fontFamily: "'Plus Jakarta Sans', sans-serif",
-                }}
-              >
-                <FiLock size={15} /> Change Password
-              </motion.button>
-            )}
+              
+              {user.isGoogleUser ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 20px", background: "#F8FAFB", borderRadius: 16, border: "1px solid #E2EEEC" }}>
+                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style={{ width: 20 }} alt="G" />
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "#4285F4" }}>Connected via Google</span>
+                </div>
+              ) : (
+                <motion.button
+                  whileHover={{ y: -2, scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowPassModal(true)}
+                  style={{
+                    padding: "14px 28px", borderRadius: 16,
+                    background: "#5BA8A0", color: "#fff", border: "none",
+                    fontSize: 14, fontWeight: 700, cursor: "pointer",
+                    boxShadow: "0 10px 20px rgba(91,168,160,0.2)",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif"
+                  }}
+                >
+                  Change Password
+                </motion.button>
+              )}
+            </div>
+          </div>
+        </FadeUp>
 
-            {/* Sign Out */}
+        {/* ── DANGER ZONE ── */}
+        <FadeUp delay={0.4}>
+          <div style={{ textAlign: "center" }}>
             <motion.button
-              whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(232,129,106,0.15)" }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.02, color: "#E8816A" }}
               onClick={handleLogout}
               style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "12px 24px", borderRadius: 14,
-                background: "rgba(232,129,106,0.07)", border: "1px solid rgba(232,129,106,0.2)",
-                color: "#E8816A", fontSize: 13, fontWeight: 600,
-                cursor: "pointer",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                background: "none", border: "none",
+                fontSize: 14, fontWeight: 700, color: "#8BA5B3",
+                cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8,
+                transition: "color 0.2s"
               }}
             >
-              <FiLogOut size={15} /> Sign Out
+              <FiLogOut size={16} /> Sign Out from SeaBite
             </motion.button>
           </div>
         </FadeUp>
@@ -308,22 +289,28 @@ export default function Profile() {
           {showPassModal && (
             <motion.div 
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(4px)" }}
+              style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(26,43,53,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(8px)" }}
             >
               <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
-                style={{ background: "#fff", padding: 32, borderRadius: 24, width: "100%", maxWidth: 400, boxShadow: "0 20px 50px rgba(0,0,0,0.2)" }}
+                initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
+                style={{ background: "#fff", padding: 40, borderRadius: 32, width: "100%", maxWidth: 440, boxShadow: "0 40px 100px rgba(0,0,0,0.25)", position: "relative" }}
               >
-                <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#1A2B35", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Update Security</h2>
-                <p style={{ fontSize: 14, color: "#6B7280", marginBottom: 24, fontWeight: 500 }}>Enter your old and new password below.</p>
+                <button onClick={() => setShowPassModal(false)} style={{ position: "absolute", top: 24, right: 24, background: "#F8FAFB", border: "none", borderRadius: "50%", width: 36, height: 36, cursor: "pointer", color: "#1A2B35" }}><FiX size={18} /></button>
                 
-                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 24 }}>
+                <div style={{ width: 56, height: 56, borderRadius: 16, background: "rgba(91,168,160,0.1)", color: "#5BA8A0", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 24 }}>
+                  <FiLock size={28} />
+                </div>
+                
+                <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1A2B35", margin: "0 0 8px", letterSpacing: "-0.03em" }}>Update Password</h2>
+                <p style={{ fontSize: 15, color: "#8BA5B3", marginBottom: 32, lineHeight: 1.5 }}>Secure your account by choosing a strong, unique password.</p>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: 20, marginBottom: 32 }}>
                   <div style={{ position: "relative" }}>
                     <input 
                       type={showOld ? "text" : "password"} placeholder="Current Password" value={oldPass} onChange={e => setOldPass(e.target.value)}
-                      style={{ width: "100%", padding: "14px 44px 14px 16px", borderRadius: 12, border: "1px solid #E5E7EB", outline: "none", fontSize: 15, boxSizing: "border-box" }}
+                      style={{ width: "100%", padding: "16px 20px", paddingRight: 50, borderRadius: 16, border: "1px solid #E2EEEC", outline: "none", fontSize: 16, background: "#F8FAFB", transition: "border-color 0.2s" }}
                     />
-                    <button onClick={() => setShowOld(!showOld)} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#9CA3AF", cursor: "pointer" }}>
+                    <button onClick={() => setShowOld(!showOld)} style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#8BA5B3", cursor: "pointer" }}>
                       {showOld ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
                     </button>
                   </div>
@@ -331,33 +318,36 @@ export default function Profile() {
                   <div style={{ position: "relative" }}>
                     <input 
                       type={showNew ? "text" : "password"} placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)}
-                      style={{ width: "100%", padding: "14px 44px 14px 16px", borderRadius: 12, border: "1px solid #E5E7EB", outline: "none", fontSize: 15, boxSizing: "border-box" }}
+                      style={{ width: "100%", padding: "16px 20px", paddingRight: 50, borderRadius: 16, border: "1px solid #E2EEEC", outline: "none", fontSize: 16, background: "#F8FAFB" }}
                     />
-                    <button onClick={() => setShowNew(!showNew)} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#9CA3AF", cursor: "pointer" }}>
+                    <button onClick={() => setShowNew(!showNew)} style={{ position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#8BA5B3", cursor: "pointer" }}>
                       {showNew ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
                     </button>
                   </div>
 
                   <input 
                     type="password" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
-                    style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #E5E7EB", outline: "none", fontSize: 15 }}
+                    style={{ width: "100%", padding: "16px 20px", borderRadius: 16, border: "1px solid #E2EEEC", outline: "none", fontSize: 16, background: "#F8FAFB" }}
                   />
+                  {newPass && confirmPass && newPass !== confirmPass && (
+                    <p style={{ color: "#E8816A", fontSize: 12, fontWeight: 700, margin: "-12px 0 0 4px" }}>Passwords do not match</p>
+                  )}
                 </div>
 
-                <div style={{ display: "flex", gap: 12 }}>
-                  <button 
-                    onClick={() => setShowPassModal(false)}
-                    style={{ flex: 1, padding: "14px", borderRadius: 12, border: "1px solid #E5E7EB", background: "#F9FAFB", color: "#6B7280", fontWeight: 700, cursor: "pointer" }}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={handleChangePassword} disabled={passLoading}
-                    style={{ flex: 1, padding: "14px", borderRadius: 12, border: "none", background: "#5BA8A0", color: "#fff", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 12px rgba(91,168,160,0.2)" }}
-                  >
-                    {passLoading ? "Updating..." : "Save Changes"}
-                  </button>
-                </div>
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleChangePassword} disabled={passLoading || (newPass !== confirmPass && newPass)}
+                  style={{ 
+                    width: "100%", padding: "18px", borderRadius: 18, border: "none", 
+                    background: (passLoading || (newPass !== confirmPass && newPass)) ? "#B8CFCC" : "#5BA8A0", 
+                    color: "#fff", fontWeight: 800, fontSize: 16, cursor: (passLoading || (newPass !== confirmPass && newPass)) ? "not-allowed" : "pointer",
+                    boxShadow: "0 12px 30px rgba(91,168,160,0.25)",
+                    transition: "all 0.3s"
+                  }}
+                >
+                  {passLoading ? "Updating..." : "Update Security"}
+                </motion.button>
               </motion.div>
             </motion.div>
           )}

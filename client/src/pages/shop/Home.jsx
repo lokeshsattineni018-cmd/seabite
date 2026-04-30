@@ -240,28 +240,23 @@ const Hero = () => {
 const WaveTicker = () => {
   const items = ["Fresh Catch Daily", "Ocean to Table", "Sustainable Sourcing", "Cold Chain Delivery", "Chef Approved", "Lab Tested Quality"];
 
-  const WaveWord = ({ text, index, totalWords }) => {
-    const phase = (index / totalWords) * Math.PI * 2;
+  const WaveWord = ({ text }) => {
     return (
-      <motion.span
-        animate={{ y: [Math.sin(phase) * 3, Math.sin(phase + Math.PI) * 3, Math.sin(phase) * 3] }}
-        transition={{ repeat: Infinity, duration: 2.4, delay: (index / totalWords) * 1.2, ease: "easeInOut" }}
-        style={{ display: "inline-flex", alignItems: "center" }}
-      >
+      <div style={{ display: "inline-flex", alignItems: "center" }}>
         <span className="text-xs font-semibold tracking-[0.15em] uppercase text-white/70 mx-8">{text}</span>
         <span style={{ color: "#5BA8A0", fontSize: "13px" }}>〰</span>
-      </motion.span>
+      </div>
     );
   };
 
-  const doubled = [...items, ...items];
+  const doubled = [...items, ...items, ...items];
 
   return (
     <div style={{ lineHeight: 0 }}>
       <div className="bg-[#1A2B35] overflow-hidden" style={{ paddingTop: "16px", paddingBottom: "16px", position: "relative", lineHeight: "normal" }}>
         <div className="absolute left-0 right-0 pointer-events-none" style={{ top: "50%", transform: "translateY(-50%)", height: "1px", background: "linear-gradient(90deg, transparent, rgba(91,168,160,0.18), transparent)" }} />
-        <motion.div className="flex whitespace-nowrap" animate={{ x: ["0%", "-50%"] }} transition={{ duration: 32, ease: "linear", repeat: Infinity }} style={{ willChange: "transform" }}>
-          {doubled.map((item, i) => <WaveWord key={i} text={item} index={i % items.length} totalWords={items.length} />)}
+        <motion.div className="flex whitespace-nowrap" animate={{ x: ["0%", "-33.33%"] }} transition={{ duration: 25, ease: "linear", repeat: Infinity }} style={{ willChange: "transform" }}>
+          {doubled.map((item, i) => <WaveWord key={i} text={item} />)}
         </motion.div>
       </div>
       <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", width: "100%", height: "60px", background: "#F8FAFB" }} preserveAspectRatio="none">

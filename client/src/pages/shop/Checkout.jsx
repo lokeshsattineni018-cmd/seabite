@@ -177,7 +177,7 @@ function CouponDrawer({ isOpen, onClose, coupons, appliedCoupon, onApply, onClea
 }
 
 export default function Checkout() {
-  const { cartItems, subtotal, storeSettings, refreshCartCount, clearCart, updateQuantity, removeFromCart } = useContext(CartContext);
+  const { cartItems, subtotal, storeSettings, refreshCartCount, clearCart, updateQuantity, removeFromCart, cartLoaded } = useContext(CartContext);
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -233,12 +233,13 @@ export default function Checkout() {
 
   useEffect(() => {
     let timeoutId;
-    if (cartItems.length === 0 && !isOrderSuccess.current) {
+    // ONLY redirect if cart is still empty AFTER we've tried to load/sync it
+    if (cartLoaded && cartItems.length === 0 && !isOrderSuccess.current) {
       setModal({ show: true, message: "Your cart is empty!", type: "error" });
       timeoutId = setTimeout(() => navigate("/products"), 2000);
     }
     return () => clearTimeout(timeoutId);
-  }, [cartItems, navigate]);
+  }, [cartItems, cartLoaded, navigate]);
 
   const itemTotal = parseFloat(subtotal) || 0;
   const taxRate = storeSettings?.taxRate !== undefined ? parseFloat(storeSettings.taxRate) / 100 : 0.05;
@@ -329,7 +330,7 @@ export default function Checkout() {
     setLoading(true);
     const orderDetails = {
       amount: grandTotal,
-      items: cartItems.map(item => ({ productId: item._id, name: item.name, price: item.price, qty: item.qty, image: item.image })),
+      items: (cartItems || []).map(item => ({ productId: item._id, name: item.name, price: item.price || 0, qty: item.qty || 1, image: item.image })),
       shippingAddress: { fullName: deliveryAddress.name, phone: deliveryAddress.phone, houseNo: deliveryAddress.houseNo, street: deliveryAddress.street, city: deliveryAddress.city, state: deliveryAddress.state, zip: deliveryAddress.postalCode },
       itemsPrice: itemTotal, taxPrice: gst, shippingPrice: deliveryCharge, discount: discountAmount, paymentMethod,
     };
@@ -524,7 +525,7 @@ export default function Checkout() {
                 >
                   <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: isItemsCollapsed ? 0 : 10 }}>
                   <AnimatePresence mode="popLayout">
-                    {cartItems.map((item, index) => (
+                    {(cartItems || []).map((item, index) => (
                       <motion.div
                         key={item._id} layout
                         initial={{ opacity: 0, y: 8 }}
@@ -537,7 +538,7 @@ export default function Checkout() {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <h4 style={{ fontWeight: 700, fontSize: 13, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</h4>
-                          <p style={{ fontSize: 10, color: T.textLite, margin: "3px 0 0" }}>₹{item.price.toFixed(2)} / unit</p>
+                          <p style={{ fontSize: 10, color: T.textLite, margin: "3px 0 0" }}>₹{(item.price || 0).toFixed(2)} / unit</p>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", borderRadius: 12, border: `1.5px solid ${T.border}`, overflow: "hidden", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>

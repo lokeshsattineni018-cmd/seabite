@@ -1,10 +1,13 @@
 import React, { useContext, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, ShoppingBag, ShoppingCart, User, Heart } from "lucide-react";
+import { Home, ShoppingBag, ShoppingCart, User, Heart, Search, Bell, CreditCard, Settings } from "lucide-react";
 import { FiLogOut } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
-import { AuthContext } from "../../context/AuthContext";
+import { AuthContext, useAuth } from "../../context/AuthContext";
+import axios from "axios";
+
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 /**
  * MobileNav Component
@@ -13,23 +16,52 @@ import { AuthContext } from "../../context/AuthContext";
  */
 const MobileNav = () => {
   const location = useLocation();
-  const { cartCount } = useContext(CartContext);
-  const { user, logout } = useContext(AuthContext);
+  const { cartCount, setIsCartOpen } = useContext(CartContext);
+  const { user } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const navItems = [
     { label: "Home", path: "/", icon: Home },
-    { label: "Cart", path: "/checkout", icon: ShoppingCart, isCart: true },
-    { label: "Wishlist", path: "/wishlist", icon: Heart },
+    { label: "Shop", path: "/products", icon: ShoppingBag },
+    { label: "Search", path: "/search", icon: Search },
+    { label: "Cart", onClick: () => setIsCartOpen(true), icon: ShoppingCart, isCart: true },
     { 
-      label: "Profile", 
-      icon: User, 
-      isProfile: true,
+      label: user ? "Menu" : "Login", 
       onClick: () => {
-        setShowProfileMenu(true);
-      }
-    },
+        if (!user) {
+          window.location.href = "/?auth=login";
+        } else {
+          setShowProfileMenu(true);
+        }
+      },
+      icon: user ? User : User, // Use User icon for both if Search is already used
+      isProfile: true
+    }
   ];
+
+  const profileMenuItems = [
+    { label: "My Profile", path: "/profile", icon: User },
+    { label: "My Orders", path: "/orders", icon: ShoppingBag },
+    { label: "Notifications", path: "/notifications", icon: Bell },
+    { label: "SeaBite Wallet", path: "/wallet", icon: CreditCard },
+  ];
+
+  if (user?.role === "admin") {
+    profileMenuItems.push({ label: "Admin Dashboard", path: "/admin", icon: Settings });
+  }
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+      localStorage.removeItem("userInfo");
+      window.location.href = "/";
+    } catch (err) {
+      console.error("Logout failed", err);
+      // Fallback: clear local storage and redirect anyway
+      localStorage.removeItem("userInfo");
+      window.location.href = "/";
+    }
+  };
 
   const handleTabClick = () => {
     if (typeof navigator !== "undefined" && navigator.vibrate) {
@@ -44,7 +76,7 @@ const MobileNav = () => {
       <nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white/80 backdrop-blur-lg border-t border-[#E2EEEC] pb-safe">
         <div className="flex items-center justify-around h-16 px-2">
           {navItems.map((item, idx) => {
-            const isActive = location.pathname === item.path;
+            const isActive = item.path ? location.pathname === item.path : false;
             const Icon = item.icon;
 
             const content = (
@@ -68,15 +100,15 @@ const MobileNav = () => {
               </motion.div>
             );
 
-            if (item.isProfile) {
+            if (item.onClick) {
               return (
                 <button
-                  key="profile-tab"
+                  key={item.label}
                   onClick={() => {
                     handleTabClick();
                     item.onClick();
                   }}
-                  className="relative flex flex-col items-center justify-center w-full h-full gap-1 group"
+                  className="relative flex flex-col items-center justify-center w-full h-full gap-0.5 group"
                 >
                   {content}
                   <span className="text-[10px] font-bold tracking-tight text-[#94A3B8]">
@@ -91,7 +123,7 @@ const MobileNav = () => {
                 key={item.path || idx}
                 to={item.path}
                 onClick={handleTabClick}
-                className="relative flex flex-col items-center justify-center w-full h-full gap-1 group"
+                className="relative flex flex-col items-center justify-center w-full h-full gap-0.5 group"
               >
                 {content}
                 
@@ -147,12 +179,7 @@ const MobileNav = () => {
               </div>
 
               <div className="grid grid-cols-1 gap-3">
-                {[
-                  { label: "My Profile", path: "/profile", icon: User },
-                  { label: "Notifications", path: "/notifications", icon: Heart },
-                  { label: "Order History", path: "/orders", icon: ShoppingBag },
-                  ...(user?.role === "admin" ? [{ label: "Admin Dashboard", path: "/admin", icon: Home }] : []),
-                ].map((option) => (
+                {profileMenuItems.map((option) => (
                   <Link
                     key={option.path}
                     to={option.path}
@@ -169,8 +196,7 @@ const MobileNav = () => {
                 <button
                   onClick={() => {
                     setShowProfileMenu(false);
-                    // Handle logout via context or window
-                    window.location.href = "/profile?action=logout"; 
+                    handleLogout();
                   }}
                   className="flex items-center gap-4 p-4 rounded-2xl bg-red-50 text-red-600 font-bold mt-2"
                 >

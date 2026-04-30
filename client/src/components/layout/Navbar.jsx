@@ -136,6 +136,11 @@ export default function Navbar({ announcementActive = false }) {
       setIsLoginOpen(true);
       searchParams.delete("auth");
       setSearchParams(searchParams);
+    } else if (authType === "forgot") {
+      setAuthMode("FORGOT");
+      setIsLoginOpen(true);
+      searchParams.delete("auth");
+      setSearchParams(searchParams);
     }
   }, [searchParams, setSearchParams]);
 
@@ -218,7 +223,19 @@ export default function Navbar({ announcementActive = false }) {
   };
 
   const handleLogout = async () => {
-    try { await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true }); setUser(null); navigate("/"); } catch { }
+    try { 
+      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true }); 
+      localStorage.removeItem("seabite_session_id");
+      localStorage.removeItem("userInfo");
+      setUser(null); 
+      setIsLoginOpen(false);
+      setAuthMode("LOGIN");
+      setAuthEmail("");
+      setAuthPassword("");
+      setAuthOtp("");
+      navigate("/"); 
+      toast.success("Logged out successfully");
+    } catch { }
   };
 
   const handleLoginSubmit = async (e) => {
