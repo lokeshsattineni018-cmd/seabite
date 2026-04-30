@@ -93,7 +93,7 @@ router.post("/send-otp", authLimiter, async (req, res) => {
   otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min expiry
 
   try {
-    await sendOtpEmail(email, otp);
+    await sendOtpEmail(email, otp, "SIGNUP");
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
     res.status(500).json({ message: "Failed to send OTP email" });
@@ -176,7 +176,7 @@ router.post("/forgot-password-otp", async (req, res) => {
   otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000, type: 'FORGOT' });
 
   try {
-    await sendOtpEmail(email, otp);
+    await sendOtpEmail(email, otp, "FORGOT");
     res.json({ message: "Reset OTP sent to your email" });
   } catch (err) {
     res.status(500).json({ message: "Failed to send reset OTP" });
