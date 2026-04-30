@@ -67,6 +67,7 @@ export const CartProvider = ({ children }) => {
         globalDiscount: 0,
     });
     const [isCartOpen, setIsCartOpen] = useState(false);
+    const [cartLoaded, setCartLoaded] = useState(false);
 
     const [storeSettings, setStoreSettings] = useState({
         taxRate: 5,
@@ -144,6 +145,7 @@ export const CartProvider = ({ children }) => {
                     await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
                 } catch (err) { }
             }
+            setCartLoaded(true);
         };
         syncCart();
     }, [user, updateCartState]);
@@ -220,6 +222,7 @@ export const CartProvider = ({ children }) => {
         clearCart,
         isCartOpen,
         setIsCartOpen,
+        cartLoaded,
         cartItems: cartState.cartItems
     };
 

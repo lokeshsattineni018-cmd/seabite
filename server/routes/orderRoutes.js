@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import Order from "../models/Order.js";
 import Complaint from "../models/Complaint.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
@@ -52,8 +53,23 @@ router.get("/myorders", protect, async (req, res) => {
 // --- SINGLE ORDER DETAILS ---
 router.get("/:orderId", protect, async (req, res) => {
   try {
-    const isNumeric = !isNaN(req.params.orderId);
-    let query = isNumeric ? { orderId: req.params.orderId } : { _id: req.params.orderId };
+    const { orderId } = req.params;
+    if (!orderId || orderId === "undefined" || orderId === "null") {
+      return res.status(400).json({ message: "Invalid Order ID" });
+    }
+
+    const isNumeric = /^\d+$/.test(orderId);
+    let query;
+
+    if (isNumeric) {
+      query = { orderId: Number(orderId) };
+    } else {
+      // Check if it's a valid MongoDB ObjectId
+      if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return res.status(400).json({ message: "Invalid Order ID format" });
+      }
+      query = { _id: orderId };
+    }
 
     const order = await Order.findOne(query)
       .populate("user", "name email")
@@ -75,15 +91,15 @@ router.get("/:orderId", protect, async (req, res) => {
     const orderObj = order.toObject();
     orderObj.complaints = complaints; // Attach complaints to the response
     if (!orderObj.itemsPrice || orderObj.itemsPrice === 0) {
-      orderObj.itemsPrice = orderObj.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      orderObj.itemsPrice = orderObj.items.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
       orderObj.shippingPrice = orderObj.itemsPrice < 1000 ? 99 : 0;
       orderObj.taxPrice = Math.round((orderObj.itemsPrice - (orderObj.discount || 0)) * 0.05);
-      // We don't save back to DB here to avoid side effects on GET, just return for display
     }
 
     res.status(200).json(orderObj);
   } catch (error) {
-    res.status(500).json({ message: "Invalid Order ID format" });
+    console.error("Order Fetch Error:", error);
+    res.status(500).json({ message: "Internal server error while fetching order" });
   }
 });
 

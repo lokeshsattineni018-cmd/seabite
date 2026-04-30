@@ -703,14 +703,15 @@ function PriceRow({ label, value, color, bold, borderTop }) {
     </div>
   );
 }
-
 // ─────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────
 export default function OrderDetails() {
   const { orderId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { addToCart, setIsCartOpen } = useContext(CartContext);
+  const token = localStorage.getItem("seabite_session_id") || "";
   const reduced = useReducedMotion();
 
   const [order, setOrder] = useState(null);
@@ -994,7 +995,11 @@ export default function OrderDetails() {
         API_URL={API_URL}
         onSuccess={() => {
           toast.success("Review saved!");
-          // Re-fetch order to refresh UI if needed
+          // Re-fetch order to refresh UI
+          setLoading(true);
+          axios.get(`${API_URL}/api/orders/${order._id || order.orderId}`, { withCredentials: true })
+            .then(res => setOrder(res.data))
+            .finally(() => setLoading(false));
         }}
       />
       <AnimatePresence>
@@ -1128,53 +1133,6 @@ export default function OrderDetails() {
               </AppleSection>
             )}
 
-            {/* ── Cancelled Banner (replaces tracker) ── */}
-            {cancelled && (
-              <AppleSection style={{ background: "#FEF2F2", borderColor: "#FECACA" }}>
-                <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-                  <div style={{
-                    width: 52, height: 52, borderRadius: 16, flexShrink: 0,
-                    background: T.coralBg, color: T.coral,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}>
-                    <FiXCircle size={26} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <h2 style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 700, color: T.coral, margin: "0 0 8px" }}>
-                      Order Cancelled
-                    </h2>
-                    {order.cancelledAt && (
-                      <p style={{ fontSize: 13, color: T.inkSoft, margin: "0 0 8px" }}>
-                        <time dateTime={order.cancelledAt}>
-                          {new Date(order.cancelledAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
-                        </time>
-                      </p>
-                    )}
-                    <p style={{ fontSize: 14, color: T.inkMid, lineHeight: 1.7, margin: "0 0 16px" }}>
-                      <span style={{ color: T.ink, fontWeight: 600 }}>Reason: </span>
-                      {order.cancelReason || "No reason provided."}
-                    </p>
-                    <motion.button
-                      whileTap={{ scale: 0.96 }}
-                      onClick={handleReorder}
-                      disabled={reordering}
-                      className="lx-focus"
-                      style={{
-                        display: "inline-flex", alignItems: "center", gap: 8,
-                        padding: "10px 20px", borderRadius: 999,
-                        background: T.teal, color: "#fff", border: "none",
-                        fontWeight: 600, fontSize: 14, cursor: reordering ? "not-allowed" : "pointer",
-                        fontFamily: "'DM Sans', sans-serif",
-                        boxShadow: T.shadowTeal,
-                      }}
-                    >
-                      {reordering ? <Spinner size={13} /> : <FiShoppingCart size={14} />}
-                      Reorder Items
-                    </motion.button>
-                  </div>
-                </div>
-              </AppleSection>
-            )}
 
             {/* ── Order Status Tracker ── */}
             {!cancelled && (
@@ -1251,7 +1209,7 @@ export default function OrderDetails() {
                 Purchased Items
               </h2>
 
-              {order.items?.length === 0 ? (
+              {(!order.items || order.items.length === 0) ? (
                 <p style={{ color: T.inkSoft, fontSize: 14, textAlign: "center", padding: "24px 0" }}>
                   No items found.
                 </p>
@@ -1292,7 +1250,7 @@ export default function OrderDetails() {
                                 </p>
                               </Link>
                               <p style={{ fontSize: 13, color: T.inkSoft, margin: 0 }}>
-                                Quantity: {item.qty} × ₹{item.price}
+                                Quantity: {item.qty || 0} × ₹{(item.price || 0).toFixed(2)}
                               </p>
                             </div>
                             <span style={{
@@ -1300,7 +1258,7 @@ export default function OrderDetails() {
                               fontSize: 15, fontWeight: 700, color: T.ink,
                               whiteSpace: "nowrap"
                             }}>
-                              ₹{item.price * item.qty}
+                              ₹{((item.price || 0) * (item.qty || 0)).toFixed(2)}
                             </span>
                           </div>
 
@@ -1380,7 +1338,7 @@ export default function OrderDetails() {
               {/* Price breakdown */}
               <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink, margin: "0 0 16px" }}>Order Summary</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <PriceRow label="Subtotal" value={`₹${order.itemsPrice || order.items.reduce((acc, item) => acc + (item.price * item.qty), 0)}`} />
+                <PriceRow label="Subtotal" value={`₹${order.itemsPrice || (order.items || []).reduce((acc, item) => acc + ((item.price || 0) * (item.qty || 0)), 0).toFixed(2)}`} />
                 <PriceRow
                   label="Shipping"
                   value={order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000) ? "Free" : `₹${order.shippingPrice || 99}`}
