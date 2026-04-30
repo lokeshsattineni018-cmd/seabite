@@ -10,7 +10,8 @@ const checkMaintenance = async (req, res, next) => {
         }
 
         // 2. Allow admins to bypass maintenance everywhere
-        if (settings && settings.isMaintenanceMode && req.session?.user?.role !== "admin") {
+        const userRole = req.session?.role || req.session?.user?.role;
+        if (settings && settings.isMaintenanceMode && userRole !== "admin") {
             return res.status(503).json({
                 maintenance: true,
                 message: settings.maintenanceMessage

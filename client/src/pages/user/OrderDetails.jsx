@@ -990,7 +990,7 @@ export default function OrderDetails() {
         onClose={() => setReviewOpen(false)}
         product={reviewProduct}
         existingReview={null}
-        token={token}
+        token={localStorage.getItem("seabite_session_id")}
         API_URL={API_URL}
         onSuccess={() => {
           toast.success("Review saved!");

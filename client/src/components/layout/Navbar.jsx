@@ -469,13 +469,14 @@ export default function Navbar({ announcementActive = false }) {
                   <AnimatePresence>
                     {showProfile && (
                       <motion.div 
-                        className="dropdown-bridge"
-                        initial={{ opacity: 0, y: -8, scale: 0.97 }} 
-                        animate={{ opacity: 1, y: 0, scale: 1 }} 
-                        style={{ position: "absolute", top: "100%", right: 0, paddingTop: "6px", minWidth: "240px", zIndex: 200 }}
+                        initial={{ opacity: 0, y: -10 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        exit={{ opacity: 0, y: -10 }} 
+                        transition={{ duration: 0.2, ease: "easeOut" }}
+                        style={{ position: "absolute", top: "calc(100% - 4px)", right: 0, paddingTop: "12px", minWidth: "240px", zIndex: 200 }}
                       >
                         <div style={{ background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.1)" }}>
-                        <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #F0F5F4", background: "#F4F9F8" }}>
+                        <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #F0F5F4", background: "#fff" }}>
                           <p style={{ fontSize: "10px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 3px" }}>Signed in as</p>
                           <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{user.email}</p>
                         </div>
@@ -548,115 +549,76 @@ export default function Navbar({ announcementActive = false }) {
 
       <AnimatePresence>
         {isLoginOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(0,0,0,0.4)" }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", justifyContent: "flex-end", background: "rgba(0,0,0,0.4)" }}>
             <div onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", inset: 0 }} />
             
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} style={{ position: "relative", background: "#fff", width: "100%", maxWidth: "760px", borderRadius: "16px", boxShadow: "0 24px 60px rgba(0,0,0,0.2)", display: "flex", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
+            <motion.div 
+              initial={{ x: "100%" }} 
+              animate={{ x: 0 }} 
+              exit={{ x: "100%" }} 
+              transition={{ type: "spring", damping: 35, stiffness: 450, mass: 1 }} 
+              style={{ position: "relative", background: "#fff", width: "100%", maxWidth: "420px", height: "100%", boxShadow: "-10px 0 60px rgba(0,0,0,0.1)", display: "flex", flexDirection: "column", fontFamily: "'Inter', sans-serif", overflowY: "auto" }}
+            >
                          {/* LEFT SIDE (FEATURES) */}
-              <div className="hidden-mobile" style={{ flex: "0.8", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "32px" }}>
-                 <AnimatePresence>
-                    <motion.div
-                       key={authImgIdx}
-                       initial={{ opacity: 0, scale: 1.02 }}
-                       animate={{ opacity: 1, scale: 1 }}
-                       exit={{ opacity: 0 }}
-                       transition={{ duration: 0.8, ease: "easeInOut" }}
-                       style={{
-                          position: "absolute", inset: 0,
-                          background: `url(${authImages[authImgIdx]}) center/cover no-repeat`
-                       }}
-                    />
-                 </AnimatePresence>
-
-                 {/* Premium Gradient Overlay */}
-                 <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1 }} />
-                 
-                 <div style={{ position: "relative", zIndex: 2, display: "flex", justifyContent: "center", alignItems: "center", width: "100%", paddingTop: "32px" }}>
-                    <img src="/logo.png" style={{ height: "64px", width: "auto", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.2))", objectFit: "contain" }} />
-                 </div>
-                 
-                 <div style={{ position: "relative", zIndex: 2, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "32px", paddingBottom: "60px", textAlign: "left" }}>
-                    <AnimatePresence mode="popLayout">
-                       <motion.div
-                          key={authImgIdx}
-                          initial={{ opacity: 0, y: 30 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -30 }}
-                          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-                       >
-                          <div style={{ display: "inline-block", padding: "6px 14px", borderRadius: "8px", background: "rgba(234, 179, 8, 0.9)", color: "#000", fontSize: "11px", fontWeight: "900", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "20px", backdropFilter: "blur(4px)" }}>
-                             {authImgIdx === 0 ? "FLASH DEAL" : authImgIdx === 1 ? "FREE SHIPPING" : "WELCOME OFFER"}
-                          </div>
-                          
-                          <h2 style={{ color: "#fff", fontSize: "52px", fontWeight: "900", fontFamily: "'Plus Jakarta Sans', sans-serif", margin: "0 0 12px", lineHeight: 0.85, letterSpacing: "-0.04em", textShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
-                             {authImgIdx === 0 ? <>10%<br/><span style={{fontSize: "26px", fontWeight: "700", letterSpacing: "0.01em"}}>DISCOUNT</span></> : authImgIdx === 1 ? <>FREE<br/><span style={{fontSize: "26px", fontWeight: "700", letterSpacing: "0.01em"}}>DELIVERY</span></> : <>FLAT ₹200<br/><span style={{fontSize: "26px", fontWeight: "700", letterSpacing: "0.01em"}}>DISCOUNT</span></>}
-                          </h2>
-                          
-                          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px", fontWeight: "500", fontFamily: "'Plus Jakarta Sans', sans-serif", margin: 0, maxWidth: "260px", lineHeight: 1.4, letterSpacing: "-0.01em" }}>
-                             {authImgIdx === 0 ? "On all orders above ₹1699" : authImgIdx === 1 ? "On all orders above ₹999" : "On your very first order"}
-                          </p>
-                       </motion.div>
-                    </AnimatePresence>
-                 </div>
+              <div className="hidden-mobile" style={{ display: "none" }}>
               </div>
 
               {/* RIGHT SIDE (WHITE BOX) */}
-              <div className="auth-modal-right" style={{ flex: 1, padding: "8px 8px 8px 0", minHeight: "auto", position: "relative", zIndex: 1 }}>
-                <div className="auth-modal-inner" style={{ background: "#fff", borderRadius: "12px", height: "100%", padding: "32px 32px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", boxShadow: "0 0 40px rgba(0,0,0,0.05)" }}>
-                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "12px", right: "12px", background: "rgba(0,0,0,0.05)", border: "none", borderRadius: "50%", width: "32px", height: "32px", color: "#111", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background="rgba(0,0,0,0.1)"} onMouseOut={e => e.currentTarget.style.background="rgba(0,0,0,0.05)"}><FiX size={18}/></button>
+              <div className="auth-modal-right" style={{ flex: 1, padding: "0", minHeight: "auto", position: "relative", zIndex: 1 }}>
+                <div className="auth-modal-inner" style={{ background: "#fff", height: "100%", padding: "32px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative" }}>
+                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "20px", right: "20px", background: "rgba(0,0,0,0.05)", border: "none", borderRadius: "50%", width: "32px", height: "32px", color: "#111", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background="rgba(0,0,0,0.1)"} onMouseOut={e => e.currentTarget.style.background="rgba(0,0,0,0.05)"}><FiX size={18}/></button>
                 <AnimatePresence mode="wait">
-                  <motion.div key={authMode} variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } }, exit: { opacity: 0 } }} initial="hidden" animate="show" exit="exit" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <motion.div key={authMode} variants={{ hidden: { opacity: 0, x: 20 }, show: { opacity: 1, x: 0, transition: { staggerChildren: 0.08 } }, exit: { opacity: 0, x: -20 } }} initial="hidden" animate="show" exit="exit" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                     
                     <div style={{ textAlign: "center", marginBottom: "24px" }}>
-                       <div className="mobile-only" style={{ marginBottom: "20px" }}>
+                       <div style={{ marginBottom: "20px" }}>
                           <img src="/logo.png" style={{ height: "40px", width: "auto", margin: "0 auto" }} />
                        </div>
                        <h2 style={{ fontSize: "24px", fontWeight: "800", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#111827", margin: "0 0 8px", lineHeight: 1.1, letterSpacing: "-0.03em" }}>
-                          {authMode === "LOGIN" ? "Unlock Ocean's Finest" 
-                           : authMode === "SIGNUP" ? "Join Us For Exclusive Catch" 
-                           : authMode === "OTP_VERIFY_SIGNUP" ? "Verify Your Email"
-                           : authMode === "RESET_PASSWORD" ? "Create New Password"
-                           : "Reset Your Password"}
+                          {
+                            authMode === "LOGIN" ? "Welcome Back" :
+                            authMode === "SIGNUP" ? "Create Account" :
+                            authMode === "OTP_VERIFY_SIGNUP" ? "Verify Email" :
+                            authMode === "RESET_PASSWORD" ? "New Password" :
+                            authMode === "FORGOT" ? "Reset Password" : "Welcome"
+                          }
                        </h2>
                        <p style={{ fontSize: "14px", color: "#6B7280", margin: 0, fontWeight: "500", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.01em" }}>
-                          {authMode === "LOGIN" ? "Enter Email to Continue" 
-                           : authMode === "SIGNUP" ? "Enter your details below" 
-                           : authMode === "OTP_VERIFY_SIGNUP" ? "Enter the 6-digit code sent to your email"
-                           : authMode === "RESET_PASSWORD" ? "Enter the reset code and your new password"
-                           : "Enter email to receive reset code"}
+                          {
+                            authMode === "LOGIN" ? "Enter your email to continue" :
+                            authMode === "SIGNUP" ? "Enter your details below" :
+                            authMode === "OTP_VERIFY_SIGNUP" ? "Enter the 6-digit code sent to your email" :
+                            authMode === "RESET_PASSWORD" ? "Enter code and new password" :
+                            authMode === "FORGOT" ? "Enter email to receive code" : "Please authenticate"
+                          }
                        </p>
                     </div>
 
                     {authMode === "LOGIN" && (
                       <form onSubmit={handleLoginSubmit}>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                           <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="Enter Email Address" />
                         </motion.div>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                           <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="Enter Password" />
                         </motion.div>
 
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                          <input type="checkbox" defaultChecked style={{ width: "16px", height: "16px", accentColor: "#5CA8DA", cursor: "pointer" }} />
-                          <span style={{ fontSize: "13px", color: "#4B5563", fontWeight: "500" }}>Notify me for fresh catch updates</span>
-                        </motion.div>
-                        
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                        <motion.button variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
                           {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Continue"}
                         </motion.button>
 
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
                           <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#E5E7EB" }} />
                           <span style={{ position: "relative", background: "#fff", padding: "0 12px", fontSize: "11px", fontWeight: "700", color: "#6B7280", textTransform: "uppercase" }}>OR</span>
                         </motion.div>
 
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "background 0.2s" }} whileHover={{ background: "#F9FAFB" }}>
+                        <motion.button variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "background 0.2s" }} whileHover={{ background: "#F9FAFB" }}>
                           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Continue with Google
                         </motion.button>
                         
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ display: "flex", justifyContent: "space-between", marginTop: "16px" }}>
-                          <button type="button" onClick={() => setAuthMode("FORGOT")} style={{ background: "none", border: "none", fontSize: "12px", color: "#6B7280", fontWeight: "600", cursor: "pointer" }}>Forgot Password?</button>
-                          <button type="button" onClick={() => setAuthMode("SIGNUP")} style={{ background: "none", border: "none", fontSize: "12px", color: "#3B82F6", fontWeight: "600", cursor: "pointer" }}>New here? Create Account</button>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} style={{ display: "flex", justifyContent: "space-between", marginTop: "24px" }}>
+                          <button type="button" onClick={() => setAuthMode("FORGOT")} style={{ background: "none", border: "none", fontSize: "13px", color: "#6B7280", fontWeight: "600", cursor: "pointer" }}>Forgot Password?</button>
+                          <button type="button" onClick={() => setAuthMode("SIGNUP")} style={{ background: "none", border: "none", fontSize: "13px", color: "#5BBFB5", fontWeight: "600", cursor: "pointer" }}>Create Account</button>
                         </motion.div>
                         
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "32px", textAlign: "center" }}>
@@ -670,37 +632,32 @@ export default function Navbar({ announcementActive = false }) {
 
                     {authMode === "SIGNUP" && (
                       <form onSubmit={handleSignupOtpRequest}>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                           <AuthInput label="Full Name" value={authName} onChange={setAuthName} placeholder="Full Name" />
                           <AuthInput label="Phone" value={authPhone} onChange={setAuthPhone} placeholder="Phone" />
                         </motion.div>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                           <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="Email Address" />
                         </motion.div>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                           <AuthInput label="Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="Password" />
                         </motion.div>
-                        
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                          <input type="checkbox" defaultChecked style={{ width: "16px", height: "16px", accentColor: "#5CA8DA", cursor: "pointer" }} />
-                          <span style={{ fontSize: "13px", color: "#4B5563", fontWeight: "500" }}>Notify me for fresh catch updates</span>
-                        </motion.div>
 
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center" }}>
+                        <motion.button variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
                           {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Create Account"}
                         </motion.button>
 
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
                           <div style={{ position: "absolute", top: "50%", left: 0, right: 0, height: "1px", background: "#E5E7EB" }} />
                           <span style={{ position: "relative", background: "#fff", padding: "0 12px", fontSize: "11px", fontWeight: "700", color: "#6B7280", textTransform: "uppercase" }}>OR</span>
                         </motion.div>
 
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "background 0.2s" }} whileHover={{ background: "#F9FAFB" }}>
+                        <motion.button variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "background 0.2s" }} whileHover={{ background: "#F9FAFB" }}>
                           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Sign up with Google
                         </motion.button>
                         
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
-                          <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontSize: "12px", color: "#3B82F6", fontWeight: "600", cursor: "pointer" }}>Already have an account? Sign In</button>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} style={{ marginTop: "24px", textAlign: "center" }}>
+                          <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontSize: "13px", color: "#5BBFB5", fontWeight: "600", cursor: "pointer" }}>Already have an account? Sign In</button>
                         </motion.div>
                         
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "24px", textAlign: "center" }}>
@@ -714,14 +671,14 @@ export default function Navbar({ announcementActive = false }) {
 
                     {authMode === "OTP_VERIFY_SIGNUP" && (
                       <form onSubmit={handleSignupVerify}>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                           <AuthInput label="Enter 6-Digit Code" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
                         </motion.div>
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
+                        <motion.button variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
                           {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Verify & Join"}
                         </motion.button>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
-                          <button type="button" onClick={handleResendOtp} disabled={resendCooldown > 0} style={{ background: "none", border: "none", fontSize: "12px", color: resendCooldown > 0 ? "#9CA3AF" : "#3B82F6", fontWeight: "600", cursor: resendCooldown > 0 ? "not-allowed" : "pointer" }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} style={{ marginTop: "24px", textAlign: "center" }}>
+                          <button type="button" onClick={handleResendOtp} disabled={resendCooldown > 0} style={{ background: "none", border: "none", fontSize: "13px", color: resendCooldown > 0 ? "#9CA3AF" : "#5BBFB5", fontWeight: "600", cursor: resendCooldown > 0 ? "not-allowed" : "pointer" }}>
                             {resendCooldown > 0 ? `Resend Code in ${resendCooldown}s` : "Didn't receive code? Resend"}
                           </button>
                         </motion.div>
@@ -730,34 +687,29 @@ export default function Navbar({ announcementActive = false }) {
 
                     {authMode === "FORGOT" && (
                       <form onSubmit={handleForgotOtpRequest}>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                           <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" />
                         </motion.div>
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
+                        <motion.button variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
                           {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Send Reset Code"}
                         </motion.button>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
-                          <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontSize: "12px", color: "#3B82F6", fontWeight: "600", cursor: "pointer" }}>Back to Sign In</button>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} style={{ marginTop: "24px", textAlign: "center" }}>
+                          <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontSize: "13px", color: "#5BBFB5", fontWeight: "600", cursor: "pointer" }}>Back to Sign In</button>
                         </motion.div>
                       </form>
                     )}
 
                     {authMode === "RESET_PASSWORD" && (
                       <form onSubmit={handleResetPassword}>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                           <AuthInput label="6-Digit Code" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
                         </motion.div>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
+                        <motion.div variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}>
                           <AuthInput label="New Password" type="password" value={authPassword} onChange={setAuthPassword} placeholder="New Password" />
                         </motion.div>
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
+                        <motion.button variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
                           {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Confirm New Password"}
                         </motion.button>
-                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
-                          <button type="button" onClick={handleResendOtp} disabled={resendCooldown > 0} style={{ background: "none", border: "none", fontSize: "12px", color: resendCooldown > 0 ? "#9CA3AF" : "#3B82F6", fontWeight: "600", cursor: resendCooldown > 0 ? "not-allowed" : "pointer" }}>
-                            {resendCooldown > 0 ? `Resend Code in ${resendCooldown}s` : "Didn't receive code? Resend"}
-                          </button>
-                        </motion.div>
                       </form>
                     )}
 
