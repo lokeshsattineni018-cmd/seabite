@@ -95,7 +95,7 @@ export default function Navbar({ announcementActive = false }) {
     if (!isLoginOpen) return;
     const interval = setInterval(() => {
       setAuthImgIdx(prev => (prev + 1) % authImages.length);
-    }, 2500);
+    }, 4000);
     return () => clearInterval(interval);
   }, [isLoginOpen]);
 
@@ -557,10 +557,10 @@ export default function Navbar({ announcementActive = false }) {
                  <AnimatePresence>
                     <motion.div
                        key={authImgIdx}
-                       initial={{ x: "100%" }}
-                       animate={{ x: 0, zIndex: 1 }}
-                       exit={{ x: "-100%", zIndex: 0 }}
-                       transition={{ duration: 0.8, ease: [0.65, 0, 0.35, 1] }}
+                       initial={{ opacity: 0, scale: 1.02 }}
+                       animate={{ opacity: 1, scale: 1 }}
+                       exit={{ opacity: 0 }}
+                       transition={{ duration: 0.8, ease: "easeInOut" }}
                        style={{
                           position: "absolute", inset: 0,
                           background: `url(${authImages[authImgIdx]}) center/cover no-repeat`
