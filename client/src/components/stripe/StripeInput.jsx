@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 
-export default function StripeInput({
+const StripeInput = forwardRef(({
     label,
     value,
     onChange,
@@ -9,7 +9,7 @@ export default function StripeInput({
     type = "text",
     Icon,
     style = {}
-}) {
+}, ref) => {
     const [focus, setFocus] = useState(false);
 
     const active = focus || value;
@@ -18,28 +18,30 @@ export default function StripeInput({
         <div
             style={{
                 position: "relative",
-                border: `1px solid ${focus ? "#635BFF" : "#E6E8EC"}`,
-                borderRadius: 8,
-                padding: "18px 12px 6px",
+                border: `1px solid ${focus ? "#5BA8A0" : "#E2EEEC"}`,
+                borderRadius: 12,
+                padding: "20px 12px 6px",
                 background: disabled ? "#F9FAFC" : "#fff",
                 transition: "border-color 0.15s",
                 display: "flex",
                 alignItems: "center",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
                 ...style
             }}
         >
             {Icon && (
-                <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6B7280" }}>
+                <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#8BA5B3" }}>
                     <Icon size={14} />
                 </span>
             )}
             <label
                 style={{
                     position: "absolute",
-                    top: active ? 4 : 16,
-                    left: Icon ? 34 : 12,
-                    fontSize: active ? 11 : 14,
-                    color: focus ? "#635BFF" : "#6B7280",
+                    top: active ? 6 : 16,
+                    left: Icon ? 36 : 12,
+                    fontSize: active ? 10 : 13,
+                    color: focus ? "#5BA8A0" : "#8BA5B3",
+                    fontWeight: 700,
                     transition: "0.15s",
                     pointerEvents: "none",
                 }}
@@ -48,6 +50,7 @@ export default function StripeInput({
             </label>
 
             <input
+                ref={ref}
                 type={type}
                 value={value}
                 onChange={onChange}
@@ -60,11 +63,15 @@ export default function StripeInput({
                     border: "none",
                     outline: "none",
                     fontSize: 14,
+                    fontWeight: 500,
                     background: "transparent",
-                    paddingLeft: Icon ? 28 : 0,
-                    color: "#1A2B35"
+                    paddingLeft: Icon ? 24 : 0,
+                    color: "#1A2B35",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif"
                 }}
             />
         </div>
     );
-}
+});
+
+export default StripeInput;

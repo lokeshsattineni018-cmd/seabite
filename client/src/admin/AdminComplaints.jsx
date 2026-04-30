@@ -9,6 +9,14 @@ import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+const ISSUE_LABELS = {
+    wrong_item: "Wrong Item",
+    poor_quality: "Poor Quality",
+    missing_items: "Missing Items",
+    damaged: "Damaged Item",
+    other: "Other Issue"
+};
+
 export default function AdminComplaints() {
     const [complaints, setComplaints] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -125,7 +133,9 @@ export default function AdminComplaints() {
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-stone-900">Order #{c.order?.orderId || "N/A"}</h3>
-                                            <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">{c.issueType}</p>
+                                            <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest">
+                                                {ISSUE_LABELS[c.issueType] || c.issueType}
+                                            </p>
                                         </div>
                                     </div>
                                     <span className="text-[10px] text-stone-400 font-medium">
@@ -133,7 +143,9 @@ export default function AdminComplaints() {
                                     </span>
                                 </div>
 
-                                <p className="text-sm text-stone-600 line-clamp-2 italic mb-4">"{c.description}"</p>
+                                <p className={`text-sm line-clamp-2 italic mb-4 ${c.description === "No description" ? "text-stone-300" : "text-stone-600"}`}>
+                                    "{c.description}"
+                                </p>
 
                                 <div className="flex items-center justify-between pt-4 border-t border-stone-50">
                                     <div className="flex items-center gap-2">

@@ -58,7 +58,7 @@ const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshC
       border: "1.5px solid #E2EEEC",
       borderRadius: "20px",
       padding: "32px",
-      fontFamily: "'Manrope', sans-serif",
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "28px" }}>
         <div style={{ width: "36px", height: "36px", background: "#F0FBF9", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
@@ -150,7 +150,7 @@ const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshC
               background: "#1A2E2C", color: "#fff",
               border: "none", borderRadius: "10px",
               fontSize: "13px", fontWeight: "700",
-              cursor: "pointer", fontFamily: "'Manrope', sans-serif",
+              cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif",
               letterSpacing: "0.02em",
               transition: "opacity 0.2s",
               opacity: isAdding ? 0.7 : 1,
@@ -163,7 +163,106 @@ const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshC
     </div>
   );
 };
+// ─── Freshness Meter ─────────────────────────────────────────────────────────
+const FreshnessMeter = ({ createdAt }) => {
+  const catchDate = new Date(createdAt);
+  const now = new Date();
+  const hoursSinceCatch = Math.max(0, (now - catchDate) / 3600000);
+  
+  // Logic: 
+  // 0-12h: Ultimate (Green)
+  // 12-24h: Premium (Teal)
+  // 24-48h: Standard (Grey-Teal)
+  // Normalize 0-48h to 0-100% (where 100% is freshest)
+  const percentage = Math.max(0, Math.min(100, 100 - (hoursSinceCatch / 48) * 100));
+  
+  let label = "Ultimate";
+  let color = "#10B981"; 
+  let glow = "rgba(16, 185, 129, 0.4)";
+  
+  if (hoursSinceCatch > 12) {
+    label = "Premium";
+    color = "#5BBFB5"; 
+    glow = "rgba(91, 191, 181, 0.4)";
+  }
+  if (hoursSinceCatch > 24) {
+    label = "Standard";
+    color = "#6B8F8A"; 
+    glow = "rgba(107, 143, 138, 0.2)";
+  }
 
+  // SVG path constants for the arc
+  const radius = 35;
+  const stroke = 5;
+  const normalizedRadius = radius - stroke * 2;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.8)",
+      backdropFilter: "blur(10px)",
+      border: "1px solid #E2EEEC",
+      borderRadius: "20px",
+      padding: "20px",
+      display: "flex",
+      alignItems: "center",
+      gap: "20px",
+      marginBottom: "24px",
+      boxShadow: "0 8px 30px rgba(0,0,0,0.03)",
+      fontFamily: "'Plus Jakarta Sans', sans-serif"
+    }}>
+      <div style={{ position: "relative", width: "70px", height: "70px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <svg height="70" width="70" style={{ transform: "rotate(-90deg)" }}>
+          <circle
+            stroke="#F0FBF9"
+            fill="transparent"
+            strokeWidth={stroke}
+            r={normalizedRadius}
+            cx="35"
+            cy="35"
+          />
+          <motion.circle
+            stroke={color}
+            fill="transparent"
+            strokeWidth={stroke}
+            strokeDasharray={circumference + " " + circumference}
+            style={{ strokeDashoffset, filter: `drop-shadow(0 0 4px ${glow})` }}
+            r={normalizedRadius}
+            cx="35"
+            cy="35"
+            initial={{ strokeDashoffset: circumference }}
+            animate={{ strokeDashoffset }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
+            strokeLinecap="round"
+          />
+        </svg>
+        <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", fontSize: "16px" }}>
+          🌊
+        </div>
+      </div>
+      
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+          <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "800", color: "#1A2E2C" }}>{label} Freshness</h4>
+          <span style={{ 
+            fontSize: "9px", fontWeight: "900", background: color, color: "#fff", 
+            padding: "2px 6px", borderRadius: "20px", textTransform: "uppercase" 
+          }}>Live</span>
+        </div>
+        <p style={{ margin: 0, fontSize: "12px", color: "#6B8F8A", fontWeight: "500" }}>
+          Caught approximately <span style={{ color: "#1A2E2C", fontWeight: "700" }}>{Math.floor(hoursSinceCatch) || "under 1"}h</span> ago. 
+          Quality verified.
+        </p>
+      </div>
+      
+      <div style={{ textAlign: "right" }}>
+        <div style={{ fontSize: "18px", fontWeight: "800", color: color, letterSpacing: "-0.02em" }}>{Math.round(percentage)}%</div>
+        <div style={{ fontSize: "10px", fontWeight: "700", color: "#B8CFCC", textTransform: "uppercase" }}>Meter</div>
+      </div>
+    </div>
+  );
+};
 
 // ─── Image Magnifier ───────────────────────────────────────────────────────────
 const ImageMagnifier = ({ src, alt, productId }) => {
@@ -262,12 +361,12 @@ const PincodeChecker = () => {
           placeholder="Enter Pincode" 
           value={pincode} 
           onChange={(e) => { setPincode(e.target.value.replace(/[^0-9]/g, '')); setStatus(null); }}
-          style={{ flex: 1, padding: "0 14px", border: "1.5px solid #E2EEEC", borderRadius: "8px", fontSize: "13px", color: "#1A2E2C", outline: "none", fontFamily: "'Manrope', sans-serif" }} 
+          style={{ flex: 1, padding: "0 14px", border: "1.5px solid #E2EEEC", borderRadius: "8px", fontSize: "13px", color: "#1A2E2C", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} 
         />
         <button 
           onClick={checkPincode}
           disabled={pincode.length !== 6 || status === 'loading'}
-          style={{ padding: "0 20px", background: pincode.length === 6 ? "#1A2E2C" : "#DDE9E7", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: pincode.length === 6 ? "pointer" : "not-allowed", fontFamily: "'Manrope', sans-serif", transition: "background 0.2s" }}
+          style={{ padding: "0 20px", background: pincode.length === 6 ? "#1A2E2C" : "#DDE9E7", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: pincode.length === 6 ? "pointer" : "not-allowed", fontFamily: "'Plus Jakarta Sans', sans-serif", transition: "background 0.2s" }}
         >
           {status === 'loading' ? '...' : 'Check'}
         </button>
@@ -525,10 +624,10 @@ export default function ProductDetails() {
 
   if (!product) {
     return (
-      <div style={{ minHeight: "100vh", background: "#F4F9F8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "24px", fontFamily: "'Manrope', sans-serif" }}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@500;700&family=Lora:wght@500&display=swap');`}</style>
+      <div style={{ minHeight: "100vh", background: "#F4F9F8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "24px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap');`}</style>
         <div style={{ fontSize: "48px", marginBottom: "16px" }}>🎣</div>
-        <h2 style={{ fontFamily: "'Lora', serif", fontSize: "26px", fontWeight: "600", color: "#1A2E2C", marginBottom: "8px" }}>Item Not Found</h2>
+        <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "26px", fontWeight: "600", color: "#1A2E2C", marginBottom: "8px" }}>Item Not Found</h2>
         <p style={{ color: "#6B8F8A", fontSize: "14px", marginBottom: "24px" }}>We couldn't find this catch. It may have swum away.</p>
         <Link to="/products" style={{ padding: "10px 24px", background: "#1A2E2C", color: "#fff", borderRadius: "10px", textDecoration: "none", fontSize: "13px", fontWeight: "700" }}>
           Back to Market
@@ -585,11 +684,11 @@ export default function ProductDetails() {
         </Helmet>
       )}
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Lora:wght@500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
-        .detail-root { font-family: 'Manrope', sans-serif; }
+        .detail-root { font-family: 'Plus Jakarta Sans', sans-serif; }
         .qty-btn:hover { background: #E2EEEC !important; }
-        .tab-btn { background: none; border: none; cursor: pointer; font-family: 'Manrope', sans-serif; transition: color 0.2s; }
+        .tab-btn { background: none; border: none; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: color 0.2s; }
         .wishlist-btn:hover { border-color: #F07468 !important; color: #F07468 !important; }
         .add-btn:hover:not(:disabled) { background: #2D4A47 !important; }
         .review-card:hover { border-color: #B8DDD9 !important; }
@@ -734,7 +833,7 @@ export default function ProductDetails() {
                 {product.category || "Fresh Catch"} · Fresh From The Sea
               </span>
 
-              <h1 style={{ fontFamily: "'Lora', serif", fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "700", color: "#1A2E2C", letterSpacing: "-0.025em", lineHeight: 1.15, marginBottom: "20px" }}>
+              <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "700", color: "#1A2E2C", letterSpacing: "-0.025em", lineHeight: 1.15, marginBottom: "20px" }}>
                 {product.name}
               </h1>
 
@@ -769,6 +868,9 @@ export default function ProductDetails() {
                 </div>
               </div>
 
+              {/* Freshness Meter */}
+              <FreshnessMeter createdAt={product.createdAt} />
+
               <PincodeChecker />
 
               <div style={{ marginBottom: "28px" }}>
@@ -781,7 +883,7 @@ export default function ProductDetails() {
                     <button
                       onClick={handleWaitlistJoin}
                       disabled={isWaitlisting || isJoinedWaitlist}
-                      style={{ background: "none", border: "none", cursor: isJoinedWaitlist ? "default" : "pointer", fontSize: "12px", fontWeight: "700", color: isJoinedWaitlist ? "#5BBFB5" : "#6B8F8A", textDecoration: "underline", fontFamily: "'Manrope', sans-serif" }}
+                      style={{ background: "none", border: "none", cursor: isJoinedWaitlist ? "default" : "pointer", fontSize: "12px", fontWeight: "700", color: isJoinedWaitlist ? "#5BBFB5" : "#6B8F8A", textDecoration: "underline", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
                     >
                       {isWaitlisting ? "Subscribing…" : isJoinedWaitlist ? "✓ Subscribed to alerts" : "Notify me when available"}
                     </button>
@@ -912,6 +1014,29 @@ export default function ProductDetails() {
                               </div>
                               <p style={{ fontSize: "14px", color: "#4A6572", lineHeight: "1.6", margin: "8px 0" }}>{review.comment}</p>
                               
+                              {/* Review Images */}
+                              {review.images && review.images.length > 0 && (
+                                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
+                                  {review.images.map((img, idx) => (
+                                    <motion.img
+                                      key={idx}
+                                      whileHover={{ scale: 1.05 }}
+                                      src={getFullImageUrl(img)}
+                                      alt={`Review ${idx}`}
+                                      style={{ 
+                                        width: "60px", 
+                                        height: "60px", 
+                                        borderRadius: "8px", 
+                                        objectFit: "cover", 
+                                        border: "1px solid #E2EEEC",
+                                        cursor: "zoom-in"
+                                      }}
+                                      onClick={() => setSelectedImage(img)}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+
                               <div style={{ display: "flex", gap: "12px", marginTop: "12px", borderTop: "1px solid #F4F9F8", paddingTop: "12px" }}>
                                 <button style={{ background: "none", border: "none", fontSize: "12px", color: "#6B8F8A", display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", fontWeight: "600" }}>
                                   👍 Helpful (0)
@@ -929,7 +1054,7 @@ export default function ProductDetails() {
                       {canReview ? (
                         <button
                           onClick={() => setIsReviewOpen(true)}
-                          style={{ padding: "10px 0", background: "#F0FBF9", border: "1.5px solid #B8DDD9", borderRadius: "10px", color: "#5BBFB5", fontSize: "13px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontFamily: "'Manrope', sans-serif", transition: "all 0.2s" }}
+                          style={{ padding: "10px 0", background: "#F0FBF9", border: "1.5px solid #B8DDD9", borderRadius: "10px", color: "#5BBFB5", fontSize: "13px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontFamily: "'Plus Jakarta Sans', sans-serif", transition: "all 0.2s" }}
                         >
                           <FiMessageSquare size={14} /> Write a Review
                         </button>
@@ -1001,7 +1126,7 @@ export default function ProductDetails() {
                     fontSize: "13px", fontWeight: "700",
                     cursor: product.stock === "out" ? "not-allowed" : "pointer",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                    fontFamily: "'Manrope', sans-serif",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     transition: "background 0.2s ease",
                     letterSpacing: "0.02em",
                   }}
@@ -1034,7 +1159,7 @@ export default function ProductDetails() {
                     fontSize: "13px", fontWeight: "800",
                     cursor: product.stock === "out" ? "not-allowed" : "pointer",
                     display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                    fontFamily: "'Manrope', sans-serif",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
                     transition: "background 0.2s ease",
                     letterSpacing: "0.02em",
                   }}

@@ -181,7 +181,7 @@ const Hero = () => {
 
             <h1
               className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
-              style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}
+              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
               Premium Fresh<br />
               <span style={{ color: "#5BA8A0" }}>Seafood</span><br />
@@ -289,7 +289,7 @@ const CategorySection = () => {
           <RevealLeft>
             <div>
               <SectionLabel>Browse Categories</SectionLabel>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 What are you<br />craving today?
               </h2>
             </div>
@@ -440,7 +440,7 @@ const CategoryRow = ({ title, filterType }) => {
           <RevealLeft>
             <div>
               <SectionLabel>{filterType === "Fish" ? "Fish" : "Shellfish"}</SectionLabel>
-              <h2 className="text-2xl md:text-3xl font-bold text-[#1A2B35]" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>{title}</h2>
+              <h2 className="text-2xl md:text-3xl font-bold text-[#1A2B35]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{title}</h2>
             </div>
           </RevealLeft>
           <RevealRight delay={0.1}>
@@ -492,7 +492,7 @@ const WhySeaBite = () => {
           <RevealLeft>
             <div>
               <SectionLabel>Why Choose Us</SectionLabel>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>The SeaBite<br />difference.</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The SeaBite<br />difference.</h2>
             </div>
           </RevealLeft>
           <RevealRight delay={0.1}>
@@ -531,41 +531,100 @@ const WhySeaBite = () => {
 const Reviews = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
-    axios.get(`${API_URL}/api/products/top-reviews`).then((res) => { setReviews(res.data); setLoading(false); }).catch(() => setLoading(false));
+    axios.get(`${API_URL}/api/products/top-reviews`)
+      .then((res) => { 
+        setReviews(res.data); 
+        setLoading(false); 
+      })
+      .catch(() => setLoading(false));
   }, []);
+
+  const getFullImageUrl = (imagePath) => {
+    if (!imagePath) return "";
+    if (imagePath.startsWith("http")) return imagePath;
+    const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
+    return cleanPath.startsWith("/uploads")
+      ? `${API_URL}${cleanPath}`
+      : `${API_URL}/uploads${cleanPath}`;
+  };
+
   return (
-    <section className="py-20 px-6 md:px-12 bg-[#F8FAFB]">
-      <div className="max-w-7xl mx-auto">
-        <Reveal>
-          <SectionLabel>Customer Reviews</SectionLabel>
-          <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] mb-12" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>Loved by seafood lovers.</h2>
-        </Reveal>
-        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {loading ? (
-            <div className="col-span-1 md:col-span-3"><SeaBiteLoader /></div>
-          ) : reviews.length > 0 ? (
-            reviews.map((r, i) => (
-              <SI key={i}>
-                <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.3 }} className="bg-white border border-[#E8EEF2] rounded-2xl p-6 h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-shadow duration-300">
-                  <div className="flex gap-0.5 mb-5">
-                    {[...Array(5)].map((_, j) => <Star key={j} size={13} className={j < r.rating ? "text-amber-400 fill-amber-400" : "text-[#E8EEF2] fill-[#E8EEF2]"} />)}
+    <section className="py-24 px-6 md:px-12 bg-white relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-[#F0FBF9] rounded-full blur-3xl opacity-60 -mr-32 -mt-32" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#FEF0EC] rounded-full blur-3xl opacity-40 -ml-48 -mb-48" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="text-center mb-16">
+          <Reveal>
+            <SectionLabel>Wall of Love</SectionLabel>
+            <h2 className="text-4xl md:text-5xl font-black text-[#1A2B35] tracking-tight mt-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              What our community <br className="hidden md:block" />
+              is <span className="text-[#5BA8A0]">catching</span>.
+            </h2>
+          </Reveal>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-20"><SeaBiteLoader /></div>
+        ) : reviews.length > 0 ? (
+          <Stagger className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+            {reviews.map((r, i) => (
+              <SI key={i} className="break-inside-avoid">
+                <motion.div 
+                  whileHover={{ y: -6 }} 
+                  transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} 
+                  className="bg-[#F8FAFB] border border-[#E8EEF2] rounded-[2rem] p-6 md:p-8 hover:shadow-[0_20px_50px_rgba(26,46,44,0.08)] transition-all duration-500 group"
+                >
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, j) => (
+                        <Star key={j} size={14} className={j < r.rating ? "text-amber-400 fill-amber-400" : "text-[#E8EEF2]"} />
+                      ))}
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[#B8CFCC]">Verified</span>
                   </div>
-                  <p className="text-[#4A6572] text-sm leading-relaxed mb-6">&ldquo;{r.comment}&rdquo;</p>
-                  <div className="flex items-center gap-3 pt-4 border-t border-[#F5F7F9]">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#5BA8A0] to-[#89C2D9] flex items-center justify-center text-white"><User size={14} /></div>
+
+                  <p className="text-[#4A6572] text-[15px] leading-relaxed mb-6 font-medium italic">
+                    &ldquo;{r.comment}&rdquo;
+                  </p>
+
+                  {/* Review Images Feed */}
+                  {r.images && r.images.length > 0 && (
+                    <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
+                      {r.images.map((img, idx) => (
+                        <div key={idx} className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
+                          <img src={getFullImageUrl(img)} alt="Customer review" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-4 pt-6 border-t border-[#E8EEF2]">
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#1A2B35] to-[#4A6572] flex items-center justify-center text-white shadow-lg">
+                      <User size={18} />
+                    </div>
                     <div>
-                      <p className="text-sm font-semibold text-[#1A2B35]">{r.userName}</p>
-                      <p className="text-[11px] text-[#5BA8A0] font-medium">{r.productName}</p>
+                      <p className="text-[15px] font-black text-[#1A2B35]">{r.userName}</p>
+                      <p className="text-xs text-[#5BA8A0] font-bold tracking-tight uppercase">{r.productName}</p>
                     </div>
                   </div>
                 </motion.div>
               </SI>
-            ))
-          ) : <p className="col-span-3 text-center text-[#8BA5B3]">No reviews yet.</p>}
-        </Stagger>
-        <style>{`@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}`}</style>
+            ))}
+          </Stagger>
+        ) : (
+          <div className="text-center py-20 bg-[#F8FAFB] rounded-[3rem] border border-dashed border-[#E2EEEC]">
+            <p className="text-[#B8CFCC] font-bold">The wall is waiting for your story. 🌊</p>
+          </div>
+        )}
       </div>
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
     </section>
   );
 };
@@ -631,7 +690,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto">
             <Reveal>
               <SectionLabel>Trending</SectionLabel>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] mb-8" style={{ fontFamily: "'Bricolage Grotesque', 'Plus Jakarta Sans', sans-serif" }}>Customer Favorites</h2>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] mb-8" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Customer Favorites</h2>
             </Reveal>
             <TrendingProducts />
           </div>

@@ -42,6 +42,7 @@ import compression from "compression";
 
 // [Import Cron Workers]
 import { initAbandonedCartWorker } from "./cron/abandonedCartWorker.js";
+import happyHourCron from "./cron/happyHour.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -68,12 +69,31 @@ const allowedOrigins = [
   "https://seabite.co.in",
   "https://www.seabite.co.in",
   "http://localhost:5173",
+  "http://127.0.0.1:5173",
   "https://seabite-server.vercel.app"
 ];
+
+// 🟢 [THE WATCHTOWER] High-Visibility Request Sentinel
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (req.path.startsWith("/api")) {
+      console.log(`📡 [WATCHTOWER] ${res.statusCode >= 400 ? '❌' : '✅'} ${req.method} ${req.path} | Status: ${res.statusCode} | Origin: ${req.headers.origin || 'NONE'} | ${duration}ms`);
+    }
+  });
+  next();
+});
 
 // ✅ ROBURST CORS
 app.use((req, res, next) => {
   const origin = req.headers.origin;
+  
+  // DEBUG LOG
+  if (req.path.startsWith("/api")) {
+    console.log(`📡 [API DEBUG] ${req.method} ${req.path} | Origin: ${origin || "NONE"}`);
+  }
+
   if (allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
   } else if (!origin && process.env.NODE_ENV !== 'production') {
@@ -155,7 +175,7 @@ app.use(helmet.xssFilter());
 // 2. Global Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 500, // Increased to avoid blocking legitimate UI polling
   message: "Too many requests from this IP, please try again later."
 });
 app.use("/api", limiter);
@@ -352,7 +372,8 @@ app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
   const isProduction = process.env.NODE_ENV === "production";
 
-  // console.error(`❌ ${req.method} ${req.path} Error:`, err);
+  console.error(`❌ [ERROR HANDLER] ${req.method} ${req.path} | Status: ${statusCode} | Error:`, err.message);
+  if (!isProduction && err.stack) console.error(err.stack);
 
   res.status(statusCode).json({
     success: false,
@@ -369,6 +390,7 @@ const server = httpServer.listen(PORT, () => {
   
   // 🟢 Start Background Workers
   initAbandonedCartWorker();
+  happyHourCron.start();
 
   // 🟢 Start System Pulse
   setInterval(() => {

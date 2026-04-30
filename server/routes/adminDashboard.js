@@ -11,10 +11,36 @@ const router = express.Router();
 // ===============================================
 router.get("/", adminAuth, async (req, res) => {
   try {
-    /* COUNTS */
-    const products = await Product.countDocuments();
-    const orders = await Order.countDocuments();
-    const users = await User.countDocuments();
+    const productsCount = await Product.countDocuments();
+    const ordersCount = await Order.countDocuments();
+    const usersCount = await User.countDocuments();
+
+    /* FINANCIALS (Profit Calculation) */
+    const allOrders = await Order.find({ status: { $ne: "Cancelled" } });
+    let totalRevenue = 0;
+    let totalCogs = 0;
+
+    allOrders.forEach(o => {
+      totalRevenue += (o.totalAmount || 0);
+      // Calculate COGS from snapshot in order items
+      o.items.forEach(item => {
+        totalCogs += (item.buyingPrice || 0) * (item.qty || 1);
+      });
+    });
+
+    const totalProfit = totalRevenue - totalCogs;
+
+    /* SLA ALERTS (Pending/Processing > 24h) */
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const slaBreaches = await Order.find({
+      status: { $in: ["Pending", "Processing"] },
+      createdAt: { $lt: dayAgo }
+    }).populate('user', 'name');
+
+    /* STOCK RISK ALERTS */
+    const stockRisks = await Product.find({
+      $expr: { $lte: ["$countInStock", "$stockThreshold"] }
+    });
 
     /* MONTHLY ORDERS GRAPH (LAST 12 MONTHS) */
     const monthly = await Order.aggregate([
@@ -50,7 +76,18 @@ router.get("/", adminAuth, async (req, res) => {
       .limit(5);
 
     res.json({
-      stats: { products, orders, users },
+      stats: { 
+        products: productsCount, 
+        orders: ordersCount, 
+        users: usersCount,
+        revenue: Math.round(totalRevenue),
+        profit: Math.round(totalProfit),
+        margin: totalRevenue > 0 ? Math.round((totalProfit / totalRevenue) * 100) : 0
+      },
+      alerts: {
+        slaBreaches,
+        stockRisks
+      },
       graph,
       recentOrders,
       popularProducts,

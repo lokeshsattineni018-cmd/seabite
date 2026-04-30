@@ -63,7 +63,7 @@ export default function CartSidebar({ onClose }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.28 }}
             onClick={closeCart}
-            style={{ position: "fixed", inset: 0, background: "rgba(26,43,53,0.32)", backdropFilter: "blur(6px)", zIndex: 1000 }}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }}
           />
 
           {/* SIDEBAR DRAWER */}
@@ -74,11 +74,11 @@ export default function CartSidebar({ onClose }) {
             transition={{ type: "spring", damping: 30, stiffness: 260, mass: 0.8 }}
             style={{
               position: "fixed", top: 0, right: 0, height: "100%",
-              width: "100%", maxWidth: 440,
+              width: "85vw", maxWidth: 400,
               background: T.surface, zIndex: 1010,
               display: "flex", flexDirection: "column",
               borderLeft: `1px solid ${T.border}`,
-              boxShadow: "-8px 0 48px rgba(26,43,53,0.10)",
+              boxShadow: "-8px 0 48px rgba(0,0,0,0.15)",
               fontFamily: font,
             }}
           >

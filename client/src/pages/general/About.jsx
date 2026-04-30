@@ -132,7 +132,7 @@ export default function About() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 style={{
-                  fontFamily: "'Bricolage Grotesque', sans-serif",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
                   fontSize: "clamp(48px, 6vw, 80px)",
                   fontWeight: "800",
                   lineHeight: 1.0,
@@ -256,7 +256,7 @@ export default function About() {
                 { val: "4.8★", label: "Avg. Rating" },
               ].map((s, i) => (
                 <div key={i} style={{ textAlign: "center", padding: "0 24px", borderRight: i < 3 ? "1px solid #E8EEF2" : "none" }}>
-                  <p style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: "32px", fontWeight: "800", color: "#5BA8A0", letterSpacing: "-0.03em", margin: "0 0 4px" }}>{s.val}</p>
+                  <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "32px", fontWeight: "800", color: "#5BA8A0", letterSpacing: "-0.03em", margin: "0 0 4px" }}>{s.val}</p>
                   <p style={{ fontSize: "12px", fontWeight: "600", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{s.label}</p>
                 </div>
               ))}
@@ -269,7 +269,7 @@ export default function About() {
           <Reveal style={{ marginBottom: "56px" }}>
             <div style={{ marginBottom: "56px" }}>
               <p style={{ fontSize: "11px", fontWeight: "700", color: "#5BA8A0", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "10px" }}>Why Choose Us</p>
-              <h2 style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: "clamp(28px,4vw,42px)", fontWeight: "800", color: "#1A2B35", letterSpacing: "-0.03em", margin: 0 }}>
+              <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "clamp(28px,4vw,42px)", fontWeight: "800", color: "#1A2B35", letterSpacing: "-0.03em", margin: 0 }}>
                 The SeaBite difference.
               </h2>
             </div>
@@ -305,7 +305,7 @@ export default function About() {
               <Reveal x={-24} y={0}>
                 <div>
                   <p style={{ fontSize: "11px", fontWeight: "700", color: "#5BA8A0", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "10px" }}>Origin</p>
-                  <h2 style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: "clamp(28px,4vw,42px)", fontWeight: "800", color: "#1A2B35", letterSpacing: "-0.03em", marginBottom: "24px" }}>
+                  <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "clamp(28px,4vw,42px)", fontWeight: "800", color: "#1A2B35", letterSpacing: "-0.03em", marginBottom: "24px" }}>
                     The Origin Story
                   </h2>
                   <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -366,7 +366,7 @@ export default function About() {
             }}>
               <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 0%, rgba(91,168,160,0.15) 0%, transparent 60%)", pointerEvents: "none" }} />
               <p style={{ fontSize: "11px", fontWeight: "700", color: "#5BA8A0", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: "16px", position: "relative" }}>Ready?</p>
-              <h2 style={{ fontFamily: "'Bricolage Grotesque',sans-serif", fontSize: "clamp(28px,4vw,48px)", fontWeight: "800", color: "#fff", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: "16px", position: "relative" }}>
+              <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "clamp(28px,4vw,48px)", fontWeight: "800", color: "#fff", letterSpacing: "-0.03em", lineHeight: 1.1, marginBottom: "16px", position: "relative" }}>
                 Ready to taste the coast?
               </h2>
               <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.5)", maxWidth: "400px", margin: "0 auto 36px", lineHeight: "1.7", position: "relative" }}>

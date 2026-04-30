@@ -28,6 +28,7 @@ router.get("/top-reviews", async (req, res) => {
           userName: review.name,
           rating: review.rating,
           comment: review.comment,
+          images: review.images || [], // 🟢 Include review images
           createdAt: review.createdAt,
         });
       });
@@ -83,26 +84,31 @@ router.get("/", async (req, res) => {
 
     const products = await Product.find(query).sort(sortOptions);
 
-    // ✅ Enterprise: Log Search Insight
-    if (search) {
-      try {
-        await SearchInsight.findOneAndUpdate(
-          { query: search.toLowerCase().trim() },
-          {
-            $inc: { count: 1 },
-            $set: {
-              found: products.length > 0,
-              lastSearched: Date.now()
-            }
-          },
-          { upsert: true, returnDocument: "after" }
-        );
+    // ✅ Enterprise: Log Search Insight (ZRO: Zero-Result Optimization)
+    if (search && search.trim().length > 2) {
+      const sanitizedSearch = search.toLowerCase().trim();
+      // Filter out common "test" junk
+      const junk = ["hi", "h", "hello", "test", "hey"];
+      if (!junk.includes(sanitizedSearch)) {
+        try {
+          await SearchInsight.findOneAndUpdate(
+            { query: sanitizedSearch },
+            {
+              $inc: { count: 1 },
+              $set: {
+                found: products.length > 0,
+                lastSearched: Date.now()
+              }
+            },
+            { upsert: true, returnDocument: "after" }
+          );
 
-        // 🟢 WATCHTOWER LOGGING
-        logActivity("SEARCH", `Searched for "${search}"`, req, { results: products.length });
+          // 🟢 WATCHTOWER LOGGING
+          logActivity("SEARCH", `Searched for "${sanitizedSearch}"`, req, { results: products.length });
 
-      } catch (err) {
-        console.error("Search Insight Error:", err);
+        } catch (err) {
+          console.error("Search Insight Error:", err);
+        }
       }
     }
 
@@ -253,8 +259,8 @@ router.post("/", upload.single('image'), async (req, res) => {
   }
 });
 
-// 🟢 ADD OR UPDATE REVIEW ROUTE (Restricted to Valid Buyers)
-router.post("/:id/reviews", protect, async (req, res) => {
+// 🟢 ADD OR UPDATE REVIEW ROUTE (Restricted to Valid Buyers) - With Photos (Cloudinary Optimized)
+router.post("/:id/reviews", protect, upload.array('images', 5), async (req, res) => {
   const { rating, comment } = req.body;
 
   try {
@@ -278,14 +284,36 @@ router.post("/:id/reviews", protect, async (req, res) => {
         (r) => r.user.toString() === req.user._id.toString()
       );
 
+      // Cloudinary Upload Logic (Consistent with Admin)
+      let reviewImages = [];
+      if (req.files && req.files.length > 0) {
+        const { v2: cloudinary } = await import("cloudinary");
+        cloudinary.config({
+          cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+          api_key: process.env.CLOUDINARY_API_KEY,
+          api_secret: process.env.CLOUDINARY_API_SECRET,
+        });
+
+        for (const file of req.files) {
+          const b64 = Buffer.from(file.buffer).toString("base64");
+          let dataURI = "data:" + file.mimetype + ";base64," + b64;
+          const cloudinaryResponse = await cloudinary.uploader.upload(dataURI, {
+            folder: "seabite-reviews",
+          });
+          reviewImages.push(cloudinaryResponse.secure_url);
+        }
+      }
+
       if (alreadyReviewed) {
         alreadyReviewed.rating = Number(rating);
         alreadyReviewed.comment = comment;
+        if (reviewImages.length > 0) alreadyReviewed.images = reviewImages;
       } else {
         const review = {
           name: req.user.name,
           rating: Number(rating),
           comment,
+          images: reviewImages,
           user: req.user._id,
         };
         product.reviews.push(review);

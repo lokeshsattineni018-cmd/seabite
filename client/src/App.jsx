@@ -20,6 +20,7 @@ import SeaBiteLoader from "./components/common/SeaBiteLoader"; // 🟢 Added Cus
 import CookieConsent from "./components/common/CookieConsent"; // 🟢 Cookie Consent
 import MobileNav from "./components/layout/MobileNav"; // 📱 Mobile Navigation Enabled
 import ComparisonDrawer from "./components/common/ComparisonDrawer"; // 📊 Product Comparison Drawer
+import GoogleOneTap from "./components/common/GoogleOneTap"; // 🟢 Google One Tap Login
 
 // Lazy Imports for Critical Pages
 const Home = lazy(() => import("./pages/shop/Home"));
@@ -43,6 +44,7 @@ const Maintenance = lazy(() => import("./pages/general/Maintenance"));
 const Contact = lazy(() => import("./pages/general/Contact"));
 const Signup = lazy(() => import("./pages/auth/Signup"));
 const ReferEarn = lazy(() => import("./pages/user/ReferEarn"));
+const Recipes = lazy(() => import("./pages/general/Recipes")); // 🥘 Shoppable Recipes
 const NotFound = lazy(() => import("./pages/general/NotFound"));
 
 // Admin Lazy Imports
@@ -54,8 +56,8 @@ const EditProduct = lazy(() => import("./admin/EditProduct"));
 const AdminOrders = lazy(() => import("./admin/AdminOrders"));
 const AdminUsers = lazy(() => import("./admin/AdminUsers"));
 const AdminMessages = lazy(() => import("./admin/AdminMessages"));
+const AdminDelivery = lazy(() => import("./admin/AdminDelivery"));
 const AdminReviews = lazy(() => import("./admin/AdminReviews"));
-const AdminCoupons = lazy(() => import("./admin/AdminCoupons"));
 const AdminPOS = lazy(() => import("./admin/AdminPOS"));
 const AdminFlashSale = lazy(() => import("./admin/AdminFlashSale"));
 const AdminMarketing = lazy(() => import("./admin/AdminMarketing"));
@@ -67,7 +69,7 @@ const AdminIAM = lazy(() => import("./admin/AdminIAM"));
 const AdminRegistry = lazy(() => import("./admin/AdminRegistry"));
 const AdminSearchDiscovery = lazy(() => import("./admin/AdminSearchDiscovery"));
 const AdminComplaints = lazy(() => import("./admin/AdminComplaints")); // 🟢 Added
-const AdminDelivery = lazy(() => import("./admin/AdminDelivery")); // [New: Delivery Management]
+const AdminCoupons = lazy(() => import("./admin/AdminCoupons")); // 🏷️ Added
 
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -118,7 +120,7 @@ function MainLayout() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const { data } = await axios.get(`${axios.defaults.baseURL}/api/admin/enterprise/settings`);
+        const { data } = await axios.get(`${axios.defaults.baseURL}/api/settings`);
         setMaintenance({
           active: data.isMaintenanceMode,
           message: data.maintenanceMessage,
@@ -203,6 +205,9 @@ function MainLayout() {
       {/* 🟢 Cookie Consent */}
       <CookieConsent />
 
+      {/* 🔐 Google One Tap Login */}
+      <GoogleOneTap />
+
       {/* 📱 Mobile Navigation Removed */}
 
       {maintenance.active && !isAdminRoute && location.pathname !== "/login" ? (
@@ -244,7 +249,8 @@ function MainLayout() {
                     <Route path="iam" element={<AdminIAM />} />
                     <Route path="registry" element={<AdminRegistry />} />
                     <Route path="discovery" element={<AdminSearchDiscovery />} />
-                    <Route path="complaints" element={<AdminComplaints />} /> {/* 🟢 Added */}
+                    <Route path="complaints" element={<AdminComplaints />} />
+                    <Route path="fleet" element={<AdminDelivery />} />
                   </Route>
                 </Routes>
               ) : (
@@ -261,6 +267,7 @@ function MainLayout() {
                     <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
                     <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
                     <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
+                    <Route path="/recipes" element={<Recipes />} />
                     <Route path="/login" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=login" replace />} />
                     <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=signup" replace />} />
                     <Route path="/about" element={<About />} />

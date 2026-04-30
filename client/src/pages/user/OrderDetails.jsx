@@ -27,17 +27,108 @@ import {
   FiArrowLeft, FiPackage, FiMapPin, FiCreditCard,
   FiShoppingBag, FiTruck, FiCheckCircle, FiXCircle,
   FiDownload, FiAlertCircle, FiExternalLink, FiRotateCcw,
-  FiStar, FiCalendar, FiShoppingCart,
+  FiStar, FiCalendar, FiShoppingCart, FiCheck,
 } from "react-icons/fi";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion, useMotionValue, useTransform } from "framer-motion";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import ReviewModal from "../../components/common/ReviewModal";
 import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
 import { generateInvoicePDF } from "../../utils/pdfGenerator";
 import OrderTrackerMap from "../../components/orders/OrderTrackerMap";
+import triggerHaptic from "../../utils/haptics";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+
+// ─────────────────────────────────────────────────────────────
+// QUALITY SLIDER — Haptic Feedback Slider
+// ─────────────────────────────────────────────────────────────
+function QualitySlider({ onConfirm, confirmed }) {
+  const x = useMotionValue(0);
+  const maxWidth = 260; // Approximate width of the slider area
+  const bgWidth = useTransform(x, [0, maxWidth], ["0%", "100%"]);
+  const opacity = useTransform(x, [0, maxWidth * 0.8], [1, 0]);
+  
+  const [lastHaptic, setLastHaptic] = useState(0);
+
+  const handleDrag = (event, info) => {
+    const currentX = info.offset.x;
+    // Trigger soft haptic every 20px for that "gear" feel
+    if (Math.abs(currentX - lastHaptic) > 20) {
+      triggerHaptic("soft");
+      setLastHaptic(currentX);
+    }
+  };
+
+  const handleDragEnd = (event, info) => {
+    if (info.offset.x >= maxWidth * 0.9) {
+      triggerHaptic("heavy");
+      onConfirm();
+    } else {
+      x.set(0);
+    }
+  };
+
+  if (confirmed) {
+    return (
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        style={{ textAlign: "center", padding: "10px 0" }}
+      >
+        <div style={{ 
+          width: 44, height: 44, borderRadius: "50%", background: "#10B981", 
+          margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" 
+        }}>
+          <FiCheck size={24} strokeWidth={3} />
+        </div>
+        <h4 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#1A2E2C", fontFamily: "'Sora', sans-serif" }}>Quality Confirmed</h4>
+        <p style={{ margin: "4px 0 0", fontSize: 12, color: "#6E6E73" }}>Thank you for your feedback!</p>
+      </motion.div>
+    );
+  }
+
+  return (
+    <div style={{ position: "relative" }}>
+      <h4 style={{ margin: "0 0 16px", fontSize: 14, fontWeight: 700, color: "#1A2E2C", fontFamily: "'Sora', sans-serif" }}>Confirm Freshness</h4>
+      <div style={{ 
+        position: "relative", height: 56, background: "#F1F1F1", borderRadius: 28, overflow: "hidden",
+        display: "flex", alignItems: "center", justifyContent: "center"
+      }}>
+        {/* Fill Background */}
+        <motion.div style={{ 
+          position: "absolute", left: 0, top: 0, bottom: 0, width: bgWidth, 
+          background: "linear-gradient(90deg, #10B981 0%, #34D399 100%)", zIndex: 0 
+        }} />
+        
+        {/* Text Prompt */}
+        <motion.span style={{ 
+          opacity, zIndex: 1, fontSize: 13, fontWeight: 600, color: "#A1A1A6", 
+          pointerEvents: "none", userSelect: "none" 
+        }}>
+          Slide to confirm quality →
+        </motion.span>
+
+        {/* Handle */}
+        <motion.div
+          drag="x"
+          dragConstraints={{ left: 0, right: maxWidth }}
+          dragElastic={0.1}
+          onDrag={handleDrag}
+          onDragEnd={handleDragEnd}
+          style={{ 
+            x, position: "absolute", left: 4, width: 48, height: 48, 
+            background: "#fff", borderRadius: "50%", cursor: "grab",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 2,
+            display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981"
+          }}
+          whileDrag={{ cursor: "grabbing", scale: 1.05 }}
+        >
+          <FiCheck size={20} strokeWidth={3} />
+        </motion.div>
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────
 // DESIGN TOKENS — must match Order.jsx
@@ -46,7 +137,7 @@ const T = {
   // Apple/H&M Backgrounds
   bg: "#FFFFFF",
   surface: "#FFFFFF",
-  glass: "rgba(255,255,255,0.85)",
+  glass: "rgba(255,255,255,1)",
 
   // Borders
   border: "#F1F1F1",
@@ -141,13 +232,12 @@ const DETAIL_CSS = `
     animation: lx-det-shimmer 1.5s infinite linear;
   }
 
-  /* Glassmorphism sticky bar */
+  /* Sticky bar */
   .lx-sticky {
     position: sticky;
     top: 0;
     z-index: 80;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    background: #fff;
   }
 
   @media (max-width: 800px) {
@@ -426,6 +516,8 @@ function QualityComplaintModal({ order, onClose }) {
       );
       toast.success("Issue reported — we'll respond within 24 hours.");
       onClose();
+      // Force refresh to show the new complaint
+      setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to submit. Please try again.");
     } finally {
@@ -737,6 +829,18 @@ export default function OrderDetails() {
     setReviewOpen(true);
   }, []);
 
+  // ── Confirm Quality ──────────────────────────────────────
+  const handleConfirmQuality = useCallback(async () => {
+    if (!order) return;
+    try {
+      await axios.put(`${API_URL}/api/orders/${order._id}/confirm-quality`, {}, { withCredentials: true });
+      setOrder(prev => ({ ...prev, qualityConfirmed: true }));
+      toast.success("Quality confirmed! 🌊", { duration: 4000 });
+    } catch (err) {
+      toast.error("Failed to save confirmation");
+    }
+  }, [order]);
+
   // ── ETA string ────────────────────────────────────────────
   const getETA = useCallback(createdAt => {
     const d = new Date(createdAt);
@@ -886,9 +990,12 @@ export default function OrderDetails() {
         onClose={() => setReviewOpen(false)}
         product={reviewProduct}
         existingReview={null}
-        token={null}
+        token={token}
         API_URL={API_URL}
-        onSuccess={() => toast.success("Review saved!")}
+        onSuccess={() => {
+          toast.success("Review saved!");
+          // Re-fetch order to refresh UI if needed
+        }}
       />
       <AnimatePresence>
         {complaintOpen && <QualityComplaintModal order={order} onClose={() => setComplaintOpen(false)} />}
@@ -1224,6 +1331,19 @@ export default function OrderDetails() {
           {/* ── RIGHT COLUMN (STICKY) ────────────────── */}
           <div style={{ flex: "1 1 35%", minWidth: 300, display: "flex", flexDirection: "column", gap: 24, position: "sticky", top: 100 }}>
 
+            {order.status === "Delivered" && (
+              <AppleSection style={{ 
+                background: "linear-gradient(135deg, #F0FBF9 0%, #FFFFFF 100%)", 
+                border: `1.5px solid ${order.qualityConfirmed ? "#10B981" : "#B8DDD9"}`,
+                boxShadow: "0 10px 40px rgba(16, 185, 129, 0.08)"
+              }}>
+                <QualitySlider 
+                  confirmed={order.qualityConfirmed} 
+                  onConfirm={handleConfirmQuality} 
+                />
+              </AppleSection>
+            )}
+
             <AppleSection>
               {/* Action Buttons Group */}
               <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24, paddingBottom: 24, borderBottom: `1px solid ${T.border}` }}>
@@ -1264,7 +1384,7 @@ export default function OrderDetails() {
                 <PriceRow
                   label="Shipping"
                   value={order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000) ? "Free" : `₹${order.shippingPrice || 99}`}
-                  color={(order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000)) ? T.ink : undefined}
+                  color={(order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000)) ? T.jade : undefined}
                 />
                 <PriceRow label="Tax" value={`₹${order.taxPrice || Math.round(((order.itemsPrice || 0) - (order.discount || 0)) * 0.05)}`} />
                 {order.discount > 0 && (
@@ -1291,6 +1411,33 @@ export default function OrderDetails() {
                 </div>
               )}
             </AppleSection>
+
+            {/* ── Reported Issues Section ────────────────── */}
+            {order.complaints && order.complaints.length > 0 && (
+              <AppleSection style={{ background: "#FFF9F9", border: "1.5px solid #FBCBCB" }}>
+                <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: "#C05A45", margin: "0 0 16px", display: "flex", alignItems: "center", gap: 8 }}>
+                  <FiAlertCircle size={18} /> Reported Issues
+                </h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {order.complaints.map((c, i) => (
+                    <div key={i} style={{ padding: 16, background: "#fff", borderRadius: 16, border: "1px solid #F5D3D3" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                        <span style={{ fontSize: 11, fontWeight: 800, color: "#C05A45", textTransform: "uppercase", letterSpacing: "0.05em" }}>{c.issueType}</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: c.status === "Resolved" ? "#059669" : "#D97706", background: c.status === "Resolved" ? "#ECFDF5" : "#FFFBEB", padding: "2px 8px", borderRadius: 99 }}>{c.status}</span>
+                      </div>
+                      <p style={{ fontSize: 13, color: T.inkMid, margin: 0 }}>"{c.description}"</p>
+                      {c.adminReply && (
+                        <div style={{ marginTop: 12, padding: 12, background: "#F8FAFB", borderRadius: 12, borderLeft: `3px solid #5BA8A0` }}>
+                          <p style={{ fontSize: 10, fontWeight: 800, color: "#5BA8A0", textTransform: "uppercase", marginBottom: 4 }}>Admin Response</p>
+                          <p style={{ fontSize: 12, color: T.inkMid, margin: 0 }}>{c.adminReply}</p>
+                        </div>
+                      )}
+                      <p style={{ fontSize: 10, color: T.inkSoft, marginTop: 8 }}>{new Date(c.createdAt).toLocaleDateString()} at {new Date(c.createdAt).toLocaleTimeString()}</p>
+                    </div>
+                  ))}
+                </div>
+              </AppleSection>
+            )}
 
             {/* Payment info */}
             <AppleSection>

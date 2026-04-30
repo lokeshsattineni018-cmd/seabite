@@ -1,5 +1,8 @@
 import express from "express";
 import Contact from "../models/Contact.js";
+import User from "../models/User.js";
+import Order from "../models/Order.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -11,7 +14,19 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ success: false, message: "Email and message are required" });
     }
 
-    await Contact.create({ name, email, subject, message });
+    // 🧠 AI Intent Tagging (Keyword Based)
+    const tags = [];
+    const lowerMsg = message.toLowerCase();
+    
+    const complaintKeywords = ["bad", "smell", "rotten", "delayed", "late", "wrong", "missing", "worst"];
+    const salesKeywords = ["bulk", "kg", "restaurant", "hotel", "order", "price for 10kg", "discount"];
+    
+    if (complaintKeywords.some(k => lowerMsg.includes(k))) tags.push("Complaint");
+    if (salesKeywords.some(k => lowerMsg.includes(k))) tags.push("Sales Lead");
+
+    const status = tags.includes("Complaint") ? "Urgent" : "New";
+
+    await Contact.create({ name, email, subject, message, tags, status });
     res.status(201).json({ success: true, message: "Message Sent Successfully!" });
   } catch (error) {
     res.status(500).json({ success: false, message: "Server Error" });
@@ -30,10 +45,58 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 3. POST: Admin replies to a message
+// 3. PUT: Update status or mark as read
+router.put("/:id", protect, admin, async (req, res) => {
+  try {
+    const { status, tags, read } = req.body;
+    const msg = await Contact.findById(req.params.id);
+    if (!msg) return res.status(404).json({ message: "Message not found" });
+
+    if (status) msg.status = status;
+    if (tags) msg.tags = tags;
+    if (read !== undefined) msg.read = read;
+
+    await msg.save();
+    res.json(msg);
+  } catch (err) {
+    res.status(500).json({ message: "Update failed" });
+  }
+});
+
+// 4. GET: Customer 360 (Context for Sidebar)
+router.get("/customer-360/:email", protect, admin, async (req, res) => {
+  try {
+    const email = req.params.email;
+    
+    // Fetch User Profile & Cart
+    const user = await User.findOne({ email }).populate('cart.product', 'name image basePrice');
+    
+    // Fetch Recent Orders
+    let orders = [];
+    if (user) {
+      orders = await Order.find({ user: user._id }).sort({ createdAt: -1 }).limit(5);
+    } else {
+      orders = await Order.find({ "shippingAddress.email": email }).sort({ createdAt: -1 }).limit(5);
+    }
+
+    res.json({
+      user: user ? {
+        name: user.name,
+        email: user.email,
+        walletBalance: user.walletBalance,
+        cart: user.cart,
+      } : null,
+      recentOrders: orders
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Context fetch failed" });
+  }
+});
+
+// 5. POST: Admin replies to a message
 import { sendEmail } from "../utils/emailService.js";
 
-router.post("/reply", async (req, res) => {
+router.post("/reply", protect, admin, async (req, res) => {
   try {
     const { to, subject, message, originalMessageId } = req.body;
 
@@ -43,6 +106,11 @@ router.post("/reply", async (req, res) => {
 
     // Send email using existing service
     await sendEmail(to, subject || "Response from SeaBite Support", message);
+
+    // Update status to Pending Reply if it was New
+    if (originalMessageId) {
+      await Contact.findByIdAndUpdate(originalMessageId, { status: "Pending Reply" });
+    }
 
     res.json({ success: true, message: "Reply sent successfully!" });
   } catch (err) {

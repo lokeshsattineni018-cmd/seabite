@@ -203,19 +203,31 @@ export default function OrderSuccess() {
           <div style={{ position: "relative", width: 80, height: 80, margin: "0 auto 14px" }}>
             <RippleRing delay={0} />
             <RippleRing delay={0.9} />
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={visible ? { scale: 1 } : {}}
-              transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.1 }}
+             <motion.div
+              initial={{ scale: 0, rotate: -20 }}
+              animate={visible ? { scale: 1, rotate: 0 } : {}}
+              transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.1 }}
               style={{
-                width: 80, height: 80, borderRadius: "50%",
-                background: `linear-gradient(135deg, ${T.primary} 0%, ${T.sky} 100%)`,
+                width: 84, height: 84, borderRadius: "50%",
+                background: "#fff",
                 display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: `0 16px 48px rgba(91,168,160,0.38)`,
+                boxShadow: `0 20px 40px rgba(16,185,129,0.12)`,
+                border: "2px solid #10B981",
                 position: "relative", zIndex: 1,
               }}
             >
-              <FiCheck size={36} color="#fff" strokeWidth={2.8} />
+              <svg width="44" height="44" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <motion.path
+                  d="M10 20.5L16.5 27L30 13.5"
+                  stroke="#10B981"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  initial={{ pathLength: 0 }}
+                  animate={visible ? { pathLength: 1 } : {}}
+                  transition={{ duration: 0.6, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                />
+              </svg>
             </motion.div>
           </div>
 

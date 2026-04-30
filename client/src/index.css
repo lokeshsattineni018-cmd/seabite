@@ -11,8 +11,9 @@ html body {
   margin: 0;
   overflow-x: hidden;
   transition: background-color 0.5s ease, color 0.5s ease;
-  /* 📱 Room for Mobile Bottom Nav */
-  padding-bottom: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @media (max-width: 768px) {
@@ -500,6 +501,16 @@ html.dark body {
 
   .admin-content {
     margin-left: 0 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .auth-modal-right {
+    padding: 0 !important;
+  }
+  .auth-modal-inner {
+    padding: 32px 24px !important;
+    border-radius: 16px !important;
   }
 }
 

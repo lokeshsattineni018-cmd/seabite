@@ -26,7 +26,7 @@ export default function Contact() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F4F9F8", fontFamily: "'Manrope', sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#F4F9F8", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <Helmet>
         <title>Contact Us | SeaBite</title>
         <meta name="description" content="Get in touch with SeaBite for any queries, order tracking, or support." />
@@ -38,7 +38,7 @@ export default function Contact() {
         <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "0 24px" }}>
           <motion.h1 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-            style={{ fontFamily: "'Lora', serif", fontSize: "clamp(32px, 5vw, 42px)", fontWeight: 700, color: "#fff", margin: 0 }}
+            style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "clamp(32px, 5vw, 42px)", fontWeight: 700, color: "#fff", margin: 0 }}
           >
             We're Here to Help
           </motion.h1>
@@ -96,25 +96,25 @@ export default function Contact() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#6B8F8A", marginBottom: "6px" }}>Name</label>
-                  <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Manrope', sans-serif" }} />
+                  <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#6B8F8A", marginBottom: "6px" }}>Email</label>
-                  <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Manrope', sans-serif" }} />
+                  <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
                 </div>
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#6B8F8A", marginBottom: "6px" }}>Subject</label>
-                <input required value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Manrope', sans-serif" }} />
+                <input required value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#6B8F8A", marginBottom: "6px" }}>Message</label>
-                <textarea required rows={4} value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", resize: "vertical", fontFamily: "'Manrope', sans-serif" }} />
+                <textarea required rows={4} value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", resize: "vertical", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
               </div>
               <motion.button 
                 whileTap={{ scale: 0.98 }}
                 disabled={isSubmitting}
-                style={{ width: "100%", padding: "14px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "10px", fontSize: "14px", fontWeight: 700, cursor: isSubmitting ? "not-allowed" : "pointer", marginTop: "8px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontFamily: "'Manrope', sans-serif" }}
+                style={{ width: "100%", padding: "14px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "10px", fontSize: "14px", fontWeight: 700, cursor: isSubmitting ? "not-allowed" : "pointer", marginTop: "8px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
               >
                 {isSubmitting ? "Sending..." : <><FiSend size={16} /> Send Message</>}
               </motion.button>

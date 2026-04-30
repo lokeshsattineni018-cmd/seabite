@@ -11,6 +11,7 @@ const reviewSchema = new mongoose.Schema(
     name: { type: String, required: true }, // Store user's name for display
     rating: { type: Number, required: true, default: 0 }, // 1 to 5 stars
     comment: { type: String, required: true },
+    images: [{ type: String }], // 🟢 Photos uploaded by user
   },
   { timestamps: true }
 );
@@ -29,6 +30,7 @@ const productSchema = new mongoose.Schema(
     trending: { type: Boolean, default: false },
     stock: { type: String, default: "in" },
     countInStock: { type: Number, default: 10, required: true },
+    stockThreshold: { type: Number, default: 2 }, // 🟢 NEW: Warning trigger (e.g. 2kg)
     active: { type: Boolean, default: true },
 
     // --- FLASH SALE ---

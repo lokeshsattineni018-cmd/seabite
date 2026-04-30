@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FiMapPin, FiNavigation, FiCheck, FiX, FiLoader, FiHome, FiSmartphone, FiUser, FiMap, FiHash } from "react-icons/fi";
+import { useState, useEffect, useRef } from "react";
+import { FiMapPin, FiNavigation, FiCheck, FiX, FiLoader, FiHome, FiSmartphone, FiUser, FiMap, FiHash, FiSearch } from "react-icons/fi";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import StripeInput from "../stripe/StripeInput";
@@ -51,6 +51,45 @@ export default function AddressForm({ onSave, onCancel, initialData = {} }) {
 
     const [detecting, setDetecting] = useState(false);
     const [errors, setErrors] = useState({});
+    const autoCompleteRef = useRef(null);
+    const inputRef = useRef(null);
+
+    useEffect(() => {
+        if (!window.google || !inputRef.current) return;
+
+        const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+            componentRestrictions: { country: "in" },
+            fields: ["address_components", "geometry", "formatted_address"],
+            types: ["address"],
+        });
+
+        autocomplete.addListener("place_changed", () => {
+            const place = autocomplete.getPlace();
+            if (!place.address_components) return;
+
+            let street = "", city = "", state = "", pincode = "", houseNo = "";
+
+            place.address_components.forEach((component) => {
+                const types = component.types;
+                if (types.includes("street_number")) houseNo = component.long_name;
+                if (types.includes("route") || types.includes("sublocality")) street += component.long_name + " ";
+                if (types.includes("locality")) city = component.long_name;
+                if (types.includes("administrative_area_level_1")) state = component.long_name;
+                if (types.includes("postal_code")) pincode = component.long_name;
+            });
+
+            setFormData((prev) => ({
+                ...prev,
+                houseNo: houseNo || prev.houseNo,
+                street: street.trim() || place.formatted_address.split(",")[0],
+                city: city || prev.city,
+                state: ALLOWED_STATES.includes(state) ? state : "Andhra Pradesh",
+                postalCode: pincode || prev.postalCode,
+            }));
+        });
+
+        autoCompleteRef.current = autocomplete;
+    }, []);
 
     const detectLocation = () => {
         if (!navigator.geolocation) { toast.error("Geolocation not supported."); return; }
@@ -198,15 +237,21 @@ export default function AddressForm({ onSave, onCancel, initialData = {} }) {
                     />
                 </Field>
 
-                {/* Street */}
+                {/* Street / Auto-complete */}
                 <Field error={errors.street}>
-                    <StripeInput
-                        label="Street / Area / Colony"
-                        Icon={FiMap}
-                        value={formData.street}
-                        onChange={e => setFormData({ ...formData, street: e.target.value })}
-                        style={{ borderColor: errors.street ? T.coral : undefined }}
-                    />
+                    <div style={{ position: "relative" }}>
+                        <StripeInput
+                            ref={inputRef}
+                            label="Street / Area / Colony (Search Address)"
+                            Icon={FiSearch}
+                            value={formData.street}
+                            onChange={e => setFormData({ ...formData, street: e.target.value })}
+                            style={{ borderColor: errors.street ? T.coral : undefined }}
+                        />
+                        <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/Google_Maps_icon_%282015-2020%29.svg" alt="G" style={{ width: 14, height: 14, opacity: 0.6 }} />
+                        </div>
+                    </div>
                 </Field>
 
                 {/* City + Pincode */}
