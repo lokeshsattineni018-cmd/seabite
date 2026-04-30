@@ -31,7 +31,6 @@ const T = {
 };
 
 const font = "'Plus Jakarta Sans', sans-serif";
-const ease = [0.16, 1, 0.3, 1];
 
 const STEPS = ["Shipping", "Payment", "Confirm"];
 

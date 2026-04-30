@@ -119,7 +119,7 @@ router.post("/verify-otp-signup", async (req, res) => {
   let referrerId = null;
   let initialWalletBalance = 0;
 
-  if (referralCode && typeof referralCode === 'string') {
+  if (referralCode) {
     const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
     if (referrer) {
       referrerId = referrer._id;
