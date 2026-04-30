@@ -557,9 +557,9 @@ export default function Navbar({ announcementActive = false }) {
                  <AnimatePresence>
                     <motion.div
                        key={authImgIdx}
-                       initial={{ y: "100%" }}
-                       animate={{ y: 0, zIndex: 1 }}
-                       exit={{ y: "-100%", zIndex: 0 }}
+                       initial={{ x: "100%" }}
+                       animate={{ x: 0, zIndex: 1 }}
+                       exit={{ x: "-100%", zIndex: 0 }}
                        transition={{ duration: 0.8, ease: [0.65, 0, 0.35, 1] }}
                        style={{
                           position: "absolute", inset: 0,
