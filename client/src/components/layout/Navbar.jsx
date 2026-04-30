@@ -87,6 +87,7 @@ export default function Navbar({ announcementActive = false }) {
   const [authOtp, setAuthOtp] = useState("");
   const [authReferral, setAuthReferral] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
   const [authImgIdx, setAuthImgIdx] = useState(0);
   const authImages = ["/auth-prawn.png", "/auth-fish.png", "/auth-crab.png"];
 
@@ -97,6 +98,14 @@ export default function Navbar({ announcementActive = false }) {
     }, 2500);
     return () => clearInterval(interval);
   }, [isLoginOpen]);
+
+  useEffect(() => {
+    let timer;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => setResendCooldown(c => c - 1), 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const isHome = location.pathname === "/";
   const isTransparent = isHome && !scrolled;
@@ -214,12 +223,13 @@ export default function Navbar({ announcementActive = false }) {
   };
 
   const handleSignupOtpRequest = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setAuthLoading(true);
     try {
       await axios.post(`${API_URL}/api/auth/send-otp`, { email: authEmail, name: authName });
       toast.success("OTP sent to your email!");
       setAuthMode("OTP_VERIFY_SIGNUP");
+      setResendCooldown(30);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to send OTP");
     } finally { setAuthLoading(false); }
@@ -243,15 +253,26 @@ export default function Navbar({ announcementActive = false }) {
   };
 
   const handleForgotOtpRequest = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setAuthLoading(true);
     try {
       await axios.post(`${API_URL}/api/auth/forgot-password-otp`, { email: authEmail });
       toast.success("Reset OTP sent to your email!");
       setAuthMode("RESET_PASSWORD");
+      setResendCooldown(30);
     } catch (err) {
       toast.error(err.response?.data?.message || "Error sending reset OTP");
     } finally { setAuthLoading(false); }
+  };
+
+  const handleResendOtp = () => {
+    if (resendCooldown > 0) return;
+    setAuthOtp(""); // Clear previous OTP
+    if (authMode === "OTP_VERIFY_SIGNUP") {
+      handleSignupOtpRequest();
+    } else if (authMode === "RESET_PASSWORD") {
+      handleForgotOtpRequest();
+    }
   };
 
   const handleResetPassword = async (e) => {
@@ -530,20 +551,19 @@ export default function Navbar({ announcementActive = false }) {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(0,0,0,0.4)" }}>
             <div onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", inset: 0 }} />
             
-            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} style={{ position: "relative", background: "#0A192F", width: "100%", maxWidth: "760px", borderRadius: "16px", boxShadow: "0 24px 60px rgba(0,0,0,0.2)", display: "flex", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} style={{ position: "relative", background: "#fff", width: "100%", maxWidth: "760px", borderRadius: "16px", boxShadow: "0 24px 60px rgba(0,0,0,0.2)", display: "flex", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
                          {/* LEFT SIDE (FEATURES) */}
               <div className="hidden-mobile" style={{ flex: "0.8", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "32px" }}>
-                 <AnimatePresence mode="wait">
+                 <AnimatePresence>
                     <motion.div
                        key={authImgIdx}
-                       initial={{ opacity: 0, x: 40 }}
-                       animate={{ opacity: 1, x: 0 }}
-                       exit={{ opacity: 0, x: -40 }}
-                       transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                       initial={{ y: "100%" }}
+                       animate={{ y: 0, zIndex: 1 }}
+                       exit={{ y: "-100%", zIndex: 0 }}
+                       transition={{ duration: 0.8, ease: [0.65, 0, 0.35, 1] }}
                        style={{
                           position: "absolute", inset: 0,
-                          background: `url(${authImages[authImgIdx]}) center/cover no-repeat`,
-                          zIndex: 0
+                          background: `url(${authImages[authImgIdx]}) center/cover no-repeat`
                        }}
                     />
                  </AnimatePresence>
@@ -592,10 +612,18 @@ export default function Navbar({ announcementActive = false }) {
                           <img src="/logo.png" style={{ height: "40px", width: "auto", margin: "0 auto" }} />
                        </div>
                        <h2 style={{ fontSize: "24px", fontWeight: "800", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#111827", margin: "0 0 8px", lineHeight: 1.1, letterSpacing: "-0.03em" }}>
-                          {authMode === "LOGIN" ? "Unlock Ocean's Finest" : authMode === "SIGNUP" ? "Join Us For Exclusive Catch" : "Reset Your Password"}
+                          {authMode === "LOGIN" ? "Unlock Ocean's Finest" 
+                           : authMode === "SIGNUP" ? "Join Us For Exclusive Catch" 
+                           : authMode === "OTP_VERIFY_SIGNUP" ? "Verify Your Email"
+                           : authMode === "RESET_PASSWORD" ? "Create New Password"
+                           : "Reset Your Password"}
                        </h2>
                        <p style={{ fontSize: "14px", color: "#6B7280", margin: 0, fontWeight: "500", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.01em" }}>
-                          {authMode === "LOGIN" ? "Enter Email to Continue" : authMode === "SIGNUP" ? "Enter your details below" : "Enter email to reset"}
+                          {authMode === "LOGIN" ? "Enter Email to Continue" 
+                           : authMode === "SIGNUP" ? "Enter your details below" 
+                           : authMode === "OTP_VERIFY_SIGNUP" ? "Enter the 6-digit code sent to your email"
+                           : authMode === "RESET_PASSWORD" ? "Enter the reset code and your new password"
+                           : "Enter email to receive reset code"}
                        </p>
                     </div>
 
@@ -692,6 +720,11 @@ export default function Navbar({ announcementActive = false }) {
                         <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
                           {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Verify & Join"}
                         </motion.button>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
+                          <button type="button" onClick={handleResendOtp} disabled={resendCooldown > 0} style={{ background: "none", border: "none", fontSize: "12px", color: resendCooldown > 0 ? "#9CA3AF" : "#3B82F6", fontWeight: "600", cursor: resendCooldown > 0 ? "not-allowed" : "pointer" }}>
+                            {resendCooldown > 0 ? `Resend Code in ${resendCooldown}s` : "Didn't receive code? Resend"}
+                          </button>
+                        </motion.div>
                       </form>
                     )}
 
@@ -720,6 +753,11 @@ export default function Navbar({ announcementActive = false }) {
                         <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
                           {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Confirm New Password"}
                         </motion.button>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
+                          <button type="button" onClick={handleResendOtp} disabled={resendCooldown > 0} style={{ background: "none", border: "none", fontSize: "12px", color: resendCooldown > 0 ? "#9CA3AF" : "#3B82F6", fontWeight: "600", cursor: resendCooldown > 0 ? "not-allowed" : "pointer" }}>
+                            {resendCooldown > 0 ? `Resend Code in ${resendCooldown}s` : "Didn't receive code? Resend"}
+                          </button>
+                        </motion.div>
                       </form>
                     )}
 
