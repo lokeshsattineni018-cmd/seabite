@@ -25,9 +25,9 @@ const PLACEHOLDER_IMG =
 // --- Animation Presets ---
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
-  hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
+  hidden: { opacity: 0, y: 20 },
   visible: (i = 0) => ({
-    opacity: 1, y: 0, filter: "blur(0px)",
+    opacity: 1, y: 0,
     transition: { delay: i * 0.05, duration: 0.6, ease },
   }),
 };
@@ -209,7 +209,7 @@ export default function AdminDashboard() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-black/20 backdrop-blur-sm"
+                className="absolute inset-0 bg-stone-900/60"
                 onClick={() => setShowOtpModal(false)}
               />
               <motion.div
@@ -267,7 +267,7 @@ export default function AdminDashboard() {
         {/* Sticky Header */}
         <motion.div 
           variants={fadeUp} 
-          className="sticky top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/80 backdrop-blur-md border-b border-stone-200/50 pb-4 pt-2 mb-8 -mx-4 px-4 md:-mx-6 md:px-6"
+          className="sticky top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white border-b border-stone-200/50 pb-4 pt-2 mb-8 -mx-4 px-4 md:-mx-6 md:px-6"
         >
           <div className="flex items-center gap-4">
             <div>
@@ -619,7 +619,7 @@ export default function AdminDashboard() {
                   <FiZap className="text-amber-400" />
                   Quick Actions
                </h3>
-               <div className="grid grid-cols-2 gap-3 relative z-10">
+               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 relative z-10">
                   <button 
                     onClick={async () => {
                       if (!window.confirm("Trigger manual evening clearance? This will slash prices by 15% across all perishables.")) return;
@@ -627,6 +627,7 @@ export default function AdminDashboard() {
                       try {
                         const res = await axios.post("/api/admin/inventory/evening-clearance", {}, { withCredentials: true });
                         toast.success(res.data.message, { id: tid });
+                        fetchDashboardData(false);
                       } catch (e) {
                         toast.error("Clearance failed", { id: tid });
                       }
@@ -635,6 +636,23 @@ export default function AdminDashboard() {
                   >
                      <FiTrendingUp className="text-rose-400" size={20} />
                      <span className="text-[10px] font-bold uppercase tracking-widest text-center">Clearance</span>
+                  </button>
+                  <button 
+                    onClick={async () => {
+                      if (!window.confirm("Reset evening clearance prices back to normal?")) return;
+                      const tid = toast.loading("Resetting Clearance...");
+                      try {
+                        const res = await axios.post("/api/admin/inventory/clearance-reset", {}, { withCredentials: true });
+                        toast.success(res.data.message, { id: tid });
+                        fetchDashboardData(false);
+                      } catch (e) {
+                        toast.error("Reset failed", { id: tid });
+                      }
+                    }}
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                  >
+                     <FiRefreshCw className="text-stone-300" size={20} />
+                     <span className="text-[10px] font-bold uppercase tracking-widest text-center">Reset Price</span>
                   </button>
                   <button 
                     onClick={() => navigate("/admin/delivery")}
