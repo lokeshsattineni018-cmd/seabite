@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import Product from "../models/Product.js";
+import User from "../models/User.js";
 import adminAuth from "../middleware/adminAuth.js";
 
 const router = express.Router();

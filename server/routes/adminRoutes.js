@@ -64,14 +64,27 @@ router.get("/", adminAuth, async (req, res) => {
       });
     }
 
-    const allOrders = await Order.find({});
-    const totalRevenue = allOrders.reduce((acc, item) => acc + (item.totalAmount || 0), 0);
+    // 🟢 OPTIMIZED: Calculate Total Revenue & Total Cost using Aggregation
+    const financialTotals = await Order.aggregate([
+      { $unwind: { path: "$items", preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: "$_id",
+          totalAmount: { $first: "$totalAmount" },
+          orderCost: { $sum: { $multiply: [{ $ifNull: ["$items.buyingPrice", 0] }, { $ifNull: ["$items.qty", 0] }] } }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalRevenue: { $sum: "$totalAmount" },
+          totalCost: { $sum: "$orderCost" }
+        }
+      }
+    ]);
 
-    // 🟢 NEW: Calculate Total Cost (Buying Price * Qty)
-    const totalCost = allOrders.reduce((acc, order) => {
-      const orderCost = (order.items || []).reduce((sum, item) => sum + ((item.buyingPrice || 0) * item.qty), 0);
-      return acc + orderCost;
-    }, 0);
+    const totalRevenue = financialTotals[0]?.totalRevenue || 0;
+    const totalCost = financialTotals[0]?.totalCost || 0;
 
     const netProfit = totalRevenue - totalCost;
 
