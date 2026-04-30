@@ -277,7 +277,7 @@ export const sendOtpEmail = async (email, otp, type = "VERIFY") => {
   return await resend.emails.send({
     from: OFFICIAL_SENDER,
     to: email,
-    subject: \`SeaBite Security Code: \${otp}\`,
+    subject: `SeaBite Security Code: ${otp}`,
     html: aestheticWrapper(content, subtitle)
   });
 };
