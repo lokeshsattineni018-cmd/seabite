@@ -81,12 +81,12 @@ const CSS = `
   .illus-inner {
     position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
     width:155px;height:155px;border-radius:50%;
-    background:rgba(255,255,255,0.6);backdrop-filter:blur(12px);
+    background:rgba(255,255,255,0.95);
     border:1px solid rgba(255,255,255,0.8);
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     box-shadow:0 8px 32px rgba(26,46,44,0.06),0 2px 8px rgba(26,46,44,0.04);
   }
-  .num-404 { font-family:'Lora',serif;font-size:64px;font-weight:600;letter-spacing:-0.06em;line-height:1;color:var(--text-dark); }
+  .num-404 { font-family:'Plus Jakarta Sans',sans-serif;font-size:64px;font-weight:600;letter-spacing:-0.06em;line-height:1;color:var(--text-dark); }
   .num-404 .zero { color:var(--primary);display:inline-block;animation:zFloat 3s ease-in-out infinite; }
   @keyframes zFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
   .num-label { font-size:9px;font-weight:800;color:var(--text-lite);text-transform:uppercase;letter-spacing:0.14em;margin-top:4px; }
@@ -107,8 +107,8 @@ const CSS = `
   .badge-dot { width:6px;height:6px;border-radius:50%;background:var(--primary);animation:dotPulse 2s ease-in-out infinite; }
   @keyframes dotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
   .badge-text { font-size:10px;font-weight:800;color:var(--primary);text-transform:uppercase;letter-spacing:0.1em; }
-  .headline { font-family:'Lora',serif;font-size:clamp(28px,4vw,40px);font-weight:600;color:var(--text-dark);letter-spacing:-0.03em;line-height:1.15;margin-bottom:16px; }
-  .headline em { font-style:italic;color:var(--primary); }
+  .headline { font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(28px,4vw,40px);font-weight:600;color:var(--text-dark);letter-spacing:-0.03em;line-height:1.15;margin-bottom:16px; }
+  .headline em { font-style:normal;color:var(--primary); }
   .subtext { font-size:14px;color:var(--text-mid);line-height:1.75;margin-bottom:28px;max-width:380px; }
   .rule { display:flex;align-items:center;gap:12px;margin-bottom:24px; }
   .rule-line { flex:1;height:1px;background:var(--border); }
@@ -144,7 +144,7 @@ const CSS = `
   .footer-brand {
     position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
     font-size:11px;color:var(--text-lite);font-weight:500;z-index:10;white-space:nowrap;
-    background:rgba(240,247,246,0.85);backdrop-filter:blur(8px);
+    background:rgba(240,247,246,0.98);
     padding:6px 14px;border-radius:20px;border:1px solid rgba(91,168,160,0.1);
   }
   @media (max-width:680px) {

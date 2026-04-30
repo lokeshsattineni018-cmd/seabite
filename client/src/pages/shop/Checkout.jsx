@@ -14,75 +14,38 @@ import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
+import { formatAddress } from "../../utils/addressFormatter";
+
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 const T = {
-  bg: "#F4F9F8", surface: "#ffffff", border: "#E2EEEC",
-  textDark: "#1A2B35", textMid: "#4A6572", textLite: "#8BA5B3",
-  primary: "#5BA8A0", sky: "#89C2D9", coral: "#E8816A",
+  bg: "#F4F9F8",
+  surface: "#ffffff",
+  border: "#E2EEEC",
+  textDark: "#1A2B35",
+  textMid: "#4A6572",
+  textLite: "#8BA5B3",
+  primary: "#5BA8A0",
+  sky: "#89C2D9",
+  coral: "#E8816A",
 };
-
-const ease = [0.22, 1, 0.36, 1];
-
-const STEPS = [
-  { id: 1, label: "Address", icon: <FiMapPin size={13} /> },
-  { id: 2, label: "Payment", icon: <FiCreditCard size={13} /> },
-  { id: 3, label: "Review", icon: <FiShoppingBag size={13} /> },
-];
 
 const font = "'Plus Jakarta Sans', sans-serif";
 
-function StepsBar({ currentStep }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1, duration: 0.5, ease }}
-      style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginBottom: 32 }}
-    >
-      {STEPS.map((step, idx) => {
-        const isActive = step.id <= currentStep;
-        const isCurrent = step.id === currentStep;
-        return (
-          <div key={step.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <motion.div
-                animate={isCurrent ? { scale: [1, 1.08, 1] } : {}}
-                transition={isCurrent ? { repeat: Infinity, duration: 2.2, ease: "easeInOut" } : {}}
-                style={{
-                  width: 34, height: 34, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
-                  background: isActive ? T.primary : "#EEF5F4",
-                  color: isActive ? "#fff" : T.textLite,
-                  boxShadow: isCurrent ? "0 0 0 4px rgba(91,168,160,0.15)" : "none",
-                  transition: "all 0.4s ease",
-                }}
-              >
-                {step.id < currentStep ? <FiCheck size={13} /> : step.icon}
-              </motion.div>
-              <span style={{
-                fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em",
-                color: isActive ? T.textDark : T.textLite, display: "none",
-              }}
-                className="sm-show">
-                {step.label}
-              </span>
-            </div>
-            {idx < STEPS.length - 1 && (
-              <div style={{ width: 32, height: 2, borderRadius: 2, background: step.id < currentStep ? T.primary : "#EEF5F4", transition: "background 0.4s" }} />
-            )}
-          </div>
-        );
-      })}
-    </motion.div>
-  );
-}
+const STEPS = ["Shipping", "Payment", "Confirm"];
 
-// Section card wrapper
 function SectionCard({ children, style = {} }) {
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
   return (
     <div style={{
-      background: T.surface, borderRadius: 18, border: `1px solid ${T.border}`,
-      boxShadow: "0 2px 16px rgba(91,168,160,0.07)", padding: "24px 26px",
+      background: T.surface,
+      borderRadius: 24,
+      padding: isMobile ? "16px" : "24px",
+      border: `1px solid ${T.border}`,
+      boxShadow: "0 8px 32px rgba(91,168,160,0.05)",
+      marginBottom: 20,
+      position: "relative",
+      overflow: "hidden",
       ...style
     }}>
       {children}
@@ -90,18 +53,126 @@ function SectionCard({ children, style = {} }) {
   );
 }
 
-// Section heading
-function SectionHead({ icon, title, action }) {
+function SectionHead({ icon, title, subtitle, action }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
-      <h3 style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 15, fontWeight: 700, color: T.textDark, margin: 0 }}>
-        <div style={{ width: 34, height: 34, borderRadius: 10, background: "rgba(91,168,160,0.1)", color: T.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          {icon}
-        </div>
-        {title}
-      </h3>
-      {action}
+    <div style={{ marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ width: 32, height: 32, borderRadius: 10, background: "rgba(91,168,160,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: T.primary, flexShrink: 0 }}>
+        {icon}
+      </div>
+      <div style={{ flex: 1 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 800, color: T.textDark, margin: 0 }}>{title}</h3>
+        {subtitle && <p style={{ fontSize: 11, color: T.textLite, margin: "2px 0 0" }}>{subtitle}</p>}
+      </div>
+      {action && <div>{action}</div>}
     </div>
+  );
+}
+
+function StepsBar({ currentStep }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
+      {STEPS.map((s, i) => {
+        const stepNum = i + 1;
+        const active = currentStep >= stepNum;
+        return (
+          <div key={s} style={{ display: "flex", alignItems: "center", gap: 8, flex: i < STEPS.length - 1 ? 1 : "none" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: "50%",
+                background: active ? T.primary : T.border,
+                color: active ? "#fff" : T.textLite,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 10, fontWeight: 800, flexShrink: 0
+              }}>
+                {active && currentStep > stepNum ? <FiCheck size={12} /> : stepNum}
+              </div>
+              <span style={{ fontSize: 12, fontWeight: 700, color: active ? T.textDark : T.textLite, whiteSpace: "nowrap" }}>{s}</span>
+            </div>
+            {i < STEPS.length - 1 && <div style={{ flex: 1, height: 2, background: active ? T.primary : T.border, opacity: 0.3, marginLeft: 8 }} />}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+// Coupon Drawer Component
+function CouponDrawer({ isOpen, onClose, coupons, appliedCoupon, onApply, onClear, itemTotal }) {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={onClose}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200 }}
+          />
+          <motion.div
+            initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            style={{
+              position: "fixed", top: 0, right: 0, bottom: 0, width: "100%", maxWidth: 400,
+              background: "#fff", zIndex: 201, boxShadow: "-10px 0 40px rgba(0,0,0,0.1)",
+              display: "flex", flexDirection: "column"
+            }}
+          >
+            <div style={{ padding: "24px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: T.textDark, margin: 0 }}>Available Offers</h3>
+              <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: T.textLite }}><FiX size={20} /></button>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+              {coupons.length === 0 ? (
+                <div style={{ textAlign: "center", padding: "40px 20px" }}>
+                  <FiGift size={40} style={{ color: T.border, marginBottom: 12 }} />
+                  <p style={{ color: T.textLite, fontSize: 14 }}>No coupons available right now.</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                  {coupons.map(c => {
+                    const isApplied = appliedCoupon?.code === c.code;
+                    const canApply = itemTotal >= (c.minOrderAmount || 0);
+                    return (
+                      <div key={c._id || c.code} style={{
+                        padding: 16, borderRadius: 16, border: `2px dashed ${isApplied ? T.primary : T.border}`,
+                        background: isApplied ? "rgba(91,168,160,0.04)" : "transparent",
+                        position: "relative"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: T.textDark, fontFamily: "monospace" }}>{c.code}</span>
+                          <span style={{ fontSize: 12, fontWeight: 700, color: T.primary }}>
+                            {c.discountType === "percent" ? `${c.value}% OFF` : `₹${c.value} OFF`}
+                          </span>
+                        </div>
+                        <p style={{ fontSize: 12, color: T.textMid, margin: "0 0 12px" }}>{c.description || "Limited time offer!"}</p>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: 10, color: canApply ? T.textLite : T.coral, fontWeight: 600 }}>
+                            {canApply ? `Min. ₹${c.minOrderAmount} met` : `Need ₹${(c.minOrderAmount - itemTotal).toFixed(0)} more`}
+                          </span>
+                          <button
+                            onClick={() => isApplied ? onClear() : onApply(c.code)}
+                            disabled={!canApply && !isApplied}
+                            style={{
+                              padding: "6px 16px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+                              background: isApplied ? "rgba(232,129,106,0.1)" : T.primary,
+                              color: isApplied ? T.coral : "#fff",
+                              border: "none", cursor: (canApply || isApplied) ? "pointer" : "not-allowed",
+                              opacity: (!canApply && !isApplied) ? 0.5 : 1
+                            }}
+                          >
+                            {isApplied ? "Remove" : "Apply"}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -115,11 +186,12 @@ export default function Checkout() {
   const [couponMessage, setCouponMessage] = useState(null);
   const [verifyingCoupon, setVerifyingCoupon] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState([]);
-  const [showCouponList, setShowCouponList] = useState(false);
+  const [showCouponDrawer, setShowCouponDrawer] = useState(false);
   const [spinDiscount, setSpinDiscount] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [deliveryAddress, setDeliveryAddress] = useState({});
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [isItemsCollapsed, setIsItemsCollapsed] = useState(window.innerWidth < 768);
   const navigate = useNavigate();
 
   const getFullImageUrl = (imagePath) => {
@@ -313,8 +385,23 @@ export default function Checkout() {
 
   const currentStep = deliveryAddress._id ? (paymentMethod ? 3 : 2) : 1;
 
+  const handleApplyCouponFromDrawer = (code) => {
+    applyCouponByCode(code);
+    setShowCouponDrawer(false);
+  };
+
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: font, padding: "100px 20px 60px", overflowX: "hidden" }}>
+      <CouponDrawer 
+        isOpen={showCouponDrawer} 
+        onClose={() => setShowCouponDrawer(false)}
+        coupons={availableCoupons}
+        appliedCoupon={appliedCoupon}
+        onApply={handleApplyCouponFromDrawer}
+        onClear={clearCoupon}
+        itemTotal={itemTotal}
+      />
+      
       {/* Ambient */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 400, background: "linear-gradient(180deg, rgba(91,168,160,0.06) 0%, transparent 100%)" }} />
@@ -324,7 +411,7 @@ export default function Checkout() {
 
       <AnimatePresence>
         {isAddressModalOpen && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(26,43,53,0.45)", backdropFilter: "blur(10px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
             <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} style={{ width: "100%", maxWidth: 640 }}>
               <AddressForm onSave={saveNewAddress} onCancel={() => setIsAddressModalOpen(false)} initialData={deliveryAddress} />
             </motion.div>
@@ -346,83 +433,22 @@ export default function Checkout() {
             Order <span style={{ color: T.primary }}>Summary</span>
           </h1>
         </motion.div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "1fr min(390px, 40%)", gap: 20 }} className="checkout-grid">
-          {/* LEFT */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-
-            {/* ── ADDRESS ── */}
+        
+        {/* Main Grid */}
+        <div className="checkout-grid" style={{ display: "grid", gridTemplateColumns: "1fr", gap: 24, marginTop: 12 }}>
+          {/* LEFT - FORM */}
+          <div>
+            {/* ── SHIPPING ADDRESS ── */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.5, ease }}>
               <SectionCard>
-                <SectionHead
-                  icon={<FiMapPin size={16} />}
-                  title="Delivery Address"
-                  action={
-                    <motion.button
-                      whileTap={{ scale: 0.96 }} whileHover={{ y: -1 }}
-                      onClick={() => setIsAddressModalOpen(true)}
-                      style={{
-                        display: "flex", alignItems: "center", gap: 6, padding: "9px 16px", borderRadius: 10,
-                        border: `1px solid ${T.border}`, background: T.bg, color: T.primary,
-                        fontSize: 11, fontWeight: 700, cursor: "pointer", fontFamily: font,
-                      }}
-                    >
-                      <FiPlusIcon size={12} /> Add Address
-                    </motion.button>
-                  }
+                <SectionHead 
+                  icon={<FiMapPin size={16} />} 
+                  title="Shipping Address" 
+                  action={<motion.button whileTap={{ scale: 0.95 }} onClick={() => setIsAddressModalOpen(true)} style={{ fontSize: 10, fontWeight: 800, color: T.primary, background: "rgba(91,168,160,0.1)", border: "none", cursor: "pointer", padding: "6px 12px", borderRadius: 8 }}>{deliveryAddress._id ? "Change" : "Add New"}</motion.button>}
                 />
-                {addresses.length === 0 ? (
-                  <div style={{ padding: "28px 20px", borderRadius: 12, background: T.bg, border: `1px solid ${T.border}`, textAlign: "center" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: "50%", background: T.surface, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 12px", color: T.textLite }}>
-                      <FiMapPin size={20} />
-                    </div>
-                    <p style={{ fontSize: 13, fontWeight: 500, color: T.textLite }}>No saved addresses yet.</p>
-                    <p style={{ fontSize: 11, color: T.textLite, marginTop: 4 }}>Add a new address to continue.</p>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {addresses.map(addr => {
-                      const isSelected = deliveryAddress._id === addr._id;
-                      return (
-                        <motion.div
-                          key={addr._id}
-                          whileHover={{ boxShadow: "0 4px 20px rgba(91,168,160,0.12)" }}
-                          onClick={() => setDeliveryAddress(addr)}
-                          style={{
-                            padding: "14px 16px", borderRadius: 14, cursor: "pointer",
-                            border: `1.5px solid ${isSelected ? T.primary : T.border}`,
-                            background: isSelected ? "rgba(91,168,160,0.05)" : T.bg,
-                            transition: "all 0.2s", position: "relative",
-                          }}
-                        >
-                          {/* Left accent bar */}
-                          {isSelected && <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: 3, borderRadius: "14px 0 0 14px", background: `linear-gradient(180deg, ${T.primary}, ${T.sky})` }} />}
-
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                              <h4 style={{ fontWeight: 700, fontSize: 13, color: T.textDark, margin: 0 }}>{addr.name}</h4>
-                              {addr.isDefault && <span style={{ fontSize: 9, fontWeight: 800, textTransform: "uppercase", padding: "2px 8px", borderRadius: 5, background: "rgba(91,168,160,0.12)", color: T.primary }}>Default</span>}
-                            </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              {isSelected && <div style={{ width: 20, height: 20, borderRadius: "50%", background: T.primary, display: "flex", alignItems: "center", justifyContent: "center" }}><FiCheck size={10} style={{ color: "#fff" }} /></div>}
-                              <motion.button whileTap={{ scale: 0.85 }} onClick={e => deleteAddress(addr._id, e)}
-                                style={{ width: 24, height: 24, borderRadius: 6, background: "rgba(232,129,106,0.08)", border: `1px solid rgba(232,129,106,0.18)`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: T.coral, flexShrink: 0 }}>
-                                <FiTrash2 size={10} />
-                              </motion.button>
-                            </div>
-                          </div>
-                          <p style={{ fontSize: 11, color: T.textLite, margin: "0 0 3px", fontWeight: 500 }}>{addr.phone}</p>
-                          <p style={{ fontSize: 12, color: T.textMid, margin: 0, lineHeight: 1.6 }}>
-                            {addr.houseNo}, {addr.street}, {addr.city}, {addr.state} — {addr.postalCode}
-                          </p>
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                )}
                 {deliveryAddress._id && (
                   <div style={{ marginTop: 12, padding: "8px 14px", borderRadius: 9, background: "rgba(91,168,160,0.08)", border: "1px solid rgba(91,168,160,0.18)", display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 700, color: T.primary }}>
-                    <FiCheckCircle size={12} /> Delivering to: {deliveryAddress.city}, {deliveryAddress.state}
+                    <FiCheckCircle size={12} /> Delivering to: {formatAddress(`${deliveryAddress.city}, ${deliveryAddress.state}`)}
                   </div>
                 )}
               </SectionCard>
@@ -470,12 +496,33 @@ export default function Checkout() {
             {/* ── CART ITEMS ── */}
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26, duration: 0.5, ease }}>
               <SectionCard>
-                <SectionHead
-                  icon={<FiShoppingBag size={16} />}
-                  title="Your Items"
-                  action={<span style={{ fontSize: 10, fontWeight: 700, color: T.primary, background: "rgba(91,168,160,0.1)", padding: "4px 10px", borderRadius: 7 }}>{cartItems.length} {cartItems.length === 1 ? "item" : "items"}</span>}
-                />
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <div 
+                  onClick={() => window.innerWidth < 768 && setIsItemsCollapsed(!isItemsCollapsed)}
+                  style={{ cursor: window.innerWidth < 768 ? "pointer" : "default" }}
+                >
+                  <SectionHead
+                    icon={<FiShoppingBag size={16} />}
+                    title="Your Items"
+                    action={
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, background: "rgba(91,168,160,0.1)", padding: "4px 10px", borderRadius: 7 }}>
+                          {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
+                        </span>
+                        {window.innerWidth < 768 && (
+                          <motion.div animate={{ rotate: isItemsCollapsed ? 0 : 180 }}>
+                            <FiChevronRight size={16} style={{ color: T.textLite, transform: "rotate(90deg)" }} />
+                          </motion.div>
+                        )}
+                      </div>
+                    }
+                  />
+                </div>
+                <motion.div 
+                  initial={false}
+                  animate={{ height: isItemsCollapsed ? 0 : "auto", opacity: isItemsCollapsed ? 0 : 1 }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8, paddingBottom: isItemsCollapsed ? 0 : 10 }}>
                   <AnimatePresence mode="popLayout">
                     {cartItems.map((item, index) => (
                       <motion.div
@@ -493,15 +540,25 @@ export default function Checkout() {
                           <p style={{ fontSize: 10, color: T.textLite, margin: "3px 0 0" }}>₹{item.price.toFixed(2)} / unit</p>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-                          <div style={{ display: "flex", alignItems: "center", borderRadius: 9, border: `1px solid ${T.border}`, overflow: "hidden", background: T.surface }}>
-                            <motion.button whileTap={{ scale: 0.85 }} onClick={() => updateQuantity(item._id, item.qty - 1)}
-                              style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer" }}>
-                              <FiMinus size={11} />
+                          <div style={{ display: "flex", alignItems: "center", borderRadius: 12, border: `1.5px solid ${T.border}`, overflow: "hidden", background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.02)" }}>
+                            <motion.button 
+                              whileHover={{ background: "rgba(232,129,106,0.05)", color: T.coral }}
+                              whileTap={{ scale: 0.9 }} 
+                              onClick={() => updateQuantity(item._id, item.qty - 1)}
+                              style={{ width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer", transition: "all 0.2s" }}
+                            >
+                              <FiMinus size={12} strokeWidth={3} />
                             </motion.button>
-                            <span style={{ width: 28, textAlign: "center", fontSize: 12, fontWeight: 800, color: T.textDark }}>{item.qty}</span>
-                            <motion.button whileTap={{ scale: 0.85 }} onClick={() => updateQuantity(item._id, item.qty + 1)}
-                              style={{ width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer" }}>
-                              <FiPlus size={11} />
+                            <div style={{ width: 30, textAlign: "center", fontSize: 13, fontWeight: 800, color: T.textDark, borderLeft: `1px solid ${T.border}`, borderRight: `1px solid ${T.border}`, height: 34, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              {item.qty}
+                            </div>
+                            <motion.button 
+                              whileHover={{ background: "rgba(91,168,160,0.05)", color: T.primary }}
+                              whileTap={{ scale: 0.9 }} 
+                              onClick={() => updateQuantity(item._id, item.qty + 1)}
+                              style={{ width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer", transition: "all 0.2s" }}
+                            >
+                              <FiPlus size={12} strokeWidth={3} />
                             </motion.button>
                           </div>
                           <span style={{ fontWeight: 700, fontSize: 13, color: T.textDark, minWidth: 60, textAlign: "right" }}>₹{(item.price * item.qty).toFixed(2)}</span>
@@ -514,7 +571,8 @@ export default function Checkout() {
                     ))}
                   </AnimatePresence>
                 </div>
-              </SectionCard>
+              </motion.div>
+            </SectionCard>
             </motion.div>
           </div>
 
@@ -552,69 +610,19 @@ export default function Checkout() {
                   <div style={{ marginBottom: 18 }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                       <p style={{ fontSize: 10, fontWeight: 700, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Promo Code</p>
-                      <button onClick={() => setShowCouponList(v => !v)}
-                        style={{ fontSize: 10, fontWeight: 700, color: T.primary, background: "none", border: "none", cursor: "pointer", fontFamily: font, padding: 0 }}>
-                        {showCouponList ? "Hide" : "View available"}
-                      </button>
+                      <motion.button 
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => setShowCouponDrawer(true)}
+                        style={{ 
+                          fontSize: 10, fontWeight: 800, color: T.primary, 
+                          background: "rgba(91,168,160,0.1)", border: "none", 
+                          cursor: "pointer", fontFamily: font, padding: "4px 10px",
+                          borderRadius: 6, display: "flex", alignItems: "center", gap: 4
+                        }}>
+                        <FiTag size={10} /> View available
+                      </motion.button>
                     </div>
-
-                    {/* Available coupons list */}
-                    <AnimatePresence>
-                      {showCouponList && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.28 }} style={{ overflow: "hidden", marginBottom: 10 }}>
-                          {availableCoupons.length === 0 ? (
-                            <p style={{ fontSize: 11, color: T.textLite, textAlign: "center", padding: "14px 0" }}>No active coupons available</p>
-                          ) : (
-                            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                              {availableCoupons.map(c => {
-                                const isApplied = appliedCoupon?.code === c.code;
-                                const canApply = itemTotal >= (c.minOrderAmount || 0);
-                                const discLabel = c.discountType === "percent" ? `${c.value}% OFF` : `₹${c.value} OFF`;
-                                return (
-                                  <div key={c._id || c.code} style={{
-                                    borderRadius: 12, overflow: "hidden",
-                                    border: `1.5px solid ${isApplied ? T.primary : canApply ? T.border : "#EEF5F4"}`,
-                                    background: isApplied ? "rgba(91,168,160,0.04)" : T.surface,
-                                    boxShadow: isApplied ? "0 2px 12px rgba(91,168,160,0.1)" : "none",
-                                  }}>
-                                    {/* Top accent bar */}
-                                    <div style={{ height: 3, background: isApplied ? `linear-gradient(90deg, ${T.primary}, ${T.sky})` : canApply ? `linear-gradient(90deg, ${T.sky}80, transparent)` : "#EEF5F4" }} />
-                                    <div style={{ padding: "10px 12px", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                                      <div style={{ flex: 1, minWidth: 0 }}>
-                                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                                          <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: 12, color: isApplied ? T.primary : T.textDark, letterSpacing: "0.05em" }}>{c.code}</span>
-                                          <span style={{ fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 5, background: isApplied ? `rgba(91,168,160,0.12)` : "rgba(137,194,217,0.12)", color: isApplied ? T.primary : T.sky }}>{discLabel}</span>
-                                        </div>
-                                        {c.minOrderAmount > 0 && (
-                                          <p style={{ fontSize: 10, color: canApply ? T.textLite : T.coral, margin: 0, fontWeight: 600 }}>
-                                            {canApply ? `✓ Min ₹${c.minOrderAmount} met` : `Min order ₹${c.minOrderAmount} needed`}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <button
-                                        onClick={() => isApplied ? clearCoupon() : applyCouponByCode(c.code)}
-                                        disabled={!canApply && !isApplied}
-                                        style={{
-                                          padding: "6px 14px", borderRadius: 9,
-                                          border: isApplied ? `1px solid rgba(232,129,106,0.25)` : canApply ? `1px solid rgba(91,168,160,0.25)` : `1px solid ${T.border}`,
-                                          cursor: canApply || isApplied ? "pointer" : "not-allowed",
-                                          fontSize: 10, fontWeight: 700, fontFamily: font,
-                                          background: isApplied ? "rgba(232,129,106,0.08)" : canApply ? "rgba(91,168,160,0.08)" : "transparent",
-                                          color: isApplied ? T.coral : canApply ? T.primary : T.textLite,
-                                          flexShrink: 0, transition: "all 0.18s",
-                                        }}>
-                                        {isApplied ? "✕ Remove" : "Apply"}
-                                      </button>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
 
                     {/* Manual input row */}
                     <div style={{ display: "flex", gap: 8 }}>
@@ -688,7 +696,7 @@ export default function Checkout() {
                   <AnimatePresence>
                     {isShippingCoupon && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-                        style={{ display: "flex", justifyContent: "space-between", color: T.primary, overflow: "hidden" }}>
+                        style={{ display: "flex", justifyContent: "space-between", color: "#10b981", overflow: "hidden" }}>
                         <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiTruck size={11} />Free Shipping ({appliedCoupon?.code})</span>
                         <span style={{ fontWeight: 700 }}>-₹{deliveryFee.toFixed(2)}</span>
                       </motion.div>
@@ -696,8 +704,8 @@ export default function Checkout() {
                   </AnimatePresence>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiTruck size={11} /> Shipping</span>
-                    <span style={{ fontWeight: 700, color: deliveryCharge === 0 ? T.primary : T.textDark }}>
-                      {deliveryCharge === 0 ? "Free" : `₹${deliveryCharge.toFixed(2)}`}
+                    <span style={{ fontWeight: 800, color: deliveryCharge === 0 ? "#10B981" : T.textDark }}>
+                      {deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge.toFixed(2)}`}
                     </span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -743,6 +751,7 @@ export default function Checkout() {
                     whileTap={{ scale: 0.98 }}
                     onClick={placeOrder}
                     disabled={loading}
+                    className="desktop-place-order"
                     style={{
                       width: "100%",
                       padding: "18px",
@@ -765,6 +774,15 @@ export default function Checkout() {
                     {loading ? <FiLoader size={18} style={{ animation: "spin 1s linear infinite" }} /> : <FiShoppingBag size={18} />}
                     {loading ? "Processing..." : `Place Order · ₹${grandTotal.toFixed(2)}`}
                   </motion.button>
+                  
+                  <div style={{ marginTop: 20, textAlign: "center", padding: "14px", background: "rgba(16,185,129,0.06)", borderRadius: 16, border: "1px solid rgba(16,185,129,0.15)" }}>
+                    <p style={{ fontSize: 12, color: "#065F46", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                      <FiCheckCircle size={14} style={{ color: "#10B981" }} /> 100% Freshness Guarantee
+                    </p>
+                    <p style={{ fontSize: 10, color: "#10B981", margin: "4px 0 0", fontWeight: 600, opacity: 0.85 }}>
+                      No questions asked returns at the door if the seal is broken.
+                    </p>
+                  </div>
                 </div>
 
                 {/* Delivery estimate */}
@@ -793,11 +811,47 @@ export default function Checkout() {
         </div>
       </div>
 
+      {/* Sticky Bottom Bar (Mobile Only) */}
+      <div className="mobile-sticky-bar" style={{
+        position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 150,
+        background: "#fff", borderTop: `1px solid ${T.border}`,
+        padding: "16px 20px",
+        alignItems: "center", justifyContent: "space-between",
+        boxShadow: "0 -8px 24px rgba(0,0,0,0.05)"
+      }}>
+        <div>
+          <p style={{ fontSize: 10, color: T.textLite, margin: 0, fontWeight: 700, textTransform: "uppercase" }}>Total Amount</p>
+          <p style={{ fontSize: 18, fontWeight: 800, color: T.textDark, margin: 0 }}>₹{grandTotal.toFixed(2)}</p>
+        </div>
+        <motion.button
+          whileTap={{ scale: 0.95 }}
+          onClick={placeOrder}
+          disabled={loading}
+          style={{
+            padding: "12px 24px", borderRadius: 14, background: T.primary, color: "#fff",
+            border: "none", fontSize: 14, fontWeight: 800, cursor: loading ? "not-allowed" : "pointer",
+            display: "flex", alignItems: "center", gap: 8, boxShadow: `0 8px 20px rgba(91,168,160,0.25)`
+          }}
+        >
+          {loading ? <FiLoader size={16} style={{ animation: "spin 1s linear infinite" }} /> : "Place Order"}
+          {!loading && <FiChevronRight size={16} />}
+        </motion.button>
+      </div>
+
       <style>{`
         @media (min-width: 900px) {
           .checkout-grid { grid-template-columns: 1fr 380px !important; }
         }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        @media (max-width: 767px) {
+          .desktop-place-order { display: none !important; }
+          .mobile-sticky-bar { display: flex !important; }
+          body { padding-bottom: 90px !important; }
+        }
+        @media (min-width: 768px) {
+          .mobile-sticky-bar { display: none !important; }
+        }
       `}</style>
     </div>
   );

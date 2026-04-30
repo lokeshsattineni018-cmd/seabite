@@ -169,6 +169,7 @@ export const getLoggedUser = async (req, res) => {
       addresses: dbUser.addresses || [],
       wishlist: dbUser.wishlist || [],
       createdAt: dbUser.createdAt,
+      isGoogleUser: !!dbUser.googleId
     });
   } catch (err) {
     logger.error("getLoggedUser DB failure", { traceId: req.traceId, error: err.message });

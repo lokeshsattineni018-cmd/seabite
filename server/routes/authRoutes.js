@@ -9,6 +9,7 @@ import {
 import { protect } from "../middleware/authMiddleware.js";
 import { sendOtpEmail } from "../utils/emailService.js";
 import generateToken from "../utils/generateToken.js";
+import { authLimiter } from "../middleware/rateLimiter.js";
 
 const router = express.Router();
 
@@ -16,7 +17,7 @@ const router = express.Router();
 const otpStore = new Map();
 
 // ================= LOGIN =================
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
@@ -76,7 +77,7 @@ router.post("/logout", (req, res) => {
 router.post("/google", googleLogin);
 
 // ================= OTP SIGNUP =================
-router.post("/send-otp", async (req, res) => {
+router.post("/send-otp", authLimiter, async (req, res) => {
   const { email, name } = req.body;
   if (!email) return res.status(400).json({ message: "Email is required" });
   
@@ -108,7 +109,12 @@ router.post("/verify-otp-signup", async (req, res) => {
   }
 
   const existingUser = await User.findOne({ email });
-  if (existingUser) return res.status(400).json({ message: "User already exists" });
+  if (existingUser) {
+    if (existingUser.googleId && !existingUser.password) {
+      return res.status(400).json({ message: "This email is already associated with a Google account. Please use Google Login." });
+    }
+    return res.status(400).json({ message: "User already exists with this email. Please login." });
+  }
 
   let referrerId = null;
   let initialWalletBalance = 0;
@@ -196,6 +202,29 @@ router.post("/reset-password", async (req, res) => {
     res.json({ message: "Password reset successful. Please login." });
   } catch (err) {
     res.status(500).json({ message: "Error resetting password" });
+  }
+});
+
+// ================= CHANGE PASSWORD =================
+router.put("/change-password", protect, async (req, res) => {
+  const { oldPassword, newPassword } = req.body;
+  try {
+    const user = await User.findById(req.user.id || req.user._id);
+    if (!user || !user.password) {
+      return res.status(400).json({ message: "Action not allowed for this account type" });
+    }
+
+    const isMatch = await user.matchPassword(oldPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect current password" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error during password change" });
   }
 });
 

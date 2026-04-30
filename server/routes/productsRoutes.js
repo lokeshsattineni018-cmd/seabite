@@ -80,9 +80,8 @@ router.post("/", upload.single('image'), async (req, res) => {
   }
 });
 
-// 🟢 NEW ROUTE: ADD REVIEW
-// This was missing, causing the 404 error
-router.post("/:id/reviews", protect, async (req, res) => {
+// 🟢 NEW ROUTE: ADD REVIEW (With Photos)
+router.post("/:id/reviews", protect, upload.array('images', 5), async (req, res) => {
   const { rating, comment } = req.body;
 
   try {
@@ -98,10 +97,13 @@ router.post("/:id/reviews", protect, async (req, res) => {
         return res.status(400).json({ message: "Product already reviewed" });
       }
 
+      const reviewImages = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+
       const review = {
         name: req.user.name,
         rating: Number(rating),
         comment,
+        images: reviewImages,
         user: req.user._id,
       };
 
@@ -114,7 +116,7 @@ router.post("/:id/reviews", protect, async (req, res) => {
         product.reviews.length;
 
       await product.save();
-      res.status(201).json({ message: "Review added" });
+      res.status(201).json({ message: "Review added successfully!" });
     } else {
       res.status(404).json({ message: "Product not found" });
     }

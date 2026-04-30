@@ -210,12 +210,12 @@ const EnhancedProductCard = ({
         position: "relative",
         transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
         boxShadow: "0 1px 4px rgba(91,191,181,0.06)",
-        fontFamily: "'Manrope', sans-serif",
+        fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
       className="product-card-hover group"
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         .product-card-hover:hover {
           box-shadow: 0 8px 32px rgba(91,191,181,0.14);
           transform: translateY(-2px);
@@ -337,9 +337,7 @@ const EnhancedProductCard = ({
           backdropFilter: "blur(4px)",
         }}
       >
-        {loadingWishlist ? (
-          <div style={{ width: "14px", height: "14px", border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-        ) : isWishlistMode ? (
+        {isWishlistMode ? (
           <FiX size={15} />
         ) : (
           <FiHeart size={15} fill={isWishlisted ? "currentColor" : "none"} />
@@ -485,7 +483,7 @@ const EnhancedProductCard = ({
               justifyContent: "center",
               gap: "6px",
               transition: "all 0.2s ease",
-              fontFamily: "'Manrope', sans-serif",
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
             }}
           >
             <div aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "6px" }}>

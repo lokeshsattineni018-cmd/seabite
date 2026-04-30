@@ -135,12 +135,20 @@ router.get("/", adminAuth, async (req, res) => {
       }
     ]);
 
-    const recentOrders = await Order.find()
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .populate('user', 'name');
+    // 🚨 ALERTS: SLA Breaches & Stock Risks
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const slaBreaches = await Order.find({
+      status: "Pending",
+      createdAt: { $lt: twentyFourHoursAgo }
+    }).select("orderId createdAt");
 
-    res.json({ stats, graph: finalGraph, recentOrders, popularProducts, heatmapData, topSpenders });
+    const stockRisks = await Product.find({
+      countInStock: { $lt: 10 }
+    }).select("name countInStock unit image category");
+
+    const alerts = { slaBreaches, stockRisks };
+
+    res.json({ stats, graph: finalGraph, recentOrders, popularProducts, heatmapData, topSpenders, alerts });
 
   } catch (err) {
     console.error("❌ ADMIN DASHBOARD CRASH:", err);
@@ -265,6 +273,31 @@ router.put("/enterprise/settings", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("Settings Update Error:", err);
     res.status(500).json({ message: "Failed to update settings" });
+  }
+});
+
+// 🟢 1.3.3 MANUAL EVENING CLEARANCE (POST /api/admin/inventory/evening-clearance)
+router.post("/inventory/evening-clearance", adminAuth, async (req, res) => {
+  try {
+    const products = await Product.find({ 
+      category: { $in: ["Fish", "Shellfish", "Meat"] }, // Perishables
+      countInStock: { $gt: 0 }
+    });
+
+    let updatedCount = 0;
+    for (const product of products) {
+      // Slash price by 15%
+      const discountAmount = Math.round(product.basePrice * 0.15);
+      product.price = product.basePrice - discountAmount;
+      product.isFlashSale = true;
+      product.flashSaleDiscount = 15;
+      await product.save();
+      updatedCount++;
+    }
+
+    res.json({ message: `Clearance engine complete. ${updatedCount} products marked down.` });
+  } catch (err) {
+    res.status(500).json({ message: "Clearance failed" });
   }
 });
 

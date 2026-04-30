@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiGift } from "react-icons/fi";
-import { motion, useInView } from "framer-motion";
+import { FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiGift, FiLock } from "react-icons/fi";
+import { motion, useInView, AnimatePresence } from "framer-motion";
 import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -28,6 +29,10 @@ const FadeUp = ({ children, delay = 0, className = "" }) => {
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPassModal, setShowPassModal] = useState(false);
+  const [oldPass, setOldPass] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [passLoading, setPassLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchUser = useCallback(async () => {
@@ -40,6 +45,22 @@ export default function Profile() {
       setLoading(false);
     }
   }, [navigate]);
+
+  const handleChangePassword = async () => {
+    if (!oldPass || !newPass) return toast.error("Please fill both fields");
+    setPassLoading(true);
+    try {
+      await axios.put(`${API_URL}/api/auth/change-password`, { oldPassword: oldPass, newPassword: newPass }, { withCredentials: true });
+      toast.success("Password updated!");
+      setShowPassModal(false);
+      setOldPass("");
+      setNewPass("");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Update failed");
+    } finally {
+      setPassLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -224,22 +245,35 @@ export default function Profile() {
               <FiHome size={15} /> Back to Home
             </motion.button>
 
-            {/* Refer & Earn */}
-            <motion.button
-              whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.2)" }}
-              whileTap={{ scale: 0.97 }}
-              onClick={() => navigate("/refer-earn")}
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
+            {/* Change Password / Google Info */}
+            {user.isGoogleUser ? (
+              <div style={{
+                display: "flex", alignItems: "center", gap: 10,
                 padding: "12px 24px", borderRadius: 14,
-                background: "#5BA8A0", border: "none",
-                color: "#ffffff", fontSize: 13, fontWeight: 700,
-                cursor: "pointer", boxShadow: "0 4px 12px rgba(91,168,160,0.3)",
+                background: "rgba(66,133,244,0.1)", border: "1px solid rgba(66,133,244,0.2)",
+                color: "#4285F4", fontSize: 13, fontWeight: 700,
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
-              }}
-            >
-              <FiGift size={15} /> Refer & Earn
-            </motion.button>
+              }}>
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style={{ width: 16 }} alt="G" />
+                Logged in using Google Gmail
+              </div>
+            ) : (
+              <motion.button
+                whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.2)" }}
+                whileTap={{ scale: 0.97 }}
+                onClick={() => setShowPassModal(true)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "12px 24px", borderRadius: 14,
+                  background: "#5BA8A0", border: "none",
+                  color: "#ffffff", fontSize: 13, fontWeight: 700,
+                  cursor: "pointer", boxShadow: "0 4px 12px rgba(91,168,160,0.3)",
+                  fontFamily: "'Plus Jakarta Sans', sans-serif",
+                }}
+              >
+                <FiLock size={15} /> Change Password
+              </motion.button>
+            )}
 
             {/* Sign Out */}
             <motion.button
@@ -259,6 +293,50 @@ export default function Profile() {
             </motion.button>
           </div>
         </FadeUp>
+
+        {/* Change Password Modal */}
+        <AnimatePresence>
+          {showPassModal && (
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(4px)" }}
+            >
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                style={{ background: "#fff", padding: 32, borderRadius: 24, width: "100%", maxWidth: 400, boxShadow: "0 20px 50px rgba(0,0,0,0.2)" }}
+              >
+                <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#1A2B35", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Update Security</h2>
+                <p style={{ fontSize: 14, color: "#6B7280", marginBottom: 24, fontWeight: 500 }}>Enter your old and new password below.</p>
+                
+                <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 24 }}>
+                  <input 
+                    type="password" placeholder="Old Password" value={oldPass} onChange={e => setOldPass(e.target.value)}
+                    style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #E5E7EB", outline: "none", fontSize: 15 }}
+                  />
+                  <input 
+                    type="password" placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)}
+                    style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #E5E7EB", outline: "none", fontSize: 15 }}
+                  />
+                </div>
+
+                <div style={{ display: "flex", gap: 12 }}>
+                  <button 
+                    onClick={() => setShowPassModal(false)}
+                    style={{ flex: 1, padding: "14px", borderRadius: 12, border: "1px solid #E5E7EB", background: "#F9FAFB", color: "#6B7280", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleChangePassword} disabled={passLoading}
+                    style={{ flex: 1, padding: "14px", borderRadius: 12, border: "none", background: "#111827", color: "#fff", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    {passLoading ? "Updating..." : "Update"}
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

@@ -2,10 +2,15 @@ import express from "express";
 const router = express.Router();
 import { checkout, paymentVerification, refundPayment } from "../controllers/paymentController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import { purchaseVelocityCheck, promoFingerprintCheck } from "../middleware/fraudProtection.js";
+import { refundToWallet } from "../controllers/walletController.js";
 
 // Routes for Razorpay Payment flow
 // 🟢 FIXED: Added 'protect' middleware here to populate req.user
-router.post("/checkout", protect, checkout);
+router.post("/checkout", protect, purchaseVelocityCheck, promoFingerprintCheck, checkout);
+
+// Wallet Refund
+router.post("/refund-wallet", protect, refundToWallet);
 
 // Verification usually comes from the client after payment; 
 // protect it to ensure only logged-in users can verify their own payments

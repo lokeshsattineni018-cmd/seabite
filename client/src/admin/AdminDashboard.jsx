@@ -17,6 +17,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
+import OrderDrawer from "./components/OrderDrawer";
 
 const PLACEHOLDER_IMG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
@@ -56,7 +57,8 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [timeFilter, setTimeFilter] = useState("6months");
   const { settings, setSettings } = useOutletContext();
-  const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, totalRevenue: 0 });
+  const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, revenue: 0, profit: 0, margin: 0 });
+  const [alerts, setAlerts] = useState({ slaBreaches: [], stockRisks: [] });
   const [graph, setGraph] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentMessages, setRecentMessages] = useState([]);
@@ -66,6 +68,8 @@ export default function AdminDashboard() {
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(""); // 🟢 Global Search
+  const [selectedDrawerOrder, setSelectedDrawerOrder] = useState(null);
   const isMounted = useRef(true);
 
   useEffect(() => {
@@ -92,6 +96,7 @@ export default function AdminDashboard() {
       if (!isMounted.current) return;
 
       setStats(dashboardRes.data.stats);
+      setAlerts(dashboardRes.data.alerts);
       setGraph(dashboardRes.data.graph);
       setRecentOrders(dashboardRes.data.recentOrders);
       setRecentMessages(messagesRes.data.slice(0, 5));
@@ -191,6 +196,12 @@ export default function AdminDashboard() {
       className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white p-4 md:p-6 font-sans"
     >
       <div className="max-w-[1600px] mx-auto space-y-6">
+        <OrderDrawer 
+          order={selectedDrawerOrder} 
+          isOpen={!!selectedDrawerOrder} 
+          onClose={() => setSelectedDrawerOrder(null)}
+          onUpdate={fetchDashboardData}
+        />
 
         {/* OTP Modal */}
         <AnimatePresence>
@@ -253,26 +264,81 @@ export default function AdminDashboard() {
           )}
         </AnimatePresence>
 
-        {/* Header */}
-        <motion.div variants={fadeUp} className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-stone-200/50 pb-4">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-light text-stone-900 tracking-tight mb-2">
-              Dashboard
-            </h1>
-            <p className="text-sm text-stone-500 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-stone-300" />
-              Last updated {lastUpdated?.toLocaleTimeString()}
-            </p>
+        {/* Sticky Header */}
+        <motion.div 
+          variants={fadeUp} 
+          className="sticky top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/80 backdrop-blur-md border-b border-stone-200/50 pb-4 pt-2 mb-8 -mx-4 px-4 md:-mx-6 md:px-6"
+        >
+          <div className="flex items-center gap-4">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-light text-stone-900 tracking-tight">
+                Command Center
+              </h1>
+              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Hub • Last sync {lastUpdated?.toLocaleTimeString()}
+              </p>
+            </div>
           </div>
-          <button
-            onClick={() => fetchDashboardData(true)}
-            disabled={isRefreshing}
-            className="px-5 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl font-medium flex items-center gap-2 transition-all disabled:opacity-50"
-          >
-            <FiRefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
-            Refresh
-          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="relative hidden md:block">
+              <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
+              <input 
+                type="text" 
+                placeholder="Find orders, customers..." 
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="pl-10 pr-4 py-2.5 bg-stone-100 border border-stone-200 rounded-2xl text-xs w-64 focus:bg-white focus:ring-4 focus:ring-stone-100 transition-all outline-none"
+              />
+            </div>
+            <button
+              onClick={() => fetchDashboardData(true)}
+              disabled={isRefreshing}
+              className="p-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl transition-all disabled:opacity-50"
+            >
+              <FiRefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+            </button>
+          </div>
         </motion.div>
+
+        {/* 🚨 CRITICAL ALERTS (SLA & STOCK) */}
+        {(alerts.slaBreaches.length > 0 || alerts.stockRisks.length > 0) && (
+          <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {alerts.slaBreaches.length > 0 && (
+              <div className="bg-rose-50 border border-rose-200 rounded-3xl p-5 flex items-start gap-4">
+                <div className="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center flex-shrink-0 animate-bounce">
+                  <FiAlertCircle size={24} />
+                </div>
+                <div>
+                  <h3 className="text-rose-900 font-bold text-sm">Action Required: SLA Breached</h3>
+                  <p className="text-rose-700 text-xs mt-1">
+                    {alerts.slaBreaches.length} orders have exceeded the 24h processing window.
+                  </p>
+                  <button onClick={() => navigate("/admin/orders")} className="mt-3 px-4 py-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-xl uppercase tracking-wider hover:bg-rose-600 transition-colors">
+                    Fulfill Now
+                  </button>
+                </div>
+              </div>
+            )}
+            {alerts.stockRisks.length > 0 && (
+              <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 flex items-start gap-4">
+                <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <FiPackage size={24} />
+                </div>
+                <div>
+                  <h3 className="text-amber-900 font-bold text-sm">Stock-Out Risk</h3>
+                  <p className="text-amber-700 text-xs mt-1">
+                    {alerts.stockRisks[0].name} {alerts.stockRisks.length > 1 ? `& ${alerts.stockRisks.length - 1} more` : ""} is running low ({alerts.stockRisks[0].countInStock}{alerts.stockRisks[0].unit}).
+                  </p>
+                  <button onClick={() => navigate("/admin/products")} className="mt-3 px-4 py-1.5 bg-amber-500 text-white text-[10px] font-bold rounded-xl uppercase tracking-wider hover:bg-amber-600 transition-colors">
+                    Restock
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Stats Grid */}
         <motion.div
@@ -280,12 +346,12 @@ export default function AdminDashboard() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5"
         >
           <StatCard
-            title="Today's Gross"
-            value={`₹${stats.todayRevenue?.toLocaleString() || 0}`}
+            title="Today's Revenue"
+            value={`₹${stats.revenue?.toLocaleString() || 0}`}
             icon={<FiDollarSign size={20} />}
-            color="from-amber-50 to-orange-50"
+            color="from-emerald-50 to-teal-50"
             index={0}
-            subtitle={`Total: ₹${stats.totalRevenue?.toLocaleString() || 0} | Profit: ₹${stats.netProfit?.toLocaleString() || 0}`}
+            subtitle={`Net Profit: ₹${stats.profit?.toLocaleString() || 0} (${stats.margin}%)`}
           />
           <StatCard
             title="Orders"
@@ -509,7 +575,7 @@ export default function AdminDashboard() {
                   {recentOrders.map((order) => (
                     <div
                       key={order._id}
-                      onClick={() => navigate(`/admin/orders`)}
+                      onClick={() => setSelectedDrawerOrder(order)}
                       className="flex items-center justify-between p-4 bg-stone-50/30 hover:bg-stone-100/50 rounded-2xl border border-transparent hover:border-stone-200 transition-all cursor-pointer group"
                     >
                       <div className="flex items-center gap-4 flex-1">
@@ -546,10 +612,66 @@ export default function AdminDashboard() {
 
           {/* Activity */}
           <motion.div variants={fadeUp} custom={8} className="lg:col-span-4 space-y-5">
+            {/* Quick Actions Hub */}
+            <div className="bg-gradient-to-br from-stone-900 to-stone-800 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16 blur-3xl group-hover:bg-white/10 transition-all" />
+               <h3 className="text-white text-lg font-light mb-5 flex items-center gap-2">
+                  <FiZap className="text-amber-400" />
+                  Quick Actions
+               </h3>
+               <div className="grid grid-cols-2 gap-3 relative z-10">
+                  <button 
+                    onClick={async () => {
+                      if (!window.confirm("Trigger manual evening clearance? This will slash prices by 15% across all perishables.")) return;
+                      const tid = toast.loading("Executing Clearance...");
+                      try {
+                        const res = await axios.post("/api/admin/inventory/evening-clearance", {}, { withCredentials: true });
+                        toast.success(res.data.message, { id: tid });
+                      } catch (e) {
+                        toast.error("Clearance failed", { id: tid });
+                      }
+                    }}
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                  >
+                     <FiTrendingUp className="text-rose-400" size={20} />
+                     <span className="text-[10px] font-bold uppercase tracking-widest text-center">Clearance</span>
+                  </button>
+                  <button 
+                    onClick={() => navigate("/admin/delivery")}
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                  >
+                     <FiActivity className="text-blue-400" size={20} />
+                     <span className="text-[10px] font-bold uppercase tracking-widest text-center">Fleet Map</span>
+                  </button>
+                  <button 
+                    onClick={() => navigate("/admin/messages")}
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                  >
+                     <FiMail className="text-teal-400" size={20} />
+                     <span className="text-[10px] font-bold uppercase tracking-widest text-center">Inbox</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                       const sub = prompt("Enter Announcement Subject:");
+                       if (!sub) return;
+                       const msg = prompt("Enter Announcement Message:");
+                       if (!msg) return;
+                       // Simulation for now
+                       toast.success("Broadcast queued!");
+                    }}
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                  >
+                     <FiStar className="text-amber-400" size={20} />
+                     <span className="text-[10px] font-bold uppercase tracking-widest text-center">Broadcast</span>
+                  </button>
+               </div>
+            </div>
+
             {/* Messages */}
             <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 h-[280px] flex flex-col hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-center mb-4 shrink-0">
-                <h3 className="text-lg font-light text-stone-900">Messages</h3>
+               {/* ... (rest of messages) ... */}
+               <div className="flex justify-between items-center mb-4 shrink-0">
+                <h3 className="text-lg font-light text-stone-900">Recent Inbox</h3>
                 <button onClick={() => navigate("/admin/messages")} className="text-stone-400 hover:text-stone-600 transition-colors">
                   <FiMail size={16} />
                 </button>

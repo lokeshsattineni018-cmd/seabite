@@ -32,9 +32,15 @@ const AuthInput = ({ label, type = "text", value, onChange, placeholder, require
       <div style={{ display: "flex", alignItems: "center", border: "1px solid #D1D5DB", borderRadius: "8px", overflow: "hidden", background: "#fff", transition: "border-color 0.2s" }}>
         <input
           type={inputType} required={required} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder || label}
-          style={{ width: "100%", padding: "12px 16px", border: "none", color: "#111827", fontSize: "14px", fontWeight: "500", outline: "none" }}
-          onFocus={e => e.currentTarget.parentElement.style.borderColor = "#3B82F6"}
-          onBlur={e => e.currentTarget.parentElement.style.borderColor = "#D1D5DB"}
+          style={{ width: "100%", padding: "14px 16px", border: "none", color: "#111827", fontSize: "16px", fontWeight: "500", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+          onFocus={e => {
+            e.currentTarget.parentElement.style.borderColor = "#5BA8A0";
+            e.currentTarget.parentElement.style.boxShadow = "0 0 0 3px rgba(91, 168, 160, 0.1)";
+          }}
+          onBlur={e => {
+            e.currentTarget.parentElement.style.borderColor = "#D1D5DB";
+            e.currentTarget.parentElement.style.boxShadow = "none";
+          }}
         />
         {isPassword && (
           <button type="button" onClick={() => setShow(!show)} style={{ background: "none", border: "none", padding: "0 12px", cursor: "pointer", color: "#9CA3AF", display: "flex", alignItems: "center" }}>
@@ -314,6 +320,15 @@ export default function Navbar({ announcementActive = false }) {
         .nav-ib:hover { background: ${T.iconHoverBg} !important; color: ${T.iconHoverColor} !important; }
         .dd-item:hover { background: #F0F8F7 !important; color: #5BBFB5 !important; }
         .prof-item:hover { background: #F4F9F8 !important; }
+        .dropdown-bridge::before {
+          content: "";
+          position: absolute;
+          top: -20px;
+          left: 0;
+          right: 0;
+          height: 20px;
+          background: transparent;
+        }
         .si:focus { outline: none; }
         .drawer-scrollbar::-webkit-scrollbar { width: 4px; }
         .drawer-scrollbar::-webkit-scrollbar-thumb { background: #E2EEEC; border-radius: 10px; }
@@ -333,7 +348,7 @@ export default function Navbar({ announcementActive = false }) {
         transition={{ duration: 0.3 }}
         style={{
           position: "fixed", top: announcementActive ? 40 : 0, left: 0, right: 0, zIndex: 100,
-          fontFamily: "'Manrope', sans-serif", background: T.navBg, backdropFilter: T.navBlur,
+          fontFamily: "'Plus Jakarta Sans', sans-serif", background: T.navBg, backdropFilter: T.navBlur,
           borderBottom: `1px solid ${T.navBorder}`, boxShadow: T.navShadow, padding: T.navPy, transition: "all 0.35s ease",
         }}
       >
@@ -349,12 +364,18 @@ export default function Navbar({ announcementActive = false }) {
 
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div style={{ position: "relative" }} onMouseEnter={() => setShowShop(true)} onMouseLeave={() => setShowShop(false)}>
-                <button className="nav-ul" style={{ display: "flex", alignItems: "center", gap: "4px", padding: "6px 12px", border: "none", background: "none", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link, cursor: "pointer", fontFamily: "'Manrope', sans-serif" }}>
+                <button className="nav-ul" style={{ display: "flex", alignItems: "center", gap: "4px", padding: "6px 12px", border: "none", background: "none", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Shop <FiChevronDown size={12} style={{ transform: showShop ? "rotate(180deg)" : "none", transition: "all 0.22s" }} />
                 </button>
                 <AnimatePresence>
                   {showShop && (
-                    <motion.div initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -8, scale: 0.97 }} style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", padding: "5px", minWidth: "170px", zIndex: 200, boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}>
+                    <motion.div 
+                      className="dropdown-bridge"
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }} 
+                      animate={{ opacity: 1, y: 0, scale: 1 }} 
+                      exit={{ opacity: 0, y: -8, scale: 0.97 }} 
+                      style={{ position: "absolute", top: "calc(100% + 5px)", left: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", padding: "5px", minWidth: "170px", zIndex: 200, boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}
+                    >
                       {NAV_LINKS.map(link => (
                         <button key={link.path} className="dd-item" onClick={() => { navigate(link.path); setShowShop(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 13px", border: "none", background: "none", borderRadius: "9px", fontSize: "13.5px", fontWeight: "600", color: "#1A2E2C", cursor: "pointer" }}>{link.label}</button>
                       ))}
@@ -364,6 +385,7 @@ export default function Navbar({ announcementActive = false }) {
               </div>
               <Link to="/about" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>About</Link>
               <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>Orders</Link>
+              <Link to="/recipes" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>Recipes</Link>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
@@ -425,7 +447,12 @@ export default function Navbar({ announcementActive = false }) {
                   </motion.button>
                   <AnimatePresence>
                     {showProfile && (
-                      <motion.div initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} style={{ position: "absolute", top: "calc(100% + 10px)", right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", overflow: "hidden", minWidth: "240px", zIndex: 200, boxShadow: "0 16px 48px rgba(0,0,0,0.1)" }}>
+                      <motion.div 
+                        className="dropdown-bridge"
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }} 
+                        animate={{ opacity: 1, y: 0, scale: 1 }} 
+                        style={{ position: "absolute", top: "calc(100% + 5px)", right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", overflow: "hidden", minWidth: "240px", zIndex: 200, boxShadow: "0 16px 48px rgba(0,0,0,0.1)" }}
+                      >
                         <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #F0F5F4", background: "#F4F9F8" }}>
                           <p style={{ fontSize: "10px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 3px" }}>Signed in as</p>
                           <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{user.email}</p>
@@ -507,10 +534,10 @@ export default function Navbar({ announcementActive = false }) {
                  <AnimatePresence mode="wait">
                     <motion.div
                        key={authImgIdx}
-                       initial={{ opacity: 0 }}
-                       animate={{ opacity: 1 }}
-                       exit={{ opacity: 0 }}
-                       transition={{ duration: 0.5, ease: "circOut" }}
+                       initial={{ opacity: 0, x: 40 }}
+                       animate={{ opacity: 1, x: 0 }}
+                       exit={{ opacity: 0, x: -40 }}
+                       transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
                        style={{
                           position: "absolute", inset: 0,
                           background: `url(${authImages[authImgIdx]}) center/cover no-repeat`,
@@ -527,23 +554,23 @@ export default function Navbar({ announcementActive = false }) {
                  </div>
                  
                  <div style={{ position: "relative", zIndex: 2, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "32px", paddingBottom: "60px", textAlign: "left" }}>
-                    <AnimatePresence mode="wait">
+                    <AnimatePresence mode="popLayout">
                        <motion.div
                           key={authImgIdx}
-                          initial={{ opacity: 0, y: 12 }}
+                          initial={{ opacity: 0, y: 30 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -12 }}
-                          transition={{ duration: 0.4, delay: 0.2, ease: "circOut" }}
+                          exit={{ opacity: 0, y: -30 }}
+                          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
                        >
-                          <div style={{ display: "inline-block", padding: "4px 12px", borderRadius: "4px", background: "#EAB308", color: "#000", fontSize: "10px", fontWeight: "900", fontFamily: "'Outfit', sans-serif", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "16px" }}>
+                          <div style={{ display: "inline-block", padding: "6px 14px", borderRadius: "8px", background: "rgba(234, 179, 8, 0.9)", color: "#000", fontSize: "11px", fontWeight: "900", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "20px", backdropFilter: "blur(4px)" }}>
                              {authImgIdx === 0 ? "FLASH DEAL" : authImgIdx === 1 ? "FREE SHIPPING" : "WELCOME OFFER"}
                           </div>
                           
-                          <h2 style={{ color: "#fff", fontSize: "44px", fontWeight: "900", fontFamily: "'Playfair Display', serif", fontStyle: "italic", margin: "0 0 10px", lineHeight: 0.95, letterSpacing: "-0.02em" }}>
-                             {authImgIdx === 0 ? <>10%<br/><span style={{fontSize: "26px"}}>DISCOUNT</span></> : authImgIdx === 1 ? <>FREE<br/><span style={{fontSize: "24px"}}>DELIVERY</span></> : <>FLAT ₹200<br/><span style={{fontSize: "24px"}}>DISCOUNT</span></>}
+                          <h2 style={{ color: "#fff", fontSize: "52px", fontWeight: "900", fontFamily: "'Plus Jakarta Sans', sans-serif", margin: "0 0 12px", lineHeight: 0.85, letterSpacing: "-0.04em", textShadow: "0 4px 12px rgba(0,0,0,0.3)" }}>
+                             {authImgIdx === 0 ? <>10%<br/><span style={{fontSize: "26px", fontWeight: "700", letterSpacing: "0.01em"}}>DISCOUNT</span></> : authImgIdx === 1 ? <>FREE<br/><span style={{fontSize: "26px", fontWeight: "700", letterSpacing: "0.01em"}}>DELIVERY</span></> : <>FLAT ₹200<br/><span style={{fontSize: "26px", fontWeight: "700", letterSpacing: "0.01em"}}>DISCOUNT</span></>}
                           </h2>
                           
-                          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: "17px", fontWeight: "600", fontFamily: "'Outfit', sans-serif", margin: 0, maxWidth: "220px", lineHeight: 1.3 }}>
+                          <p style={{ color: "rgba(255,255,255,0.95)", fontSize: "16px", fontWeight: "500", fontFamily: "'Plus Jakarta Sans', sans-serif", margin: 0, maxWidth: "260px", lineHeight: 1.4, letterSpacing: "-0.01em" }}>
                              {authImgIdx === 0 ? "On all orders above ₹1699" : authImgIdx === 1 ? "On all orders above ₹999" : "On your very first order"}
                           </p>
                        </motion.div>
@@ -552,17 +579,20 @@ export default function Navbar({ announcementActive = false }) {
               </div>
 
               {/* RIGHT SIDE (WHITE BOX) */}
-              <div style={{ flex: 1, padding: "8px 8px 8px 0", minHeight: "auto", position: "relative", zIndex: 1 }}>
-                <div style={{ background: "#fff", borderRadius: "12px", height: "100%", padding: "32px 32px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", boxShadow: "0 0 40px rgba(0,0,0,0.05)" }}>
-                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "12px", right: "12px", background: "rgba(0,0,0,0.05)", border: "none", borderRadius: "50%", width: "24px", height: "24px", color: "#111", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background="rgba(0,0,0,0.1)"} onMouseOut={e => e.currentTarget.style.background="rgba(0,0,0,0.05)"}><FiX size={14}/></button>
+              <div className="auth-modal-right" style={{ flex: 1, padding: "8px 8px 8px 0", minHeight: "auto", position: "relative", zIndex: 1 }}>
+                <div className="auth-modal-inner" style={{ background: "#fff", borderRadius: "12px", height: "100%", padding: "32px 32px", display: "flex", flexDirection: "column", justifyContent: "center", position: "relative", boxShadow: "0 0 40px rgba(0,0,0,0.05)" }}>
+                <button onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", top: "12px", right: "12px", background: "rgba(0,0,0,0.05)", border: "none", borderRadius: "50%", width: "32px", height: "32px", color: "#111", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background="rgba(0,0,0,0.1)"} onMouseOut={e => e.currentTarget.style.background="rgba(0,0,0,0.05)"}><FiX size={18}/></button>
                 <AnimatePresence mode="wait">
                   <motion.div key={authMode} variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.08 } }, exit: { opacity: 0 } }} initial="hidden" animate="show" exit="exit" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                     
                     <div style={{ textAlign: "center", marginBottom: "24px" }}>
-                       <h2 style={{ fontSize: "22px", fontWeight: "800", color: "#111827", margin: "0 0 8px", lineHeight: 1.2 }}>
-                          {authMode === "LOGIN" ? "Unlock\nOcean's Finest" : authMode === "SIGNUP" ? "Join Us For\nExclusive Catch" : "Reset Your\nPassword"}
+                       <div className="mobile-only" style={{ marginBottom: "20px" }}>
+                          <img src="/logo.png" style={{ height: "40px", width: "auto", margin: "0 auto" }} />
+                       </div>
+                       <h2 style={{ fontSize: "24px", fontWeight: "800", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#111827", margin: "0 0 8px", lineHeight: 1.1, letterSpacing: "-0.03em" }}>
+                          {authMode === "LOGIN" ? "Unlock Ocean's Finest" : authMode === "SIGNUP" ? "Join Us For Exclusive Catch" : "Reset Your Password"}
                        </h2>
-                       <p style={{ fontSize: "14px", color: "#6B7280", margin: 0, fontWeight: "500" }}>
+                       <p style={{ fontSize: "14px", color: "#6B7280", margin: 0, fontWeight: "500", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.01em" }}>
                           {authMode === "LOGIN" ? "Enter Email to Continue" : authMode === "SIGNUP" ? "Enter your details below" : "Enter email to reset"}
                        </p>
                     </div>
@@ -703,7 +733,7 @@ export default function Navbar({ announcementActive = false }) {
         {mobileOpen && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000 }} />
-            <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 28, stiffness: 220 }} style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "85vw", maxWidth: "360px", background: "#fff", zIndex: 1001, display: "flex", flexDirection: "column", fontFamily: "'Manrope', sans-serif" }}>
+            <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 28, stiffness: 220 }} style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "85vw", maxWidth: "360px", background: "#fff", zIndex: 1001, display: "flex", flexDirection: "column", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               <div style={{ padding: "24px", background: "#1A2B35", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <img src="/logo.png" alt="SeaBite" style={{ height: "36px", filter: "brightness(0) invert(1)" }} />
                 <button onClick={() => setMobileOpen(false)} style={{ background: "none", border: "none", color: "#fff" }}><FiX size={24} /></button>

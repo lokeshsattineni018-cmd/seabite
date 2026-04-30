@@ -1,5 +1,6 @@
 import express from "express";
 import Order from "../models/Order.js";
+import Complaint from "../models/Complaint.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 import { cancelOrder, updateOrderStatus, deleteOrder, createComplaint } from "../controllers/orderController.js";
 // 🟢 ADDED: Import the email service to trigger the confirmation mail
@@ -20,6 +21,19 @@ router.get("/", protect, admin, async (req, res) => {
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: "Failed to load admin orders" });
+  }
+});
+
+// 🟢 GET UNASSIGNED ORDERS (For Fleet Management)
+router.get("/unassigned", protect, admin, async (req, res) => {
+  try {
+    const orders = await Order.find({ 
+      status: { $in: ["Pending", "Processing", "Cooking", "Ready"] },
+      deliveryPartner: { $exists: false }
+    }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch unassigned orders" });
   }
 });
 
@@ -47,8 +61,12 @@ router.get("/:orderId", protect, async (req, res) => {
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
+    // 🟢 NEW: Fetch associated complaints for this order
+    const complaints = await Complaint.find({ order: order._id }).sort({ createdAt: -1 });
+
     // 🔐 ENHANCEMENT: Fallback calculation for legacy orders missing summary fields
     const orderObj = order.toObject();
+    orderObj.complaints = complaints; // Attach complaints to the response
     if (!orderObj.itemsPrice || orderObj.itemsPrice === 0) {
       orderObj.itemsPrice = orderObj.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
       orderObj.shippingPrice = orderObj.itemsPrice < 1000 ? 99 : 0;
@@ -70,6 +88,23 @@ router.put("/:id/cancel", protect, cancelOrder);
 
 // --- USER SUBMIT COMPLAINT ---
 router.post("/:id/complaint", protect, createComplaint);
+
+// --- USER CONFIRM QUALITY ---
+router.put("/:id/confirm-quality", protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    if (order.user.toString() !== req.user._id.toString()) return res.status(401).json({ message: "Not authorized" });
+
+    order.qualityConfirmed = true;
+    order.qualityConfirmedAt = Date.now();
+    await order.save();
+
+    res.status(200).json({ message: "Quality confirmed! Thank you." });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to confirm quality" });
+  }
+});
 
 // --- ADMIN DELETE ORDER ---
 router.delete("/:id", protect, admin, deleteOrder);

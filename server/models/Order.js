@@ -88,13 +88,19 @@ const orderSchema = new mongoose.Schema(
       enum: ["Unassigned", "Assigned", "Picked Up", "Arriving", "Delivered", "Failed"],
       default: "Unassigned"
     },
+    // 🐟 Premium Quality Feedback
+    qualityConfirmed: { type: Boolean, default: false },
+    qualityConfirmedAt: { type: Date },
     // 🔐 Enterprise Idempotency (Prevent Duplicate Orders)
     idempotencyKey: {
       type: String,
       unique: true,
       sparse: true,
       index: true
-    }
+    },
+    // 🛡️ Fraud Protection
+    couponCode: { type: String },
+    fraudFingerprint: { type: String, index: true }
   },
   { timestamps: true }
 );

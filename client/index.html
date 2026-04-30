@@ -7,6 +7,16 @@
   <link rel="apple-touch-icon" href="/roundlogo.png" />
   <link rel="shortcut icon" href="/roundlogo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/manifest.json" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW Registered'))
+          .catch(err => console.log('SW Failed', err));
+      });
+    }
+  </script>
   <title>SeaBite - Fresh Coastal Catch Delivered</title>
   <meta name="keywords"
     content="seafood, fresh fish, crab, prawns, delivery, coastal catch, sea bite, mogalthur, chemical free fish" />
@@ -58,7 +68,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places"></script>
 
   <style>
     html,

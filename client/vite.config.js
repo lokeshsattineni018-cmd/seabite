@@ -17,7 +17,11 @@ export default defineConfig({
       },
     },
   },
+  esbuild: {
+    drop: ['console', 'debugger'],
+  },
   build: {
+    minify: 'esbuild',
     sourcemap: false, // 🛡️ Protect source code in production
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
