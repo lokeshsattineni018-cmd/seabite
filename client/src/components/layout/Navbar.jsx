@@ -93,14 +93,21 @@ export default function Navbar({ announcementActive = false }) {
 
   useEffect(() => {
     if (!isLoginOpen) {
+      // Complete state reset on close
       setAuthMode("LOGIN");
       setAuthOtp("");
+      setAuthEmail("");
+      setAuthPassword("");
+      setAuthName("");
+      setAuthPhone("");
+      setAuthReferral("");
       setResendCooldown(0);
+      setAuthImgIdx(0);
       return;
     }
     const interval = setInterval(() => {
       setAuthImgIdx(prev => (prev + 1) % authImages.length);
-    }, 2500);
+    }, 3500); // Slightly slower for more premium feel
     return () => clearInterval(interval);
   }, [isLoginOpen]);
 
@@ -429,7 +436,7 @@ export default function Navbar({ announcementActive = false }) {
                 </AnimatePresence>
                 <AnimatePresence>
                   {suggestions.length > 0 && searchExpanded && (
-                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", overflow: "hidden", zIndex: 300, minWidth: "240px", boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}>
+                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, x: 0 }} style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", overflow: "hidden", zIndex: 300, minWidth: "240px", boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}>
                       {suggestions.map(item => (
                         <div key={item._id} className="prof-item" onClick={() => handleSuggestionClick(item)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #F4F9F8" }}>
                           <img src={item.image} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover" }} />
@@ -559,19 +566,19 @@ export default function Navbar({ announcementActive = false }) {
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} style={{ position: "relative", background: "#fff", width: "100%", maxWidth: "760px", borderRadius: "16px", boxShadow: "0 24px 60px rgba(0,0,0,0.2)", display: "flex", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>
                          {/* LEFT SIDE (FEATURES) */}
               <div className="hidden-mobile" style={{ flex: "0.8", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: "32px" }}>
-                 <AnimatePresence>
+                  <AnimatePresence initial={false}>
                     <motion.div
                        key={authImgIdx}
-                       initial={{ x: "100%" }}
-                       animate={{ x: 0, zIndex: 1 }}
-                       exit={{ x: "-100%", zIndex: 0 }}
-                       transition={{ duration: 0.8, ease: [0.65, 0, 0.35, 1] }}
+                       initial={{ x: "100%", opacity: 0.8 }}
+                       animate={{ x: 0, opacity: 1, zIndex: 1 }}
+                       exit={{ x: "-100%", opacity: 0.8, zIndex: 0 }}
+                       transition={{ duration: 1.2, ease: [0.4, 0, 0.2, 1] }} // More fluid, premium timing
                        style={{
                           position: "absolute", inset: 0,
                           background: `url(${authImages[authImgIdx]}) center/cover no-repeat`
                        }}
                     />
-                 </AnimatePresence>
+                  </AnimatePresence>
 
                  {/* Premium Gradient Overlay */}
                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1 }} />
@@ -584,10 +591,10 @@ export default function Navbar({ announcementActive = false }) {
                     <AnimatePresence mode="popLayout">
                        <motion.div
                           key={authImgIdx}
-                          initial={{ opacity: 0, y: 30 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -30 }}
-                          transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+                          initial={{ opacity: 0, x: 40 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -40 }}
+                          transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
                        >
                           <div style={{ display: "inline-block", padding: "6px 14px", borderRadius: "8px", background: "rgba(234, 179, 8, 0.9)", color: "#000", fontSize: "11px", fontWeight: "900", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: "20px", backdropFilter: "blur(4px)" }}>
                              {authImgIdx === 0 ? "FLASH DEAL" : authImgIdx === 1 ? "FREE SHIPPING" : "WELCOME OFFER"}
