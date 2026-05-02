@@ -497,8 +497,21 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
           </div>
         </div>
 
+        {/* Cancellation Reason Banner */}
+        {order.cancelReason && (
+          <div className="px-8 py-3 bg-rose-50 border-b border-rose-100 flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+              <FiXCircle size={18} />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-rose-400 uppercase tracking-widest mb-0.5">Cancellation Reason</p>
+              <p className="text-sm font-bold text-rose-700">{order.cancelReason}</p>
+            </div>
+          </div>
+        )}
+
         {/* Delete Banner (Warning) */}
-        <div className="px-8 py-2 bg-rose-50 border-b border-rose-100 flex justify-between items-center group">
+        <div className="px-8 py-2 bg-stone-50 border-b border-stone-100 flex justify-between items-center group">
           <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">Danger Zone: Permanent Deletion</p>
           <button
             onClick={() => handleDeleteOrder(order._id, order.orderId)}
