@@ -7,6 +7,8 @@ import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import toast from "react-hot-toast";
+import AnimatedOceanBanner from "./AnimatedOceanBanner";
+
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -118,15 +120,12 @@ export default function Profile() {
         </div>
 
         {/* Right Content */}
-        <div className="col-span-1 md:col-span-3 flex flex-col gap-8">
+        <div className="col-span-1 md:col-span-3 flex flex-col gap-5">
           
           {/* Profile Header */}
           <div className="relative mb-12">
-            <img 
-              src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000&auto=format&fit=crop" 
-              className="w-full h-40 object-cover rounded-2xl border border-gray-200/60 shadow-sm" 
-              alt="Ocean cover"
-            />
+            <AnimatedOceanBanner />
+
             {/* Avatar exactly on bottom edge */}
             <div className="absolute left-1/2 -bottom-12 -translate-x-1/2">
               <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-semibold text-white shadow-sm overflow-hidden bg-white">
@@ -135,7 +134,7 @@ export default function Profile() {
             </div>
           </div>
 
-          <div className="text-center mt-2 mb-2">
+          <div className="text-center mt-0 mb-1">
             <h1 className="text-xl font-semibold text-gray-900">{user.name}</h1>
             <p className="text-sm text-gray-500">{user.email}</p>
           </div>
@@ -146,7 +145,7 @@ export default function Profile() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col gap-8"
+            className="flex flex-col gap-5"
           >
             {activeTab === "overview" && (
               <>
