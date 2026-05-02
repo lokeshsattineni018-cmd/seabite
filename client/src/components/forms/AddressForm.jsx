@@ -55,7 +55,7 @@ export default function AddressForm({ onSave, onCancel, initialData = {} }) {
     const inputRef = useRef(null);
 
     useEffect(() => {
-        if (!window.google || !inputRef.current) return;
+        if (!window.google || !window.google.maps || !window.google.maps.places || !inputRef.current) return;
 
         const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
             componentRestrictions: { country: "in" },
