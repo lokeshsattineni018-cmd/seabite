@@ -7,6 +7,8 @@ import { FiSave, FiSettings, FiDollarSign, FiClock, FiMapPin, FiTruck, FiPercent
 import { motion } from "framer-motion";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
+const API_URL = import.meta.env.VITE_API_URL || "";
+
 const fadeUp = {
     hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
     visible: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
@@ -30,11 +32,12 @@ export default function AdminSettings() {
         e.preventDefault();
         setSaving(true);
         try {
-            const { data } = await axios.put("/api/admin/enterprise/settings", formData, { withCredentials: true });
+            const { data } = await axios.put(`${API_URL}/api/admin/enterprise/settings`, formData, { withCredentials: true });
             setSettings(data.settings);
             toast.success("Settings saved successfully");
-        } catch {
-            toast.error("Failed to update settings");
+        } catch (err) {
+            console.error("Settings Update Error:", err);
+            toast.error(err.response?.data?.message || "Failed to update settings");
         } finally {
             setSaving(false);
         }
@@ -181,6 +184,14 @@ export default function AdminSettings() {
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl"><FiBriefcase size={20} /></div>
                             <h2 className="text-lg font-bold text-stone-900">Announcement Bar</h2>
+                            <button
+                                type="button"
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="ml-auto text-[10px] font-bold uppercase tracking-widest text-purple-600 hover:text-purple-700 transition-colors"
+                            >
+                                {saving ? "Saving..." : "Save Section"}
+                            </button>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
@@ -272,6 +283,14 @@ export default function AdminSettings() {
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl"><FiPercent size={20} /></div>
                             <h2 className="text-lg font-bold text-stone-900">Gamification & Rewards</h2>
+                            <button
+                                type="button"
+                                onClick={handleSave}
+                                disabled={saving}
+                                className="ml-auto text-[10px] font-bold uppercase tracking-widest text-rose-600 hover:text-rose-700 transition-colors"
+                            >
+                                {saving ? "Saving..." : "Save Section"}
+                            </button>
                         </div>
 
                         <div className="flex items-center justify-between p-6 bg-stone-50 rounded-2xl border border-stone-100">
