@@ -7,7 +7,6 @@ import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import toast from "react-hot-toast";
-import toast from "react-hot-toast";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
