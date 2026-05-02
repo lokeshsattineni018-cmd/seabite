@@ -422,14 +422,11 @@ export default function Checkout() {
       </AnimatePresence>
 
       <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
-        {/* Steps */}
-        <StepsBar currentStep={currentStep} />
-
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} style={{ marginBottom: 28 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-            <div style={{ width: 4, height: 16, borderRadius: 2, background: `linear-gradient(180deg, ${T.primary}, ${T.sky})` }} />
-            <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.16em" }}>Secure Checkout</span>
+        {/* Centered Header */}
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease }} style={{ marginBottom: 32, textAlign: "center" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <FiShield size={16} style={{ color: T.primary }} />
+            <span style={{ fontSize: 12, fontWeight: 800, color: T.primary, textTransform: "uppercase", letterSpacing: "0.16em" }}>Secure Checkout</span>
           </div>
           <h1 style={{ fontSize: 34, fontWeight: 800, color: T.textDark, letterSpacing: "-0.03em", margin: 0 }}>
             Order <span style={{ color: T.primary }}>Summary</span>
@@ -579,7 +576,7 @@ export default function Checkout() {
           </div>
 
           {/* RIGHT - ORDER SUMMARY */}
-          <div style={{ position: "sticky", top: 96, alignSelf: "flex-start" }}>
+          <div style={{ position: "sticky", top: 96, alignSelf: "flex-start", paddingBottom: "48px" }}>
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.5, ease }}>
               <SectionCard>
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: T.textDark, marginBottom: 20, display: "flex", alignItems: "center", gap: 8 }}>
@@ -752,7 +749,7 @@ export default function Checkout() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={placeOrder}
-                    disabled={loading}
+                    disabled={loading || !deliveryAddress._id}
                     className="desktop-place-order"
                     style={{
                       width: "100%",
@@ -763,8 +760,9 @@ export default function Checkout() {
                       fontSize: "15px",
                       fontWeight: "800",
                       border: "none",
-                      cursor: loading ? "not-allowed" : "pointer",
-                      boxShadow: loading ? "none" : "0 12px 32px rgba(91,168,160,0.3)",
+                      cursor: (loading || !deliveryAddress._id) ? "not-allowed" : "pointer",
+                      opacity: (!deliveryAddress._id) ? 0.5 : 1,
+                      boxShadow: (loading || !deliveryAddress._id) ? "none" : "0 12px 32px rgba(91,168,160,0.3)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
