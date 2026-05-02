@@ -153,21 +153,25 @@ function MainLayout() {
   // 🎡 Spin Wheel Trigger Logic
   useEffect(() => {
     const hasSpunThisSession = sessionStorage.getItem("seabite_spun_this_session");
+    const hasExistingCoupon = localStorage.getItem("seabiteSpinDiscount");
 
-    if (spinWheelEnabled && !hasSpunThisSession) {
-      // If user is logged in, double check with backend if they can actually spin
-      if (user) {
-        axios.get(`${API_URL}/api/spin/can-spin`, { withCredentials: true })
-          .then(({ data }) => {
-            if (data.canSpin) {
-              setTimeout(() => { setIsSpinOpen(true); }, 5000);
-            }
-          })
-          .catch(() => { });
-      } else {
-        // For guests, show the wheel anyway to tease the rewards (Spin component handles login prompt)
-        setTimeout(() => { setIsSpinOpen(true); }, 5000);
-      }
+    // Don't show if already spun this session or has an active coupon
+    if (!spinWheelEnabled || hasSpunThisSession || hasExistingCoupon) return;
+
+    const triggerWheel = () => {
+      setTimeout(() => { setIsSpinOpen(true); }, 5000);
+    };
+
+    if (user) {
+      // For logged-in users, strictly check backend eligibility
+      axios.get(`${API_URL}/api/spin/can-spin`, { withCredentials: true })
+        .then(({ data }) => {
+          if (data.canSpin) triggerWheel();
+        })
+        .catch(() => { });
+    } else {
+      // For guests, show the wheel to tease rewards
+      triggerWheel();
     }
   }, [spinWheelEnabled, user]);
 
