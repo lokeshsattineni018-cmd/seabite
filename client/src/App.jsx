@@ -154,18 +154,20 @@ function MainLayout() {
   useEffect(() => {
     const hasSpunThisSession = sessionStorage.getItem("seabite_spun_this_session");
 
-    if (spinWheelEnabled && user && !hasSpunThisSession) {
-      // Check if user actually can spin from backend
-      axios.get(`${API_URL}/api/auth/can-spin`, { withCredentials: true })
-        .then(({ data }) => {
-          if (data.canSpin) {
-            // Trigger auto-open after 5 seconds delay for better UX
-            setTimeout(() => {
-              setIsSpinOpen(true);
-            }, 5000);
-          }
-        })
-        .catch(() => { });
+    if (spinWheelEnabled && !hasSpunThisSession) {
+      // If user is logged in, double check with backend if they can actually spin
+      if (user) {
+        axios.get(`${API_URL}/api/spin/can-spin`, { withCredentials: true })
+          .then(({ data }) => {
+            if (data.canSpin) {
+              setTimeout(() => { setIsSpinOpen(true); }, 5000);
+            }
+          })
+          .catch(() => { });
+      } else {
+        // For guests, show the wheel anyway to tease the rewards (Spin component handles login prompt)
+        setTimeout(() => { setIsSpinOpen(true); }, 5000);
+      }
     }
   }, [spinWheelEnabled, user]);
 
