@@ -404,7 +404,7 @@ export default function Navbar({ announcementActive = false }) {
         animate={{ y: hidden ? -72 : 0, opacity: hidden ? 0 : 1 }}
         transition={{ duration: 0.3 }}
         style={{
-          position: "fixed", top: announcementActive ? 40 : 0, left: 0, right: 0, zIndex: 100,
+          position: "fixed", top: announcementActive ? 36 : 0, left: 0, right: 0, zIndex: 100,
           fontFamily: "'Plus Jakarta Sans', sans-serif", background: T.navBg, backdropFilter: T.navBlur,
           borderBottom: `1px solid ${T.navBorder}`, boxShadow: T.navShadow, padding: T.navPy, transition: "all 0.35s ease",
         }}

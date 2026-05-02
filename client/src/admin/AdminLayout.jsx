@@ -160,9 +160,6 @@ export default function AdminLayout() {
 
       {/* 🟢 Main Content Area */}
       <main className="flex-1 relative overflow-y-auto overflow-x-hidden h-full pt-16 md:pt-0 scroll-smooth bg-[#fafaf9]">
-        {/* Rolling Announcement (Admin Only) */}
-        <AnnouncementBar settings={settings?.announcement} />
-
         {/* Top Navigation Bar (Desktop) */}
         <div className="hidden md:flex items-center justify-between px-8 py-5 sticky top-0 bg-[#fafaf9]/95 backdrop-blur-md z-20 border-b border-stone-200/40">
           <div className="flex items-center gap-6">
