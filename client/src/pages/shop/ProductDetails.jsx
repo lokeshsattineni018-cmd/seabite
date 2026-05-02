@@ -199,7 +199,7 @@ const FreshnessMeter = ({ productId }) => {
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
   return (
-    <div style={{
+    <div className="freshness-widget" style={{
       background: "rgba(255,255,255,0.8)",
       backdropFilter: "blur(10px)",
       border: "1px solid #E2EEEC",
@@ -212,6 +212,20 @@ const FreshnessMeter = ({ productId }) => {
       boxShadow: "0 8px 30px rgba(0,0,0,0.03)",
       fontFamily: "'Plus Jakarta Sans', sans-serif"
     }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .freshness-widget {
+            padding: 12px 16px;
+            gap: 12px;
+          }
+          .freshness-info p {
+            font-size: 11px !important;
+          }
+          .freshness-info h4 {
+            font-size: 13px !important;
+          }
+        }
+      `}</style>
       <div style={{ position: "relative", width: "70px", height: "70px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <svg height="70" width="70" style={{ transform: "rotate(-90deg)" }}>
           <circle
@@ -242,7 +256,7 @@ const FreshnessMeter = ({ productId }) => {
         </div>
       </div>
       
-      <div style={{ flex: 1 }}>
+      <div className="freshness-info" style={{ flex: 1 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
           <h4 style={{ margin: 0, fontSize: "14px", fontWeight: "800", color: "#1A2E2C" }}>{label} Freshness</h4>
           <span style={{ 
@@ -251,8 +265,7 @@ const FreshnessMeter = ({ productId }) => {
           }}>Live</span>
         </div>
         <p style={{ margin: 0, fontSize: "12px", color: "#6B8F8A", fontWeight: "500" }}>
-          Caught approximately <span style={{ color: "#1A2E2C", fontWeight: "700" }}>{Math.floor(hoursSinceCatch) || "under 1"}h</span> ago. 
-          Quality verified.
+          Caught <span style={{ color: "#1A2E2C", fontWeight: "700" }}>{Math.floor(hoursSinceCatch) || "under 1"}h</span> ago.
         </p>
       </div>
       
@@ -366,7 +379,19 @@ const PincodeChecker = () => {
         <button 
           onClick={checkPincode}
           disabled={pincode.length !== 6 || status === 'loading'}
-          style={{ padding: "0 20px", background: pincode.length === 6 ? "#1A2E2C" : "#DDE9E7", color: "#fff", border: "none", borderRadius: "8px", fontSize: "13px", fontWeight: "700", cursor: pincode.length === 6 ? "pointer" : "not-allowed", fontFamily: "'Plus Jakarta Sans', sans-serif", transition: "background 0.2s" }}
+          style={{ 
+            padding: "0 20px", 
+            background: pincode.length === 6 ? "#1A2E2C" : "#B8CFCC", 
+            color: "#fff", 
+            border: "none", 
+            borderRadius: "8px", 
+            fontSize: "13px", 
+            fontWeight: "800", 
+            cursor: pincode.length === 6 ? "pointer" : "not-allowed", 
+            fontFamily: "'Plus Jakarta Sans', sans-serif", 
+            transition: "all 0.2s ease",
+            boxShadow: pincode.length === 6 ? "0 4px 12px rgba(26, 46, 44, 0.15)" : "none"
+          }}
         >
           {status === 'loading' ? '...' : 'Check'}
         </button>
@@ -696,6 +721,17 @@ export default function ProductDetails() {
         @media (min-width: 768px) {
           .product-grid { grid-template-columns: 1fr 1fr; gap: 48px; }
         }
+        @media (max-width: 767px) {
+          .hero-image-container { 
+            padding: 20px !important; 
+            border-radius: 24px !important;
+            margin: 0 -12px 20px !important;
+            width: calc(100% + 24px) !important;
+          }
+          .hero-image-container img {
+            object-fit: cover !important;
+          }
+        }
       `}</style>
 
       {typeof document !== "undefined" && createPortal(
@@ -752,7 +788,7 @@ export default function ProductDetails() {
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
               style={{ position: "sticky", top: "108px" }}
             >
-              <div style={{
+              <div className="hero-image-container" style={{
                 background: "#fff",
                 borderRadius: "20px",
                 border: "1.5px solid #E2EEEC",
@@ -1194,6 +1230,48 @@ export default function ProductDetails() {
         </div>
       </div>
 
+      {/* 📱 Mobile Sticky Action Bar */}
+      <div className="show-mobile" style={{
+        position: "fixed",
+        bottom: "64px", // Above mobile nav
+        left: 0,
+        right: 0,
+        background: "rgba(255, 255, 255, 0.95)",
+        backdropFilter: "blur(12px)",
+        borderTop: "1.5px solid #E2EEEC",
+        padding: "12px 24px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        zIndex: 40,
+        boxShadow: "0 -8px 25px rgba(26, 46, 44, 0.08)"
+      }}>
+        <div>
+          <span style={{ fontSize: "10px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.08em", display: "block" }}>Total Price</span>
+          <span style={{ fontSize: "20px", fontWeight: "800", color: "#1A2E2C", letterSpacing: "-0.02em" }}>₹{Number(totalPrice).toFixed(0)}</span>
+        </div>
+        <button
+          onClick={handleAddToCart}
+          disabled={isAdded || product.stock === "out"}
+          style={{
+            background: isAdded ? "#5BBFB5" : product.stock === "out" ? "#F0F5F4" : "#1A2E2C",
+            color: "#fff",
+            border: "none",
+            borderRadius: "14px",
+            padding: "12px 28px",
+            fontSize: "14px",
+            fontWeight: "700",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            boxShadow: isAdded ? "none" : "0 8px 20px rgba(26, 46, 44, 0.2)"
+          }}
+        >
+          {isAdded ? <FiCheck /> : <FiShoppingBag />}
+          {isAdded ? "Added" : "Add to Cart"}
+        </button>
+      </div>
+
       <ReviewModal
         isOpen={isReviewOpen}
         onClose={() => setIsReviewOpen(false)}
@@ -1202,7 +1280,10 @@ export default function ProductDetails() {
         API_URL={API_URL}
         onSuccess={fetchProduct}
       />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media (min-width: 769px) { .show-mobile { display: none !important; } }
+      `}</style>
     </>
   );
 }
