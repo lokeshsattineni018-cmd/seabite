@@ -129,6 +129,7 @@ function MainLayout() {
           banner: data.banner
         });
         setAnnouncement(data.announcement); // 🟢 Capture Announcement
+      console.log("📢 Announcement State Updated:", data.announcement);
         setSpinWheelEnabled(data.spinWheelEnabled); // 🟢 Capture Spin State
       } catch (error) {
         // console.error("Failed to check maintenance mode:", error);

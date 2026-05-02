@@ -27,9 +27,14 @@ export default function UserInfo({ user, onUpdate }) {
       return toast.error("Field cannot be empty");
     }
 
+    if (field === "phone" && !/^\d+$/.test(formData[field])) {
+      toast.error("Phone number must contain only digits");
+      return;
+    }
+    
     setLoading(true);
     try {
-      const res = await axios.put(`${API_URL}/api/auth/profile`, { [field]: formData[field] }, { withCredentials: true });
+      const res = await axios.put(`${API_URL}/api/auth/me`, { [field]: formData[field] }, { withCredentials: true });
       toast.success("Profile updated");
       setEditing(null);
       if (onUpdate) onUpdate(res.data);
