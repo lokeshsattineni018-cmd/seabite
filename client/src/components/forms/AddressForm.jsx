@@ -36,18 +36,20 @@ const labelStyle = {
     display: "block", marginBottom: 6,
 };
 
-export default function AddressForm({ onSave, onCancel, initialData = {} }) {
+export default function AddressForm({ onSave, onCancel, initialData }) {
+    const data = initialData || {};
     const [formData, setFormData] = useState({
-        name: initialData.name || "",
-        phone: initialData.phone || "",
-        houseNo: initialData.houseNo || "",
-        street: initialData.street || "",
-        landmark: initialData.landmark || "",
-        city: initialData.city || "",
-        state: initialData.state || "Andhra Pradesh",
-        postalCode: initialData.postalCode || "",
-        isDefault: initialData.isDefault || false,
+        name: data.name || "",
+        phone: data.phone || "",
+        houseNo: data.houseNo || "",
+        street: data.street || "",
+        landmark: data.landmark || "",
+        city: data.city || "",
+        state: data.state || "Andhra Pradesh",
+        postalCode: data.postalCode || "",
+        isDefault: data.isDefault || false,
     });
+
 
     const [detecting, setDetecting] = useState(false);
     const [errors, setErrors] = useState({});
@@ -175,7 +177,7 @@ export default function AddressForm({ onSave, onCancel, initialData = {} }) {
                     <div style={{ width: 32, height: 32, borderRadius: 9, background: "rgba(91,168,160,0.1)", color: T.primary, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <FiMapPin size={15} />
                     </div>
-                    {initialData._id ? "Edit Address" : "Add New Address"}
+                    {data._id ? "Edit Address" : "Add New Address"}
                 </h3>
                 <button onClick={onCancel} style={{ color: T.textLite, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
                     <FiX size={20} />
