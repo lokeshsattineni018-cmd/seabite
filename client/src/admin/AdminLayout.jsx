@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
 
+const API_URL = import.meta.env.VITE_API_URL || "";
+
 const AdminPageLoader = () => (
   <div className="w-full animate-pulse space-y-8 p-6">
     <div className="flex justify-between items-center">
@@ -41,7 +43,7 @@ export default function AdminLayout() {
 
   const fetchSettings = useCallback(async () => {
     try {
-      const { data } = await axios.get("/api/admin/enterprise/settings", { withCredentials: true });
+      const { data } = await axios.get(`${API_URL}/api/admin/enterprise/settings`, { withCredentials: true });
       setSettings(data);
     } catch (err) {
       if (err.response?.status === 401) navigate("/login");
@@ -55,7 +57,7 @@ export default function AdminLayout() {
   // 🟢 NEW: Fetch Notifications
   const fetchNotifications = useCallback(async () => {
     try {
-      const { data } = await axios.get("/api/admin/notifications", { withCredentials: true });
+      const { data } = await axios.get(`${API_URL}/api/admin/notifications`, { withCredentials: true });
       setNotifications(data);
       setUnreadCount(data.filter(n => !n.read).length);
     } catch (err) {
@@ -71,7 +73,7 @@ export default function AdminLayout() {
 
   const markAllAsRead = async () => {
     try {
-      await axios.put("/api/admin/notifications/read-all", {}, { withCredentials: true });
+      await axios.put(`${API_URL}/api/admin/notifications/read-all`, {}, { withCredentials: true });
       fetchNotifications();
       toast.success("All marked as read");
     } catch (err) {
@@ -104,7 +106,7 @@ export default function AdminLayout() {
 
   const updateBanner = async (newBanner) => {
     try {
-      const { data } = await axios.put("/api/admin/enterprise/settings", { ...settings, banner: newBanner }, { withCredentials: true });
+      const { data } = await axios.put(`${API_URL}/api/admin/enterprise/settings`, { ...settings, banner: newBanner }, { withCredentials: true });
       setSettings(data);
       toast.success("Banner updated successfully");
     } catch (err) {
@@ -118,7 +120,7 @@ export default function AdminLayout() {
       if (searchQuery.length >= 2) {
         setIsSearching(true);
         try {
-          const { data } = await axios.get(`/api/admin/universal-search?q=${searchQuery}`, { withCredentials: true });
+          const { data } = await axios.get(`${API_URL}/api/admin/universal-search?q=${searchQuery}`, { withCredentials: true });
           setSearchResults(data);
         } catch (err) {
           console.error("Search failed", err);

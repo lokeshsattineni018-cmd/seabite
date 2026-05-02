@@ -15,7 +15,7 @@ const fadeUp = {
 };
 
 export default function AdminSettings() {
-    const { settings, setSettings } = useOutletContext();
+    const { settings, setSettings, fetchSettings } = useOutletContext();
     const [formData, setFormData] = useState(settings || {});
     const [saving, setSaving] = useState(false);
 
@@ -254,7 +254,24 @@ export default function AdminSettings() {
                                         <input
                                             type="checkbox"
                                             checked={formData.announcement?.active || false}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...(prev.announcement || {}), active: e.target.checked } }))}
+                                            onChange={async (e) => {
+                                                const newActive = e.target.checked;
+                                                // 1. Update local state for immediate UI feedback
+                                                setFormData(prev => ({ ...prev, announcement: { ...(prev.announcement || {}), active: newActive } }));
+                                                
+                                                // 2. Immediate auto-save for the toggle
+                                                try {
+                                                    const updatedAnnouncement = { ...(formData.announcement || {}), active: newActive };
+                                                    await axios.put(`${API_URL}/api/admin/enterprise/settings`, { ...formData, announcement: updatedAnnouncement }, { withCredentials: true });
+                                                    toast.success(`Announcement Bar ${newActive ? "Enabled" : "Disabled"}`);
+                                                    // Refresh context to sync with other components
+                                                    if (fetchSettings) fetchSettings();
+                                                } catch (err) {
+                                                    toast.error("Auto-save failed");
+                                                    // Revert on failure
+                                                    setFormData(prev => ({ ...prev, announcement: { ...(prev.announcement || {}), active: !newActive } }));
+                                                }
+                                            }}
                                             className="sr-only peer"
                                         />
                                         <div className="w-12 h-7 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-stone-900 shadow-inner"></div>
@@ -308,7 +325,19 @@ export default function AdminSettings() {
                                     type="checkbox"
                                     name="spinWheelEnabled"
                                     checked={formData.spinWheelEnabled || false}
-                                    onChange={handleChange}
+                                    onChange={async (e) => {
+                                        const newEnabled = e.target.checked;
+                                        setFormData(prev => ({ ...prev, spinWheelEnabled: newEnabled }));
+                                        
+                                        try {
+                                            await axios.put(`${API_URL}/api/admin/enterprise/settings`, { ...formData, spinWheelEnabled: newEnabled }, { withCredentials: true });
+                                            toast.success(`Spin Wheel ${newEnabled ? "Enabled" : "Disabled"}`);
+                                            if (fetchSettings) fetchSettings();
+                                        } catch (err) {
+                                            toast.error("Auto-save failed");
+                                            setFormData(prev => ({ ...prev, spinWheelEnabled: !newEnabled }));
+                                        }
+                                    }}
                                     className="sr-only peer"
                                 />
                                 <div className="w-14 h-8 bg-stone-200 rounded-full peer peer-checked:after:translate-x-6 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-500 shadow-inner"></div>
