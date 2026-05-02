@@ -281,8 +281,14 @@ router.put("/enterprise/settings", adminAuth, async (req, res) => {
     if (isMaintenanceMode !== undefined) settings.isMaintenanceMode = isMaintenanceMode;
     if (maintenanceMessage !== undefined) settings.maintenanceMessage = maintenanceMessage;
     if (globalDiscount !== undefined) settings.globalDiscount = Number(globalDiscount);
-    if (banner !== undefined) settings.banner = banner;
-    if (announcement !== undefined) settings.announcement = announcement;
+    if (banner !== undefined) {
+      settings.banner = banner;
+      settings.markModified('banner');
+    }
+    if (announcement !== undefined) {
+      settings.announcement = announcement;
+      settings.markModified('announcement');
+    }
     if (spinWheelEnabled !== undefined) settings.spinWheelEnabled = spinWheelEnabled;
 
     settings.lastUpdatedBy = req.session?.userId || null;
