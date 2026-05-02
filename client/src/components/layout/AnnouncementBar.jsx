@@ -8,8 +8,12 @@ export default function AnnouncementBar({ settings }) {
             style={{
                 position: "fixed",
                 top: 0, left: 0, right: 0,
+                height: "40px",
                 zIndex: 110,
-                padding: "8px 16px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "0 16px",
                 textAlign: "center",
                 fontSize: "13px",
                 fontWeight: 700,

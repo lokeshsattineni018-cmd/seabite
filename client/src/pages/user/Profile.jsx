@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiLock, FiEye, FiEyeOff, FiShoppingBag, FiShield, FiCreditCard } from "react-icons/fi";
+import { FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiLock, FiEye, FiEyeOff, FiShoppingBag, FiShield, FiX, FiCheckCircle } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
@@ -13,10 +13,15 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("overview");
   const [showPassModal, setShowPassModal] = useState(false);
   const [oldPass, setOldPass] = useState("");
   const [newPass, setNewPass] = useState("");
+  const [confirmPass, setConfirmPass] = useState("");
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
+  
   const navigate = useNavigate();
 
   const fetchUser = useCallback(async () => {
@@ -30,9 +35,7 @@ export default function Profile() {
     }
   }, [navigate]);
 
-  const [confirmPass, setConfirmPass] = useState("");
-  const [showOld, setShowOld] = useState(false);
-  const [showNew, setShowNew] = useState(false);
+  useEffect(() => { fetchUser(); }, [fetchUser]);
 
   const handleChangePassword = async () => {
     if (!oldPass || !newPass) return toast.error("Please fill both fields");
@@ -60,197 +63,233 @@ export default function Profile() {
       await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
     } catch (err) {
       console.error("Logout failed", err);
-    }
-    finally {
+    } finally {
       localStorage.removeItem("userInfo");
       localStorage.removeItem("seabite_session_id");
-      window.location.href = "/?auth=login"; // Redirect and trigger login to show it's cleared
+      window.location.href = "/?auth=login";
     }
   };
 
-  useEffect(() => { fetchUser(); }, [fetchUser]);
-
-  if (loading) {
-    return <SeaBiteLoader fullScreen />;
-  }
-
+  if (loading) return <SeaBiteLoader fullScreen />;
   if (!user) return null;
 
   const avatarLetter = user.name?.charAt(0).toUpperCase() || "S";
   const avatarUrl = user.picture || user.avatar || null;
 
+  const TabButton = ({ id, icon: Icon, label }) => {
+    const isActive = activeTab === id;
+    return (
+      <button
+        onClick={() => setActiveTab(id)}
+        className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+          isActive
+            ? "bg-blue-50 text-blue-600"
+            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+        }`}
+      >
+        <Icon size={18} /> {label}
+      </button>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-        {/* Back button */}
-        <div className="max-w-7xl mx-auto px-4 pt-6 pb-2">
-            <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors w-max">
-                <FiArrowLeft size={16} /> Back to Home
-            </button>
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-2">
+        <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors w-max">
+          <FiArrowLeft size={16} /> Back to Home
+        </button>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+        {/* Sidebar / Mobile Tabs */}
+        <div className="col-span-1">
+          <div className="md:sticky md:top-24 bg-white rounded-2xl border border-gray-200/60 p-2 md:p-4 shadow-sm overflow-x-auto no-scrollbar">
+            <nav className="flex md:flex-col gap-1 min-w-max md:min-w-0">
+              <TabButton id="overview" icon={FiHome} label="Overview" />
+              <TabButton id="orders" icon={FiShoppingBag} label="My Orders" />
+              <TabButton id="addresses" icon={FiMapPin} label="Addresses" />
+              <TabButton id="security" icon={FiShield} label="Security" />
+              <div className="hidden md:block h-[1px] bg-gray-100 my-2"></div>
+              <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-red-500 hover:bg-red-50 transition-colors ml-auto md:ml-0">
+                <FiLogOut size={18} /> Sign Out
+              </button>
+            </nav>
+          </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Left Sidebar */}
-            <div className="col-span-1 hidden md:block">
-                <div className="sticky top-24 bg-white rounded-2xl border border-gray-100 p-4 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
-                    <nav className="flex flex-col gap-1">
-                        <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl bg-gray-50 text-blue-600">
-                           <FiHome size={18} /> Overview
-                        </button>
-                        <button onClick={() => navigate("/orders")} className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                           <FiShoppingBag size={18} /> My Orders
-                        </button>
-                        <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                           <FiMapPin size={18} /> Addresses
-                        </button>
-                        <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                           <FiCreditCard size={18} /> Wallet
-                        </button>
-                        <button className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
-                           <FiShield size={18} /> Security
-                        </button>
-                        <div className="h-[1px] bg-gray-100 my-2"></div>
-                        <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-red-500 hover:bg-red-50 transition-colors">
-                           <FiLogOut size={18} /> Sign Out
-                        </button>
-                    </nav>
-                </div>
+        {/* Right Content */}
+        <div className="col-span-1 md:col-span-3 flex flex-col gap-8">
+          
+          {/* Profile Header */}
+          <div className="relative mb-12">
+            <img 
+              src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000&auto=format&fit=crop" 
+              className="w-full h-40 object-cover rounded-2xl border border-gray-200/60 shadow-sm" 
+              alt="Ocean cover"
+            />
+            {/* Avatar exactly on bottom edge */}
+            <div className="absolute left-1/2 -bottom-12 -translate-x-1/2">
+              <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-semibold text-white shadow-sm overflow-hidden bg-white">
+                {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" alt="Avatar" /> : avatarLetter}
+              </div>
             </div>
+          </div>
 
-            {/* Right Content */}
-            <div className="col-span-1 md:col-span-3 flex flex-col gap-10">
-                {/* Hero Banner & Avatar */}
-                <div className="relative mb-12">
-                    <img 
-                      src="https://images.unsplash.com/photo-1518837695005-2083093ee35b?q=80&w=2000&auto=format&fit=crop" 
-                      className="w-full h-48 object-cover rounded-2xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]" 
-                      alt="Ocean cover"
-                    />
-                    <div className="absolute -bottom-10 left-8 flex items-end gap-6">
-                        <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-bold text-white shadow-md overflow-hidden shrink-0">
-                            {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" alt="Avatar" /> : avatarLetter}
-                        </div>
-                        <div className="mb-2">
-                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">{user.name}</h1>
-                            <p className="text-sm font-medium text-gray-500">{user.email}</p>
-                        </div>
+          <div className="text-center mt-2 mb-2">
+            <h1 className="text-xl font-semibold text-gray-900">{user.name}</h1>
+            <p className="text-sm text-gray-500">{user.email}</p>
+          </div>
+
+          {/* Dynamic Content based on activeTab */}
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="flex flex-col gap-8"
+          >
+            {activeTab === "overview" && (
+              <>
+                {/* Stats Widgets */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-white rounded-2xl p-5 border border-gray-200/60 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+                      <FiShoppingBag size={20} />
                     </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Total Orders</p>
+                      <p className="text-xl font-semibold text-gray-900">{user.totalOrders || 0}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white rounded-2xl p-5 border border-gray-200/60 shadow-sm flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                      <FiCheckCircle size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Account Status</p>
+                      <p className="text-xl font-semibold text-gray-900">Active</p>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Premium Stat Widgets */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <div className="bg-gray-900 text-white rounded-2xl p-6 shadow-lg flex flex-col justify-between relative overflow-hidden">
-                        <div className="relative z-10">
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Wallet Balance</p>
-                            <p className="text-3xl font-black">₹{user.walletBalance || 0}</p>
-                        </div>
-                        <button className="relative z-10 mt-6 w-max px-5 py-2 text-xs font-bold uppercase tracking-wider text-white border border-gray-700 rounded-xl hover:bg-gray-800 transition-colors">
-                            Top Up Wallet
-                        </button>
-                        {/* Background subtle decoration */}
-                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white opacity-5 rounded-full blur-2xl"></div>
-                    </div>
-                    
-                    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] flex flex-col justify-between group">
-                        <div>
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Total Orders</p>
-                            <p className="text-3xl font-black text-gray-900">{user.totalOrders || 0}</p>
-                        </div>
-                        <button onClick={() => navigate("/orders")} className="mt-6 w-max px-5 py-2 text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
-                            View History
-                        </button>
-                    </div>
+                <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">
+                  <UserInfo user={user} />
                 </div>
+              </>
+            )}
 
-                {/* Personal Information (UserInfo) */}
-                <UserInfo user={user} />
+            {activeTab === "orders" && (
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-8 text-center">
+                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <FiShoppingBag size={24} />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Order History</h3>
+                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
+                  View your complete order history, track active shipments, and download past invoices.
+                </p>
+                <button
+                  onClick={() => navigate("/orders")}
+                  className="px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-2"
+                >
+                  Go to Orders Page <FiArrowLeft className="rotate-180" />
+                </button>
+              </div>
+            )}
 
-                {/* Address Manager */}
+            {activeTab === "addresses" && (
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">
                 <AddressManager />
+              </div>
+            )}
 
-                {/* Security Section (Change Password) */}
-                <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 px-1">Security & Access</h3>
-                    <div className="bg-white rounded-2xl border border-gray-100 p-6 sm:p-8 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
-                        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
-                            <div>
-                                <h4 className="text-base font-bold text-gray-900">Authentication Method</h4>
-                                <p className="text-sm text-gray-500 mt-1">Manage your password and how you sign in to SeaBite.</p>
-                            </div>
-                            {user.isGoogleUser ? (
-                                <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-xl border border-gray-100 shrink-0">
-                                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5" alt="G" />
-                                    <span className="text-sm font-bold text-blue-600">Connected via Google</span>
-                                </div>
-                            ) : (
-                                <button onClick={() => setShowPassModal(true)} className="px-6 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold shadow-md hover:bg-gray-800 transition-colors shrink-0">
-                                    Change Password
-                                </button>
-                            )}
-                        </div>
+            {activeTab === "security" && (
+              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">
+                <h3 className="text-xl font-semibold text-gray-900 mb-4 px-1">Security & Access</h3>
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
+                  <div>
+                    <h4 className="text-base font-semibold text-gray-900">Authentication Method</h4>
+                    <p className="text-sm text-gray-500 mt-1">Manage your password and how you sign in to SeaBite.</p>
+                  </div>
+                  {user.isGoogleUser ? (
+                    <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-xl border border-gray-200/60 shrink-0">
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5" alt="G" />
+                      <span className="text-sm font-medium text-gray-900">Connected via Google</span>
                     </div>
-                </div>
-            </div>
-        </div>
-
-        {/* Change Password Modal */}
-        <AnimatePresence>
-          {showPassModal && (
-            <div className="fixed inset-0 z-[2000] bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-              <motion.div 
-                initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 40, opacity: 0 }}
-                className="bg-white p-8 sm:p-10 rounded-3xl w-full max-w-md shadow-2xl relative"
-              >
-                <button onClick={() => setShowPassModal(false)} className="absolute top-6 right-6 p-2 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-900 transition-colors"><FiX size={18} /></button>
-                
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6">
-                  <FiLock size={24} />
-                </div>
-                
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">Update Password</h2>
-                <p className="text-sm text-gray-500 mb-8">Secure your account by choosing a strong, unique password.</p>
-                
-                <div className="flex flex-col gap-5 mb-8">
-                  <div className="relative">
-                    <input 
-                      type={showOld ? "text" : "password"} placeholder="Current Password" value={oldPass} onChange={e => setOldPass(e.target.value)}
-                      className="w-full px-5 py-4 pr-12 rounded-2xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
-                    />
-                    <button onClick={() => setShowOld(!showOld)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                      {showOld ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
+                  ) : (
+                    <button onClick={() => setShowPassModal(true)} className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-gray-800 transition-colors shrink-0">
+                      Change Password
                     </button>
-                  </div>
-
-                  <div className="relative">
-                    <input 
-                      type={showNew ? "text" : "password"} placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)}
-                      className="w-full px-5 py-4 pr-12 rounded-2xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
-                    />
-                    <button onClick={() => setShowNew(!showNew)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                      {showNew ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
-                    </button>
-                  </div>
-
-                  <input 
-                    type="password" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
-                    className="w-full px-5 py-4 rounded-2xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 transition-colors"
-                  />
-                  {newPass && confirmPass && newPass !== confirmPass && (
-                    <p className="text-red-500 text-xs font-bold mt-[-12px] ml-1">Passwords do not match</p>
                   )}
                 </div>
+              </div>
+            )}
+          </motion.div>
+        </div>
+      </div>
 
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleChangePassword} disabled={passLoading || (newPass !== confirmPass && newPass)}
-                  className="w-full py-4 rounded-2xl border-none bg-gray-900 text-white font-bold text-sm shadow-lg hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                >
-                  {passLoading ? "Updating..." : "Update Security"}
-                </motion.button>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
+      {/* Change Password Modal */}
+      <AnimatePresence>
+        {showPassModal && (
+          <div className="fixed inset-0 z-[2000] bg-gray-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ y: 20, opacity: 0, scale: 0.95 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 20, opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white p-8 rounded-3xl w-full max-w-md shadow-xl border border-gray-200/60 relative"
+            >
+              <button onClick={() => setShowPassModal(false)} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-full transition-colors"><FiX size={20} /></button>
+              
+              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6">
+                <FiLock size={20} />
+              </div>
+              
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Update Password</h2>
+              <p className="text-sm text-gray-500 mb-6">Secure your account by choosing a strong, unique password.</p>
+              
+              <div className="flex flex-col gap-4 mb-8">
+                <div className="relative">
+                  <input 
+                    type={showOld ? "text" : "password"} placeholder="Current Password" value={oldPass} onChange={e => setOldPass(e.target.value)}
+                    className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
+                  />
+                  <button onClick={() => setShowOld(!showOld)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showOld ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <input 
+                    type={showNew ? "text" : "password"} placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)}
+                    className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
+                  />
+                  <button onClick={() => setShowNew(!showNew)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    {showNew ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
+                  </button>
+                </div>
+
+                <div>
+                  <input 
+                    type="password" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
+                  />
+                  {newPass && confirmPass && newPass !== confirmPass && (
+                    <p className="text-red-500 text-xs font-medium mt-1.5 ml-1">Passwords do not match</p>
+                  )}
+                </div>
+              </div>
+
+              <motion.button 
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={handleChangePassword} disabled={passLoading || (newPass !== confirmPass && newPass)}
+                className="w-full py-3 rounded-xl border-none bg-gray-900 text-white font-medium text-sm shadow-sm hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {passLoading ? "Updating..." : "Update Security"}
+              </motion.button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
