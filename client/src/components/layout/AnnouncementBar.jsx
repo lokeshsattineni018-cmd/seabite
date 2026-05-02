@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function AnnouncementBar({ settings }) {
+    // If not active or no text, don't render anything
     if (!settings?.active || !settings?.text) return null;
 
     return (
@@ -11,7 +12,7 @@ export default function AnnouncementBar({ settings }) {
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
                 style={{
-                    backgroundColor: settings.bgColor || "#1A2E2C",
+                    backgroundColor: settings.bgColor || "#1c1917",
                     color: settings.textColor || "#ffffff",
                     width: "100%",
                     overflow: "hidden",
@@ -21,35 +22,71 @@ export default function AnnouncementBar({ settings }) {
                     top: 0,
                     left: 0,
                     right: 0,
-                    zIndex: 200,
-                    borderBottom: "1px solid rgba(255,255,255,0.1)"
+                    zIndex: 999, // Ensure it's above everything
+                    borderBottom: "1px solid rgba(255,255,255,0.05)",
+                    backdropFilter: "blur(8px)",
                 }}
             >
                 <style>
                     {`
-                    @keyframes marquee {
-                        0% { transform: translateX(100%); }
-                        100% { transform: translateX(-100%); }
+                    @keyframes marquee-seamless {
+                        0% { transform: translateX(0); }
+                        100% { transform: translateX(-50%); }
                     }
-                    .rolling-text {
-                        animation: marquee 40s linear infinite;
+                    .marquee-container {
+                        display: flex;
+                        width: fit-content;
+                        animation: marquee-seamless 60s linear infinite;
+                        will-change: transform;
+                    }
+                    .marquee-content {
+                        display: flex;
+                        align-items: center;
                         white-space: nowrap;
-                        padding-left: 50px;
-                        display: inline-block;
-                        font-family: 'Sora', sans-serif;
+                        flex-shrink: 0;
+                        padding-right: 50px;
+                    }
+                    .marquee-item {
+                        font-family: 'Plus Jakarta Sans', sans-serif;
                         font-size: 11px;
-                        font-weight: 800;
+                        font-weight: 700;
                         text-transform: uppercase;
                         letter-spacing: 0.15em;
+                        display: flex;
+                        align-items: center;
                     }
-                    .rolling-container:hover .rolling-text {
+                    .marquee-dot {
+                        width: 4px;
+                        height: 4px;
+                        border-radius: 50%;
+                        background-color: currentColor;
+                        margin: 0 30px;
+                        opacity: 0.5;
+                    }
+                    .rolling-wrapper:hover .marquee-container {
                         animation-play-state: paused;
                     }
                     `}
                 </style>
-                <div className="rolling-container" style={{ width: "100%", overflow: "hidden" }}>
-                    <div className="rolling-text">
-                        {settings.text} • {settings.text} • {settings.text} • {settings.text} • {settings.text} • {settings.text}
+                <div className="rolling-wrapper" style={{ width: "100%", overflow: "hidden" }}>
+                    <div className="marquee-container">
+                        {/* Two copies of the content for a seamless loop */}
+                        <div className="marquee-content">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={`set1-${i}`} className="marquee-item">
+                                    {settings.text}
+                                    <div className="marquee-dot" />
+                                </div>
+                            ))}
+                        </div>
+                        <div className="marquee-content">
+                            {[...Array(6)].map((_, i) => (
+                                <div key={`set2-${i}`} className="marquee-item">
+                                    {settings.text}
+                                    <div className="marquee-dot" />
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </motion.div>

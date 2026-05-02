@@ -99,7 +99,12 @@ function MainLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const [maintenance, setMaintenance] = useState({ active: false, message: "" });
-  const [announcement, setAnnouncement] = useState(null); // 🟢 Added
+  const [announcement, setAnnouncement] = useState(() => {
+    try {
+      const cached = localStorage.getItem("seabite_announcement");
+      return cached ? JSON.parse(cached) : null;
+    } catch (e) { return null; }
+  });
   const [spinWheelEnabled, setSpinWheelEnabled] = useState(false);
   const [isSpinOpen, setIsSpinOpen] = useState(false);
 
@@ -129,16 +134,19 @@ function MainLayout() {
           message: data.maintenanceMessage,
           banner: data.banner
         });
-        setAnnouncement(data.announcement); // 🟢 Capture Announcement
-        console.log("📢 Announcement State Updated:", data.announcement);
-        setSpinWheelEnabled(data.spinWheelEnabled); // 🟢 Capture Spin State
-        console.log("🎡 Spin Wheel Enabled:", data.spinWheelEnabled);
+        
+        if (data.announcement) {
+          setAnnouncement(data.announcement);
+          localStorage.setItem("seabite_announcement", JSON.stringify(data.announcement));
+        }
+        
+        setSpinWheelEnabled(data.spinWheelEnabled);
       } catch (error) {
-        // console.error("Failed to check maintenance mode:", error);
+        // Silent fail for settings fetch
       }
     };
     fetchSettings();
-    const interval = setInterval(fetchSettings, 60000); // Check every minute
+    const interval = setInterval(fetchSettings, 30000); // Check every 30 seconds
     return () => clearInterval(interval);
   }, [location.pathname]);
 
