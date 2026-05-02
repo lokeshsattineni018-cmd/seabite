@@ -142,7 +142,6 @@ function MainLayout() {
   // 🎡 Spin Wheel Trigger Logic
   useEffect(() => {
     const hasSpunThisSession = sessionStorage.getItem("seabite_spun_this_session");
-    const user = JSON.parse(localStorage.getItem("userInfo") || "null");
 
     if (spinWheelEnabled && user && !hasSpunThisSession) {
       // Check if user actually can spin from backend
@@ -220,7 +219,9 @@ function MainLayout() {
           {!isAdminRoute && (
             <>
               <CartSidebar />
-              <Spin isOpen={isSpinOpen} onClose={() => setIsSpinOpen(false)} />
+              <Suspense fallback={null}>
+                <Spin isOpen={isSpinOpen} onClose={() => setIsSpinOpen(false)} />
+              </Suspense>
             </>
           )}
 

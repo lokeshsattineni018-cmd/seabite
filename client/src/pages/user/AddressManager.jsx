@@ -68,7 +68,13 @@ export default function AddressManager() {
     return (
         <div>
             <div className="flex items-center justify-between mb-4 px-1">
-                <h3 className="text-lg font-bold text-gray-900">My Addresses</h3>
+                <h3 className="text-xl font-semibold text-gray-900">My Addresses</h3>
+                <button 
+                    onClick={handleCreate} 
+                    className="text-blue-600 font-medium hover:bg-blue-50 py-2 px-4 rounded-xl transition-colors text-sm flex items-center gap-2"
+                >
+                    <FiPlus size={16} /> Add New Address
+                </button>
             </div>
 
             {loading ? (
@@ -76,7 +82,7 @@ export default function AddressManager() {
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {addresses.map((addr) => (
-                        <div key={addr._id} className="relative p-5 rounded-2xl bg-white border border-gray-100 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] flex flex-col justify-between group transition-all hover:border-blue-200">
+                        <div key={addr._id} className="relative p-5 rounded-2xl bg-white border border-gray-200/60 shadow-sm flex flex-col justify-between group transition-all hover:border-blue-200">
                             <div>
                                 <div className="flex items-center gap-3 mb-2">
                                     <h4 className="text-sm font-bold text-gray-900">{addr.name}</h4>
@@ -102,13 +108,7 @@ export default function AddressManager() {
                             </div>
                         </div>
                     ))}
-
-                    <button onClick={handleCreate} className="flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-50 hover:border-blue-500 text-gray-500 hover:text-blue-600 transition-all min-h-[160px]">
-                        <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-gray-100">
-                            <FiPlus size={20} />
-                        </div>
-                        <span className="text-sm font-bold">Add New Address</span>
-                    </button>
+                    
                 </div>
             )}
 
