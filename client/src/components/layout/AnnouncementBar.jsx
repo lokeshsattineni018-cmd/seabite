@@ -17,8 +17,11 @@ export default function AnnouncementBar({ settings }) {
                     overflow: "hidden",
                     display: "flex",
                     alignItems: "center",
-                    position: "relative",
-                    zIndex: 40,
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    zIndex: 200,
                     borderBottom: "1px solid rgba(255,255,255,0.1)"
                 }}
             >

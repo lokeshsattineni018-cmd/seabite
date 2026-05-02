@@ -140,7 +140,10 @@ export default function AdminLayout() {
     <div className="flex h-screen w-full bg-[#fafaf9] font-sans text-stone-900 overflow-hidden selection:bg-stone-200 selection:text-stone-900">
 
       {/* 🟢 Mobile Header */}
-      <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-stone-200/60 z-40 flex items-center justify-between px-6">
+      <header 
+        className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-stone-200/60 z-40 flex items-center justify-between px-6"
+        style={{ top: settings?.announcement?.active ? "36px" : 0 }}
+      >
         <div className="flex items-center gap-3">
           <img src="/roundlogo.png" alt="SeaBite" className="h-8 w-auto mix-blend-multiply" />
           <span className="font-bold text-lg tracking-tight text-stone-800">Admin</span>
@@ -154,12 +157,18 @@ export default function AdminLayout() {
       </header>
 
       {/* 🟢 Sidebar (Desktop) */}
-      <aside className="hidden md:flex flex-col w-[280px] bg-stone-50/50 border-r border-stone-200/60 z-30 h-full">
+      <aside 
+        className="hidden md:flex flex-col w-[280px] bg-stone-50/50 border-r border-stone-200/60 z-30 h-full"
+        style={{ marginTop: settings?.announcement?.active ? "36px" : 0 }}
+      >
         <AdminSidebar settings={settings} onUpdateBanner={updateBanner} />
       </aside>
 
       {/* 🟢 Main Content Area */}
-      <main className="flex-1 relative overflow-y-auto overflow-x-hidden h-full pt-16 md:pt-0 scroll-smooth bg-[#fafaf9]">
+      <main 
+        className="flex-1 relative overflow-y-auto overflow-x-hidden h-full pt-16 md:pt-0 scroll-smooth bg-[#fafaf9]"
+        style={{ marginTop: settings?.announcement?.active ? "36px" : 0 }}
+      >
         {/* Top Navigation Bar (Desktop) */}
         <div className="hidden md:flex items-center justify-between px-8 py-5 sticky top-0 bg-[#fafaf9]/95 backdrop-blur-md z-20 border-b border-stone-200/40">
           <div className="flex items-center gap-6">
