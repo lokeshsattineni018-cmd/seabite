@@ -32,15 +32,15 @@ export default function AnnouncementBar({ settings }) {
                         100% { transform: translateX(-100%); }
                     }
                     .rolling-text {
-                        animation: marquee 15s linear infinite;
+                        animation: marquee 40s linear infinite;
                         white-space: nowrap;
-                        padding-left: 20px;
+                        padding-left: 50px;
                         display: inline-block;
                         font-family: 'Sora', sans-serif;
                         font-size: 11px;
                         font-weight: 800;
                         text-transform: uppercase;
-                        letter-spacing: 0.1em;
+                        letter-spacing: 0.15em;
                     }
                     .rolling-container:hover .rolling-text {
                         animation-play-state: paused;
@@ -49,7 +49,7 @@ export default function AnnouncementBar({ settings }) {
                 </style>
                 <div className="rolling-container" style={{ width: "100%", overflow: "hidden" }}>
                     <div className="rolling-text">
-                        {settings.text} • {settings.text} • {settings.text} • {settings.text}
+                        {settings.text} • {settings.text} • {settings.text} • {settings.text} • {settings.text} • {settings.text}
                     </div>
                 </div>
             </motion.div>
