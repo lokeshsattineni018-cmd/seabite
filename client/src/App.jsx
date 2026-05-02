@@ -148,11 +148,13 @@ function MainLayout() {
 
     if (spinWheelEnabled && user && !hasSpunThisSession) {
       // Check if user actually can spin from backend
-      axios.get(`${API_URL}/api/spin/can-spin`, { withCredentials: true })
-        .then(res => {
-          if (res.data.canSpin) {
-            setIsSpinOpen(true);
-            sessionStorage.setItem("seabite_spun_this_session", "true");
+      axios.get(`${API_URL}/api/auth/can-spin`, { withCredentials: true })
+        .then(({ data }) => {
+          if (data.canSpin) {
+            // Trigger auto-open after 5 seconds delay for better UX
+            setTimeout(() => {
+              setIsSpinOpen(true);
+            }, 5000);
           }
         })
         .catch(() => { });
@@ -183,19 +185,6 @@ function MainLayout() {
             boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
             fontFamily: "'Plus Jakarta Sans', sans-serif",
           },
-          success: {
-            icon: '✅',
-            iconTheme: {
-              primary: '#fff',
-              secondary: '#1A2B35',
-            },
-          },
-          error: {
-            icon: '❌',
-            iconTheme: {
-              primary: '#fff',
-              secondary: '#1A2B35',
-            },
         }}
       />
 
