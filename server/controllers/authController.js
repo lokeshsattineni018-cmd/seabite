@@ -184,14 +184,17 @@ export const getLoggedUser = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
   console.log("✏️ updateUserProfile called");
 
-  if (!req.session?.user) {
-    console.log("❌ No session user");
-    return res.status(401).json({ message: "Not authenticated" });
-  }
+
 
   try {
+    const userId = req.user?.id || req.user?._id || req.session?.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({ message: "User identity not found" });
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
-      req.session.user.id,
+      userId,
       { $set: req.body },
       { returnDocument: "after", runValidators: true, select: "-password" }
     );

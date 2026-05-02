@@ -190,10 +190,46 @@ export default function AdminSettings() {
                                     <input
                                         name="announcement.text"
                                         value={formData.announcement?.text || ""}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...prev.announcement, text: e.target.value } }))}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...(prev.announcement || {}), text: e.target.value } }))}
                                         className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl font-medium text-stone-900 focus:bg-white focus:border-purple-400 focus:ring-4 focus:ring-purple-50 outline-none transition-all placeholder:text-stone-300"
                                         placeholder="🎉 Flash Sale! Flat 50% OFF on all Prawns"
                                     />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 ml-1">BG Color</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="color"
+                                                value={formData.announcement?.bgColor || "#1c1917"}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...(prev.announcement || {}), bgColor: e.target.value } }))}
+                                                className="h-10 w-12 rounded-lg cursor-pointer border-none"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={formData.announcement?.bgColor || "#1c1917"}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...(prev.announcement || {}), bgColor: e.target.value } }))}
+                                                className="flex-1 p-2 bg-stone-50 border border-stone-200 rounded-lg text-xs font-mono"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-2 ml-1">Text Color</label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="color"
+                                                value={formData.announcement?.textColor || "#ffffff"}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...(prev.announcement || {}), textColor: e.target.value } }))}
+                                                className="h-10 w-12 rounded-lg cursor-pointer border-none"
+                                            />
+                                            <input
+                                                type="text"
+                                                value={formData.announcement?.textColor || "#ffffff"}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...(prev.announcement || {}), textColor: e.target.value } }))}
+                                                className="flex-1 p-2 bg-stone-50 border border-stone-200 rounded-lg text-xs font-mono"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-4 bg-stone-50 p-4 rounded-2xl border border-stone-100">
                                     <div className={`p-3 rounded-full shrink-0 transition-colors ${formData.announcement?.active ? "bg-purple-100 text-purple-600" : "bg-stone-200 text-stone-400"}`}>
@@ -207,7 +243,7 @@ export default function AdminSettings() {
                                         <input
                                             type="checkbox"
                                             checked={formData.announcement?.active || false}
-                                            onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...prev.announcement, active: e.target.checked } }))}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, announcement: { ...(prev.announcement || {}), active: e.target.checked } }))}
                                             className="sr-only peer"
                                         />
                                         <div className="w-12 h-7 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-stone-900 shadow-inner"></div>
@@ -219,10 +255,10 @@ export default function AdminSettings() {
                             <div className="bg-stone-100 p-6 rounded-2xl border border-stone-200 border-dashed text-center">
                                 <p className="text-xs font-bold text-stone-400 uppercase tracking-wide mb-3">Live Preview</p>
                                 <div
-                                    className="w-full py-3 px-4 rounded-lg shadow-sm text-sm font-bold truncate"
+                                    className="w-full py-3 px-4 rounded-lg shadow-sm text-sm font-bold truncate transition-all"
                                     style={{
-                                        backgroundColor: "#1c1917",
-                                        color: "#ffffff"
+                                        backgroundColor: formData.announcement?.bgColor || "#1c1917",
+                                        color: formData.announcement?.textColor || "#ffffff"
                                     }}
                                 >
                                     {formData.announcement?.text || "Your text here..."}
