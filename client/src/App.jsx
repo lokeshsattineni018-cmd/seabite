@@ -154,7 +154,7 @@ function MainLayout() {
         })
         .catch(() => { });
     }
-  }, [spinWheelEnabled]);
+  }, [spinWheelEnabled, user]);
 
   const adminLayoutElement = (
     <AdminRoute>
