@@ -774,15 +774,6 @@ export default function Checkout() {
                     {loading ? <FiLoader size={18} style={{ animation: "spin 1s linear infinite" }} /> : <FiShoppingBag size={18} />}
                     {loading ? "Processing..." : `Place Order · ₹${grandTotal.toFixed(2)}`}
                   </motion.button>
-                  
-                  <div style={{ marginTop: 20, textAlign: "center", padding: "14px", background: "rgba(16,185,129,0.06)", borderRadius: 16, border: "1px solid rgba(16,185,129,0.15)" }}>
-                    <p style={{ fontSize: 12, color: "#065F46", fontWeight: 700, margin: 0, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                      <FiCheckCircle size={14} style={{ color: "#10B981" }} /> 100% Freshness Guarantee
-                    </p>
-                    <p style={{ fontSize: 10, color: "#10B981", margin: "4px 0 0", fontWeight: 600, opacity: 0.85 }}>
-                      No questions asked returns at the door if the seal is broken.
-                    </p>
-                  </div>
                 </div>
 
                 {/* Delivery estimate */}
