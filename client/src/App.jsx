@@ -15,7 +15,6 @@ import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import SupportWidget from "./components/common/SupportWidget";
 import BannerPopup from "./components/layout/BannerPopup";
-import AnnouncementBar from "./components/layout/AnnouncementBar";
 import SeaBiteLoader from "./components/common/SeaBiteLoader"; // 🟢 Added Custom Loader
 import CookieConsent from "./components/common/CookieConsent"; // 🟢 Cookie Consent
 import MobileNav from "./components/layout/MobileNav"; // 📱 Mobile Navigation Enabled
@@ -34,7 +33,6 @@ const OrderSuccess = lazy(() => import("./pages/shop/OrderSuccess"));
 const Orders = lazy(() => import("./pages/user/Orders"));
 const OrderDetails = lazy(() => import("./pages/user/OrderDetails"));
 const Notifications = lazy(() => import("./pages/user/Notifications"));
-const Spin = lazy(() => import("./pages/general/Spin"));
 const About = lazy(() => import("./pages/general/About"));
 const FAQ = lazy(() => import("./pages/legal/FAQ"));
 const Terms = lazy(() => import("./pages/legal/Terms"));
@@ -98,10 +96,6 @@ function MainLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const [maintenance, setMaintenance] = useState({ active: false, message: "" });
-  const [announcement, setAnnouncement] = useState(null); // 🟢 Added
-  const [spinWheelEnabled, setSpinWheelEnabled] = useState(false);
-  const [isSpinOpen, setIsSpinOpen] = useState(false);
-
 
 
   // ✅ Axios Interceptor for Maintenance Mode
@@ -128,8 +122,6 @@ function MainLayout() {
           message: data.maintenanceMessage,
           banner: data.banner
         });
-        setAnnouncement(data.announcement); // 🟢 Capture Announcement
-        setSpinWheelEnabled(data.spinWheelEnabled); // 🟢 Capture Spin State
       } catch (error) {
         // console.error("Failed to check maintenance mode:", error);
       }
@@ -139,22 +131,6 @@ function MainLayout() {
     return () => clearInterval(interval);
   }, []);
 
-  // 🎡 Spin Wheel Trigger Logic
-  useEffect(() => {
-    const hasSpunThisSession = sessionStorage.getItem("seabite_spun_this_session");
-
-    if (spinWheelEnabled && user && !hasSpunThisSession) {
-      // Check if user actually can spin from backend
-      axios.get("/api/spin/can-spin")
-        .then(res => {
-          if (res.data.canSpin) {
-            setIsSpinOpen(true);
-            sessionStorage.setItem("seabite_spun_this_session", "true");
-          }
-        })
-        .catch(() => { });
-    }
-  }, [spinWheelEnabled]);
 
   const adminLayoutElement = (
     <AdminRoute>
@@ -197,8 +173,6 @@ function MainLayout() {
         }}
       />
 
-      {/* 🟢 Global Announcement */}
-      <AnnouncementBar settings={announcement} />
 
       {/* 🟢 Global Popup Banner */}
       <BannerPopup bannerSettings={maintenance.banner} />
@@ -215,15 +189,8 @@ function MainLayout() {
         <Maintenance message={maintenance.message} />
       ) : (
         <>
-          {!isAdminRoute && <Navbar announcementActive={!!announcement?.active} />}
-          {!isAdminRoute && (
-            <>
-              <CartSidebar />
-              <Suspense fallback={null}>
-                <Spin isOpen={isSpinOpen} onClose={() => setIsSpinOpen(false)} />
-              </Suspense>
-            </>
-          )}
+          {!isAdminRoute && <Navbar />}
+          {!isAdminRoute && <CartSidebar />}
 
           <div className="flex-grow">
             <Suspense fallback={<SeaBiteLoader fullScreen />}>
