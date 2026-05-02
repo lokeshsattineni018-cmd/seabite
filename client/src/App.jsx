@@ -140,7 +140,7 @@ function MainLayout() {
     fetchSettings();
     const interval = setInterval(fetchSettings, 60000); // Check every minute
     return () => clearInterval(interval);
-  }, []);
+  }, [location.pathname]);
 
   // 🎡 Spin Wheel Trigger Logic
   useEffect(() => {
