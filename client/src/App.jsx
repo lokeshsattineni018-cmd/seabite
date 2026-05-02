@@ -79,7 +79,8 @@ import ErrorBoundary from "./components/common/ErrorBoundary";
 import { useTelemetry } from "./hooks/useTelemetry"; // 🟢 Telemetry Tracker
 
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || "";
+const API_URL = import.meta.env.VITE_API_URL || "";
+axios.defaults.baseURL = API_URL;
 
 // ✅ Header-based Session Fallback (Mobile stability)
 axios.interceptors.request.use((config) => {
@@ -122,15 +123,16 @@ function MainLayout() {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const { data } = await axios.get(`${axios.defaults.baseURL}/api/settings`);
+        const { data } = await axios.get(`${API_URL}/api/settings`);
         setMaintenance({
           active: data.isMaintenanceMode,
           message: data.maintenanceMessage,
           banner: data.banner
         });
         setAnnouncement(data.announcement); // 🟢 Capture Announcement
-      console.log("📢 Announcement State Updated:", data.announcement);
+        console.log("📢 Announcement State Updated:", data.announcement);
         setSpinWheelEnabled(data.spinWheelEnabled); // 🟢 Capture Spin State
+        console.log("🎡 Spin Wheel Enabled:", data.spinWheelEnabled);
       } catch (error) {
         // console.error("Failed to check maintenance mode:", error);
       }
@@ -146,7 +148,7 @@ function MainLayout() {
 
     if (spinWheelEnabled && user && !hasSpunThisSession) {
       // Check if user actually can spin from backend
-      axios.get("/api/spin/can-spin")
+      axios.get(`${API_URL}/api/spin/can-spin`, { withCredentials: true })
         .then(res => {
           if (res.data.canSpin) {
             setIsSpinOpen(true);
