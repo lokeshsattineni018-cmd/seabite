@@ -99,6 +99,8 @@ const Spin = ({ isOpen, onClose }) => {
       setTimeout(() => {
         setResult(backendResult);
         setSpinning(false);
+        // 🟢 Mark as spun in this session to prevent auto-popup
+        sessionStorage.setItem("seabite_spun_this_session", "true");
 
         if (backendResult.result === "COUPON") {
           const discountData = {
