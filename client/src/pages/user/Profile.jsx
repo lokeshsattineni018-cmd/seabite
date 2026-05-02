@@ -23,7 +23,12 @@ export default function Profile() {
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
+
+  const [isForgot, setIsForgot] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
   
+
   const navigate = useNavigate();
 
   const fetchUser = useCallback(async () => {
@@ -59,6 +64,42 @@ export default function Profile() {
       setPassLoading(false);
     }
   };
+
+  const handleSendOtp = async () => {
+    setPassLoading(true);
+    try {
+      await axios.post(`${API_URL}/api/auth/forgot-password-otp`, { email: user.email });
+      toast.success("Reset OTP sent to your email!");
+      setOtpSent(true);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error sending reset OTP");
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
+  const handleResetWithOtp = async () => {
+    if (!otp || !newPass) return toast.error("Please fill all fields");
+    if (newPass.length < 6) return toast.error("New password must be at least 6 characters");
+    if (newPass !== confirmPass) return toast.error("Passwords do not match");
+
+    setPassLoading(true);
+    try {
+      await axios.post(`${API_URL}/api/auth/reset-password`, { email: user.email, otp, newPassword: newPass });
+      toast.success("Password reset successful!");
+      setShowPassModal(false);
+      setOtp("");
+      setNewPass("");
+      setConfirmPass("");
+      setOtpSent(false);
+      setIsForgot(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Invalid OTP or error resetting password");
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
 
   const handleLogout = async () => {
     try {
@@ -150,8 +191,8 @@ export default function Profile() {
             {activeTab === "overview" && (
               <>
                 {/* Stats Widgets */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="bg-white rounded-2xl p-5 border border-gray-200/60 shadow-sm flex items-center gap-4">
+                <div className="flex gap-4">
+                  <div className="flex-1 bg-white rounded-2xl p-5 border border-gray-200/60 shadow-sm flex items-center gap-4 max-w-sm">
                     <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
                       <FiShoppingBag size={20} />
                     </div>
@@ -160,20 +201,10 @@ export default function Profile() {
                       <p className="text-xl font-semibold text-gray-900">{user.totalOrders || 0}</p>
                     </div>
                   </div>
-                  
-                  <div className="bg-white rounded-2xl p-5 border border-gray-200/60 shadow-sm flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-                      <FiCheckCircle size={20} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Account Status</p>
-                      <p className="text-xl font-semibold text-gray-900">Active</p>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">
-                  <UserInfo user={user} />
+                  <UserInfo user={user} onUpdate={fetchUser} />
                 </div>
               </>
             )}
@@ -216,9 +247,14 @@ export default function Profile() {
                       <span className="text-sm font-medium text-gray-900">Connected via Google</span>
                     </div>
                   ) : (
-                    <button onClick={() => setShowPassModal(true)} className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-gray-800 transition-colors shrink-0">
-                      Change Password
-                    </button>
+                    <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+                      <button onClick={() => { setShowPassModal(true); setIsForgot(true); setOtpSent(false); }} className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                        Forgot Password?
+                      </button>
+                      <button onClick={() => { setShowPassModal(true); setIsForgot(false); }} className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-gray-800 transition-colors">
+                        Change Password
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -242,48 +278,77 @@ export default function Profile() {
                 <FiLock size={20} />
               </div>
               
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">Update Password</h2>
-              <p className="text-sm text-gray-500 mb-6">Secure your account by choosing a strong, unique password.</p>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                {isForgot ? "Reset Password" : "Update Password"}
+              </h2>
+              <p className="text-sm text-gray-500 mb-6">
+                {isForgot 
+                  ? "Receive an OTP to securely reset your password." 
+                  : "Secure your account by choosing a strong, unique password."}
+              </p>
               
               <div className="flex flex-col gap-4 mb-8">
-                <div className="relative">
-                  <input 
-                    type={showOld ? "text" : "password"} placeholder="Current Password" value={oldPass} onChange={e => setOldPass(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
-                  />
-                  <button onClick={() => setShowOld(!showOld)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    {showOld ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
-                  </button>
-                </div>
+                {isForgot && !otpSent && (
+                  <div className="text-sm text-gray-700 text-center mb-2">
+                    We will send a 6-digit OTP to <b>{user.email}</b>.
+                  </div>
+                )}
 
-                <div className="relative">
-                  <input 
-                    type={showNew ? "text" : "password"} placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)}
-                    className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
-                  />
-                  <button onClick={() => setShowNew(!showNew)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                    {showNew ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
-                  </button>
-                </div>
+                {isForgot && otpSent && (
+                  <div className="relative">
+                    <input 
+                      type="text" placeholder="Enter 6-digit OTP" value={otp} onChange={e => setOtp(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all tracking-widest text-center"
+                      maxLength={6}
+                    />
+                  </div>
+                )}
 
-                <div>
-                  <input 
-                    type="password" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
-                  />
-                  {newPass && confirmPass && newPass !== confirmPass && (
-                    <p className="text-red-500 text-xs font-medium mt-1.5 ml-1">Passwords do not match</p>
-                  )}
-                </div>
+                {(!isForgot) && (
+                  <div className="relative">
+                    <input 
+                      type={showOld ? "text" : "password"} placeholder="Current Password" value={oldPass} onChange={e => setOldPass(e.target.value)}
+                      className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
+                    />
+                    <button onClick={() => setShowOld(!showOld)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                      {showOld ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
+                    </button>
+                  </div>
+                )}
+
+                {(!isForgot || otpSent) && (
+                  <>
+                    <div className="relative">
+                      <input 
+                        type={showNew ? "text" : "password"} placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)}
+                        className="w-full px-4 py-3 pr-12 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
+                      />
+                      <button onClick={() => setShowNew(!showNew)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        {showNew ? <FiEyeOff size={18}/> : <FiEye size={18}/>}
+                      </button>
+                    </div>
+
+                    <div>
+                      <input 
+                        type="password" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none text-sm font-medium bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 transition-all"
+                      />
+                      {newPass && confirmPass && newPass !== confirmPass && (
+                        <p className="text-red-500 text-xs font-medium mt-1.5 ml-1">Passwords do not match</p>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
 
               <motion.button 
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
-                onClick={handleChangePassword} disabled={passLoading || (newPass !== confirmPass && newPass)}
+                onClick={isForgot ? (otpSent ? handleResetWithOtp : handleSendOtp) : handleChangePassword} 
+                disabled={passLoading || (!isForgot && newPass !== confirmPass && newPass)}
                 className="w-full py-3 rounded-xl border-none bg-gray-900 text-white font-medium text-sm shadow-sm hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                {passLoading ? "Updating..." : "Update Security"}
+                {passLoading ? "Wait..." : (isForgot ? (otpSent ? "Reset Password" : "Send OTP") : "Update Security")}
               </motion.button>
             </motion.div>
           </div>

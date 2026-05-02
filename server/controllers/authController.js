@@ -1,5 +1,6 @@
 // controllers/authController.js
 import User from "../models/User.js";
+import Order from "../models/Order.js";
 import { sendAuthEmail } from "../utils/emailService.js";
 import { OAuth2Client } from "google-auth-library";
 import axios from "axios";
@@ -154,10 +155,12 @@ export const getLoggedUser = async (req, res) => {
   try {
     // Full DB fetch to get createdAt, picture, phone, addresses
     const dbUser = await User.findById(req.user.id || req.user._id)
-      .select("name email role phone picture avatar addresses wishlist createdAt")
+      .select("name email role phone picture avatar addresses wishlist createdAt googleId")
       .lean();
 
     if (!dbUser) return res.status(404).json({ message: "User not found" });
+
+    const totalOrders = await Order.countDocuments({ user: dbUser._id });
 
     res.json({
       id: dbUser._id,
@@ -169,7 +172,8 @@ export const getLoggedUser = async (req, res) => {
       addresses: dbUser.addresses || [],
       wishlist: dbUser.wishlist || [],
       createdAt: dbUser.createdAt,
-      isGoogleUser: !!dbUser.googleId
+      isGoogleUser: !!dbUser.googleId,
+      totalOrders: totalOrders
     });
   } catch (err) {
     logger.error("getLoggedUser DB failure", { traceId: req.traceId, error: err.message });
