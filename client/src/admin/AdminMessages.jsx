@@ -4,7 +4,8 @@ import axios from "axios";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
 import Customer360Sidebar from "./components/Customer360Sidebar";
-import { FiMail, FiRefreshCw, FiSearch, FiInbox, FiSend, FiTrash2, FiX, FiCheck, FiTag, FiArchive, FiAlertCircle, FiChevronDown, FiMessageSquare } from "react-icons/fi";
+import { FiMail, FiRefreshCw, FiSearch, FiInbox, FiSend, FiTrash2, FiX, FiCheck, FiTag, FiArchive, FiAlertCircle, FiChevronDown, FiMessageSquare, FiCreditCard } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 
 const CANNED_RESPONSES = [
   "Hi! Our standard delivery window is 2-4 hours. You'll receive a live tracking link once dispatched.",

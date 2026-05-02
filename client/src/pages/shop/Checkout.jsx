@@ -33,6 +33,7 @@ const T = {
 const font = "'Plus Jakarta Sans', sans-serif";
 
 const STEPS = ["Shipping", "Payment", "Confirm"];
+const ease = [0.16, 1, 0.3, 1];
 
 function SectionCard({ children, style = {} }) {
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;

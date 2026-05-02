@@ -21,7 +21,7 @@
 import React, {
   useEffect, useState, useCallback, useRef, useContext,
 } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import {
   FiArrowLeft, FiPackage, FiMapPin, FiCreditCard,
