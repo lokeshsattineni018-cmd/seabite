@@ -200,9 +200,6 @@ function MainLayout() {
         }}
       />
 
-      {/* 🟢 Global Announcement */}
-      <AnnouncementBar settings={announcement} />
-
       {/* 🟢 Global Popup Banner */}
       <BannerPopup bannerSettings={maintenance.banner} />
 
