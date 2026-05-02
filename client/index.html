@@ -8,13 +8,25 @@
   <link rel="shortcut icon" href="/roundlogo.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="manifest" href="/manifest.json" />
-  <script>
+  <script type="module">
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('SW Registered'))
-          .catch(err => console.log('SW Failed', err));
-      });
+      if (import.meta.env.DEV) {
+        navigator.serviceWorker.getRegistrations().then(registrations => {
+          for (let registration of registrations) {
+            registration.unregister();
+            console.log('SW Unregistered in dev mode');
+          }
+        });
+        caches.keys().then(names => {
+          for (let name of names) caches.delete(name);
+        });
+      } else {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW Registered'))
+            .catch(err => console.log('SW Failed', err));
+        });
+      }
     }
   </script>
   <title>SeaBite - Fresh Coastal Catch Delivered</title>
