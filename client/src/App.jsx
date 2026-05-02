@@ -196,9 +196,11 @@ function MainLayout() {
               primary: '#fff',
               secondary: '#1A2B35',
             },
-          }
         }}
       />
+
+      {/* 🟢 Global Announcement (Rolling Ticker) */}
+      <AnnouncementBar settings={announcement} />
 
       {/* 🟢 Global Popup Banner */}
       <BannerPopup bannerSettings={maintenance.banner} />
