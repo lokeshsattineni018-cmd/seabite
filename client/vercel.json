@@ -14,7 +14,7 @@
       "destination": "https://seabite-server.vercel.app/uploads/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!assets/|.*\\..*).*)",
       "destination": "/"
     }
   ],

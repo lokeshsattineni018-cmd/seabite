@@ -1,15 +1,21 @@
 import { useState } from "react";
 import { FiEdit2, FiCheck, FiX } from "react-icons/fi";
-import { FcGoogle } from "react-icons/fc";
 import axios from "axios";
 import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
+// Monochrome Google Icon
+const GoogleMono = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-gray-500">
+    <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
+  </svg>
+);
+
 export default function UserInfo({ user, onUpdate }) {
   if (!user) return null;
 
-  const [editing, setEditing] = useState(null); // 'name' or 'phone'
+  const [editing, setEditing] = useState(null);
   const [formData, setFormData] = useState({
     name: user.name || "",
     phone: user.phone || ""
@@ -26,7 +32,7 @@ export default function UserInfo({ user, onUpdate }) {
       const res = await axios.put(`${API_URL}/api/auth/profile`, { [field]: formData[field] }, { withCredentials: true });
       toast.success("Profile updated");
       setEditing(null);
-      if (onUpdate) onUpdate(res.data); // Optional callback to update parent state if needed
+      if (onUpdate) onUpdate(res.data);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to update profile");
     } finally {
@@ -43,81 +49,64 @@ export default function UserInfo({ user, onUpdate }) {
     const isEditing = editing === field;
 
     return (
-      <li className="flex items-center justify-between p-5 hover:bg-gray-50 transition-colors group">
-        <div className="flex flex-col sm:flex-row sm:items-center w-full gap-2 sm:gap-0">
-          <span className="text-sm font-medium text-gray-500 w-1/3">{label}</span>
-          <div className="w-2/3 flex items-center gap-2">
+      <div className="flex items-center justify-between py-3 px-5 group">
+        <div className="flex flex-col sm:flex-row sm:items-center w-full gap-1 sm:gap-6">
+          <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold w-24 shrink-0">{label}</span>
+          <div className="flex-1 flex items-center gap-2">
             {isEditing ? (
               <input
                 type={field === 'phone' ? 'tel' : 'text'}
                 value={formData[field]}
                 onChange={(e) => setFormData({ ...formData, [field]: e.target.value })}
-                className="flex-1 px-3 py-1.5 text-sm border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-100 bg-white"
+                className="w-full px-0 py-1 text-sm border-b border-gray-300 focus:border-gray-900 focus:outline-none bg-transparent font-medium text-gray-900"
                 autoFocus
               />
             ) : (
-              <span className="text-sm font-medium text-gray-900">{value || "Not provided"}</span>
+              <span className="text-sm font-medium text-gray-900 truncate">{value || "—"}</span>
             )}
           </div>
         </div>
         
-        <div className="flex items-center ml-4">
+        <div className="flex items-center ml-4 shrink-0">
           {isEditing ? (
-            <div className="flex items-center gap-1">
-              <button 
-                onClick={() => handleSave(field)} 
-                disabled={loading}
-                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-              >
+            <div className="flex items-center gap-2">
+              <button onClick={() => handleSave(field)} disabled={loading} className="text-gray-900 hover:text-black transition-colors">
                 <FiCheck size={16} />
               </button>
-              <button 
-                onClick={() => handleCancel(field)}
-                disabled={loading}
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              >
+              <button onClick={() => handleCancel(field)} disabled={loading} className="text-gray-400 hover:text-gray-600 transition-colors">
                 <FiX size={16} />
               </button>
             </div>
           ) : (
-            <button 
-              onClick={() => setEditing(field)}
-              className="text-gray-400 opacity-0 group-hover:opacity-100 hover:text-blue-600 transition-all p-2 rounded-lg hover:bg-blue-50"
-            >
-              <FiEdit2 size={16} />
+            <button onClick={() => setEditing(field)} className="text-gray-300 group-hover:text-gray-500 transition-colors">
+              <FiEdit2 size={14} />
             </button>
           )}
         </div>
-      </li>
+      </div>
     );
   };
 
   return (
-    <div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-4 px-1">Personal Information</h3>
-      <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm overflow-hidden">
-        <ul className="divide-y divide-gray-100">
-          
-          {/* Name - Editable */}
-          {renderField('name', 'Full Name', user.name)}
+    <div className="bg-white rounded-3xl ring-1 ring-gray-900/5 overflow-hidden">
+      <div className="divide-y divide-gray-100/80">
+        {/* Name */}
+        {renderField('name', 'Name', user.name)}
 
-          {/* Email - Non-Editable */}
-          <li className="flex items-center justify-between p-5 hover:bg-gray-50 transition-colors">
-            <div className="flex flex-col sm:flex-row sm:items-center w-full gap-2 sm:gap-0">
-              <span className="text-sm font-medium text-gray-500 w-1/3">Email Address</span>
-              <div className="w-2/3 flex items-center gap-2">
-                {user.isGoogleUser && <FcGoogle size={18} />}
-                <span className="text-sm font-medium text-gray-900">{user.email}</span>
-              </div>
+        {/* Email */}
+        <div className="flex items-center justify-between py-3 px-5">
+          <div className="flex flex-col sm:flex-row sm:items-center w-full gap-1 sm:gap-6">
+            <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold w-24 shrink-0">Email</span>
+            <div className="flex-1 flex items-center gap-2">
+              {user.isGoogleUser && <GoogleMono />}
+              <span className="text-sm font-medium text-gray-900 truncate">{user.email}</span>
             </div>
-            {/* Empty space to align with edit buttons */}
-            <div className="w-8 ml-4"></div>
-          </li>
+          </div>
+          <div className="w-4 ml-4 shrink-0"></div>
+        </div>
 
-          {/* Phone - Editable */}
-          {renderField('phone', 'Phone Number', user.phone)}
-          
-        </ul>
+        {/* Phone */}
+        {renderField('phone', 'Phone', user.phone)}
       </div>
     </div>
   );

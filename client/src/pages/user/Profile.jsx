@@ -7,10 +7,7 @@ import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import toast from "react-hot-toast";
-import AnimatedOceanBanner from "./AnimatedOceanBanner";
-
-
-const API_URL = import.meta.env.VITE_API_URL || "";
+import toast from "react-hot-toast";
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -124,134 +121,159 @@ export default function Profile() {
     return (
       <button
         onClick={() => setActiveTab(id)}
-        className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
+        className={`flex items-center gap-3 px-4 py-2.5 text-sm font-semibold rounded-2xl transition-all ${
           isActive
-            ? "bg-blue-50 text-blue-600"
-            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+            ? "bg-gray-900 text-white shadow-lg shadow-gray-200/50"
+            : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
         }`}
       >
-        <Icon size={18} /> {label}
+        <Icon size={16} /> {label}
       </button>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-      <div className="max-w-7xl mx-auto px-4 pt-6 pb-2">
-        <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-gray-900 transition-colors w-max">
-          <FiArrowLeft size={16} /> Back to Home
+    <div className="min-h-screen bg-[#FBFBFB] pb-20 font-sans text-gray-900">
+      {/* Back to Home Header */}
+      <div className="max-w-7xl mx-auto px-6 pt-8 pb-4">
+        <button onClick={() => navigate("/")} className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors w-max">
+          <FiArrowLeft size={14} /> Back to Dashboard
         </button>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-1 md:grid-cols-4 gap-8">
-        {/* Sidebar / Mobile Tabs */}
+      <div className="max-w-7xl mx-auto px-6 py-4 grid grid-cols-1 md:grid-cols-4 gap-12 items-start">
+        
+        {/* Sidebar */}
         <div className="col-span-1">
-          <div className="md:sticky md:top-24 bg-white rounded-2xl border border-gray-200/60 p-2 md:p-4 shadow-sm overflow-x-auto no-scrollbar">
-            <nav className="flex md:flex-col gap-1 min-w-max md:min-w-0">
-              <TabButton id="overview" icon={FiHome} label="Overview" />
-              <TabButton id="orders" icon={FiShoppingBag} label="My Orders" />
-              <TabButton id="addresses" icon={FiMapPin} label="Addresses" />
-              <TabButton id="security" icon={FiShield} label="Security" />
-              <div className="hidden md:block h-[1px] bg-gray-100 my-2"></div>
-              <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl text-red-500 hover:bg-red-50 transition-colors ml-auto md:ml-0">
-                <FiLogOut size={18} /> Sign Out
-              </button>
-            </nav>
+          <div className="md:sticky md:top-24 bg-white rounded-[2.5rem] ring-1 ring-gray-900/5 p-3 flex md:flex-col gap-1 overflow-x-auto no-scrollbar shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
+            <TabButton id="overview" icon={FiHome} label="Dashboard" />
+            <TabButton id="orders" icon={FiShoppingBag} label="Orders" />
+            <TabButton id="addresses" icon={FiMapPin} label="Addresses" />
+            <TabButton id="security" icon={FiShield} label="Security" />
+            <div className="hidden md:block h-[1px] bg-gray-100/80 my-3 mx-4"></div>
+            <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-2.5 text-sm font-semibold rounded-2xl text-red-500 hover:bg-red-50 transition-colors ml-auto md:ml-0">
+              <FiLogOut size={16} /> Sign Out
+            </button>
           </div>
         </div>
 
-        {/* Right Content */}
-        <div className="col-span-1 md:col-span-3 flex flex-col gap-5">
+        {/* Main Content Area */}
+        <div className="col-span-1 md:col-span-3">
           
-          {/* Profile Header */}
-          <div className="relative mb-12">
-            <AnimatedOceanBanner />
+          {/* Profile Header (Mesh Gradient) */}
+          <div className="relative mb-16">
+            <div className="h-44 rounded-[2.5rem] w-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-slate-200 via-[#1A2B35] to-[#0A1620] overflow-hidden relative shadow-[0_30px_60px_rgba(0,0,0,0.12)]">
+              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
+              {/* Dynamic light flare */}
+              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/10 blur-[100px] rounded-full"></div>
+            </div>
 
-            {/* Avatar exactly on bottom edge */}
-            <div className="absolute left-1/2 -bottom-12 -translate-x-1/2">
-              <div className="w-24 h-24 rounded-full border-4 border-white bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-3xl font-semibold text-white shadow-sm overflow-hidden bg-white">
+            {/* Avatar overlapping precisely */}
+            <div className="absolute left-10 -bottom-8 flex items-end gap-6">
+              <div className="w-24 h-24 rounded-full border-[4px] border-white flex items-center justify-center text-3xl font-light text-white shadow-[0_15px_40px_rgba(0,0,0,0.15)] overflow-hidden bg-gradient-to-br from-gray-700 to-gray-900 relative z-10">
                 {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" alt="Avatar" /> : avatarLetter}
+              </div>
+              <div className="pb-2">
+                <h1 className="text-2xl font-bold tracking-tight text-gray-900">{user.name}</h1>
+                <p className="text-sm font-medium text-gray-400">{user.email}</p>
               </div>
             </div>
           </div>
 
-          <div className="text-center mt-0 mb-1">
-            <h1 className="text-xl font-semibold text-gray-900">{user.name}</h1>
-            <p className="text-sm text-gray-500">{user.email}</p>
-          </div>
-
-          {/* Dynamic Content based on activeTab */}
+          {/* Tab Content */}
           <motion.div
             key={activeTab}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col gap-5"
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           >
             {activeTab === "overview" && (
-              <>
-                {/* Stats Widgets */}
-                <div className="flex gap-4">
-                  <div className="flex-1 bg-white rounded-2xl p-5 border border-gray-200/60 shadow-sm flex items-center gap-4 max-w-sm">
-                    <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                      <FiShoppingBag size={20} />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                {/* Stats Bento Card */}
+                <div className="bg-white rounded-[2.5rem] p-8 ring-1 ring-gray-900/5 shadow-[0_10px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[160px]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
+                      <FiShoppingBag size={14} />
                     </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Total Orders</p>
-                      <p className="text-xl font-semibold text-gray-900">{user.totalOrders || 0}</p>
-                    </div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">Total Orders</p>
                   </div>
+                  <p className="text-5xl font-light tracking-tighter text-gray-900">{user.totalOrders || 0}</p>
                 </div>
 
-                <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">
+                {/* Status Bento Card */}
+                <div className="bg-white rounded-[2.5rem] p-8 ring-1 ring-gray-900/5 shadow-[0_10px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[160px] relative overflow-hidden group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400">
+                      <FiShield size={14} />
+                    </div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400">Security Status</p>
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <div className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                    </div>
+                    <p className="text-lg font-bold tracking-tight text-gray-900">Verified Account</p>
+                  </div>
+                  <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-green-50/50 rounded-full blur-3xl transition-all group-hover:scale-110"></div>
+                </div>
+
+                {/* Info Section spanning bottom */}
+                <div className="md:col-span-3 mt-4">
+                  <div className="flex items-center justify-between mb-6 px-2">
+                    <h3 className="text-lg font-bold tracking-tight text-gray-900">Personal Information</h3>
+                  </div>
                   <UserInfo user={user} onUpdate={fetchUser} />
                 </div>
-              </>
+              </div>
             )}
 
             {activeTab === "orders" && (
-              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-8 text-center">
-                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <FiShoppingBag size={24} />
+              <div className="bg-white rounded-[2.5rem] ring-1 ring-gray-900/5 p-12 text-center shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
+                <div className="w-20 h-20 bg-gray-50 text-gray-300 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                  <FiShoppingBag size={28} />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">Order History</h3>
-                <p className="text-sm text-gray-500 mb-6 max-w-md mx-auto">
-                  View your complete order history, track active shipments, and download past invoices.
+                <h3 className="text-2xl font-bold text-gray-900 tracking-tight mb-3">Order History</h3>
+                <p className="text-gray-400 font-medium mb-10 max-w-sm mx-auto leading-relaxed">
+                  Track your active shipments and view your complete purchasing history.
                 </p>
                 <button
                   onClick={() => navigate("/orders")}
-                  className="px-6 py-2.5 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-800 transition-colors shadow-sm inline-flex items-center gap-2"
+                  className="px-8 py-3.5 bg-gray-900 text-white text-xs font-bold uppercase tracking-widest rounded-2xl hover:bg-black transition-all shadow-xl shadow-gray-900/20 inline-flex items-center gap-3"
                 >
-                  Go to Orders Page <FiArrowLeft className="rotate-180" />
+                  Enter Archive <FiArrowLeft className="rotate-180" size={14} />
                 </button>
               </div>
             )}
 
             {activeTab === "addresses" && (
-              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">
+              <div className="bg-white rounded-[2.5rem] ring-1 ring-gray-900/5 p-8 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
                 <AddressManager />
               </div>
             )}
 
             {activeTab === "security" && (
-              <div className="bg-white rounded-2xl border border-gray-200/60 shadow-sm p-6">
-                <h3 className="text-xl font-semibold text-gray-900 mb-4 px-1">Security & Access</h3>
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-6">
-                  <div>
-                    <h4 className="text-base font-semibold text-gray-900">Authentication Method</h4>
-                    <p className="text-sm text-gray-500 mt-1">Manage your password and how you sign in to SeaBite.</p>
+              <div className="bg-white rounded-[2.5rem] ring-1 ring-gray-900/5 p-10 shadow-[0_20px_50px_rgba(0,0,0,0.02)]">
+                <div className="flex flex-col md:flex-row justify-between md:items-center gap-10">
+                  <div className="max-w-md">
+                    <h3 className="text-2xl font-bold text-gray-900 tracking-tight mb-2">Security & Access</h3>
+                    <p className="text-sm text-gray-400 font-medium leading-relaxed">Manage your authentication methods and maintain control over your account security.</p>
                   </div>
+                  
                   {user.isGoogleUser ? (
-                    <div className="flex items-center gap-3 px-5 py-3 bg-gray-50 rounded-xl border border-gray-200/60 shrink-0">
-                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" className="w-5" alt="G" />
-                      <span className="text-sm font-medium text-gray-900">Connected via Google</span>
+                    <div className="flex items-center gap-4 px-6 py-4 bg-gray-50/50 rounded-[1.5rem] ring-1 ring-gray-900/5 shrink-0">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-gray-500">
+                        <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" />
+                      </svg>
+                      <span className="text-sm font-bold text-gray-900 tracking-tight">Protected via Google</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
-                      <button onClick={() => { setShowPassModal(true); setIsForgot(true); setOtpSent(false); }} className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
-                        Forgot Password?
+                    <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
+                      <button onClick={() => { setShowPassModal(true); setIsForgot(true); setOtpSent(false); }} className="px-6 py-3 text-gray-500 text-xs font-bold uppercase tracking-widest hover:text-gray-900 transition-colors">
+                        Forgot Key?
                       </button>
-                      <button onClick={() => { setShowPassModal(true); setIsForgot(false); }} className="px-6 py-2.5 bg-gray-900 text-white rounded-xl text-sm font-medium shadow-sm hover:bg-gray-800 transition-colors">
+                      <button onClick={() => { setShowPassModal(true); setIsForgot(false); }} className="px-8 py-3.5 bg-gray-900 text-white rounded-2xl text-xs font-bold uppercase tracking-widest shadow-xl shadow-gray-900/20 hover:bg-black transition-all">
                         Change Password
                       </button>
                     </div>
@@ -266,25 +288,28 @@ export default function Profile() {
       {/* Change Password Modal */}
       <AnimatePresence>
         {showPassModal && (
-          <div className="fixed inset-0 z-[2000] bg-gray-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[5000] bg-gray-900/60 backdrop-blur-md flex items-center justify-center p-6">
             <motion.div 
-              initial={{ y: 20, opacity: 0, scale: 0.95 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 20, opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="bg-white p-8 rounded-3xl w-full max-w-md shadow-xl border border-gray-200/60 relative"
+              initial={{ y: 30, opacity: 0, scale: 0.98 }} animate={{ y: 0, opacity: 1, scale: 1 }} exit={{ y: 30, opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="bg-white p-12 rounded-[3rem] w-full max-w-lg shadow-[0_50px_100px_rgba(0,0,0,0.25)] ring-1 ring-gray-900/5 relative overflow-hidden"
             >
-              <button onClick={() => setShowPassModal(false)} className="absolute top-6 right-6 p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-50 rounded-full transition-colors"><FiX size={20} /></button>
+              {/* Background accent */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-full -mr-16 -mt-16 blur-3xl opacity-50"></div>
               
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-6">
-                <FiLock size={20} />
+              <button onClick={() => setShowPassModal(false)} className="absolute top-8 right-8 p-3 text-gray-300 hover:text-gray-900 transition-colors rounded-full hover:bg-gray-50"><FiX size={20} /></button>
+              
+              <div className="w-16 h-16 rounded-[1.5rem] bg-gray-50 text-gray-900 flex items-center justify-center mb-8 ring-1 ring-gray-900/5">
+                <FiLock size={24} />
               </div>
               
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                {isForgot ? "Reset Password" : "Update Password"}
+              <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
+                {isForgot ? "Reset Access" : "Update Security"}
               </h2>
-              <p className="text-sm text-gray-500 mb-6">
+              <p className="text-sm text-gray-400 font-medium mb-10 leading-relaxed">
                 {isForgot 
-                  ? "Receive an OTP to securely reset your password." 
-                  : "Secure your account by choosing a strong, unique password."}
+                  ? "Receive an encrypted OTP to securely restore your account access." 
+                  : "Choose a complex, high-entropy password to protect your digital vault."}
               </p>
               
               <div className="flex flex-col gap-4 mb-8">
