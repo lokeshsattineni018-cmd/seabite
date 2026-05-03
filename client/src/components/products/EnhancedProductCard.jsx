@@ -9,6 +9,7 @@ import { AuthContext } from "../../context/AuthContext";
 import toast from "../../utils/toast"; // Custom SeaBite toast
 import triggerHaptic from "../../utils/haptics"; // 📱 Haptic feedback
 import axios from "axios";
+import Magnetic from "../common/Magnetic";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -43,6 +44,18 @@ const EnhancedProductCard = ({
   
   const [flyItems, setFlyItems] = useState([]);
   const flyIdRef = useRef(0);
+  const prefetchTimeoutRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    // Wait 100ms before prefetching to avoid unnecessary requests on quick mouse pass-through
+    prefetchTimeoutRef.current = setTimeout(() => {
+      axios.get(`${API_URL}/api/products/${product._id}`).catch(() => {});
+    }, 100);
+  };
+
+  const handleMouseLeave = () => {
+    if (prefetchTimeoutRef.current) clearTimeout(prefetchTimeoutRef.current);
+  };
 
   const isActiveFlashSale =
     product.flashSale?.isFlashSale &&
@@ -213,6 +226,8 @@ const EnhancedProductCard = ({
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
       className="product-card-hover group"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
@@ -461,41 +476,43 @@ const EnhancedProductCard = ({
             </span>
           </div>
 
-          <button
-            onClick={handleAddToCart}
-            disabled={isOutOfStock || isAdding}
-            className="cart-btn-wave"
-            aria-label={isAdding ? "Product added to cart" : isOutOfStock ? "Product sold out" : "Add product to cart"}
-            style={{
-              width: "100%",
-              padding: "10px 0",
-              borderRadius: "10px",
-              border: "1.5px solid",
-              borderColor: isOutOfStock ? "#E2EEEC" : isAdding ? "#5BBFB5" : "#5BBFB5",
-              background: isAdding ? "#5BBFB5" : "transparent",
-              color: isOutOfStock ? "#B8CFCC" : isAdding ? "#fff" : "#5BBFB5",
-              fontSize: "13px",
-              fontWeight: "700",
-              letterSpacing: "0.02em",
-              cursor: isOutOfStock ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "6px",
-              transition: "all 0.2s ease",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-            }}
-          >
-            <div aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              {isAdding ? (
-                <><FiCheck size={14} /> Added</>
-              ) : isOutOfStock ? (
-                "Sold Out"
-              ) : (
-                <><FiShoppingCart size={14} /> Add to Cart</>
-              )}
-            </div>
-          </button>
+          <Magnetic strength={0.4}>
+            <button
+              onClick={handleAddToCart}
+              disabled={isOutOfStock || isAdding}
+              className="cart-btn-wave"
+              aria-label={isAdding ? "Product added to cart" : isOutOfStock ? "Product sold out" : "Add product to cart"}
+              style={{
+                width: "100%",
+                padding: "10px 24px", // Increased padding for magnetic feel
+                borderRadius: "10px",
+                border: "1.5px solid",
+                borderColor: isOutOfStock ? "#E2EEEC" : isAdding ? "#5BBFB5" : "#5BBFB5",
+                background: isAdding ? "#5BBFB5" : "transparent",
+                color: isOutOfStock ? "#B8CFCC" : isAdding ? "#fff" : "#5BBFB5",
+                fontSize: "13px",
+                fontWeight: "700",
+                letterSpacing: "0.02em",
+                cursor: isOutOfStock ? "not-allowed" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                transition: "all 0.2s ease",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+              }}
+            >
+              <div aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                {isAdding ? (
+                  <><FiCheck size={14} /> Added</>
+                ) : isOutOfStock ? (
+                  "Sold Out"
+                ) : (
+                  <><FiShoppingCart size={14} /> Add to Cart</>
+                )}
+              </div>
+            </button>
+          </Magnetic>
         </div>
       </div>
 

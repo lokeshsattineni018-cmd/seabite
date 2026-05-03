@@ -14,7 +14,7 @@ const PullToRefresh = ({ onRefresh, children }) => {
   const startY = useRef(0);
   const isPulling = useRef(false);
 
-  const PULL_THRESHOLD = 100; // px
+  const PULL_THRESHOLD = 90; // px
 
   const handleTouchStart = (e) => {
     if (window.scrollY > 0 || isRefreshing) return;
@@ -28,11 +28,9 @@ const PullToRefresh = ({ onRefresh, children }) => {
     const diff = currentY - startY.current;
 
     if (diff > 0) {
-      // Resistance logic
-      const progress = Math.min(diff / PULL_THRESHOLD, 1.5);
+      const progress = Math.min(diff / PULL_THRESHOLD, 1.4);
       setPullProgress(progress);
       
-      // Haptic feedback at threshold
       if (progress >= 1 && pullProgress < 1) {
         triggerHaptic("medium");
       }
@@ -66,51 +64,73 @@ const PullToRefresh = ({ onRefresh, children }) => {
       onTouchEnd={handleTouchEnd}
       className="relative w-full min-h-screen"
     >
-      {/* Pull Indicator Area */}
       <div 
-        className="absolute top-0 left-0 right-0 flex justify-center pointer-events-none z-50 overflow-hidden"
-        style={{ height: pullProgress * PULL_THRESHOLD }}
+        className="absolute top-0 left-0 right-0 flex justify-center pointer-events-none z-[100] overflow-hidden"
+        style={{ height: 120 }}
       >
         <AnimatePresence>
           {(pullProgress > 0 || isRefreshing) && (
             <motion.div
-              initial={{ y: -50, opacity: 0 }}
+              initial={{ y: -60, opacity: 0 }}
               animate={{ 
-                y: isRefreshing ? 20 : (pullProgress * 40 - 20),
-                opacity: 1,
-                rotate: isRefreshing ? [0, 10, -10, 0] : 0
+                y: isRefreshing ? 20 : (pullProgress * 50 - 30),
+                opacity: 1
               }}
-              exit={{ y: -50, opacity: 0 }}
-              transition={isRefreshing ? { rotate: { repeat: Infinity, duration: 0.5 } } : { type: "spring", damping: 20 }}
+              exit={{ y: -60, opacity: 0 }}
               className="flex flex-col items-center"
             >
-              {/* The Fishing Hook */}
-              <div className="relative flex flex-col items-center">
-                {/* Fishing Line */}
-                <div className="w-[1px] h-20 bg-[#94A3B8] opacity-40" />
-                {/* Hook Icon */}
-                <div className="text-3xl filter drop-shadow-md">
-                   {isRefreshing ? "🎣" : "🪝"}
-                </div>
+              <div className="relative">
+                {/* Bubbles */}
+                <AnimatePresence>
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ y: 20, x: 0, opacity: 0, scale: 0.5 }}
+                      animate={{ 
+                        y: -40 - (i * 10), 
+                        x: (i % 2 === 0 ? 15 : -15) * pullProgress,
+                        opacity: [0, 0.8, 0],
+                        scale: [0.5, 1, 0.5]
+                      }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                      style={{ position: "absolute", left: "50%", width: 8, height: 8, borderRadius: "50%", border: "1.5px solid #5BA8A0", opacity: 0.3 }}
+                    />
+                  ))}
+                </AnimatePresence>
+
+                {/* The Dolphin */}
+                <motion.div
+                  animate={{ 
+                    rotate: isRefreshing ? [0, -15, 15, 0] : (pullProgress * 10 - 5),
+                    scale: isRefreshing ? [1, 1.1, 1] : (0.8 + pullProgress * 0.2),
+                    y: isRefreshing ? [0, -10, 0] : 0
+                  }}
+                  transition={isRefreshing ? { repeat: Infinity, duration: 0.6 } : {}}
+                  className="w-16 h-16 flex items-center justify-center"
+                >
+                  <svg viewBox="0 0 24 24" className="w-12 h-12 fill-[#5BA8A0] drop-shadow-lg">
+                    <path d="M21,12c0-4.97-4.03-9-9-9s-9,4.03-9,9s4.03,9,9,9S21,16.97,21,12z M12,19c-3.87,0-7-3.13-7-7s3.13-7,7-7s7,3.13,7,7S15.87,19,12,19z" opacity="0.2"/>
+                    <text x="2" y="18" fontSize="16">🐬</text>
+                  </svg>
+                </motion.div>
               </div>
               
               <motion.span 
-                animate={{ opacity: pullProgress >= 1 ? 1 : 0.5 }}
-                className="text-[10px] font-bold text-[#5BA8A0] uppercase tracking-[0.2em] mt-2"
+                animate={{ opacity: pullProgress >= 1 ? 1 : 0.6, scale: pullProgress >= 1 ? 1.05 : 1 }}
+                className="text-[10px] font-black text-[#5BA8A0] uppercase tracking-[0.25em] mt-3"
               >
-                {isRefreshing ? "Securing Catch..." : pullProgress >= 1 ? "Release to Refresh" : "Pull to Catch Freshness"}
+                {isRefreshing ? "CATCHING FRESHNESS..." : pullProgress >= 1 ? "RELEASE THE DOLPHIN!" : "PULL FOR FRESH CATCH"}
               </motion.span>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Main Content with subtle push down */}
       <motion.div
         style={{ 
-          y: isRefreshing ? 60 : (pullProgress * 50)
+          y: isRefreshing ? 80 : (pullProgress * 70)
         }}
-        transition={isRefreshing ? { type: "spring", damping: 25 } : { type: "tween", ease: "linear" }}
+        transition={isRefreshing ? { type: "spring", damping: 25, stiffness: 200 } : { type: "tween", ease: "linear" }}
       >
         {children}
       </motion.div>

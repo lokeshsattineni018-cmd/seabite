@@ -460,14 +460,27 @@ export default function Navbar({ announcementActive = false }) {
                 </AnimatePresence>
                 <AnimatePresence>
                   {suggestions.length > 0 && searchExpanded && (
-                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, x: 0 }} style={{ position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", overflow: "hidden", zIndex: 300, minWidth: "240px", boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}>
-                      {suggestions.map(item => (
-                        <div key={item._id} className="prof-item" onClick={() => handleSuggestionClick(item)} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #F4F9F8" }}>
-                          <img src={item.image} alt={item.name} style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover" }} />
-                          <div style={{ flex: 1 }}><p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{item.name}</p></div>
-                          <span style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.basePrice}</span>
-                        </div>
-                      ))}
+                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} style={{ position: "absolute", top: "calc(100% + 12px)", right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "18px", overflow: "hidden", zIndex: 300, minWidth: "320px", boxShadow: "0 20px 50px rgba(26,46,44,0.12)" }}>
+                      <div style={{ padding: "12px 16px 8px", borderBottom: "1px solid #F4F9F8" }}>
+                        <span style={{ fontSize: "10px", fontWeight: "800", color: "#A8C5C0", textTransform: "uppercase", letterSpacing: "0.1em" }}>Top Results</span>
+                      </div>
+                      <div style={{ maxHeight: "380px", overflowY: "auto" }} className="drawer-scrollbar">
+                        {suggestions.map(item => (
+                          <div key={item._id} className="prof-item" onClick={() => handleSuggestionClick(item)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid #F4F9F8", transition: "background 0.2s" }}>
+                            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "#F8FAFB", overflow: "hidden", flexShrink: 0, border: "1px solid #E8EEF2" }}>
+                              <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", margin: "0 0 2px" }}>{item.name}</p>
+                              <p style={{ fontSize: "12px", fontWeight: "500", color: "#5BBFB5" }}>₹{item.basePrice} <span style={{ color: "#A8C5C0", fontSize: "11px" }}>/ kg</span></p>
+                            </div>
+                            <FiArrowRight size={14} style={{ color: "#E2EEEC" }} />
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ padding: "10px", background: "#F4F9F8", textAlign: "center" }}>
+                         <button onClick={() => { saveRecentSearch(searchTerm); navigate(`/products?search=${encodeURIComponent(searchTerm)}`); setSearchExpanded(false); }} style={{ background: "none", border: "none", fontSize: "12px", fontWeight: "700", color: "#5BBFB5", cursor: "pointer" }}>View all results</button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import TrendingProducts from "../../components/products/TrendingProducts";
+import ProductSkeleton from "../../components/products/ProductSkeleton";
+import Magnetic from "../../components/common/Magnetic";
 
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -123,9 +125,11 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
   };
   return (
     <Link to={to}>
-      <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className={`${base} ${styles[variant]} ${className}`}>
-        {children}
-      </motion.button>
+      <Magnetic strength={0.3}>
+        <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} className={`${base} ${styles[variant]} ${className}`}>
+          {children}
+        </motion.button>
+      </Magnetic>
     </Link>
   );
 };
@@ -446,7 +450,7 @@ const CategoryRow = ({ title, filterType }) => {
         </div>
         <Stagger className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {loading ? (
-            [...Array(4)].map((_, i) => <Skeleton key={i} />)
+            [...Array(4)].map((_, i) => <ProductSkeleton key={i} />)
           ) : products.length > 0 ? (
             products.map((p) => (
               <SI key={p._id}>

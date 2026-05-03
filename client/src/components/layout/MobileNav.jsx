@@ -1,211 +1,187 @@
-import React, { useContext, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useContext, useState, useRef, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, ShoppingBag, ShoppingCart, User, Heart, Search, Bell, CreditCard, Settings } from "lucide-react";
-import { FiLogOut } from "react-icons/fi";
+import { Home, ShoppingBag, ShoppingCart, User, Search, X, Zap, Heart, Bell, CreditCard, Settings, ChevronRight } from "lucide-react";
+import { FiLogOut, FiArrowRight } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext, useAuth } from "../../context/AuthContext";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-/**
- * MobileNav Component
- * A premium, sticky bottom navigation bar for mobile devices.
- * Features glassmorphism and real-time cart count.
- */
 const MobileNav = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { cartCount, setIsCartOpen } = useContext(CartContext);
   const { user } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
 
   const navItems = [
-    { label: "Home", path: "/", icon: Home },
-    { label: "Shop", path: "/products", icon: ShoppingBag },
-    { label: "Search", path: "/search", icon: Search },
-    { label: "Cart", onClick: () => setIsCartOpen(true), icon: ShoppingCart, isCart: true },
-    { 
-      label: user ? "Menu" : "Login", 
-      onClick: () => {
-        if (!user) {
-          window.location.href = "/?auth=login";
-        } else {
-          setShowProfileMenu(true);
-        }
-      },
-      icon: user ? User : User, // Use User icon for both if Search is already used
-      isProfile: true
-    }
+    { id: "home", label: "Home", path: "/", icon: Home },
+    { id: "shop", label: "Shop", path: "/products", icon: ShoppingBag },
+    { id: "search", label: "Find", onClick: () => setShowSearch(true), icon: Search },
+    { id: "cart", label: "Cart", onClick: () => setIsCartOpen(true), icon: ShoppingCart, isCart: true },
+    { id: "menu", label: "Me", onClick: () => setShowProfileMenu(true), icon: User }
   ];
 
-  const profileMenuItems = [
-    { label: "My Profile", path: "/profile", icon: User },
-    { label: "My Orders", path: "/orders", icon: ShoppingBag },
-    { label: "Notifications", path: "/notifications", icon: Bell },
-    { label: "SeaBite Wallet", path: "/wallet", icon: CreditCard },
-  ];
-
-  if (user?.role === "admin") {
-    profileMenuItems.push({ label: "Admin Dashboard", path: "/admin", icon: Settings });
-  }
-
-  const handleLogout = async () => {
-    try {
-      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
-      localStorage.removeItem("userInfo");
-      window.location.href = "/";
-    } catch (err) {
-      console.error("Logout failed", err);
-      // Fallback: clear local storage and redirect anyway
-      localStorage.removeItem("userInfo");
-      window.location.href = "/";
+  const handleSearch = async (val) => {
+    setSearchTerm(val);
+    if (val.length > 1) {
+      try {
+        const { data } = await axios.get(`${API_URL}/api/products?search=${val}`);
+        setSuggestions(data.products.slice(0, 10));
+      } catch (e) {}
+    } else {
+      setSuggestions([]);
     }
   };
 
-  const handleTabClick = () => {
-    if (typeof navigator !== "undefined" && navigator.vibrate) {
-      navigator.vibrate(10);
-    }
-  };
-
-  if (location.pathname.startsWith("/admin")) return null;
+  if (location.pathname.startsWith("/admin") || location.pathname === "/checkout") return null;
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-[100] md:hidden bg-white/80 backdrop-blur-lg border-t border-[#E2EEEC] pb-safe">
-        <div className="flex items-center justify-around h-16 px-2">
-          {navItems.map((item, idx) => {
+      <style>{`
+        /* Hide intrusive side support/chat widgets on mobile */
+        [class*="support"], [id*="support"], [class*="chat"], [id*="chat"], .social-widget {
+          display: none !important;
+        }
+        .mesh-clean {
+          background: radial-gradient(circle at top right, #f0fdfa, #ffffff 70%);
+        }
+        .search-glass {
+          background: rgba(255, 255, 255, 0.6);
+          backdrop-filter: blur(30px);
+          border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+      `}</style>
+
+      {/* 🌊 Ultra-Minimalist Floating Navbar */}
+      <nav className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] md:hidden w-auto">
+        <motion.div 
+          initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
+          className="flex items-center gap-1 p-1.5 bg-white/40 backdrop-blur-3xl rounded-[40px] border border-white/50 shadow-[0_25px_60px_rgba(0,0,0,0.1)]"
+        >
+          {navItems.map((item) => {
             const isActive = item.path ? location.pathname === item.path : false;
             const Icon = item.icon;
 
-            const content = (
-              <motion.div
-                whileTap={{ scale: 0.85 }}
-                className={`relative p-1.5 rounded-xl transition-colors ${
-                  isActive ? "text-[#5BA8A0]" : "text-[#94A3B8]"
-                }`}
+            return (
+              <button
+                key={item.id}
+                onClick={() => item.onClick ? item.onClick() : navigate(item.path)}
+                className={`relative p-4 rounded-full transition-all duration-500 ${isActive ? "bg-white text-[#1A2E2C] shadow-sm" : "text-[#1A2E2C]/40 hover:text-[#1A2E2C]"}`}
               >
                 <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                
                 {item.isCart && cartCount > 0 && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-0.5 -right-0.5 bg-[#E8816A] text-white text-[10px] font-bold min-w-[16px] h-4 flex items-center justify-center rounded-full px-1 border-2 border-white"
-                  >
-                    {cartCount}
-                  </motion.span>
+                  <span className="absolute top-3 right-3 w-4 h-4 bg-[#F07468] text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white">{cartCount}</span>
                 )}
-              </motion.div>
-            );
-
-            if (item.onClick) {
-              return (
-                <button
-                  key={item.label}
-                  onClick={() => {
-                    handleTabClick();
-                    item.onClick();
-                  }}
-                  className="relative flex flex-col items-center justify-center w-full h-full gap-0.5 group"
-                >
-                  {content}
-                  <span className="text-[10px] font-bold tracking-tight text-[#94A3B8]">
-                    {item.label}
-                  </span>
-                </button>
-              );
-            }
-
-            return (
-              <Link
-                key={item.path || idx}
-                to={item.path}
-                onClick={handleTabClick}
-                className="relative flex flex-col items-center justify-center w-full h-full gap-0.5 group"
-              >
-                {content}
-                
-                <span
-                  className={`text-[10px] font-bold tracking-tight ${
-                    isActive ? "text-[#5BA8A0]" : "text-[#94A3B8]"
-                  }`}
-                >
-                  {item.label}
-                </span>
-
-                {isActive && (
-                  <motion.div
-                    layoutId="activeTabMobile"
-                    className="absolute -top-[1px] w-8 h-[2px] bg-[#5BA8A0] rounded-full"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-              </Link>
+              </button>
             );
           })}
-        </div>
+        </motion.div>
       </nav>
 
-      {/* Profile Menu Popup */}
+      {/* 🔮 Minimalist Aesthetic Search */}
       <AnimatePresence>
-        {showProfileMenu && (
-          <div className="fixed inset-0 z-[110] md:hidden">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowProfileMenu(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute bottom-0 left-0 right-0 bg-white rounded-t-[32px] p-6 pb-12 shadow-2xl"
-            >
-              <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6" />
-              
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 rounded-full bg-[#5BA8A0] flex items-center justify-center text-white text-xl font-bold">
-                  {user?.name?.charAt(0).toUpperCase() || "S"}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-[#1A2B35]">{user?.name}</h3>
-                  <p className="text-sm text-gray-500">{user?.email}</p>
-                </div>
+        {showSearch && (
+          <motion.div initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} className="fixed inset-0 z-[300] bg-white/95 backdrop-blur-3xl overflow-y-auto mesh-clean">
+            <div className="max-w-md mx-auto p-8 pt-20">
+              <div className="flex items-center justify-between mb-16">
+                 <button onClick={() => setShowSearch(false)} className="text-[#1A2E2C] opacity-30 hover:opacity-100 transition-opacity"><X size={28} /></button>
               </div>
 
-              <div className="grid grid-cols-1 gap-3">
-                {profileMenuItems.map((option) => (
-                  <Link
-                    key={option.path}
-                    to={option.path}
-                    onClick={() => setShowProfileMenu(false)}
-                    className="flex items-center gap-4 p-4 rounded-2xl bg-gray-50 active:bg-gray-100 transition-colors"
-                  >
-                    <div className="p-2 rounded-xl bg-white text-[#5BA8A0] shadow-sm">
-                      <option.icon size={20} />
-                    </div>
-                    <span className="font-bold text-[#1A2B35]">{option.label}</span>
-                  </Link>
-                ))}
-                
-                <button
-                  onClick={() => {
-                    setShowProfileMenu(false);
-                    handleLogout();
-                  }}
-                  className="flex items-center gap-4 p-4 rounded-2xl bg-red-50 text-red-600 font-bold mt-2"
-                >
-                  <div className="p-2 rounded-xl bg-white shadow-sm">
-                    <FiLogOut size={20} />
-                  </div>
-                  <span>Logout</span>
-                </button>
+              <div className="relative flex flex-col items-center">
+                <input 
+                  autoFocus 
+                  type="text" 
+                  placeholder="Search..." 
+                  value={searchTerm} 
+                  onChange={(e) => handleSearch(e.target.value)} 
+                  className="w-[200px] bg-[#F8FAFB] border-none rounded-full py-3 px-6 text-center text-sm font-bold text-[#1A2E2C] focus:ring-2 focus:ring-[#5BA8A0]/20 transition-all placeholder:text-[#1A2E2C]/20" 
+                />
               </div>
+
+              <div className="space-y-4 mt-10">
+                {suggestions.length > 0 ? suggestions.map((p, i) => (
+                  <motion.div 
+                    key={p._id} 
+                    initial={{ opacity: 0, y: 10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    transition={{ delay: i * 0.03 }} 
+                    onClick={() => { navigate(`/products/${p._id}`); setShowSearch(false); }} 
+                    className="flex gap-4 p-3 bg-white rounded-xl shadow-sm border border-gray-100 active:bg-gray-50 transition-all"
+                  >
+                    {/* Image Column */}
+                    <div className="w-[110px] h-[110px] flex-shrink-0 bg-[#F8FAFB] rounded-lg overflow-hidden">
+                      <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
+                    </div>
+                    
+                    {/* Info Column */}
+                    <div className="flex flex-col justify-between py-1 flex-1">
+                      <div>
+                        <p className="text-[14px] font-medium text-gray-900 leading-snug line-clamp-2 mb-1">{p.name}</p>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-[12px] font-bold text-gray-900">₹</span>
+                          <span className="text-[20px] font-bold text-gray-900">{p.basePrice}</span>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full bg-green-500" />
+                          <p className="text-[11px] font-medium text-green-700">In Stock</p>
+                        </div>
+                        <p className="text-[11px] text-gray-500">FREE delivery by <span className="font-bold text-gray-700">Tomorrow Morning</span></p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )) : searchTerm.length > 1 ? (
+                   <p className="text-center text-[#1A2E2C]/30 font-bold mt-20">No results found...</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 opacity-60">
+                    {["Premium Salmon", "Fresh Prawns", "Blue Crab", "Lobster"].map(t => (
+                      <button key={t} onClick={() => { setSearchTerm(t); handleSearch(t); }} className="p-4 bg-[#F8FAFB] rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#1A2E2C]">{t}</button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🫧 Clean Minimal Sidebar */}
+      <AnimatePresence>
+        {showProfileMenu && (
+          <div className="fixed inset-0 z-[400] md:hidden">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowProfileMenu(false)} className="absolute inset-0 bg-[#1A2E2C]/20 backdrop-blur-sm" />
+            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 30 }} className="absolute top-0 right-0 h-full w-[80%] bg-white p-10 pt-20 shadow-2xl overflow-y-auto">
+               <div className="mb-16">
+                  <h3 className="text-4xl font-black text-[#1A2E2C] mb-1">{user?.name?.split(" ")[0]}</h3>
+                  <p className="text-sm font-bold text-[#5BA8A0] opacity-60">{user?.email}</p>
+               </div>
+
+               <div className="space-y-8">
+                 {[
+                   { label: "My Profile", path: "/profile" },
+                   { label: "My Orders", path: "/orders" },
+                   { label: "Saved Items", path: "/wishlist" },
+                   { label: "Notifications", path: "/notifications" },
+                   ...(user?.role === "admin" ? [{ label: "Admin Dashboard", path: "/admin" }] : [])
+                 ].map(item => (
+                   <Link key={item.path} to={item.path} onClick={() => setShowProfileMenu(false)} className="block group">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl font-black text-[#1A2E2C]/40 group-hover:text-[#1A2E2C] transition-colors">{item.label}</span>
+                        <ChevronRight className="opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all text-[#5BA8A0]" size={20} />
+                      </div>
+                   </Link>
+                 ))}
+                 
+                 <button onClick={() => { setShowProfileMenu(false); axios.post(`${API_URL}/api/auth/logout`).then(() => window.location.reload()); }} className="pt-12 block text-red-500 font-black text-lg">Sign Out</button>
+               </div>
             </motion.div>
           </div>
         )}
