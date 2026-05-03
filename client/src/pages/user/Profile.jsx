@@ -5,7 +5,7 @@ import {
   FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiLock, 
   FiEye, FiEyeOff, FiShoppingBag, FiShield, FiX, 
   FiCheckCircle, FiUser, FiChevronRight, FiCreditCard,
-  FiBell, FiSettings
+  FiBell, FiSettings, FiPackage, FiCalendar
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import UserInfo from "./UserInfo";
@@ -20,6 +20,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 export default function Profile() {
   const { user: authUser, loading: authLoading } = useAuth();
   const [user, setUser] = useState(null);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [showPassModal, setShowPassModal] = useState(false);
@@ -34,10 +35,14 @@ export default function Profile() {
 
   const navigate = useNavigate();
 
-  const fetchUser = useCallback(async () => {
+  const fetchUserAndOrders = useCallback(async () => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
-      setUser(res.data);
+      const [userRes, ordersRes] = await Promise.all([
+        axios.get(`${API_URL}/api/auth/me`, { withCredentials: true }),
+        axios.get(`${API_URL}/api/orders/myorders`, { withCredentials: true })
+      ]);
+      setUser(userRes.data);
+      setOrders(ordersRes.data);
     } catch (err) {
       console.error("Profile Fetch Error:", err);
       if (authUser) {
@@ -52,9 +57,9 @@ export default function Profile() {
 
   useEffect(() => { 
     if (!authLoading) {
-      fetchUser(); 
+      fetchUserAndOrders(); 
     }
-  }, [fetchUser, authLoading]);
+  }, [fetchUserAndOrders, authLoading]);
 
   const handleLogout = async () => {
     try {
@@ -99,13 +104,15 @@ export default function Profile() {
     { id: "security", icon: FiShield, label: "Security" },
   ];
 
+  const totalSpent = orders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-100">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-100 pt-32">
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         
         {/* 🔙 Navigation */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-8">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-10">
           <button 
             onClick={() => navigate("/")}
             className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all"
@@ -114,12 +121,12 @@ export default function Profile() {
           </button>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
           
           {/* 📱 Left Sidebar */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-3 space-y-6"
+            className="lg:col-span-3 space-y-6 lg:sticky lg:top-32"
           >
             <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 text-center">
               <div className="relative inline-block mb-4">
@@ -206,12 +213,12 @@ export default function Profile() {
                     {/* Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-blue-200 transition-all">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Total Orders</p>
-                        <p className="text-5xl font-extralight tracking-tighter">{user.totalOrders || 0}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Real-time Orders</p>
+                        <p className="text-5xl font-extralight tracking-tighter">{orders.length}</p>
                       </div>
                       <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-indigo-200 transition-all">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Wallet Balance</p>
-                        <p className="text-5xl font-extralight tracking-tighter">₹{user.walletBalance || 0}</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Total Spent</p>
+                        <p className="text-5xl font-extralight tracking-tighter">₹{totalSpent}</p>
                       </div>
                       <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-green-200 transition-all">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Profile Status</p>
@@ -224,21 +231,59 @@ export default function Profile() {
 
                     <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
                        <h3 className="text-xl font-bold tracking-tight mb-8">Personal Information</h3>
-                       <UserInfo user={user} onUpdate={fetchUser} />
+                       <UserInfo user={user} onUpdate={fetchUserAndOrders} />
                     </div>
                   </>
                 )}
 
                 {activeTab === "orders" && (
-                  <div className="bg-white rounded-[2.5rem] p-20 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 text-center">
-                    <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
-                      <FiShoppingBag className="text-slate-300" size={32} />
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between px-2">
+                       <h2 className="text-2xl font-bold tracking-tight">Recent Orders</h2>
+                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{orders.length} total</span>
                     </div>
-                    <h2 className="text-2xl font-bold mb-2">No active orders.</h2>
-                    <p className="text-slate-400 font-medium mb-10">You haven't ordered anything yet. Explore our menu!</p>
-                    <button onClick={() => navigate("/products")} className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-slate-900/20 hover:scale-105 transition-all">
-                      Browse Menu
-                    </button>
+                    
+                    {orders.length === 0 ? (
+                      <div className="bg-white rounded-[2.5rem] p-20 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 text-center">
+                        <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
+                          <FiShoppingBag className="text-slate-300" size={32} />
+                        </div>
+                        <h2 className="text-2xl font-bold mb-2">No active orders.</h2>
+                        <p className="text-slate-400 font-medium mb-10">You haven't ordered anything yet. Explore our menu!</p>
+                        <button onClick={() => navigate("/products")} className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-slate-900/20 hover:scale-105 transition-all">
+                          Browse Menu
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4">
+                        {orders.slice(0, 5).map((order) => (
+                          <div key={order._id} className="bg-white rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center justify-between group hover:border-slate-300 transition-all">
+                             <div className="flex items-center gap-6">
+                                <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
+                                   <FiPackage size={24} />
+                                </div>
+                                <div>
+                                   <h4 className="font-bold text-slate-900">Order #{order.orderId || order._id.slice(-6).toUpperCase()}</h4>
+                                   <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 font-medium">
+                                      <span className="flex items-center gap-1"><FiCalendar size={12}/> {new Date(order.createdAt).toLocaleDateString()}</span>
+                                      <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                                      <span>{order.items?.length || 0} items</span>
+                                   </div>
+                                </div>
+                             </div>
+                             <div className="text-right">
+                                <p className="font-bold text-slate-900">₹{order.totalAmount}</p>
+                                <span className={`text-[10px] font-black uppercase tracking-widest mt-1 block ${
+                                  order.status === 'Delivered' ? 'text-green-500' : 'text-blue-500'
+                                }`}>{order.status}</span>
+                             </div>
+                          </div>
+                        ))}
+                        <button onClick={() => navigate("/orders")} className="w-full py-4 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-sm font-bold hover:bg-slate-50 transition-all">
+                           View All Orders
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
