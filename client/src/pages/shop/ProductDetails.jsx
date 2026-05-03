@@ -265,7 +265,10 @@ const FreshnessMeter = ({ productId }) => {
           }}>Live</span>
         </div>
         <p style={{ margin: 0, fontSize: "12px", color: "#6B8F8A", fontWeight: "500" }}>
-          Caught <span style={{ color: "#1A2E2C", fontWeight: "700" }}>{Math.floor(hoursSinceCatch) || "under 1"}h</span> ago.
+          Caught <span style={{ color: "#1A2E2C", fontWeight: "700" }}>{Math.floor(hoursSinceCatch) || "under 1"}h</span> ago (at {(() => {
+            const catchTime = new Date(Date.now() - hoursSinceCatch * 3600000);
+            return catchTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          })()}).
         </p>
       </div>
       
@@ -398,8 +401,19 @@ const PincodeChecker = () => {
       </div>
       <AnimatePresence>
         {status === 'success' && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: "12px", fontSize: "12px", color: "#059669", display: "flex", alignItems: "center", gap: "6px", fontWeight: "600" }}>
-            <FiCheck /> Express delivery available: Get it by 2 PM today.
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: "12px", fontSize: "12px", color: "#059669", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px", fontWeight: "600" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              <FiCheck /> Express delivery available: Get it by {(() => {
+                const now = new Date();
+                const hour = now.getHours();
+                if (hour < 11) return "2 PM today";
+                if (hour < 17) return "9 PM today";
+                return "11 AM tomorrow";
+              })()}.
+            </div>
+            <span style={{ fontSize: "10px", color: "#B8CFCC", marginLeft: "auto", fontWeight: "500" }}>
+              Checked at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
           </motion.div>
         )}
         {status === 'unavailable' && pincode.length === 6 && (
