@@ -125,23 +125,22 @@ router.put("/:id", adminAuth, async (req, res) => {
 
     const isNowInStock = finalStock === "in" && finalCount > 0;
 
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (category !== undefined) updateData.category = category;
+    if (desc !== undefined) updateData.desc = desc;
+    if (trending !== undefined) updateData.trending = trending;
+    if (finalStock !== undefined) updateData.stock = finalStock;
+    if (image !== undefined) updateData.image = image;
+    if (images !== undefined) updateData.images = Array.isArray(images) ? images : [];
+    if (basePrice !== undefined) updateData.basePrice = Number(basePrice);
+    if (req.body.buyingPrice !== undefined) updateData.buyingPrice = Number(req.body.buyingPrice);
+    if (unit !== undefined) updateData.unit = unit;
+    if (finalCount !== undefined) updateData.countInStock = finalCount;
+
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      {
-        $set: {
-          name,
-          category,
-          desc,
-          trending,
-          stock: finalStock,
-          image,
-          images: Array.isArray(images) ? images : [],
-          basePrice: Number(basePrice),
-          buyingPrice: Number(req.body.buyingPrice || 0), // 🟢 NEW
-          unit,
-          countInStock: finalCount
-        }
-      },
+      { $set: updateData },
       { returnDocument: "after", runValidators: true }
     ).populate('waitlist', 'name email');
 

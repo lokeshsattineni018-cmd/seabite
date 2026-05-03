@@ -7,8 +7,12 @@ import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import toast from "react-hot-toast";
+import { useAuth } from "../../context/AuthContext";
+
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Profile() {
+  const { user: authUser, loading: authLoading } = useAuth();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
@@ -31,14 +35,24 @@ export default function Profile() {
     try {
       const res = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
       setUser(res.data);
-    } catch {
-      navigate("/login");
+    } catch (err) {
+      console.error("Profile Fetch Error:", err);
+      // If we already have authUser, use it as fallback
+      if (authUser) {
+        setUser(authUser);
+      } else {
+        navigate("/login");
+      }
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, authUser]);
 
-  useEffect(() => { fetchUser(); }, [fetchUser]);
+  useEffect(() => { 
+    if (!authLoading) {
+      fetchUser(); 
+    }
+  }, [fetchUser, authLoading]);
 
   const handleChangePassword = async () => {
     if (!oldPass || !newPass) return toast.error("Please fill both fields");
