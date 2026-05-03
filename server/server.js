@@ -386,7 +386,7 @@ app.use((err, req, res, next) => {
 
 export { io }; // Export real IO
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 const server = httpServer.listen(PORT, () => {
   logger.info(`Server started`, { port: PORT, mode: process.env.NODE_ENV || 'development' });
   

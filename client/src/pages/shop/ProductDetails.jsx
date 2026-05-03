@@ -725,27 +725,35 @@ export default function ProductDetails() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
-        .detail-root { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .detail-root { font-family: 'Plus Jakarta Sans', sans-serif; background: #fff !important; }
+        
+        @media (max-width: 767px) {
+          .detail-root { padding: 0 !important; }
+          .product-grid { display: block !important; }
+          .hero-image-container { 
+            padding: 0 !important; 
+            border: none !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+            aspect-ratio: 1/1 !important;
+            background: #fff !important;
+          }
+          .info-container {
+            padding: 20px 16px !important;
+          }
+          .breadcrumb-hide { display: none !important; }
+          .mobile-sticky-actions {
+            bottom: 0 !important;
+            padding: 12px 16px !important;
+          }
+        }
+        
         .qty-btn:hover { background: #E2EEEC !important; }
         .tab-btn { background: none; border: none; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: color 0.2s; }
         .wishlist-btn:hover { border-color: #F07468 !important; color: #F07468 !important; }
         .add-btn:hover:not(:disabled) { background: #2D4A47 !important; }
         .review-card:hover { border-color: #B8DDD9 !important; }
-        .product-grid { display: grid; grid-template-columns: 1fr; gap: 32px; align-items: start; }
-        @media (min-width: 768px) {
-          .product-grid { grid-template-columns: 1fr 1fr; gap: 48px; }
-        }
-        @media (max-width: 767px) {
-          .hero-image-container { 
-            padding: 20px !important; 
-            border-radius: 24px !important;
-            margin: 0 -12px 20px !important;
-            width: calc(100% + 24px) !important;
-          }
-          .hero-image-container img {
-            object-fit: cover !important;
-          }
-        }
       `}</style>
 
       {typeof document !== "undefined" && createPortal(
@@ -781,510 +789,157 @@ export default function ProductDetails() {
 
       <div
         className="detail-root"
-        style={{ minHeight: "100vh", background: "#F4F9F8", paddingTop: "88px", paddingBottom: "64px", paddingLeft: "24px", paddingRight: "24px" }}
+        style={{ minHeight: "100vh", background: "#fff", paddingTop: "88px", paddingBottom: "100px", paddingLeft: "24px", paddingRight: "24px" }}
       >
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: "400px", background: "linear-gradient(180deg, rgba(91,191,181,0.06) 0%, transparent 100%)", pointerEvents: "none", zIndex: 0 }} />
-
-        <div style={{ maxWidth: "1100px", margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} style={{ marginBottom: "28px", display: "flex", alignItems: "center", gap: "6px" }}>
-            <Link to="/products" style={{ display: "flex", alignItems: "center", gap: "6px", color: "#6B8F8A", textDecoration: "none", fontSize: "13px", fontWeight: "600", transition: "color 0.2s" }}>
-              <FiArrowLeft size={14} />
+        <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <motion.div className="breadcrumb-hide" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "6px" }}>
+            <Link to="/products" style={{ display: "flex", alignItems: "center", gap: "6px", color: "#6B8F8A", textDecoration: "none", fontSize: "12px", fontWeight: "600" }}>
               Market
             </Link>
-            <FiChevronRight size={11} style={{ color: "#B8CFCC" }} />
-            <span style={{ fontSize: "13px", fontWeight: "600", color: "#5BBFB5" }}>{product.name}</span>
+            <FiChevronRight size={10} style={{ color: "#B8CFCC" }} />
+            <span style={{ fontSize: "12px", fontWeight: "600", color: "#5BBFB5" }}>{product.name}</span>
           </motion.div>
 
-          <div className="product-grid">
+          <div className="product-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "start" }}>
+            {/* Image Gallery Column */}
             <motion.div
-              initial={{ opacity: 0, y: 32 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="hero-image-container"
               style={{ position: "sticky", top: "108px" }}
             >
-              <div className="hero-image-container" style={{
-                background: "#fff",
-                borderRadius: "20px",
-                border: "1.5px solid #E2EEEC",
-                padding: "40px",
-                aspectRatio: "1/1",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                position: "relative",
-                overflow: "hidden",
-              }}>
-                <div style={{ position: "absolute", width: "70%", height: "70%", borderRadius: "50%", background: "radial-gradient(circle, rgba(91,191,181,0.08) 0%, transparent 70%)", pointerEvents: "none" }} />
-
-                <div style={{ position: "absolute", top: "16px", left: "16px", display: "flex", flexDirection: "column", gap: "6px", zIndex: 10 }}>
-                  {product.trending && (
-                    <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: "9px", fontWeight: "800", padding: "4px 10px", borderRadius: "20px", textTransform: "uppercase", letterSpacing: "0.08em" }}>🔥 Trending</span>
-                  )}
-                  {isActiveFlashSale && (
-                    <span style={{ background: "#FEE2E2", color: "#B91C1C", fontSize: "9px", fontWeight: "800", padding: "4px 10px", borderRadius: "20px", textTransform: "uppercase", letterSpacing: "0.06em", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <FiZap size={8} /> Flash Deal -{discountPct}%
-                    </span>
-                  )}
-                  {isGlobalDiscount && (
-                    <span style={{ background: "#EDE9FE", color: "#6D28D9", fontSize: "9px", fontWeight: "800", padding: "4px 10px", borderRadius: "20px", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      Happy Hour -{globalDiscount}%
-                    </span>
-                  )}
+              <div style={{ position: "relative", background: "#fff" }}>
+                <div style={{ position: "absolute", top: "16px", right: "16px", zIndex: 10 }}>
+                  <button
+                    onClick={handleWishlistToggle}
+                    disabled={loadingWishlist}
+                    style={{
+                      width: "40px", height: "40px",
+                      borderRadius: "50%", background: "rgba(255,255,255,0.9)",
+                      border: "1px solid #eee", color: isWishlisted ? "#F07468" : "#ccc",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                    }}
+                  >
+                    <FiHeart size={20} fill={isWishlisted ? "currentColor" : "none"} />
+                  </button>
+                </div>
+                
+                <div style={{ width: "100%", aspectRatio: "1/1", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                   <ImageMagnifier src={getFullImageUrl(selectedImage || product.image)} alt={product.name} productId={product._id} />
                 </div>
 
-                <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column" }}>
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", minHeight: 0 }}>
-                    <ImageMagnifier src={getFullImageUrl(selectedImage || product.image)} alt={product.name} productId={product._id} />
+                {product.images?.length > 0 && (
+                  <div style={{ display: "flex", gap: "8px", padding: "16px", overflowX: "auto", scrollbarWidth: "none" }}>
+                    {[product.image, ...product.images].map((img, idx) => (
+                      <div key={idx} onClick={() => setSelectedImage(img)} style={{
+                        width: "60px", height: "60px", flexShrink: 0, borderRadius: "8px", border: `2px solid ${selectedImage === img ? "#1A2E2C" : "#f0f0f0"}`,
+                        padding: "4px", cursor: "pointer", overflow: "hidden"
+                      }}>
+                        <img src={getFullImageUrl(img)} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                      </div>
+                    ))}
                   </div>
-                  
-                  {product.images && product.images.length > 0 && (
-                    <div style={{ 
-                      display: "flex", 
-                      gap: "10px", 
-                      justifyContent: "center", 
-                      padding: "20px 0 0",
-                      overflowX: "auto",
-                      scrollbarWidth: "none"
-                    }}>
-                      {[product.image, ...product.images].filter(Boolean).map((img, idx) => (
-                        <motion.div
-                          key={idx}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setSelectedImage(img)}
-                          style={{
-                            width: "50px",
-                            height: "50px",
-                            borderRadius: "10px",
-                            border: `2px solid ${selectedImage === img ? "#5BBFB5" : "#E2EEEC"}`,
-                            background: "#F4F9F8",
-                            padding: "4px",
-                            cursor: "pointer",
-                            flexShrink: 0,
-                            overflow: "hidden"
-                          }}
-                        >
-                          <img src={getFullImageUrl(img)} style={{ width: "100%", height: "100%", objectFit: "contain" }} alt={`Gallery ${idx}`} />
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              style={{ paddingTop: "8px" }}
-            >
-              <span style={{ fontSize: "10px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.12em", display: "block", marginBottom: "10px" }}>
-                {product.category || "Fresh Catch"} · Fresh From The Sea
-              </span>
-
-              <h1 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "clamp(28px, 4vw, 42px)", fontWeight: "700", color: "#1A2E2C", letterSpacing: "-0.025em", lineHeight: 1.15, marginBottom: "20px" }}>
+            {/* Info Column */}
+            <div className="info-container">
+              <div style={{ marginBottom: "8px" }}>
+                <span style={{ fontSize: "12px", color: "#6B8F8A", fontWeight: "600" }}>{product.category || "SeaBite Fresh"}</span>
+              </div>
+              
+              <h1 style={{ fontSize: "24px", fontWeight: "700", color: "#1A2E2C", lineHeight: 1.2, marginBottom: "8px" }}>
                 {product.name}
               </h1>
 
               {product.rating > 0 && (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-                  <div style={{ display: "flex", gap: "2px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "16px" }}>
+                  <div style={{ display: "flex", gap: "1px" }}>
                     {[...Array(5)].map((_, i) => (
-                      <FiStar key={i} size={14} style={{ color: i < Math.round(product.rating) ? "#F59E0B" : "#E2EEEC" }} fill={i < Math.round(product.rating) ? "#F59E0B" : "none"} />
+                      <FiStar key={i} size={14} style={{ color: i < Math.round(product.rating) ? "#F59E0B" : "#eee" }} fill={i < Math.round(product.rating) ? "#F59E0B" : "none"} />
                     ))}
                   </div>
-                  <span style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C" }}>{product.rating.toFixed(1)}</span>
-                  <span style={{ fontSize: "12px", color: "#B8CFCC" }}>({product.numReviews} reviews)</span>
+                  <span style={{ fontSize: "13px", color: "#007185", fontWeight: "500" }}>{product.numReviews} ratings</span>
                 </div>
               )}
 
-              <div style={{ height: "1px", background: "#F0F5F4", marginBottom: "20px" }} />
+              <div style={{ height: "1px", background: "#f0f0f0", marginBottom: "16px" }} />
 
-              <div style={{ marginBottom: "24px" }}>
-                {(isActiveFlashSale || isGlobalDiscount) && (
-                  <span style={{ fontSize: "16px", color: "#B8CFCC", textDecoration: "line-through", display: "block", marginBottom: "4px" }}>₹{basePrice.toFixed(0)}</span>
-                )}
-                <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
-                  <span style={{ fontSize: "40px", fontWeight: "800", color: "#1A2E2C", letterSpacing: "-0.04em", lineHeight: 1 }}>
-                    ₹{Number(unitPrice).toFixed(0)}
-                  </span>
-                  <span style={{ fontSize: "14px", color: "#6B8F8A", fontWeight: "500" }}>/ {product.unit || "kg"}</span>
-                  {discountPct > 0 && (
-                    <span style={{ fontSize: "12px", fontWeight: "800", background: "#F0FBF9", color: "#5BBFB5", padding: "3px 10px", borderRadius: "20px", marginLeft: "4px" }}>
-                      Save {discountPct}%
-                    </span>
-                  )}
+              <div style={{ marginBottom: "20px" }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
+                  <span style={{ fontSize: "14px", fontWeight: "400", color: "#565959", marginTop: "4px" }}>₹</span>
+                  <span style={{ fontSize: "32px", fontWeight: "500", color: "#1A2E2C" }}>{Number(unitPrice).toFixed(0)}</span>
                 </div>
+                {discountPct > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                    <span style={{ fontSize: "14px", color: "#CC0C39", fontWeight: "400" }}>-{discountPct}%</span>
+                    <span style={{ fontSize: "14px", color: "#565959", textDecoration: "line-through" }}>M.R.P.: ₹{basePrice.toFixed(0)}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Freshness Meter */}
-              <FreshnessMeter productId={product._id} />
+              <div style={{ marginBottom: "20px" }}>
+                <p style={{ fontSize: "14px", color: "#007600", fontWeight: "700", marginBottom: "4px" }}>In Stock</p>
+                <p style={{ fontSize: "13px", color: "#565959" }}>
+                  FREE delivery <span style={{ fontWeight: "700" }}>Tomorrow</span>. Order within <span style={{ color: "#B12704" }}>4 hrs 12 mins</span>.
+                </p>
+              </div>
 
+              <FreshnessMeter productId={product._id} />
               <PincodeChecker />
 
-              <div style={{ marginBottom: "28px" }}>
-                {(product.stock === "out" || (product.countInStock !== undefined && product.countInStock <= 0)) ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: "6px", padding: "6px 14px", background: "#FEF2F2", borderRadius: "20px", border: "1px solid #FECACA", fontSize: "11px", fontWeight: "700", color: "#DC2626", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#DC2626" }} />
-                      Sold Out
-                    </span>
-                    <button
-                      onClick={handleWaitlistJoin}
-                      disabled={isWaitlisting || isJoinedWaitlist}
-                      style={{ background: "none", border: "none", cursor: isJoinedWaitlist ? "default" : "pointer", fontSize: "12px", fontWeight: "700", color: isJoinedWaitlist ? "#5BBFB5" : "#6B8F8A", textDecoration: "underline", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-                    >
-                      {isWaitlisting ? "Subscribing…" : isJoinedWaitlist ? "✓ Subscribed to alerts" : "Notify me when available"}
-                    </button>
-                  </div>
-                ) : (
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", background: "#F0FBF9", borderRadius: "20px", border: "1px solid #B8DDD9", fontSize: "11px", fontWeight: "700", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                    <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#5BBFB5", animation: "pulse 2s infinite" }} />
-                    In Stock
-                    <style>{`@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }`}</style>
-                  </span>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div style={{ height: "1px", background: "#F0F5F4", marginBottom: "24px" }} />
-
-              {/* ── Tabs ─────────────────────────────────── */}
-              <div style={{ marginBottom: "28px" }}>
-                <div style={{ display: "flex", gap: "0", borderBottom: "1px solid #E2EEEC", marginBottom: "20px", overflowX: "auto" }}>
-                  {TABS.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className="tab-btn"
-                      style={{
-                        padding: "10px 18px",
-                        fontSize: "12px",
-                        fontWeight: "700",
-                        textTransform: "uppercase",
-                        letterSpacing: "0.06em",
-                        color: activeTab === tab.id ? "#1A2E2C" : "#B8CFCC",
-                        borderBottom: `2px solid ${activeTab === tab.id ? "#5BBFB5" : "transparent"}`,
-                        marginBottom: "-1px",
-                        whiteSpace: "nowrap",
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
-
-                <AnimatePresence mode="wait">
-                  {activeTab === "desc" && (
-                    <motion.p key="desc" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
-                      style={{ fontSize: "14px", color: "#6B8F8A", lineHeight: "1.8", fontWeight: "400" }}>
-                      {product.desc || "Premium quality seafood sourced directly from local fishermen. Guaranteed fresh and stored at optimal temperatures to maintain flavor and texture."}
-                    </motion.p>
-                  )}
-
-                  {activeTab === "shipping" && (
-                    <motion.div key="shipping" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
-                      style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                      {[
-                        { icon: <FiTruck size={16} style={{ color: "#5BBFB5" }} />, title: "Express Delivery", desc: "Delivered within 1–2 days of order confirmation." },
-                        { icon: <FiInfo size={16} style={{ color: "#5BBFB5" }} />, title: "Packaging", desc: "Vacuum sealed to ensure maximum freshness." },
-                      ].map((item, i) => (
-                        <div key={i} style={{ display: "flex", gap: "14px", alignItems: "flex-start" }}>
-                          <div style={{ width: "36px", height: "36px", background: "#F0FBF9", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                            {item.icon}
-                          </div>
-                          <div>
-                            <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", marginBottom: "3px" }}>{item.title}</p>
-                            <p style={{ fontSize: "13px", color: "#6B8F8A", lineHeight: "1.6" }}>{item.desc}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </motion.div>
-                  )}
-
-                  {activeTab === "reviews" && (
-                    <motion.div key="reviews" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}
-                      style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                      
-                      {/* Star Distribution Histogram */}
-                      {product.reviews?.length > 0 && (
-                        <div style={{ display: "flex", alignItems: "center", gap: "24px", background: "#F4F9F8", padding: "20px", borderRadius: "16px", border: "1.5px solid #E2EEEC" }}>
-                          <div style={{ textAlign: "center", flexShrink: 0 }}>
-                            <div style={{ fontSize: "36px", fontWeight: "800", color: "#1A2E2C", lineHeight: 1 }}>
-                              {product.rating ? product.rating.toFixed(1) : "5.0"}
-                            </div>
-                            <div style={{ display: "flex", gap: "2px", margin: "6px 0 4px" }}>
-                              {[...Array(5)].map((_, s) => (
-                                <FiStar key={s} size={14} fill={s < Math.round(product.rating || 5) ? "#F59E0B" : "none"} style={{ color: s < Math.round(product.rating || 5) ? "#F59E0B" : "#E2EEEC" }} />
-                              ))}
-                            </div>
-                            <div style={{ fontSize: "11px", color: "#6B8F8A", fontWeight: "700" }}>{product.numReviews} Reviews</div>
-                          </div>
-
-                          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px" }}>
-                            {[5, 4, 3, 2, 1].map(star => {
-                              const count = product.reviews.filter(r => Math.round(r.rating) === star).length;
-                              const percentage = product.numReviews > 0 ? (count / product.numReviews) * 100 : 0;
-                              return (
-                                <div key={star} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                  <span style={{ fontSize: "11px", color: "#1A2E2C", width: "16px", fontWeight: "800", textAlign: "right" }}>{star}</span>
-                                  <FiStar size={10} style={{ color: "#F59E0B", flexShrink: 0 }} fill="#F59E0B" />
-                                  <div style={{ flex: 1, height: "6px", background: "#E2EEEC", borderRadius: "4px", overflow: "hidden" }}>
-                                    <div style={{ width: `${percentage}%`, height: "100%", background: "#F59E0B", borderRadius: "4px", transition: "width 0.5s ease-out" }} />
-                                  </div>
-                                  <span style={{ fontSize: "10px", color: "#6B8F8A", width: "20px", textAlign: "right", fontWeight: "600" }}>{percentage.toFixed(0)}%</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {product.reviews?.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "14px", maxHeight: "360px", overflowY: "auto", paddingRight: "6px" }}>
-                          {product.reviews.map((review, i) => (
-                            <div key={i} className="review-card" style={{ background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", padding: "16px", transition: "border-color 0.2s", boxShadow: "0 2px 8px rgba(26,46,44,0.02)" }}>
-                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-                                <div>
-                                  <span style={{ fontSize: "14px", fontWeight: "800", color: "#1A2E2C", display: "flex", alignItems: "center", gap: "6px" }}>
-                                    {review.name}
-                                    <span style={{ display: "flex", alignItems: "center", gap: "3px", fontSize: "10px", color: "#5BBFB5", background: "#F0FBF9", padding: "2px 6px", borderRadius: "4px", fontWeight: "700" }}>
-                                      <FiCheck size={10} /> Verified Purchase
-                                    </span>
-                                  </span>
-                                  <div style={{ display: "flex", gap: "2px", marginTop: "4px" }}>
-                                    {[...Array(5)].map((_, s) => (
-                                      <FiStar key={s} size={11} fill={s < review.rating ? "#F59E0B" : "none"} style={{ color: s < review.rating ? "#F59E0B" : "#E2EEEC" }} />
-                                    ))}
-                                  </div>
-                                </div>
-                                <span style={{ fontSize: "11px", color: "#8BA5B3", fontWeight: "600" }}>{new Date(review.createdAt).toLocaleDateString("en-IN", { year: "numeric", month: "short", day: "numeric" })}</span>
-                              </div>
-                              <p style={{ fontSize: "14px", color: "#4A6572", lineHeight: "1.6", margin: "8px 0" }}>{review.comment}</p>
-                              
-                              {/* Review Images */}
-                              {review.images && review.images.length > 0 && (
-                                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
-                                  {review.images.map((img, idx) => (
-                                    <motion.img
-                                      key={idx}
-                                      whileHover={{ scale: 1.05 }}
-                                      src={getFullImageUrl(img)}
-                                      alt={`Review ${idx}`}
-                                      style={{ 
-                                        width: "60px", 
-                                        height: "60px", 
-                                        borderRadius: "8px", 
-                                        objectFit: "cover", 
-                                        border: "1px solid #E2EEEC",
-                                        cursor: "zoom-in"
-                                      }}
-                                      onClick={() => setSelectedImage(img)}
-                                    />
-                                  ))}
-                                </div>
-                              )}
-
-                              <div style={{ display: "flex", gap: "12px", marginTop: "12px", borderTop: "1px solid #F4F9F8", paddingTop: "12px" }}>
-                                <button style={{ background: "none", border: "none", fontSize: "12px", color: "#6B8F8A", display: "flex", alignItems: "center", gap: "4px", cursor: "pointer", fontWeight: "600" }}>
-                                  👍 Helpful (0)
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div style={{ textAlign: "center", padding: "28px", border: "1.5px dashed #E2EEEC", borderRadius: "12px" }}>
-                          <p style={{ fontSize: "14px", color: "#B8CFCC", marginBottom: "4px" }}>🎣 No reviews yet.</p>
-                          <p style={{ fontSize: "12px", color: "#B8CFCC" }}>Be the first to share your catch experience!</p>
-                        </div>
-                      )}
-                      {canReview ? (
-                        <button
-                          onClick={() => setIsReviewOpen(true)}
-                          style={{ padding: "10px 0", background: "#F0FBF9", border: "1.5px solid #B8DDD9", borderRadius: "10px", color: "#5BBFB5", fontSize: "13px", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontFamily: "'Plus Jakarta Sans', sans-serif", transition: "all 0.2s" }}
-                        >
-                          <FiMessageSquare size={14} /> Write a Review
-                        </button>
-                      ) : (
-                        <p style={{ fontSize: "12px", color: "#B8CFCC", textAlign: "center" }}>
-                          {user ? "Only verified buyers can leave reviews." : <><Link to="/login" style={{ color: "#5BBFB5", fontWeight: "700" }}>Login</Link> to write a review.</>}
-                        </p>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              {/* Divider */}
-              <div style={{ height: "1px", background: "#F0F5F4", marginBottom: "24px" }} />
-
-              {/* ── Action Row ───────────────────────────── */}
-              <div style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "16px" }}>
-                {/* Quantity */}
-                <div style={{
-                  display: "flex", alignItems: "center",
-                  background: "#F4F9F8", border: "1.5px solid #E2EEEC",
-                  borderRadius: "10px", overflow: "hidden", flexShrink: 0,
-                }}>
-                  <button className="qty-btn" onClick={() => setQty((q) => Math.max(1, q - 1))}
-                    style={{ width: "38px", height: "46px", border: "none", background: "transparent", color: "#6B8F8A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }}>
-                    <FiMinus size={13} />
-                  </button>
-                  <span style={{ width: "36px", textAlign: "center", fontSize: "15px", fontWeight: "800", color: "#1A2E2C" }}>{qty}</span>
-                  <button className="qty-btn" onClick={() => setQty((q) => q + 1)}
-                    style={{ width: "38px", height: "46px", border: "none", background: "transparent", color: "#6B8F8A", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }}>
-                    <FiPlus size={13} />
-                  </button>
-                </div>
-
-                {/* Wishlist */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "32px" }}>
                 <button
-                  className="wishlist-btn"
-                  onClick={handleWishlistToggle}
-                  disabled={loadingWishlist}
-                  style={{
-                    width: "46px", height: "46px", flexShrink: 0,
-                    border: `1.5px solid ${isWishlisted ? "#F07468" : "#E2EEEC"}`,
-                    borderRadius: "10px", background: isWishlisted ? "#FFF5F4" : "#fff",
-                    color: isWishlisted ? "#F07468" : "#B8CFCC",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    cursor: "pointer", transition: "all 0.2s ease",
-                  }}
-                >
-                  {loadingWishlist
-                    ? <div style={{ width: "16px", height: "16px", border: "2px solid currentColor", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.6s linear infinite" }} />
-                    : <FiHeart size={18} fill={isWishlisted ? "currentColor" : "none"} />
-                  }
-                </button>
-              </div>
-
-              <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                {/* Add to cart */}
-                <motion.button
-                  className={`add-btn ${!isAdded && product.stock !== "out" ? "liquid-cta" : ""}`}
-                  whileTap={!isAdded && product.stock !== "out" ? { scale: 0.97 } : {}}
                   onClick={handleAddToCart}
                   disabled={isAdded || product.stock === "out"}
                   style={{
-                    flex: 1, height: "46px",
-                    border: "none", borderRadius: "10px",
-                    background: isAdded ? "#5BBFB5" : product.stock === "out" ? "#F0F5F4" : "#1A2E2C",
-                    color: isAdded ? "#fff" : product.stock === "out" ? "#B8CFCC" : "#fff",
-                    fontSize: "13px", fontWeight: "700",
-                    cursor: product.stock === "out" ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    transition: "background 0.2s ease",
-                    letterSpacing: "0.02em",
+                    width: "100%", height: "48px", borderRadius: "100px", border: "none",
+                    background: "#FFD814", color: "#0F1111", fontSize: "14px", fontWeight: "500",
+                    cursor: "pointer", boxShadow: "0 2px 5px rgba(213,217,217,0.5)"
                   }}
                 >
-                  <AnimatePresence mode="wait">
-                    {isAdded ? (
-                      <motion.span key="added" initial={{ scale: 0.8 }} animate={{ scale: 1 }} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <FiCheck size={15} /> Added
-                      </motion.span>
-                    ) : product.stock === "out" ? (
-                      <span>Sold Out</span>
-                    ) : (
-                      <motion.span key="add" initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <FiShoppingBag size={15} /> Add
-                      </motion.span>
-                    )}
-                  </AnimatePresence>
-                </motion.button>
-                
-                {/* Buy Now */}
-                <motion.button
-                  whileTap={product.stock !== "out" ? { scale: 0.97 } : {}}
+                  {isAdded ? "✓ Added to Cart" : "Add to Cart"}
+                </button>
+                <button
                   onClick={handleBuyNow}
                   disabled={product.stock === "out"}
                   style={{
-                    flex: 1, height: "46px",
-                    border: "none", borderRadius: "10px",
-                    background: product.stock === "out" ? "#F0F5F4" : "#E8A365",
-                    color: product.stock === "out" ? "#B8CFCC" : "#1A2E2C",
-                    fontSize: "13px", fontWeight: "800",
-                    cursor: product.stock === "out" ? "not-allowed" : "pointer",
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: "8px",
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                    transition: "background 0.2s ease",
-                    letterSpacing: "0.02em",
+                    width: "100%", height: "48px", borderRadius: "100px", border: "none",
+                    background: "#FFA41C", color: "#0F1111", fontSize: "14px", fontWeight: "500",
+                    cursor: "pointer", boxShadow: "0 2px 5px rgba(213,217,217,0.5)"
                   }}
                 >
                   Buy Now
-                </motion.button>
+                </button>
               </div>
-            </motion.div>
+
+              <div style={{ height: "1px", background: "#f0f0f0", marginBottom: "20px" }} />
+
+              <div style={{ marginBottom: "32px" }}>
+                <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "12px" }}>About this item</h3>
+                <p style={{ fontSize: "14px", color: "#1A2E2C", lineHeight: 1.5 }}>
+                  {product.desc || "Premium fresh seafood sourced daily. Hand-picked for quality and freshness."}
+                </p>
+              </div>
+
+              {/* Related / Bundle */}
+              {product.relatedProducts?.length > 0 && (
+                <div style={{ marginTop: "40px" }}>
+                   <BundleSection mainProduct={product} relatedProducts={product.relatedProducts} getFullImageUrl={getFullImageUrl} refreshCartCount={refreshCartCount} />
+                </div>
+              )}
+            </div>
           </div>
-
-          {/* ── Bundle Section ───────────────────────────── */}
-          {product.relatedProducts?.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              style={{ marginTop: "48px" }}
-            >
-              <BundleSection
-                mainProduct={product}
-                relatedProducts={product.relatedProducts}
-                getFullImageUrl={getFullImageUrl}
-                refreshCartCount={refreshCartCount}
-              />
-            </motion.div>
-          )}
-
-          {/* ── Recently Viewed Section ───────────────────────────── */}
+          
           {recentItems.length > 0 && (
             <RecentlyViewed items={recentItems} getFullImageUrl={getFullImageUrl} />
           )}
         </div>
       </div>
 
-      {/* 📱 Mobile Sticky Action Bar */}
-      <div className="show-mobile" style={{
-        position: "fixed",
-        bottom: "64px", // Above mobile nav
-        left: 0,
-        right: 0,
-        background: "rgba(255, 255, 255, 0.95)",
-        backdropFilter: "blur(12px)",
-        borderTop: "1.5px solid #E2EEEC",
-        padding: "12px 24px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        zIndex: 40,
-        boxShadow: "0 -8px 25px rgba(26, 46, 44, 0.08)"
-      }}>
-        <div>
-          <span style={{ fontSize: "10px", fontWeight: "800", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.08em", display: "block" }}>Total Price</span>
-          <span style={{ fontSize: "20px", fontWeight: "800", color: "#1A2E2C", letterSpacing: "-0.02em" }}>₹{Number(totalPrice).toFixed(0)}</span>
-        </div>
-        <button
-          onClick={handleAddToCart}
-          disabled={isAdded || product.stock === "out"}
-          style={{
-            background: isAdded ? "#5BBFB5" : product.stock === "out" ? "#F0F5F4" : "#1A2E2C",
-            color: "#fff",
-            border: "none",
-            borderRadius: "14px",
-            padding: "12px 28px",
-            fontSize: "14px",
-            fontWeight: "700",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            boxShadow: isAdded ? "none" : "0 8px 20px rgba(26, 46, 44, 0.2)"
-          }}
-        >
-          {isAdded ? <FiCheck /> : <FiShoppingBag />}
-          {isAdded ? "Added" : "Add to Cart"}
-        </button>
-      </div>
+
 
       <ReviewModal
         isOpen={isReviewOpen}
