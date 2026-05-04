@@ -1,225 +1,199 @@
 import { useState, useEffect } from "react";
-import { FiX, FiFilter, FiCheck, FiChevronDown, FiSliders } from "react-icons/fi";
+import { FiX, FiFilter, FiCheck, FiSliders } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
+const BRAND = "#5BBFB5";
+const BRAND_DARK = "#1A2E2C";
+
 const FilterContent = ({ filters, setFilters, clearFilters, localPrice, handlePriceChange, applyPrice }) => (
-    <div className="space-y-8">
-        {/* Sort Order */}
-        <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">
-                Sort By
-            </h3>
-            <div className="space-y-2">
-                {[
-                    { label: "Newest Arrivals", value: "newest" },
-                    { label: "Price: Low to High", value: "price-asc" },
-                    { label: "Price: High to Low", value: "price-desc" },
-                    { label: "Top Rated", value: "rating" },
-                ].map((option) => (
-                    <label key={option.value} className="flex items-center gap-3 cursor-pointer group">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${filters.sort === option.value
-                            ? "border-blue-500 bg-blue-500"
-                            : "border-slate-300 dark:border-slate-600 group-hover:border-blue-400"
-                            }`}>
-                            {filters.sort === option.value && <FiCheck size={12} className="text-white" />}
-                        </div>
-                        <input
-                            type="radio"
-                            name="sort"
-                            value={option.value}
-                            checked={filters.sort === option.value}
-                            onChange={(e) => setFilters(prev => ({ ...prev, sort: e.target.value }))}
-                            className="hidden"
-                        />
-                        <span className={`text-sm ${filters.sort === option.value
-                            ? "font-bold text-blue-600 dark:text-blue-400"
-                            : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
-                            }`}>
-                            {option.label}
-                        </span>
-                    </label>
-                ))}
-            </div>
-        </div>
+  <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
 
-        <div className="h-px bg-slate-100 dark:bg-slate-700" />
-
-        {/* Price Range */}
-        <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">
-                Price Range
-            </h3>
-            <div className="flex items-center gap-2 mb-4">
-                <div className="relative flex-1">
-                    <span className="absolute left-3 top-2.5 text-slate-400 text-xs font-bold">₹</span>
-                    <input
-                        type="number"
-                        name="min"
-                        value={localPrice.min}
-                        onChange={handlePriceChange}
-                        onBlur={applyPrice}
-                        placeholder="Min"
-                        className="w-full pl-6 pr-3 py-2 rounded-lg text-sm outline-none transition-colors"
-                        style={{ background: '#fff', border: '1.5px solid #D8ECEA', color: '#1A2E2C' }}
-                    />
-                </div>
-                <span className="text-slate-400">-</span>
-                <div className="relative flex-1">
-                    <span className="absolute left-3 top-2.5 text-slate-400 text-xs font-bold">₹</span>
-                    <input
-                        type="number"
-                        name="max"
-                        value={localPrice.max}
-                        onChange={handlePriceChange}
-                        onBlur={applyPrice}
-                        placeholder="Max"
-                        className="w-full pl-6 pr-3 py-2 rounded-lg text-sm outline-none transition-colors"
-                        style={{ background: '#fff', border: '1.5px solid #D8ECEA', color: '#1A2E2C' }}
-                    />
-                </div>
-            </div>
-            <button
-                onClick={applyPrice}
-                className="w-full py-2 text-xs font-bold rounded-lg transition-colors"
-                style={{ background: '#1A2E2C', color: '#fff' }}
-            >
-                Apply Price
-            </button>
-        </div>
-
-        <div className="h-px bg-slate-100 dark:bg-slate-700" />
-
-        {/* Availability */}
-        <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-3">
-                Availability
-            </h3>
-            <label className="flex items-center gap-3 cursor-pointer group">
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${filters.inStock
-                    ? "border-emerald-500 bg-emerald-500"
-                    : "border-slate-300 dark:border-slate-600 group-hover:border-emerald-400"
-                    }`}>
-                    {filters.inStock && <FiCheck size={14} className="text-white" />}
-                </div>
-                <input
-                    type="checkbox"
-                    checked={filters.inStock}
-                    onChange={(e) => setFilters(prev => ({ ...prev, inStock: e.target.checked }))}
-                    className="hidden"
-                />
-                <span className={`text-sm ${filters.inStock
-                    ? "font-bold text-emerald-600 dark:text-emerald-400"
-                    : "text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
-                    }`}>
-                    In Stock Only
-                </span>
+    {/* Sort By */}
+    <div>
+      <h3 style={{ fontSize: "11px", fontWeight: 800, color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "14px", margin: "0 0 14px" }}>
+        Sort By
+      </h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {[
+          { label: "Newest Arrivals", value: "newest" },
+          { label: "Price: Low to High", value: "price-asc" },
+          { label: "Price: High to Low", value: "price-desc" },
+          { label: "Top Rated", value: "rating" },
+        ].map((option) => {
+          const active = filters.sort === option.value;
+          return (
+            <label key={option.value} style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}>
+              <div style={{
+                width: "20px", height: "20px", borderRadius: "50%", border: `2px solid ${active ? BRAND : "#D8ECEA"}`,
+                background: active ? BRAND : "transparent",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                transition: "all 0.2s",
+              }}>
+                {active && <FiCheck size={11} color="#fff" />}
+              </div>
+              <input type="radio" name="sort" value={option.value} checked={active}
+                onChange={(e) => setFilters(prev => ({ ...prev, sort: e.target.value }))} style={{ display: "none" }} />
+              <span style={{ fontSize: "14px", fontWeight: active ? 700 : 500, color: active ? BRAND_DARK : "#6B8F8A", fontFamily: "'Manrope', sans-serif" }}>
+                {option.label}
+              </span>
             </label>
-        </div>
-
-        <div className="pt-4">
-            <button
-                onClick={clearFilters}
-                className="w-full py-3 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-500 hover:text-red-500 hover:border-red-200 dark:hover:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all"
-            >
-                Reset All Filters
-            </button>
-        </div>
+          );
+        })}
+      </div>
     </div>
+
+    <div style={{ height: "1px", background: "#EEF5F4" }} />
+
+    {/* Price Range */}
+    <div>
+      <h3 style={{ fontSize: "11px", fontWeight: 800, color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 14px" }}>
+        Price Range
+      </h3>
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px" }}>
+        <div style={{ position: "relative", flex: 1 }}>
+          <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#B8CFCC", fontSize: "12px", fontWeight: 700 }}>₹</span>
+          <input type="number" name="min" value={localPrice.min} onChange={handlePriceChange} onBlur={applyPrice} placeholder="Min"
+            style={{ width: "100%", paddingLeft: "26px", paddingRight: "10px", paddingTop: "10px", paddingBottom: "10px", borderRadius: "10px", border: "1.5px solid #D8ECEA", background: "#F4F9F8", fontSize: "13px", color: BRAND_DARK, outline: "none", fontFamily: "'Manrope', sans-serif", boxSizing: "border-box" }} />
+        </div>
+        <span style={{ color: "#B8CFCC", fontWeight: 700 }}>—</span>
+        <div style={{ position: "relative", flex: 1 }}>
+          <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#B8CFCC", fontSize: "12px", fontWeight: 700 }}>₹</span>
+          <input type="number" name="max" value={localPrice.max} onChange={handlePriceChange} onBlur={applyPrice} placeholder="Max"
+            style={{ width: "100%", paddingLeft: "26px", paddingRight: "10px", paddingTop: "10px", paddingBottom: "10px", borderRadius: "10px", border: "1.5px solid #D8ECEA", background: "#F4F9F8", fontSize: "13px", color: BRAND_DARK, outline: "none", fontFamily: "'Manrope', sans-serif", boxSizing: "border-box" }} />
+        </div>
+      </div>
+      <button onClick={applyPrice}
+        style={{ width: "100%", padding: "10px", borderRadius: "10px", background: BRAND_DARK, color: "#fff", border: "none", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: "'Manrope', sans-serif" }}>
+        Apply Price
+      </button>
+    </div>
+
+    <div style={{ height: "1px", background: "#EEF5F4" }} />
+
+    {/* Availability */}
+    <div>
+      <h3 style={{ fontSize: "11px", fontWeight: 800, color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 14px" }}>
+        Availability
+      </h3>
+      <label style={{ display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }}>
+        <div style={{
+          width: "20px", height: "20px", borderRadius: "6px", border: `2px solid ${filters.inStock ? BRAND : "#D8ECEA"}`,
+          background: filters.inStock ? BRAND : "transparent",
+          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.2s",
+        }}>
+          {filters.inStock && <FiCheck size={12} color="#fff" />}
+        </div>
+        <input type="checkbox" checked={filters.inStock} onChange={(e) => setFilters(prev => ({ ...prev, inStock: e.target.checked }))} style={{ display: "none" }} />
+        <span style={{ fontSize: "14px", fontWeight: filters.inStock ? 700 : 500, color: filters.inStock ? BRAND_DARK : "#6B8F8A", fontFamily: "'Manrope', sans-serif" }}>
+          In Stock Only
+        </span>
+      </label>
+    </div>
+
+    {/* Reset */}
+    <button onClick={clearFilters}
+      style={{ width: "100%", padding: "12px", borderRadius: "12px", border: "1.5px solid #E2EEEC", background: "transparent", color: "#9BB5B2", fontSize: "13px", fontWeight: 700, cursor: "pointer", fontFamily: "'Manrope', sans-serif", transition: "all 0.2s" }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = "#F07468"; e.currentTarget.style.color = "#F07468"; }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = "#E2EEEC"; e.currentTarget.style.color = "#9BB5B2"; }}
+    >
+      Reset All Filters
+    </button>
+  </div>
 );
 
-export default function FilterSidebar({
-    isOpen,
-    onClose,
-    filters,
-    setFilters,
-    clearFilters
-}) {
-    const [localPrice, setLocalPrice] = useState({ min: filters.minPrice, max: filters.maxPrice });
+export default function FilterSidebar({ isOpen, onClose, filters, setFilters, clearFilters }) {
+  const [localPrice, setLocalPrice] = useState({ min: filters.minPrice, max: filters.maxPrice });
 
-    useEffect(() => {
-        setLocalPrice({ min: filters.minPrice, max: filters.maxPrice });
-    }, [filters.minPrice, filters.maxPrice]);
+  useEffect(() => {
+    setLocalPrice({ min: filters.minPrice, max: filters.maxPrice });
+  }, [filters.minPrice, filters.maxPrice]);
 
-    const handlePriceChange = (e) => {
-        const { name, value } = e.target;
-        setLocalPrice(prev => ({ ...prev, [name]: value }));
-    };
+  const handlePriceChange = (e) => {
+    const { name, value } = e.target;
+    setLocalPrice(prev => ({ ...prev, [name]: value }));
+  };
 
-    const applyPrice = () => {
-        setFilters(prev => ({ ...prev, minPrice: localPrice.min, maxPrice: localPrice.max }));
-    };
+  const applyPrice = () => {
+    setFilters(prev => ({ ...prev, minPrice: localPrice.min, maxPrice: localPrice.max }));
+  };
 
-    return (
-        <>
-            {/* Desktop Sidebar (Sticky) */}
-            <div className="hidden lg:block w-64 shrink-0 sticky top-24 h-fit max-h-[calc(100vh-8rem)] overflow-y-auto pr-4 custom-scrollbar">
-                <div className="flex items-center gap-2 mb-6">
-                    <FiSliders className="text-blue-600 dark:text-blue-400" />
-                    <h2 className="text-lg font-bold text-slate-900 dark:text-white">Filters</h2>
+  return (
+    <>
+      {/* Desktop Sidebar (Sticky) */}
+      <div style={{ display: "none" }} className="lg-filter-sidebar">
+        <div style={{ width: "240px", flexShrink: 0, position: "sticky", top: "120px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "24px" }}>
+            <FiSliders color={BRAND} size={16} />
+            <h2 style={{ fontSize: "16px", fontWeight: 700, color: BRAND_DARK, margin: 0, fontFamily: "'Manrope', sans-serif" }}>Filters</h2>
+          </div>
+          <FilterContent filters={filters} setFilters={setFilters} clearFilters={clearFilters}
+            localPrice={localPrice} handlePriceChange={handlePriceChange} applyPrice={applyPrice} />
+        </div>
+      </div>
+
+      {/* Mobile Drawer — z-index 9997 so it's above everything including sticky bar (z:100) */}
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: 9997 }}
+            />
+
+            {/* Panel — slides from right */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "tween", duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: "fixed", top: 0, right: 0, bottom: 0,
+                width: "min(85vw, 320px)",
+                background: "#fff",
+                zIndex: 9998,
+                display: "flex", flexDirection: "column",
+                fontFamily: "'Manrope', sans-serif",
+              }}
+            >
+              {/* Header */}
+              <div style={{ padding: "20px 20px 18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #EEF5F4", flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <FiFilter color={BRAND} size={16} />
+                  <h2 style={{ fontSize: "16px", fontWeight: 800, color: BRAND_DARK, margin: 0 }}>Filter & Sort</h2>
                 </div>
-                <FilterContent
-                    filters={filters}
-                    setFilters={setFilters}
-                    clearFilters={clearFilters}
-                    localPrice={localPrice}
-                    handlePriceChange={handlePriceChange}
-                    applyPrice={applyPrice}
-                />
-            </div>
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={onClose}
+                  style={{ background: "#F4F9F8", border: "none", borderRadius: "50%", width: "34px", height: "34px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6B8F8A" }}
+                >
+                  <FiX size={18} />
+                </motion.button>
+              </div>
 
-            {/* Mobile Drawer */}
-            <AnimatePresence>
-                {isOpen && (
-                    <>
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={onClose}
-                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] lg:hidden"
-                        />
-                        <motion.div
-                            initial={{ x: "100%" }}
-                            animate={{ x: 0 }}
-                            exit={{ x: "100%" }}
-                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                            className="fixed inset-y-0 right-0 w-80 bg-white dark:bg-slate-900 shadow-2xl z-[70] lg:hidden flex flex-col"
-                        >
-                            <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                                <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                    <FiFilter /> Filter & Sort
-                                </h2>
-                                <button
-                                    onClick={onClose}
-                                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                                >
-                                    <FiX size={20} />
-                                </button>
-                            </div>
+              {/* Body */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px" }}>
+                <FilterContent filters={filters} setFilters={setFilters} clearFilters={clearFilters}
+                  localPrice={localPrice} handlePriceChange={handlePriceChange} applyPrice={applyPrice} />
+              </div>
 
-                            <div className="flex-1 overflow-y-auto p-5">
-                                <FilterContent
-                                    filters={filters}
-                                    setFilters={setFilters}
-                                    clearFilters={clearFilters}
-                                    localPrice={localPrice}
-                                    handlePriceChange={handlePriceChange}
-                                    applyPrice={applyPrice}
-                                />
-                            </div>
-
-                            <div className="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
-                                <button
-                                    onClick={onClose}
-                                    className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-500/30 active:scale-95 transition-all"
-                                >
-                                    View Results
-                                </button>
-                            </div>
-                        </motion.div>
-                    </>
-                )}
-            </AnimatePresence>
-        </>
-    );
+              {/* Footer — Done button, no "View Results" */}
+              <div style={{ padding: "16px 20px", borderTop: "1px solid #EEF5F4", flexShrink: 0 }}>
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={onClose}
+                  style={{ width: "100%", padding: "14px", borderRadius: "12px", background: BRAND_DARK, color: "#fff", border: "none", fontSize: "14px", fontWeight: 800, cursor: "pointer" }}
+                >
+                  Done
+                </motion.button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }

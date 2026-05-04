@@ -3,8 +3,8 @@ import { useState, useContext, useEffect, useRef, Suspense } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FiUser, FiShoppingBag, FiSearch, FiLogOut, FiPackage,
-  FiGrid, FiBell, FiMenu, FiX, FiChevronDown, FiHeart, FiMail, FiCheckCircle, FiZap, FiEye, FiEyeOff, FiArrowRight
+  FiUser, FiShoppingCart, FiSearch, FiLogOut, FiPackage,
+  FiGrid, FiBell, FiMenu, FiX, FiChevronDown, FiChevronRight, FiHeart, FiMail, FiCheckCircle, FiZap, FiEye, FiEyeOff, FiArrowRight
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import axios from "axios";
@@ -69,6 +69,7 @@ export default function Navbar({ announcementActive = false }) {
   const [searchExpanded, setSearchExpanded] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showSpinWheel, setShowSpinWheel] = useState(false);
+  const [showCatOpen, setShowCatOpen] = useState(true);
   const [trendingSearched, setTrendingSearched] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -121,8 +122,6 @@ export default function Navbar({ announcementActive = false }) {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-  const isHome = location.pathname === "/";
-  const isTransparent = isHome && !scrolled;
 
   useEffect(() => {
     const authType = searchParams.get("auth");
@@ -336,80 +335,76 @@ export default function Navbar({ announcementActive = false }) {
     }
   });
 
-  const isActive = (p) => location.pathname + location.search === p;
+  const isHome = location.pathname === "/";
+  const isTransparent = isHome && !scrolled;
 
   const T = {
-    navBg: isTransparent ? "transparent" : "rgba(255,255,255,0.97)",
-    navBlur: isTransparent ? "none" : "blur(24px) saturate(1.6)",
-    navBorder: isTransparent ? "transparent" : "rgba(226,238,236,0.85)",
-    navShadow: isTransparent ? "none" : "0 2px 24px rgba(26,46,44,0.07)",
-    navPy: isTransparent ? "14px 0" : "10px 0",
-    link: isTransparent ? "rgba(255,255,255,0.88)" : "#2C4A46",
-    linkActive: isTransparent ? "#fff" : "#5BBFB5",
-    underline: isTransparent ? "rgba(255,255,255,0.9)" : "#5BBFB5",
-    iconBg: isTransparent ? "transparent" : "#F4F9F8",
-    iconBorder: isTransparent ? "none" : "1px solid #E2EEEC",
-    iconColor: isTransparent ? "rgba(255,255,255,0.90)" : "#4A7570",
-    iconHoverBg: isTransparent ? "rgba(255,255,255,0.15)" : "#E8F4F2",
-    iconHoverColor: isTransparent ? "#fff" : "#5BBFB5",
-    loginBg: isTransparent ? "#5BBFB5" : "#1A2E2C",
-    loginShadow: isTransparent ? "0 2px 14px rgba(0,0,0,0.20)" : "none",
-    pillBg: isTransparent ? "transparent" : "#fff",
-    pillBorder: isTransparent ? "transparent" : "#DDE9E7",
+    navBg: isTransparent ? "transparent" : "rgba(255,255,255,0.98)",
+    navBlur: isTransparent ? "none" : "blur(20px) saturate(1.8)",
+    navBorder: isTransparent ? "transparent" : "rgba(0,0,0,0.06)",
+    navShadow: isTransparent ? "none" : "0 4px 30px rgba(0,0,0,0.04)",
+    navPy: isTransparent ? "20px 0" : "12px 0",
+    link: isTransparent ? "#ffffff" : "#1A2E2C",
+    linkActive: isTransparent ? "#ffffff" : "#5BBFB5",
+    underline: isTransparent ? "#ffffff" : "#5BBFB5",
+    iconBg: "transparent",
+    iconBorder: "none",
+    iconColor: isTransparent ? "#ffffff" : "#1A2E2C",
+    iconHoverBg: isTransparent ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.03)",
+    iconHoverColor: isTransparent ? "#ffffff" : "#5BBFB5",
+    pillBg: isTransparent ? "rgba(255,255,255,0.15)" : "#F8FAFB",
+    pillBorder: isTransparent ? "rgba(255,255,255,0.2)" : "#E8EEF2",
     pillName: isTransparent ? "#ffffff" : "#1A2E2C",
-    pillChevron: isTransparent ? "#ffffff" : "#A8C5C0",
+    pillChevron: isTransparent ? "rgba(255,255,255,0.6)" : "#A8C5C0",
   };
 
   const iconBtn = {
-    width: "36px", height: "36px", borderRadius: "10px",
+    width: "40px", height: "40px", borderRadius: "12px",
     background: T.iconBg, border: T.iconBorder, color: T.iconColor,
     display: "flex", alignItems: "center", justifyContent: "center",
-    cursor: "pointer", flexShrink: 0, transition: "background 0.25s, color 0.25s, border-color 0.25s",
+    cursor: "pointer", flexShrink: 0, transition: "all 0.3s ease",
   };
 
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
         .nav-root * { box-sizing: border-box; }
-        .nav-ul::after { content: ''; display: block; height: 1.5px; border-radius: 2px; margin-top: 3px; background: ${T.underline}; transform: scaleX(0); transform-origin: left; transition: transform 0.22s ease, background 0.35s; }
-        .nav-ul:hover::after, .nav-ul-active::after { transform: scaleX(1); }
+        .nav-ul { position: relative; text-decoration: none; font-family: 'Manrope', sans-serif; }
+        .nav-ul::after { content: ''; display: block; height: 2px; border-radius: 2px; margin-top: 4px; background: ${T.underline}; transform: scaleX(0); transform-origin: left; transition: transform 0.25s ease; }
+        .nav-ul:hover::after { transform: scaleX(1); }
         .nav-ib:hover { background: ${T.iconHoverBg} !important; color: ${T.iconHoverColor} !important; }
-        .dd-item:hover { background: #F0F8F7 !important; color: #5BBFB5 !important; }
-        .prof-item:hover { background: #F4F9F8 !important; }
-        .dropdown-bridge::before {
-          content: "";
-          position: absolute;
-          top: -20px;
-          left: 0;
-          right: 0;
-          height: 20px;
-          background: transparent;
-        }
+        .dd-item:hover { background: #f8f8f8 !important; color: #000 !important; }
+        .prof-item:hover { background: #f9f9f9 !important; }
         .si:focus { outline: none; }
         .drawer-scrollbar::-webkit-scrollbar { width: 4px; }
-        .drawer-scrollbar::-webkit-scrollbar-thumb { background: #E2EEEC; border-radius: 10px; }
-        .auth-input-veirdo { width: 100%; padding: 14px 16px; border-radius: 0; border: 1.5px solid #E8EEF2; background: #F8FAFB; outline: none; font-size: 14px; font-weight: 600; transition: all 0.2s ease; color: #1A2B35; font-family: 'Manrope', sans-serif; }
-        .auth-input-veirdo::placeholder { color: #A8C5C0; font-weight: 500; }
-        .auth-input-veirdo:focus { border-color: #1A2B35; background: #fff; }
-        .loading-spinner { width: 18px; height: 18px; border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: auth-spin 0.8s linear infinite; }
-        @keyframes auth-spin { to { transform: rotate(360deg); } }
-        @media (max-width: 768px) { .hidden-mobile { display: none !important; } .show-mobile { display: flex !important; } }
+        .drawer-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        @media (max-width: 768px) { 
+          .hidden-mobile { display: none !important; } 
+          .show-mobile { display: flex !important; } 
+          .nav-root { padding: 0 !important; border: none !important; }
+        }
         @media (min-width: 769px) { .show-mobile { display: none !important; } .hidden-mobile { display: flex !important; } }
       `}</style>
 
       <motion.nav
         className="nav-root"
-        initial={{ y: -72, opacity: 0 }}
-        animate={{ y: hidden ? -72 : 0, opacity: hidden ? 0 : 1 }}
-        transition={{ duration: 0.3 }}
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
         style={{
-          position: "fixed", top: announcementActive ? 36 : 0, left: 0, right: 0, zIndex: 100,
-          fontFamily: "'Plus Jakarta Sans', sans-serif", background: T.navBg, backdropFilter: T.navBlur,
-          borderBottom: `1px solid ${T.navBorder}`, boxShadow: T.navShadow, padding: T.navPy, transition: "all 0.35s ease",
+          position: "fixed",
+          top: announcementActive && !scrolled ? 36 : 0,
+          left: 0, right: 0, zIndex: 1100,
+          background: isTransparent ? "transparent" : "rgba(255,255,255,0.98)",
+          backdropFilter: isTransparent ? "none" : "blur(20px) saturate(1.8)",
+          borderBottom: isTransparent ? "none" : "1px solid rgba(0,0,0,0.06)",
+          boxShadow: isTransparent ? "none" : "0 4px 30px rgba(0,0,0,0.04)",
+          padding: T.navPy,
+          transition: "background 0.4s ease, padding 0.4s ease, border 0.4s ease, top 0.3s ease",
         }}
       >
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 28px", display: "flex", alignItems: "center" }}>
+        <div style={{ maxWidth: "1440px", margin: "0 auto", padding: "0 40px", display: "flex", alignItems: "center" }}>
 
           {/* --- DESKTOP VIEW --- */}
           <div className="hidden-mobile" style={{ width: "100%", display: "flex", alignItems: "center" }}>
@@ -500,7 +495,7 @@ export default function Navbar({ announcementActive = false }) {
               </motion.button>
 
               <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
-                <FiShoppingBag size={15} />
+                <FiShoppingCart size={15} />
                 {cartCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
               </motion.button>
 
@@ -572,28 +567,354 @@ export default function Navbar({ announcementActive = false }) {
             </div>
           </div>
 
-          {/* --- MOBILE VIEW (VEIRDO STYLE) --- */}
-          <div className="show-mobile" style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              {/* Hamburger Menu Removed as requested */}
-            </div>
+          {/* --- MOBILE HEADER (EXTREME CLEAN) --- */}
+          <div 
+            className="show-mobile" 
+            style={{ 
+              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", height: "72px", 
+              background: isTransparent ? "transparent" : "#fff", 
+              padding: "0", // Extreme corners
+              transition: "all 0.3s ease"
+            }}
+          >
+            {/* Left: Hamburger */}
+            <motion.button 
+              whileTap={{ scale: 0.9 }} 
+              onClick={() => setMobileOpen(true)} 
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "0 20px", height: "100%", display: "flex", alignItems: "center" }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                <div style={{ width: "26px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+                <div style={{ width: "18px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+                <div style={{ width: "26px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+              </div>
+            </motion.button>
 
+            {/* Center: Big Logo */}
             <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
-              <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-                <img src="/logo.png" alt="SeaBite" style={{ height: "48px", width: "auto" }} />
+              <Link to="/" style={{ textDecoration: "none" }}>
+                <img 
+                  src="/logo.png" 
+                  alt="SeaBite" 
+                  style={{ 
+                    height: "46px", width: "auto", 
+                    transition: "all 0.3s ease"
+                  }} 
+                />
               </Link>
             </div>
 
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative", background: "none", border: "none" }}>
-                <FiShoppingBag size={22} color={T.iconColor} />
-                {cartCount > 0 && <span style={{ position: "absolute", top: "0px", right: "0px", background: "#1A2B35", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
+            {/* Right: Actions */}
+            <div style={{ display: "flex", alignItems: "center", height: "100%" }}>
+              <motion.button 
+                whileTap={{ scale: 0.88 }} 
+                onClick={() => setSearchExpanded(true)} 
+                style={{ background: "none", border: "none", padding: "0 15px", color: isTransparent ? "#fff" : "#000", height: "100%" }}
+              >
+                <FiSearch size={24} />
+              </motion.button>
+              <motion.button 
+                whileTap={{ scale: 0.88 }} 
+                onClick={() => setIsCartOpen(true)} 
+                style={{ background: "none", border: "none", padding: "0 20px", color: isTransparent ? "#fff" : "#000", height: "100%", position: "relative" }}
+              >
+                <FiShoppingCart size={24} />
+                {cartCount > 0 && (
+                  <span style={{ 
+                    position: "absolute", top: "20px", right: "12px", 
+                    background: "#F07468", color: "#fff", 
+                    width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" 
+                  }}>
+                    {cartCount}
+                  </span>
+                )}
               </motion.button>
             </div>
           </div>
 
+          {/* Mobile Search Overlay */}
+          <AnimatePresence>
+            {searchExpanded && (
+              <motion.div
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  position: "fixed",
+                  top: announcementActive && !scrolled ? "108px" : "72px",
+                  left: 0, right: 0,
+                  background: "rgba(255,255,255,0.98)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  zIndex: 1300,
+                  boxShadow: "0 12px 40px rgba(26,46,44,0.13)",
+                  borderBottom: "1px solid rgba(91,191,181,0.12)",
+                  padding: "14px 16px 8px",
+                }}
+              >
+                {/* Pill input row */}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                  <div style={{
+                    flex: 1, display: "flex", alignItems: "center", gap: "10px",
+                    background: "#fff",
+                    border: "2px solid #5BBFB5",
+                    borderRadius: "50px",
+                    padding: "10px 16px",
+                    boxShadow: "0 0 0 4px rgba(91,191,181,0.1)",
+                  }}>
+                    <FiSearch size={17} color="#5BBFB5" />
+                    <input
+                      autoFocus
+                      placeholder="Search fresh catch..."
+                      value={searchTerm}
+                      onChange={e => handleSearchInput(e.target.value)}
+                      onKeyDown={handleSearchSubmit}
+                      style={{
+                        border: "none", background: "none", flex: 1,
+                        fontSize: "15px", outline: "none", color: "#1A2E2C",
+                        fontFamily: "'Manrope', sans-serif", fontWeight: 500,
+                      }}
+                    />
+                    {searchTerm && (
+                      <FiX size={16} color="#B8CFCC" style={{ cursor: "pointer", flexShrink: 0 }}
+                        onClick={() => { setSearchTerm(""); setSuggestions([]); }} />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { setSearchExpanded(false); setSuggestions([]); setSearchTerm(""); }}
+                    style={{
+                      background: "none", border: "none", color: "#6B8F8A",
+                      fontWeight: "700", fontSize: "13px",
+                      fontFamily: "'Manrope', sans-serif", cursor: "pointer",
+                      flexShrink: 0, padding: "8px 4px",
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+
+                {/* Live results */}
+                {suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    style={{ borderTop: "1px solid #EEF5F4", maxHeight: "50vh", overflowY: "auto", marginTop: "8px" }}
+                  >
+                    {suggestions.map((item, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          navigate(`/products/${item._id}`);
+                          setSearchExpanded(false);
+                          setSuggestions([]);
+                          setSearchTerm("");
+                        }}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "12px",
+                          padding: "11px 4px", cursor: "pointer",
+                          borderBottom: idx < suggestions.length - 1 ? "1px solid #f5f5f5" : "none",
+                        }}
+                      >
+                        {item.image ? (
+                          <img src={item.image} alt={item.name}
+                            style={{ width: "46px", height: "46px", borderRadius: "10px", objectFit: "cover", flexShrink: 0, border: "1px solid #EEF5F4" }} />
+                        ) : (
+                          <div style={{ width: "46px", height: "46px", borderRadius: "10px", background: "#EEF5F4", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>🐟</div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#1A2E2C", fontFamily: "'Manrope', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {item.name}
+                          </p>
+                          <p style={{ margin: 0, fontSize: "13px", color: "#5BBFB5", fontWeight: "800", fontFamily: "'Manrope', sans-serif", marginTop: "2px" }}>
+                            ₹{item.basePrice}
+                          </p>
+                        </div>
+                        <FiChevronRight size={14} color="#D8ECEA" />
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+
+                {/* No results */}
+                {searchTerm.length > 1 && suggestions.length === 0 && (
+                  <div style={{ padding: "20px 4px 12px", textAlign: "center", color: "#B8CFCC", fontSize: "13px", fontFamily: "'Manrope', sans-serif" }}>
+                    No results for "<span style={{ color: "#6B8F8A", fontWeight: 700 }}>{searchTerm}</span>"
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+
         </div>
       </motion.nav>
+
+      {/* MOBILE HEADER SPACER */}
+      {!isHome && <div className="show-mobile" style={{ height: announcementActive ? "108px" : "72px", width: "100%" }} />}
+
+      {/* --- MOBILE DRAWER (outside motion.nav to avoid backdropFilter stacking context bug) --- */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 9998 }}
+            />
+
+            {/* Drawer Panel */}
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "tween", duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+              style={{
+                position: "fixed", top: 0, left: 0,
+                width: "80vw", maxWidth: "340px", height: "100dvh",
+                background: "#fff", zIndex: 9999,
+                display: "flex", flexDirection: "column",
+                color: "#000", fontFamily: "'Manrope', sans-serif",
+                boxShadow: "8px 0 40px rgba(0,0,0,0.15)",
+                overscrollBehavior: "contain",
+              }}
+            >
+              {/* Header */}
+              <div style={{ padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f0f0f0", flexShrink: 0 }}>
+                <img src="/logo.png" style={{ height: "36px" }} alt="SeaBite" />
+                <motion.button
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setMobileOpen(false)}
+                  style={{ background: "#f5f5f5", border: "none", borderRadius: "50%", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", color: "#000", cursor: "pointer" }}
+                >
+                  <FiX size={20} />
+                </motion.button>
+              </div>
+
+              {/* Body */}
+              <div style={{ flex: 1, overflowY: "auto", padding: "20px" }} className="drawer-scrollbar">
+
+                {/* My Account */}
+                <p style={{ fontSize: "10px", fontWeight: "800", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "14px" }}>My Account</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "28px" }}>
+                  {user ? (
+                    <>
+                      <Link to="/profile" onClick={() => setMobileOpen(false)} style={{ padding: "11px 12px", fontSize: "15px", fontWeight: "600", color: "#111", textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", borderRadius: "10px" }}>
+                        <FiUser size={17} color="#5BBFB5" /> Profile
+                      </Link>
+                      <Link to="/orders" onClick={() => setMobileOpen(false)} style={{ padding: "11px 12px", fontSize: "15px", fontWeight: "600", color: "#111", textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", borderRadius: "10px" }}>
+                        <FiPackage size={17} color="#5BBFB5" /> My Orders
+                      </Link>
+                      <Link to="/wishlist" onClick={() => setMobileOpen(false)} style={{ padding: "11px 12px", fontSize: "15px", fontWeight: "600", color: "#111", textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", borderRadius: "10px" }}>
+                        <FiHeart size={17} color="#5BBFB5" /> Wishlist
+                      </Link>
+                    </>
+                  ) : (
+                    <button
+                      onClick={() => { setIsLoginOpen(true); setMobileOpen(false); }}
+                      style={{ padding: "11px 12px", fontSize: "15px", fontWeight: "600", color: "#111", background: "none", border: "none", display: "flex", alignItems: "center", gap: "12px", borderRadius: "10px", cursor: "pointer", textAlign: "left" }}
+                    >
+                      <FiUser size={17} color="#5BBFB5" /> Log In / Sign Up
+                    </button>
+                  )}
+                </div>
+
+                {/* Shop — collapsible accordion, pre-open */}
+                <div style={{ marginBottom: "28px" }}>
+                  <button
+                    onClick={() => setShowCatOpen(o => !o)}
+                    style={{
+                      width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+                      padding: "11px 12px", background: "none", border: "none",
+                      fontSize: "15px", fontWeight: "700", color: "#111", cursor: "pointer",
+                      borderRadius: "10px",
+                    }}
+                  >
+                    <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <FiGrid size={17} color="#5BBFB5" /> Shop
+                    </span>
+                    <FiChevronDown
+                      size={17}
+                      color="#aaa"
+                      style={{ transform: showCatOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.25s ease" }}
+                    />
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {showCatOpen && (
+                      <motion.div
+                        key="cat-dropdown"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                        style={{ overflow: "hidden" }}
+                      >
+                        <div style={{ paddingLeft: "16px", paddingTop: "4px", display: "flex", flexDirection: "column", gap: "2px" }}>
+                          {[
+                            { label: "🐟 Fish", path: "/products?category=Fish" },
+                            { label: "🦐 Prawns", path: "/products?category=Prawn" },
+                            { label: "🦀 Crabs", path: "/products?category=Crab" },
+                          ].map((item, idx) => (
+                            <Link
+                              key={idx}
+                              to={item.path}
+                              onClick={() => setMobileOpen(false)}
+                              style={{
+                                padding: "10px 12px", fontSize: "14px", fontWeight: "600",
+                                color: "#444", textDecoration: "none",
+                                display: "flex", justifyContent: "space-between", alignItems: "center",
+                                borderRadius: "8px",
+                              }}
+                            >
+                              {item.label}
+                              <FiChevronRight size={14} color="#ccc" />
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                {/* More */}
+                <p style={{ fontSize: "10px", fontWeight: "800", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.12em", marginBottom: "14px" }}>More</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  {[
+                    { label: "About Us", path: "/about" },
+                    { label: "Contact", path: "/contact" },
+                  ].map((item, idx) => (
+                    <Link
+                      key={idx}
+                      to={item.path}
+                      onClick={() => setMobileOpen(false)}
+                      style={{ padding: "11px 12px", fontSize: "15px", fontWeight: "600", color: "#111", textDecoration: "none", display: "flex", justifyContent: "space-between", alignItems: "center", borderRadius: "10px" }}
+                    >
+                      {item.label} <FiChevronRight size={16} color="#ccc" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer */}
+              {user && (
+                <div style={{ padding: "16px 20px", borderTop: "1px solid #f0f0f0", flexShrink: 0 }}>
+                  <button
+                    onClick={handleLogout}
+                    style={{ width: "100%", padding: "13px", borderRadius: "10px", background: "#1A2E2C", color: "#fff", border: "none", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
 
       <AnimatePresence>
         {isLoginOpen && (
@@ -821,42 +1142,7 @@ export default function Navbar({ announcementActive = false }) {
           </motion.div>
         )}
       </AnimatePresence>
-      <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMobileOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000 }} />
-            <motion.div initial={{ x: "-100%" }} animate={{ x: 0 }} exit={{ x: "-100%" }} transition={{ type: "spring", damping: 28, stiffness: 220 }} style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: "85vw", maxWidth: "360px", background: "#fff", zIndex: 1001, display: "flex", flexDirection: "column", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-              <div style={{ padding: "24px", background: "#1A2B35", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <img src="/logo.png" alt="SeaBite" style={{ height: "36px", filter: "brightness(0) invert(1)" }} />
-                <button onClick={() => setMobileOpen(false)} style={{ background: "none", border: "none", color: "#fff" }}><FiX size={24} /></button>
-              </div>
-              <div style={{ flex: 1, padding: "24px", display: "flex", flexDirection: "column", gap: "16px", overflowY: "auto" }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                   {NAV_LINKS.map(link => (
-                     <Link key={link.path} to={link.path} onClick={() => setMobileOpen(false)} style={{ fontSize: "20px", fontWeight: "900", color: "#1A2B35", textDecoration: "none", textTransform: "uppercase", letterSpacing: "0.05em", borderBottom: "1px solid #E8EEF2", paddingBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        {link.label} <FiChevronDown style={{ transform: "rotate(-90deg)", color: "#5BBFB5" }} size={20} />
-                     </Link>
-                   ))}
-                </div>
 
-                <div style={{ marginTop: "32px", display: "flex", flexDirection: "column", gap: "12px" }}>
-                  <p style={{ fontSize: "11px", fontWeight: "800", color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.1em" }}>My Account</p>
-                  {user ? (
-                    <>
-                      <Link to="/profile" onClick={() => setMobileOpen(false)} style={{ fontSize: "15px", fontWeight: "700", color: "#1A2B35", textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}><FiUser /> Profile</Link>
-                      <Link to="/orders" onClick={() => setMobileOpen(false)} style={{ fontSize: "15px", fontWeight: "700", color: "#1A2B35", textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}><FiPackage /> Orders</Link>
-                      <Link to="/wishlist" onClick={() => setMobileOpen(false)} style={{ fontSize: "15px", fontWeight: "700", color: "#1A2B35", textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}><FiHeart /> Wishlist</Link>
-                      <button onClick={handleLogout} style={{ fontSize: "15px", fontWeight: "700", color: "#E8816A", textDecoration: "none", display: "flex", alignItems: "center", gap: "10px", background: "none", border: "none", padding: 0, cursor: "pointer", marginTop: "16px" }}><FiLogOut /> Logout</button>
-                    </>
-                  ) : (
-                    <button onClick={() => { setMobileOpen(false); setIsLoginOpen(true); }} style={{ width: "100%", padding: "14px", background: "#1A2B35", color: "#fff", border: "none", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.06em", cursor: "pointer" }}>Login / Sign Up</button>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
       <Suspense fallback={null}>
         {showSpinWheel && <Spin isOpen={showSpinWheel} onClose={() => setShowSpinWheel(false)} />}
       </Suspense>
