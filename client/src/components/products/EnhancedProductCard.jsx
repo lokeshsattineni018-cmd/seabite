@@ -210,464 +210,178 @@ const EnhancedProductCard = ({
     product.createdAt &&
     new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-
-  if (isMobile) {
-    return (
-      <div
-        className="mobile-product-card"
-        style={{
-          background: "#fff",
-          border: "1px solid #f3f4f6",
-          borderRadius: "16px",
-          overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          position: "relative",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
-        }}
-      >
-        {/* Image Section */}
-        <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", overflow: "hidden" }}>
-          <Link to={`/products/${product._id}`} style={{ display: "block", width: "100%", height: "100%", background: "#F4F9F8" }}>
-            <img 
-              src={getImageUrl(product.image)} 
-              alt={product.name} 
-              style={{ 
-                width: "100%", 
-                height: "100%", 
-                objectFit: "cover",
-                transition: "all 0.4s ease",
-                transform: imageLoaded ? "scale(1)" : "scale(1.05)",
-                opacity: imageLoaded ? 1 : 0
-              }} 
-              onLoad={() => setImageLoaded(true)}
-            />
-            {isOutOfStock && (
-              <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <span style={{ background: "#000", color: "#fff", fontSize: "10px", fontWeight: "800", padding: "4px 8px", borderRadius: "4px" }}>OUT OF STOCK</span>
-              </div>
-            )}
-          </Link>
-          
-          {/* Wishlist Button (Frosted Glass) */}
-          <button
-            onClick={handleWishlistToggle}
-            disabled={loadingWishlist}
-            style={{
-              position: "absolute", top: "8px", right: "8px",
-              width: "32px", height: "32px",
-              background: "rgba(255,255,255,0.7)",
-              backdropFilter: "blur(8px)",
-              WebkitBackdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.3)",
-              borderRadius: "50%",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: isWishlisted ? "#F07468" : "#000",
-              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-              zIndex: 10
-            }}
-          >
-            <FiHeart size={14} fill={isWishlisted ? "currentColor" : "none"} />
-          </button>
-        </div>
-
-        {/* Info Section */}
-        <div style={{ padding: "12px", display: "flex", flexDirection: "column", flex: 1 }}>
-          <Link to={`/products/${product._id}`} style={{ textDecoration: "none" }}>
-            <h3 style={{ 
-              fontSize: "14px", 
-              fontWeight: "500", 
-              color: "#111827", 
-              lineHeight: "1.3",
-              marginBottom: "8px",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              height: "2.6em"
-            }}>
-              {product.name}
-            </h3>
-          </Link>
-
-          {/* Action Row */}
-          <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "16px", fontWeight: "700", color: "#111827" }}>
-              ₹{displayPrice}
-            </span>
-            
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={handleAddToCart}
-              disabled={isOutOfStock || isAdding}
-              style={{
-                background: "#5BBFB5",
-                color: "#fff",
-                border: "none",
-                borderRadius: "8px",
-                padding: "6px 14px",
-                fontSize: "12px",
-                fontWeight: "700",
-                boxShadow: "0 2px 8px rgba(91,191,181,0.25)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
-            >
-              {isAdding ? "..." : "Add"}
-            </motion.button>
-          </div>
-        </div>
-
-        {/* Fly Animation Portal */}
-        {typeof document !== "undefined" && createPortal(
-          flyItems.map((item) => (
-            <motion.div
-              key={item.id}
-              initial={{ left: item.startX, top: item.startY, opacity: 1, scale: 1, rotate: 0 }}
-              animate={{ left: item.endX, top: item.endY, opacity: 0.6, scale: 0.2, rotate: 90 }}
-              transition={{ duration: 1.1 }}
-              onAnimationComplete={() => handleFlyComplete(item.id)}
-              style={{ position: "fixed", width: "60px", height: "60px", zIndex: 99999999, borderRadius: "12px", overflow: "hidden" }}
-            >
-              <img src={item.image} alt="Flying" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </motion.div>
-          )),
-          document.body
-        )}
-      </div>
-    );
-  }
-
   return (
     <div
+      className="product-card-root"
       style={{
-        background: "#FFFFFF",
-        border: "1px solid #E2EEEC",
+        background: "#fff",
+        border: "1px solid #f3f4f6",
         borderRadius: "16px",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         height: "100%",
         position: "relative",
-        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
-        boxShadow: "0 1px 4px rgba(91,191,181,0.06)",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+        transition: "transform 0.3s ease, box-shadow 0.3s ease",
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
-      className="product-card-hover group"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        .product-card-hover:hover {
-          box-shadow: 0 8px 32px rgba(91,191,181,0.14);
-          transform: translateY(-2px);
-          border-color: #B8DDD9;
+        .product-card-root:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+          border-color: #5BBFB544;
         }
-        .cart-btn-wave:hover {
-          background: #5BBFB5 !important;
-          color: white !important;
-          border-color: #5BBFB5 !important;
-        }
-        
-        .shimmer-badge {
-          position: relative;
+        .product-name-clamp {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
           overflow: hidden;
-        }
-        .shimmer-badge::after {
-          content: "";
-          position: absolute;
-          top: -50%;
-          left: -60%;
-          width: 20%;
-          height: 200%;
-          background: rgba(255, 255, 255, 0.4);
-          transform: rotate(30deg);
-          animation: shimmerSweep 3s infinite cubic-bezier(0.19, 1, 0.22, 1);
-        }
-        @keyframes shimmerSweep {
-          0% { left: -60%; opacity: 0; }
-          10% { opacity: 0.5; }
-          20% { left: 140%; opacity: 0; }
-          100% { left: 140%; opacity: 0; }
+          height: 2.6em;
+          line-height: 1.3;
         }
       `}</style>
-      
-      {/* Framer Motion Parabolic Flight Animation (Immune to iOS Battery Saver) */}
+
+      {/* Image Section */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", overflow: "hidden", background: "#F4F9F8" }}>
+        <Link to={`/products/${product._id}`} style={{ display: "block", width: "100%", height: "100%" }}>
+          <img 
+            src={getImageUrl(product.image)} 
+            alt={product.name} 
+            style={{ 
+              width: "100%", 
+              height: "100%", 
+              objectFit: "cover",
+              transition: "all 0.5s ease",
+              transform: imageLoaded ? "scale(1)" : "scale(1.05)",
+              opacity: imageLoaded ? 1 : 0
+            }} 
+            onLoad={() => setImageLoaded(true)}
+            className="hover-zoom"
+          />
+          {isOutOfStock && (
+            <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(2px)" }}>
+              <span style={{ background: "#000", color: "#fff", fontSize: "10px", fontWeight: "800", padding: "6px 12px", borderRadius: "6px", letterSpacing: "0.05em" }}>SOLD OUT</span>
+            </div>
+          )}
+        </Link>
+        
+        {/* Badges */}
+        <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
+          {product.trending && (
+            <span style={{ background: "#1A2E2C", color: "#FFD700", fontSize: "8px", fontWeight: "900", padding: "3px 8px", borderRadius: "4px", textTransform: "uppercase" }}>HOT</span>
+          )}
+          {discountPct > 0 && (
+            <span style={{ background: "#F07468", color: "#fff", fontSize: "8px", fontWeight: "900", padding: "3px 8px", borderRadius: "4px" }}>-{discountPct}%</span>
+          )}
+        </div>
+
+        {/* Wishlist Button */}
+        <button
+          onClick={handleWishlistToggle}
+          disabled={loadingWishlist}
+          style={{
+            position: "absolute", top: "10px", right: "10px",
+            width: "34px", height: "34px",
+            background: "rgba(255,255,255,0.8)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,0.3)",
+            borderRadius: "50%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: isWishlisted ? "#F07468" : "#000",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+            cursor: "pointer",
+            zIndex: 10,
+            transition: "all 0.2s ease"
+          }}
+        >
+          <FiHeart size={15} fill={isWishlisted ? "currentColor" : "none"} />
+        </button>
+      </div>
+
+      {/* Info Section */}
+      <div style={{ padding: "14px", display: "flex", flexDirection: "column", flex: 1 }}>
+        <Link to={`/products/${product._id}`} style={{ textDecoration: "none" }}>
+          <h3 className="product-name-clamp" style={{ 
+            fontSize: "15px", 
+            fontWeight: "600", 
+            color: "#1A2E2C", 
+            marginBottom: "10px"
+          }}>
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* Action Row */}
+        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: "18px", fontWeight: "800", color: "#1A2E2C" }}>
+              ₹{displayPrice}
+            </span>
+            <span style={{ fontSize: "10px", color: "#6B8F8A", fontWeight: "600" }}>per {product.unit || "kg"}</span>
+          </div>
+          
+          <motion.button
+            whileHover={{ 
+              scale: 1.05,
+              boxShadow: "0 8px 20px rgba(91,191,181,0.3)"
+            }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleAddToCart}
+            disabled={isOutOfStock || isAdding}
+            style={{
+              background: "#5BBFB5",
+              color: "#fff",
+              border: "none",
+              borderRadius: "10px",
+              padding: "8px 18px",
+              fontSize: "13px",
+              fontWeight: "700",
+              boxShadow: "0 4px 12px rgba(91,191,181,0.2)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              transition: "all 0.2s ease"
+            }}
+          >
+            {isAdding ? "..." : (
+              <>
+                <motion.span
+                  initial={{ x: 0 }}
+                  whileHover={{ x: -2 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  style={{ display: "flex", alignItems: "center" }}
+                >
+                  <FiShoppingCart size={14} />
+                </motion.span>
+                Add
+              </>
+            )}
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Fly Animation Portal */}
       {typeof document !== "undefined" && createPortal(
         flyItems.map((item) => (
           <motion.div
             key={item.id}
             initial={{ left: item.startX, top: item.startY, opacity: 1, scale: 1, rotate: 0 }}
             animate={{ left: item.endX, top: item.endY, opacity: 0.6, scale: 0.2, rotate: 90 }}
-            transition={{ 
-              duration: 1.1,
-              left: { ease: "linear", duration: 1.1 },
-              top: { ease: [0.3, -0.4, 0.7, 1], duration: 1.1 },
-              scale: { ease: "easeOut", duration: 1.1 },
-              rotate: { ease: "easeOut", duration: 1.1 },
-            }}
+            transition={{ duration: 1.1 }}
             onAnimationComplete={() => handleFlyComplete(item.id)}
-            style={{ 
-              position: "fixed", 
-              width: "60px", 
-              height: "60px", 
-              zIndex: 99999999, 
-              pointerEvents: "none",
-              borderRadius: "12px",
-              overflow: "hidden",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.3)"
-            }}
+            style={{ position: "fixed", width: "60px", height: "60px", zIndex: 99999999, borderRadius: "12px", overflow: "hidden", boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}
           >
-            <img src={item.image} alt="Flying item" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={item.image} alt="Flying" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </motion.div>
         )),
         document.body
       )}
-
-      {/* Badge Row */}
-      <div style={{ position: "absolute", top: "12px", left: "12px", display: "flex", flexDirection: "column", gap: "4px", zIndex: 10 }}>
-        {product.trending && (
-          <span 
-            className="shimmer-badge"
-            style={{ 
-              background: "#1A2E2C", // Dark obsidian for more premium 'HOT' feel
-              color: "#FFD700", // Gold text
-              fontSize: "9px", 
-              fontWeight: "900", 
-              padding: "4px 10px", 
-              borderRadius: "6px", 
-              letterSpacing: "0.1em", 
-              textTransform: "uppercase",
-              boxShadow: "0 2px 10px rgba(26,46,44,0.15)"
-            }}
-          >
-            HOT
-          </span>
-        )}
-        {isNew && !product.trending && (
-          <span style={{ background: "#DBEAFE", color: "#1E40AF", fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            NEW
-          </span>
-        )}
-        {discountPct > 0 && (
-          <span style={{
-            background: isActiveFlashSale ? "#FEE2E2" : "#EDE9FE",
-            color: isActiveFlashSale ? "#B91C1C" : "#6D28D9",
-            fontSize: "9px", fontWeight: "800", padding: "3px 8px", borderRadius: "6px", letterSpacing: "0.06em", textTransform: "uppercase",
-            display: "flex", alignItems: "center", gap: "3px"
-          }}>
-            {isActiveFlashSale && <FiZap size={7} />} -{discountPct}%
-          </span>
-        )}
-      </div>
-
-      {/* Wishlist */}
-      <button
-        onClick={handleWishlistToggle}
-        disabled={loadingWishlist}
-        aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-        style={{
-          position: "absolute", top: "12px", right: "12px", zIndex: 20,
-          width: "34px", height: "34px",
-          background: "rgba(255,255,255,0.92)",
-          border: "1px solid #E2EEEC",
-          borderRadius: "50%",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          cursor: "pointer",
-          color: isWishlisted ? "#F07468" : "#A0B8B5",
-          transition: "all 0.2s ease",
-          backdropFilter: "blur(4px)",
-        }}
-      >
-        {isWishlistMode ? (
-          <FiX size={15} />
-        ) : (
-          <FiHeart size={15} fill={isWishlisted ? "currentColor" : "none"} />
-        )}
-      </button>
-
-      {/* Image */}
-      <Link
-        to={`/products/${product._id}`}
-        style={{
-          height: "200px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#F4F9F8",
-          overflow: "hidden",
-          padding: "24px",
-          position: "relative",
-        }}
-      >
-        {isOutOfStock && (
-          <div style={{
-            position: "absolute", inset: 0, background: "rgba(244,249,248,0.6)",
-            display: "flex", alignItems: "center", justifyContent: "center", zIndex: 5,
-          }}>
-            <span style={{ background: "#F4F9F8", border: "1px solid #E2EEEC", color: "#9AB5B1", fontSize: "10px", fontWeight: "700", padding: "4px 12px", borderRadius: "20px", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-              SOLD OUT
-            </span>
-          </div>
-        )}
-        <img
-          src={getImageUrl(product.image)}
-          alt={product.name}
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            transition: "all 0.4s ease",
-            transform: imageLoaded ? "scale(1)" : "scale(1.05)",
-            opacity: imageLoaded ? 1 : 0
-          }}
-          onLoad={() => setImageLoaded(true)}
-          className="group-hover:scale-105 product-image"
-          loading="lazy"
-        />
-      </Link>
-
-      {/* Content */}
-      <div style={{ padding: "16px 18px 18px", display: "flex", flexDirection: "column", flex: 1 }}>
-        {/* Category */}
-        <span style={{ fontSize: "10px", fontWeight: "700", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px", display: "block" }}>
-          {product.category || "Fresh Catch"}
-        </span>
-
-        {/* Name */}
-        <h3 style={{ fontSize: "15px", fontWeight: "700", color: "#1A2E2C", lineHeight: "1.35", marginBottom: "10px", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-          {product.name}
-        </h3>
-
-        {/* Stock dot */}
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "14px" }}>
-          <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: !isOutOfStock ? "#5BBFB5" : "#FDA29B", flexShrink: 0 }} />
-          <span style={{ fontSize: "10px", fontWeight: "600", color: !isOutOfStock ? "#5BBFB5" : "#F04438", textTransform: "uppercase", letterSpacing: "0.07em" }}>
-            {!isOutOfStock ? "In Stock" : "Out of Stock"}
-          </span>
-          {isActiveFlashSale && timeLeft && (
-            <span style={{ marginLeft: "auto", fontSize: "9px", fontWeight: "800", color: "#DC2626", background: "#FEF2F2", padding: "2px 6px", borderRadius: "6px" }}>
-              ⏱ {timeLeft}
-            </span>
-          )}
-        </div>
-
-        {/* Compare Checkbox */}
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-          <button 
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleCompare(product); }}
-            style={{ 
-              display: "flex", 
-              alignItems: "center", 
-              gap: "6px", 
-              background: "none", 
-              border: "none", 
-              padding: 0, 
-              cursor: "pointer", 
-              fontSize: "11px", 
-              fontWeight: "700", 
-              color: compareItems?.find(i => i._id === product._id) ? "#5BBFB5" : "#A8C5C0",
-              transition: "color 0.2s"
-            }}
-          >
-            <div style={{ 
-              width: "14px", 
-              height: "14px", 
-              borderRadius: "4px", 
-              border: `1.5px solid ${compareItems?.find(i => i._id === product._id) ? "#5BBFB5" : "#DDE9E7"}`,
-              background: compareItems?.find(i => i._id === product._id) ? "#5BBFB5" : "transparent",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              transition: "all 0.2s"
-            }}>
-              {compareItems?.find(i => i._id === product._id) && <FiCheck size={10} style={{ color: "#fff" }} />}
-            </div>
-            Compare
-          </button>
-        </div>
-
-        {/* Price + CTA */}
-        <div style={{ marginTop: "auto" }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginBottom: "12px" }}>
-            {(isActiveFlashSale || globalDiscountApplied) && (
-              <span style={{ fontSize: "13px", color: "#B8CFCC", textDecoration: "line-through", fontWeight: "500" }}>
-                ₹{product.basePrice}
-              </span>
-            )}
-            <span style={{ fontSize: "22px", fontWeight: "800", color: "#1A2E2C", letterSpacing: "-0.02em" }}>
-              ₹{displayPrice}
-            </span>
-            <span style={{ fontSize: "11px", color: "#9AB5B1", fontWeight: "500" }}>
-              /{product.unit || "kg"}
-            </span>
-          </div>
-
-          <Magnetic strength={0.4}>
-            <motion.button
-              whileHover={!isOutOfStock && !isAdding ? { 
-                scale: 1.02, 
-                backgroundColor: "#5BBFB5", 
-                color: "#fff",
-                boxShadow: "0 8px 20px rgba(91,191,181,0.3)"
-              } : {}}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleAddToCart}
-              disabled={isOutOfStock || isAdding}
-              className="cart-btn-wave group/btn"
-              aria-label={isAdding ? "Product added to cart" : isOutOfStock ? "Product sold out" : "Add product to cart"}
-              style={{
-                width: "100%",
-                padding: "10px 24px",
-                borderRadius: "10px",
-                border: "1.5px solid",
-                borderColor: isOutOfStock ? "#E2EEEC" : isAdding ? "#5BBFB5" : "#5BBFB5",
-                background: isAdding ? "#5BBFB5" : "transparent",
-                color: isOutOfStock ? "#B8CFCC" : isAdding ? "#fff" : "#5BBFB5",
-                fontSize: "13px",
-                fontWeight: "700",
-                letterSpacing: "0.02em",
-                cursor: isOutOfStock ? "not-allowed" : "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                position: "relative",
-                overflow: "hidden"
-              }}
-            >
-              {/* Shine effect on button hover */}
-              {!isOutOfStock && !isAdding && (
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]" style={{ transform: 'skewX(-20deg)' }} />
-              )}
-              
-              <div aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "6px", position: "relative", zIndex: 1 }}>
-                {isAdding ? (
-                  <><FiCheck size={14} /> Added</>
-                ) : isOutOfStock ? (
-                  "Sold Out"
-                ) : (
-                  <><FiShoppingCart size={14} className="group-hover/btn:scale-110 transition-transform" /> Add to Cart</>
-                )}
-              </div>
-            </motion.button>
-          </Magnetic>
-        </div>
-      </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes shimmer { 100% { transform: translateX(100%) skewX(-20deg); } }
-        .cart-btn-wave { position: relative; overflow: hidden; }
-        .cart-btn-wave:active { transform: scale(0.97); }
-      `}</style>
     </div>
   );
 };
