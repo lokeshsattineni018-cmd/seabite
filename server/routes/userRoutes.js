@@ -19,10 +19,7 @@ router.post("/wishlist/:id", protect, async (req, res) => {
 
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        const isWishlisted = user.wishlist.includes(productId);
-
-        // 🟢 WATCHTOWER LOG
-        // import { logActivity } from "../utils/activityLogger.js"; // Removed from here
+        const isWishlisted = user.wishlist.some(id => id.toString() === productId);
 
         if (isWishlisted) {
             // Remove
@@ -38,6 +35,7 @@ router.post("/wishlist/:id", protect, async (req, res) => {
             res.json({ message: "Added to Wishlist", wishlist: user.wishlist });
         }
     } catch (error) {
+        console.error("WISHLIST ERROR:", error);
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 });
