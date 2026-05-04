@@ -26,7 +26,7 @@ export default function Contact() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F4F9F8", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#F4F9F8", fontFamily: "'Plus Jakarta Sans', sans-serif", paddingTop: "72px" }}>
       <Helmet>
         <title>Contact Us | SeaBite</title>
         <meta name="description" content="Get in touch with SeaBite for any queries, order tracking, or support." />
@@ -36,13 +36,13 @@ export default function Contact() {
       <div style={{ position: "relative", width: "100%", height: "240px", background: "#1A2E2C", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, opacity: 0.1, backgroundImage: "radial-gradient(#5BBFB5 1px, transparent 1px)", backgroundSize: "20px 20px" }} />
         <div style={{ position: "relative", zIndex: 1, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", textAlign: "center", padding: "0 24px" }}>
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
             style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "clamp(32px, 5vw, 42px)", fontWeight: 700, color: "#fff", margin: 0 }}
           >
             We're Here to Help
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}
             style={{ color: "rgba(255,255,255,0.8)", fontSize: "15px", marginTop: "12px", maxWidth: "500px" }}
           >
@@ -53,7 +53,7 @@ export default function Contact() {
 
       <div style={{ maxWidth: "1000px", margin: "-40px auto 64px", padding: "0 24px", position: "relative", zIndex: 2 }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "24px" }}>
-          
+
           {/* Contact Info Cards */}
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div style={{ background: "#fff", borderRadius: "16px", padding: "24px", border: "1.5px solid #E2EEEC", display: "flex", alignItems: "flex-start", gap: "16px", boxShadow: "0 4px 12px rgba(26,46,44,0.03)" }}>
@@ -63,7 +63,9 @@ export default function Contact() {
               <div>
                 <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1A2E2C", margin: "0 0 4px" }}>Phone Support</h3>
                 <p style={{ fontSize: "14px", color: "#6B8F8A", margin: "0 0 12px", lineHeight: 1.5 }}>Mon-Sat from 8am to 8pm.</p>
-                <a href="tel:+919876543210" style={{ fontSize: "15px", fontWeight: 800, color: "#5BBFB5", textDecoration: "none" }}>+91 98765 43210</a>
+                <a href="tel:+919866635566" style={{ fontSize: "15px", fontWeight: 800, color: "#5BBFB5", textDecoration: "none" }}>+91 9866635566</a>
+                <br />
+                <a href="https://wa.me/919866635566" target="_blank" rel="noreferrer" style={{ fontSize: "13px", fontWeight: 600, color: "#25D366", textDecoration: "none", marginTop: "6px", display: "inline-flex", alignItems: "center", gap: "4px" }}>💬 WhatsApp Us</a>
               </div>
             </div>
 
@@ -84,7 +86,7 @@ export default function Contact() {
               </div>
               <div>
                 <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1A2E2C", margin: "0 0 4px" }}>Visit Us</h3>
-                <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0, lineHeight: 1.6 }}>SeaBite HQ, Vizag Harbor,<br />Andhra Pradesh, India 530001</p>
+                <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0, lineHeight: 1.6 }}>SeaBite, Mogalthur,<br />West Godavari District,<br />Andhra Pradesh, India</p>
               </div>
             </div>
           </div>
@@ -96,22 +98,22 @@ export default function Contact() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#6B8F8A", marginBottom: "6px" }}>Name</label>
-                  <input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
+                  <input required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
                 </div>
                 <div>
                   <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#6B8F8A", marginBottom: "6px" }}>Email</label>
-                  <input required type="email" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
+                  <input required type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
                 </div>
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#6B8F8A", marginBottom: "6px" }}>Subject</label>
-                <input required value={formData.subject} onChange={e => setFormData({...formData, subject: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
+                <input required value={formData.subject} onChange={e => setFormData({ ...formData, subject: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
               </div>
               <div>
                 <label style={{ display: "block", fontSize: "12px", fontWeight: 700, color: "#6B8F8A", marginBottom: "6px" }}>Message</label>
-                <textarea required rows={4} value={formData.message} onChange={e => setFormData({...formData, message: e.target.value})} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", resize: "vertical", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
+                <textarea required rows={4} value={formData.message} onChange={e => setFormData({ ...formData, message: e.target.value })} style={{ width: "100%", padding: "12px 16px", borderRadius: "10px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", fontSize: "14px", outline: "none", resize: "vertical", fontFamily: "'Plus Jakarta Sans', sans-serif" }} />
               </div>
-              <motion.button 
+              <motion.button
                 whileTap={{ scale: 0.98 }}
                 disabled={isSubmitting}
                 style={{ width: "100%", padding: "14px", background: "#1A2E2C", color: "#fff", border: "none", borderRadius: "10px", fontSize: "14px", fontWeight: 700, cursor: isSubmitting ? "not-allowed" : "pointer", marginTop: "8px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}

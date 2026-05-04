@@ -731,6 +731,7 @@ export default function ProductDetails() {
           .detail-root { padding: 0 !important; }
           .product-grid { display: block !important; }
           .hero-image-container { 
+            position: static !important;
             padding: 0 !important; 
             border: none !important;
             border-radius: 0 !important;

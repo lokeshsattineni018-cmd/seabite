@@ -135,7 +135,7 @@ export default function Products() {
 
       <div
         className="products-root products-wrapper"
-        style={{ minHeight: "100vh", background: "#F4F9F8", paddingTop: "88px", paddingBottom: "64px" }}
+        style={{ minHeight: "100vh", background: "#F4F9F8", paddingTop: "124px", paddingBottom: "64px" }}
       >
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, height: "320px",
@@ -149,7 +149,7 @@ export default function Products() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-            style={{ marginBottom: "36px" }}
+            style={{ marginBottom: "20px" }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
               <span style={{ fontSize: "11px", fontWeight: "600", color: "#B8CFCC", textTransform: "uppercase", letterSpacing: "0.1em" }}>SeaBite</span>
@@ -159,7 +159,7 @@ export default function Products() {
               </span>
             </div>
 
-            <div className="products-header" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "20px" }}>
+            <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
               <div>
                 <AnimatePresence mode="wait">
                   <motion.h1
@@ -183,57 +183,92 @@ export default function Products() {
                 </AnimatePresence>
                 <p style={{ fontSize: "14px", color: "#6B8F8A", fontWeight: "500" }}>{meta.tagline}</p>
               </div>
-
-              <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-                <button
-                  onClick={() => setIsSidebarOpen(true)}
-                  className="filter-btn mobile-filter-btn"
-                  style={{
-                    display: "none",
-                    alignItems: "center", gap: "6px",
-                    padding: "9px 16px", borderRadius: "10px",
-                    border: "1.5px solid #E2EEEC", background: "#fff",
-                    color: "#6B8F8A", fontSize: "13px", fontWeight: "600",
-                    cursor: "pointer", transition: "all 0.2s ease",
-                  }}
-                >
-                  <FiSliders size={14} />
-                  Filters
-                  {activeFilterCount > 0 && (
-                    <span style={{ background: "#5BBFB5", color: "#fff", width: "18px", height: "18px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "10px", fontWeight: "800" }}>
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </button>
-
-                <div style={{ position: "relative" }}>
-                  <FiSearch size={14} style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#B8CFCC", pointerEvents: "none" }} />
-                  <input
-                    type="text"
-                    placeholder="Search fish, crab, prawn…"
-                    value={filters.search}
-                    onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
-                    className="search-input"
-                    style={{
-                      paddingLeft: "38px", paddingRight: "16px", paddingTop: "9px", paddingBottom: "9px",
-                      border: "1.5px solid #E2EEEC", borderRadius: "10px", background: "#fff",
-                      fontSize: "13px", color: "#1A2E2C", outline: "none",
-                      width: "220px", transition: "all 0.2s ease",
-                      fontFamily: "'Manrope', sans-serif",
-                    }}
-                  />
-                  {filters.search && (
-                    <button
-                      onClick={() => setFilters((p) => ({ ...p, search: "" }))}
-                      style={{ position: "absolute", right: "10px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", alignItems: "center" }}
-                    >
-                      <FiX size={13} />
-                    </button>
-                  )}
-                  </div>
-              </div>
             </div>
           </motion.div>
+
+          {/* ── STICKY FILTER BAR ── */}
+          <div style={{
+            position: "sticky",
+            top: "72px",
+            zIndex: 100,
+            background: "rgba(244,249,248,0.97)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
+            marginBottom: "20px",
+            padding: "10px 0",
+            marginLeft: "-24px",
+            marginRight: "-24px",
+            paddingLeft: "16px",
+            paddingRight: "16px",
+            borderBottom: "1px solid rgba(91,191,181,0.15)",
+          }}>
+            {/* Single row: Filters + Search + Pills */}
+            <div style={{ display: "flex", gap: "8px", alignItems: "center", overflowX: "auto" }} className="no-scrollbar">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                style={{
+                  display: "flex", alignItems: "center", gap: "5px", flexShrink: 0,
+                  padding: "8px 14px", borderRadius: "10px",
+                  border: "1.5px solid #E2EEEC", background: "#fff",
+                  color: "#6B8F8A", fontSize: "12px", fontWeight: "700",
+                  cursor: "pointer", fontFamily: "'Manrope', sans-serif",
+                }}
+              >
+                <FiSliders size={13} />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span style={{ background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", fontWeight: "800" }}>
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
+
+              <div style={{ position: "relative", width: "140px", flexShrink: 0 }}>
+                <FiSearch size={12} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#B8CFCC", pointerEvents: "none" }} />
+                <input
+                  type="text"
+                  placeholder="Search…"
+                  value={filters.search}
+                  onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
+                  style={{
+                    width: "100%", paddingLeft: "28px", paddingRight: filters.search ? "28px" : "10px",
+                    paddingTop: "8px", paddingBottom: "8px",
+                    border: "1.5px solid #E2EEEC", borderRadius: "10px", background: "#fff",
+                    fontSize: "12px", color: "#1A2E2C", outline: "none",
+                    fontFamily: "'Manrope', sans-serif", boxSizing: "border-box",
+                  }}
+                />
+                {filters.search && (
+                  <button onClick={() => setFilters((p) => ({ ...p, search: "" }))}
+                    style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex" }}>
+                    <FiX size={11} />
+                  </button>
+                )}
+              </div>
+
+              <div style={{ width: "1px", height: "20px", background: "#E2EEEC", flexShrink: 0 }} />
+
+              {categories.map((cat) => (
+                <motion.button
+                  key={cat}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setFilters((p) => ({ ...p, category: cat }));
+                    navigate(cat === "All" ? "/products" : `/products?category=${cat}`);
+                  }}
+                  className={`category-pill ${filters.category === cat ? "category-pill-active" : ""}`}
+                  style={{
+                    padding: "7px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "600",
+                    whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "5px",
+                    fontFamily: "'Manrope', sans-serif", flexShrink: 0,
+                  }}
+                >
+                  <span>{CATEGORY_META[cat]?.emoji}</span>{cat}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
 
           <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
             <FilterSidebar
@@ -245,37 +280,7 @@ export default function Products() {
             />
 
             <div style={{ flex: 1, minWidth: 0 }}>
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                style={{ display: "flex", gap: "8px", marginBottom: "28px", overflowX: "auto" }}
-                className="no-scrollbar"
-              >
-                {categories.map((cat) => (
-                  <motion.button
-                    key={cat}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={() => {
-                      setFilters((p) => ({ ...p, category: cat }));
-                      navigate(cat === "All" ? "/products" : `/products?category=${cat}`);
-                    }}
-                    className={`category-pill ${filters.category === cat ? "category-pill-active" : ""}`}
-                    style={{
-                      padding: "7px 18px",
-                      borderRadius: "20px",
-                      fontSize: "13px",
-                      fontWeight: "600",
-                      whiteSpace: "nowrap",
-                      display: "flex", alignItems: "center", gap: "6px",
-                      fontFamily: "'Manrope', sans-serif",
-                    }}
-                  >
-                    <span>{CATEGORY_META[cat]?.emoji}</span>
-                    {cat}
-                  </motion.button>
-                ))}
-              </motion.div>
+              {/* Category pills now in sticky bar above — remove duplicate */}
 
               <AnimatePresence mode="wait">
                 {loading ? (
@@ -307,7 +312,12 @@ export default function Products() {
                     key="grid"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "20px" }}
+                    style={{ 
+                      display: "grid", 
+                      gridTemplateColumns: window.innerWidth < 768 ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(220px, 1fr))", 
+                      gap: window.innerWidth < 768 ? "12px" : "20px",
+                      paddingBottom: window.innerWidth < 768 ? "112px" : "64px" // pb-28 for mobile
+                    }}
                     className="product-grid"
                   >
                     {products.map((p, i) => (

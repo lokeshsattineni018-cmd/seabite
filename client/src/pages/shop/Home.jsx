@@ -508,17 +508,35 @@ const WhySeaBite = () => {
             ))}
           </div>
         </ScaleReveal>
-        <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Mobile: horizontal snap-scroll | Desktop: 4-col grid */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           {features.map((f, i) => (
-            <SI key={i}>
-              <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.3 }} className="bg-[#F8FAFB] border border-[#E8EEF2] rounded-2xl p-6 h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-shadow duration-300">
-                <div className={`w-10 h-10 rounded-xl ${f.bg} ${f.color} flex items-center justify-center mb-5`}>{f.icon}</div>
-                <h3 className="font-bold text-[#1A2B35] mb-2 text-[15px]">{f.title}</h3>
-                <p className="text-sm text-[#8BA5B3] leading-relaxed">{f.desc}</p>
-              </motion.div>
-            </SI>
+            <motion.div key={i} whileHover={{ y: -4 }} transition={{ duration: 0.3 }} className="bg-[#F8FAFB] border border-[#E8EEF2] rounded-2xl p-5 h-full hover:shadow-[0_8px_30px_rgba(0,0,0,0.05)] transition-shadow duration-300">
+              <div className={`w-10 h-10 rounded-xl ${f.bg} ${f.color} flex items-center justify-center mb-4`}>{f.icon}</div>
+              <h3 className="font-bold text-[#1A2B35] mb-1 text-base">{f.title}</h3>
+              <p className="text-sm text-[#8BA5B3] leading-relaxed">{f.desc}</p>
+            </motion.div>
           ))}
-        </Stagger>
+        </div>
+
+        {/* Mobile snap-scroll row */}
+        <div
+          className="flex md:hidden overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none", gap: "14px" }}
+        >
+          {features.map((f, i) => (
+            <div
+              key={i}
+              className="snap-center shrink-0 bg-[#F8FAFB] border border-[#E8EEF2] rounded-2xl p-5"
+              style={{ minWidth: "80vw" }}
+            >
+              <div className={`w-10 h-10 rounded-xl ${f.bg} ${f.color} flex items-center justify-center mb-4`}>{f.icon}</div>
+              <h3 className="font-semibold text-[#1A2B35] mb-1 text-base">{f.title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+
       </div>
     </section>
   );
@@ -628,25 +646,6 @@ const Reviews = () => {
   );
 };
 
-// ══════════════════════════════════════════════
-//  SCROLL-TO-TOP
-// ══════════════════════════════════════════════
-const ScrollTop = () => {
-  const [show, setShow] = useState(false);
-  useEffect(() => { const h = () => setShow(window.scrollY > 500); window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h); }, []);
-  return (
-    <AnimatePresence>
-      {show && (
-        <motion.button initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} whileHover={{ y: -2 }}
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-8 right-8 z-50 w-12 h-12 bg-white border border-[#E8EEF2] rounded-full shadow-md flex items-center justify-center text-[#4A6572] hover:border-[#5BA8A0] hover:text-[#5BA8A0] transition-colors"
-        >
-          <ChevronDown size={20} className="rotate-180" />
-        </motion.button>
-      )}
-    </AnimatePresence>
-  );
-};
 
 // ══════════════════════════════════════════════
 //  PAGE EXPORT
@@ -697,7 +696,7 @@ export default function Home() {
   
         <Reviews />
         <WhySeaBite />
-        <ScrollTop />
+
       </div>
     </PullToRefresh>
   );

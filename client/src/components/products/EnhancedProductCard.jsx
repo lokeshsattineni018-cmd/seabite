@@ -210,6 +210,138 @@ const EnhancedProductCard = ({
     product.createdAt &&
     new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+  if (isMobile) {
+    return (
+      <div
+        className="mobile-product-card"
+        style={{
+          background: "#fff",
+          border: "1px solid #f3f4f6",
+          borderRadius: "16px",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          position: "relative",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.04)"
+        }}
+      >
+        {/* Image Section */}
+        <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", overflow: "hidden" }}>
+          <Link to={`/products/${product._id}`} style={{ display: "block", width: "100%", height: "100%", background: "#F4F9F8" }}>
+            <img 
+              src={getImageUrl(product.image)} 
+              alt={product.name} 
+              style={{ 
+                width: "100%", 
+                height: "100%", 
+                objectFit: "cover",
+                transition: "all 0.4s ease",
+                transform: imageLoaded ? "scale(1)" : "scale(1.05)",
+                opacity: imageLoaded ? 1 : 0
+              }} 
+              onLoad={() => setImageLoaded(true)}
+            />
+            {isOutOfStock && (
+              <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ background: "#000", color: "#fff", fontSize: "10px", fontWeight: "800", padding: "4px 8px", borderRadius: "4px" }}>OUT OF STOCK</span>
+              </div>
+            )}
+          </Link>
+          
+          {/* Wishlist Button (Frosted Glass) */}
+          <button
+            onClick={handleWishlistToggle}
+            disabled={loadingWishlist}
+            style={{
+              position: "absolute", top: "8px", right: "8px",
+              width: "32px", height: "32px",
+              background: "rgba(255,255,255,0.7)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              borderRadius: "50%",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: isWishlisted ? "#F07468" : "#000",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              zIndex: 10
+            }}
+          >
+            <FiHeart size={14} fill={isWishlisted ? "currentColor" : "none"} />
+          </button>
+        </div>
+
+        {/* Info Section */}
+        <div style={{ padding: "12px", display: "flex", flexDirection: "column", flex: 1 }}>
+          <Link to={`/products/${product._id}`} style={{ textDecoration: "none" }}>
+            <h3 style={{ 
+              fontSize: "14px", 
+              fontWeight: "500", 
+              color: "#111827", 
+              lineHeight: "1.3",
+              marginBottom: "8px",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              height: "2.6em"
+            }}>
+              {product.name}
+            </h3>
+          </Link>
+
+          {/* Action Row */}
+          <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: "16px", fontWeight: "700", color: "#111827" }}>
+              ₹{displayPrice}
+            </span>
+            
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAddToCart}
+              disabled={isOutOfStock || isAdding}
+              style={{
+                background: "#5BBFB5",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                padding: "6px 14px",
+                fontSize: "12px",
+                fontWeight: "700",
+                boxShadow: "0 2px 8px rgba(91,191,181,0.25)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px"
+              }}
+            >
+              {isAdding ? "..." : "Add"}
+            </motion.button>
+          </div>
+        </div>
+
+        {/* Fly Animation Portal */}
+        {typeof document !== "undefined" && createPortal(
+          flyItems.map((item) => (
+            <motion.div
+              key={item.id}
+              initial={{ left: item.startX, top: item.startY, opacity: 1, scale: 1, rotate: 0 }}
+              animate={{ left: item.endX, top: item.endY, opacity: 0.6, scale: 0.2, rotate: 90 }}
+              transition={{ duration: 1.1 }}
+              onAnimationComplete={() => handleFlyComplete(item.id)}
+              style={{ position: "fixed", width: "60px", height: "60px", zIndex: 99999999, borderRadius: "12px", overflow: "hidden" }}
+            >
+              <img src={item.image} alt="Flying" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </motion.div>
+          )),
+          document.body
+        )}
+      </div>
+    );
+  }
+
   return (
     <div
       style={{
@@ -477,14 +609,21 @@ const EnhancedProductCard = ({
           </div>
 
           <Magnetic strength={0.4}>
-            <button
+            <motion.button
+              whileHover={!isOutOfStock && !isAdding ? { 
+                scale: 1.02, 
+                backgroundColor: "#5BBFB5", 
+                color: "#fff",
+                boxShadow: "0 8px 20px rgba(91,191,181,0.3)"
+              } : {}}
+              whileTap={{ scale: 0.98 }}
               onClick={handleAddToCart}
               disabled={isOutOfStock || isAdding}
-              className="cart-btn-wave"
+              className="cart-btn-wave group/btn"
               aria-label={isAdding ? "Product added to cart" : isOutOfStock ? "Product sold out" : "Add product to cart"}
               style={{
                 width: "100%",
-                padding: "10px 24px", // Increased padding for magnetic feel
+                padding: "10px 24px",
                 borderRadius: "10px",
                 border: "1.5px solid",
                 borderColor: isOutOfStock ? "#E2EEEC" : isAdding ? "#5BBFB5" : "#5BBFB5",
@@ -498,26 +637,34 @@ const EnhancedProductCard = ({
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "6px",
-                transition: "all 0.2s ease",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 fontFamily: "'Plus Jakarta Sans', sans-serif",
+                position: "relative",
+                overflow: "hidden"
               }}
             >
-              <div aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              {/* Shine effect on button hover */}
+              {!isOutOfStock && !isAdding && (
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite]" style={{ transform: 'skewX(-20deg)' }} />
+              )}
+              
+              <div aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "6px", position: "relative", zIndex: 1 }}>
                 {isAdding ? (
                   <><FiCheck size={14} /> Added</>
                 ) : isOutOfStock ? (
                   "Sold Out"
                 ) : (
-                  <><FiShoppingCart size={14} /> Add to Cart</>
+                  <><FiShoppingCart size={14} className="group-hover/btn:scale-110 transition-transform" /> Add to Cart</>
                 )}
               </div>
-            </button>
+            </motion.button>
           </Magnetic>
         </div>
       </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes shimmer { 100% { transform: translateX(100%) skewX(-20deg); } }
         .cart-btn-wave { position: relative; overflow: hidden; }
         .cart-btn-wave:active { transform: scale(0.97); }
       `}</style>

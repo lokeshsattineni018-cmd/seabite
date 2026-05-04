@@ -41,14 +41,9 @@ export default function TrendingProducts() {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-14 overflow-hidden border-y border-[#E2EEEC] relative" style={{ background: "linear-gradient(180deg, #F4F9F8 0%, #ffffff 50%, #F4F9F8 100%)" }}>
-      {/* Decorative Background */}
-      <div className="absolute inset-0 pointer-events-none opacity-5">
-        <div className="absolute top-10 left-10 w-72 h-72 bg-blue-500 rounded-full blur-3xl" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-500 rounded-full blur-3xl" />
-      </div>
+    <section className="py-14 overflow-hidden" style={{ background: "#F4F9F8" }}>
 
-      <div className="container mx-auto px-6 mb-12 flex flex-col items-center text-center relative z-10">
+      <div className="container mx-auto px-6 mb-12 flex flex-col items-center text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -75,7 +70,7 @@ export default function TrendingProducts() {
         </motion.p>
       </div>
 
-      <div className="relative w-full z-10">
+      <div className="relative w-full">
         <motion.div
           className="flex gap-6 w-max pl-6"
           animate={{ x: ["0%", "-33.33%"] }}

@@ -18,7 +18,7 @@ import BannerPopup from "./components/layout/BannerPopup";
 import AnnouncementBar from "./components/layout/AnnouncementBar";
 import SeaBiteLoader from "./components/common/SeaBiteLoader"; // 🟢 Added Custom Loader
 import CookieConsent from "./components/common/CookieConsent"; // 🟢 Cookie Consent
-import MobileNav from "./components/layout/MobileNav"; // 📱 Mobile Navigation Enabled
+
 import ComparisonDrawer from "./components/common/ComparisonDrawer"; // 📊 Product Comparison Drawer
 import GoogleOneTap from "./components/common/GoogleOneTap"; // 🟢 Google One Tap Login
 
@@ -186,6 +186,7 @@ function MainLayout() {
       <ScrollToTop />
       <Toaster
         position="top-right"
+        containerStyle={{ zIndex: 99999 }}
         toastOptions={{
           duration: 3000,
           style: {
@@ -293,7 +294,7 @@ function MainLayout() {
 
           {!isAdminRoute && location.pathname !== "/success" && <Footer />}
           {!isAdminRoute && <SupportWidget />}
-          {!isAdminRoute && <MobileNav />}
+
           {!isAdminRoute && <ComparisonDrawer />}
         </>
       )
