@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       minLength: 10,
       maxLength: 15,
-      match: [/^\d+$/, "Phone number must contain only digits"],
+      match: [/^[0-9+\s-]+$/, "Phone number contains invalid characters"],
     },
 
     lastSpinTime: {
