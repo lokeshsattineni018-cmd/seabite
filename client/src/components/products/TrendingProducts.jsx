@@ -41,7 +41,7 @@ export default function TrendingProducts() {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-14 overflow-hidden" style={{ background: "#F4F9F8" }}>
+    <section className="py-14 overflow-hidden" style={{ background: "#FFFFFF" }}>
 
       <div className="container mx-auto px-6 mb-12 flex flex-col items-center text-center">
         <motion.div

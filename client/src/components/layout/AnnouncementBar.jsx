@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 
 export default function AnnouncementBar({ settings }) {
     const [visible, setVisible] = useState(true);
+    const location = useLocation();
 
     useEffect(() => {
         const onScroll = () => setVisible(window.scrollY < 60);
@@ -10,7 +12,9 @@ export default function AnnouncementBar({ settings }) {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    if (!settings?.active || !settings?.text) return null;
+    const isAdminPage = location.pathname.startsWith("/admin") || location.pathname.startsWith("/command-center");
+
+    if (!settings?.active || !settings?.text || isAdminPage) return null;
 
     return (
         <AnimatePresence>
@@ -27,8 +31,8 @@ export default function AnnouncementBar({ settings }) {
                         left: 0,
                         right: 0,
                         zIndex: 1200,
-                        backgroundColor: settings.bgColor || "#1c1917",
-                        color: settings.textColor || "#ffffff",
+                        backgroundColor: settings.bgColor || "#ffffff",
+                        color: settings.textColor || "#000000",
                         overflow: "hidden",
                         display: "flex",
                         alignItems: "center",

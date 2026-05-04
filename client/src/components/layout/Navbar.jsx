@@ -566,71 +566,73 @@ export default function Navbar({ announcementActive = false }) {
               )}
             </div>
           </div>
+        </div>
 
-          {/* --- MOBILE HEADER (EXTREME CLEAN) --- */}
-          <div 
-            className="show-mobile" 
-            style={{ 
-              width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", height: "72px", 
-              background: isTransparent ? "transparent" : "#fff", 
-              padding: "0", // Extreme corners
-              transition: "all 0.3s ease"
-            }}
+        {/* --- MOBILE HEADER (EXTREME CLEAN) --- */}
+        <div 
+          className="show-mobile" 
+          style={{ 
+            width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px", 
+            background: isTransparent ? "transparent" : "#fff", 
+            padding: "0", // ABSOLUTE EXTREME
+            transition: "all 0.3s ease",
+            position: "relative"
+          }}
+        >
+          {/* Left: Hamburger */}
+          <motion.button 
+            whileTap={{ scale: 0.9 }} 
+            onClick={() => setMobileOpen(true)} 
+            style={{ background: "none", border: "none", cursor: "pointer", padding: "0 8px", height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start" }}
           >
-            {/* Left: Hamburger */}
-            <motion.button 
-              whileTap={{ scale: 0.9 }} 
-              onClick={() => setMobileOpen(true)} 
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "0 20px", height: "100%", display: "flex", alignItems: "center" }}
-            >
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <div style={{ width: "26px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
-                <div style={{ width: "18px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
-                <div style={{ width: "26px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
-              </div>
-            </motion.button>
-
-            {/* Center: Big Logo */}
-            <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)" }}>
-              <Link to="/" style={{ textDecoration: "none" }}>
-                <img 
-                  src="/logo.png" 
-                  alt="SeaBite" 
-                  style={{ 
-                    height: "46px", width: "auto", 
-                    transition: "all 0.3s ease"
-                  }} 
-                />
-              </Link>
+            <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+              <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+              <div style={{ width: "12px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+              <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
             </div>
+          </motion.button>
 
-            {/* Right: Actions */}
-            <div style={{ display: "flex", alignItems: "center", height: "100%" }}>
-              <motion.button 
-                whileTap={{ scale: 0.88 }} 
-                onClick={() => setSearchExpanded(true)} 
-                style={{ background: "none", border: "none", padding: "0 15px", color: isTransparent ? "#fff" : "#000", height: "100%" }}
-              >
-                <FiSearch size={24} />
-              </motion.button>
-              <motion.button 
-                whileTap={{ scale: 0.88 }} 
-                onClick={() => setIsCartOpen(true)} 
-                style={{ background: "none", border: "none", padding: "0 20px", color: isTransparent ? "#fff" : "#000", height: "100%", position: "relative" }}
-              >
-                <FiShoppingCart size={24} />
-                {cartCount > 0 && (
-                  <span style={{ 
-                    position: "absolute", top: "20px", right: "12px", 
-                    background: "#F07468", color: "#fff", 
-                    width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" 
-                  }}>
-                    {cartCount}
-                  </span>
-                )}
-              </motion.button>
-            </div>
+          {/* Center: Big Logo */}
+          <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", pointerEvents: "none" }}>
+            <Link to="/" style={{ textDecoration: "none", pointerEvents: "auto" }}>
+              <img 
+                src="/logo.png" 
+                alt="SeaBite" 
+                style={{ 
+                  height: "40px", width: "auto", 
+                  transition: "all 0.3s ease"
+                }} 
+              />
+            </Link>
           </div>
+
+          {/* Right: Actions */}
+          <div style={{ display: "flex", alignItems: "center", height: "100%" }}>
+            <motion.button 
+              whileTap={{ scale: 0.88 }} 
+              onClick={() => setSearchExpanded(true)} 
+              style={{ background: "none", border: "none", padding: "0 10px", color: isTransparent ? "#fff" : "#000", height: "100%" }}
+            >
+              <FiSearch size={20} />
+            </motion.button>
+            <motion.button 
+              whileTap={{ scale: 0.88 }} 
+              onClick={() => setIsCartOpen(true)} 
+              style={{ background: "none", border: "none", padding: "0 8px", color: isTransparent ? "#fff" : "#000", height: "100%", position: "relative", display: "flex", alignItems: "center", justifyContent: "flex-end" }}
+            >
+              <FiShoppingCart size={20} />
+              {cartCount > 0 && (
+                <span style={{ 
+                  position: "absolute", top: "18px", right: "2px", 
+                  background: "#F07468", color: "#fff", 
+                  width: "14px", height: "14px", borderRadius: "50%", fontSize: "8px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" 
+                }}>
+                  {cartCount}
+                </span>
+              )}
+            </motion.button>
+          </div>
+        </div>
 
           {/* Mobile Search Overlay */}
           <AnimatePresence>
@@ -746,8 +748,6 @@ export default function Navbar({ announcementActive = false }) {
             )}
           </AnimatePresence>
 
-
-        </div>
       </motion.nav>
 
       {/* MOBILE HEADER SPACER */}
