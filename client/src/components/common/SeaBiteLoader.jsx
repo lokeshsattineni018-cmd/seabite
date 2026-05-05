@@ -1,8 +1,19 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const SeaBiteLoader = ({ fullScreen = false, small = false }) => {
-  const size = small ? 24 : 64;
-  
+  const images = ["/auth-fish.png", "/auth-prawn.png", "/auth-crab.png"];
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIdx((prev) => (prev + 1) % images.length);
+    }, 800); // Fast cycling for loader
+    return () => clearInterval(interval);
+  }, []);
+
+  const size = small ? 32 : 120;
+
   const containerStyle = fullScreen
     ? {
       minHeight: "100vh",
@@ -19,51 +30,57 @@ const SeaBiteLoader = ({ fullScreen = false, small = false }) => {
       alignItems: "center",
       justifyContent: "center",
       width: "100%",
-      padding: small ? "0" : "48px 0",
+      padding: small ? "0" : "60px 0",
     };
 
   return (
     <div style={containerStyle}>
       <style>{`
-        @keyframes sb-pulse {
-          0% { transform: scale(1); opacity: 1; }
-          50% { transform: scale(1.08); opacity: 0.8; }
-          100% { transform: scale(1); opacity: 1; }
+        @keyframes sb-float {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
+        }
+        .loader-ring {
+          position: absolute;
+          width: ${size + (small ? 8 : 40)}px;
+          height: ${size + (small ? 8 : 40)}px;
+          border: 2px solid rgba(91, 191, 181, 0.05);
+          border-top: 2px solid #5BBFB5;
+          border-radius: 50%;
+          animation: sb-spin 1.2s linear infinite;
         }
         @keyframes sb-spin {
           to { transform: rotate(360deg); }
         }
-        .sb-loader-wrap {
-          position: relative;
-          display: flex;
-          alignItems: center;
-          justifyContent: center;
-        }
-        .sb-ring {
-          position: absolute;
-          width: ${size + (small ? 4 : 12)}px;
-          height: ${size + (small ? 4 : 12)}px;
-          border: ${small ? 1.5 : 2}px solid rgba(91, 191, 181, 0.08);
-          border-top: ${small ? 1.5 : 2}px solid #5BBFB5;
-          border-radius: 50%;
-          animation: sb-spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-        }
-        .sb-logo-inner {
-          width: ${size}px;
-          height: ${size}px;
-          object-fit: contain;
-          animation: sb-pulse 1.8s ease-in-out infinite;
-          filter: drop-shadow(0 2px 8px rgba(91, 191, 181, 0.15));
-        }
       `}</style>
-      <div className="sb-loader-wrap">
-        <div className="sb-ring" />
-        <img 
-          src="/logo.png" 
-          alt="SeaBite" 
-          className="sb-logo-inner"
-          onError={(e) => { e.target.style.display = 'none'; }}
-        />
+      
+      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {!small && <div className="loader-ring" />}
+        
+        <div style={{ 
+          width: size, 
+          height: size, 
+          position: "relative",
+          animation: small ? "none" : "sb-float 2s ease-in-out infinite"
+        }}>
+          <AnimatePresence mode="wait">
+            <motion.img
+              key={idx}
+              src={images[idx]}
+              initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0 }}
+              exit={{ opacity: 0, scale: 1.1, rotate: 10 }}
+              transition={{ duration: 0.3 }}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+                position: "absolute",
+                filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.1))"
+              }}
+            />
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
