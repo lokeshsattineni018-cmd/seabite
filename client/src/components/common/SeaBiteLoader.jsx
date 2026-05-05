@@ -1,18 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import React from "react";
 
 const SeaBiteLoader = ({ fullScreen = false, small = false }) => {
-  const images = ["/auth-fish.png", "/auth-prawn.png", "/auth-crab.png"];
-  const [idx, setIdx] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIdx((prev) => (prev + 1) % images.length);
-    }, 800); // Fast cycling for loader
-    return () => clearInterval(interval);
-  }, []);
-
-  const size = small ? 32 : 120;
+  // Determine scale and padding based on context
+  const scale = small ? 0.4 : 1;
 
   const containerStyle = fullScreen
     ? {
@@ -20,7 +10,7 @@ const SeaBiteLoader = ({ fullScreen = false, small = false }) => {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      background: "#fff",
+      background: "linear-gradient(135deg, #eaf8fc 0%, #fdf9f4 100%)",
       position: "fixed",
       inset: 0,
       zIndex: 9999
@@ -29,57 +19,83 @@ const SeaBiteLoader = ({ fullScreen = false, small = false }) => {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      width: "100%",
-      padding: small ? "0" : "60px 0",
+      width: small ? "auto" : "100%",
+      padding: small ? "0" : "40px 0",
     };
 
   return (
     <div style={containerStyle}>
       <style>{`
-        @keyframes sb-float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+        .sb-loader-wrapper {
+          position: relative;
+          width: 68px;
+          height: 68px;
         }
-        .loader-ring {
+
+        /* tri-color spinning arc */
+        .sb-ring {
           position: absolute;
-          width: ${size + (small ? 8 : 40)}px;
-          height: ${size + (small ? 8 : 40)}px;
-          border: 2px solid rgba(91, 191, 181, 0.05);
-          border-top: 2px solid #5BBFB5;
+          inset: 0;
           border-radius: 50%;
-          animation: sb-spin 1.2s linear infinite;
+          border: 3px solid transparent;
+          border-top-color:    #38c8e8;
+          border-right-color:  #ff8c5a;
+          border-bottom-color: #f5c030;
+          border-left-color:   transparent;
+          animation: sb-spin 1.2s cubic-bezier(0.5,0.1,0.5,0.9) infinite;
         }
+
         @keyframes sb-spin {
           to { transform: rotate(360deg); }
         }
+
+        /* soft inner circle */
+        .sb-inner {
+          position: absolute;
+          inset: 9px;
+          border-radius: 50%;
+          background: rgba(255,255,255,0.45);
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          display: flex;
+          align-items: center;
+          justifyContent: center;
+          overflow: hidden;
+        }
+
+        /* emoji creature */
+        .sb-creature {
+          position: absolute;
+          font-size: 38px;
+          line-height: 1;
+          opacity: 0;
+          transform: scale(0.3) rotate(-15deg);
+          animation: sb-pop 3.3s ease-in-out infinite;
+          -webkit-font-smoothing: antialiased;
+          text-rendering: optimizeLegibility;
+        }
+
+        .sb-fish  { animation-delay: 0s; }
+        .sb-prawn { animation-delay: 1.1s; }
+        .sb-crab  { animation-delay: 2.2s; }
+
+        @keyframes sb-pop {
+          0%         { opacity: 0; transform: scale(0.3) rotate(-15deg); }
+          10%        { opacity: 1; transform: scale(1.15) rotate(4deg); }
+          20%        { opacity: 1; transform: scale(1) rotate(0deg); }
+          32%        { opacity: 1; transform: scale(1) translateY(-3px); }
+          40%        { opacity: 1; transform: scale(1); }
+          50%        { opacity: 0; transform: scale(0.3) rotate(15deg); }
+          100%       { opacity: 0; transform: scale(0.3) rotate(-15deg); }
+        }
       `}</style>
-      
-      <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {!small && <div className="loader-ring" />}
-        
-        <div style={{ 
-          width: size, 
-          height: size, 
-          position: "relative",
-          animation: small ? "none" : "sb-float 2s ease-in-out infinite"
-        }}>
-          <AnimatePresence mode="wait">
-            <motion.img
-              key={idx}
-              src={images[idx]}
-              initial={{ opacity: 0, scale: 0.8, rotate: -10 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0 }}
-              exit={{ opacity: 0, scale: 1.1, rotate: 10 }}
-              transition={{ duration: 0.3 }}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-                position: "absolute",
-                filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.1))"
-              }}
-            />
-          </AnimatePresence>
+
+      <div className="sb-loader-wrapper" style={{ transform: `scale(${scale})` }} role="status" aria-label="Loading">
+        <div className="sb-ring"></div>
+        <div className="sb-inner">
+          <div className="sb-creature sb-fish" aria-hidden="true">🐠</div>
+          <div className="sb-creature sb-prawn" aria-hidden="true">🦐</div>
+          <div className="sb-creature sb-crab" aria-hidden="true">🦀</div>
         </div>
       </div>
     </div>
