@@ -63,26 +63,32 @@ export const googleLogin = async (req, res) => {
 
     // 🔐 ENTERPRISE IAM: Brute-Force Check
     if (user && user.lockUntil && user.lockUntil > Date.now()) {
+      console.log("❌ Login blocked: Account locked until", user.lockUntil);
       logger.security("Blocked login attempt: Account locked", { traceId: req.traceId, email: user.email });
       return res.status(403).json({ message: "Too many failed attempts. Account is temporarily locked." });
     }
 
     if (user) {
+      console.log("🔍 Existing user found:", user.email, "Role:", user.role);
       if (!user.googleId) {
         if (user.password) {
+           console.log("❌ Conflict: User has password but no googleId. Redirecting to password login.");
            return res.status(400).json({ message: "You already have an account via Email/Password. Please login with your password." });
         } else {
+           console.log("🔗 Linking Google ID to existing passwordless account.");
            user.googleId = googleId;
            await user.save();
         }
       }
     } else {
+      console.log("🆕 Creating new user via Google:", email);
       user = new User({ name, email, googleId, role: "user" });
       await user.save();
     }
 
     // 🚫 BAN CHECK
     if (user.isBanned) {
+      console.log("❌ Login blocked: User is banned.");
       logger.security("Banned user attempted login", { traceId: req.traceId, email: user.email });
       return res.status(403).json({ message: "Access Denied: Your account has been suspended." });
     }
@@ -95,6 +101,7 @@ export const googleLogin = async (req, res) => {
     }
 
     if (!req.session) {
+      console.log("❌ Server Session Error: req.session is undefined");
       return res.status(500).json({ message: "Server Session Error" });
     }
 
@@ -105,12 +112,15 @@ export const googleLogin = async (req, res) => {
       role: user.role,
     };
 
+    console.log("💾 Saving session for user:", user.email);
     req.session.save(async (err) => {
       if (err) {
+        console.log("❌ Session save failed:", err.message);
         logger.error("Session save failed", { traceId: req.traceId, error: err.message });
         return res.status(500).json({ message: "Session save failed" });
       }
 
+      console.log("✅ Session saved successfully. Finalizing response.");
       logger.info("User Authenticated", { traceId: req.traceId, userId: user._id, email: user.email });
 
       // Send welcome email (non-blocking)
@@ -122,10 +132,12 @@ export const googleLogin = async (req, res) => {
       const callerIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
       const geo = geoip.lookup(callerIp);
       if (geo && geo.country !== "IN") {
+        console.log("⚠️ Geo-Anomaly detected:", geo.country, "for user:", user.email);
         logActivity("SECURITY", `Geo-Anomaly Login: ${user.email} from ${geo.country} (${callerIp})`, req);
         
         // 🔒 CRITICAL: Lock Admin accounts immediately on Geo-Anomaly
         if (user.role === "admin") {
+          console.log("🔒 Locking Admin account due to Geo-Anomaly.");
           user.lockUntil = Date.now() + 15 * 60 * 1000; // 15 Minute Lock
           await user.save();
           logger.security("Admin Account Locked: Geo-Anomaly Detected", { traceId: req.traceId, email: user.email, country: geo.country });
