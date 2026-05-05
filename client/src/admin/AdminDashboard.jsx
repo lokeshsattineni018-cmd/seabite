@@ -932,7 +932,7 @@ function BannerControl({ settings, setSettings }) {
 
         {uploading ? (
           <div className="py-2">
-            <div className="w-5 h-5 border-2 border-stone-300 border-t-stone-700 rounded-full animate-spin mx-auto mb-1" />
+            <SeaBiteLoader small />
             <span className="text-xs text-stone-600">Uploading...</span>
           </div>
         ) : settings.banner?.imageUrl ? (

@@ -6,6 +6,7 @@ import {
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -70,11 +71,7 @@ export default function AdminComplaints() {
         return matchesFilter && matchesSearch;
     });
 
-    if (loading) return (
-        <div className="flex items-center justify-center min-h-[400px]">
-            <div className="w-8 h-8 border-4 border-stone-200 border-t-stone-900 rounded-full animate-spin" />
-        </div>
-    );
+    if (loading) return <SeaBiteLoader />;
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-8 font-sans">

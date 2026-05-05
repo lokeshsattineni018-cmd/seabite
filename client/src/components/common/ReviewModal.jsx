@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { FiX, FiStar, FiCamera, FiTrash2, FiPlus } from 'react-icons/fi';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import SeaBiteLoader from './SeaBiteLoader';
 
 const ReviewModal = ({ isOpen, onClose, product, existingReview, token, API_URL, onSuccess }) => {
   const [rating, setRating] = useState(5);
@@ -220,7 +221,7 @@ const ReviewModal = ({ isOpen, onClose, product, existingReview, token, API_URL,
               className="w-full py-4 bg-slate-900 dark:bg-blue-600 hover:bg-slate-800 dark:hover:bg-blue-700 text-white font-black rounded-2xl transition-all shadow-xl shadow-blue-600/10 disabled:opacity-50 flex items-center justify-center gap-2 group"
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <SeaBiteLoader small />
               ) : (
                 <>
                   {existingReview ? 'Update Review' : 'Post Review'}

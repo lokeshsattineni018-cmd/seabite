@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { X, Sparkles } from "lucide-react";
+import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 axios.defaults.withCredentials = true;
@@ -194,7 +195,7 @@ const Spin = ({ isOpen, onClose }) => {
             >
               {spinning ? (
                 <span className="flex items-center justify-center gap-2">
-                  <div className="w-5 h-5 border-2 border-white dark:border-slate-900 border-t-transparent rounded-full animate-spin" />
+                  <SeaBiteLoader small />
                   Spinning...
                 </span>
               ) : (
