@@ -71,14 +71,9 @@ export const googleLogin = async (req, res) => {
     if (user) {
       console.log("🔍 Existing user found:", user.email, "Role:", user.role);
       if (!user.googleId) {
-        if (user.password) {
-           console.log("❌ Conflict: User has password but no googleId. Redirecting to password login.");
-           return res.status(400).json({ message: "You already have an account via Email/Password. Please login with your password." });
-        } else {
-           console.log("🔗 Linking Google ID to existing passwordless account.");
-           user.googleId = googleId;
-           await user.save();
-        }
+         console.log("🔗 Linking Google ID to existing account (Auto-merge).");
+         user.googleId = googleId;
+         await user.save();
       }
     } else {
       console.log("🆕 Creating new user via Google:", email);
