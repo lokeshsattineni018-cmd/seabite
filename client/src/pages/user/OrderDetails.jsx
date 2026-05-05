@@ -244,7 +244,7 @@ const DETAIL_CSS = `
     .lx-desktop-only { display: none !important; }
     .lx-mobile-only { display: block !important; }
     .lx-row-to-col { flex-direction: column !important; gap: 12px !important; }
-    .lx-main-content { padding: 48px 0 40px !important; width: 100% !important; overflow-x: hidden !important; }
+    .lx-main-content { padding: 110px 0 40px !important; width: 100% !important; overflow-x: hidden !important; }
     .lx-apple-section { padding: 16px !important; margin-bottom: 8px !important; border-radius: 0 !important; border-left: none !important; border-right: none !important; border-top: 1px solid #f0f0f0 !important; border-bottom: 1px solid #f0f0f0 !important; box-shadow: none !important; width: 100% !important; }
     .lx-horizontal-tracker { min-width: 0 !important; width: 100% !important; padding: 10px 0 !important; }
     .lx-tracker-label { font-size: 8px !important; line-height: 1.1 !important; margin-top: 6px !important; }
@@ -1039,6 +1039,18 @@ export default function OrderDetails() {
           transition={{ duration: 0.48, ease: T.ease }}
           style={{ marginBottom: 28 }}
         >
+          <Link
+            to="/orders"
+            className="lx-focus lx-header-content"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              color: T.inkSoft, textDecoration: "none",
+              fontSize: 13, fontWeight: 500, marginBottom: 18,
+            }}
+          >
+            <FiArrowLeft size={13} aria-hidden="true" />
+            Back to Orders
+          </Link>
 
 
           <div className="lx-header-content" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 14 }}>
