@@ -135,7 +135,7 @@ export default function Products() {
 
       <div
         className="products-root products-wrapper"
-        style={{ minHeight: "100vh", background: "#F4F9F8", paddingTop: "124px", paddingBottom: "64px" }}
+        style={{ minHeight: "100vh", background: "#F4F9F8", paddingTop: "32px", paddingBottom: "64px" }}
       >
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, height: "320px",

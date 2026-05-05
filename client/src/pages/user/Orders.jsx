@@ -926,7 +926,7 @@ export default function Order() {
         }} />
       </div>
 
-      <div style={{ position: "relative", zIndex: 1, maxWidth: 1120, margin: "0 auto", padding: "104px 24px 72px" }}>
+      <div style={{ position: "relative", zIndex: 1, maxWidth: 1120, margin: "0 auto", padding: "32px 24px 72px" }}>
 
         {/* ── PAGE HEADER ──────────────────────────────── */}
         <motion.header
