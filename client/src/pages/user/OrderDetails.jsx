@@ -244,15 +244,11 @@ const DETAIL_CSS = `
     .lx-desktop-only { display: none !important; }
     .lx-mobile-only { display: block !important; }
     .lx-row-to-col { flex-direction: column !important; }
-    .lx-main-content { padding: 80px 16px 40px !important; }
-    .lx-page-title { fontSize: 22px !important; }
-    .lx-section-title { fontSize: 17px !important; }
-    .lx-apple-section { padding: 18px 14px !important; margin-bottom: 16px !important; }
-    .lx-item-image { width: 64px !important; height: 64px !important; }
-    .lx-col-gap { gap: 16px !important; }
-    .lx-map-container { height: 200px !important; }
-    .lx-header-btn { padding: 8px 14px !important; font-size: 12px !important; }
-    .lx-horizontal-tracker { min-width: 500px !important; }
+    .lx-main-content { padding: 64px 0 40px !important; }
+    .lx-apple-section { padding: 20px 16px !important; margin-bottom: 10px !important; border-radius: 0 !important; border-left: none !important; border-right: none !important; }
+    .lx-horizontal-tracker { min-width: 100% !important; padding: 10px 4px !important; }
+    .lx-tracker-label { font-size: 8px !important; line-height: 1.1 !important; margin-top: 6px !important; }
+    .lx-header-content { padding: 0 16px !important; }
   }
   @media (min-width: 801px) {
     .lx-mobile-only { display: none !important; }
@@ -375,7 +371,7 @@ function HorizontalTracker({ currentStepIndex, reduced }) {
               {step.icon}
             </motion.div>
 
-            <p style={{
+            <p className="lx-tracker-label" style={{
               fontFamily: "'DM Sans', sans-serif",
               fontSize: 11, fontWeight: current ? 700 : 500,
               color: current ? T.ink : done ? T.inkMid : T.inkGhost,
@@ -386,6 +382,7 @@ function HorizontalTracker({ currentStepIndex, reduced }) {
 
             {current && (
               <motion.span
+                className="lx-tracker-label lx-desktop-only"
                 initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.3 }}
                 style={{
@@ -1029,7 +1026,7 @@ export default function OrderDetails() {
         >
           <Link
             to="/orders"
-            className="lx-focus"
+            className="lx-focus lx-header-content"
             style={{
               display: "inline-flex", alignItems: "center", gap: 7,
               color: T.inkSoft, textDecoration: "none",
@@ -1040,7 +1037,7 @@ export default function OrderDetails() {
             Back to Orders
           </Link>
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 14 }}>
+          <div className="lx-header-content" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 14 }}>
             <div>
               <h1 className="lx-page-title" style={{
                 fontFamily: "'Sora', sans-serif",
@@ -1192,7 +1189,7 @@ export default function OrderDetails() {
                   </div>
                 )}
 
-                <div style={{ paddingBottom: 10, overflowX: "auto", paddingX: 4 }}>
+                <div style={{ paddingBottom: 10, width: "100%" }}>
                   <HorizontalTracker currentStepIndex={stepIdx} reduced={reduced} />
                 </div>
 
