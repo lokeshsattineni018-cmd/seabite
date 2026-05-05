@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import axios from "axios";
+import SeaBiteLoader from "./common/SeaBiteLoader";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -39,11 +40,7 @@ export default function AdminRoute({ children }) {
 
   // Show loader instead of white screen
   if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
+    return <SeaBiteLoader fullScreen />;
   }
 
   if (status === "unauthorized") {
