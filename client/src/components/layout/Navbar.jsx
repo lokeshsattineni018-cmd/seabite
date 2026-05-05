@@ -406,7 +406,11 @@ export default function Navbar({ announcementActive = false }) {
           .show-mobile { display: flex !important; } 
           .nav-root { padding: 0 !important; border: none !important; }
         }
-        @media (min-width: 769px) { .show-mobile { display: none !important; } .hidden-mobile { display: flex !important; } }
+        @media (min-width: 769px) { 
+          .mobile-search-overlay { display: none !important; }
+          .show-mobile { display: none !important; } 
+          .hidden-mobile { display: flex !important; } 
+        }
       `}</style>
 
       <motion.nav
@@ -501,13 +505,7 @@ export default function Navbar({ announcementActive = false }) {
                 </AnimatePresence>
               </div>
 
-              {/* Notifications */}
-              {user && (
-                <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate("/notifications")} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
-                  <FiBell size={15} />
-                  {unreadCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount}</span>}
-                </motion.button>
-              )}
+
 
               <motion.button whileTap={{ scale: 0.88 }} onClick={() => user ? navigate("/wishlist") : navigate("/login")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
                 <FiHeart size={15} />
@@ -558,7 +556,6 @@ export default function Navbar({ announcementActive = false }) {
                         <div style={{ padding: "8px" }}>
                           <button onClick={() => { navigate("/profile"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textAlign: "left" }}><FiUser size={16}/> Profile</button>
                           <button onClick={() => { navigate("/orders"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textAlign: "left" }}><FiPackage size={16}/> Orders</button>
-                          <button onClick={() => { navigate("/notifications"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textAlign: "left" }}><FiBell size={16}/> Notifications</button>
                           {user.role === "admin" && (
                             <button onClick={() => { navigate("/admin/dashboard"); setShowProfile(false); }} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "800", color: "#5BBFB5", marginTop: "4px", textAlign: "left" }}><FiGrid size={16}/> Admin Dashboard</button>
                           )}
@@ -658,7 +655,7 @@ export default function Navbar({ announcementActive = false }) {
           <AnimatePresence>
             {searchExpanded && (
               <motion.div
-                className="search-container"
+                className="search-container mobile-search-overlay"
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
