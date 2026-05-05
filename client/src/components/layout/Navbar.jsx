@@ -182,6 +182,25 @@ export default function Navbar({ announcementActive = false }) {
       .catch(() => { });
   }, []);
 
+  useEffect(() => {
+    if (searchExpanded) {
+      const timer = setTimeout(() => searchRef.current?.focus(), 250);
+      return () => clearTimeout(timer);
+    }
+  }, [searchExpanded]);
+
+  useEffect(() => {
+    if (!searchExpanded) return;
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target) && !e.target.closest('.search-container')) {
+        setSearchExpanded(false);
+        setSuggestions([]);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [searchExpanded]);
+
   const handleSearchInput = (val) => {
     setSearchTerm(val);
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -442,16 +461,16 @@ export default function Navbar({ announcementActive = false }) {
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
-              <div style={{ position: "relative" }}>
+            <div style={{ position: "relative" }} className="search-container">
                 <AnimatePresence>
                   {searchExpanded ? (
                     <motion.div key="open" initial={{ width: 36, opacity: 0.4 }} animate={{ width: 230, opacity: 1 }} exit={{ width: 36, opacity: 0 }} transition={{ duration: 0.28 }} style={{ display: "flex", alignItems: "center", gap: "8px", background: "#fff", border: "1.5px solid #5BBFB5", borderRadius: "10px", padding: "7px 12px", boxShadow: "0 0 0 3px rgba(91,191,181,0.10)" }}>
                       <FiSearch size={13} style={{ color: "#5BBFB5", flexShrink: 0 }} />
-                      <input ref={searchRef} autoFocus className="si" value={searchTerm} onChange={e => handleSearchInput(e.target.value)} onKeyDown={handleSearchSubmit} onBlur={() => setTimeout(() => { setSearchExpanded(false); setSuggestions([]); }, 180)} placeholder="Search fresh catch…" style={{ border: "none", background: "none", fontSize: "13px", color: "#1A2E2C", width: "100%" }} />
+                      <input ref={searchRef} className="si" value={searchTerm} onChange={e => handleSearchInput(e.target.value)} onKeyDown={handleSearchSubmit} placeholder="Search fresh catch…" style={{ border: "none", background: "none", fontSize: "13px", color: "#1A2E2C", width: "100%" }} />
                       {searchTerm && <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", padding: 0 }}><FiX size={12} /></button>}
                     </motion.div>
                   ) : (
-                    <motion.button key="icon" whileTap={{ scale: 0.88 }} onClick={() => setSearchExpanded(true)} className="nav-ib" style={iconBtn}><FiSearch size={15} /></motion.button>
+                    <motion.button key="icon" whileTap={{ scale: 0.88 }} onClick={() => setSearchExpanded(true)} className="nav-ib search-container" style={iconBtn}><FiSearch size={15} /></motion.button>
                   )}
                 </AnimatePresence>
                 <AnimatePresence>
@@ -639,6 +658,7 @@ export default function Navbar({ announcementActive = false }) {
           <AnimatePresence>
             {searchExpanded && (
               <motion.div
+                className="search-container"
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
