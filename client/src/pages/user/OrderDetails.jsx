@@ -244,7 +244,7 @@ const DETAIL_CSS = `
     .lx-desktop-only { display: none !important; }
     .lx-mobile-only { display: block !important; }
     .lx-row-to-col { flex-direction: column !important; gap: 12px !important; }
-    .lx-main-content { padding: 110px 0 40px !important; width: 100% !important; overflow-x: hidden !important; }
+    .lx-main-content { padding: 32px 0 40px !important; width: 100% !important; overflow-x: hidden !important; }
     .lx-apple-section { padding: 16px !important; margin-bottom: 8px !important; border-radius: 0 !important; border-left: none !important; border-right: none !important; border-top: 1px solid #f0f0f0 !important; border-bottom: 1px solid #f0f0f0 !important; box-shadow: none !important; width: 100% !important; }
     .lx-horizontal-tracker { min-width: 0 !important; width: 100% !important; padding: 10px 0 !important; }
     .lx-tracker-label { font-size: 8px !important; line-height: 1.1 !important; margin-top: 6px !important; }
@@ -1029,7 +1029,7 @@ export default function OrderDetails() {
       </AnimatePresence>
 
       {/* ── Main content ─────────────────────────────────── */}
-      <div className="lx-main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 24px 72px", width: "100%", boxSizing: "border-box" }}>
+      <div className="lx-main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 72px", width: "100%", boxSizing: "border-box" }}>
 
         {/* ── PAGE HEADER ─────────────────────────────── */}
         <motion.div
