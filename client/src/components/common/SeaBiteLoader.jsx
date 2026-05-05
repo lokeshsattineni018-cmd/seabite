@@ -57,17 +57,19 @@ const SeaBiteLoader = ({ fullScreen = false, small = false }) => {
           background: rgba(255,255,255,0.45);
           backdrop-filter: blur(10px);
           -webkit-backdrop-filter: blur(10px);
-          display: flex;
-          align-items: center;
-          justifyContent: center;
+          display: grid;
+          place-items: center;
           overflow: hidden;
         }
 
         /* emoji creature */
         .sb-creature {
-          position: absolute;
+          grid-area: 1 / 1;
           font-size: 38px;
           line-height: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           opacity: 0;
           transform: scale(0.3) rotate(-15deg);
           animation: sb-pop 3.3s ease-in-out infinite;
