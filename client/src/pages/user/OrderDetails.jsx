@@ -244,6 +244,14 @@ const DETAIL_CSS = `
     .lx-desktop-only { display: none !important; }
     .lx-mobile-only { display: block !important; }
     .lx-row-to-col { flex-direction: column !important; }
+    .lx-main-content { padding: 80px 16px 40px !important; }
+    .lx-page-title { fontSize: 22px !important; }
+    .lx-section-title { fontSize: 17px !important; }
+    .lx-apple-section { padding: 20px 16px !important; margin-bottom: 16px !important; }
+    .lx-item-image { width: 64px !important; height: 64px !important; }
+    .lx-col-gap { gap: 16px !important; }
+    .lx-map-container { height: 200px !important; }
+    .lx-header-btn { padding: 8px 14px !important; font-size: 12px !important; }
   }
   @media (min-width: 801px) {
     .lx-mobile-only { display: none !important; }
@@ -260,10 +268,10 @@ if (typeof document !== "undefined" && !document.getElementById("lx-detail-style
 // ─────────────────────────────────────────────────────────────
 // SHIMMER IMAGE — prevents layout shift on image load
 // ─────────────────────────────────────────────────────────────
-function ShimmerImage({ src, alt, style }) {
+function ShimmerImage({ src, alt, style, className }) {
   const [loaded, setLoaded] = useState(false);
   return (
-    <div style={{ position: "relative", ...style }}>
+    <div className={className} style={{ position: "relative", ...style }}>
       {!loaded && (
         <div
           className="lx-img-shimmer"
@@ -297,9 +305,9 @@ function PaymentIcon({ method }) {
 // ─────────────────────────────────────────────────────────────
 // APPLE SECTION — consistent panel wrapper
 // ─────────────────────────────────────────────────────────────
-function AppleSection({ children, style: extra }) {
+function AppleSection({ children, style: extra, className }) {
   return (
-    <div style={{
+    <div className={`lx-apple-section ${className || ""}`} style={{
       background: T.surface, borderRadius: T.rLg,
       border: `1px solid ${T.border}`, boxShadow: T.shadow,
       padding: 32, ...extra,
@@ -1007,7 +1015,7 @@ export default function OrderDetails() {
       </AnimatePresence>
 
       {/* ── Main content ─────────────────────────────────── */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 24px 72px" }}>
+      <div className="lx-main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 24px 72px" }}>
 
         {/* ── PAGE HEADER ─────────────────────────────── */}
         <motion.div
@@ -1032,7 +1040,7 @@ export default function OrderDetails() {
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 14 }}>
             <div>
-              <h1 style={{
+              <h1 className="lx-page-title" style={{
                 fontFamily: "'Sora', sans-serif",
                 fontSize: 30, fontWeight: 800, color: T.ink,
                 letterSpacing: "-0.03em", margin: "0 0 6px",
@@ -1083,7 +1091,7 @@ export default function OrderDetails() {
           style={{ display: "flex", flexDirection: "row", gap: 32, alignItems: "flex-start", flexWrap: "wrap" }}
         >
           {/* ── LEFT COLUMN ────────────────────────── */}
-          <div style={{ flex: "1 1 60%", minWidth: 320, display: "flex", flexDirection: "column", gap: 32 }}>
+          <div className="lx-col-gap" style={{ flex: "1 1 60%", minWidth: 320, display: "flex", flexDirection: "column", gap: 32 }}>
 
             {/* ── Cancelled Banner (replaces tracker) ── */}
             {cancelled && (
@@ -1138,7 +1146,7 @@ export default function OrderDetails() {
             {!cancelled && (
               <AppleSection>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                  <h2 style={{
+                  <h2 className="lx-section-title" style={{
                     fontFamily: "'Sora', sans-serif",
                     fontSize: 20, fontWeight: 700, color: T.ink, margin: 0
                   }}>
@@ -1187,21 +1195,21 @@ export default function OrderDetails() {
                 </div>
 
                 {/* ── Live Delivery Map ── */}
-                <div style={{ marginTop: 32 }}>
-                  <p style={{
-                    fontFamily: "'Sora', sans-serif", fontSize: 13, fontWeight: 700, 
-                    color: T.inkMid, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em"
-                  }}>
-                    Live Delivery Route
-                  </p>
-                  <OrderTrackerMap orderStatus={order.status} shippingAddress={order.shippingAddress} />
-                </div>
+                  <div className="lx-map-container" style={{ marginTop: 32 }}>
+                    <p style={{
+                      fontFamily: "'Sora', sans-serif", fontSize: 13, fontWeight: 700, 
+                      color: T.inkMid, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em"
+                    }}>
+                      Live Delivery Route
+                    </p>
+                    <OrderTrackerMap orderStatus={order.status} shippingAddress={order.shippingAddress} />
+                  </div>
               </AppleSection>
             )}
 
             {/* ── Items card ─────────────────────────── */}
             <AppleSection>
-              <h2 style={{
+              <h2 className="lx-section-title" style={{
                 fontFamily: "'Sora', sans-serif",
                 fontSize: 20, fontWeight: 700, color: T.ink,
                 margin: "0 0 20px",
@@ -1226,6 +1234,7 @@ export default function OrderDetails() {
                         {/* Compact Thumbnail */}
                         <Link to={`/products/${pid}`} style={{ display: "block", flexShrink: 0 }}>
                           <ShimmerImage
+                            className="lx-item-image"
                             src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
                             alt={item.name}
                             style={{
@@ -1287,7 +1296,7 @@ export default function OrderDetails() {
           </div>
 
           {/* ── RIGHT COLUMN (STICKY) ────────────────── */}
-          <div style={{ flex: "1 1 35%", minWidth: 300, display: "flex", flexDirection: "column", gap: 24, position: "sticky", top: 100 }}>
+          <div className="lx-col-gap" style={{ flex: "1 1 35%", minWidth: 300, display: "flex", flexDirection: "column", gap: 24, position: "sticky", top: 100 }}>
 
             {order.status === "Delivered" && (
               <AppleSection style={{ 
@@ -1373,7 +1382,7 @@ export default function OrderDetails() {
             {/* ── Reported Issues Section ────────────────── */}
             {order.complaints && order.complaints.length > 0 && (
               <AppleSection style={{ background: "#FFF9F9", border: "1.5px solid #FBCBCB" }}>
-                <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: "#C05A45", margin: "0 0 16px", display: "flex", alignItems: "center", gap: 8 }}>
+                <h3 className="lx-section-title" style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: "#C05A45", margin: "0 0 16px", display: "flex", alignItems: "center", gap: 8 }}>
                   <FiAlertCircle size={18} /> Reported Issues
                 </h3>
                 <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -1572,7 +1581,7 @@ function HeaderBtn({ icon, label, onClick, disabled = false, primary = false }) 
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
       disabled={disabled}
-      className="lx-focus"
+      className={`lx-focus lx-header-btn`}
       style={{
         display: "flex", alignItems: "center", gap: 8,
         padding: "10px 20px",
