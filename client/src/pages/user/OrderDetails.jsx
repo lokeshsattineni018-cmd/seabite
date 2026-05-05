@@ -247,11 +247,12 @@ const DETAIL_CSS = `
     .lx-main-content { padding: 80px 16px 40px !important; }
     .lx-page-title { fontSize: 22px !important; }
     .lx-section-title { fontSize: 17px !important; }
-    .lx-apple-section { padding: 20px 16px !important; margin-bottom: 16px !important; }
+    .lx-apple-section { padding: 18px 14px !important; margin-bottom: 16px !important; }
     .lx-item-image { width: 64px !important; height: 64px !important; }
     .lx-col-gap { gap: 16px !important; }
     .lx-map-container { height: 200px !important; }
     .lx-header-btn { padding: 8px 14px !important; font-size: 12px !important; }
+    .lx-horizontal-tracker { min-width: 500px !important; }
   }
   @media (min-width: 801px) {
     .lx-mobile-only { display: none !important; }
@@ -324,7 +325,8 @@ function HorizontalTracker({ currentStepIndex, reduced }) {
   const pct = Math.max(0, (currentStepIndex / (STEPS.length - 1)) * 100);
   return (
     <div role="list" aria-label="Order progress"
-      style={{ display: "flex", justifyContent: "space-between", position: "relative" }}>
+      className="lx-horizontal-tracker"
+      style={{ display: "flex", justifyContent: "space-between", position: "relative", minWidth: 600, padding: "10px 0" }}>
 
       {/* Track rail */}
       <div aria-hidden="true" style={{
@@ -1190,8 +1192,8 @@ export default function OrderDetails() {
                   </div>
                 )}
 
-                <div style={{ paddingBottom: 10 }}>
-                  <VerticalTracker currentStepIndex={stepIdx} order={order} reduced={reduced} />
+                <div style={{ paddingBottom: 10, overflowX: "auto", paddingX: 4 }}>
+                  <HorizontalTracker currentStepIndex={stepIdx} reduced={reduced} />
                 </div>
 
                 {/* ── Live Delivery Map ── */}
