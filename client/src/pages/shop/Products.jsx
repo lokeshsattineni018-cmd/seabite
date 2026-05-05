@@ -189,7 +189,7 @@ export default function Products() {
           {/* ── STICKY FILTER BAR ── */}
           <div style={{
             position: "sticky",
-            top: "72px",
+            top: "108px",
             zIndex: 100,
             background: "rgba(244,249,248,0.97)",
             backdropFilter: "blur(16px)",

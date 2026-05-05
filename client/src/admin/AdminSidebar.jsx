@@ -49,20 +49,20 @@ export default function AdminSidebar({ settings, onUpdateBanner }) {
   return (
     <div className="h-full flex flex-col bg-stone-50/50 border-r border-stone-200/60">
       {/* Brand Header */}
-      <div className="h-24 flex items-center px-8">
+      <div className="h-20 flex items-center px-8">
         <Link to="/admin/dashboard" className="flex items-center gap-3 group">
-          <div className="relative flex items-center justify-center w-10 h-10 group-hover:scale-105 transition-transform duration-300">
+          <div className="relative flex items-center justify-center w-9 h-9 group-hover:scale-105 transition-transform duration-300">
             <img src="/logo.png" alt="SeaBite Logo" className="w-full h-full object-contain drop-shadow-sm" />
           </div>
           <div>
-            <h2 className="font-bold text-lg text-stone-900 tracking-tight leading-tight group-hover:text-stone-600 transition-colors">SeaBite</h2>
-            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Admin Panel</p>
+            <h2 className="font-bold text-base text-stone-900 tracking-tight leading-tight group-hover:text-stone-600 transition-colors">SeaBite</h2>
+            <p className="text-[9px] font-bold text-stone-400 uppercase tracking-widest">Admin Panel</p>
           </div>
         </Link>
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 overflow-y-auto px-4 space-y-1 custom-scrollbar pb-6 scroll-smooth">
+      <nav className="flex-1 overflow-y-auto px-4 space-y-0.5 custom-scrollbar pb-6 scroll-smooth">
         <p className="px-4 text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-3 mt-2">Main Menu</p>
 
         {LINKS.map((link) => {
@@ -78,7 +78,7 @@ export default function AdminSidebar({ settings, onUpdateBanner }) {
               )}
 
               <div
-                className={`relative flex items-center justify-between px-4 py-3 rounded-xl text-[13px] font-medium transition-all duration-200 ${isActive
+                className={`relative flex items-center justify-between px-4 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-200 ${isActive
                   ? "text-stone-900 font-bold"
                   : "text-stone-500 hover:text-stone-900 hover:bg-stone-100/50"
                   }`}
