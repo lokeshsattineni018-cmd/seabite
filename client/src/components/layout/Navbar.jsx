@@ -497,6 +497,7 @@ export default function Navbar({ announcementActive = false }) {
                   )}
                 </AnimatePresence>
               </div>
+              )}
 
               {/* Notifications */}
               {user && (
