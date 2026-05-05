@@ -352,10 +352,11 @@ export default function Navbar({ announcementActive = false }) {
     iconColor: isTransparent ? "#ffffff" : "#1A2E2C",
     iconHoverBg: isTransparent ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.03)",
     iconHoverColor: isTransparent ? "#ffffff" : "#5BBFB5",
-    pillBg: isTransparent ? "rgba(255,255,255,0.15)" : "#F8FAFB",
-    pillBorder: isTransparent ? "rgba(255,255,255,0.2)" : "#E8EEF2",
+    pillBg: "transparent",
+    pillBorder: "transparent",
     pillName: isTransparent ? "#ffffff" : "#1A2E2C",
-    pillChevron: isTransparent ? "rgba(255,255,255,0.6)" : "#A8C5C0",
+    pillChevron: isTransparent ? "#ffffff" : "#1A2E2C",
+    pillBlur: "none",
   };
 
   const iconBtn = {
@@ -489,7 +490,7 @@ export default function Navbar({ announcementActive = false }) {
                 </motion.button>
               )}
 
-              <motion.button whileTap={{ scale: 0.88 }} onClick={() => navigate(user ? "/wishlist" : "#")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
+              <motion.button whileTap={{ scale: 0.88 }} onClick={() => user ? navigate("/wishlist") : navigate("/login")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
                 <FiHeart size={15} />
                 {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{user.wishlist.length}</span>}
               </motion.button>

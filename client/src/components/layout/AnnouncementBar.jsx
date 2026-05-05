@@ -26,7 +26,7 @@ export default function AnnouncementBar({ settings }) {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     style={{
-                        position: "fixed",
+                        position: "absolute",
                         top: 0,
                         left: 0,
                         right: 0,

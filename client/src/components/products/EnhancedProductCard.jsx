@@ -246,7 +246,7 @@ const EnhancedProductCard = ({
       `}</style>
 
       {/* Image Section */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", overflow: "hidden", background: "#F4F9F8" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", overflow: "hidden" }}>
         <Link to={`/products/${product._id}`} style={{ display: "block", width: "100%", height: "100%" }}>
           <img 
             src={getImageUrl(product.image)} 
@@ -326,30 +326,30 @@ const EnhancedProductCard = ({
           </div>
           
           <motion.button
-            whileHover={{ 
+            whileHover={!isOutOfStock ? { 
               scale: 1.05,
               boxShadow: "0 8px 20px rgba(91,191,181,0.3)"
-            }}
-            whileTap={{ scale: 0.95 }}
+            } : {}}
+            whileTap={!isOutOfStock ? { scale: 0.95 } : {}}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
             style={{
-              background: "#5BBFB5",
-              color: "#fff",
+              background: isOutOfStock ? "#E5E7EB" : "#5BBFB5",
+              color: isOutOfStock ? "#9CA3AF" : "#fff",
               border: "none",
               borderRadius: "10px",
               padding: "8px 18px",
               fontSize: "13px",
               fontWeight: "700",
-              boxShadow: "0 4px 12px rgba(91,191,181,0.2)",
-              cursor: "pointer",
+              boxShadow: isOutOfStock ? "none" : "0 4px 12px rgba(91,191,181,0.2)",
+              cursor: isOutOfStock ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               gap: "6px",
               transition: "all 0.2s ease"
             }}
           >
-            {isAdding ? "..." : (
+            {isAdding ? "..." : isOutOfStock ? "Out of Stock" : (
               <>
                 <motion.span
                   initial={{ x: 0 }}
