@@ -302,13 +302,13 @@ function AppleSection({ children, style: extra, title }) {
     <div style={{
       background: T.surface, borderRadius: 12,
       border: `1px solid ${T.border}`,
-      padding: \"20px 16px\", marginBottom: 12, ...extra,
+      padding: "20px 16px", marginBottom: 12, ...extra,
     }}>
       {title && (
         <h3 style={{ 
-          fontFamily: \"'Sora', sans-serif\", fontSize: 14, fontWeight: 700, 
-          color: T.inkGhost, textTransform: \"uppercase\", letterSpacing: \"0.05em\",
-          margin: \"0 0 16px\" 
+          fontFamily: "'Sora', sans-serif", fontSize: 14, fontWeight: 700, 
+          color: T.inkGhost, textTransform: "uppercase", letterSpacing: "0.05em",
+          margin: "0 0 16px" 
         }}>
           {title}
         </h3>
@@ -1016,7 +1016,7 @@ export default function OrderDetails() {
       </AnimatePresence>
 
       {/* ── Main content ─────────────────────────────────── */}
-      <div style={{ maxWidth: 700, margin: \"0 auto\", padding: \"80px 16px 100px\" }}>
+      <div style={{ maxWidth: 700, margin: "0 auto", padding: "80px 16px 100px" }}>
 
         {/* ── PAGE HEADER ─────────────────────────────── */}
         <motion.div
@@ -1026,7 +1026,7 @@ export default function OrderDetails() {
           transition={{ duration: 0.48, ease: T.ease }}
           style={{ marginBottom: 20 }}
         >
-          <div style={{ display: \"flex\", justifyContent: \"space-between\", alignItems: \"center\" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Link to="/orders" style={{ color: T.ink, textDecoration: "none", display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 600 }}>
               <FiArrowLeft size={18} /> Order Details
             </Link>
@@ -1038,40 +1038,40 @@ export default function OrderDetails() {
 
         {/* ── TOP INFO CARD ── */}
         <AppleSection>
-          <div style={{ display: \"flex\", justifyContent: \"space-between\", alignItems: \"flex-start\" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
             <div>
-              <p style={{ fontSize: 12, color: T.inkSoft, margin: \"0 0 4px\" }}>Order Date</p>
+              <p style={{ fontSize: 12, color: T.inkSoft, margin: "0 0 4px" }}>Order Date</p>
               <p style={{ fontSize: 14, fontWeight: 700, color: T.ink, margin: 0 }}>
-                {new Date(order.createdAt).toLocaleDateString(\"en-GB\", { day: \"numeric\", month: \"long\", year: \"numeric\" })}
+                {new Date(order.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
               </p>
             </div>
-            <div style={{ textAlign: \"right\" }}>
-              <p style={{ fontSize: 12, color: T.inkSoft, margin: \"0 0 4px\" }}>Order Total</p>
+            <div style={{ textAlign: "right" }}>
+              <p style={{ fontSize: 12, color: T.inkSoft, margin: "0 0 4px" }}>Order Total</p>
               <p style={{ fontSize: 16, fontWeight: 800, color: T.ink, margin: 0 }}>₹{order.totalAmount}</p>
             </div>
           </div>
         </AppleSection>
 
         {/* ── ITEMS SECTION ── */}
-        <AppleSection title=\"Items\">
-          <div style={{ display: \"flex\", flexDirection: \"column\", gap: 20 }}>
+        <AppleSection title="Items">
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
             {order.items.map((item, i) => {
               const pid = item.productId?._id || item.productId || item.product?._id || item.product || item._id;
               return (
-                <div key={i} style={{ display: \"flex\", gap: 16, borderBottom: i !== order.items.length - 1 ? `1px solid ${T.border}` : \"none\", paddingBottom: i !== order.items.length - 1 ? 20 : 0 }}>
+                <div key={i} style={{ display: "flex", gap: 16, borderBottom: i !== order.items.length - 1 ? `1px solid ${T.border}` : "none", paddingBottom: i !== order.items.length - 1 ? 20 : 0 }}>
                   <ShimmerImage
-                    src={`${API_URL}/uploads/${item.image?.replace(\"uploads/\", \"\")}`}
+                    src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
                     alt={item.name}
-                    style={{ width: 80, height: 80, borderRadius: 10, objectFit: \"cover\", flexShrink: 0 }}
+                    style={{ width: 80, height: 80, borderRadius: 10, objectFit: "cover", flexShrink: 0 }}
                   />
-                  <div style={{ flex: 1, display: \"flex\", flexDirection: \"column\", justifyContent: \"space-between\" }}>
+                  <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                     <div>
-                      <Link to={`/products/${pid}`} style={{ textDecoration: \"none\" }}>
-                        <p style={{ fontSize: 14, fontWeight: 700, color: T.ink, margin: \"0 0 4px\", lineHeight: 1.4 }}>{item.name}</p>
+                      <Link to={`/products/${pid}`} style={{ textDecoration: "none" }}>
+                        <p style={{ fontSize: 14, fontWeight: 700, color: T.ink, margin: "0 0 4px", lineHeight: 1.4 }}>{item.name}</p>
                       </Link>
                       <p style={{ fontSize: 12, color: T.inkSoft, margin: 0 }}>Qty: {item.qty} × ₹{item.price}</p>
                     </div>
-                    <div style={{ display: \"flex\", justifyContent: \"space-between\", alignItems: \"center\", marginTop: 8 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
                        <span style={{ fontSize: 15, fontWeight: 800, color: T.ink }}>₹{item.qty * item.price}</span>
                        {delivered && (
                          <button onClick={() => openReview(item)} style={{ background: "transparent", border: "none", color: T.teal, fontSize: 12, fontWeight: 700, cursor: "pointer", padding: 0 }}>
@@ -1108,7 +1108,7 @@ export default function OrderDetails() {
         )}
         )}
 
-        {/* ── SHIPPING \u0026 PAYMENT ── */}
+        {/* ── SHIPPING & PAYMENT ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 0 }}>
           <AppleSection title="Shipping Details">
             <p style={{ fontSize: 14, fontWeight: 700, color: T.ink, margin: "0 0 4px" }}>{order.shippingAddress?.fullName}</p>
