@@ -411,7 +411,7 @@ export default function Navbar({ announcementActive = false }) {
           <div className="hidden-mobile" style={{ width: "100%", display: "flex", alignItems: "center" }}>
             <div style={{ marginRight: "36px", flexShrink: 0 }}>
               <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-                <img src="/logo.png" alt="SeaBite" style={{ height: "64px", width: "auto" }} />
+                <img src="/logo.png" alt="SeaBite" style={{ height: "76px", width: "auto" }} />
               </Link>
             </div>
 
@@ -438,6 +438,9 @@ export default function Navbar({ announcementActive = false }) {
               </div>
               <Link to="/about" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>About</Link>
               <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>Orders</Link>
+              {user?.role === "admin" && (
+                <Link to="/admin/dashboard" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: "#5BBFB5" }}>Admin</Link>
+              )}
 
             </div>
 
@@ -600,7 +603,7 @@ export default function Navbar({ announcementActive = false }) {
                 src="/logo.png" 
                 alt="SeaBite" 
                 style={{ 
-                  height: "40px", width: "auto", 
+                  height: "54px", width: "auto", 
                   transition: "all 0.3s ease"
                 }} 
               />
@@ -785,7 +788,7 @@ export default function Navbar({ announcementActive = false }) {
             >
               {/* Header */}
               <div style={{ padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f0f0f0", flexShrink: 0 }}>
-                <img src="/logo.png" style={{ height: "36px" }} alt="SeaBite" />
+                <img src="/logo.png" style={{ height: "44px" }} alt="SeaBite" />
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setMobileOpen(false)}
@@ -812,6 +815,11 @@ export default function Navbar({ announcementActive = false }) {
                       <Link to="/wishlist" onClick={() => setMobileOpen(false)} style={{ padding: "11px 12px", fontSize: "15px", fontWeight: "600", color: "#111", textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", borderRadius: "10px" }}>
                         <FiHeart size={17} color="#5BBFB5" /> Wishlist
                       </Link>
+                      {user.role === "admin" && (
+                        <Link to="/admin/dashboard" onClick={() => setMobileOpen(false)} style={{ padding: "11px 12px", fontSize: "15px", fontWeight: "800", color: "#5BBFB5", textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", borderRadius: "10px", background: "#f0fdf4", border: "1px solid #dcfce7", marginTop: "4px" }}>
+                          <FiGrid size={17} /> Command Center
+                        </Link>
+                      )}
                     </>
                   ) : (
                     <button
