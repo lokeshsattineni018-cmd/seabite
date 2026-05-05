@@ -243,15 +243,19 @@ const DETAIL_CSS = `
   @media (max-width: 800px) {
     .lx-desktop-only { display: none !important; }
     .lx-mobile-only { display: block !important; }
-    .lx-row-to-col { flex-direction: column !important; }
-    .lx-main-content { padding: 64px 0 40px !important; }
-    .lx-apple-section { padding: 20px 16px !important; margin-bottom: 10px !important; border-radius: 0 !important; border-left: none !important; border-right: none !important; }
-    .lx-horizontal-tracker { min-width: 100% !important; padding: 10px 4px !important; }
+    .lx-row-to-col { flex-direction: column !important; gap: 12px !important; }
+    .lx-main-content { padding: 48px 0 40px !important; width: 100% !important; overflow-x: hidden !important; }
+    .lx-apple-section { padding: 16px !important; margin-bottom: 8px !important; border-radius: 0 !important; border-left: none !important; border-right: none !important; border-top: 1px solid #f0f0f0 !important; border-bottom: 1px solid #f0f0f0 !important; box-shadow: none !important; width: 100% !important; }
+    .lx-horizontal-tracker { min-width: 0 !important; width: 100% !important; padding: 10px 0 !important; }
     .lx-tracker-label { font-size: 8px !important; line-height: 1.1 !important; margin-top: 6px !important; }
     .lx-header-content { padding: 0 16px !important; }
+    .lx-col-gap { width: 100% !important; min-width: 0 !important; flex: none !important; gap: 8px !important; }
+    .lx-sticky-mobile-bottom { position: static !important; }
+    html, body { overflow-x: hidden !important; width: 100% !important; position: relative !important; }
   }
   @media (min-width: 801px) {
     .lx-mobile-only { display: none !important; }
+    .lx-horizontal-tracker { min-width: 600px; }
   }
 `;
 
@@ -322,7 +326,7 @@ function HorizontalTracker({ currentStepIndex, reduced }) {
   return (
     <div role="list" aria-label="Order progress"
       className="lx-horizontal-tracker"
-      style={{ display: "flex", justifyContent: "space-between", position: "relative", minWidth: 600, padding: "10px 0" }}>
+      style={{ display: "flex", justifyContent: "space-between", position: "relative", padding: "10px 0" }}>
 
       {/* Track rail */}
       <div aria-hidden="true" style={{
@@ -501,7 +505,7 @@ function VerticalTracker({ currentStepIndex, order, reduced }) {
 // ─────────────────────────────────────────────────────────────
 // QUALITY COMPLAINT MODAL
 // ─────────────────────────────────────────────────────────────
-function QualityComplaintModal({ order, onClose }) {
+function QualityComplaintModal({ order, onClose, onSuccess }) {
   const [issueType, setIssueType] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -522,9 +526,8 @@ function QualityComplaintModal({ order, onClose }) {
         { withCredentials: true }
       );
       toast.success("Issue reported — we'll respond within 24 hours.");
+      onSuccess?.();
       onClose();
-      // Force refresh to show the new complaint
-      setTimeout(() => window.location.reload(), 1000);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to submit. Please try again.");
     } finally {
@@ -1010,11 +1013,23 @@ export default function OrderDetails() {
         }}
       />
       <AnimatePresence>
-        {complaintOpen && <QualityComplaintModal order={order} onClose={() => setComplaintOpen(false)} />}
+        {complaintOpen && (
+          <QualityComplaintModal 
+            order={order} 
+            onClose={() => setComplaintOpen(false)} 
+            onSuccess={() => {
+              // Re-fetch order to refresh the complaints list
+              setLoading(true);
+              axios.get(`${API_URL}/api/orders/${order._id || order.orderId}`, { withCredentials: true })
+                .then(res => setOrder(res.data))
+                .finally(() => setLoading(false));
+            }}
+          />
+        )}
       </AnimatePresence>
 
       {/* ── Main content ─────────────────────────────────── */}
-      <div className="lx-main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 24px 72px" }}>
+      <div className="lx-main-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "96px 24px 72px", width: "100%", boxSizing: "border-box" }}>
 
         {/* ── PAGE HEADER ─────────────────────────────── */}
         <motion.div
@@ -1024,18 +1039,7 @@ export default function OrderDetails() {
           transition={{ duration: 0.48, ease: T.ease }}
           style={{ marginBottom: 28 }}
         >
-          <Link
-            to="/orders"
-            className="lx-focus lx-header-content"
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 7,
-              color: T.inkSoft, textDecoration: "none",
-              fontSize: 13, fontWeight: 500, marginBottom: 18,
-            }}
-          >
-            <FiArrowLeft size={13} aria-hidden="true" />
-            Back to Orders
-          </Link>
+
 
           <div className="lx-header-content" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 14 }}>
             <div>
@@ -1087,9 +1091,9 @@ export default function OrderDetails() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.48, delay: 0.18, ease: T.ease }}
           className="lx-row-to-col"
-          style={{ display: "flex", flexDirection: "row", gap: 32, alignItems: "flex-start", flexWrap: "wrap" }}
+          style={{ display: "flex", flexDirection: "row", gap: 32, alignItems: "flex-start" }}
         >
-          {/* ── LEFT COLUMN ────────────────────────── */}
+          {/* ── LEFT COLUMN (Main details) ── */}
           <div className="lx-col-gap" style={{ flex: "1 1 60%", minWidth: 320, display: "flex", flexDirection: "column", gap: 32 }}>
 
             {/* ── Cancelled Banner (replaces tracker) ── */}
@@ -1190,7 +1194,12 @@ export default function OrderDetails() {
                 )}
 
                 <div style={{ paddingBottom: 10, width: "100%" }}>
-                  <HorizontalTracker currentStepIndex={stepIdx} reduced={reduced} />
+                  <div className="lx-desktop-only">
+                    <HorizontalTracker currentStepIndex={stepIdx} reduced={reduced} />
+                  </div>
+                  <div className="lx-mobile-only">
+                    <VerticalTracker currentStepIndex={stepIdx} order={order} reduced={reduced} />
+                  </div>
                 </div>
 
                 {/* ── Live Delivery Map ── */}
@@ -1310,55 +1319,14 @@ export default function OrderDetails() {
               </AppleSection>
             )}
 
-            <AppleSection>
-              {/* Action Buttons Group */}
-              <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24, paddingBottom: 24, borderBottom: `1px solid ${T.border}` }}>
-                {(delivered || cancelled) && (
-                  <HeaderBtn
-                    icon={reordering ? <Spinner size={13} /> : <FiShoppingCart size={13} />}
-                    label="Reorder"
-                    onClick={handleReorder}
-                    disabled={reordering}
-                    primary={true}
-                  />
-                )}
-                {delivered && (
-                  <HeaderBtn
-                    icon={<FiAlertCircle size={13} />}
-                    label="Report Issue"
-                    onClick={() => setComplaintOpen(true)}
-                  />
-                )}
-                <HeaderBtn
-                  icon={<FiDownload size={13} />}
-                  label="Invoice"
-                  onClick={() => generateInvoicePDF(order)}
-                />
-                {canCancel && (
-                  <HeaderBtn
-                    icon={<FiXCircle size={13} />}
-                    label="Cancel"
-                    onClick={() => setCancelOpen(true)}
-                  />
-                )}
-              </div>
+            {/* In mobile, we want summary to be prominent - putting it near the top for visibility or at the bottom? User said make it full. */}
+            <div className="lx-mobile-only">
+              <SummaryCard order={order} canCancel={canCancel} reordering={reordering} handleReorder={handleReorder} setComplaintOpen={setComplaintOpen} setCancelOpen={setCancelOpen} />
+            </div>
 
-              {/* Price breakdown */}
-              <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink, margin: "0 0 16px" }}>Order Summary</h3>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <PriceRow label="Subtotal" value={`₹${order.itemsPrice || (order.items || []).reduce((acc, item) => acc + ((item.price || 0) * (item.qty || 0)), 0).toFixed(2)}`} />
-                <PriceRow
-                  label="Shipping"
-                  value={order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000) ? "Free" : `₹${order.shippingPrice || 99}`}
-                  color={(order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000)) ? T.jade : undefined}
-                />
-                <PriceRow label="Tax" value={`₹${order.taxPrice || Math.round(((order.itemsPrice || 0) - (order.discount || 0)) * 0.05)}`} />
-                {order.discount > 0 && (
-                  <PriceRow label="Discount" value={`-₹${order.discount}`} color={T.teal} />
-                )}
-                <PriceRow label="Total" value={`₹${order.totalAmount}`} bold borderTop />
-              </div>
-            </AppleSection>
+            <div className="lx-desktop-only">
+               <SummaryCard order={order} canCancel={canCancel} reordering={reordering} handleReorder={handleReorder} setComplaintOpen={setComplaintOpen} setCancelOpen={setCancelOpen} />
+            </div>
 
             {/* Delivery address */}
             <AppleSection>
@@ -1566,6 +1534,66 @@ export default function OrderDetails() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// SUMMARY CARD — reusable pricing and actions card
+// ─────────────────────────────────────────────────────────────
+function SummaryCard({ order, canCancel, reordering, handleReorder, setComplaintOpen, setCancelOpen }) {
+  const delivered = order.status === "Delivered";
+  const cancelled = order.status.includes("Cancelled");
+
+  return (
+    <AppleSection>
+      {/* Action Buttons Group */}
+      <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 24, paddingBottom: 24, borderBottom: `1px solid ${T.border}` }}>
+        {(delivered || cancelled) && (
+          <HeaderBtn
+            icon={reordering ? <Spinner size={13} /> : <FiShoppingCart size={13} />}
+            label="Reorder"
+            onClick={handleReorder}
+            disabled={reordering}
+            primary={true}
+          />
+        )}
+        {delivered && (
+          <HeaderBtn
+            icon={<FiAlertCircle size={13} />}
+            label="Report Issue"
+            onClick={() => setComplaintOpen(true)}
+          />
+        )}
+        <HeaderBtn
+          icon={<FiDownload size={13} />}
+          label="Invoice"
+          onClick={() => generateInvoicePDF(order)}
+        />
+        {canCancel && (
+          <HeaderBtn
+            icon={<FiXCircle size={13} />}
+            label="Cancel"
+            onClick={() => setCancelOpen(true)}
+          />
+        )}
+      </div>
+
+      {/* Price breakdown */}
+      <h3 style={{ fontFamily: "'Sora', sans-serif", fontSize: 16, fontWeight: 700, color: T.ink, margin: "0 0 16px" }}>Order Summary</h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <PriceRow label="Subtotal" value={`₹${order.itemsPrice || (order.items || []).reduce((acc, item) => acc + ((item.price || 0) * (item.qty || 0)), 0).toFixed(2)}`} />
+        <PriceRow
+          label="Shipping"
+          value={order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000) ? "Free" : `₹${order.shippingPrice || 99}`}
+          color={(order.shippingPrice === 0 || (!order.shippingPrice && (order.itemsPrice || 0) >= 1000)) ? T.jade : undefined}
+        />
+        <PriceRow label="Tax" value={`₹${order.taxPrice || Math.round(((order.itemsPrice || 0) - (order.discount || 0)) * 0.05)}`} />
+        {order.discount > 0 && (
+          <PriceRow label="Discount" value={`-₹${order.discount}`} color={T.teal} />
+        )}
+        <PriceRow label="Total" value={`₹${order.totalAmount}`} bold borderTop />
+      </div>
+    </AppleSection>
   );
 }
 

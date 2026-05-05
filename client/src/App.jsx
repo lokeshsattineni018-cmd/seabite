@@ -204,7 +204,7 @@ function MainLayout() {
       />
 
       {/* 🟢 Global Announcement (Rolling Ticker) */}
-      <AnnouncementBar settings={announcement} />
+      {!isAdminRoute && <AnnouncementBar settings={announcement} />}
 
       {/* 🟢 Global Popup Banner */}
       <BannerPopup bannerSettings={maintenance.banner} />
