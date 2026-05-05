@@ -416,48 +416,32 @@ export default function Navbar({ announcementActive = false }) {
               </Link>
             </div>
 
-            <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "28px", marginLeft: "48px" }}>
-              {isOrderDetails ? (
-                <button 
-                  onClick={() => navigate("/orders")}
-                  className="nav-ul" 
-                  style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", border: "1.5px solid #E2EEEC", background: "#F4F9F8", borderRadius: "12px", fontSize: "13.5px", fontWeight: "800", color: "#5BBFB5", cursor: "pointer", transition: "all 0.2s" }}
-                >
-                  <FiArrowLeft size={16} /> BACK TO ORDERS
+            <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ position: "relative" }} onMouseEnter={() => setShowShop(true)} onMouseLeave={() => setShowShop(false)}>
+                <button className="nav-ul" style={{ display: "flex", alignItems: "center", gap: "4px", padding: "6px 12px", border: "none", background: "none", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  Shop <FiChevronDown size={12} style={{ transform: showShop ? "rotate(180deg)" : "none", transition: "all 0.22s" }} />
                 </button>
-              ) : (
-                <>
-                  <div style={{ position: "relative" }} onMouseEnter={() => setShowShop(true)} onMouseLeave={() => setShowShop(false)}>
-                    <button className="nav-ul" style={{ display: "flex", alignItems: "center", gap: "4px", padding: "6px 12px", border: "none", background: "none", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                      Shop <FiChevronDown size={12} style={{ transform: showShop ? "rotate(180deg)" : "none", transition: "all 0.22s" }} />
-                    </button>
-                    <AnimatePresence>
-                      {showShop && (
-                        <motion.div 
-                          className="dropdown-bridge"
-                          initial={{ opacity: 0, y: -8, scale: 0.97 }} 
-                          animate={{ opacity: 1, y: 0, scale: 1 }} 
-                          exit={{ opacity: 0, y: -8, scale: 0.97 }} 
-                          style={{ position: "absolute", top: "calc(100% + 5px)", left: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", padding: "5px", minWidth: "170px", zIndex: 200, boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}
-                        >
-                          {NAV_LINKS.map(link => (
-                            <button key={link.path} className="dd-item" onClick={() => { navigate(link.path); setShowShop(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 13px", border: "none", background: "none", borderRadius: "9px", fontSize: "13.5px", fontWeight: "600", color: "#1A2E2C", cursor: "pointer" }}>{link.label}</button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                  <Link to="/about" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>About</Link>
-                  <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>Orders</Link>
-                  {user?.role === "admin" && (
-                    <Link to="/admin/dashboard" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: "#5BBFB5" }}>Admin</Link>
+                <AnimatePresence>
+                  {showShop && (
+                    <motion.div 
+                      className="dropdown-bridge"
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }} 
+                      animate={{ opacity: 1, y: 0, scale: 1 }} 
+                      exit={{ opacity: 0, y: -8, scale: 0.97 }} 
+                      style={{ position: "absolute", top: "calc(100% + 5px)", left: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", padding: "5px", minWidth: "170px", zIndex: 200, boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}
+                    >
+                      {NAV_LINKS.map(link => (
+                        <button key={link.path} className="dd-item" onClick={() => { navigate(link.path); setShowShop(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 13px", border: "none", background: "none", borderRadius: "9px", fontSize: "13.5px", fontWeight: "600", color: "#1A2E2C", cursor: "pointer" }}>{link.label}</button>
+                      ))}
+                    </motion.div>
                   )}
-                </>
-              )}
+                </AnimatePresence>
+              </div>
+              <Link to="/about" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>About</Link>
+              <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>Orders</Link>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
-              {!isOrderDetails && (
               <div style={{ position: "relative" }}>
                 <AnimatePresence>
                   {searchExpanded ? (
@@ -497,7 +481,6 @@ export default function Navbar({ announcementActive = false }) {
                   )}
                 </AnimatePresence>
               </div>
-              )}
 
               {/* Notifications */}
               {user && (
@@ -597,29 +580,18 @@ export default function Navbar({ announcementActive = false }) {
             position: "relative"
           }}
         >
-          {/* Left: Hamburger or Back */}
-          {isOrderDetails ? (
-            <motion.button 
-              whileTap={{ scale: 0.92 }} 
-              onClick={() => navigate("/orders")} 
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "0 16px", height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "8px" }}
-            >
-              <FiArrowLeft size={22} color={isTransparent ? "#fff" : "#000"} />
-              <span style={{ fontSize: "14px", fontWeight: "800", color: isTransparent ? "#fff" : "#000", textTransform: "uppercase", letterSpacing: "0.05em" }}>Orders</span>
-            </motion.button>
-          ) : (
-            <motion.button 
-              whileTap={{ scale: 0.9 }} 
-              onClick={() => setMobileOpen(true)} 
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "0 12px", height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start" }}
-            >
-              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
-                <div style={{ width: "12px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
-                <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
-              </div>
-            </motion.button>
-          )}
+          {/* Left: Hamburger */}
+          <motion.button 
+            whileTap={{ scale: 0.9 }} 
+            onClick={() => setMobileOpen(true)} 
+            style={{ background: "none", border: "none", cursor: "pointer", padding: "0 12px", height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start" }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+              <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+              <div style={{ width: "12px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+              <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+            </div>
+          </motion.button>
 
           {/* Center: Big Logo */}
           <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", pointerEvents: "none" }}>
@@ -840,11 +812,7 @@ export default function Navbar({ announcementActive = false }) {
                       <Link to="/wishlist" onClick={() => setMobileOpen(false)} style={{ padding: "11px 12px", fontSize: "15px", fontWeight: "600", color: "#111", textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", borderRadius: "10px" }}>
                         <FiHeart size={17} color="#5BBFB5" /> Wishlist
                       </Link>
-                      {user.role === "admin" && (
-                        <Link to="/admin/dashboard" onClick={() => setMobileOpen(false)} style={{ padding: "11px 12px", fontSize: "15px", fontWeight: "800", color: "#5BBFB5", textDecoration: "none", display: "flex", alignItems: "center", gap: "12px", borderRadius: "10px", background: "#f0fdf4", border: "1px solid #dcfce7", marginTop: "4px" }}>
-                          <FiGrid size={17} /> Command Center
-                        </Link>
-                      )}
+
                     </>
                   ) : (
                     <button
