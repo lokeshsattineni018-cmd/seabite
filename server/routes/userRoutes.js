@@ -1,4 +1,5 @@
 import express from "express";
+import mongoose from "mongoose";
 import User from "../models/User.js";
 import { protect } from "../middleware/authMiddleware.js";
 import Product from "../models/Product.js";
@@ -16,8 +17,14 @@ router.post("/wishlist/:id", protect, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         const productId = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({ message: "Invalid Product ID" });
+        }
 
         if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Ensure wishlist exists
+        if (!user.wishlist) user.wishlist = [];
 
         const isWishlisted = user.wishlist.some(id => id.toString() === productId);
 

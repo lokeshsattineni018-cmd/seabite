@@ -1,7 +1,7 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, ShoppingBag, ShoppingCart, User, Search, X, Zap, Heart, Bell, CreditCard, Settings, ChevronRight } from "lucide-react";
+import { Home, ShoppingBag, ShoppingCart, User, Search, X, Zap, Heart, Bell, CreditCard, Settings, ChevronRight, LayoutDashboard } from "lucide-react";
 import { FiLogOut, FiArrowRight } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext, useAuth } from "../../context/AuthContext";
@@ -19,11 +19,11 @@ const MobileNav = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
 
-  const navItems = [
     { id: "home", label: "Home", path: "/", icon: Home },
     { id: "shop", label: "Shop", path: "/products", icon: ShoppingBag },
     { id: "search", label: "Find", onClick: () => setShowSearch(true), icon: Search },
     { id: "cart", label: "Cart", onClick: () => setIsCartOpen(true), icon: ShoppingCart, isCart: true },
+    ...(user?.role === "admin" ? [{ id: "admin", label: "Admin", path: "/admin", icon: LayoutDashboard }] : []),
     { id: "menu", label: "Me", onClick: () => setShowProfileMenu(true), icon: User }
   ];
 
