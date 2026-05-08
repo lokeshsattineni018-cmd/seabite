@@ -14,6 +14,16 @@ const BRAND_PRIMARY = "#1A2E2C"; // Primary Sea
 const BRAND_ACCENT = "#F07468"; // Accent Fresh
 const BRAND_TEXT = "#374151"; // Grayscale Text
 const BRAND_BG = "#F9FAFB"; // Grayscale Background
+const API_URL = process.env.VITE_API_URL || "https://seabite.co.in";
+
+const getEmailImageUrl = (path) => {
+  if (!path) return "https://placehold.co/400?text=No+Image";
+  if (path.startsWith("http")) return path;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return cleanPath.startsWith("/uploads")
+    ? `${API_URL}${cleanPath}`
+    : `${API_URL}/uploads${cleanPath}`;
+};
 
 const aestheticWrapper = (content, subtitle, isMarketing = false) => `
   <!DOCTYPE html>
@@ -47,14 +57,12 @@ const aestheticWrapper = (content, subtitle, isMarketing = false) => `
         <!-- Footer -->
         <tr>
           <td style="padding: 40px; background-color: #f3f4f6; text-align: center; border-top: 1px solid #e5e7eb;">
-            <div style="margin-bottom: 24px;">
-              <a href="https://instagram.com/seabite" style="margin: 0 10px; text-decoration: none; color: ${BRAND_PRIMARY}; font-weight: 600; font-size: 13px;">Instagram</a>
-              <a href="https://twitter.com/seabite" style="margin: 0 10px; text-decoration: none; color: ${BRAND_PRIMARY}; font-weight: 600; font-size: 13px;">Twitter</a>
-              <a href="https://facebook.com/seabite" style="margin: 0 10px; text-decoration: none; color: ${BRAND_PRIMARY}; font-weight: 600; font-size: 13px;">Facebook</a>
+            <div style="margin-bottom: 24px; color: ${BRAND_PRIMARY}; font-weight: 700; font-size: 14px; letter-spacing: 1px; text-transform: uppercase;">
+              Premium Quality &bull; Hand Selected
             </div>
             <div style="font-size: 12px; color: #6b7280; line-height: 1.5;">
               SeaBite India &bull; The Art of Freshness<br>
-              123 Coastal Road, Vizag, AP, India<br><br>
+              Beach Road, Visakhapatnam, Andhra Pradesh 530001, India<br><br>
               &copy; 2026 SeaBite. All rights reserved.<br>
               <a href="https://seabite.co.in/unsubscribe" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a>
             </div>
@@ -104,11 +112,14 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
   const isCOD = paymentMethod === "COD";
   const itemRows = items.map(item => `
     <tr>
-      <td style="padding: 20px 0; border-bottom: 1px solid #1e293b;">
-        <div style="color: #f8fafc; font-weight: 500;">${item.name}</div>
-        <div style="font-size: 12px; color: #64748b;">QUANTITY: ${item.qty}</div>
+      <td style="padding: 20px 0; border-bottom: 1px solid #e5e7eb; width: 60px;">
+        <img src="${getEmailImageUrl(item.image)}" width="50" height="50" style="border-radius: 8px; object-fit: cover; display: block; border: 1px solid #f3f4f6;">
       </td>
-      <td style="padding: 20px 0; text-align: right; border-bottom: 1px solid #1e293b; color: #38bdf8; font-weight: 600;">₹${(item.price * item.qty).toLocaleString()}</td>
+      <td style="padding: 20px 12px; border-bottom: 1px solid #e5e7eb;">
+        <div style="color: ${BRAND_PRIMARY}; font-weight: 700; font-size: 15px;">${item.name}</div>
+        <div style="font-size: 12px; color: #6b7280; font-weight: 500;">QTY: ${item.qty} &bull; ₹${item.price}</div>
+      </td>
+      <td style="padding: 20px 0; text-align: right; border-bottom: 1px solid #e5e7eb; color: ${BRAND_PRIMARY}; font-weight: 800; font-size: 15px;">₹${(item.price * item.qty).toLocaleString()}</td>
     </tr>
   `).join('');
 
