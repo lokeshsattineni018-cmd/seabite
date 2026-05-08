@@ -335,25 +335,28 @@ export const sendEmail = async (to, subject, content) => {
 /**
  * 🟢 8. AUTOMATION: ABANDONED CART RECOVERY
  */
+/**
+ * 🟢 8. AUTOMATION: ABANDONED CART RECOVERY
+ */
 export const sendAbandonedCartEmail = async (email, name, cartItems) => {
   if (!resend) return;
 
   const content = `
-    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
-      You Left Something <span style="color: #38bdf8;">Behind!</span>
+    <h1 style="color: ${BRAND_PRIMARY}; font-size: 26px; font-weight: 700; margin-bottom: 16px;">
+      You Left Something Behind!
     </h1>
-    <p style="margin-bottom: 25px;">
+    <p style="margin-bottom: 24px; color: ${BRAND_TEXT};">
       Hello <b>${name}</b>, we noticed you left some premium catch in your cart. 
       Our fresh supply is limited and moves fast. Secure your order before it's gone!
     </p>
 
-    <div style="background: rgba(56, 189, 248, 0.1); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(56, 189, 248, 0.3);">
-      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">YOUR CART CONTAINS</div>
-      <div style="color: #f8fafc; font-weight: 500;">${cartItems.length} items waiting for you.</div>
+    <div style="background-color: ${BRAND_BG}; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: center; border: 1px solid #e5e7eb;">
+      <div style="font-size: 11px; color: #6b7280; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">YOUR CART CONTAINS</div>
+      <div style="color: ${BRAND_PRIMARY}; font-weight: 700; font-size: 18px;">${cartItems.length} items waiting for you.</div>
     </div>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in/cart" style="background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; letter-spacing: 1px;">RETURN TO CART</a>
+      <a href="https://seabite.co.in/cart" class="cta-button" style="background-color: ${BRAND_ACCENT}; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; display: block; font-size: 16px; letter-spacing: 0.5px;">RETURN TO CART</a>
     </div>
   `;
 
@@ -372,26 +375,26 @@ export const sendWinBackEmail = async (email, name, couponCode) => {
   if (!resend) return;
 
   const content = `
-    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
-      We Miss <span style="color: #38bdf8;">You!</span>
+    <h1 style="color: ${BRAND_PRIMARY}; font-size: 26px; font-weight: 700; margin-bottom: 16px;">
+      We Miss You!
     </h1>
-    <p style="margin-bottom: 25px;">
+    <p style="margin-bottom: 24px; color: ${BRAND_TEXT};">
       Hello <b>${name}</b>, it's been a while since we've seen you. 
       The ocean has brought in some incredible catches lately, and we'd love for you to taste them.
     </p>
 
-    <div style="background: rgba(56, 189, 248, 0.1); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(56, 189, 248, 0.3);">
-      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">YOUR EXCLUSIVE GIFT</div>
-      <div style="font-size: 32px; font-weight: 700; color: #38bdf8; letter-spacing: 2px;">${couponCode}</div>
-      <div style="font-size: 12px; color: #cbd5e1; margin-top: 10px;">15% OFF • Valid for 48 Hours</div>
+    <div style="background-color: ${BRAND_BG}; border-radius: 12px; padding: 32px; margin-bottom: 32px; text-align: center; border: 1px solid #e5e7eb;">
+      <div style="font-size: 11px; color: #6b7280; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;">YOUR EXCLUSIVE GIFT</div>
+      <div style="font-size: 32px; font-weight: 800; color: ${BRAND_ACCENT}; letter-spacing: 4px;">${couponCode}</div>
+      <div style="font-size: 13px; color: ${BRAND_TEXT}; font-weight: 600; margin-top: 12px;">15% OFF &bull; Valid for 48 Hours</div>
     </div>
 
-    <p style="font-size: 14px; text-align: center; color: #94a3b8; margin-bottom: 30px;">
+    <p style="font-size: 14px; text-align: center; color: #6b7280; margin-bottom: 32px;">
       This code is linked to your account and cannot be transferred.
     </p>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in" style="background: #38bdf8; color: #020617; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; letter-spacing: 1px;">CLAIM OFFER</a>
+      <a href="https://seabite.co.in" class="cta-button" style="background-color: ${BRAND_ACCENT}; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; display: block; font-size: 16px; letter-spacing: 0.5px;">CLAIM OFFER</a>
     </div>
   `;
 
@@ -403,32 +406,32 @@ export const sendWinBackEmail = async (email, name, couponCode) => {
   });
 };
 
-/**
+/**/**
  * 🟢 10. LOYALTY: SEABITE CASH CREDIT
  */
 export const sendLoyaltyCreditEmail = async (email, name, amount, reason) => {
   if (!resend) return;
 
   const content = `
-    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
-      You've Earned <span style="color: #10b981;">SeaBite Cash!</span>
+    <h1 style="color: ${BRAND_PRIMARY}; font-size: 26px; font-weight: 700; margin-bottom: 16px;">
+      You've Earned SeaBite Cash!
     </h1>
-    <p style="margin-bottom: 25px;">
+    <p style="margin-bottom: 24px; color: ${BRAND_TEXT};">
       Hello <b>${name}</b>, your loyalty has been rewarded. We've credited your account with <b>₹${amount}</b> in SeaBite Cash.
     </p>
 
-    <div style="background: rgba(16, 185, 129, 0.1); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(16, 185, 129, 0.3);">
-      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">CREDIT DETAILS</div>
-      <div style="font-size: 32px; font-weight: 700; color: #10b981; letter-spacing: 2px;">+ ₹${amount}</div>
-      <div style="font-size: 12px; color: #cbd5e1; margin-top: 10px;">REASON: ${reason}</div>
+    <div style="background-color: ${BRAND_BG}; border-radius: 12px; padding: 32px; margin-bottom: 32px; text-align: center; border: 1px solid #e5e7eb;">
+      <div style="font-size: 11px; color: #6b7280; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;">CREDIT DETAILS</div>
+      <div style="font-size: 32px; font-weight: 800; color: #10b981; letter-spacing: 2px;">+ ₹${amount}</div>
+      <div style="font-size: 13px; color: ${BRAND_TEXT}; font-weight: 600; margin-top: 12px;">REASON: ${reason}</div>
     </div>
 
-    <p style="font-size: 14px; text-align: center; color: #94a3b8; margin-bottom: 30px;">
+    <p style="font-size: 14px; text-align: center; color: #6b7280; margin-bottom: 32px;">
       Use this balance on your next order for an instant discount. No minimum order required.
     </p>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in/profile" style="background: #10b981; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; letter-spacing: 1px;">VIEW BALANCE</a>
+      <a href="https://seabite.co.in/profile" class="cta-button" style="background-color: ${BRAND_ACCENT}; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; display: block; font-size: 16px; letter-spacing: 0.5px;">VIEW BALANCE</a>
     </div>
   `;
 
@@ -447,20 +450,20 @@ export const sendInventoryAlertEmail = async (adminEmail, productName, stockCoun
   if (!resend) return;
 
   const content = `
-    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
-      Inventory <span style="color: #f43f5e;">Alert</span>
+    <h1 style="color: ${BRAND_PRIMARY}; font-size: 26px; font-weight: 700; margin-bottom: 16px;">
+      Inventory Alert
     </h1>
-    <p style="margin-bottom: 25px;">
+    <p style="margin-bottom: 24px; color: ${BRAND_TEXT};">
       Critical alert for product: <b>${productName}</b>. Stock levels have dropped below the safety threshold.
     </p>
 
-    <div style="background: rgba(244, 63, 94, 0.1); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid rgba(244, 63, 94, 0.3);">
-      <div style="font-size: 11px; color: #94a3b8; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">CURRENT STOCK</div>
-      <div style="font-size: 32px; font-weight: 700; color: #f43f5e; letter-spacing: 2px;">${stockCount} UNITS</div>
+    <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; padding: 32px; margin-bottom: 32px; text-align: center;">
+      <div style="font-size: 11px; color: #be123c; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;">CURRENT STOCK</div>
+      <div style="font-size: 32px; font-weight: 800; color: #e11d48; letter-spacing: 2px;">${stockCount} UNITS</div>
     </div>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in/admin/products" style="background: #f43f5e; color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; letter-spacing: 1px;">RESTOCK NOW</a>
+      <a href="https://seabite.co.in/admin/products" class="cta-button" style="background-color: ${BRAND_ACCENT}; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; display: block; font-size: 16px; letter-spacing: 0.5px;">RESTOCK NOW</a>
     </div>
   `;
 
@@ -469,5 +472,40 @@ export const sendInventoryAlertEmail = async (adminEmail, productName, stockCoun
     to: adminEmail,
     subject: `⚠️ INVENTORY ALERT: ${productName} (${stockCount} left)`,
     html: aestheticWrapper(content, "SYSTEM ALERT")
+  });
+};
+
+/**
+ * 🟢 12. DYNAMIC: LOW STOCK ALERT (Consumer Facing)
+ */
+export const sendLowStockAlert = async (email, name, product) => {
+  if (!resend) return;
+
+  const content = `
+    <div style="text-align: center; margin-bottom: 24px;">
+      <img src="https://cdn-icons-png.flaticon.com/512/564/564619.png" width="48" alt="Urgent" style="opacity: 0.8;">
+    </div>
+    <h1 style="color: ${BRAND_PRIMARY}; font-size: 26px; font-weight: 700; margin-bottom: 16px; text-align: center;">
+      Almost Gone!
+    </h1>
+    <p style="margin-bottom: 24px; color: ${BRAND_TEXT}; text-align: center;">
+      Hi ${name}, the <b>${product.name}</b> you viewed is running extremely low on stock. 
+    </p>
+    
+    <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 12px; padding: 24px; margin-bottom: 32px; text-align: center;">
+      <div style="color: #e11d48; font-weight: 800; font-size: 18px; margin-bottom: 4px;">ONLY ${product.countInStock} LEFT IN STOCK</div>
+      <div style="color: #9f1239; font-size: 13px; font-weight: 600;">Secure yours before it's completely sold out.</div>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="https://seabite.co.in/products/${product._id}" class="cta-button" style="background-color: ${BRAND_ACCENT}; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; display: block; font-size: 16px; letter-spacing: 0.5px;">CLAIM MINE NOW</a>
+    </div>
+  `;
+
+  return await resend.emails.send({
+    from: OFFICIAL_SENDER,
+    to: email,
+    subject: `Hurry! Only ${product.countInStock} left of ${product.name}`,
+    html: aestheticWrapper(content, "URGENT UPDATE")
   });
 };
