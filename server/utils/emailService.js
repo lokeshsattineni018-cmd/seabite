@@ -17,12 +17,16 @@ const BRAND_BG = "#F9FAFB"; // Grayscale Background
 const API_URL = process.env.VITE_API_URL || "https://seabite.co.in";
 
 const getEmailImageUrl = (path) => {
-  if (!path) return "https://placehold.co/400?text=No+Image";
+  if (!path || typeof path !== 'string') return "https://placehold.co/400?text=No+Image";
   if (path.startsWith("http")) return path;
   const cleanPath = path.startsWith("/") ? path : `/${path}`;
   return cleanPath.startsWith("/uploads")
     ? `${API_URL}${cleanPath}`
     : `${API_URL}/uploads${cleanPath}`;
+};
+
+const logEmailError = (type, error, context) => {
+  console.error(`❌ [EMAIL FAILED] Type: ${type} | Error: ${error.message || error} | Context:`, JSON.stringify(context));
 };
 
 const aestheticWrapper = (content, subtitle, isMarketing = false) => `
@@ -95,12 +99,16 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
     </div>
   `;
 
-  return await resend.emails.send({
-    from: OFFICIAL_SENDER,
-    to: email,
-    subject: isNewUser ? 'SeaBite | Access Granted' : 'SeaBite Secure Login',
-    html: aestheticWrapper(content, isNewUser ? "NEW MEMBER" : "SECURE ACCESS")
-  });
+  try {
+    return await resend.emails.send({
+      from: OFFICIAL_SENDER,
+      to: email,
+      subject: isNewUser ? 'SeaBite | Access Granted' : 'SeaBite Secure Login',
+      html: aestheticWrapper(content, isNewUser ? "NEW MEMBER" : "SECURE ACCESS")
+    });
+  } catch (err) {
+    logEmailError("AUTH_EMAIL", err, { email, name });
+  }
 };
 
 /**
@@ -140,12 +148,16 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
     </div>
   `;
 
-  return await resend.emails.send({
-    from: ORDERS_SENDER,
-    to: email,
-    subject: `SeaBite Receipt | #${orderId}`,
-    html: aestheticWrapper(content, "ORDER CONFIRMATION")
-  });
+    try {
+      return await resend.emails.send({
+        from: ORDERS_SENDER,
+        to: email,
+        subject: `Order Confirmed: #${orderId}`,
+        html: aestheticWrapper(content, "CONFIRMATION")
+      });
+    } catch (err) {
+      logEmailError("ORDER_EMAIL", err, { email, orderId });
+    }
 };
 
 /**

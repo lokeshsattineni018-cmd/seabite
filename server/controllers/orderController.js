@@ -79,7 +79,8 @@ export const createOrder = async (req, res) => {
                 await product.save({ session });
 
                 // Low Stock Alert (Non-blocking)
-                if (product.countInStock <= 5) {
+                const threshold = product.stockThreshold || 5;
+                if (product.countInStock <= threshold) {
                     const adminEmail = process.env.ADMIN_EMAIL || "official@seabite.co.in";
                     sendInventoryAlertEmail(adminEmail, product.name, product.countInStock).catch(e => 
                         logger.error("Inventory Alert Failed", { error: e.message, productId: product._id })
@@ -107,7 +108,8 @@ export const createOrder = async (req, res) => {
                     req.user.name,
                     createdOrder.orderId || createdOrder._id,
                     createdOrder.totalAmount,
-                    createdOrder.items
+                    createdOrder.items,
+                    createdOrder.paymentMethod
                 );
             } catch (err) {
                 logger.error("Order Confirmation Email Failed", { error: err.message, orderId: createdOrder._id });

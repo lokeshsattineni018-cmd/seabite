@@ -144,6 +144,16 @@ router.put("/:id", adminAuth, async (req, res) => {
       { returnDocument: "after", runValidators: true }
     ).populate('waitlist', 'name email');
 
+    // 🔔 Trigger Low Stock Alert for Admin if updated to low stock
+    const threshold = updatedProduct.stockThreshold || 5;
+    if (updatedProduct.countInStock <= threshold) {
+      const { sendInventoryAlertEmail } = await import("../utils/emailService.js");
+      const adminEmail = process.env.ADMIN_EMAIL || "lokeshsattineni018@gmail.com";
+      sendInventoryAlertEmail(adminEmail, updatedProduct.name, updatedProduct.countInStock).catch(e => 
+        console.error("Admin Inventory Alert Failed:", e.message)
+      );
+    }
+
     // ✅ Enterprise: Trigger Waitlist Notifications
     if (wasOutOfStock && isNowInStock && updatedProduct.waitlist.length > 0) {
       const { sendWaitlistEmail } = await import("../utils/emailService.js");
