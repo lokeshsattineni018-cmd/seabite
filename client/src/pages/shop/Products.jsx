@@ -8,7 +8,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import { CartContext } from "../../context/CartContext";
-import EnhancedProductCard from "../../components/products/EnhancedProductCard";
+import ProductCard from "../../components/common/ProductCard";
 import FilterSidebar from "../../components/layout/FilterSidebar";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import ProductSkeleton from "../../components/common/ProductSkeleton";
@@ -24,7 +24,7 @@ const CATEGORY_META = {
 };
 
 export default function Products() {
-  const { refreshCartCount } = useContext(CartContext);
+  const { refreshCartCount, addToCart } = useContext(CartContext);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -314,15 +314,15 @@ export default function Products() {
                     animate={{ opacity: 1 }}
                     style={{ 
                       display: "grid", 
-                      gridTemplateColumns: window.innerWidth < 768 ? "repeat(2, 1fr)" : "repeat(auto-fill, minmax(220px, 1fr))", 
-                      gap: window.innerWidth < 768 ? "12px" : "20px",
-                      paddingBottom: window.innerWidth < 768 ? "112px" : "64px" // pb-28 for mobile
+                      gridTemplateColumns: window.innerWidth < 640 ? "1fr" : "repeat(2, 1fr)", 
+                      gap: "24px",
+                      paddingBottom: window.innerWidth < 768 ? "112px" : "64px"
                     }}
                     className="product-grid"
                   >
                     {products.map((p, i) => (
                       <motion.div key={p._id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}>
-                        <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
+                        <ProductCard product={p} onAddToCart={addToCart} />
                       </motion.div>
                     ))}
                   </motion.div>

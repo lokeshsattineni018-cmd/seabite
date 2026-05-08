@@ -11,10 +11,9 @@ import { sendOtpEmail } from "../utils/emailService.js";
 import generateToken from "../utils/generateToken.js";
 import { authLimiter } from "../middleware/rateLimiter.js";
 
-const router = express.Router();
+import OTP from "../models/OTP.js";
 
-// Memory store for OTPs (in production, use Redis or DB with TTL)
-const otpStore = new Map();
+const router = express.Router();
 
 // ================= LOGIN =================
 router.post("/login", authLimiter, async (req, res) => {
@@ -90,12 +89,16 @@ router.post("/send-otp", authLimiter, async (req, res) => {
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000 }); // 10 min expiry
-
+  
   try {
+    // Clear any existing OTP for this email
+    await OTP.deleteMany({ email, type: "SIGNUP" });
+    await OTP.create({ email, otp, type: "SIGNUP" });
+    
     await sendOtpEmail(email, otp, "SIGNUP");
     res.json({ message: "OTP sent successfully" });
   } catch (err) {
+    console.error("OTP Send Error:", err);
     res.status(500).json({ message: "Failed to send OTP email" });
   }
 });
@@ -103,8 +106,8 @@ router.post("/send-otp", authLimiter, async (req, res) => {
 router.post("/verify-otp-signup", async (req, res) => {
   const { name, email, phone, password, otp, referralCode } = req.body;
   
-  const storedOtpData = otpStore.get(email);
-  if (!storedOtpData || storedOtpData.otp !== otp || storedOtpData.expiresAt < Date.now()) {
+  const storedOtpData = await OTP.findOne({ email, otp, type: "SIGNUP" });
+  if (!storedOtpData) {
     return res.status(400).json({ message: "Invalid or expired OTP" });
   }
 
@@ -134,10 +137,9 @@ router.post("/verify-otp-signup", async (req, res) => {
       phone,
       password,
       referredBy: referrerId,
-      walletBalance: initialWalletBalance
     });
 
-    otpStore.delete(email);
+    await OTP.deleteMany({ email, type: "SIGNUP" });
 
     // Create session
     req.session.userId = user._id;
@@ -173,9 +175,11 @@ router.post("/forgot-password-otp", async (req, res) => {
   }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  otpStore.set(email, { otp, expiresAt: Date.now() + 10 * 60 * 1000, type: 'FORGOT' });
-
+  
   try {
+    await OTP.deleteMany({ email, type: "FORGOT" });
+    await OTP.create({ email, otp, type: "FORGOT" });
+
     await sendOtpEmail(email, otp, "FORGOT");
     res.json({ message: "Reset OTP sent to your email" });
   } catch (err) {
@@ -186,8 +190,8 @@ router.post("/forgot-password-otp", async (req, res) => {
 router.post("/reset-password", async (req, res) => {
   const { email, otp, newPassword } = req.body;
   
-  const storedOtpData = otpStore.get(email);
-  if (!storedOtpData || storedOtpData.otp !== otp || storedOtpData.type !== 'FORGOT' || storedOtpData.expiresAt < Date.now()) {
+  const storedOtpData = await OTP.findOne({ email, otp, type: "FORGOT" });
+  if (!storedOtpData) {
     return res.status(400).json({ message: "Invalid or expired OTP" });
   }
 
@@ -198,7 +202,7 @@ router.post("/reset-password", async (req, res) => {
     user.password = newPassword;
     await user.save();
 
-    otpStore.delete(email);
+    await OTP.deleteMany({ email, type: "FORGOT" });
     res.json({ message: "Password reset successful. Please login." });
   } catch (err) {
     res.status(500).json({ message: "Error resetting password" });

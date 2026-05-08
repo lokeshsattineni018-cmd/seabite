@@ -10,30 +10,59 @@ const ORDERS_SENDER = 'SeaBite Orders <orders@seabite.co.in>';
 
 const LOGO_URL = process.env.LOGO_URL || "https://seabite.co.in/logo.png";
 
-// 🟢 The Aesthetic Wrapper: Glassmorphism & Deep Slate Design
-const aestheticWrapper = (content, subtitle) => `
-  <div style="background: #020617; padding: 50px 20px; font-family: 'DM Sans', sans-serif, 'Helvetica Neue', Arial;">
-    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background: #0f172a; border-radius: 24px; border: 1px solid #1e293b; overflow: hidden;">
-      <tr>
-        <td style="padding: 40px 0; text-align: center;">
-          <img src="${LOGO_URL}" width="160" alt="SeaBite" style="margin-bottom: 10px;">
-          <div style="color: #38bdf8; font-size: 11px; text-transform: uppercase; letter-spacing: 5px; font-weight: 700;">${subtitle}</div>
-        </td>
-      </tr>
-      <tr>
-        <td style="padding: 0 40px 40px 40px; color: #cbd5e1; line-height: 1.8; font-size: 15px;">
-          ${content}
-        </td>
-      </tr>
-      <tr>
-        <td style="padding: 30px; background: rgba(30, 41, 59, 0.5); text-align: center;">
-          <div style="font-size: 12px; color: #64748b; letter-spacing: 1px;">
-            &copy; 2026 SEABITE INDIA &bull; THE ART OF FRESHNESS
-          </div>
-        </td>
-      </tr>
-    </table>
-  </div>
+const BRAND_PRIMARY = "#1A2E2C"; // Primary Sea
+const BRAND_ACCENT = "#F07468"; // Accent Fresh
+const BRAND_TEXT = "#374151"; // Grayscale Text
+const BRAND_BG = "#F9FAFB"; // Grayscale Background
+
+const aestheticWrapper = (content, subtitle, isMarketing = false) => `
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        @media only screen and (max-width: 600px) {
+          .container { width: 100% !important; border-radius: 0 !important; }
+          .cta-button { width: 100% !important; box-sizing: border-box !important; }
+        }
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: ${BRAND_BG}; font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;">
+      <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);" class="container">
+        <!-- Header -->
+        <tr>
+          <td style="padding: 40px 20px; text-align: center; background-color: ${BRAND_PRIMARY};">
+            <img src="${LOGO_URL}" width="140" alt="SeaBite" style="display: block; margin: 0 auto 12px;">
+            <div style="color: #ffffff; font-size: 11px; text-transform: uppercase; letter-spacing: 3px; font-weight: 700; opacity: 0.8;">${subtitle}</div>
+          </td>
+        </tr>
+        
+        <!-- Content Area -->
+        <tr>
+          <td style="padding: 48px 40px; color: ${BRAND_TEXT}; line-height: 1.6; font-size: 16px;">
+            ${content}
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding: 40px; background-color: #f3f4f6; text-align: center; border-top: 1px solid #e5e7eb;">
+            <div style="margin-bottom: 24px;">
+              <a href="https://instagram.com/seabite" style="margin: 0 10px; text-decoration: none; color: ${BRAND_PRIMARY}; font-weight: 600; font-size: 13px;">Instagram</a>
+              <a href="https://twitter.com/seabite" style="margin: 0 10px; text-decoration: none; color: ${BRAND_PRIMARY}; font-weight: 600; font-size: 13px;">Twitter</a>
+              <a href="https://facebook.com/seabite" style="margin: 0 10px; text-decoration: none; color: ${BRAND_PRIMARY}; font-weight: 600; font-size: 13px;">Facebook</a>
+            </div>
+            <div style="font-size: 12px; color: #6b7280; line-height: 1.5;">
+              SeaBite India &bull; The Art of Freshness<br>
+              123 Coastal Road, Vizag, AP, India<br><br>
+              &copy; 2026 SeaBite. All rights reserved.<br>
+              <a href="https://seabite.co.in/unsubscribe" style="color: #9ca3af; text-decoration: underline;">Unsubscribe</a>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </html>
 `;
 
 /**
@@ -45,16 +74,16 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
   const istTime = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", timeStyle: "short", dateStyle: "medium" });
 
   const content = `
-    <h1 style="color: #f8fafc; font-size: 28px; font-weight: 300; margin-bottom: 20px;">
-      ${isNewUser ? `Welcome to the <span style="color: #38bdf8;">Elite</span>` : `Welcome Back, <span style="color: #38bdf8;">${name}</span>`}
+    <h1 style="color: ${BRAND_PRIMARY}; font-size: 28px; font-weight: 700; margin-bottom: 16px;">
+      ${isNewUser ? `Welcome to the Elite` : `Welcome Back, ${name}`}
     </h1>
-    <p style="margin-bottom: 25px;">
+    <p style="margin-bottom: 32px; font-size: 16px; color: ${BRAND_TEXT};">
       ${isNewUser
       ? "You've successfully gained access to the freshest seafood supply chain in India. Prepare your palate for something extraordinary."
-      : `A secure login was verified at <b>${istTime} IST</b>. We're keeping your account under the surface and safe.`}
+      : `A secure login was verified at <b>${istTime} IST</b>. We're keeping your account safe and secure.`}
     </p>
-    <div style="text-align: center; margin-top: 35px;">
-      <a href="https://seabite.co.in" style="background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%); color: white; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 600; display: inline-block;">ENTER STORE</a>
+    <div style="text-align: center;">
+      <a href="https://seabite.co.in" class="cta-button" style="background-color: ${BRAND_ACCENT}; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; display: block; font-size: 16px; letter-spacing: 0.5px; box-shadow: 0 4px 6px rgba(240, 116, 104, 0.2);">ENTER STORE</a>
     </div>
   `;
 
@@ -84,19 +113,19 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
   `).join('');
 
   const content = `
-    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 10px;">Order <span style="color: #38bdf8;">Confirmed</span></h1>
-    <p style="font-size: 14px; margin-bottom: 30px;">Ref: #${orderId} | Our team is hand-selecting your items now.</p>
+    <h1 style="color: ${BRAND_PRIMARY}; font-size: 26px; font-weight: 700; margin-bottom: 8px;">Order Confirmed</h1>
+    <p style="font-size: 15px; margin-bottom: 32px; color: ${BRAND_TEXT}; opacity: 0.8;">Ref: #${orderId} | Our team is hand-selecting your items now.</p>
     
     <table width="100%" style="border-collapse: collapse;">
       ${itemRows}
       <tr>
-        <td style="padding-top: 30px; font-size: 14px; color: #94a3b8;">${isCOD ? "PAY ON DELIVERY" : "TOTAL SECURED"}</td>
-        <td style="padding-top: 30px; text-align: right; font-size: 22px; color: #f8fafc; font-weight: 300;">₹${total.toLocaleString()}</td>
+        <td style="padding-top: 32px; font-size: 14px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${isCOD ? "PAY ON DELIVERY" : "TOTAL PAID"}</td>
+        <td style="padding-top: 32px; text-align: right; font-size: 24px; color: ${BRAND_PRIMARY}; font-weight: 800;">₹${total.toLocaleString()}</td>
       </tr>
     </table>
 
-    <div style="margin-top: 40px; padding: 20px; background: rgba(56, 189, 248, 0.1); border-radius: 15px; text-align: center; border: 1px solid rgba(56, 189, 248, 0.2);">
-      <span style="color: #38bdf8; font-size: 13px; letter-spacing: 2px; font-weight: 600;">ESTIMATED ARRIVAL: 2-3 BUSINESS DAYS</span>
+    <div style="margin-top: 40px; padding: 24px; background-color: ${BRAND_BG}; border-radius: 12px; text-align: center; border: 1px solid #e5e7eb;">
+      <span style="color: ${BRAND_PRIMARY}; font-size: 13px; letter-spacing: 1px; font-weight: 700;">ESTIMATED ARRIVAL: 2-3 BUSINESS DAYS</span>
     </div>
   `;
 
@@ -201,24 +230,27 @@ export const sendWaitlistEmail = async (email, name, productName, productImage) 
   if (!resend) return;
 
   const content = `
-    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
-      It's <span style="color: #38bdf8;">Back!</span>
+    <div style="margin-bottom: 32px; border-radius: 12px; overflow: hidden; height: 200px;">
+      <img src="https://images.unsplash.com/photo-1559742811-824289541bd7?auto=format&fit=crop&w=600&h=200" alt="Fresh Catch" style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+    <h1 style="color: ${BRAND_PRIMARY}; font-size: 26px; font-weight: 700; margin-bottom: 16px;">
+      It's Back!
     </h1>
-    <p style="margin-bottom: 25px;">
+    <p style="margin-bottom: 24px; color: ${BRAND_TEXT};">
       Good news, <b>${name}</b>! The product you've been waiting for is officially back in our premium supply chain.
     </p>
     
-    <div style="background: rgba(30, 41, 59, 0.5); border-radius: 20px; padding: 20px; margin-bottom: 30px; text-align: center; border: 1px solid #1e293b;">
-      <img src="${productImage}" alt="${productName}" style="width: 120px; height: 120px; object-fit: contain; margin-bottom: 15px; border-radius: 12px;">
-      <div style="color: #f8fafc; font-weight: 700; font-size: 18px;">${productName}</div>
+    <div style="background-color: ${BRAND_BG}; border-radius: 16px; padding: 32px; margin-bottom: 32px; text-align: center; border: 1px solid #e5e7eb;">
+      <img src="${productImage}" alt="${productName}" style="width: 140px; height: 140px; object-fit: contain; margin-bottom: 20px; border-radius: 12px; background: white; padding: 10px;">
+      <div style="color: ${BRAND_PRIMARY}; font-weight: 800; font-size: 20px;">${productName}</div>
     </div>
 
-    <p style="font-size: 14px; text-align: center; color: #94a3b8; margin-bottom: 30px;">
+    <p style="font-size: 15px; text-align: center; color: #6b7280; margin-bottom: 32px;">
       Stock is limited and moves fast. Secure yours before it's gone again.
     </p>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in/products" style="background: #38bdf8; color: #020617; padding: 16px 40px; text-decoration: none; border-radius: 50px; font-weight: 700; display: inline-block; letter-spacing: 1px;">BUY NOW</a>
+      <a href="https://seabite.co.in/products" class="cta-button" style="background-color: ${BRAND_ACCENT}; color: white; padding: 18px 40px; text-decoration: none; border-radius: 8px; font-weight: 700; display: block; font-size: 16px; letter-spacing: 0.5px;">BUY NOW</a>
     </div>
   `;
 
@@ -255,21 +287,24 @@ export const sendOtpEmail = async (email, otp, type = "VERIFY") => {
   }
 
   const content = `
-    <h1 style="color: #f8fafc; font-size: 26px; font-weight: 300; margin-bottom: 20px;">
-      ${titleText}
+    <div style="text-align: center; margin-bottom: 24px;">
+      <img src="https://cdn-icons-png.flaticon.com/512/1161/1161388.png" width="48" alt="Security" style="opacity: 0.8;">
+    </div>
+    <h1 style="color: ${BRAND_PRIMARY}; font-size: 26px; font-weight: 700; margin-bottom: 16px;">
+      ${titleText.replace(/<span style="color: #38bdf8;">|<\/span>/g, "")}
     </h1>
-    <p style="margin-bottom: 25px;">
+    <p style="margin-bottom: 32px; color: ${BRAND_TEXT}; font-size: 16px;">
       ${actionText} Please use the following One-Time Password to proceed.
     </p>
     
-    <div style="background: rgba(30, 41, 59, 0.5); border-radius: 12px; padding: 30px; margin-bottom: 30px; text-align: center; border: 1px solid #1e293b; letter-spacing: 10px; font-size: 32px; font-weight: 700; color: #38bdf8;">
+    <div style="background-color: ${BRAND_BG}; border-radius: 12px; padding: 32px; margin-bottom: 32px; text-align: center; border: 1px solid #e5e7eb; letter-spacing: 12px; font-size: 36px; font-weight: 800; color: ${BRAND_ACCENT};">
       ${otp}
     </div>
 
-    <p style="font-size: 14px; text-align: center; color: #94a3b8; margin-bottom: 10px;">
+    <p style="font-size: 14px; text-align: center; color: #6b7280; margin-bottom: 8px;">
       This code is valid for 10 minutes.
     </p>
-    <p style="font-size: 12px; text-align: center; color: #ef4444;">
+    <p style="font-size: 12px; text-align: center; color: #ef4444; font-weight: 600;">
       If you did not request this, please ignore this email.
     </p>
   `;
