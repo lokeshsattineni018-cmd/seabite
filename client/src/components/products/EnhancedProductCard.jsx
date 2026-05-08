@@ -259,6 +259,7 @@ const EnhancedProductCard = ({
               transform: imageLoaded ? "scale(1)" : "scale(1.05)",
               opacity: imageLoaded ? 1 : 0
             }} 
+            loading="lazy"
             onLoad={() => setImageLoaded(true)}
             className="hover-zoom"
           />
@@ -283,6 +284,7 @@ const EnhancedProductCard = ({
         <button
           onClick={handleWishlistToggle}
           disabled={loadingWishlist}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           style={{
             position: "absolute", top: "10px", right: "10px",
             width: "34px", height: "34px",
@@ -333,6 +335,7 @@ const EnhancedProductCard = ({
             whileTap={!isOutOfStock ? { scale: 0.95 } : {}}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
+            aria-label={isOutOfStock ? "Out of stock" : "Add to cart"}
             style={{
               background: isOutOfStock ? "#E5E7EB" : "#5BBFB5",
               color: isOutOfStock ? "#9CA3AF" : "#fff",
