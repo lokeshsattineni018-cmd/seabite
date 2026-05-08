@@ -31,6 +31,8 @@ const ProductCard = ({ product, onAddToCart }) => {
   return (
     <motion.div
       whileHover={{ y: -4, boxShadow: shadows.premium }}
+      role="article"
+      aria-label={`Product card for ${product.name}`}
       style={{
         backgroundColor: colors.white,
         borderRadius: borderRadius.lg,
@@ -58,7 +60,8 @@ const ProductCard = ({ product, onAddToCart }) => {
       >
         <img
           src={getImageUrl(product.image)}
-          alt={product.name}
+          alt={`Image of ${product.name}`}
+          loading="lazy"
           style={{
             maxWidth: "100%",
             maxHeight: "100%",
@@ -67,6 +70,8 @@ const ProductCard = ({ product, onAddToCart }) => {
         />
         {product.discount > 0 && (
           <div
+            role="status"
+            aria-label={`${product.discount} percent discount`}
             style={{
               position: "absolute",
               top: spacing.sm,
@@ -116,6 +121,7 @@ const ProductCard = ({ product, onAddToCart }) => {
           }}
         >
           <span
+            aria-label={`Price: ${formattedPrice}`}
             style={{
               color: colors.accentFresh,
               fontSize: typography.scales.h3,
@@ -127,8 +133,9 @@ const ProductCard = ({ product, onAddToCart }) => {
           </span>
           {product.oldPrice && (
             <span
+              aria-label={`Original price: ₹${product.oldPrice}`}
               style={{
-                color: "#9CA3AF",
+                color: "#6B7280",
                 fontSize: typography.scales.small,
                 textDecoration: "line-through",
               }}
@@ -142,6 +149,7 @@ const ProductCard = ({ product, onAddToCart }) => {
         <motion.button
           whileTap={{ scale: 0.98 }}
           onClick={() => onAddToCart(product)}
+          aria-label={`Add ${product.name} to cart`}
           style={{
             backgroundColor: colors.accentFresh,
             color: colors.white,
@@ -159,7 +167,7 @@ const ProductCard = ({ product, onAddToCart }) => {
             transition: "opacity 0.2s",
           }}
         >
-          <FiShoppingCart size={18} />
+          <FiShoppingCart size={18} aria-hidden="true" />
           Add to Cart
         </motion.button>
       </div>

@@ -17,6 +17,7 @@ import { Helmet } from "react-helmet-async";
 import toast from "../../utils/toast"; // Custom SeaBite toast
 import triggerHaptic from "../../utils/haptics"; // 📱 Haptic feedback
 import ReviewModal from "../../components/common/ReviewModal";
+import RecommendationBlock from "../../components/common/RecommendationBlock";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -937,6 +938,13 @@ export default function ProductDetails() {
           {recentItems.length > 0 && (
             <RecentlyViewed items={recentItems} getFullImageUrl={getFullImageUrl} />
           )}
+
+          {/* 🟢 Recommendation Engine Integration */}
+          <RecommendationBlock 
+            currentProductId={product._id} 
+            category={product.category} 
+            title="Customers also bought" 
+          />
         </div>
       </div>
 
