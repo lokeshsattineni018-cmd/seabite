@@ -8,7 +8,7 @@ import {
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import { CartContext } from "../../context/CartContext";
-import ProductCard from "../../components/common/ProductCard";
+import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 import FilterSidebar from "../../components/layout/FilterSidebar";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import ProductSkeleton from "../../components/common/ProductSkeleton";
@@ -314,15 +314,15 @@ export default function Products() {
                     animate={{ opacity: 1 }}
                     style={{ 
                       display: "grid", 
-                      gridTemplateColumns: window.innerWidth < 640 ? "1fr" : "repeat(2, 1fr)", 
-                      gap: "24px",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", 
+                      gap: "20px",
                       paddingBottom: window.innerWidth < 768 ? "112px" : "64px"
                     }}
                     className="product-grid"
                   >
                     {products.map((p, i) => (
                       <motion.div key={p._id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}>
-                        <ProductCard product={p} onAddToCart={addToCart} />
+                        <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
                       </motion.div>
                     ))}
                   </motion.div>
