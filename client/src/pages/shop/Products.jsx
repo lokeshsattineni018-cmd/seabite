@@ -314,8 +314,8 @@ export default function Products() {
                     animate={{ opacity: 1 }}
                     style={{ 
                       display: "grid", 
-                      gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", 
-                      gap: "20px",
+                      gridTemplateColumns: window.innerWidth < 640 ? "repeat(2, 1fr)" : "repeat(5, 1fr)", 
+                      gap: "12px",
                       paddingBottom: window.innerWidth < 768 ? "112px" : "64px"
                     }}
                     className="product-grid"
