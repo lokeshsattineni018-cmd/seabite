@@ -474,7 +474,7 @@ export default function Navbar({ announcementActive = false }) {
                       {searchTerm && <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", padding: 0 }}><FiX size={12} /></button>}
                     </motion.div>
                   ) : (
-                    <motion.button key="icon" whileTap={{ scale: 0.88 }} onClick={() => setSearchExpanded(true)} className="nav-ib search-container" style={iconBtn}><FiSearch size={15} /></motion.button>
+                    <motion.button key="icon" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} onClick={() => setSearchExpanded(true)} className="nav-ib search-container" style={iconBtn}><FiSearch size={15} /></motion.button>
                   )}
                 </AnimatePresence>
                 <AnimatePresence>
@@ -507,12 +507,12 @@ export default function Navbar({ announcementActive = false }) {
 
 
 
-              <motion.button whileTap={{ scale: 0.88 }} onClick={() => user ? navigate("/wishlist") : navigate("/login")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} onClick={() => user ? navigate("/wishlist") : navigate("/login")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
                 <FiHeart size={15} />
                 {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{user.wishlist.length}</span>}
               </motion.button>
 
-              <motion.button whileTap={{ scale: 0.88 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
                 <FiShoppingCart size={15} />
                 {cartCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
               </motion.button>
@@ -569,7 +569,7 @@ export default function Navbar({ announcementActive = false }) {
                   </AnimatePresence>
                 </div>
               ) : (
-                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => setIsLoginOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative", marginLeft: "14px", background: "none", border: "none", padding: 0 }}>
+                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.96 }} onClick={() => setIsLoginOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative", marginLeft: "14px", background: "none", border: "none", padding: 0 }}>
                   <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "4px" }}>
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.iconColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
@@ -1030,8 +1030,15 @@ export default function Navbar({ announcementActive = false }) {
                           <span style={{ fontSize: "13px", color: "#4B5563", fontWeight: "500" }}>Notify me for fresh catch updates</span>
                         </motion.div>
                         
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Continue"}
+                        <motion.button 
+                          variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
+                          type="submit" 
+                          disabled={authLoading} 
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          style={{ width: "100%", height: "48px", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", transition: "all 0.2s" }}
+                        >
+                          {authLoading ? <div className="loading-spinner" /> : "Continue"}
                         </motion.button>
 
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
@@ -1039,7 +1046,14 @@ export default function Navbar({ announcementActive = false }) {
                           <span style={{ position: "relative", background: "#fff", padding: "0 12px", fontSize: "11px", fontWeight: "700", color: "#6B7280", textTransform: "uppercase" }}>OR</span>
                         </motion.div>
 
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "background 0.2s" }} whileHover={{ background: "#F9FAFB" }}>
+                        <motion.button 
+                          variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
+                          type="button" 
+                          onClick={() => googleLogin()} 
+                          whileHover={{ background: "#F9FAFB", scale: 1.01 }} 
+                          whileTap={{ scale: 0.99 }}
+                          style={{ width: "100%", height: "48px", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "all 0.2s" }}
+                        >
                           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Continue with Google
                         </motion.button>
                         
@@ -1075,8 +1089,15 @@ export default function Navbar({ announcementActive = false }) {
                           <span style={{ fontSize: "13px", color: "#4B5563", fontWeight: "500" }}>Notify me for fresh catch updates</span>
                         </motion.div>
 
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center" }}>
-                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Create Account"}
+                        <motion.button 
+                          variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
+                          type="submit" 
+                          disabled={authLoading} 
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          style={{ width: "100%", height: "48px", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", transition: "all 0.2s" }}
+                        >
+                          {authLoading ? <div className="loading-spinner" /> : "Create Account"}
                         </motion.button>
 
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
@@ -1084,7 +1105,14 @@ export default function Navbar({ announcementActive = false }) {
                           <span style={{ position: "relative", background: "#fff", padding: "0 12px", fontSize: "11px", fontWeight: "700", color: "#6B7280", textTransform: "uppercase" }}>OR</span>
                         </motion.div>
 
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="button" onClick={() => googleLogin()} style={{ width: "100%", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "background 0.2s" }} whileHover={{ background: "#F9FAFB" }}>
+                        <motion.button 
+                          variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
+                          type="button" 
+                          onClick={() => googleLogin()} 
+                          whileHover={{ background: "#F9FAFB", scale: 1.01 }} 
+                          whileTap={{ scale: 0.99 }}
+                          style={{ width: "100%", height: "48px", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "all 0.2s" }}
+                        >
                           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Sign up with Google
                         </motion.button>
                         
@@ -1106,8 +1134,15 @@ export default function Navbar({ announcementActive = false }) {
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
                           <AuthInput label="Enter 6-Digit Code" value={authOtp} onChange={setAuthOtp} placeholder="000000" />
                         </motion.div>
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
-                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Verify & Join"}
+                        <motion.button 
+                          variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
+                          type="submit" 
+                          disabled={authLoading} 
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          style={{ width: "100%", height: "48px", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px", transition: "all 0.2s" }}
+                        >
+                          {authLoading ? <div className="loading-spinner" /> : "Verify & Join"}
                         </motion.button>
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
                           <button type="button" onClick={handleResendOtp} disabled={resendCooldown > 0} style={{ background: "none", border: "none", fontSize: "12px", color: resendCooldown > 0 ? "#9CA3AF" : "#3B82F6", fontWeight: "600", cursor: resendCooldown > 0 ? "not-allowed" : "pointer" }}>
@@ -1122,8 +1157,15 @@ export default function Navbar({ announcementActive = false }) {
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
                           <AuthInput label="Email Address" type="email" value={authEmail} onChange={setAuthEmail} placeholder="name@example.com" />
                         </motion.div>
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
-                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Send Reset Code"}
+                        <motion.button 
+                          variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
+                          type="submit" 
+                          disabled={authLoading} 
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          style={{ width: "100%", height: "48px", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px", transition: "all 0.2s" }}
+                        >
+                          {authLoading ? <div className="loading-spinner" /> : "Send Reset Code"}
                         </motion.button>
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
                           <button type="button" onClick={() => setAuthMode("LOGIN")} style={{ background: "none", border: "none", fontSize: "12px", color: "#3B82F6", fontWeight: "600", cursor: "pointer" }}>Back to Sign In</button>
@@ -1142,8 +1184,15 @@ export default function Navbar({ announcementActive = false }) {
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
                           <AuthInput label="Confirm Password" type="password" value={authConfirmPassword} onChange={setAuthConfirmPassword} placeholder="Confirm Password" />
                         </motion.div>
-                        <motion.button variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} type="submit" disabled={authLoading} style={{ width: "100%", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px" }}>
-                          {authLoading ? <div className="loading-spinner" style={{ borderColor: "rgba(255,255,255,0.2)", borderTopColor: "#fff" }}/> : "Confirm New Password"}
+                        <motion.button 
+                          variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
+                          type="submit" 
+                          disabled={authLoading} 
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          style={{ width: "100%", height: "48px", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", marginTop: "12px", transition: "all 0.2s" }}
+                        >
+                          {authLoading ? <div className="loading-spinner" /> : "Confirm New Password"}
                         </motion.button>
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
                           <button type="button" onClick={handleResendOtp} disabled={resendCooldown > 0} style={{ background: "none", border: "none", fontSize: "12px", color: resendCooldown > 0 ? "#9CA3AF" : "#3B82F6", fontWeight: "600", cursor: resendCooldown > 0 ? "not-allowed" : "pointer" }}>
