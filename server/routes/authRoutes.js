@@ -7,7 +7,7 @@ import {
   googleLogin,
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
-import { sendOtpEmail } from "../utils/emailService.js";
+import { sendOtpEmail, sendAuthEmail } from "../utils/emailService.js";
 import generateToken from "../utils/generateToken.js";
 import { authLimiter } from "../middleware/rateLimiter.js";
 
@@ -43,6 +43,11 @@ router.post("/login", authLimiter, async (req, res) => {
           referralCode: user.referralCode,
         },
       });
+
+      // 📧 Send login notification email (Non-blocking)
+      sendAuthEmail(user.email, user.name).catch(e => 
+        console.error("Login Email Failed:", e.message)
+      );
     } else {
       res.status(401).json({ message: "Invalid email or password" });
     }
