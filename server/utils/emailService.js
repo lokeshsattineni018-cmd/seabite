@@ -335,9 +335,6 @@ export const sendEmail = async (to, subject, content) => {
 /**
  * 🟢 8. AUTOMATION: ABANDONED CART RECOVERY
  */
-/**
- * 🟢 8. AUTOMATION: ABANDONED CART RECOVERY
- */
 export const sendAbandonedCartEmail = async (email, name, cartItems) => {
   if (!resend) return;
 
@@ -406,7 +403,7 @@ export const sendWinBackEmail = async (email, name, couponCode) => {
   });
 };
 
-/**/**
+/**
  * 🟢 10. LOYALTY: SEABITE CASH CREDIT
  */
 export const sendLoyaltyCreditEmail = async (email, name, amount, reason) => {
