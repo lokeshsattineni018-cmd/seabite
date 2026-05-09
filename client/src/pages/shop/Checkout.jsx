@@ -269,6 +269,14 @@ export default function Checkout() {
 
   const clearCoupon = () => { setAppliedCoupon(null); setCouponCode(""); setCouponMessage(null); };
 
+  // 🟢 Auto-remove coupon if cart drops below minimum requirement
+  useEffect(() => {
+    if (appliedCoupon && appliedCoupon.minOrderAmount && itemTotal < appliedCoupon.minOrderAmount) {
+      clearCoupon();
+      setCouponMessage({ type: "error", text: `Coupon removed: minimum ₹${appliedCoupon.minOrderAmount} required.` });
+    }
+  }, [itemTotal, appliedCoupon]);
+
   const applyCouponByCode = async (code) => {
     if (!code) return;
     setVerifyingCoupon(true); setCouponMessage(null);
