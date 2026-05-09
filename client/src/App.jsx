@@ -213,7 +213,7 @@ function MainLayout() {
       <CookieConsent />
 
       {/* 🔐 Google One Tap Login */}
-      <GoogleOneTap />
+      {/* <GoogleOneTap /> Disabled to prevent unwanted auto-logins into Gmail accounts */}
 
       {/* 📱 Mobile Navigation Removed */}
 

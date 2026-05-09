@@ -313,18 +313,9 @@ export default function Products() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     style={{ 
-                      display: "grid", 
-                      gridTemplateColumns: "repeat(2, 1fr)",
-                      "@media (min-width: 640px)": {
-                        gridTemplateColumns: "repeat(3, 1fr)"
-                      },
-                      "@media (min-width: 1024px)": {
-                        gridTemplateColumns: "repeat(5, 1fr)"
-                      },
-                      gap: "12px",
                       paddingBottom: window.innerWidth < 768 ? "112px" : "64px"
                     }}
-                    className="product-grid"
+                    className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 product-grid"
                   >
                     {products.map((p, i) => (
                       <motion.div key={p._id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}>
