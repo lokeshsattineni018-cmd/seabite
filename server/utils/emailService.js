@@ -322,43 +322,7 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
   }
 };
 
-/**
- * 🟢 4. MARKETING: PREMIUM PROMOTIONAL BLAST (BATCH)
- * Sends up to 100 emails in a single API call.
- */
-export const sendBatchMarketingEmails = async (recipients, subject, messageBody) => {
-  console.log(`🔍 [DEBUG] sendBatchMarketingEmails triggered for ${recipients.length} recipients`);
-  if (!resend) return;
 
-  const batch = recipients.map((user) => {
-    const content = `
-      <h1 style="color: ${T.primary}; font-size: 28px; font-weight: 800; margin-bottom: 24px; letter-spacing: -0.02em;">
-        Hello <span style="color: ${T.accent};">${user.name || "Customer"}</span>,
-      </h1>
-      <div style="color: ${T.text}; line-height: 1.8; font-size: 16px;">
-        ${messageBody}
-      </div>
-      <div style="text-align: center; margin: 40px 0;">
-        <a href="https://seabite.co.in" class="cta-button">EXPLORE THE CATCH</a>
-      </div>
-    `;
-
-    return {
-      from: OFFICIAL_SENDER,
-      to: user.email,
-      subject: subject,
-      html: aestheticWrapper(content, "EXCLUSIVE UPDATE")
-    };
-  });
-
-  try {
-    const result = await resend.batch.send(batch);
-    console.log(`📧 [EMAIL SENT] Batch Marketing dispatched to ${recipients.length} users`);
-    return result;
-  } catch (err) {
-    logEmailError("BATCH_MARKETING", err, { count: recipients.length });
-  }
-};
 
 export const sendMarketingEmail = async (email, name, subject, body) => {
   console.log(`🔍 [DEBUG] sendMarketingEmail triggered for: ${email}`);
