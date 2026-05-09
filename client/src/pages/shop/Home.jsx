@@ -417,8 +417,8 @@ const CategoryRow = ({ title, filterType }) => {
       const all = res.data.products || [];
       setGlobalDiscount(res.data.globalDiscount || 0);
       const filtered = filterType === "Fish"
-        ? all.filter((p) => p.category === "Fish").slice(0, 4)
-        : all.filter((p) => p.category === "Prawn" || p.category === "Crab").slice(0, 4);
+        ? all.filter((p) => p.category === "Fish").slice(0, 5)
+        : all.filter((p) => p.category === "Prawn" || p.category === "Crab").slice(0, 5);
       setProducts(filtered);
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -450,7 +450,7 @@ const CategoryRow = ({ title, filterType }) => {
         </div>
         <Stagger className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
           {loading ? (
-            [...Array(4)].map((_, i) => <ProductSkeleton key={i} />)
+            [...Array(5)].map((_, i) => <ProductSkeleton key={i} />)
           ) : products.length > 0 ? (
             products.map((p) => (
               <SI key={p._id}>

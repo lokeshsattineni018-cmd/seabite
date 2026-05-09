@@ -241,18 +241,23 @@ const EnhancedProductCard = ({
               background: isOutOfStock ? "#F1F5F5" : "#5BBFB5",
               color: isOutOfStock ? "#9CA3AF" : "#FFF",
               border: "none",
-              borderRadius: "14px",
-              height: "48px",
-              width: "48px",
+              borderRadius: "10px",
+              height: "38px",
+              padding: "0 12px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              gap: "6px",
+              fontSize: "12px",
+              fontWeight: "700",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
-              boxShadow: isOutOfStock ? "none" : "0 8px 24px rgba(91,191,181,0.25)",
-              transition: "all 0.3s ease"
+              boxShadow: isOutOfStock ? "none" : "0 4px 14px rgba(91,191,181,0.25)",
+              transition: "all 0.3s ease",
+              fontFamily: "inherit"
             }}
           >
-            {isAdding ? <FiCheck size={20} /> : <FiShoppingCart size={20} />}
+            {isAdding ? <FiCheck size={14} /> : <FiShoppingCart size={14} />}
+            {isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : "Add to Cart")}
           </motion.button>
         </div>
       </div>
