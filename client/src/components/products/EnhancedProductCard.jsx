@@ -233,32 +233,26 @@ const EnhancedProductCard = ({
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.05, backgroundColor: "#2A413F" }}
+            whileHover={{ scale: 1.05, backgroundColor: "#4AA89F" }}
             whileTap={{ scale: 0.95 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
             style={{
-              background: isOutOfStock ? "#F1F5F5" : "#1A2E2C",
-              color: isOutOfStock ? "#9CA3AF" : "#FFFFFF",
+              background: isOutOfStock ? "#F1F5F5" : "#5BBFB5",
+              color: isOutOfStock ? "#9CA3AF" : "#FFF",
               border: "none",
-              borderRadius: "100px", // perfect pill
-              height: "32px",
-              padding: "0 16px",
+              borderRadius: "14px",
+              height: "48px",
+              width: "48px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "6px",
-              fontSize: "12px",
-              fontWeight: "600",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
-              boxShadow: isOutOfStock ? "none" : "0 8px 16px rgba(26, 46, 44, 0.2)",
-              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-              fontFamily: "inherit",
-              letterSpacing: "0.03em"
+              boxShadow: isOutOfStock ? "none" : "0 8px 24px rgba(91,191,181,0.25)",
+              transition: "all 0.3s ease"
             }}
           >
-            {isAdding ? <FiCheck size={13} strokeWidth={3} /> : <FiPlus size={13} strokeWidth={2.5} />}
-            {isOutOfStock ? "Sold" : (isAdding ? "Added" : "Add")}
+            {isAdding ? <FiCheck size={20} /> : <FiShoppingCart size={20} />}
           </motion.button>
         </div>
       </div>
