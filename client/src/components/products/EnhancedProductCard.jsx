@@ -233,32 +233,32 @@ const EnhancedProductCard = ({
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.05, backgroundColor: "#2A413F" }}
             whileTap={{ scale: 0.95 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
             style={{
-              background: isOutOfStock ? "#F1F5F5" : "rgba(91,191,181,0.12)",
-              color: isOutOfStock ? "#9CA3AF" : "#5BBFB5",
-              border: isOutOfStock ? "1.5px solid #E5E7EB" : "1.5px solid rgba(91,191,181,0.4)",
-              borderRadius: "8px",
-              height: "34px",
-              padding: "0 14px",
+              background: isOutOfStock ? "#F1F5F5" : "#1A2E2C",
+              color: isOutOfStock ? "#9CA3AF" : "#FFFFFF",
+              border: "none",
+              borderRadius: "100px", // perfect pill
+              height: "32px",
+              padding: "0 16px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "4px",
-              fontSize: "13px",
-              fontWeight: "800",
+              gap: "6px",
+              fontSize: "12px",
+              fontWeight: "600",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
-              transition: "all 0.2s ease",
+              boxShadow: isOutOfStock ? "none" : "0 8px 16px rgba(26, 46, 44, 0.2)",
+              transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
               fontFamily: "inherit",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em"
+              letterSpacing: "0.03em"
             }}
           >
-            {isAdding ? <FiCheck size={14} strokeWidth={3} /> : <FiPlus size={14} strokeWidth={3} />}
-            {isOutOfStock ? "SOLD" : (isAdding ? "ADDED" : "ADD")}
+            {isAdding ? <FiCheck size={13} strokeWidth={3} /> : <FiPlus size={13} strokeWidth={2.5} />}
+            {isOutOfStock ? "Sold" : (isAdding ? "Added" : "Add")}
           </motion.button>
         </div>
       </div>
