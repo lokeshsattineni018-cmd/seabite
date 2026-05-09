@@ -257,7 +257,7 @@ const EnhancedProductCard = ({
             }}
           >
             {isAdding ? <FiCheck size={14} /> : <FiShoppingCart size={14} />}
-            {isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : "Add to Cart")}
+            {isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : "Add")}
           </motion.button>
         </div>
       </div>
