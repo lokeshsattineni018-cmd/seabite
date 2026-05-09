@@ -2,397 +2,278 @@ import { useState, useContext, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiHeart, FiX, FiZap, FiShoppingCart, FiCheck, FiLayers } from "react-icons/fi";
-import { CompareContext } from "../../context/CompareContext";
+import { FiHeart, FiShoppingCart, FiZap, FiCheck, FiArrowRight } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
-import toast from "../../utils/toast"; // Custom SeaBite toast
-import triggerHaptic from "../../utils/haptics"; // 📱 Haptic feedback
+import toast from "../../utils/toast"; 
+import triggerHaptic from "../../utils/haptics"; 
 import axios from "axios";
-import Magnetic from "../common/Magnetic";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// ─── Design Tokens ───────────────────────────────────────────────────────────
-// Primary:    Seafoam   #5BBFB5
-// Secondary:  Sky       #7EB8D4
-// Accent:     Coral     #F07468
-// Surface:    White     #FFFFFF
-// Background: Off-white #F4F9F8
-// Border:     Mist      #E2EEEC
-// Text-1:     Slate     #1A2E2C
-// Text-2:     Drift     #6B8F8A
-// ─────────────────────────────────────────────────────────────────────────────
-
+/**
+ * 🌊 EnhancedProductCard: Liquid Luxury Edition
+ * Premium coastal aesthetic with ultra-smooth interactions.
+ */
 const EnhancedProductCard = ({
   product,
   onWishlistChange,
   onAddToCart,
-  isWishlistMode = false,
   globalDiscount = 0,
 }) => {
   const { addToCart, refreshCartCount } = useContext(CartContext);
   const { user, refreshMe } = useContext(AuthContext);
-  const { compareItems, toggleCompare } = useContext(CompareContext);
   const navigate = useNavigate();
 
   const [isAdding, setIsAdding] = useState(false);
   const [loadingWishlist, setLoadingWishlist] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState("");
   const [imageLoaded, setImageLoaded] = useState(false);
-  
   const [flyItems, setFlyItems] = useState([]);
   const flyIdRef = useRef(0);
-  const prefetchTimeoutRef = useRef(null);
 
-  const handleMouseEnter = () => {
-    // Wait 100ms before prefetching to avoid unnecessary requests on quick mouse pass-through
-    prefetchTimeoutRef.current = setTimeout(() => {
-      axios.get(`${API_URL}/api/products/${product._id}`).catch(() => {});
-    }, 100);
-  };
-
-  const handleMouseLeave = () => {
-    if (prefetchTimeoutRef.current) clearTimeout(prefetchTimeoutRef.current);
-  };
-
-  const isActiveFlashSale =
-    product.flashSale?.isFlashSale &&
-    new Date(product.flashSale.saleEndDate) > new Date();
-
-  let displayPrice = isActiveFlashSale
-    ? product.flashSale.discountPrice
-    : product.basePrice;
+  // 1. Flash Sale & Pricing Logic
+  const isActiveFlashSale = product.flashSale?.isFlashSale && new Date(product.flashSale.saleEndDate) > new Date();
+  let displayPrice = isActiveFlashSale ? product.flashSale.discountPrice : product.basePrice;
   const globalDiscountApplied = !isActiveFlashSale && globalDiscount > 0;
-
-  if (globalDiscountApplied) {
-    displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
-  }
-
+  if (globalDiscountApplied) displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
+  
   const discountPct = isActiveFlashSale
     ? Math.round((1 - product.flashSale.discountPrice / product.basePrice) * 100)
-    : globalDiscountApplied
-      ? globalDiscount
-      : 0;
+    : globalDiscountApplied ? globalDiscount : 0;
 
-  useEffect(() => {
-    if (!isActiveFlashSale) return;
-    const timer = setInterval(() => {
-      const diff = new Date(product.flashSale.saleEndDate) - new Date();
-      if (diff <= 0) { setTimeLeft("EXPIRED"); clearInterval(timer); return; }
-      const h = Math.floor(diff / 3600000);
-      const m = Math.floor((diff % 3600000) / 60000);
-      const s = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(`${h}h ${m}m ${s}s`);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [product.flashSale, isActiveFlashSale]);
-
+  // 2. Robust Wishlist Sync
   useEffect(() => {
     if (user?.wishlist) {
-      setIsWishlisted(
-        user.wishlist.some(
-          (item) => (typeof item === "string" ? item : item._id) === product._id
-        )
-      );
+      const isSaved = user.wishlist.some(item => {
+        const id = typeof item === 'object' ? (item._id || item.id) : item;
+        return id?.toString() === product._id?.toString();
+      });
+      setIsWishlisted(isSaved);
     } else {
       setIsWishlisted(false);
     }
-  }, [user, product._id]);
+  }, [user?.wishlist, product._id]);
 
   const getImageUrl = (path) => {
     if (!path) return "https://placehold.co/400?text=No+Image";
     if (path.startsWith("http")) return path;
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
-    return cleanPath.startsWith("/uploads")
-      ? `${API_URL}${cleanPath}`
-      : `${API_URL}/uploads${cleanPath}`;
+    return cleanPath.startsWith("/uploads") ? `${API_URL}${cleanPath}` : `${API_URL}/uploads${cleanPath}`;
   };
-
-  const handleAddToCart = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isAdding) return;
-    setIsAdding(true);
-
-    // Safety reset: if anything hangs, ensure we go back to "Add to Cart" after 4s
-    const safetyTimer = setTimeout(() => setIsAdding(false), 4000);
-
-    try {
-      const btn = e.currentTarget;
-      const btnRect = btn.getBoundingClientRect();
-      
-      const cartIcons = Array.from(document.querySelectorAll('[data-cart-icon]'));
-      const cartIconEl = cartIcons.find(icon => {
-        const r = icon.getBoundingClientRect();
-        return r.width > 0 && r.height > 0;
-      });
-
-      const cartRect = cartIconEl 
-          ? cartIconEl.getBoundingClientRect() 
-          : { left: window.innerWidth - 40, top: 20, width: 30, height: 30 };
-      
-      const startX = btnRect.left + btnRect.width / 2 - 25;
-      const startY = btnRect.top + btnRect.height / 2 - 25;
-      const endX = cartRect.left + cartRect.width / 2 - 10;
-      const endY = cartRect.top + cartRect.height / 2 - 10;
-
-      const flyId = ++flyIdRef.current;
-      setFlyItems(prev => [...prev, {
-        id: flyId,
-        startX, startY, endX, endY,
-        image: getImageUrl(product.image)
-      }]);
-      
-      setTimeout(() => {
-        if (cartIconEl) {
-          cartIconEl.animate([
-            { transform: "scale(1)" }, { transform: "scale(1.5)" }, 
-            { transform: "scale(0.9)" }, { transform: "scale(1.1)" }, { transform: "scale(1)" }
-          ], { duration: 500, easing: "ease-out" });
-        }
-      }, 1100);
-
-    } catch (err) { 
-      console.error("Cart animation computation failed: ", err);
-      setIsAdding(false);
-      clearTimeout(safetyTimer);
-    }
-
-    setTimeout(() => {
-      try {
-        triggerHaptic("medium"); // 📳 Haptic vibration
-        addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice), originalPrice: parseFloat(product.basePrice) });
-        refreshCartCount();
-        toast.success(`${product.name} added`, {
-          icon: "🛒",
-        });
-        if (onAddToCart) onAddToCart(product._id);
-      } finally {
-        setIsAdding(false);
-        clearTimeout(safetyTimer);
-      }
-    }, 1100); 
-  };
-
-  const handleFlyComplete = useCallback((fId) => {
-    setFlyItems((prev) => prev.filter((item) => item.id !== fId));
-  }, []);
 
   const handleWishlistToggle = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    triggerHaptic("soft"); // 📳 Haptic vibration
     if (!user) {
-      toast.error("Please login to save items"); return navigate("/login"); }
-    const prev = isWishlisted;
-    setIsWishlisted(!prev);
+      triggerHaptic("rigid");
+      return window.dispatchEvent(new CustomEvent('open-auth-drawer'));
+    }
+    
+    triggerHaptic("soft");
+    const prevState = isWishlisted;
+    setIsWishlisted(!prevState); // Optimistic Update
     setLoadingWishlist(true);
+
     try {
       await axios.post(`${API_URL}/api/user/wishlist/${product._id}`, {}, { withCredentials: true });
       await refreshMe();
-      toast.success(prev ? "Removed from wishlist" : "Saved to wishlist", {
-        style: { borderRadius: "12px", fontSize: "13px" },
-        icon: prev ? "💔" : "❤️",
+      toast.success(prevState ? "Removed from wishlist" : "Added to wishlist", {
+        icon: prevState ? "💔" : "❤️",
       });
-      if (onWishlistChange && prev) onWishlistChange(product._id);
-    } catch {
-      setIsWishlisted(prev);
-      toast.error("Failed to update wishlist");
+      if (onWishlistChange && prevState) onWishlistChange(product._id);
+    } catch (err) {
+      setIsWishlisted(prevState); // Rollback
+      toast.error("Wishlist sync failed");
     } finally {
       setLoadingWishlist(false);
     }
   };
 
-  const isOutOfStock = product.stock === "out" || (product.countInStock !== undefined && product.countInStock <= 0);
-  const isNew =
-    product.createdAt &&
-    new Date(product.createdAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isAdding || product.stock === "out") return;
+    setIsAdding(true);
+
+    const btnRect = e.currentTarget.getBoundingClientRect();
+    const cartIconEl = document.querySelector('[data-cart-icon]');
+    const cartRect = cartIconEl ? cartIconEl.getBoundingClientRect() : { left: window.innerWidth - 40, top: 20 };
+
+    const flyId = ++flyIdRef.current;
+    setFlyItems(prev => [...prev, {
+      id: flyId,
+      startX: btnRect.left + btnRect.width/2,
+      startY: btnRect.top + btnRect.height/2,
+      endX: cartRect.left + 15,
+      endY: cartRect.top + 15,
+      image: getImageUrl(product.image)
+    }]);
+
+    setTimeout(() => {
+      triggerHaptic("medium");
+      addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice), originalPrice: parseFloat(product.basePrice) });
+      refreshCartCount();
+      setIsAdding(false);
+      toast.success(`${product.name} added!`, { icon: "🛒" });
+    }, 1000);
+  };
+
+  const isOutOfStock = product.stock === "out" || product.countInStock <= 0;
 
   return (
-    <div
-      className="product-card-root"
+    <motion.div
+      whileHover={{ y: -8 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       style={{
-        background: "#fff",
-        border: "1px solid #f3f4f6",
-        borderRadius: "16px",
+        background: "#FFFFFF",
+        borderRadius: "24px",
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         height: "100%",
         position: "relative",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-        transition: "transform 0.3s ease, box-shadow 0.3s ease",
+        border: "1.5px solid #F0F4F4",
+        boxShadow: "0 10px 40px rgba(26, 46, 44, 0.03)",
         fontFamily: "'Plus Jakarta Sans', sans-serif",
       }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
     >
-      <style>{`
-        .product-card-root:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 24px rgba(0,0,0,0.08);
-          border-color: #5BBFB544;
-        }
-        .product-name-clamp {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-          height: 2.6em;
-          line-height: 1.3;
-        }
-      `}</style>
-
-      {/* Image Section */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", overflow: "hidden" }}>
+      {/* 🖼️ Premium Image Container */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", overflow: "hidden", background: "#F9FBFA" }}>
         <Link to={`/products/${product._id}`} style={{ display: "block", width: "100%", height: "100%" }}>
-          <img 
+          <motion.img 
             src={getImageUrl(product.image)} 
-            alt={product.name} 
-            style={{ 
-              width: "100%", 
-              height: "100%", 
-              objectFit: "cover",
-              transition: "all 0.5s ease",
-              transform: imageLoaded ? "scale(1)" : "scale(1.05)",
-              opacity: imageLoaded ? 1 : 0
-            }} 
-            loading="lazy"
+            alt={product.name}
+            initial={{ opacity: 0, scale: 1.1 }}
+            animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 1.1 }}
+            transition={{ duration: 0.6 }}
             onLoad={() => setImageLoaded(true)}
-            className="hover-zoom"
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
           {isOutOfStock && (
-            <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(2px)" }}>
-              <span style={{ background: "#000", color: "#fff", fontSize: "10px", fontWeight: "800", padding: "6px 12px", borderRadius: "6px", letterSpacing: "0.05em" }}>SOLD OUT</span>
+            <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ background: "#1A2E2C", color: "#FFF", fontSize: "11px", fontWeight: "800", padding: "8px 16px", borderRadius: "100px", letterSpacing: "0.05em" }}>SOLD OUT</span>
             </div>
           )}
         </Link>
-        
-        {/* Badges */}
-        <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", flexDirection: "column", gap: "4px" }}>
-          {product.trending && (
-            <span style={{ background: "#1A2E2C", color: "#FFD700", fontSize: "8px", fontWeight: "900", padding: "3px 8px", borderRadius: "4px", textTransform: "uppercase" }}>HOT</span>
+
+        {/* 🏷️ Glassmorphic Badges */}
+        <div style={{ position: "absolute", top: "16px", left: "16px", display: "flex", flexDirection: "column", gap: "8px", pointerEvents: "none" }}>
+          {isActiveFlashSale && (
+            <div style={{ background: "rgba(240, 116, 104, 0.9)", backdropFilter: "blur(10px)", color: "#FFF", fontSize: "10px", fontWeight: "800", padding: "4px 10px", borderRadius: "100px", display: "flex", alignItems: "center", gap: "4px" }}>
+              <FiZap size={10} fill="currentColor" /> FLASH SALE
+            </div>
           )}
           {discountPct > 0 && (
-            <span style={{ background: "#F07468", color: "#fff", fontSize: "8px", fontWeight: "900", padding: "3px 8px", borderRadius: "4px" }}>-{discountPct}%</span>
+            <div style={{ background: "rgba(91, 191, 181, 0.9)", backdropFilter: "blur(10px)", color: "#FFF", fontSize: "10px", fontWeight: "800", padding: "4px 10px", borderRadius: "100px" }}>
+              {discountPct}% OFF
+            </div>
           )}
         </div>
 
-        {/* Wishlist Button */}
-        <button
+        {/* ❤️ Luxury Wishlist Button */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={handleWishlistToggle}
           disabled={loadingWishlist}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           style={{
-            position: "absolute", top: "10px", right: "10px",
-            width: "34px", height: "34px",
-            background: "rgba(255,255,255,0.8)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
+            position: "absolute", top: "16px", right: "16px",
+            width: "42px", height: "42px",
+            background: "rgba(255,255,255,0.85)",
+            backdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.3)",
             borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: isWishlisted ? "#F07468" : "#000",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+            color: isWishlisted ? "#F07468" : "#1A2E2C",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
             cursor: "pointer",
-            zIndex: 10,
-            transition: "all 0.2s ease"
+            zIndex: 5
           }}
         >
-          <FiHeart size={15} fill={isWishlisted ? "currentColor" : "none"} />
-        </button>
+          <FiHeart size={18} fill={isWishlisted ? "currentColor" : "none"} strokeWidth={2.5} />
+        </motion.button>
       </div>
 
-      {/* Info Section */}
-      <div style={{ padding: "14px", display: "flex", flexDirection: "column", flex: 1 }}>
-        <Link to={`/products/${product._id}`} style={{ textDecoration: "none" }}>
-          <h3 className="product-name-clamp" style={{ 
-            fontSize: "15px", 
-            fontWeight: "600", 
-            color: "#1A2E2C", 
-            marginBottom: "10px"
-          }}>
-            {product.name}
-          </h3>
-        </Link>
+      {/* ✍️ Content Section */}
+      <div style={{ padding: "20px", display: "flex", flexDirection: "column", flex: 1 }}>
+        <div style={{ marginBottom: "12px" }}>
+          <span style={{ fontSize: "11px", fontWeight: "700", color: "#6B8F8A", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+            {product.category || "Fresh Catch"}
+          </span>
+          <Link to={`/products/${product._id}`} style={{ textDecoration: "none" }}>
+            <h3 style={{ 
+              fontSize: "17px", 
+              fontWeight: "700", 
+              color: "#1A2E2C", 
+              marginTop: "4px",
+              lineHeight: 1.3,
+              height: "2.6em",
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical"
+            }}>
+              {product.name}
+            </h3>
+          </Link>
+        </div>
 
-        {/* Action Row */}
-        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ marginTop: "auto", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+          <div>
             <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontSize: "18px", fontWeight: "800", color: "#1A2E2C" }}>
-                ₹{displayPrice}
-              </span>
+              <span style={{ fontSize: "24px", fontWeight: "800", color: "#1A2E2C" }}>₹{displayPrice}</span>
               {product.basePrice > displayPrice && (
-                <span style={{ fontSize: "12px", color: "#6B8F8A", textDecoration: "line-through", fontWeight: "500" }}>
-                  ₹{product.basePrice}
-                </span>
+                <span style={{ fontSize: "13px", color: "#6B8F8A", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
               )}
             </div>
-            <span style={{ fontSize: "10px", color: "#6B8F8A", fontWeight: "600" }}>per {product.unit || "kg"}</span>
+            <p style={{ fontSize: "11px", color: "#6B8F8A", fontWeight: "600", marginTop: "2px" }}>
+              Net Wt: <span style={{ color: "#1A2E2C" }}>{product.unit || "500g"}</span>
+            </p>
           </div>
-          
+
           <motion.button
-            whileHover={!isOutOfStock ? { 
-              scale: 1.05,
-              boxShadow: "0 8px 20px rgba(91,191,181,0.3)"
-            } : {}}
-            whileTap={!isOutOfStock ? { scale: 0.95 } : {}}
+            whileHover={{ scale: 1.05, backgroundColor: "#4AA89F" }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
-            aria-label={isOutOfStock ? "Out of stock" : "Add to cart"}
             style={{
-              background: isOutOfStock ? "#E5E7EB" : "#5BBFB5",
-              color: isOutOfStock ? "#9CA3AF" : "#fff",
+              background: isOutOfStock ? "#F1F5F5" : "#5BBFB5",
+              color: isOutOfStock ? "#9CA3AF" : "#FFF",
               border: "none",
-              borderRadius: "10px",
-              padding: "8px 18px",
-              fontSize: "13px",
-              fontWeight: "700",
-              boxShadow: isOutOfStock ? "none" : "0 4px 12px rgba(91,191,181,0.2)",
-              cursor: isOutOfStock ? "not-allowed" : "pointer",
+              borderRadius: "14px",
+              height: "48px",
+              width: "48px",
               display: "flex",
               alignItems: "center",
-              gap: "6px",
-              transition: "all 0.2s ease"
+              justifyContent: "center",
+              cursor: isOutOfStock ? "not-allowed" : "pointer",
+              boxShadow: isOutOfStock ? "none" : "0 8px 24px rgba(91,191,181,0.25)",
+              transition: "all 0.3s ease"
             }}
           >
-            {isAdding ? "..." : isOutOfStock ? "Out of Stock" : (
-              <>
-                <motion.span
-                  initial={{ x: 0 }}
-                  whileHover={{ x: -2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  style={{ display: "flex", alignItems: "center" }}
-                >
-                  <FiShoppingCart size={14} />
-                </motion.span>
-                Add
-              </>
-            )}
+            {isAdding ? <FiCheck size={20} /> : <FiShoppingCart size={20} />}
           </motion.button>
         </div>
       </div>
 
-      {/* Fly Animation Portal */}
+      {/* 🚀 Fly Animation Portal */}
       {typeof document !== "undefined" && createPortal(
         flyItems.map((item) => (
           <motion.div
             key={item.id}
-            initial={{ left: item.startX, top: item.startY, opacity: 1, scale: 1, rotate: 0 }}
-            animate={{ left: item.endX, top: item.endY, opacity: 0.6, scale: 0.2, rotate: 90 }}
-            transition={{ duration: 1.1 }}
-            onAnimationComplete={() => handleFlyComplete(item.id)}
-            style={{ position: "fixed", width: "60px", height: "60px", zIndex: 99999999, borderRadius: "12px", overflow: "hidden", boxShadow: "0 10px 25px rgba(0,0,0,0.2)" }}
+            initial={{ left: item.startX, top: item.startY, opacity: 1, scale: 0.8 }}
+            animate={{ left: item.endX, top: item.endY, opacity: 0.2, scale: 0.1, rotate: 360 }}
+            transition={{ duration: 0.8, ease: "circIn" }}
+            onAnimationComplete={() => setFlyItems(prev => prev.filter(f => f.id !== item.id))}
+            style={{ position: "fixed", width: "40px", height: "40px", zIndex: 999999, borderRadius: "50%", overflow: "hidden", border: "2px solid #5BBFB5" }}
           >
-            <img src={item.image} alt="Flying" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={item.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </motion.div>
         )),
         document.body
       )}
-    </div>
+    </motion.div>
   );
 };
 

@@ -314,7 +314,13 @@ export default function Products() {
                     animate={{ opacity: 1 }}
                     style={{ 
                       display: "grid", 
-                      gridTemplateColumns: window.innerWidth < 640 ? "repeat(2, 1fr)" : "repeat(5, 1fr)", 
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      "@media (min-width: 640px)": {
+                        gridTemplateColumns: "repeat(3, 1fr)"
+                      },
+                      "@media (min-width: 1024px)": {
+                        gridTemplateColumns: "repeat(5, 1fr)"
+                      },
                       gap: "12px",
                       paddingBottom: window.innerWidth < 768 ? "112px" : "64px"
                     }}
