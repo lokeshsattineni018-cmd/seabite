@@ -86,7 +86,7 @@ export default function Contact() {
               </div>
               <div>
                 <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1A2E2C", margin: "0 0 4px" }}>Visit Us</h3>
-                <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0, lineHeight: 1.6 }}>SeaBite, Mogalthur,<br />West Godavari District,<br />Andhra Pradesh, India</p>
+                <p style={{ fontSize: "14px", color: "#6B8F8A", margin: 0, lineHeight: 1.6 }}>SeaBite, Mogalthur, AP 534281,<br />West Godavari District,<br />Andhra Pradesh, India</p>
               </div>
             </div>
           </div>

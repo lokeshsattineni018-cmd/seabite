@@ -93,7 +93,12 @@ const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshC
               <img src={getFullImageUrl(mainProduct.image)} style={{ width: "100%", height: "100%", objectFit: "contain" }} alt={mainProduct.name} />
             </div>
             <p style={{ fontSize: "11px", fontWeight: "700", color: "#1A2E2C", marginTop: "8px", maxWidth: "100px", lineHeight: 1.3 }}>{mainProduct.name}</p>
-            <p style={{ fontSize: "12px", fontWeight: "800", color: "#5BBFB5", margin: "2px 0 0" }}>₹{mainPrice.toFixed(0)}</p>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <p style={{ fontSize: "12px", fontWeight: "800", color: "#5BBFB5", margin: "2px 0 0" }}>₹{mainPrice.toFixed(0)}</p>
+              {mainProduct.basePrice > mainPrice && (
+                <p style={{ fontSize: "10px", color: "#6B8F8A", textDecoration: "line-through", margin: 0 }}>₹{mainProduct.basePrice}</p>
+              )}
+            </div>
           </div>
 
           {relatedProducts.map((rel, i) => (
@@ -448,7 +453,12 @@ const RecentlyViewed = ({ items, getFullImageUrl }) => {
                 <img src={getFullImageUrl(item.image)} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
               </div>
               <p style={{ fontSize: "12px", fontWeight: "700", color: "#1A2E2C", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>{item.name}</p>
-              <p style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.basePrice}</p>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
+                <p style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.price || item.basePrice}</p>
+                {item.basePrice > (item.price || item.basePrice) && (
+                  <p style={{ fontSize: "10px", color: "#A8C5C0", textDecoration: "line-through" }}>₹{item.basePrice}</p>
+                )}
+              </div>
             </div>
           </Link>
         ))}
@@ -525,7 +535,8 @@ export default function ProductDetails() {
             _id: res.data._id,
             name: res.data.name,
             image: res.data.image,
-            basePrice: res.data.basePrice
+            basePrice: res.data.basePrice,
+            price: unitPrice // Store the actual discounted price
           });
           const newRecent = filtered.slice(0, 4);
           localStorage.setItem("seabite_recent", JSON.stringify(newRecent));

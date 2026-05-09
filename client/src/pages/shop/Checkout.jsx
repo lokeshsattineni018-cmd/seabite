@@ -308,13 +308,23 @@ export default function Checkout() {
 
   const saveNewAddress = async (newAddress) => {
     try {
-      const res = await axios.post(`${API_URL}/api/user/address`, newAddress, { withCredentials: true });
+      let res;
+      if (newAddress._id) {
+        res = await axios.put(`${API_URL}/api/user/address/${newAddress._id}`, newAddress, { withCredentials: true });
+      } else {
+        res = await axios.post(`${API_URL}/api/user/address`, newAddress, { withCredentials: true });
+      }
       setAddresses(res.data);
-      const added = res.data[res.data.length - 1];
-      setDeliveryAddress(added);
+      const updated = newAddress._id 
+        ? res.data.find(a => a._id === newAddress._id)
+        : res.data[res.data.length - 1];
+      setDeliveryAddress(updated || res.data[0]);
       setIsAddressModalOpen(false);
-      toast.success("Address added");
-    } catch { toast.error("Failed to save address"); }
+      toast.success(newAddress._id ? "Address updated" : "Address added");
+    } catch (err) { 
+      console.error("Address save error:", err);
+      toast.error(err.response?.data?.message || "Failed to save address"); 
+    }
   };
 
   const placeOrder = async () => {

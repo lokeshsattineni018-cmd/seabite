@@ -39,6 +39,7 @@ const labelStyle = {
 export default function AddressForm({ onSave, onCancel, initialData }) {
     const data = initialData || {};
     const [formData, setFormData] = useState({
+        _id: data._id || data.id || null, // Preserve ID for updates
         name: data.name || "",
         phone: data.phone || "",
         houseNo: data.houseNo || "",

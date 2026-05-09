@@ -247,7 +247,8 @@ export const updateOrderStatus = async (req, res) => {
                     order.user.email,
                     order.user.name,
                     order.orderId || order._id,
-                    status
+                    status,
+                    order.items
                 );
             }
         } catch (mailErr) {

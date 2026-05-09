@@ -111,60 +111,82 @@ router.post("/send-otp", authLimiter, async (req, res) => {
 router.post("/verify-otp-signup", async (req, res) => {
   const { name, email, phone, password, otp, referralCode } = req.body;
   
-  const storedOtpData = await OTP.findOne({ email, otp, type: "SIGNUP" });
-  if (!storedOtpData) {
-    return res.status(400).json({ message: "Invalid or expired OTP" });
-  }
+    console.log(`🔍 [DEBUG] verify-otp-signup triggered for: ${email}, Phone: ${phone}`);
 
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    if (existingUser.googleId && !existingUser.password) {
-      return res.status(400).json({ message: "This email is already associated with a Google account. Please use Google Login." });
+    if (!phone || phone.length < 10) {
+        console.log("❌ [DEBUG] Signup Verification Failed: Invalid phone number length");
+        return res.status(400).json({ message: "Phone number must be at least 10 digits" });
     }
-    return res.status(400).json({ message: "User already exists with this email. Please login." });
-  }
-
-  let referrerId = null;
-  let initialWalletBalance = 0;
-
-  if (referralCode) {
-    const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
-    if (referrer) {
-      referrerId = referrer._id;
-      initialWalletBalance = 100; // New user gets ₹100 off their first order via wallet
+    const storedOtpData = await OTP.findOne({ email, otp, type: "SIGNUP" });
+    if (!storedOtpData) {
+      console.log(`❌ [AUTH] Invalid OTP for: ${email}`);
+      return res.status(400).json({ message: "Invalid or expired OTP" });
     }
-  }
 
-  try {
-    const user = await User.create({
-      name,
-      email,
-      phone,
-      password,
-      referredBy: referrerId,
-    });
-
-    await OTP.deleteMany({ email, type: "SIGNUP" });
-
-    // Create session
-    req.session.userId = user._id;
-    req.session.role = user.role;
-    
-    generateToken(res, user._id);
-
-    res.status(201).json({
-      message: "Registration successful",
-      sessionId: req.sessionID,
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        phone: user.phone,
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      console.log(`❌ [AUTH] User already exists: ${email}`);
+      if (existingUser.googleId && !existingUser.password) {
+        return res.status(400).json({ message: "This email is already associated with a Google account. Please use Google Login." });
       }
-    });
-  } catch (err) {
-    res.status(500).json({ message: "Error creating user" });
+      return res.status(400).json({ message: "User already exists with this email. Please login." });
+    }
+
+    let referrerId = null;
+    if (referralCode) {
+      const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
+      if (referrer) {
+        referrerId = referrer._id;
+        console.log(`✅ [AUTH] Referral matched: ${referralCode}`);
+      } else {
+        console.log(`⚠️ [AUTH] Referral not found: ${referralCode}`);
+      }
+    }
+
+    try {
+      console.log(`🔍 [DEBUG] Attempting User.create for: ${email}`);
+      const user = await User.create({
+        name: name || "User",
+        email,
+        phone: phone && phone.trim() !== "" ? phone : undefined,
+        password,
+        referredBy: referrerId,
+      });
+
+      console.log(`✅ [AUTH] User created successfully: ${user._id}`);
+      await OTP.deleteMany({ email, type: "SIGNUP" });
+
+      // Create session
+      req.session.userId = user._id;
+      req.session.role = user.role;
+      
+      generateToken(res, user._id);
+      
+      // 📧 Send Welcome Email
+      try {
+        await sendAuthEmail(user.email, user.name, true);
+      } catch (emailErr) {
+        console.error("Welcome email failed:", emailErr);
+      }
+
+      res.status(201).json({
+        message: "Registration successful",
+        sessionId: req.sessionID,
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          phone: user.phone,
+        }
+      });
+    } catch (err) {
+      console.error("❌ SIGNUP VERIFICATION ERROR:", err);
+      res.status(500).json({ message: "Error creating user", error: err.message });
+    }
+  } catch (globalErr) {
+    console.error("❌ GLOBAL SIGNUP ERROR:", globalErr);
+    res.status(500).json({ message: "Internal server error during signup" });
   }
 });
 

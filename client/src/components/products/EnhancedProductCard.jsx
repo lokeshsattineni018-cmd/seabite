@@ -321,9 +321,16 @@ const EnhancedProductCard = ({
         {/* Action Row */}
         <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "18px", fontWeight: "800", color: "#1A2E2C" }}>
-              ₹{displayPrice}
-            </span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+              <span style={{ fontSize: "18px", fontWeight: "800", color: "#1A2E2C" }}>
+                ₹{displayPrice}
+              </span>
+              {product.basePrice > displayPrice && (
+                <span style={{ fontSize: "12px", color: "#6B8F8A", textDecoration: "line-through", fontWeight: "500" }}>
+                  ₹{product.basePrice}
+                </span>
+              )}
+            </div>
             <span style={{ fontSize: "10px", color: "#6B8F8A", fontWeight: "600" }}>per {product.unit || "kg"}</span>
           </div>
           

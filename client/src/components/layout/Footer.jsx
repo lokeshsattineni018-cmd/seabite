@@ -72,7 +72,7 @@ export default function Footer() {
                 <FiMail size={13} color="#5BBFB5" /> support@seabite.co.in
               </a>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6B8F8A", fontSize: "13px" }}>
-                <FiMapPin size={13} color="#5BBFB5" /> Andhra Pradesh, India
+                <FiMapPin size={13} color="#5BBFB5" /> Mogalthur, AP 534281, Andhra Pradesh, India
               </div>
             </div>
           </div>
