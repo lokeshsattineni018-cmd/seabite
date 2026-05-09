@@ -8,7 +8,10 @@ const resend = process.env.RESEND_API_KEY
 if (!resend) {
   console.warn("❌ [EMAIL SERVICE] CRITICAL: RESEND_API_KEY is missing or undefined. Emails will not be sent.");
 } else {
-  console.log("✅ [EMAIL SERVICE] Initialized with API Key:", process.env.RESEND_API_KEY.substring(0, 5) + "...const OFFICIAL_SENDER = 'SeaBite Official <official@seabite.co.in>';
+  console.log("✅ [EMAIL SERVICE] Initialized with API Key:", process.env.RESEND_API_KEY.substring(0, 5) + "...");
+}
+
+const OFFICIAL_SENDER = 'SeaBite Official <official@seabite.co.in>';
 const ORDERS_SENDER = 'SeaBite Orders <orders@seabite.co.in>';
 
 const LOGO_URL = process.env.LOGO_URL || "https://seabite.co.in/logo.png";
@@ -428,20 +431,6 @@ export const sendWaitlistEmail = async (email, name, productName, productImage) 
   }
 };
 
-  try {
-    const result = await resend.emails.send({
-      from: OFFICIAL_SENDER,
-      to: email,
-      subject: `Restocked: ${productName} is back!`,
-      html: aestheticWrapper(content, "BACK IN STOCK")
-    });
-    logEmailSuccess("WAITLIST", email);
-    return result;
-  } catch (err) {
-    logEmailError("WAITLIST_EMAIL", err, { email, productName });
-  }
-};
-
 /**
  * 🟢 6. SECURITY: OTP VERIFICATION
  */
@@ -526,6 +515,7 @@ export const sendEmail = async (to, subject, content) => {
     logEmailError("GENERIC_EMAIL", err, { to });
   }
 };
+
 /**
  * 🟢 8. AUTOMATION: ABANDONED CART RECOVERY
  */
@@ -587,11 +577,6 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
   }
 };
 
-  try {
-    const result = await resend.emails.send({
-      from: OFFICIAL_SENDER,
-      to: email,
-      subject: `SeaBite | Don't miss out on your fresh catch, ${name}!`,
 /**
  * 🟢 9. AUTOMATION: WIN-BACK COUPON
  */
@@ -746,7 +731,62 @@ export const sendLowStockAlert = async (email, name, product) => {
     logEmailError("LOW_STOCK_ALERT_EMAIL", err, { email, productId: product._id });
   }
 };
-`,
-    html: aestheticWrapper(content, "URGENT UPDATE")
-  });
+
+/**
+ * 🟢 12. MARKETING: PROMOTIONAL BLAST
+ */
+export const sendMarketingPromoEmail = async (email, name, promoData) => {
+  const { title, subtitle, image, ctaText, ctaLink, description } = promoData;
+  console.log(`🔍 [DEBUG] sendMarketingPromoEmail triggered for: ${email}`);
+  if (!resend) return;
+
+  const content = `
+    <h1 style="color: ${T.primary}; font-size: 36px; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.04em; line-height: 1.1;">${title}</h1>
+    <p style="margin-bottom: 24px; color: ${T.text}; font-size: 18px; font-weight: 600;">${subtitle}</p>
+    
+    ${image ? `<img src="${image}" alt="Promo" style="width: 100%; border-radius: 20px; margin-bottom: 32px; border: 1px solid ${T.border};">` : ''}
+    
+    <p style="margin-bottom: 40px; color: ${T.textLight}; font-size: 16px; line-height: 1.7;">
+      ${description}
+    </p>
+
+    <div style="text-align: center; margin: 40px 0;">
+      <a href="${ctaLink || 'https://seabite.co.in'}" class="cta-button">${ctaText || 'SHOP THE SALE'}</a>
+    </div>
+  `;
+
+  try {
+    const result = await resend.emails.send({
+      from: OFFICIAL_SENDER,
+      to: email,
+      subject: `${title} | SeaBite Fresh`,
+      html: aestheticWrapper(content, "SPECIAL OFFER", true)
+    });
+    logEmailSuccess("MARKETING_PROMO", email);
+    return result;
+  } catch (err) {
+    logEmailError("MARKETING_PROMO_EMAIL", err, { email });
+  }
+};
+
+/**
+ * 🟢 13. BATCH: SEND TO MULTIPLE USERS
+ */
+export const sendBatchMarketingEmails = async (users, promoData) => {
+  console.log(`🚀 Starting batch marketing to ${users.length} users...`);
+  const results = { success: 0, failed: 0 };
+
+  for (const user of users) {
+    try {
+      await sendMarketingPromoEmail(user.email, user.name, promoData);
+      results.success++;
+      // Avoid rate limits
+      await new Promise(r => setTimeout(r, 100)); 
+    } catch (err) {
+      results.failed++;
+    }
+  }
+
+  console.log(`✅ Batch complete. Success: ${results.success}, Failed: ${results.failed}`);
+  return results;
 };
