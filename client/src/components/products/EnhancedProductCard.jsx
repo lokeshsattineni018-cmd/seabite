@@ -163,7 +163,7 @@ const EnhancedProductCard = ({
     setTimeout(() => {
       try {
         triggerHaptic("medium"); // 📳 Haptic vibration
-        addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice) });
+        addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice), originalPrice: parseFloat(product.basePrice) });
         refreshCartCount();
         toast.success(`${product.name} added`, {
           icon: "🛒",

@@ -109,8 +109,9 @@ router.post("/send-otp", authLimiter, async (req, res) => {
 });
 
 router.post("/verify-otp-signup", async (req, res) => {
-  const { name, email, phone, password, otp, referralCode } = req.body;
-  
+  try {
+    const { name, email, phone, password, otp, referralCode } = req.body;
+    
     console.log(`🔍 [DEBUG] verify-otp-signup triggered for: ${email}, Phone: ${phone}`);
 
     if (!phone || phone.length < 10) {

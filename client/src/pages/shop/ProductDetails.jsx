@@ -621,7 +621,7 @@ export default function ProductDetails() {
     setTimeout(() => {
       try {
         triggerHaptic("medium");
-        addToCart({ ...product, qty, price: parseFloat(totalPrice) });
+        addToCart({ ...product, quantity: qty, price: parseFloat(unitPrice), originalPrice: parseFloat(basePrice) });
         refreshCartCount();
         toast.success(`${product.name} added`, {
           icon: "🛒",
