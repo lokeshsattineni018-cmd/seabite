@@ -2,7 +2,7 @@ import { useState, useContext, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiHeart, FiShoppingCart, FiZap, FiCheck, FiArrowRight } from "react-icons/fi";
+import { FiHeart, FiShoppingCart, FiZap, FiCheck, FiArrowRight, FiPlus } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import toast from "../../utils/toast"; 
@@ -233,31 +233,32 @@ const EnhancedProductCard = ({
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.05, backgroundColor: "#4AA89F" }}
+            whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
             style={{
-              background: isOutOfStock ? "#F1F5F5" : "#5BBFB5",
-              color: isOutOfStock ? "#9CA3AF" : "#FFF",
-              border: "none",
-              borderRadius: "10px",
-              height: "38px",
-              padding: "0 12px",
+              background: isOutOfStock ? "#F1F5F5" : "rgba(91,191,181,0.12)",
+              color: isOutOfStock ? "#9CA3AF" : "#5BBFB5",
+              border: isOutOfStock ? "1.5px solid #E5E7EB" : "1.5px solid rgba(91,191,181,0.4)",
+              borderRadius: "8px",
+              height: "34px",
+              padding: "0 14px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "6px",
-              fontSize: "12px",
-              fontWeight: "700",
+              gap: "4px",
+              fontSize: "13px",
+              fontWeight: "800",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
-              boxShadow: isOutOfStock ? "none" : "0 4px 14px rgba(91,191,181,0.25)",
-              transition: "all 0.3s ease",
-              fontFamily: "inherit"
+              transition: "all 0.2s ease",
+              fontFamily: "inherit",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em"
             }}
           >
-            {isAdding ? <FiCheck size={14} /> : <FiShoppingCart size={14} />}
-            {isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : "Add to Cart")}
+            {isAdding ? <FiCheck size={14} strokeWidth={3} /> : <FiPlus size={14} strokeWidth={3} />}
+            {isOutOfStock ? "SOLD" : (isAdding ? "ADDED" : "ADD")}
           </motion.button>
         </div>
       </div>
