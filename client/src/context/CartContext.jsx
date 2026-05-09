@@ -14,15 +14,16 @@ const calculateTotals = (cart, globalDiscount = 0, settings = {}) => {
     let count = 0;
 
     const updatedCart = cart.map(item => {
-        let price = parseFloat(item.basePrice);
-        if (isNaN(price)) price = parseFloat(item.price) || 0;
+        let basePrice = parseFloat(item.basePrice);
+        if (isNaN(basePrice)) basePrice = parseFloat(item.price) || 0;
 
+        let price = basePrice;
         const isFlashSale = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
 
         if (isFlashSale) {
             price = parseFloat(item.flashSale.discountPrice);
         } else if (globalDiscount > 0) {
-            price = Math.round(price * (1 - globalDiscount / 100));
+            price = Math.round(basePrice * (1 - globalDiscount / 100));
         }
 
         const qty = Number(item.qty || 1);
@@ -32,7 +33,7 @@ const calculateTotals = (cart, globalDiscount = 0, settings = {}) => {
             count += qty;
         }
 
-        return { ...item, price };
+        return { ...item, price, originalPrice: basePrice };
     });
 
     // Dynamic Settings with defaults

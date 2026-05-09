@@ -8,6 +8,7 @@ import {
     addAddress,
     getAddresses,
     deleteAddress,
+    updateAddress,
 } from "../controllers/addressController.js";
 
 const router = express.Router();
@@ -17,11 +18,17 @@ router.post("/wishlist/:id", protect, async (req, res) => {
     try {
         const user = await User.findById(req.user._id);
         const productId = req.params.id;
+        console.log(`🔍 [DEBUG] Wishlist toggle triggered for user: ${req.user?._id}, product: ${productId}`);
+
         if (!mongoose.Types.ObjectId.isValid(productId)) {
+            console.log("❌ [WISHLIST] Invalid Product ID:", productId);
             return res.status(400).json({ message: "Invalid Product ID" });
         }
 
-        if (!user) return res.status(404).json({ message: "User not found" });
+        if (!user) {
+            console.log("❌ [WISHLIST] User not found:", req.user?._id);
+            return res.status(404).json({ message: "User not found" });
+        }
 
         // Ensure wishlist exists
         if (!user.wishlist) user.wishlist = [];
@@ -32,17 +39,19 @@ router.post("/wishlist/:id", protect, async (req, res) => {
             // Remove
             user.wishlist = user.wishlist.filter((id) => id.toString() !== productId);
             await user.save();
+            console.log(`✅ [WISHLIST] Removed product ${productId}`);
             logActivity("WISHLIST_REMOVE", `Removed product ${productId} from wishlist`, req);
             res.json({ message: "Removed from Wishlist", wishlist: user.wishlist });
         } else {
             // Add
             user.wishlist.push(productId);
             await user.save();
+            console.log(`✅ [WISHLIST] Added product ${productId}`);
             logActivity("WISHLIST_ADD", `Added product ${productId} to wishlist`, req);
             res.json({ message: "Added to Wishlist", wishlist: user.wishlist });
         }
     } catch (error) {
-        console.error("WISHLIST ERROR:", error);
+        console.error("❌ [WISHLIST] Wishlist Error:", error);
         res.status(500).json({ message: "Server Error", error: error.message });
     }
 });
@@ -61,6 +70,7 @@ router.get("/wishlist", protect, async (req, res) => {
 // 🟢 ADDRESS MANAGEMENT
 router.post("/address", protect, addAddress);
 router.get("/address", protect, getAddresses);
+router.put("/address/:id", protect, updateAddress);
 router.delete("/address/:id", protect, deleteAddress);
 
 // 🛒 CART SYNC (Abandoned Cart Recovery)

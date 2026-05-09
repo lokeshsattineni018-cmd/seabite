@@ -152,18 +152,18 @@ const levenshtein = (a, b) => {
 router.get("/search/suggest", async (req, res) => {
   try {
     const { q } = req.query;
-    if (!q) return res.json([]);
+    if (!q) return res.json({ suggestions: [], globalDiscount: 0 });
 
     let suggestions = await Product.find({
       name: { $regex: q, $options: "i" },
       active: true
     })
-      .select("name image category basePrice")
+      .select("name image category basePrice flashSale")
       .limit(5);
 
     // 🟢 "DID YOU MEAN?" LOGIC (If no results)
     if (suggestions.length === 0 && q.length > 2) {
-      const allProducts = await Product.find({ active: true }).select("name image category basePrice");
+      const allProducts = await Product.find({ active: true }).select("name image category basePrice flashSale");
 
       const fuzzyMatches = allProducts.map(p => ({
         ...p.toObject(),
@@ -179,7 +179,14 @@ router.get("/search/suggest", async (req, res) => {
       }
     }
 
-    res.json(suggestions);
+    // Fetch Global Discount
+    let globalDiscount = 0;
+    try {
+      const settings = await getSettings();
+      if (settings) globalDiscount = settings.globalDiscount || 0;
+    } catch (err) {}
+
+    res.json({ suggestions, globalDiscount });
   } catch (err) {
     res.status(500).json({ message: "Search failed" });
   }

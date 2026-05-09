@@ -72,6 +72,7 @@ export default function Navbar({ announcementActive = false }) {
   const [showCatOpen, setShowCatOpen] = useState(true);
   const [trendingSearched, setTrendingSearched] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [searchGlobalDiscount, setSearchGlobalDiscount] = useState(0); // 🟢 Capture Search Discount
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [systemAlert, setSystemAlert] = useState(null); // [Pulse State]
   const isOrderDetails = location.pathname.startsWith("/orders/") && location.pathname.length > 8;
@@ -157,11 +158,26 @@ export default function Navbar({ announcementActive = false }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, [location.pathname]);
 
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
   useEffect(() => {
-    if (!user) return setUnreadCount(0);
-    axios.get(`${API_URL}/api/notifications`, { withCredentials: true })
-      .then(res => setUnreadCount(res.data.filter(n => !n.read).length))
-      .catch(() => { });
+    if (!user) {
+      setUnreadCount(0);
+      setNotifications([]);
+      return;
+    }
+    const fetchNotifications = () => {
+      axios.get(`${API_URL}/api/notifications`, { withCredentials: true })
+        .then(res => {
+          setNotifications(res.data);
+          setUnreadCount(res.data.filter(n => !n.read).length);
+        })
+        .catch(() => { });
+    };
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000); // Poll every minute
+    return () => clearInterval(interval);
   }, [user]);
 
   useEffect(() => {
@@ -190,16 +206,29 @@ export default function Navbar({ announcementActive = false }) {
   }, [searchExpanded]);
 
   useEffect(() => {
-    if (!searchExpanded) return;
     const handleClickOutside = (e) => {
-      if (searchRef.current && !searchRef.current.contains(e.target) && !e.target.closest('.search-container')) {
+      if (showNotifications && !e.target.closest('.notif-container')) {
+        setShowNotifications(false);
+      }
+      if (showProfile && !e.target.closest('.profile-container')) {
+        setShowProfile(false);
+      }
+      if (searchExpanded && searchRef.current && !searchRef.current.contains(e.target) && !e.target.closest('.search-container')) {
         setSearchExpanded(false);
         setSuggestions([]);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [searchExpanded]);
+  }, [showNotifications, showProfile, searchExpanded]);
+
+  const markAllAsRead = async () => {
+    try {
+      await axios.put(`${API_URL}/api/notifications/read-all`, {}, { withCredentials: true });
+      setUnreadCount(0);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) { }
+  };
 
   const handleSearchInput = (val) => {
     setSearchTerm(val);
@@ -208,7 +237,8 @@ export default function Navbar({ announcementActive = false }) {
     debounceRef.current = setTimeout(async () => {
       try {
         const r = await axios.get(`${API_URL}/api/products/search/suggest?q=${val}`);
-        setSuggestions(r.data);
+        setSuggestions(r.data.suggestions || []);
+        setSearchGlobalDiscount(r.data.globalDiscount || 0);
       } catch { }
     }, 300);
   };
@@ -248,6 +278,8 @@ export default function Navbar({ announcementActive = false }) {
       localStorage.removeItem("userInfo");
       setUser(null); 
       setIsLoginOpen(false);
+      setShowProfile(false);
+      setShowNotifications(false);
       setAuthMode("LOGIN");
       setAuthEmail("");
       setAuthPassword("");
@@ -274,6 +306,7 @@ export default function Navbar({ announcementActive = false }) {
 
   const handleSignupOtpRequest = async (e) => {
     if (e) e.preventDefault();
+    if (!authPhone || authPhone.length < 10) return toast.error("Phone number must be at least 10 digits");
     setAuthLoading(true);
     try {
       await axios.post(`${API_URL}/api/auth/send-otp`, { email: authEmail, name: authName });
@@ -491,7 +524,21 @@ export default function Navbar({ announcementActive = false }) {
                             </div>
                             <div style={{ flex: 1 }}>
                               <p style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", margin: "0 0 2px" }}>{item.name}</p>
-                              <p style={{ fontSize: "12px", fontWeight: "500", color: "#5BBFB5" }}>₹{item.basePrice} <span style={{ color: "#A8C5C0", fontSize: "11px" }}>/ kg</span></p>
+                              <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                                <p style={{ fontSize: "12px", fontWeight: "500", color: "#5BBFB5" }}>
+                                  ₹{(() => {
+                                    const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
+                                    const disc = hasFlash ? item.flashSale.discountPrice : (searchGlobalDiscount > 0 ? item.basePrice * (1 - searchGlobalDiscount / 100) : item.basePrice);
+                                    return disc.toFixed(0);
+                                  })()}
+                                </p>
+                                {(() => {
+                                  const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
+                                  const isDisc = hasFlash || searchGlobalDiscount > 0;
+                                  return isDisc && <span style={{ fontSize: "10px", color: "#A8C5C0", textDecoration: "line-through" }}>₹{item.basePrice}</span>;
+                                })()}
+                                <span style={{ color: "#A8C5C0", fontSize: "11px" }}>/ kg</span>
+                              </div>
                             </div>
                             <FiArrowRight size={14} style={{ color: "#E2EEEC" }} />
                           </div>
@@ -506,6 +553,76 @@ export default function Navbar({ announcementActive = false }) {
               </div>
 
 
+
+              {user && (
+                <div style={{ position: "relative" }} className="notif-container">
+                  <motion.button 
+                    whileHover={{ scale: 1.05 }} 
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    style={{
+                      background: "none", border: "none", padding: "8px",
+                      cursor: "pointer", color: T.iconColor,
+                      position: "relative", display: "flex", alignItems: "center",
+                    }}
+                  >
+                    <FiBell size={18} />
+                    {unreadCount > 0 && (
+                      <span style={{
+                        position: "absolute", top: "0px", right: "0px",
+                        background: "#F07468", color: "white",
+                        fontSize: "9px", fontWeight: "800",
+                        width: "14px", height: "14px",
+                        borderRadius: "50%", display: "flex",
+                        alignItems: "center", justifyContent: "center",
+                        border: `1.5px solid ${isTransparent ? "transparent" : "#fff"}`,
+                      }}>
+                        {unreadCount}
+                      </span>
+                    )}
+                  </motion.button>
+
+                  <AnimatePresence>
+                    {showNotifications && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        style={{
+                          position: "absolute", top: "100%", right: 0, marginTop: "12px",
+                          width: "320px", background: "white", borderRadius: "20px",
+                          boxShadow: "0 20px 50px rgba(0,0,0,0.12)", border: "1.5px solid #E2EEEC",
+                          zIndex: 1000, overflow: "hidden"
+                        }}
+                      >
+                        <div style={{ padding: "18px", borderBottom: "1.5px solid #F4F9F8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "800", color: "#1A2E2C" }}>Notifications</h3>
+                          {unreadCount > 0 && (
+                            <button onClick={markAllAsRead} style={{ background: "none", border: "none", color: "#5BBFB5", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Mark all read</button>
+                          )}
+                        </div>
+                        <div style={{ maxHeight: "360px", overflowY: "auto" }} className="no-scrollbar">
+                          {notifications.length > 0 ? (
+                            notifications.map(n => (
+                              <div key={n._id} style={{ padding: "16px", borderBottom: "1px solid #F4F9F8", background: n.read ? "transparent" : "#F4FBF9" }}>
+                                <p style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: "700", color: "#1A2E2C" }}>{n.title}</p>
+                                <p style={{ margin: 0, fontSize: "12px", color: "#6B8F8A", lineHeight: 1.4 }}>{n.message}</p>
+                                <p style={{ margin: "8px 0 0", fontSize: "10px", color: "#B8CFCC", fontWeight: "600" }}>{new Date(n.createdAt).toLocaleDateString()}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{ padding: "60px 20px", textAlign: "center" }}>
+                              <div style={{ fontSize: "24px", marginBottom: "12px" }}>🔔</div>
+                              <p style={{ fontSize: "13px", color: "#B8CFCC", margin: 0, fontWeight: "600" }}>All caught up!</p>
+                            </div>
+                          )}
+                        </div>
+                        <button onClick={() => { navigate("/notifications"); setShowNotifications(false); }} style={{ width: "100%", padding: "16px", background: "#F4F9F8", border: "none", color: "#1A2E2C", fontSize: "13px", fontWeight: "800", cursor: "pointer", borderTop: "1.5px solid #E2EEEC" }}>View All Notifications</button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
 
               <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} onClick={() => user ? navigate("/wishlist") : navigate("/login")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
                 <FiHeart size={15} />
@@ -750,9 +867,20 @@ export default function Navbar({ announcementActive = false }) {
                           <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#1A2E2C", fontFamily: "'Manrope', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             {item.name}
                           </p>
-                          <p style={{ margin: 0, fontSize: "13px", color: "#5BBFB5", fontWeight: "800", fontFamily: "'Manrope', sans-serif", marginTop: "2px" }}>
-                            ₹{item.basePrice}
-                          </p>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginTop: "2px" }}>
+                            <p style={{ margin: 0, fontSize: "13px", color: "#5BBFB5", fontWeight: "800", fontFamily: "'Manrope', sans-serif" }}>
+                              ₹{(() => {
+                                const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
+                                const disc = hasFlash ? item.flashSale.discountPrice : (searchGlobalDiscount > 0 ? item.basePrice * (1 - searchGlobalDiscount / 100) : item.basePrice);
+                                return disc.toFixed(0);
+                              })()}
+                            </p>
+                            {(() => {
+                              const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
+                              const isDisc = hasFlash || searchGlobalDiscount > 0;
+                              return isDisc && <span style={{ fontSize: "11px", color: "#A8C5C0", textDecoration: "line-through" }}>₹{item.basePrice}</span>;
+                            })()}
+                          </div>
                         </div>
                         <FiChevronRight size={14} color="#D8ECEA" />
                       </div>

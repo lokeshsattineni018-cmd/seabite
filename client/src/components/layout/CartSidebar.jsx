@@ -259,9 +259,16 @@ export default function CartSidebar({ onClose }) {
                             </motion.button>
                           </div>
 
-                          <span style={{ fontSize: 14, fontWeight: 800, color: T.textDark }}>
-                            ₹{(item.price * item.qty).toFixed(0)}
-                          </span>
+                          <div style={{ textAlign: "right" }}>
+                            {item.originalPrice > item.price && (
+                              <div style={{ fontSize: 10, color: T.textLite, textDecoration: "line-through", marginBottom: 2 }}>
+                                ₹{(item.originalPrice * item.qty).toFixed(0)}
+                              </div>
+                            )}
+                            <span style={{ fontSize: 14, fontWeight: 800, color: T.textDark }}>
+                              ₹{(item.price * item.qty).toFixed(0)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
