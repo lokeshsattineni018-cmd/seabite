@@ -233,26 +233,43 @@ const EnhancedProductCard = ({
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.05, backgroundColor: "#4AA89F" }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={!isOutOfStock ? { 
+              scale: 1.05,
+              boxShadow: "0 8px 20px rgba(91,191,181,0.3)"
+            } : {}}
+            whileTap={!isOutOfStock ? { scale: 0.95 } : {}}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
+            aria-label={isOutOfStock ? "Out of stock" : "Add to cart"}
             style={{
-              background: isOutOfStock ? "#F1F5F5" : "#5BBFB5",
-              color: isOutOfStock ? "#9CA3AF" : "#FFF",
+              background: isOutOfStock ? "#E5E7EB" : "#5BBFB5",
+              color: isOutOfStock ? "#9CA3AF" : "#fff",
               border: "none",
-              borderRadius: "14px",
-              height: "48px",
-              width: "48px",
+              borderRadius: "10px",
+              padding: "8px 18px",
+              fontSize: "13px",
+              fontWeight: "700",
+              boxShadow: isOutOfStock ? "none" : "0 4px 12px rgba(91,191,181,0.2)",
+              cursor: isOutOfStock ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
-              justifyContent: "center",
-              cursor: isOutOfStock ? "not-allowed" : "pointer",
-              boxShadow: isOutOfStock ? "none" : "0 8px 24px rgba(91,191,181,0.25)",
-              transition: "all 0.3s ease"
+              gap: "6px",
+              transition: "all 0.2s ease"
             }}
           >
-            {isAdding ? <FiCheck size={20} /> : <FiShoppingCart size={20} />}
+            {isAdding ? "..." : isOutOfStock ? "Out of Stock" : (
+              <>
+                <motion.span
+                  initial={{ x: 0 }}
+                  whileHover={{ x: -2 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                  style={{ display: "flex", alignItems: "center" }}
+                >
+                  <FiShoppingCart size={14} />
+                </motion.span>
+                Add to Cart
+              </>
+            )}
           </motion.button>
         </div>
       </div>
