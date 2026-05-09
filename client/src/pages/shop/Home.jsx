@@ -448,7 +448,7 @@ const CategoryRow = ({ title, filterType }) => {
             </Link>
           </RevealRight>
         </div>
-        <Stagger className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Stagger className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
           {loading ? (
             [...Array(4)].map((_, i) => <ProductSkeleton key={i} />)
           ) : products.length > 0 ? (

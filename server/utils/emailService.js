@@ -11,7 +11,7 @@ if (!resend) {
   console.log("✅ [EMAIL SERVICE] Initialized with API Key:", process.env.RESEND_API_KEY.substring(0, 5) + "...");
 }
 
-const OFFICIAL_SENDER = 'SeaBite Official <official@seabite.co.in>';
+const OFFICIAL_SENDER = 'SeaBite Fresh Catch <notifications@seabite.co.in>';
 const ORDERS_SENDER = 'SeaBite Orders <orders@seabite.co.in>';
 
 const LOGO_URL = process.env.LOGO_URL || "https://seabite.co.in/logo.png";
@@ -51,108 +51,41 @@ const logEmailSuccess = (type, email) => {
  * 🎨 Premium E-commerce Email Wrapper
  * Designed for maximum inbox delivery and elite visual appeal.
  */
-const aestheticWrapper = (content, subtitle, isMarketing = false) => `
-  <!DOCTYPE html>
-  <html lang="en">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="x-apple-disable-message-reformatting">
-      <!--[if mso]>
-      <noscript>
-        <xml>
-          <o:OfficeDocumentSettings>
-            <o:PixelsPerInch>96</o:PixelsPerInch>
-          </o:OfficeDocumentSettings>
-        </xml>
-      </noscript>
-      <![endif]-->
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        
-        body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; background-color: ${T.bg}; font-family: 'Plus Jakarta Sans', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, helvetica, arial, sans-serif; }
-        table { border-collapse: collapse !important; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
-        img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; display: block; }
-        
-        .container { width: 100% !important; max-width: 600px !important; margin: 0 auto !important; }
-        .content-card { background-color: ${T.surface}; border-radius: 24px; box-shadow: 0 10px 30px rgba(26, 46, 44, 0.04); overflow: hidden; border: 1px solid ${T.border}; }
-        .cta-button { 
-          display: inline-block; 
-          background-color: ${T.accent}; 
-          color: #ffffff !important; 
-          padding: 18px 42px; 
-          text-decoration: none; 
-          border-radius: 14px; 
-          font-weight: 700; 
-          font-size: 16px; 
-          letter-spacing: -0.01em;
-          box-shadow: 0 8px 20px rgba(91, 191, 181, 0.25);
-        }
-        
-        @media only screen and (max-width: 620px) {
-          .container { width: 100% !important; padding: 10px !important; }
-          .content-padding { padding: 32px 24px !important; }
-          .header-padding { padding: 40px 24px !important; }
-        }
-      </style>
-    </head>
-    <body>
-      <div style="background-color: ${T.bg}; padding: 40px 0;">
-        <table class="container" align="center" border="0" cellpadding="0" cellspacing="0" width="600">
-          <!-- Logo Header -->
-          <tr>
-            <td class="header-padding" align="center" style="padding: 0 0 40px 0;">
-              <a href="https://seabite.co.in" target="_blank">
-                <img src="${LOGO_URL}" width="160" alt="SeaBite" style="margin-bottom: 8px;">
-              </a>
-              <div style="color: ${T.textLight}; font-size: 11px; text-transform: uppercase; letter-spacing: 0.25em; font-weight: 700;">
-                ${subtitle || 'PREMIUM COASTAL CATCH'}
-              </div>
-            </td>
-          </tr>
-          
-          <!-- Main Card -->
-          <tr>
-            <td class="content-card">
-              <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td class="content-padding" style="padding: 56px 48px;">
-                    ${content}
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 48px 40px; text-align: center;">
-              <div style="margin-bottom: 24px;">
-                <span style="display: inline-block; padding: 6px 16px; background-color: #E2EEEC; color: ${T.primary}; border-radius: 30px; font-size: 11px; font-weight: 800; letter-spacing: 0.1em;">
-                  CERTIFIED FRESHNESS
-                </span>
-              </div>
-              <div style="font-size: 13px; color: ${T.textLight}; line-height: 1.8; font-weight: 500;">
-                <b style="color: ${T.primary};">SeaBite HQ</b><br>
-                Mogalthur, AP 534281, West Godavari,<br>
-                Andhra Pradesh, India
-              </div>
-              
-              <div style="margin-top: 32px; padding-top: 32px; border-top: 1px solid ${T.border};">
-                <div style="font-size: 11px; color: ${T.textLight}; opacity: 0.8; line-height: 1.5;">
-                  You received this email because you're a valued member of SeaBite.<br>
-                  &copy; 2026 SeaBite Global. All rights reserved.<br><br>
-                  <a href="https://seabite.co.in/privacy" style="color: ${T.primary}; text-decoration: none; margin: 0 8px;">Privacy Policy</a> &bull; 
-                  <a href="https://seabite.co.in/terms" style="color: ${T.primary}; text-decoration: none; margin: 0 8px;">Terms of Service</a> &bull; 
-                  <a href="https://seabite.co.in/unsubscribe" style="color: ${T.primary}; text-decoration: none; margin: 0 8px;">Unsubscribe</a>
-                </div>
-              </div>
-            </td>
-          </tr>
-        </table>
-      </div>
-    </body>
-  </html>
+const aestheticWrapper = (content, subtitle) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F4F9F8; margin: 0; padding: 20px; color: #1A2E2C; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    .header { padding: 30px; text-align: center; background-color: #ffffff; border-bottom: 1px solid #E2EEEC; }
+    .content { padding: 40px; line-height: 1.6; }
+    .footer { padding: 30px; text-align: center; font-size: 12px; color: #6B8F8A; background-color: #F9FBFA; }
+    .btn { display: inline-block; padding: 14px 30px; background-color: #F07468; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="${LOGO_URL}" alt="SeaBite" width="140" style="margin-bottom: 10px;">
+      <div style="font-size: 10px; color: #6B8F8A; text-transform: uppercase; letter-spacing: 2px;">${subtitle || 'PREMIUM COASTAL CATCH'}</div>
+    </div>
+    <div class="content">
+      ${content}
+    </div>
+    <div class="footer">
+      <p><b>SeaBite HQ</b><br>Mogalthur, AP 534281, West Godavari, Andhra Pradesh</p>
+      <p>&copy; 2026 SeaBite. All rights reserved.</p>
+      <p>
+        <a href="https://seabite.co.in/privacy" style="color: #5BBFB5; text-decoration: none;">Privacy</a> | 
+        <a href="https://seabite.co.in/terms" style="color: #5BBFB5; text-decoration: none;">Terms</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>
 `;
 
 /**
