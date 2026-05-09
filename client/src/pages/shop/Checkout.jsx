@@ -98,23 +98,26 @@ function StepsBar({ currentStep }) {
 }
 
 
+import { createPortal } from "react-dom";
+
 // Coupon Drawer Component
 function CouponDrawer({ isOpen, onClose, coupons, appliedCoupon, onApply, onClear, itemTotal }) {
-  return (
+  if (typeof document === "undefined") return null;
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <>
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200 }}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 9998 }}
           />
           <motion.div
             initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             style={{
               position: "fixed", top: 0, right: 0, bottom: 0, width: "100%", maxWidth: 400,
-              background: "#fff", zIndex: 201, boxShadow: "-10px 0 40px rgba(0,0,0,0.1)",
+              background: "#fff", zIndex: 9999, boxShadow: "-10px 0 40px rgba(0,0,0,0.1)",
               display: "flex", flexDirection: "column"
             }}
           >
@@ -173,7 +176,8 @@ function CouponDrawer({ isOpen, onClose, coupons, appliedCoupon, onApply, onClea
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
