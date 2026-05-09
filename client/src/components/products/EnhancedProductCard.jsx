@@ -233,43 +233,31 @@ const EnhancedProductCard = ({
           </div>
 
           <motion.button
-            whileHover={!isOutOfStock ? { 
-              scale: 1.05,
-              boxShadow: "0 8px 20px rgba(91,191,181,0.3)"
-            } : {}}
-            whileTap={!isOutOfStock ? { scale: 0.95 } : {}}
+            whileHover={{ scale: 1.05, backgroundColor: "#4AA89F" }}
+            whileTap={{ scale: 0.95 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
-            aria-label={isOutOfStock ? "Out of stock" : "Add to cart"}
             style={{
-              background: isOutOfStock ? "#E5E7EB" : "#5BBFB5",
-              color: isOutOfStock ? "#9CA3AF" : "#fff",
+              background: isOutOfStock ? "#F1F5F5" : "#5BBFB5",
+              color: isOutOfStock ? "#9CA3AF" : "#FFF",
               border: "none",
               borderRadius: "10px",
-              padding: "8px 18px",
-              fontSize: "13px",
-              fontWeight: "700",
-              boxShadow: isOutOfStock ? "none" : "0 4px 12px rgba(91,191,181,0.2)",
-              cursor: isOutOfStock ? "not-allowed" : "pointer",
+              height: "38px",
+              padding: "0 12px",
               display: "flex",
               alignItems: "center",
+              justifyContent: "center",
               gap: "6px",
-              transition: "all 0.2s ease"
+              fontSize: "12px",
+              fontWeight: "700",
+              cursor: isOutOfStock ? "not-allowed" : "pointer",
+              boxShadow: isOutOfStock ? "none" : "0 4px 14px rgba(91,191,181,0.25)",
+              transition: "all 0.3s ease",
+              fontFamily: "inherit"
             }}
           >
-            {isAdding ? "..." : isOutOfStock ? "Out of Stock" : (
-              <>
-                <motion.span
-                  initial={{ x: 0 }}
-                  whileHover={{ x: -2 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                  style={{ display: "flex", alignItems: "center" }}
-                >
-                  <FiShoppingCart size={14} />
-                </motion.span>
-                Add to Cart
-              </>
-            )}
+            {isAdding ? <FiCheck size={14} /> : <FiShoppingCart size={14} />}
+            {isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : "Add to Cart")}
           </motion.button>
         </div>
       </div>
