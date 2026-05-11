@@ -35,6 +35,10 @@ const couponSchema = new mongoose.Schema({
     type: Date, 
     default: Date.now 
   },
+  firstTimeOnly: {
+    type: Boolean,
+    default: false
+  },
 
   // Extra fields for spin-wheel unique coupons
   isSpinCoupon: { 
