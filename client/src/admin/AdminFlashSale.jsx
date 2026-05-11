@@ -4,7 +4,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     FiZap, FiClock, FiDollarSign, FiSave,
-    FiX, FiSearch, FiRefreshCw
+    FiX, FiSearch, FiRefreshCw, FiPercent
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
@@ -32,6 +32,12 @@ export default function AdminFlashSale() {
         saleEndDate: "",
         isFlashSale: false
     });
+    const [massConfig, setMassConfig] = useState({
+        category: "",
+        discountPercent: 10,
+        saleEndDate: ""
+    });
+    const [isMassLoading, setIsMassLoading] = useState(false);
 
     const fetchProducts = async () => {
         setLoading(true);
@@ -83,6 +89,41 @@ export default function AdminFlashSale() {
         }
     };
 
+    const handleMassApply = async () => {
+        if (!massConfig.category || !massConfig.saleEndDate || massConfig.discountPercent <= 0) {
+            return toast.error("Please fill all fields for mass apply");
+        }
+
+        const targetProducts = massConfig.category === "All" 
+            ? products 
+            : products.filter(p => p.category?.toLowerCase() === massConfig.category.toLowerCase());
+
+        if (targetProducts.length === 0) return toast.error("No products found in this category");
+        
+        if (!window.confirm(`Apply ${massConfig.discountPercent}% discount to ${targetProducts.length} products?`)) return;
+
+        setIsMassLoading(true);
+        try {
+            await Promise.all(targetProducts.map(p => {
+                const discountPrice = Math.round(p.basePrice * (1 - massConfig.discountPercent / 100));
+                return axios.put(`/api/admin/products/${p._id}/flash-sale`, {
+                    discountPrice,
+                    saleEndDate: massConfig.saleEndDate,
+                    isFlashSale: true
+                }, { withCredentials: true });
+            }));
+            toast.success(`Successfully applied to ${targetProducts.length} products`);
+            fetchProducts();
+            setMassConfig({ category: "", discountPercent: 10, saleEndDate: "" });
+        } catch (err) {
+            toast.error("Mass apply failed");
+        } finally {
+            setIsMassLoading(false);
+        }
+    };
+
+    const categories = ["All", ...new Set(products.map(p => p.category).filter(Boolean))];
+
     const filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
     return (
@@ -113,11 +154,55 @@ export default function AdminFlashSale() {
                         </div>
                         <button
                             onClick={deactivateAll}
-                            className="px-6 py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg"
+                            className="px-6 py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-2xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg shrink-0"
                         >
                             End All
                         </button>
                     </div>
+                </motion.div>
+
+                {/* Mass Apply Feature */}
+                <motion.div variants={fadeUp} className="bg-white p-6 rounded-3xl shadow-sm border border-stone-200/60 mb-8 flex flex-col md:flex-row items-end gap-4">
+                    <div className="flex-1 space-y-1.5 w-full">
+                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Category</label>
+                        <select 
+                            value={massConfig.category} 
+                            onChange={e => setMassConfig({...massConfig, category: e.target.value})}
+                            className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 text-sm font-bold text-stone-800 outline-none focus:bg-white focus:border-amber-400 transition-all"
+                        >
+                            <option value="">Select Category...</option>
+                            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex-1 space-y-1.5 w-full">
+                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Discount %</label>
+                        <div className="relative">
+                            <FiPercent className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
+                            <input 
+                                type="number" 
+                                min="1" max="99"
+                                value={massConfig.discountPercent} 
+                                onChange={e => setMassConfig({...massConfig, discountPercent: Number(e.target.value)})}
+                                className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-10 pr-4 text-sm font-bold text-stone-800 outline-none focus:bg-white focus:border-amber-400 transition-all"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex-1 space-y-1.5 w-full">
+                        <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Ends At</label>
+                        <input 
+                            type="datetime-local" 
+                            value={massConfig.saleEndDate} 
+                            onChange={e => setMassConfig({...massConfig, saleEndDate: e.target.value})}
+                            className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 text-sm font-bold text-stone-800 outline-none focus:bg-white focus:border-amber-400 transition-all"
+                        />
+                    </div>
+                    <button 
+                        onClick={handleMassApply}
+                        disabled={isMassLoading}
+                        className="w-full md:w-auto px-8 py-3 bg-amber-500 hover:bg-amber-400 text-stone-900 rounded-xl font-bold text-xs uppercase tracking-wide transition-all shadow-lg flex items-center justify-center h-[46px] disabled:opacity-50"
+                    >
+                        {isMassLoading ? <FiRefreshCw className="animate-spin" /> : "Apply to Category"}
+                    </button>
                 </motion.div>
 
                 {/* Grid */}

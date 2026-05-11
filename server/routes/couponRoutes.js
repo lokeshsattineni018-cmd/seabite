@@ -1,5 +1,7 @@
 import express from "express";
 import Coupon from "../models/Coupon.js";
+import Order from "../models/Order.js";
+import User from "../models/User.js";
 
 const router = express.Router();
 
@@ -62,6 +64,23 @@ router.post("/validate", async (req, res) => {
       discountAmount = coupon.value;
     }
 
+    // Check first-time user restriction (we check this last to save DB calls)
+    if (coupon.firstTimeOnly) {
+      if (!safeEmail) {
+        return res.status(400).json({ success: false, message: "Please login to use this coupon." });
+      }
+      
+      const userObj = await User.findOne({ email: safeEmail });
+      if (!userObj) {
+        // If user doesn't exist, they are implicitly a first-time user
+      } else {
+        const orderCount = await Order.countDocuments({ user: userObj._id, status: { $ne: "Cancelled" } });
+        if (orderCount > 0) {
+          return res.status(400).json({ success: false, message: "This coupon is valid for first-time users only." });
+        }
+      }
+    }
+
     res.json({
       success: true,
       discountAmount: Math.floor(discountAmount),
@@ -79,7 +98,7 @@ router.post("/", async (req, res) => {
   try {
     console.log("📥 Received coupon creation request:", req.body);
 
-    const { code, value, minOrderAmount, discountType, maxDiscount, isActive, expiresAt, maxUses } = req.body;
+    const { code, value, minOrderAmount, discountType, maxDiscount, isActive, expiresAt, maxUses, firstTimeOnly } = req.body;
 
     // ✅ Validation
     if (!code || code.trim() === "") {
@@ -111,6 +130,7 @@ router.post("/", async (req, res) => {
       expiresAt: expiresAt || null,
       maxUses: maxUses ? Number(maxUses) : 0,
       usedCount: 0, // ✅ Initialize usedCount
+      firstTimeOnly: !!firstTimeOnly,
     };
 
     console.log("💾 Creating coupon with data:", couponData);

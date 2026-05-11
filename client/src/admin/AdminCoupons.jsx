@@ -26,7 +26,7 @@ export default function AdminCoupons() {
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
   const [formData, setFormData] = useState({
-    code: "", value: "", minOrderAmount: "", discountType: "percent"
+    code: "", value: "", minOrderAmount: "", discountType: "percent", firstTimeOnly: false
   });
 
   const fetchCoupons = async (isSilent = false) => {
@@ -56,10 +56,11 @@ export default function AdminCoupons() {
         maxDiscount: 0,
         isActive: true,
         isSpinCoupon: false,
+        firstTimeOnly: formData.firstTimeOnly,
       };
 
       await axios.post(`${API_URL}/api/coupons`, couponData, { withCredentials: true });
-      setFormData({ code: "", value: "", minOrderAmount: "", discountType: "percent" });
+      setFormData({ code: "", value: "", minOrderAmount: "", discountType: "percent", firstTimeOnly: false });
       fetchCoupons(true);
       toast.success("Coupon created successfully");
     } catch (err) {
@@ -154,6 +155,17 @@ export default function AdminCoupons() {
                 </div>
               </div>
 
+              <div className="flex items-center gap-3 py-2 border-t border-stone-100 mt-2">
+                <input
+                  type="checkbox"
+                  id="firstTimeOnly"
+                  checked={formData.firstTimeOnly}
+                  onChange={(e) => setFormData({ ...formData, firstTimeOnly: e.target.checked })}
+                  className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900 cursor-pointer"
+                />
+                <label htmlFor="firstTimeOnly" className="text-xs font-bold text-stone-600 cursor-pointer">Valid for First-Time Users Only</label>
+              </div>
+
               <button type="submit" className="w-full py-4 bg-stone-900 text-white rounded-xl font-bold text-xs uppercase hover:bg-stone-800 transition-all shadow-lg flex items-center justify-center gap-2 mt-4">
                 <FiPlus size={16} /> Create Coupon
               </button>
@@ -202,9 +214,14 @@ export default function AdminCoupons() {
                           {copiedId === coupon._id ? <FiCheck size={14} className="text-emerald-500" /> : <FiCopy size={14} />}
                         </button>
                       </div>
-                      <p className="text-xs font-medium text-stone-500 truncate">
-                        {coupon.minOrderAmount ? `Orders over ₹${coupon.minOrderAmount}` : "No minimum order amount"}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs font-medium text-stone-500 truncate">
+                          {coupon.minOrderAmount ? `Orders over ₹${coupon.minOrderAmount}` : "No minimum order amount"}
+                        </p>
+                        {coupon.firstTimeOnly && (
+                          <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">New Users</span>
+                        )}
+                      </div>
                     </div>
 
                     <button
