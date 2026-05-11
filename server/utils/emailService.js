@@ -439,14 +439,14 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
               <tr>
                 <td width="72" style="vertical-align: top;">
-                  <img src="${getEmailImageUrl(item.product?.image || item.image)}" width="64" height="64" style="border-radius: 12px; object-fit: cover; display: block; border: 1px solid ${T.border}; background: ${T.bg};">
+                  <img src="${getEmailImageUrl(item.image)}" width="64" height="64" style="border-radius: 12px; object-fit: cover; display: block; border: 1px solid ${T.border}; background: ${T.bg};">
                 </td>
                 <td style="padding-left: 20px; vertical-align: middle;">
-                  <div style="font-size: 15px; font-weight: 800; color: ${T.primary}; margin-bottom: 4px;">${item.product?.name || item.name || 'Premium Item'}</div>
-                  <div style="font-size: 12px; color: ${T.textLight}; font-weight: 600;">Quantity: ${item.qty || 1}</div>
+                  <div style="font-size: 15px; font-weight: 800; color: ${T.primary}; margin-bottom: 4px;">${item.name}</div>
+                  <div style="font-size: 12px; color: ${T.textLight}; font-weight: 600;">Qty: ${item.qty || 1}</div>
                 </td>
                 <td align="right" style="vertical-align: middle;">
-                  <div style="font-size: 16px; font-weight: 800; color: ${T.primary};">₹${item.product?.price || item.price || 0}</div>
+                  <div style="font-size: 16px; font-weight: 800; color: ${T.primary};">₹${item.price || 0}</div>
                 </td>
               </tr>
             </table>
