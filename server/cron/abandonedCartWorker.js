@@ -15,15 +15,34 @@ export const initAbandonedCartWorker = () => {
         "cart.0": { $exists: true }, // cart is not empty
         cartUpdatedAt: { $lt: twoHoursAgo },
         abandonedCartEmailSent: false,
-      }).limit(50); // Process in batches
+      })
+        .populate("cart.product", "name image basePrice flashSale")
+        .limit(50); // Process in batches
 
       if (abandonedUsers.length === 0) return;
 
       for (const user of abandonedUsers) {
         if (!user.email) continue;
-        
+
+        // Build a flat, email-friendly cart array
+        const populatedCart = user.cart
+          .filter(item => item.product) // skip if product was deleted
+          .map(item => {
+            const p = item.product;
+            const isFlashSale = p.flashSale?.isFlashSale && new Date(p.flashSale.saleEndDate) > new Date();
+            const price = isFlashSale ? p.flashSale.discountPrice : p.basePrice;
+            return {
+              name: p.name,
+              image: p.image,
+              price,
+              qty: item.qty,
+            };
+          });
+
+        if (populatedCart.length === 0) continue;
+
         try {
-          await sendAbandonedCartEmail(user.email, user.name, user.cart);
+          await sendAbandonedCartEmail(user.email, user.name, populatedCart);
           user.abandonedCartEmailSent = true;
           await user.save();
           logger.info(`Abandoned cart email sent to ${user.email}`);
