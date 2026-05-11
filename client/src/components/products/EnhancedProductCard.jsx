@@ -159,35 +159,57 @@ const EnhancedProductCard = ({
 
         {/* 🏷️ Glassmorphic Badges */}
         <div style={{ position: "absolute", top: "16px", left: "16px", display: "flex", flexDirection: "column", gap: "8px", pointerEvents: "none" }}>
-          {isActiveFlashSale && (
-            <div style={{ background: "rgba(240, 116, 104, 0.9)", backdropFilter: "blur(10px)", color: "#FFF", fontSize: "10px", fontWeight: "800", padding: "4px 10px", borderRadius: "100px", display: "flex", alignItems: "center", gap: "4px" }}>
-              <FiZap size={10} fill="currentColor" /> FLASH SALE
-            </div>
-          )}
-          {discountPct > 0 && (
+          {isActiveFlashSale ? (
             <motion.div 
               initial={{ opacity: 0, y: -4 }}
               animate={{ opacity: 1, y: 0 }}
               style={{
-                background: "rgba(255, 255, 255, 0.9)",
+                background: "rgba(240, 116, 104, 0.95)",
                 backdropFilter: "blur(12px)",
-                color: "#1A2E2C",
-                padding: "5px 10px", 
+                color: "#FFF",
+                padding: "6px 12px", 
                 borderRadius: "100px",
                 fontSize: "10px", 
-                fontWeight: 700,
-                boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-                border: "1px solid rgba(0,0,0,0.03)",
+                fontWeight: 800,
+                boxShadow: "0 4px 15px rgba(240, 116, 104, 0.2)",
                 display: "flex", 
                 alignItems: "center", 
-                gap: "5px",
+                gap: "6px",
                 letterSpacing: "0.05em",
                 textTransform: "uppercase"
               }}
             >
-              <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#5BBFB5" }} />
-              {discountPct}% OFF
+              <FiZap size={12} fill="currentColor" />
+              <span>Flash Sale</span>
+              <span style={{ opacity: 0.6 }}>•</span>
+              <span>{discountPct}% OFF</span>
             </motion.div>
+          ) : (
+            discountPct > 0 && (
+              <motion.div 
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                style={{
+                  background: "rgba(255, 255, 255, 0.9)",
+                  backdropFilter: "blur(12px)",
+                  color: "#1A2E2C",
+                  padding: "5px 10px", 
+                  borderRadius: "100px",
+                  fontSize: "10px", 
+                  fontWeight: 700,
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+                  border: "1px solid rgba(0,0,0,0.03)",
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: "5px",
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase"
+                }}
+              >
+                <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#5BBFB5" }} />
+                {discountPct}% OFF
+              </motion.div>
+            )
           )}
         </div>
 
