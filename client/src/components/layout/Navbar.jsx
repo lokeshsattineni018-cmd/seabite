@@ -651,6 +651,7 @@ export default function Navbar({ announcementActive = false }) {
                         className="dropdown-bridge"
                         initial={{ opacity: 0, y: -8, scale: 0.97 }} 
                         animate={{ opacity: 1, y: 0, scale: 1 }} 
+                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
                         style={{ position: "absolute", top: "100%", right: 0, paddingTop: "6px", minWidth: "240px", zIndex: 200 }}
                       >
                         <div style={{ background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.1)" }}>
