@@ -180,8 +180,6 @@ const EnhancedProductCard = ({
               }}
             >
               <FiZap size={12} fill="currentColor" />
-              <span>Flash Sale</span>
-              <span style={{ opacity: 0.6 }}>•</span>
               <span>{discountPct}% OFF</span>
             </motion.div>
           ) : (
