@@ -166,21 +166,26 @@ const EnhancedProductCard = ({
           )}
           {discountPct > 0 && (
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              whileHover={{ scale: 1.05 }}
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
               style={{
-                background: "linear-gradient(135deg, #FF6B6B 0%, #FF4757 100%)",
-                color: "#fff",
-                padding: "6px 12px", borderRadius: "20px",
-                fontSize: "11px", fontWeight: 800,
-                boxShadow: "0 4px 15px rgba(255, 71, 87, 0.4)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                display: "flex", alignItems: "center", gap: "4px",
-                letterSpacing: "0.5px"
+                background: "rgba(255, 255, 255, 0.9)",
+                backdropFilter: "blur(12px)",
+                color: "#1A2E2C",
+                padding: "5px 10px", 
+                borderRadius: "100px",
+                fontSize: "10px", 
+                fontWeight: 700,
+                boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
+                border: "1px solid rgba(0,0,0,0.03)",
+                display: "flex", 
+                alignItems: "center", 
+                gap: "5px",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase"
               }}
             >
-              <motion.div animate={{ rotate: [0, -10, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}>🔥</motion.div>
+              <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#5BBFB5" }} />
               {discountPct}% OFF
             </motion.div>
           )}
