@@ -165,9 +165,24 @@ const EnhancedProductCard = ({
             </div>
           )}
           {discountPct > 0 && (
-            <div style={{ background: "rgba(91, 191, 181, 0.9)", backdropFilter: "blur(10px)", color: "#FFF", fontSize: "10px", fontWeight: "800", padding: "4px 10px", borderRadius: "100px" }}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              whileHover={{ scale: 1.05 }}
+              style={{
+                background: "linear-gradient(135deg, #FF6B6B 0%, #FF4757 100%)",
+                color: "#fff",
+                padding: "6px 12px", borderRadius: "20px",
+                fontSize: "11px", fontWeight: 800,
+                boxShadow: "0 4px 15px rgba(255, 71, 87, 0.4)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                display: "flex", alignItems: "center", gap: "4px",
+                letterSpacing: "0.5px"
+              }}
+            >
+              <motion.div animate={{ rotate: [0, -10, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}>🔥</motion.div>
               {discountPct}% OFF
-            </div>
+            </motion.div>
           )}
         </div>
 

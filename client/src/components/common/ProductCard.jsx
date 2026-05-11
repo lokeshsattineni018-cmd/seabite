@@ -15,7 +15,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
  * SeaBite Product Card Component (Standard)
  * Upgraded with strike-off pricing and wishlist support.
  */
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, globalDiscount = 0 }) => {
   const { colors, typography, spacing, shadows, borderRadius } = tokens;
   const { user, refreshMe } = useContext(AuthContext);
   const { addToCart, refreshCartCount } = useContext(CartContext);
@@ -39,8 +39,16 @@ const ProductCard = ({ product }) => {
       : `${API_URL}/uploads${cleanPath}`;
   };
 
-  const hasDiscount = product.basePrice > product.price;
-  const discountPct = hasDiscount ? Math.round((1 - product.price / product.basePrice) * 100) : 0;
+  const isActiveFlashSale = product.flashSale?.isFlashSale && new Date(product.flashSale.saleEndDate) > new Date();
+  let displayPrice = isActiveFlashSale ? product.flashSale.discountPrice : product.basePrice;
+  const globalDiscountApplied = !isActiveFlashSale && globalDiscount > 0;
+  if (globalDiscountApplied) displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
+  
+  const discountPct = isActiveFlashSale
+    ? Math.round((1 - product.flashSale.discountPrice / product.basePrice) * 100)
+    : globalDiscountApplied ? globalDiscount : 0;
+  
+  const hasDiscount = discountPct > 0;
 
   const handleWishlist = async (e) => {
     e.preventDefault();
@@ -100,14 +108,26 @@ const ProductCard = ({ product }) => {
           />
           
           {discountPct > 0 && (
-            <div style={{
-              position: "absolute", top: 12, left: 12,
-              backgroundColor: colors.accentFresh, color: colors.white,
-              padding: "4px 8px", borderRadius: 6,
-              fontSize: 10, fontWeight: 800,
-            }}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              whileHover={{ scale: 1.05 }}
+              style={{
+                position: "absolute", top: 12, left: 12,
+                background: "linear-gradient(135deg, #FF6B6B 0%, #FF4757 100%)",
+                color: "#fff",
+                padding: "6px 12px", borderRadius: "20px",
+                fontSize: "11px", fontWeight: 800,
+                boxShadow: "0 4px 15px rgba(255, 71, 87, 0.4)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                zIndex: 2,
+                display: "flex", alignItems: "center", gap: "4px",
+                letterSpacing: "0.5px"
+              }}
+            >
+              <motion.div animate={{ rotate: [0, -10, 10, -10, 0] }} transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}>🔥</motion.div>
               {discountPct}% OFF
-            </div>
+            </motion.div>
           )}
 
           <button
@@ -138,7 +158,7 @@ const ProductCard = ({ product }) => {
           <div style={{ marginTop: "auto" }}>
             <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
               <span style={{ fontSize: 18, fontWeight: 800, color: colors.primarySea }}>
-                ₹{product.price}
+                ₹{displayPrice}
               </span>
               {hasDiscount && (
                 <span style={{ fontSize: 12, color: colors.textDrift, textDecoration: "line-through" }}>
