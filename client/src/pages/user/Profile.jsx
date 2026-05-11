@@ -218,7 +218,7 @@ export default function Profile() {
                       </div>
                       <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-indigo-200 transition-all">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Total Spent</p>
-                        <p className="text-5xl font-extralight tracking-tighter">₹{totalSpent}</p>
+                        <p className="text-5xl font-extralight tracking-tighter">₹{Number(totalSpent || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                       </div>
                       <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-green-200 transition-all">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Profile Status</p>
