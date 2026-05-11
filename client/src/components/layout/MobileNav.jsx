@@ -87,7 +87,7 @@ const MobileNav = () => {
       {/* 🔮 Minimalist Aesthetic Search */}
       <AnimatePresence>
         {showSearch && (
-          <motion.div initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} className="fixed inset-0 z-[300] bg-white/95 backdrop-blur-3xl overflow-y-auto mesh-clean">
+          <motion.div initial={{ opacity: 0, scale: 1.05 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }} className="fixed inset-0 z-[1200] bg-white/95 backdrop-blur-3xl overflow-y-auto mesh-clean">
             <div className="max-w-md mx-auto p-8 pt-20">
               <div className="flex items-center justify-between mb-16">
                  <button onClick={() => setShowSearch(false)} className="text-[#1A2E2C] opacity-30 hover:opacity-100 transition-opacity"><X size={28} /></button>
@@ -156,7 +156,7 @@ const MobileNav = () => {
       {/* 🫧 Clean Minimal Sidebar */}
       <AnimatePresence>
         {showProfileMenu && (
-          <div className="fixed inset-0 z-[400] md:hidden">
+          <div className="fixed inset-0 z-[1200] md:hidden">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowProfileMenu(false)} className="absolute inset-0 bg-[#1A2E2C]/20 backdrop-blur-sm" />
             <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 30 }} className="absolute top-0 right-0 h-full w-[80%] bg-white p-10 pt-20 shadow-2xl overflow-y-auto">
                <div className="mb-16">
