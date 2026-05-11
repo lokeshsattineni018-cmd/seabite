@@ -8,6 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 const RecommendationBlock = ({ currentProductId, category, title = "Recommended for You" }) => {
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [globalDiscount, setGlobalDiscount] = useState(0);
 
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -23,6 +24,10 @@ const RecommendationBlock = ({ currentProductId, category, title = "Recommended 
           .slice(0, 4);
           
         setRecommendations(filtered);
+        // Save global discount if available
+        if (res.data.globalDiscount !== undefined) {
+          setGlobalDiscount(res.data.globalDiscount);
+        }
       } catch (err) {
         console.error("Failed to fetch recommendations", err);
       } finally {
@@ -64,7 +69,7 @@ const RecommendationBlock = ({ currentProductId, category, title = "Recommended 
         }}
       >
         {recommendations.map(product => (
-          <ProductCard key={product._id} product={product} />
+          <ProductCard key={product._id} product={product} globalDiscount={globalDiscount} />
         ))}
       </div>
     </section>
