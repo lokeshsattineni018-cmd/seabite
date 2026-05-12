@@ -143,6 +143,19 @@ io.on("connection", (socket) => {
     io.to(`product:${productId}`).emit("PRODUCT_VIEWER_COUNT", { productId, count: roomSize });
   });
 
+  // 🔍 X-Ray: Frustration Events
+  socket.on("join-admin", () => {
+    socket.join("admins");
+  });
+
+  socket.on("FRUSTRATION_EVENT", (data) => {
+    // Broadcast to all admins
+    io.to("admins").emit("FRUSTRATION_ALERT", {
+      ...data,
+      timestamp: new Date()
+    });
+  });
+
   socket.on("disconnect", () => {
     connectedUsers = Math.max(0, connectedUsers - 1);
     io.emit("USER_COUNT_UPDATE", connectedUsers);

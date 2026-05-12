@@ -17,6 +17,7 @@ import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import { formatAddress } from "../../utils/addressFormatter";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+import socket from "../../utils/socket";
 
 const T = {
   bg: "#F4F9F8",
@@ -199,6 +200,50 @@ export default function Checkout() {
   const [isItemsCollapsed, setIsItemsCollapsed] = useState(window.innerWidth < 768);
   const navigate = useNavigate();
 
+  // 🔍 X-Ray: Frustration Tracking
+  const [couponFailCount, setCouponFailCount] = useState(0);
+  const hoverTimer = useRef(null);
+  const pageStartTime = useRef(Date.now());
+  const frustrationSent = useRef({ coupon: false, hover: false, time: false });
+
+  useEffect(() => {
+    // 🔍 X-Ray: Total Time Monitoring
+    const timeCheck = setInterval(() => {
+      const minutes = (Date.now() - pageStartTime.current) / 60000;
+      if (minutes >= 5 && !frustrationSent.current.time) {
+        emitFrustration("TIME_STALL", { minutes: Math.floor(minutes) });
+        frustrationSent.current.time = true;
+      }
+    }, 10000);
+    return () => clearInterval(timeCheck);
+  }, []);
+
+  const emitFrustration = (type, details) => {
+    socket.emit("FRUSTRATION_EVENT", {
+      type,
+      details,
+      user: user ? { name: user.name, email: user.email } : null,
+      guestId: localStorage.getItem("seabite_guest_id"),
+      cartTotal: grandTotal,
+      items: cartItems.length
+    });
+  };
+
+  const handleHoverStart = () => {
+    if (loading || frustrationSent.current.hover) return;
+    hoverTimer.current = setTimeout(() => {
+      emitFrustration("HOVER_STALL", { duration: "20s" });
+      frustrationSent.current.hover = true;
+    }, 20000);
+  };
+
+  const handleHoverEnd = () => {
+    if (hoverTimer.current) {
+      clearTimeout(hoverTimer.current);
+      hoverTimer.current = null;
+    }
+  };
+
   const getFullImageUrl = (imagePath) => {
     if (!imagePath) return null;
     const cleanPath = imagePath.replace(/\\/g, "/").replace("uploads/", "");
@@ -301,7 +346,18 @@ export default function Checkout() {
         setCouponMessage({ type: "success", text: res.data.message });
       }
     } catch (err) {
-      setCouponMessage({ type: "error", text: err.response?.data?.message || "Invalid Coupon Code" });
+      const msg = err.response?.data?.message || "Invalid Coupon Code";
+      setCouponMessage({ type: "error", text: msg });
+      
+      // 🔍 X-Ray: Coupon Abuse/Failure tracking
+      setCouponFailCount(prev => {
+        const next = prev + 1;
+        if (next >= 3 && !frustrationSent.current.coupon) {
+          emitFrustration("COUPON_ABUSE", { attempts: next, lastCode: code });
+          frustrationSent.current.coupon = true;
+        }
+        return next;
+      });
     } finally { setVerifyingCoupon(false); }
   };
 
@@ -770,6 +826,8 @@ export default function Checkout() {
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onMouseEnter={handleHoverStart}
+                    onMouseLeave={handleHoverEnd}
                     onClick={placeOrder}
                     disabled={loading || !deliveryAddress._id}
                     className="desktop-place-order"
