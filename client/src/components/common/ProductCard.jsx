@@ -1,5 +1,5 @@
 // client/src/components/common/ProductCard.jsx
-import React, { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, memo } from "react";
 import { motion } from "framer-motion";
 import { FiShoppingCart, FiHeart } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
@@ -101,9 +101,9 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
           position: "relative",
           overflow: 'hidden'
         }}>
-          <img
             src={getImageUrl(product.image)}
             alt={product.name}
+            loading="lazy"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
           
@@ -191,4 +191,4 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
   );
 };
 
-export default ProductCard;
+export default memo(ProductCard);
