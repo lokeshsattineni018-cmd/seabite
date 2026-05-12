@@ -193,7 +193,7 @@ export default function AdminDashboard() {
   return (
     <motion.div
       initial="hidden" animate="visible" variants={staggerContainer}
-      className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white p-4 md:p-6 font-sans"
+      className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white p-4 md:px-6 md:py-2 font-sans"
     >
       <div className="max-w-[1600px] mx-auto space-y-6">
         <OrderDrawer 
@@ -267,7 +267,7 @@ export default function AdminDashboard() {
         {/* Sticky Header */}
         <motion.div 
           variants={fadeUp} 
-          className="sticky top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white border-b border-stone-200/50 pb-4 pt-2 mb-8 -mx-4 px-4 md:-mx-6 md:px-6"
+          className="sticky top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white border-b border-stone-200/50 pb-4 pt-0 mb-8 -mx-4 px-4 md:-mx-6 md:px-6"
         >
           <div className="flex items-center gap-4">
             <div>
