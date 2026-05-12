@@ -20,6 +20,8 @@ import ReviewModal from "../../components/common/ReviewModal";
 import RecommendationBlock from "../../components/common/RecommendationBlock";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+import socket from "../../utils/socket";
+import { v4 as uuidv4 } from 'uuid';
 
 // ─── Bundle Section ───────────────────────────────────────────────────────────
 const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshCartCount }) => {
@@ -489,6 +491,29 @@ export default function ProductDetails() {
   const flyIdRef = useRef(0);
   const [recentItems, setRecentItems] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [viewerCount, setViewerCount] = useState(1);
+
+  // 🛰️ Real-Time Pulse Tracking
+  useEffect(() => {
+    if (!id) return;
+    
+    socket.emit("join-product", id);
+    socket.on("PRODUCT_VIEWER_COUNT", (data) => {
+      if (data.productId === id) setViewerCount(data.count);
+    });
+
+    let guestId = localStorage.getItem("seabite_guest_id");
+    if (!guestId) {
+      guestId = uuidv4();
+      localStorage.setItem("seabite_guest_id", guestId);
+    }
+    axios.post(`/api/pulse/track/${id}`, { guestId }).catch(() => {});
+
+    return () => {
+      socket.emit("leave-product", id);
+      socket.off("PRODUCT_VIEWER_COUNT");
+    };
+  }, [id]);
 
   const isWishlisted = user?.wishlist?.some(
     (item) => (typeof item === "string" ? item : item._id) === id
@@ -876,6 +901,28 @@ export default function ProductDetails() {
                 <span style={{ fontSize: "12px", color: "#6B8F8A", fontWeight: "600" }}>{product.category || "SeaBite Fresh"}</span>
               </div>
               
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#F0FBF9", padding: "6px 12px", borderRadius: "100px", alignSelf: "flex-start", marginBottom: "16px", border: "1.5px solid #E2EEEC", width: "fit-content" }}>
+                <div className="pulse-ping" style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#5BBFB5" }} />
+                <span style={{ fontSize: "11px", fontWeight: "700", color: "#1A2E2C", letterSpacing: "0.02em" }}>
+                  {viewerCount} {viewerCount === 1 ? 'person is' : 'people are'} viewing this right now
+                </span>
+              </div>
+
+              <style>{`
+                @keyframes pulse-ping {
+                  0% { transform: scale(1); opacity: 1; }
+                  100% { transform: scale(2.5); opacity: 0; }
+                }
+                .pulse-ping { position: relative; }
+                .pulse-ping::after {
+                  content: '';
+                  position: absolute; inset: 0;
+                  border-radius: 50%;
+                  background: inherit;
+                  animation: pulse-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+                }
+              `}</style>
+
               <h1 style={{ fontSize: "24px", fontWeight: "700", color: "#1A2E2C", lineHeight: 1.2, marginBottom: "8px" }}>
                 {product.name}
               </h1>
