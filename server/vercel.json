@@ -23,5 +23,11 @@
             "src": "/(.*)",
             "dest": "/server.js"
         }
+    ],
+    "crons": [
+        {
+            "path": "/api/admin/cron/abandoned-carts",
+            "schedule": "0 */1 * * *"
+        }
     ]
 }
