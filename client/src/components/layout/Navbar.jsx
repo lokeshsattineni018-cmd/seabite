@@ -125,6 +125,8 @@ export default function Navbar({ announcementActive = false }) {
   }, [resendCooldown]);
 
 
+  }, [searchParams, setSearchParams]);
+
   useEffect(() => {
     const authType = searchParams.get("auth");
     if (authType === "login") {
@@ -144,6 +146,15 @@ export default function Navbar({ announcementActive = false }) {
       setSearchParams(searchParams);
     }
   }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const handleOpenAuth = () => {
+      setAuthMode("LOGIN");
+      setIsLoginOpen(true);
+    };
+    window.addEventListener('open-auth-drawer', handleOpenAuth);
+    return () => window.removeEventListener('open-auth-drawer', handleOpenAuth);
+  }, []);
 
   useEffect(() => {
     setScrolled(window.scrollY > 24);
@@ -628,7 +639,7 @@ export default function Navbar({ announcementActive = false }) {
                 </div>
               )}
 
-              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} onClick={() => user ? navigate("/wishlist") : navigate("/login")} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} onClick={() => user ? navigate("/wishlist") : setIsLoginOpen(true)} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
                 <FiHeart size={15} />
                 {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{user.wishlist.length}</span>}
               </motion.button>

@@ -121,7 +121,7 @@ const Spin = ({ isOpen, onClose }) => {
         onClose();
       } else if (e.response?.status === 401) {
         alert("Please login to spin the wheel!");
-        navigate("/login");
+        window.dispatchEvent(new CustomEvent('open-auth-drawer'));
       } else {
         alert("Something went wrong. Try again!");
       }
