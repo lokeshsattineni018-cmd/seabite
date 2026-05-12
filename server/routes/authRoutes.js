@@ -93,15 +93,23 @@ router.post("/send-otp", authLimiter, async (req, res) => {
     return res.status(400).json({ message: "Email already registered. Please login with your password." });
   }
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  
   try {
-    // Clear any existing OTP for this email
+    // 🛡️ 60-second cooldown: prevent OTP spam
+    const existingOtp = await OTP.findOne({ email, type: "SIGNUP" });
+    if (existingOtp) {
+      const elapsed = (Date.now() - new Date(existingOtp.createdAt).getTime()) / 1000;
+      if (elapsed < 60) {
+        const wait = Math.ceil(60 - elapsed);
+        return res.status(429).json({ message: `Please wait ${wait}s before requesting a new OTP`, cooldown: wait });
+      }
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     await OTP.deleteMany({ email, type: "SIGNUP" });
     await OTP.create({ email, otp, type: "SIGNUP" });
     
     await sendOtpEmail(email, otp, "SIGNUP");
-    res.json({ message: "OTP sent successfully" });
+    res.json({ message: "OTP sent successfully", cooldown: 60 });
   } catch (err) {
     console.error("OTP Send Error:", err);
     res.status(500).json({ message: "Failed to send OTP email" });
@@ -209,14 +217,23 @@ router.post("/forgot-password-otp", authLimiter, async (req, res) => {
     return res.status(400).json({ message: "This email is registered via Google login. Please use Google to sign in." });
   }
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  
   try {
+    // 🛡️ 60-second cooldown: prevent OTP spam
+    const existingOtp = await OTP.findOne({ email, type: "FORGOT" });
+    if (existingOtp) {
+      const elapsed = (Date.now() - new Date(existingOtp.createdAt).getTime()) / 1000;
+      if (elapsed < 60) {
+        const wait = Math.ceil(60 - elapsed);
+        return res.status(429).json({ message: `Please wait ${wait}s before requesting a new OTP`, cooldown: wait });
+      }
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     await OTP.deleteMany({ email, type: "FORGOT" });
     await OTP.create({ email, otp, type: "FORGOT" });
 
     await sendOtpEmail(email, otp, "FORGOT");
-    res.json({ message: "Reset OTP sent to your email" });
+    res.json({ message: "Reset OTP sent to your email", cooldown: 60 });
   } catch (err) {
     res.status(500).json({ message: "Failed to send reset OTP" });
   }
