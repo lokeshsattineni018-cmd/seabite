@@ -648,7 +648,11 @@ export default function ProductDetails() {
 
   const handleWishlistToggle = async () => {
     triggerHaptic("soft");
-    if (!user) { toast.error("Please login to save items"); return navigate("/login"); }
+    if (!user) { 
+      toast.error("Please login to save items"); 
+      triggerHaptic("rigid");
+      return window.dispatchEvent(new CustomEvent('open-auth-drawer'));
+    }
     setLoadingWishlist(true);
     try {
       const res = await axios.post(`${API_URL}/api/user/wishlist/${product._id}`, {}, { withCredentials: true });
@@ -659,7 +663,11 @@ export default function ProductDetails() {
   };
 
   const handleWaitlistJoin = async () => {
-    if (!user) { toast.error("Please login to join the waitlist"); return navigate("/login"); }
+    if (!user) { 
+      toast.error("Please login to join the waitlist"); 
+      triggerHaptic("rigid");
+      return window.dispatchEvent(new CustomEvent('open-auth-drawer'));
+    }
     setIsWaitlisting(true);
     try {
       const res = await axios.post(`${API_URL}/api/products/${product._id}/waitlist`, {}, { withCredentials: true });

@@ -53,7 +53,9 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
   const handleWishlist = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!user) return navigate("/login");
+    if (!user) {
+      return window.dispatchEvent(new CustomEvent('open-auth-drawer'));
+    }
     
     setLoadingWishlist(true);
     try {
