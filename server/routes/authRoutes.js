@@ -108,19 +108,26 @@ router.post("/send-otp", authLimiter, async (req, res) => {
   }
 });
 
-router.post("/verify-otp-signup", async (req, res) => {
+router.post("/verify-otp-signup", authLimiter, async (req, res) => {
   try {
     const { name, email, phone, password, otp, referralCode } = req.body;
     
-    console.log(`🔍 [DEBUG] verify-otp-signup triggered for: ${email}, Phone: ${phone}`);
+    const isDevMode = process.env.NODE_ENV !== "production";
+    if (isDevMode) console.log(`🔍 verify-otp-signup triggered for: ${email}`);
 
+    // 🛡️ Input Validation
+    if (!email || !password || !otp) {
+      return res.status(400).json({ message: "Email, password, and OTP are required" });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
     if (!phone || phone.length < 10) {
-        console.log("❌ [DEBUG] Signup Verification Failed: Invalid phone number length");
         return res.status(400).json({ message: "Phone number must be at least 10 digits" });
     }
     const storedOtpData = await OTP.findOne({ email, otp, type: "SIGNUP" });
     if (!storedOtpData) {
-      console.log(`❌ [AUTH] Invalid OTP for: ${email}`);
+      if (isDevMode) console.log(`❌ Invalid OTP for: ${email}`);
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 
@@ -192,7 +199,7 @@ router.post("/verify-otp-signup", async (req, res) => {
 });
 
 // ================= FORGOT PASSWORD =================
-router.post("/forgot-password-otp", async (req, res) => {
+router.post("/forgot-password-otp", authLimiter, async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: "Email is required" });
 
@@ -215,7 +222,7 @@ router.post("/forgot-password-otp", async (req, res) => {
   }
 });
 
-router.post("/reset-password", async (req, res) => {
+router.post("/reset-password", authLimiter, async (req, res) => {
   const { email, otp, newPassword } = req.body;
   
   const storedOtpData = await OTP.findOne({ email, otp, type: "FORGOT" });
