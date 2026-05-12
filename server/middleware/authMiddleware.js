@@ -2,10 +2,11 @@
 import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
-  console.log("🛡️ Protect Middleware: Checking authentication");
-  console.log("🍪 Cookie header:", req.headers.cookie || "NONE");
-  console.log("🔑 Session ID:", req.sessionID || "NONE");
-  console.log("👤 Session user:", req.session?.user);
+  const isDevMode = process.env.NODE_ENV !== "production";
+  if (isDevMode) {
+    console.log("🛡️ Protect Middleware: Checking authentication");
+    console.log("🔑 Session exists:", !!req.session?.userId || !!req.session?.user);
+  }
   
   try {
     if (!req.session) {
@@ -15,7 +16,7 @@ export const protect = async (req, res, next) => {
 
     // Check manual session
     if (req.session?.user?.id) {
-      console.log("✅ Session user found:", req.session.user.email);
+      if (isDevMode) console.log("✅ Session user found");
       
       const sessUser = req.session.user;
       req.user = {
@@ -26,18 +27,18 @@ export const protect = async (req, res, next) => {
         role: sessUser.role,
       };
 
-      console.log("✅ Protect: Authentication successful");
+      if (isDevMode) console.log("✅ Protect: Authentication successful");
       return next();
     }
 
     // Fallback: userId only
     if (req.session?.userId) {
-      console.log("🔍 Found userId, fetching from DB:", req.session.userId);
+      if (isDevMode) console.log("🔍 Found userId, fetching from DB");
       
       const user = await User.findById(req.session.userId).select("-password");
       
       if (!user) {
-        console.log("❌ User not found in DB");
+        if (isDevMode) console.log("❌ User not found in DB");
         return res.status(401).json({ message: "User not found" });
       }
 
@@ -53,7 +54,7 @@ export const protect = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!req.session?.user && authHeader && authHeader.startsWith("Bearer ")) {
       const sessionId = authHeader.split(" ")[1];
-      console.log("🔑 Attempting session recovery from header SID:", sessionId);
+      if (isDevMode) console.log("🔑 Attempting session recovery from header");
       
       return new Promise((resolve) => {
         req.sessionStore.get(sessionId, async (err, session) => {
