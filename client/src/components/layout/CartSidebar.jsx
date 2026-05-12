@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -25,6 +25,15 @@ const getFullImageUrl = (imagePath) => {
 export default function CartSidebar({ onClose }) {
   const { cartCount, refreshCartCount, cartItems, subtotal: subtotalStr, storeSettings, isCartOpen, setIsCartOpen } = useContext(CartContext);
   const navigate = useNavigate();
+  const [trending, setTrending] = useState([]);
+
+  useEffect(() => {
+    if (isCartOpen && cartItems.length === 0) {
+      axios.get(`${API_URL}/api/products?sort=popular&limit=4`)
+        .then(res => setTrending(res.data.products || res.data || []))
+        .catch(() => {});
+    }
+  }, [isCartOpen, cartItems.length]);
 
   // Use eitherprop onClose OR context setIsCartOpen(false)
   const closeCart = onClose || (() => setIsCartOpen(false));
@@ -173,11 +182,34 @@ export default function CartSidebar({ onClose }) {
                     style={{
                       padding: "12px 24px", borderRadius: 12, background: T.primary,
                       color: "#fff", fontWeight: 700, fontSize: 13, border: "none",
-                      cursor: "pointer", fontFamily: font,
+                      cursor: "pointer", fontFamily: font, marginBottom: 40
                     }}
                   >
                     Browse Products
                   </motion.button>
+
+                  {trending.length > 0 && (
+                    <div style={{ width: "100%", textAlign: "left" }}>
+                      <p style={{ fontSize: 10, fontWeight: 800, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>Trending Now</p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {trending.map((p) => (
+                          <motion.div 
+                            key={p._id}
+                            onClick={() => { navigate(`/products/${p._id}`); closeCart(); }}
+                            whileHover={{ x: 5 }}
+                            style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px", borderRadius: 12, background: T.surface, border: `1px solid ${T.border}`, cursor: "pointer" }}
+                          >
+                            <img src={getFullImageUrl(p.image)} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover" }} />
+                            <div style={{ flex: 1 }}>
+                              <h5 style={{ fontSize: 11, fontWeight: 700, color: T.textDark, margin: 0 }}>{p.name}</h5>
+                              <p style={{ fontSize: 11, fontWeight: 800, color: T.primary, margin: 0 }}>₹{p.flashSale?.isFlashSale ? p.flashSale.discountPrice : p.basePrice}</p>
+                            </div>
+                            <FiArrowRight size={12} style={{ color: T.border }} />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ) : (
                 <AnimatePresence mode="popLayout">

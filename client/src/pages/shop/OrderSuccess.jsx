@@ -113,8 +113,61 @@ export default function OrderSuccess() {
     axios.get(`${API_URL}/api/orders/${dbId}`, { withCredentials: true })
       .then(({ data }) => setOrder(data))
       .catch(() => { })
-      .finally(() => { setLoading(false); setTimeout(() => setVisible(true), 60); });
+      .finally(() => { 
+        setLoading(false); 
+        setTimeout(() => {
+          setVisible(true);
+          fireConfetti(); // 🎊 Trigger celebration
+        }, 60); 
+      });
   }, [dbId]);
+
+  // 🎊 Premium Confetti Celebration
+  const fireConfetti = () => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js";
+    script.onload = () => {
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const randomInRange = (min, max) => Math.random() * (max - min) + min;
+
+      const interval = setInterval(function() {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) return clearInterval(interval);
+
+        const particleCount = 50 * (timeLeft / duration);
+        window.confetti(Object.assign({}, defaults, { 
+          particleCount, 
+          origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+          colors: ['#5BA8A0', '#89C2D9', '#ffffff', '#F07468'],
+          shapes: ['circle', 'square'],
+          scalar: randomInRange(0.4, 0.8)
+        }));
+        window.confetti(Object.assign({}, defaults, { 
+          particleCount, 
+          origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+          colors: ['#5BA8A0', '#89C2D9', '#ffffff', '#F07468'],
+          shapes: ['circle', 'square'],
+          scalar: randomInRange(0.4, 0.8)
+        }));
+      }, 250);
+
+      // One big central burst
+      setTimeout(() => {
+        window.confetti({
+          particleCount: 150,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#5BA8A0', '#ffffff', '#FFD700'], // Added Gold
+          scalar: 1.2
+        });
+      }, 500);
+    };
+    document.body.appendChild(script);
+  };
 
   useEffect(() => {
     if (!loading) setTimeout(() => setVisible(true), 60);

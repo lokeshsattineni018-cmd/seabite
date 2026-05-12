@@ -713,22 +713,27 @@ export default function ProductDetails() {
             "@context": "https://schema.org",
             "@type": "Product",
             "name": product.name,
-            "description": product.description || `Fresh ${product.name} from SeaBite`,
-            "image": product.image ? `${API_URL}${product.image}` : "https://seabite.co.in/fisherman.jpg",
+            "description": product.description || product.desc || `Fresh ${product.name} from SeaBite Mogalthur`,
+            "image": [getFullImageUrl(product.image), ...((product.images || []).map(img => getFullImageUrl(img)))],
             "brand": { "@type": "Brand", "name": "SeaBite" },
+            "sku": product._id,
+            "mpn": product._id,
             "offers": {
               "@type": "Offer",
               "priceCurrency": "INR",
-              "price": product.flashSale?.isFlashSale ? product.flashSale.discountPrice : product.basePrice,
-              "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+              "price": Number(unitPrice).toFixed(0),
+              "priceValidUntil": new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              "availability": product.stock === "out" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
               "url": `https://seabite.co.in/products/${product._id}`,
-              "seller": { "@type": "Organization", "name": "SeaBite" }
+              "seller": { "@type": "Organization", "name": "SeaBite Seafoods" }
             },
             ...(product.numReviews > 0 && {
               "aggregateRating": {
                 "@type": "AggregateRating",
                 "ratingValue": product.rating || 4.5,
-                "reviewCount": product.numReviews
+                "reviewCount": product.numReviews,
+                "bestRating": "5",
+                "worstRating": "1"
               }
             })
           })}</script>

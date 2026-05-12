@@ -15,8 +15,15 @@ export default function Wishlist() {
     const { addToCart, globalDiscount } = useContext(CartContext);
     const [wishlist, setWishlist] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [trending, setTrending] = useState([]);
 
-    useEffect(() => { fetchWishlist(); }, [user]);
+    useEffect(() => { 
+        fetchWishlist(); 
+        // 🚀 Fetch trending products for empty state
+        axios.get(`${API_URL}/api/products?sort=popular&limit=5`)
+            .then(res => setTrending(res.data.products || res.data || []))
+            .catch(() => {});
+    }, [user]);
 
     const fetchWishlist = async () => {
         if (!user) { setLoading(false); return; }
@@ -155,6 +162,17 @@ export default function Wishlist() {
                                     transition: "all 0.2s ease",
                                 }}
                             >Browse Products</Link>
+
+                            {trending.length > 0 && (
+                                <div style={{ marginTop: 80, textAlign: "left" }}>
+                                    <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1A2E2C", marginBottom: 24 }}>Recommended for you</h3>
+                                    <div className="wishlist-grid">
+                                        {trending.map(p => (
+                                            <EnhancedProductCard key={p._id} product={p} globalDiscount={globalDiscount} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
 
