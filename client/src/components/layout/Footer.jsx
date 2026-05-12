@@ -14,7 +14,6 @@ const COLS = [
   {
     title: "Account",
     links: [
-      { to: "/login",    label: "Sign In" },
       { to: "/orders",   label: "My Orders" },
       { to: "/wishlist", label: "Wishlist" },
       { to: "/cart",     label: "Cart" },
