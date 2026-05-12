@@ -124,9 +124,6 @@ export default function Navbar({ announcementActive = false }) {
     return () => clearInterval(timer);
   }, [resendCooldown]);
 
-
-  }, [searchParams, setSearchParams]);
-
   useEffect(() => {
     const authType = searchParams.get("auth");
     if (authType === "login") {
