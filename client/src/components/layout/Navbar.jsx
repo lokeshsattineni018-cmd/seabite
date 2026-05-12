@@ -309,11 +309,13 @@ export default function Navbar({ announcementActive = false }) {
     if (!authPhone || authPhone.length < 10) return toast.error("Phone number must be at least 10 digits");
     setAuthLoading(true);
     try {
-      await axios.post(`${API_URL}/api/auth/send-otp`, { email: authEmail, name: authName });
+      const res = await axios.post(`${API_URL}/api/auth/send-otp`, { email: authEmail, name: authName });
       toast.success("OTP sent to your email!");
       setAuthMode("OTP_VERIFY_SIGNUP");
-      setResendCooldown(30);
+      setResendCooldown(res.data.cooldown || 60);
     } catch (err) {
+      // If server returns a cooldown (429), sync the timer
+      if (err.response?.data?.cooldown) setResendCooldown(err.response.data.cooldown);
       toast.error(err.response?.data?.message || "Failed to send OTP");
     } finally { setAuthLoading(false); }
   };
@@ -339,11 +341,13 @@ export default function Navbar({ announcementActive = false }) {
     if (e) e.preventDefault();
     setAuthLoading(true);
     try {
-      await axios.post(`${API_URL}/api/auth/forgot-password-otp`, { email: authEmail });
+      const res = await axios.post(`${API_URL}/api/auth/forgot-password-otp`, { email: authEmail });
       toast.success("Reset OTP sent to your email!");
       setAuthMode("RESET_PASSWORD");
-      setResendCooldown(30);
+      setResendCooldown(res.data.cooldown || 60);
     } catch (err) {
+      // If server returns a cooldown (429), sync the timer
+      if (err.response?.data?.cooldown) setResendCooldown(err.response.data.cooldown);
       toast.error(err.response?.data?.message || "Error sending reset OTP");
     } finally { setAuthLoading(false); }
   };
