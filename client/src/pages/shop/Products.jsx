@@ -57,10 +57,22 @@ export default function Products() {
         : "All",
       search: search || "",
     }));
+
+    // 🚀 Performance: Try to load from cache immediately on mount
+    const cacheKey = `seabite_products_cache_${location.search}`;
+    const cachedData = sessionStorage.getItem(cacheKey);
+    if (cachedData) {
+      try {
+        const { products, globalDiscount } = JSON.parse(cachedData);
+        setProducts(products);
+        setGlobalDiscount(globalDiscount);
+        setLoading(false); // Immediate display if cached
+      } catch (e) { console.error("Cache parse error", e); }
+    }
   }, [location.search]);
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
+  const fetchProducts = useCallback(async (isInitial = true) => {
+    if (isInitial && products.length === 0) setLoading(true);
     setError(null);
     try {
       const params = {
@@ -72,15 +84,26 @@ export default function Products() {
         sort: filters.sort,
       };
       const res = await axios.get(`${API_URL}/api/products`, { params });
-      setProducts(res.data.products || res.data || []);
-      setGlobalDiscount(res.data.globalDiscount || 0);
+      const fetchedProducts = res.data.products || res.data || [];
+      const fetchedDiscount = res.data.globalDiscount || 0;
+      
+      setProducts(fetchedProducts);
+      setGlobalDiscount(fetchedDiscount);
+
+      // 🚀 Performance: Update cache
+      const cacheKey = `seabite_products_cache_${location.search}`;
+      sessionStorage.setItem(cacheKey, JSON.stringify({ 
+        products: fetchedProducts, 
+        globalDiscount: fetchedDiscount,
+        timestamp: Date.now()
+      }));
     } catch (err) {
       console.error("Products fetch error:", err);
-      setError("Failed to fetch fresh catch. Please try again.");
+      if (products.length === 0) setError("Failed to fetch fresh catch. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, location.search, products.length]);
 
   useEffect(() => {
     const t = setTimeout(fetchProducts, 300);

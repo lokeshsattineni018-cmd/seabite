@@ -1,4 +1,4 @@
-import { useState, useContext, useEffect, useRef, useCallback } from "react";
+import { useState, useContext, useEffect, useRef, useCallback, memo } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -148,6 +148,7 @@ const EnhancedProductCard = ({
             animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 1.1 }}
             transition={{ duration: 0.6 }}
             onLoad={() => setImageLoaded(true)}
+            loading="lazy"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
           {isOutOfStock && (
@@ -322,4 +323,4 @@ const EnhancedProductCard = ({
   );
 };
 
-export default EnhancedProductCard;
+export default memo(EnhancedProductCard);
