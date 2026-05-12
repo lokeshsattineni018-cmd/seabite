@@ -128,12 +128,24 @@ let connectedUsers = 0;
 io.on("connection", (socket) => {
   connectedUsers++;
   io.emit("USER_COUNT_UPDATE", connectedUsers);
-  // console.log(`🔌 New client connected. Total: ${connectedUsers}`);
+
+  // 🛰️ Real-Time Product Pulse: Join product room
+  socket.on("join-product", (productId) => {
+    socket.join(`product:${productId}`);
+    const roomSize = io.sockets.adapter.rooms.get(`product:${productId}`)?.size || 0;
+    io.to(`product:${productId}`).emit("PRODUCT_VIEWER_COUNT", { productId, count: roomSize });
+  });
+
+  // 🛰️ Real-Time Product Pulse: Leave product room
+  socket.on("leave-product", (productId) => {
+    socket.leave(`product:${productId}`);
+    const roomSize = io.sockets.adapter.rooms.get(`product:${productId}`)?.size || 0;
+    io.to(`product:${productId}`).emit("PRODUCT_VIEWER_COUNT", { productId, count: roomSize });
+  });
 
   socket.on("disconnect", () => {
     connectedUsers = Math.max(0, connectedUsers - 1);
     io.emit("USER_COUNT_UPDATE", connectedUsers);
-    // console.log(`🔌 Client disconnected. Total: ${connectedUsers}`);
   });
 });
 
@@ -336,6 +348,8 @@ app.use("/api/spin", spinRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/telemetry", telemetryRoutes);
+import pulseRoutes from "./routes/pulseRoutes.js";
+app.use("/api/pulse", pulseRoutes);
 
 app.get("/health", async (req, res) => {
   const start = Date.now();
