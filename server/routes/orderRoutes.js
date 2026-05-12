@@ -191,6 +191,16 @@ router.post("/", protect, async (req, res) => {
 
     const savedOrder = await newOrder.save();
 
+    // 🟢 NEW: Clear user's cart on server and reset abandoned flags
+    try {
+      const User = mongoose.model("User");
+      await User.findByIdAndUpdate(req.user._id, {
+        $set: { cart: [], abandonedCartEmailSent: false }
+      });
+    } catch (err) {
+      console.error("❌ Failed to clear user cart:", err.message);
+    }
+
     // 🟢 TRIGGER: Send the Premium Order Confirmation Email
     // Since we are inside 'protect', req.user is available
     try {

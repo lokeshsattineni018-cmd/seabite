@@ -103,7 +103,9 @@ export default function AdminAbandonedCarts() {
                                         </div>
                                         <div className="flex items-center gap-2 text-xs text-stone-500 bg-stone-50/50 p-3 rounded-2xl border border-stone-100/50">
                                             <FiClock size={14} />
-                                            {new Date(user.updatedAt).toLocaleDateString()}
+                                            {new Date(user.cartUpdatedAt || user.updatedAt).toLocaleDateString()}
+                                            <span className="opacity-40">•</span>
+                                            {new Date(user.cartUpdatedAt || user.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
                                     </div>
                                     <button
@@ -141,10 +143,10 @@ export default function AdminAbandonedCarts() {
                                                 />
                                                 <div className="flex-1">
                                                     <p className="text-sm font-medium text-stone-900 line-clamp-1">{item.product?.name}</p>
-                                                    <p className="text-xs text-stone-500 mt-0.5">Qty: {item.qty} × ₹{item.product?.price}</p>
+                                                    <p className="text-xs text-stone-500 mt-0.5">Qty: {item.qty} × ₹{item.price || item.product?.price || 0}</p>
                                                 </div>
                                                 <span className="font-medium text-stone-900 text-sm whitespace-nowrap">
-                                                    ₹{(item.qty * (item.product?.price || 0)).toLocaleString()}
+                                                    ₹{(item.qty * (item.price || item.product?.price || 0)).toLocaleString()}
                                                 </span>
                                             </div>
                                         ))}

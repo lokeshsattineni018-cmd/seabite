@@ -11,6 +11,7 @@ import Contact from "../models/Contact.js"; // 🟢 Added
 import Notification from "../models/notification.js"; // 🟢 Added
 import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail, sendEmail, sendWinBackEmail } from "../utils/emailService.js";
 import logger from "../utils/logger.js";
+import { runAbandonedCartWorker } from "../cron/abandonedCartWorker.js";
 
 const router = express.Router();
 
@@ -951,10 +952,19 @@ router.get("/carts/abandoned", adminAuth, async (req, res) => {
       email: u.email,
       phone: u.phone,
       updatedAt: u.updatedAt,
-      cart: u.cart.filter(item => item.product), // Filter nulls
+      cartUpdatedAt: u.cartUpdatedAt,
+      cart: u.cart.filter(item => item.product).map(item => {
+        const p = item.product;
+        const currentPrice = p.flashSale?.isFlashSale ? p.flashSale.discountPrice : (p.price || p.basePrice || 0);
+        return {
+          ...item.toObject(),
+          price: currentPrice
+        };
+      }),
       total: u.cart.reduce((sum, item) => {
         const p = item.product;
-        const currentPrice = p.flashSale?.isFlashSale ? p.flashSale.discountPrice : (p.price || p.basePrice);
+        if (!p) return sum;
+        const currentPrice = p.flashSale?.isFlashSale ? p.flashSale.discountPrice : (p.price || p.basePrice || 0);
         return sum + currentPrice * item.qty;
       }, 0)
     })).filter(u => u.cart.length > 0);
@@ -993,6 +1003,22 @@ router.post("/carts/remind/:userId", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("Cart Reminder Failed:", err);
     res.status(500).json({ message: "Failed to send reminder" });
+  }
+});
+
+// 🟢 CRON TRIGGER: ABANDONED CARTS
+router.get("/cron/abandoned-carts", async (req, res) => {
+  try {
+    // Basic secret check to prevent unauthorized calls
+    const secret = req.query.secret;
+    if (secret !== process.env.CRON_SECRET && process.env.NODE_ENV === 'production') {
+      return res.status(401).json({ message: "Unauthorized cron call" });
+    }
+
+    const stats = await runAbandonedCartWorker();
+    res.json({ success: true, stats });
+  } catch (err) {
+    res.status(500).json({ message: "Cron process failed", error: err.message });
   }
 });
 
