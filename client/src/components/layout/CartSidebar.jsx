@@ -1,4 +1,5 @@
 import { useContext, useEffect, useState } from "react";
+import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -253,10 +254,11 @@ export default function CartSidebar({ onClose }) {
                           <motion.button
                             whileHover={{ scale: 1.2, color: T.coral }}
                             whileTap={{ scale: 0.8 }}
-                            onClick={() => handleRemove(item._id)}
-                            style={{ color: T.border, background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0 }}
+                            onClick={(e) => { e.stopPropagation(); handleRemove(item._id); }}
+                            style={{ color: T.textLite, background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
+                            title="Remove item"
                           >
-                            <FiTrash2 size={13} />
+                            <FiX size={14} />
                           </motion.button>
                         </div>
 

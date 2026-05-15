@@ -24,6 +24,7 @@ const showToast = {
             fontSize: "13px",
             fontWeight: "600",
             fontFamily: "'Manrope', sans-serif",
+            pointerEvents: "auto",
           }}
         >
           <div className="flex-1 flex items-center gap-3">
@@ -34,7 +35,7 @@ const showToast = {
             <button
               onClick={() => toast.dismiss(t.id)}
               className="w-full border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none"
-              style={{ transition: "color 0.2s" }}
+              style={{ transition: "color 0.2s", pointerEvents: "auto" }}
             >
               <FiX size={16} />
             </button>
@@ -67,6 +68,7 @@ const showToast = {
             fontSize: "13px",
             fontWeight: "600",
             fontFamily: "'Manrope', sans-serif",
+            pointerEvents: "auto",
           }}
         >
           <div className="flex-1 flex items-center gap-3">
@@ -77,7 +79,7 @@ const showToast = {
             <button
               onClick={() => toast.dismiss(t.id)}
               className="w-full border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none"
-              style={{ transition: "color 0.2s" }}
+              style={{ transition: "color 0.2s", pointerEvents: "auto" }}
             >
               <FiX size={16} />
             </button>

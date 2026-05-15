@@ -103,6 +103,7 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
           position: "relative",
           overflow: 'hidden'
         }}>
+          <img
             src={getImageUrl(product.image)}
             alt={product.name}
             loading="lazy"
@@ -178,10 +179,10 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
               onClick={handleCart}
               style={{
                 width: "100%", padding: "10px", borderRadius: 8,
-                background: colors.accentFresh, color: "#fff",
+                background: "#1A2E2C", color: "#fff",
                 border: "none", fontWeight: 700, fontSize: 13,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                cursor: "pointer"
+                cursor: "pointer", transition: "all 0.2s ease"
               }}
             >
               <FiShoppingCart size={14} /> Add

@@ -706,6 +706,8 @@ export default function ProductDetails() {
     return <SeaBiteLoader fullScreen />;
   }
 
+
+
   if (!product) {
     return (
       <div style={{ minHeight: "100vh", background: "#F4F9F8", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "24px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -969,8 +971,9 @@ export default function ProductDetails() {
                   disabled={isAdded || product.stock === "out"}
                   style={{
                     width: "100%", height: "48px", borderRadius: "100px", border: "none",
-                    background: "#FFD814", color: "#0F1111", fontSize: "14px", fontWeight: "500",
-                    cursor: "pointer", boxShadow: "0 2px 5px rgba(213,217,217,0.5)"
+                    background: "#1A2E2C", color: "#FFFFFF", fontSize: "14px", fontWeight: "600",
+                    cursor: "pointer", boxShadow: "0 4px 12px rgba(26,46,44,0.15)",
+                    transition: "all 0.2s ease"
                   }}
                 >
                   {isAdded ? "✓ Added to Cart" : "Add to Cart"}
@@ -980,8 +983,9 @@ export default function ProductDetails() {
                   disabled={product.stock === "out"}
                   style={{
                     width: "100%", height: "48px", borderRadius: "100px", border: "none",
-                    background: "#FFA41C", color: "#0F1111", fontSize: "14px", fontWeight: "500",
-                    cursor: "pointer", boxShadow: "0 2px 5px rgba(213,217,217,0.5)"
+                    background: "#5BBFB5", color: "#FFFFFF", fontSize: "14px", fontWeight: "600",
+                    cursor: "pointer", boxShadow: "0 4px 12px rgba(91,191,181,0.15)",
+                    transition: "all 0.2s ease"
                   }}
                 >
                   Buy Now
