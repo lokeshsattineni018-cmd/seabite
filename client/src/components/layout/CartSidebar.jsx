@@ -162,56 +162,188 @@ export default function CartSidebar({ onClose }) {
             <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", background: T.bg, display: "flex", flexDirection: "column", gap: 10 }}>
               {cartItems.length === 0 ? (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.94 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
-                  style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "40px 20px" }}
+                  style={{ 
+                    display: "flex", 
+                    flexDirection: "column", 
+                    alignItems: "center", 
+                    textAlign: "center", 
+                    padding: "60px 20px 40px" 
+                  }}
                 >
                   <motion.div
-                    animate={{ y: [0, -8, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    style={{ width: 72, height: 72, borderRadius: "50%", background: T.surface, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20, boxShadow: "0 4px 20px rgba(91,168,160,0.10)" }}
+                    animate={{ 
+                      y: [0, -12, 0],
+                      rotate: [0, 2, -2, 0]
+                    }}
+                    transition={{ 
+                      duration: 5, 
+                      repeat: Infinity, 
+                      ease: "easeInOut" 
+                    }}
+                    style={{ 
+                      width: 180, 
+                      height: 180, 
+                      marginBottom: 24,
+                      position: "relative",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center"
+                    }}
                   >
-                    <FiPackage size={28} style={{ color: T.border }} />
+                    {/* Decorative glow behind image */}
+                    <div style={{
+                      position: "absolute",
+                      width: "120%",
+                      height: "120%",
+                      background: "radial-gradient(circle, rgba(91,168,160,0.12) 0%, rgba(91,168,160,0) 70%)",
+                      zIndex: 0
+                    }} />
+                    
+                    <img 
+                      src="/empty-cart.png" 
+                      alt="Empty Cart" 
+                      style={{ 
+                        width: "100%", 
+                        height: "100%", 
+                        objectFit: "contain",
+                        zIndex: 1,
+                        filter: "drop-shadow(0 20px 30px rgba(0,0,0,0.08))"
+                      }} 
+                    />
                   </motion.div>
-                  <h3 style={{ fontSize: 17, fontWeight: 700, color: T.textDark, marginBottom: 8 }}>Your cart is empty</h3>
-                  <p style={{ fontSize: 13, color: T.textLite, maxWidth: 220, lineHeight: 1.7, marginBottom: 24 }}>Add some fresh catch to get started.</p>
+
+                  <h3 style={{ 
+                    fontSize: 22, 
+                    fontWeight: 800, 
+                    color: T.textDark, 
+                    marginBottom: 12,
+                    letterSpacing: "-0.02em"
+                  }}>
+                    Your cart is empty
+                  </h3>
+                  
+                  <p style={{ 
+                    fontSize: 14, 
+                    color: T.textLite, 
+                    maxWidth: 260, 
+                    lineHeight: 1.6, 
+                    marginBottom: 32,
+                    fontWeight: 500
+                  }}>
+                    Looks like you haven't added anything yet. Explore our fresh catch and fill it up!
+                  </p>
+
                   <motion.button
-                    whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(91,168,160,0.22)" }}
+                    whileHover={{ y: -3, scale: 1.02, boxShadow: "0 12px 32px rgba(91,168,160,0.3)" }}
                     whileTap={{ scale: 0.97 }}
                     onClick={closeCart}
                     style={{
-                      padding: "12px 24px", borderRadius: 12, background: T.primary,
-                      color: "#fff", fontWeight: 700, fontSize: 13, border: "none",
-                      cursor: "pointer", fontFamily: font, marginBottom: 40
+                      padding: "16px 32px", 
+                      borderRadius: 16, 
+                      background: T.primary,
+                      color: "#fff", 
+                      fontWeight: 800, 
+                      fontSize: 14, 
+                      border: "none",
+                      cursor: "pointer", 
+                      fontFamily: font, 
+                      marginBottom: 60,
+                      boxShadow: "0 8px 24px rgba(91,168,160,0.2)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8
                     }}
                   >
-                    Browse Products
+                    Start Shopping
+                    <FiArrowRight size={16} />
                   </motion.button>
 
                   {trending.length > 0 && (
                     <div style={{ width: "100%", textAlign: "left" }}>
-                      <p style={{ fontSize: 10, fontWeight: 800, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 16 }}>Trending Now</p>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                        {trending.map((p) => (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                        <p style={{ 
+                          fontSize: 11, 
+                          fontWeight: 800, 
+                          color: T.textMid, 
+                          textTransform: "uppercase", 
+                          letterSpacing: "0.12em",
+                          margin: 0
+                        }}>
+                          Recommended for you
+                        </p>
+                        <div style={{ height: 1, flex: 1, background: T.border, marginLeft: 16 }} />
+                      </div>
+                      
+                      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                        {trending.slice(0, 3).map((p, idx) => (
                           <motion.div 
                             key={p._id}
+                            initial={{ opacity: 0, x: 20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: 0.5 + (idx * 0.1) }}
                             onClick={() => { navigate(`/products/${p._id}`); closeCart(); }}
-                            whileHover={{ x: 5 }}
-                            style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px", borderRadius: 12, background: T.surface, border: `1px solid ${T.border}`, cursor: "pointer" }}
+                            whileHover={{ x: 8, background: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}
+                            style={{ 
+                              display: "flex", 
+                              alignItems: "center", 
+                              gap: 16, 
+                              padding: "12px", 
+                              borderRadius: 16, 
+                              background: "rgba(255,255,255,0.6)", 
+                              border: `1px solid ${T.border}`, 
+                              cursor: "pointer",
+                              transition: "all 0.3s ease"
+                            }}
                           >
-                            <img src={getFullImageUrl(p.image)} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover" }} />
-                            <div style={{ flex: 1 }}>
-                              <h5 style={{ fontSize: 11, fontWeight: 700, color: T.textDark, margin: 0 }}>{p.name}</h5>
-                              <p style={{ fontSize: 11, fontWeight: 800, color: T.primary, margin: 0 }}>₹{p.flashSale?.isFlashSale ? p.flashSale.discountPrice : p.basePrice}</p>
+                            <div style={{ 
+                              width: 56, 
+                              height: 56, 
+                              borderRadius: 12, 
+                              overflow: "hidden", 
+                              background: "#fff",
+                              border: `1px solid ${T.border}`
+                            }}>
+                              <img 
+                                src={getFullImageUrl(p.image)} 
+                                style={{ width: "100%", height: "100%", objectFit: "cover" }} 
+                              />
                             </div>
-                            <FiArrowRight size={12} style={{ color: T.border }} />
+                            <div style={{ flex: 1 }}>
+                              <h5 style={{ fontSize: 13, fontWeight: 700, color: T.textDark, margin: "0 0 4px" }}>{p.name}</h5>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <p style={{ fontSize: 13, fontWeight: 800, color: T.primary, margin: 0 }}>
+                                  ₹{p.flashSale?.isFlashSale ? p.flashSale.discountPrice : p.basePrice}
+                                </p>
+                                {p.flashSale?.isFlashSale && (
+                                  <p style={{ fontSize: 11, color: T.textLite, textDecoration: "line-through", margin: 0 }}>
+                                    ₹{p.basePrice}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ 
+                              width: 32, 
+                              height: 32, 
+                              borderRadius: "50%", 
+                              background: T.surface, 
+                              display: "flex", 
+                              alignItems: "center", 
+                              justifyContent: "center",
+                              color: T.primary,
+                              border: `1px solid ${T.border}`
+                            }}>
+                              <FiArrowRight size={14} />
+                            </div>
                           </motion.div>
                         ))}
                       </div>
                     </div>
                   )}
                 </motion.div>
+
               ) : (
                 <AnimatePresence mode="popLayout">
                   {cartItems.map((item, index) => (
