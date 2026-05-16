@@ -250,11 +250,13 @@ router.get("/:id", async (req, res) => {
 
     let salesLast24h = 0;
     recentOrdersCount.forEach(order => {
-      order.items.forEach(item => {
-        if (item.productId.toString() === product._id.toString()) {
-          salesLast24h += item.qty || 1;
-        }
-      });
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach(item => {
+          if (item.productId && item.productId.toString() === product._id.toString()) {
+            salesLast24h += item.qty || 1;
+          }
+        });
+      }
     });
 
     res.json({ ...product.toObject(), relatedProducts, globalDiscount, salesLast24h });
