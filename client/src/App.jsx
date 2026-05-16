@@ -21,6 +21,7 @@ import CookieConsent from "./components/common/CookieConsent"; // 🟢 Cookie Co
 
 import ComparisonDrawer from "./components/common/ComparisonDrawer"; // 📊 Product Comparison Drawer
 import GoogleOneTap from "./components/common/GoogleOneTap"; // 🟢 Google One Tap Login
+import LiveSocialProof from "./components/common/LiveSocialProof"; // 🛰️ Live Sales Notification
 
 // Lazy Imports for Critical Pages
 const Home = lazy(() => import("./pages/shop/Home"));
@@ -304,6 +305,7 @@ function MainLayout() {
           {!isAdminRoute && <SupportWidget />}
 
           {!isAdminRoute && <ComparisonDrawer />}
+          {!isAdminRoute && <LiveSocialProof />}
         </>
       )
       }

@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowLeft, FiMinus, FiPlus, FiShoppingBag, FiTruck,
   FiInfo, FiCheck, FiPackage, FiStar, FiMessageSquare,
-  FiHeart, FiZap, FiChevronRight, FiBox, FiX
+  FiHeart, FiZap, FiChevronRight, FiBox, FiX, FiAlertCircle
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import toast from "../../utils/toast"; // Custom SeaBite toast
@@ -142,6 +142,18 @@ const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshC
           padding: "24px",
           textAlign: "center",
         }}>
+                  <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  style={{
+                    fontSize: "10px", fontWeight: "900", background: "rgba(91, 191, 181, 0.1)", color: "#5BBFB5",
+                    padding: "4px 10px", borderRadius: "20px", textTransform: "uppercase", letterSpacing: "0.08em",
+                    display: "flex", alignItems: "center", gap: "6px", border: "1px solid rgba(91, 191, 181, 0.2)", marginBottom: "12px"
+                  }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#5BBFB5] animate-pulse" />
+                  {viewerCount > 1 ? `${viewerCount} people viewing now` : "Recently Viewed"}
+                </motion.span>
           <p style={{ fontSize: "11px", fontWeight: "600", color: "#6B8F8A", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "8px" }}>
             {selectedItems.length + 1} items total
           </p>
@@ -491,29 +503,8 @@ export default function ProductDetails() {
   const flyIdRef = useRef(0);
   const [recentItems, setRecentItems] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [viewerCount, setViewerCount] = useState(1);
 
-  // 🛰️ Real-Time Pulse Tracking
-  useEffect(() => {
-    if (!id) return;
-    
-    socket.emit("join-product", id);
-    socket.on("PRODUCT_VIEWER_COUNT", (data) => {
-      if (data.productId === id) setViewerCount(data.count);
-    });
 
-    let guestId = localStorage.getItem("seabite_guest_id");
-    if (!guestId) {
-      guestId = uuidv4();
-      localStorage.setItem("seabite_guest_id", guestId);
-    }
-    axios.post(`/api/pulse/track/${id}`, { guestId }).catch(() => {});
-
-    return () => {
-      socket.emit("leave-product", id);
-      socket.off("PRODUCT_VIEWER_COUNT");
-    };
-  }, [id]);
 
   const isWishlisted = user?.wishlist?.some(
     (item) => (typeof item === "string" ? item : item._id) === id
@@ -569,7 +560,7 @@ export default function ProductDetails() {
         } catch {}
       })
       .catch(() => setLoading(false));
-  }, [id]);
+  }, [id, unitPrice]);
 
   useEffect(() => { window.scrollTo(0, 0); fetchProduct(); }, [fetchProduct]);
 
@@ -903,12 +894,14 @@ export default function ProductDetails() {
                 <span style={{ fontSize: "12px", color: "#6B8F8A", fontWeight: "600" }}>{product.category || "SeaBite Fresh"}</span>
               </div>
               
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#F0FBF9", padding: "6px 12px", borderRadius: "100px", alignSelf: "flex-start", marginBottom: "16px", border: "1.5px solid #E2EEEC", width: "fit-content" }}>
-                <div className="pulse-ping" style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#5BBFB5" }} />
-                <span style={{ fontSize: "11px", fontWeight: "700", color: "#1A2E2C", letterSpacing: "0.02em" }}>
-                  {viewerCount} {viewerCount === 1 ? 'person is' : 'people are'} viewing this right now
-                </span>
-              </div>
+              {product.salesLast24h > 0 && (
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#F0FBF9", padding: "6px 12px", borderRadius: "100px", alignSelf: "flex-start", marginBottom: "16px", border: "1.5px solid #E2EEEC", width: "fit-content" }}>
+                  <div className="pulse-ping" style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#5BBFB5" }} />
+                  <span style={{ fontSize: "11px", fontWeight: "700", color: "#1A2E2C", letterSpacing: "0.02em" }}>
+                    {product.salesLast24h} {product.unit || 'kg'} sold in last 24 hrs
+                  </span>
+                </div>
+              )}
 
               <style>{`
                 @keyframes pulse-ping {
@@ -956,10 +949,32 @@ export default function ProductDetails() {
               </div>
 
               <div style={{ marginBottom: "20px" }}>
-                <p style={{ fontSize: "14px", color: "#007600", fontWeight: "700", marginBottom: "4px" }}>In Stock</p>
-                <p style={{ fontSize: "13px", color: "#565959" }}>
-                  FREE delivery <span style={{ fontWeight: "700" }}>Tomorrow</span>. Order within <span style={{ color: "#B12704" }}>4 hrs 12 mins</span>.
-                </p>
+                {product.countInStock > 0 ? (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                      <p style={{ fontSize: "14px", color: product.countInStock <= 5 ? "#B12704" : "#007600", fontWeight: "700", margin: 0 }}>
+                        {product.countInStock <= 5 ? `Only ${product.countInStock} ${product.unit || 'kg'} left in stock` : "In Stock"}
+                      </p>
+                      {product.countInStock <= 5 && (
+                        <motion.div
+                          animate={{ opacity: [0, 1, 0] }}
+                          transition={{ repeat: Infinity, duration: 1 }}
+                          style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#EF4444" }}
+                        />
+                      )}
+                    </div>
+                    <p style={{ fontSize: "13px", color: "#565959", margin: 0 }}>
+                      FREE delivery <span style={{ fontWeight: "700" }}>Tomorrow</span>. Order within <span style={{ color: "#B12704" }}>4 hrs 12 mins</span>.
+                    </p>
+                    {product.countInStock <= 5 && (
+                      <p style={{ fontSize: "11px", color: "#B12704", fontWeight: "600", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <FiAlertCircle size={12} /> Fresh batch selling out fast!
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p style={{ fontSize: "14px", color: "#B12704", fontWeight: "700" }}>Currently Unavailable</p>
+                )}
               </div>
 
               <FreshnessMeter productId={product._id} />

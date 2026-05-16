@@ -277,6 +277,13 @@ export default function Checkout() {
         else localStorage.removeItem("seabiteSpinDiscount");
       } catch { }
     }
+
+    // 🟢 CHECK FOR ABANDONED CART NUDGE COUPON
+    const nudgeCode = localStorage.getItem("seabite_nudge_coupon");
+    if (nudgeCode && !savedDiscount) {
+      applyCouponByCode(nudgeCode);
+      localStorage.removeItem("seabite_nudge_coupon"); // Clear after applying
+    }
   }, []);
 
   const isOrderSuccess = useRef(false);

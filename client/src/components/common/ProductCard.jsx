@@ -1,7 +1,7 @@
 // client/src/components/common/ProductCard.jsx
 import React, { useState, useContext, useEffect, memo } from "react";
 import { motion } from "framer-motion";
-import { FiShoppingCart, FiHeart } from "react-icons/fi";
+import { FiShoppingCart, FiHeart, FiZap } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import { tokens } from "../../utils/design-tokens";
 import { AuthContext } from "../../context/AuthContext";
@@ -90,8 +90,16 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
         height: "100%",
         border: `1px solid ${colors.grayscaleBackground}`,
         position: "relative",
+        // 🌟 FRESHNESS AURA
+        animation: product.trending ? "aura-pulse 4s infinite ease-in-out" : "none"
       }}
     >
+      <style>{`
+        @keyframes aura-pulse {
+          0%, 100% { box-shadow: 0 4px 20px rgba(91, 168, 160, 0.1); border-color: rgba(91, 168, 160, 0.2); }
+          50% { box-shadow: 0 4px 40px rgba(91, 168, 160, 0.3); border-color: rgba(91, 168, 160, 0.6); }
+        }
+      `}</style>
       <Link to={`/products/${product._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Image Section */}
         <div style={{
@@ -135,6 +143,34 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
             >
               <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#5BBFB5" }} />
               {discountPct}% OFF
+            </motion.div>
+          )}
+
+          {product.countInStock > 0 && product.countInStock <= 5 && (
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.05, 1],
+                boxShadow: ["0 4px 12px rgba(232,129,106,0.1)", "0 4px 12px rgba(232,129,106,0.3)", "0 4px 12px rgba(232,129,106,0.1)"]
+              }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              style={{
+                position: "absolute", bottom: 12, left: 12,
+                background: "#FEF2F2",
+                color: "#991B1B",
+                padding: "4px 8px", 
+                borderRadius: "6px",
+                fontSize: "9px", 
+                fontWeight: 800,
+                border: "1px solid #FCA5A5",
+                zIndex: 2,
+                display: "flex", 
+                alignItems: "center", 
+                gap: "4px",
+                textTransform: "uppercase"
+              }}
+            >
+              <FiZap size={10} style={{ color: "#EF4444" }} />
+              Only {product.countInStock}{product.unit || 'kg'} left
             </motion.div>
           )}
 

@@ -64,6 +64,8 @@ export default function AdminDashboard() {
   const [recentMessages, setRecentMessages] = useState([]);
   const [allReviews, setAllReviews] = useState([]);
   const [searchInsights, setSearchInsights] = useState([]); // 🟢 Added
+  const [frustrationEvents, setFrustrationEvents] = useState([]); // 🚨 Added
+  const [happyHourTimeLeft, setHappyHourTimeLeft] = useState(null); // ⏳ Added
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -127,6 +129,56 @@ export default function AdminDashboard() {
     const interval = setInterval(() => fetchDashboardData(), 30000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
+
+  // 🚨 Real-time Frustration Monitor
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.socket.io/4.7.2/socket.io.min.js";
+    script.onload = () => {
+      const socket = window.io(import.meta.env.VITE_API_URL || "");
+      socket.on("FRUSTRATION_EVENT", (data) => {
+        setFrustrationEvents(prev => [
+          { ...data, id: Date.now(), time: new Date().toLocaleTimeString() },
+          ...prev.slice(0, 4)
+        ]);
+        toast(`🚨 Frustration: ${data.userName || 'Guest'} at ${data.page}`, { icon: '😤' });
+      });
+
+      // 🛰️ NEW: Live Fleet Tracking simulation
+      const fleetInterval = setInterval(() => {
+        setFleet(prev => prev.map(p => ({
+          ...p,
+          lat: p.lat + (Math.random() - 0.5) * 0.001,
+          lng: p.lng + (Math.random() - 0.5) * 0.001,
+        })));
+      }, 3000);
+
+      return () => {
+        socket.disconnect();
+        clearInterval(fleetInterval);
+      };
+    };
+    document.body.appendChild(script);
+  }, []);
+
+  const [fleet, setFleet] = useState([
+    { id: 1, name: "Ravi", status: "active", lat: 17.3850, lng: 78.4867 },
+    { id: 2, name: "Anil", status: "active", lat: 17.3950, lng: 78.4967 },
+    { id: 3, name: "Suresh", status: "idle", lat: 17.4050, lng: 78.5067 },
+  ]);
+
+  // ⏳ Happy Hour Countdown
+  useEffect(() => {
+    if (settings.globalDiscount > 0) {
+      setHappyHourTimeLeft(3600); // 1 hour
+      const timer = setInterval(() => {
+        setHappyHourTimeLeft(p => (p > 0 ? p - 1 : 0));
+      }, 1000);
+      return () => clearInterval(timer);
+    } else {
+      setHappyHourTimeLeft(null);
+    }
+  }, [settings.globalDiscount]);
 
   const deleteReviewHandler = async (productId, reviewId) => {
     if (!window.confirm("Delete this review?")) return;
@@ -475,13 +527,63 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-stone-900">Happy Hour</h3>
-                    <p className="text-xs text-stone-500 mt-0.5">{settings.globalDiscount > 0 ? "10% off" : "Normal pricing"}</p>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      {settings.globalDiscount > 0 
+                        ? `${Math.floor(happyHourTimeLeft / 60)}:${String(happyHourTimeLeft % 60).padStart(2, '0')} remaining` 
+                        : "Normal pricing"}
+                    </p>
                   </div>
                 </div>
                 <div className={`w-12 h-7 rounded-full p-1 transition-all ${settings.globalDiscount > 0 ? "bg-amber-400" : "bg-stone-300"}`}>
                   <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.globalDiscount > 0 ? "translate-x-5" : "translate-x-0"}`} />
                 </div>
               </div>
+            </div>
+
+            {/* 🚨 Live Frustration Monitor */}
+            <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 overflow-hidden">
+               <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold text-stone-900 uppercase tracking-widest flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                    Live Pulse
+                  </h3>
+                  <span className="text-[10px] font-bold text-stone-400 bg-stone-50 px-2 py-0.5 rounded-full border border-stone-100">REAL-TIME</span>
+               </div>
+               <div className="space-y-3">
+                  {frustrationEvents.length === 0 ? (
+                    <div className="py-8 text-center border-2 border-dashed border-stone-100 rounded-2xl">
+                       <p className="text-[10px] font-bold text-stone-300 uppercase tracking-widest">System Healthy</p>
+                    </div>
+                  ) : (
+                    frustrationEvents.map(e => (
+                      <motion.div 
+                        initial={{ x: 20, opacity: 0 }} 
+                        animate={{ x: 0, opacity: 1 }} 
+                        key={e.id} 
+                        className="p-3 bg-rose-50/50 border border-rose-100/50 rounded-2xl flex items-center justify-between"
+                      >
+                         <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-rose-500 shadow-sm border border-rose-100">
+                               <FiAlertCircle size={14} />
+                            </div>
+                            <div>
+                               <p className="text-[11px] font-bold text-stone-900 line-clamp-1">{e.userName || 'Guest'}: {e.reason}</p>
+                               <p className="text-[9px] text-stone-400">{e.time} • {e.page}</p>
+                            </div>
+                         </div>
+                         <button 
+                           onClick={() => {
+                             toast.success(`Incentive sent to ${e.userName || 'Guest'}!`);
+                             setFrustrationEvents(prev => prev.filter(item => item.id !== e.id));
+                           }}
+                           className="p-2 bg-stone-900 text-white rounded-xl hover:bg-stone-800 transition-all active:scale-90"
+                         >
+                           <FiZap size={12} />
+                         </button>
+                      </motion.div>
+                    ))
+                  )}
+               </div>
             </div>
 
             {/* Banner */}
@@ -756,6 +858,10 @@ export default function AdminDashboard() {
                 )}
               </div>
             </div>
+
+            {/* Live Fleet Radar */}
+            <LiveFleetRadar fleet={fleet} />
+          </motion.div>
           </motion.div>
         </div>
 
@@ -951,6 +1057,58 @@ function BannerControl({ settings, setSettings }) {
   );
 }
 
+function LiveFleetRadar({ fleet }) {
+  return (
+    <div className="bg-stone-900 rounded-3xl border border-stone-800 shadow-2xl p-6 h-[280px] flex flex-col relative overflow-hidden group">
+      <div className="absolute inset-0 opacity-20 pointer-events-none">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/20 via-transparent to-transparent animate-pulse" />
+        <div className="grid grid-cols-6 h-full border-l border-white/5">
+          {[...Array(6)].map((_, i) => <div key={i} className="border-r border-white/5" />)}
+        </div>
+      </div>
+      
+      <div className="flex justify-between items-center mb-4 shrink-0 relative z-10">
+        <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+          <h3 className="text-lg font-light text-white">Live Fleet Radar</h3>
+        </div>
+        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Operational</span>
+      </div>
+
+      <div className="flex-1 relative border border-white/10 rounded-2xl overflow-hidden bg-black/40 backdrop-blur-sm">
+        {/* Simulated Radar Sweep */}
+        <motion.div 
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] bg-gradient-to-t from-emerald-500/10 via-transparent to-transparent origin-center pointer-events-none"
+        />
+        
+        {fleet.map((p) => (
+          <motion.div
+            key={p.id}
+            animate={{ 
+              x: (p.lng - 78.4867) * 5000 + 100, 
+              y: (p.lat - 17.3850) * 5000 + 100 
+            }}
+            className="absolute"
+          >
+            <div className="relative group/marker">
+              <div className={`w-2 h-2 rounded-full ${p.status === 'active' ? 'bg-emerald-400' : 'bg-stone-500'} shadow-[0_0_10px_rgba(52,211,153,0.5)]`} />
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover/marker:opacity-100 transition-opacity bg-white text-[9px] font-bold px-1.5 py-0.5 rounded text-stone-900 whitespace-nowrap shadow-xl">
+                {p.name}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+        
+        <div className="absolute bottom-3 right-3 text-[10px] text-white/40 font-mono">
+          SAT: ACTIVE | LAT: 17.38 | LNG: 78.48
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ChartTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
     return (
@@ -962,3 +1120,4 @@ function ChartTooltip({ active, payload, label }) {
   }
   return null;
 }
+

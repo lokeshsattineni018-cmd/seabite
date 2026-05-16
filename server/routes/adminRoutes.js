@@ -239,6 +239,7 @@ router.post("/maintenance/verify", adminAuth, async (req, res) => {
       : "";
     settings.lastUpdatedBy = req.session.userId;
     await settings.save();
+    req.io.emit("SETTINGS_UPDATE", settings);
 
     res.json({ message: "Maintenance Updated Successfully", settings });
 
@@ -294,6 +295,7 @@ router.put("/enterprise/settings", adminAuth, async (req, res) => {
 
     settings.lastUpdatedBy = req.session?.userId || null;
     await settings.save();
+    req.io.emit("SETTINGS_UPDATE", settings);
     res.json({ message: "Settings updated", settings });
   } catch (err) {
     console.error("Settings Update Error:", err);

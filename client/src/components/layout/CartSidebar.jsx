@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiX, FiMinus, FiPlus, FiTrash2, FiShoppingBag,
-  FiArrowRight, FiPackage, FiLock,
+  FiArrowRight, FiPackage, FiLock, FiTruck, FiCheck,
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { removeFromCart, updateQty } from "../../utils/cartStorage";
@@ -138,22 +138,61 @@ export default function CartSidebar({ onClose }) {
               {/* Free delivery progress */}
               {cartItems.length > 0 && (
                 <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, alignItems: "center" }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: remaining > 0 ? T.primary : "#10B981", textTransform: "uppercase", letterSpacing: "0.1em", display: "flex", alignItems: "center", gap: 4 }}>
+                      {remaining > 0 ? <FiPackage size={12} /> : <FiCheck size={12} />}
                       Free Delivery
                     </span>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: T.textLite }}>
-                      {remaining > 0 ? `₹${remaining.toFixed(0)} more` : "🎉 Unlocked!"}
+                    <span style={{ fontSize: 10, fontWeight: 800, color: remaining > 0 ? T.textLite : "#10B981" }}>
+                      {remaining > 0 ? `Add ₹${remaining.toFixed(0)} more` : (
+                        <motion.span 
+                          initial={{ scale: 0.8, opacity: 0 }} 
+                          animate={{ scale: 1, opacity: 1 }}
+                          style={{ background: "#DCFCE7", padding: "2px 8px", borderRadius: 20, color: "#166534" }}
+                        >
+                          🎉 GOAL REACHED!
+                        </motion.span>
+                      )}
                     </span>
                   </div>
-                  <div style={{ height: 5, background: "#EEF5F4", borderRadius: 4, overflow: "hidden" }}>
+                  <div style={{ height: 6, background: "#EEF5F4", borderRadius: 4, overflow: "hidden", position: "relative" }}>
                     <motion.div
                       initial={{ width: 0 }}
-                      animate={{ width: `${deliveryProgress}%` }}
-                      transition={{ duration: 0.9, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                      style={{ height: "100%", background: "linear-gradient(90deg, #5BA8A0, #89C2D9)", borderRadius: 4 }}
-                    />
+                      animate={{ 
+                        width: `${deliveryProgress}%`,
+                        background: remaining > 0 
+                          ? "linear-gradient(90deg, #5BA8A0, #89C2D9)" 
+                          : "linear-gradient(90deg, #10B981, #34D399)"
+                      }}
+                      transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                      style={{ height: "100%", borderRadius: 4, position: "relative" }}
+                    >
+                      {remaining > 0 && (
+                        <motion.div
+                          animate={{ x: ["0%", "100%"], opacity: [0, 1, 0] }}
+                          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+                          style={{
+                            position: "absolute", inset: 0,
+                            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)",
+                          }}
+                        />
+                      )}
+                    </motion.div>
                   </div>
+                  <AnimatePresence>
+                    {remaining <= 0 && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        style={{ overflow: "hidden" }}
+                      >
+                        <p style={{ margin: "8px 0 0", fontSize: "11px", color: "#166534", fontWeight: "600", display: "flex", alignItems: "center", gap: 6 }}>
+                          <FiTruck style={{ color: "#10B981" }} /> You saved ₹{FREE_DELIVERY_THRESHOLD >= 1000 ? "99" : "49"} in delivery fees!
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </div>
