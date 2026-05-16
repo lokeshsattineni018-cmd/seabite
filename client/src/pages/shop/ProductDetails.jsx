@@ -841,7 +841,7 @@ export default function ProductDetails() {
               Market
             </Link>
             <FiChevronRight size={10} style={{ color: "#B8CFCC" }} />
-            <span style={{ fontSize: "12px", fontWeight: "600", color: "#5BBFB5" }}>{product.name}</span>
+            <span style={{ fontSize: "12px", fontWeight: "600", color: "#5BBFB5" }}>{product?.name}</span>
           </motion.div>
 
           <div className="product-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "start" }}>
@@ -894,7 +894,7 @@ export default function ProductDetails() {
                 <span style={{ fontSize: "12px", color: "#6B8F8A", fontWeight: "600" }}>{product.category || "SeaBite Fresh"}</span>
               </div>
               
-              {product.salesLast24h > 0 && (
+              {product?.salesLast24h > 0 && (
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#F0FBF9", padding: "6px 12px", borderRadius: "100px", alignSelf: "flex-start", marginBottom: "16px", border: "1.5px solid #E2EEEC", width: "fit-content" }}>
                   <div className="pulse-ping" style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#5BBFB5" }} />
                   <span style={{ fontSize: "11px", fontWeight: "700", color: "#1A2E2C", letterSpacing: "0.02em" }}>
