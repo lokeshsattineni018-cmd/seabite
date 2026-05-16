@@ -150,13 +150,47 @@ io.on("connection", (socket) => {
 
   socket.on("FRUSTRATION_EVENT", (data) => {
     // Broadcast to all admins
-    io.to("admins").emit("FRUSTRATION_ALERT", {
+    io.to("admins").emit("FRUSTRATION_EVENT", {
       ...data,
       timestamp: new Date()
     });
   });
 
+  // 🛒 Abandoned Cart Nudge System (Real-time Intent)
+  const cartTimers = new Map();
+
+  socket.on("CART_ACTIVITY", (data) => {
+    const { userId, cartItems } = data;
+    if (!userId || !cartItems || cartItems.length === 0) {
+      if (cartTimers.has(socket.id)) {
+        clearTimeout(cartTimers.get(socket.id));
+        cartTimers.delete(socket.id);
+      }
+      return;
+    }
+
+    // Reset abandonment timer
+    if (cartTimers.has(socket.id)) {
+      clearTimeout(cartTimers.get(socket.id));
+    }
+
+    const timer = setTimeout(() => {
+      socket.emit("NUDGE_OFFER", {
+        message: "Your catch is still waiting! Get 5% extra off if you checkout now.",
+        coupon: "SEABITE5",
+        expiresIn: 900 // 15 mins
+      });
+      console.log(`📡 [NUDGE] Sent abandonment offer to socket: ${socket.id}`);
+    }, 10 * 60 * 1000); // 10 minutes
+
+    cartTimers.set(socket.id, timer);
+  });
+
   socket.on("disconnect", () => {
+    if (cartTimers.has(socket.id)) {
+      clearTimeout(cartTimers.get(socket.id));
+      cartTimers.delete(socket.id);
+    }
     connectedUsers = Math.max(0, connectedUsers - 1);
     io.emit("USER_COUNT_UPDATE", connectedUsers);
   });

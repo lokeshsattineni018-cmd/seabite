@@ -238,11 +238,26 @@ router.get("/:id", async (req, res) => {
     try {
       const settings = await getSettings();
       if (settings) globalDiscount = settings.globalDiscount || 0;
-    } catch (err) {
-      // console.error("Global discount fetch failed", err);
-    }
+    } catch (err) {}
 
-    res.json({ ...product.toObject(), relatedProducts, globalDiscount });
+    // 🟢 NEW: Calculate Sales in last 24h
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const recentOrdersCount = await Order.find({
+      createdAt: { $gte: twentyFourHoursAgo },
+      "items.productId": product._id,
+      status: { $ne: "Cancelled" }
+    });
+
+    let salesLast24h = 0;
+    recentOrdersCount.forEach(order => {
+      order.items.forEach(item => {
+        if (item.productId.toString() === product._id.toString()) {
+          salesLast24h += item.qty || 1;
+        }
+      });
+    });
+
+    res.json({ ...product.toObject(), relatedProducts, globalDiscount, salesLast24h });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

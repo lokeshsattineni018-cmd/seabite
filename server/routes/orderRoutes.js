@@ -216,6 +216,19 @@ router.post("/", protect, async (req, res) => {
       console.error("❌ Email Trigger Failed:", mailErr.message);
     }
 
+    // 🛰️ BROADCAST: Live Sale Social Proof
+    try {
+      req.io.emit("LIVE_SALE", {
+        customerName: req.user.name.split(" ")[0],
+        location: deliveryAddress.city,
+        productName: items[0]?.name,
+        image: items[0]?.image,
+        timestamp: new Date()
+      });
+    } catch (ioErr) {
+      console.error("❌ Socket Broadcast Failed:", ioErr.message);
+    }
+
     res.status(201).json(savedOrder);
   } catch (error) {
     console.error("Order Creation Error:", error);

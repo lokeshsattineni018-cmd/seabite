@@ -296,7 +296,14 @@ export default function AdminProducts() {
                   <div className="p-5">
                     <p className="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">{p.category}</p>
                     <h3 className="font-bold text-stone-900 text-sm truncate">{p.name}</h3>
-                    <div className="mt-2 font-mono text-stone-600 font-medium">{formatPrice(p.basePrice)}</div>
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="font-mono text-stone-600 font-medium">{formatPrice(p.basePrice)}</div>
+                      {p.buyingPrice > 0 && (
+                        <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${((p.basePrice - p.buyingPrice) / p.buyingPrice * 100) > 20 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                          {Math.round(((p.basePrice - p.buyingPrice) / p.buyingPrice) * 100)}% Margin
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -318,6 +325,7 @@ export default function AdminProducts() {
                       <th className="px-6 py-4">Product</th>
                       <th className="px-6 py-4">Category</th>
                       <th className="px-6 py-4">Price</th>
+                      <th className="px-6 py-4">Margin</th>
                       <th className="px-6 py-4">Status</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
@@ -350,6 +358,18 @@ export default function AdminProducts() {
                         </td>
                         <td className="px-6 py-4"><span className="px-2.5 py-1 rounded-lg text-xs font-bold bg-stone-100 text-stone-600 uppercase tracking-wide">{p.category}</span></td>
                         <td className="px-6 py-4 font-mono text-sm text-stone-700">{formatPrice(p.basePrice)}</td>
+                        <td className="px-6 py-4">
+                          {p.buyingPrice > 0 ? (
+                            <div className="flex flex-col">
+                              <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full w-fit ${((p.basePrice - p.buyingPrice) / p.buyingPrice * 100) > 20 ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'}`}>
+                                {Math.round(((p.basePrice - p.buyingPrice) / p.buyingPrice) * 100)}%
+                              </span>
+                              <span className="text-[10px] text-stone-400 mt-1">Cost: ₹{p.buyingPrice}</span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-stone-300 italic">No cost data</span>
+                          )}
+                        </td>
                         <td className="px-6 py-4">
                           <div className="text-sm font-bold text-stone-900">
                             {p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0) ? (

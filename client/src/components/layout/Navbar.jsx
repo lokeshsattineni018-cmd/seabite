@@ -75,6 +75,7 @@ export default function Navbar({ announcementActive = false }) {
   const [searchGlobalDiscount, setSearchGlobalDiscount] = useState(0); // 🟢 Capture Search Discount
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [systemAlert, setSystemAlert] = useState(null); // [Pulse State]
+  const [isHappyHour, setIsHappyHour] = useState(false); // ⚡ Added
   const isOrderDetails = location.pathname.startsWith("/orders/") && location.pathname.length > 8;
 
   const lastScrollY = useRef(0);
@@ -189,11 +190,23 @@ export default function Navbar({ announcementActive = false }) {
   }, [user]);
 
   useEffect(() => {
-    if (user?.role !== "admin") return;
+    // Initial fetch
+    axios.get(`${API_URL}/api/admin/enterprise/settings`).then(res => {
+      if (res.data.globalDiscount > 0) setIsHappyHour(true);
+    }).catch(() => {});
+
     const socket = io(API_URL);
     socket.on("SYSTEM_PULSE", (data) => {
       if (data.alert) setSystemAlert(data.alert);
       else setSystemAlert(null);
+    });
+    socket.on("SETTINGS_UPDATE", (data) => {
+      if (data.globalDiscount > 0) {
+        setIsHappyHour(true);
+        toast("⚡ HAPPY HOUR LIVE! 10% OFF EVERYTHING!", { icon: '🎁', duration: 6000 });
+      } else {
+        setIsHappyHour(false);
+      }
     });
     return () => socket.disconnect();
   }, [user]);
@@ -456,10 +469,18 @@ export default function Navbar({ announcementActive = false }) {
           .show-mobile { display: none !important; } 
           .hidden-mobile { display: flex !important; } 
         }
+        @keyframes gold-pulse {
+          0%, 100% { border-bottom-color: #F59E0B; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.1); }
+          50% { border-bottom-color: #FBBF24; box-shadow: 0 4px 40px rgba(245, 158, 11, 0.3); }
+        }
+        .happy-hour-glow {
+          animation: gold-pulse 2s infinite ease-in-out !important;
+          border-bottom: 2px solid #F59E0B !important;
+        }
       `}</style>
 
       <motion.nav
-        className="nav-root"
+        className={`nav-root ${isHappyHour ? 'happy-hour-glow' : ''}`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         style={{

@@ -19,6 +19,32 @@ const MobileNav = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
 
+  const getImageUrl = (path) => {
+    if (!path) return "https://placehold.co/400?text=No+Image";
+    if (path.startsWith("http")) return path;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return cleanPath.startsWith("/uploads")
+      ? `${API_URL}${cleanPath}`
+      : `${API_URL}/uploads${cleanPath}`;
+  };
+
+  const handleSearch = async (val) => {
+    setSearchTerm(val);
+    if (val.length > 1) {
+      try {
+        const { data } = await axios.get(`${API_URL}/api/products?search=${val}`);
+        // Handle both possible response formats
+        const products = data.products || (Array.isArray(data) ? data : []);
+        setSuggestions(products.slice(0, 10));
+      } catch (e) {
+        setSuggestions([]);
+      }
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  const navItems = [
     { id: "home", label: "Home", path: "/", icon: Home },
     { id: "shop", label: "Shop", path: "/products", icon: ShoppingBag },
     { id: "search", label: "Find", onClick: () => setShowSearch(true), icon: Search },
@@ -26,18 +52,6 @@ const MobileNav = () => {
     ...(user?.role === "admin" ? [{ id: "admin", label: "Admin", path: "/admin", icon: LayoutDashboard }] : []),
     { id: "menu", label: "Me", onClick: () => setShowProfileMenu(true), icon: User }
   ];
-
-  const handleSearch = async (val) => {
-    setSearchTerm(val);
-    if (val.length > 1) {
-      try {
-        const { data } = await axios.get(`${API_URL}/api/products?search=${val}`);
-        setSuggestions(data.products.slice(0, 10));
-      } catch (e) {}
-    } else {
-      setSuggestions([]);
-    }
-  };
 
   if (location.pathname.startsWith("/admin") || location.pathname === "/checkout") return null;
 
@@ -116,7 +130,7 @@ const MobileNav = () => {
                   >
                     {/* Image Column */}
                     <div className="w-[110px] h-[110px] flex-shrink-0 bg-[#F8FAFB] rounded-lg overflow-hidden">
-                      <img src={p.image} className="w-full h-full object-cover" alt={p.name} />
+                      <img src={getImageUrl(p.image)} className="w-full h-full object-cover" alt={p.name} />
                     </div>
                     
                     {/* Info Column */}

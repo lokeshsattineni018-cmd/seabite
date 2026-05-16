@@ -1,6 +1,8 @@
-import { createContext, useState, useEffect, useCallback, useContext } from "react";
+import { createContext, useState, useEffect, useCallback, useContext, useRef } from "react";
 import axios from "axios";
 import { AuthContext } from "./AuthContext";
+import socket from "../utils/socket";
+import CartNudge from "../components/common/CartNudge";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -76,6 +78,43 @@ export const CartProvider = ({ children }) => {
         freeDeliveryThreshold: 1000
     });
     const [globalDiscount, setGlobalDiscount] = useState(0);
+
+    const [isNudgeOpen, setIsNudgeOpen] = useState(false);
+    const [nudgeCoupon, setNudgeCoupon] = useState(null);
+
+    // Socket initialization and Nudge listening
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on("NUDGE_OFFER", (data) => {
+            // Only show nudge if not already on checkout and cart not empty
+            const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+            if (window.location.pathname !== "/checkout" && cart.length > 0) {
+                setNudgeCoupon(data.coupon);
+                setIsNudgeOpen(true);
+            }
+        });
+
+        return () => {
+            socket.off("NUDGE_OFFER");
+        };
+    }, []);
+
+    // Emit CART_ACTIVITY when cart items change
+    useEffect(() => {
+        if (socket && cartLoaded) {
+            socket.emit("CART_ACTIVITY", {
+                userId: user?._id || "guest",
+                cartItems: cartState.cartItems
+            });
+        }
+    }, [cartState.cartItems, user, cartLoaded]);
+
+    const applyNudgeCoupon = (coupon) => {
+        // This would ideally integrate with a coupon application system
+        localStorage.setItem("seabite_nudge_coupon", coupon);
+        // We can trigger a refresh or just rely on the checkout page to find it
+    };
 
     // Fetch Global Settings & Discount
     useEffect(() => {
@@ -230,6 +269,11 @@ export const CartProvider = ({ children }) => {
     return (
         <CartContext.Provider value={contextValue}>
             {children}
+            <CartNudge 
+                isOpen={isNudgeOpen} 
+                onClose={() => setIsNudgeOpen(false)} 
+                onApplyOffer={applyNudgeCoupon} 
+            />
         </CartContext.Provider>
     );
 };
