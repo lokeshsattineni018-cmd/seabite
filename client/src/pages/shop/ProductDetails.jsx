@@ -512,6 +512,7 @@ export default function ProductDetails() {
 
   const isActiveFlashSale =
     product?.flashSale?.isFlashSale &&
+    product?.flashSale?.saleEndDate &&
     new Date(product.flashSale.saleEndDate) > new Date();
 
   const basePrice = product ? parseFloat(product.basePrice) : 0;
@@ -749,15 +750,15 @@ export default function ProductDetails() {
               "priceCurrency": "INR",
               "price": Number(unitPrice).toFixed(0),
               "priceValidUntil": new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-              "availability": product.stock === "out" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-              "url": `https://seabite.co.in/products/${product._id}`,
+              "availability": product?.stock === "out" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+              "url": `https://seabite.co.in/products/${product?._id}`,
               "seller": { "@type": "Organization", "name": "SeaBite Seafoods" }
             },
-            ...(product.numReviews > 0 && {
+            ...(product?.numReviews > 0 && {
               "aggregateRating": {
                 "@type": "AggregateRating",
-                "ratingValue": product.rating || 4.5,
-                "reviewCount": product.numReviews,
+                "ratingValue": product?.rating || 4.5,
+                "reviewCount": product?.numReviews,
                 "bestRating": "5",
                 "worstRating": "1"
               }
