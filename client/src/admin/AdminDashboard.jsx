@@ -57,7 +57,17 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [timeFilter, setTimeFilter] = useState("6months");
   const { settings, setSettings } = useOutletContext();
-  const [stats, setStats] = useState({ products: 0, orders: 0, users: 0, revenue: 0, profit: 0, margin: 0 });
+  const [stats, setStats] = useState({ 
+    products: 0, 
+    totalOrders: 0, 
+    activeUsers: 0, 
+    totalRevenue: 0, 
+    netProfit: 0, 
+    todayRevenue: 0, 
+    pendingOrders: 0, 
+    awaitingPickup: 0, 
+    outForDelivery: 0 
+  });
   const [alerts, setAlerts] = useState({ slaBreaches: [], stockRisks: [] });
   const [graph, setGraph] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
@@ -130,12 +140,13 @@ export default function AdminDashboard() {
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
-  // 🚨 Real-time Frustration Monitor
+  // 🚨 Real-time Frustration Monitor & Fleet
   useEffect(() => {
+    let socket;
     const script = document.createElement("script");
     script.src = "https://cdn.socket.io/4.7.2/socket.io.min.js";
     script.onload = () => {
-      const socket = window.io(import.meta.env.VITE_API_URL || "");
+      socket = window.io(import.meta.env.VITE_API_URL || "");
       socket.on("FRUSTRATION_EVENT", (data) => {
         setFrustrationEvents(prev => [
           { ...data, id: Date.now(), time: new Date().toLocaleTimeString() },
@@ -143,22 +154,25 @@ export default function AdminDashboard() {
         ]);
         toast(`🚨 Frustration: ${data.userName || 'Guest'} at ${data.page}`, { icon: '😤' });
       });
-
-      // 🛰️ NEW: Live Fleet Tracking simulation
-      const fleetInterval = setInterval(() => {
-        setFleet(prev => prev.map(p => ({
-          ...p,
-          lat: p.lat + (Math.random() - 0.5) * 0.001,
-          lng: p.lng + (Math.random() - 0.5) * 0.001,
-        })));
-      }, 3000);
-
-      return () => {
-        socket.disconnect();
-        clearInterval(fleetInterval);
-      };
     };
     document.body.appendChild(script);
+
+    // 🛰️ NEW: Live Fleet Tracking simulation
+    const fleetInterval = setInterval(() => {
+      setFleet(prev => prev.map(p => ({
+        ...p,
+        lat: p.lat + (Math.random() - 0.5) * 0.001,
+        lng: p.lng + (Math.random() - 0.5) * 0.001,
+      })));
+    }, 3000);
+
+    return () => {
+      if (socket) socket.disconnect();
+      clearInterval(fleetInterval);
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
   }, []);
 
   const [fleet, setFleet] = useState([
@@ -399,11 +413,11 @@ export default function AdminDashboard() {
         >
           <StatCard
             title="Today's Revenue"
-            value={`₹${stats.revenue?.toLocaleString() || 0}`}
+            value={`₹${stats.todayRevenue?.toLocaleString() || 0}`}
             icon={<FiDollarSign size={20} />}
             color="from-emerald-50 to-teal-50"
             index={0}
-            subtitle={`Net Profit: ₹${stats.profit?.toLocaleString() || 0} (${stats.margin}%)`}
+            subtitle={`Net Profit: ₹${stats.netProfit?.toLocaleString() || 0} (${Math.round((stats.netProfit / (stats.totalRevenue || 1)) * 100)}% Margin)`}
           />
           <StatCard
             title="Orders"
@@ -861,7 +875,6 @@ export default function AdminDashboard() {
 
             {/* Live Fleet Radar */}
             <LiveFleetRadar fleet={fleet} />
-          </motion.div>
           </motion.div>
         </div>
 
