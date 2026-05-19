@@ -53,6 +53,8 @@ export default function Footer() {
               <img
                 src="/logo.png"
                 alt="SeaBite"
+                width={75}
+                height={52}
                 style={{ height: "52px", width: "auto" }}
               />
             </Link>

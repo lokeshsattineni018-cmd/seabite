@@ -501,7 +501,7 @@ export default function Navbar({ announcementActive = false }) {
           <div className="hidden-mobile" style={{ width: "100%", display: "flex", alignItems: "center" }}>
             <div style={{ marginRight: "36px", flexShrink: 0 }}>
               <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-                <img src="/logo.png" alt="SeaBite" style={{ height: "76px", width: "auto" }} />
+                <img src="/logo.png" alt="SeaBite" width={110} height={76} style={{ height: "76px", width: "auto" }} />
               </Link>
             </div>
 
@@ -770,6 +770,8 @@ export default function Navbar({ announcementActive = false }) {
               <img 
                 src="/logo.png" 
                 alt="SeaBite" 
+                width={78}
+                height={54}
                 style={{ 
                   height: "54px", width: "auto", 
                   transition: "all 0.3s ease"
@@ -968,7 +970,7 @@ export default function Navbar({ announcementActive = false }) {
             >
               {/* Header */}
               <div style={{ padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f0f0f0", flexShrink: 0 }}>
-                <img src="/logo.png" style={{ height: "44px" }} alt="SeaBite" />
+                <img src="/logo.png" width={64} height={44} style={{ height: "44px" }} alt="SeaBite" />
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setMobileOpen(false)}
@@ -1131,7 +1133,7 @@ export default function Navbar({ announcementActive = false }) {
                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1 }} />
                  
                  <div style={{ position: "relative", zIndex: 2, display: "flex", justifyContent: "center", alignItems: "center", width: "100%", paddingTop: "32px" }}>
-                    <img src="/logo.png" style={{ height: "64px", width: "auto", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.2))", objectFit: "contain" }} />
+                    <img src="/logo.png" width={92} height={64} style={{ height: "64px", width: "auto", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.2))", objectFit: "contain" }} />
                  </div>
                  
                  <div style={{ position: "relative", zIndex: 2, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "32px", paddingBottom: "60px", textAlign: "left" }}>
@@ -1168,7 +1170,7 @@ export default function Navbar({ announcementActive = false }) {
                     
                     <div style={{ textAlign: "center", marginBottom: "24px" }}>
                        <div className="mobile-only" style={{ marginBottom: "20px" }}>
-                          <img src="/logo.png" style={{ height: "40px", width: "auto", margin: "0 auto" }} />
+                          <img src="/logo.png" width={58} height={40} style={{ height: "40px", width: "auto", margin: "0 auto" }} />
                        </div>
                        <h2 style={{ fontSize: "24px", fontWeight: "800", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#111827", margin: "0 0 8px", lineHeight: 1.1, letterSpacing: "-0.03em" }}>
                           {authMode === "LOGIN" ? "Unlock Ocean's Finest" 
