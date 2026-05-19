@@ -14,7 +14,7 @@ if (!resend) {
 const OFFICIAL_SENDER = 'SeaBite Fresh Catch <notifications@seabite.co.in>';
 const ORDERS_SENDER = 'SeaBite Orders <orders@seabite.co.in>';
 
-const LOGO_URL = process.env.LOGO_URL || "https://seabite.co.in/logo.png";
+const LOGO_URL = process.env.LOGO_URL || "https://www.seabite.co.in/logo.png";
 
 // Premium Design Tokens (Amazon/Flipkart inspired)
 const T = {
@@ -60,17 +60,19 @@ const aestheticWrapper = (content, subtitle) => `
   <style>
     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #F4F9F8; margin: 0; padding: 20px; color: #1A2E2C; }
     .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-    .header { padding: 30px; text-align: center; background-color: #ffffff; border-bottom: 1px solid #E2EEEC; }
+    .header { padding: 45px 30px 30px 30px; text-align: center; background-color: #ffffff; border-bottom: 1px solid #E2EEEC; }
     .content { padding: 40px; line-height: 1.6; }
-    .footer { padding: 30px; text-align: center; font-size: 12px; color: #6B8F8A; background-color: #F9FBFA; }
-    .btn { display: inline-block; padding: 14px 30px; background-color: #F07468; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: bold; }
+    .footer { padding: 30px; text-align: center; font-size: 12px; color: #6B8F8A; background-color: #F9FBFA; border-top: 1px solid #f0f0f0; }
+    .btn, .cta-button { display: inline-block; padding: 14px 32px; background-color: #E8816A; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 14px; letter-spacing: 0.05em; text-align: center; border: none; box-shadow: 0 4px 12px rgba(232, 129, 106, 0.25); }
   </style>
 </head>
 <body>
   <div class="container">
+    <div style="height: 4px; background-color: #5BA8A0; width: 100%;"></div>
     <div class="header">
       <img src="${LOGO_URL}" alt="SeaBite" width="140" style="margin-bottom: 10px;">
-      <div style="font-size: 10px; color: #6B8F8A; text-transform: uppercase; letter-spacing: 2px;">${subtitle || 'PREMIUM COASTAL CATCH'}</div>
+      <br>
+      <div style="display: inline-block; padding: 4px 12px; background-color: rgba(91, 168, 160, 0.1); color: #5BA8A0; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; border-radius: 100px; border: 1px solid rgba(91, 168, 160, 0.2); margin-top: 10px;">${subtitle || 'PREMIUM COASTAL CATCH'}</div>
     </div>
     <div class="content">
       ${content}
@@ -136,10 +138,30 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
   if (!resend) return;
 
   const isCOD = paymentMethod === "COD";
+  
+  // Calculate pricing values with a dynamic database fetch fallback
+  let subtotal = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+  let discount = 0;
+  let shippingPrice = subtotal < 1000 ? 99 : 0;
+  let taxPrice = Math.round((subtotal - discount) * 0.05);
+
+  try {
+    const Order = (await import("../models/Order.js")).default;
+    const orderData = await Order.findOne({ $or: [{ orderId: orderId.toString() }, { orderId: Number(orderId) || 0 }] }).lean();
+    if (orderData) {
+      subtotal = orderData.itemsPrice || subtotal;
+      discount = orderData.discount || 0;
+      shippingPrice = typeof orderData.shippingPrice === 'number' ? orderData.shippingPrice : shippingPrice;
+      taxPrice = typeof orderData.taxPrice === 'number' ? orderData.taxPrice : taxPrice;
+    }
+  } catch (err) {
+    console.log("Could not load order details from DB for email:", err.message);
+  }
+
   const itemRows = items.map(item => `
     <tr>
-      <td style="padding: 24px 0; border-bottom: 1px solid ${T.border}; width: 80px; vertical-align: top;">
-        <img src="${getEmailImageUrl(item.image)}" width="64" height="64" style="border-radius: 12px; object-fit: cover; display: block; background-color: ${T.bg};">
+      <td style="padding: 24px 0; border-bottom: 1px solid ${T.border}; width: 100px; vertical-align: top;">
+        <img src="${getEmailImageUrl(item.image)}" width="88" height="88" style="border-radius: 12px; object-fit: cover; display: block; background-color: ${T.bg}; border: 1px solid ${T.border};">
       </td>
       <td style="padding: 24px 16px; border-bottom: 1px solid ${T.border}; vertical-align: top;">
         <div style="color: ${T.primary}; font-weight: 800; font-size: 15px; margin-bottom: 4px;">${item.name}</div>
@@ -150,26 +172,56 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
   `).join('');
 
   const content = `
-    <h1 style="color: ${T.primary}; font-size: 32px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.03em;">Order Confirmed</h1>
+    <div style="width: 40px; height: 4px; background-color: #5BA8A0; margin-bottom: 16px; border-radius: 2px;"></div>
+    <h1 style="color: #5BA8A0; font-size: 32px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.03em;">Order Confirmed</h1>
     <p style="font-size: 16px; margin-bottom: 40px; color: ${T.text}; line-height: 1.6;">
       Hello <b>${name}</b>, your order <b>#${orderId}</b> has been received. Our team at Mogalthur is hand-selecting the freshest catch for you.
     </p>
     
     <table width="100%" style="border-collapse: collapse;">
       ${itemRows}
+      
+      <!-- Price Breakdown -->
       <tr>
-        <td colspan="2" style="padding-top: 32px; font-size: 13px; color: ${T.textLight}; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">${isCOD ? "PAY ON DELIVERY" : "TOTAL PAID"}</td>
-        <td style="padding-top: 32px; text-align: right; font-size: 28px; color: ${T.primary}; font-weight: 800; letter-spacing: -0.02em;">₹${total.toLocaleString()}</td>
+        <td colspan="2" style="padding: 16px 0 8px 0; font-size: 14px; color: ${T.textLight}; font-weight: 600;">Subtotal</td>
+        <td style="padding: 16px 0 8px 0; text-align: right; font-size: 14px; color: ${T.primary}; font-weight: 700;">₹${subtotal.toLocaleString()}</td>
+      </tr>
+      ${discount > 0 ? `
+      <tr>
+        <td colspan="2" style="padding: 8px 0; font-size: 14px; color: ${T.coral}; font-weight: 600;">Coupon Discount</td>
+        <td style="padding: 8px 0; text-align: right; font-size: 14px; color: ${T.coral}; font-weight: 700;">-₹${discount.toLocaleString()}</td>
+      </tr>
+      ` : ''}
+      <tr>
+        <td colspan="2" style="padding: 8px 0; font-size: 14px; color: ${T.textLight}; font-weight: 600;">Delivery Fee</td>
+        <td style="padding: 8px 0; text-align: right; font-size: 14px; color: ${T.primary}; font-weight: 700;">${shippingPrice > 0 ? `₹${shippingPrice.toLocaleString()}` : 'FREE'}</td>
+      </tr>
+      ${taxPrice > 0 ? `
+      <tr>
+        <td colspan="2" style="padding: 8px 0; font-size: 14px; color: ${T.textLight}; font-weight: 600;">Tax & GST (5%)</td>
+        <td style="padding: 8px 0; text-align: right; font-size: 14px; color: ${T.primary}; font-weight: 700;">₹${taxPrice.toLocaleString()}</td>
+      </tr>
+      ` : ''}
+      
+      <!-- Border spacing -->
+      <tr>
+        <td colspan="3" style="padding: 16px 0; border-bottom: 2px solid ${T.border};"></td>
+      </tr>
+      
+      <!-- Grand Total -->
+      <tr>
+        <td colspan="2" style="padding-top: 24px; font-size: 13px; color: ${T.textLight}; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;">${isCOD ? "PAY ON DELIVERY" : "TOTAL PAID"}</td>
+        <td style="padding-top: 24px; text-align: right; font-size: 28px; color: ${T.primary}; font-weight: 800; letter-spacing: -0.02em;">₹${total.toLocaleString()}</td>
       </tr>
     </table>
 
-    <div style="margin-top: 48px; padding: 32px; background-color: ${T.bg}; border-radius: 20px; text-align: center; border: 1px solid ${T.border};">
+    <div style="margin-top: 48px; padding: 24px 32px; background-color: ${T.bg}; border-radius: 12px; text-align: left; border: 1px solid ${T.border}; border-left: 4px solid #5BA8A0;">
       <div style="color: ${T.accent}; font-size: 12px; letter-spacing: 0.15em; font-weight: 800; margin-bottom: 8px; text-transform: uppercase;">Estimated Arrival</div>
       <div style="color: ${T.primary}; font-size: 18px; font-weight: 700;">2-3 Business Days</div>
     </div>
     
     <div style="text-align: center; margin-top: 40px;">
-      <a href="https://seabite.co.in/profile" class="cta-button">TRACK MY ORDER</a>
+      <a href="${API_URL}/orders/${orderId}" class="cta-button">TRACK MY ORDER</a>
     </div>
   `;
 
@@ -237,7 +289,7 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
     ${itemPreview}
 
     <div style="text-align: center; margin: 40px 0;">
-      <a href="https://seabite.co.in/profile" class="cta-button">LIVE TRACKING</a>
+      <a href="${API_URL}/orders/${orderId}" class="cta-button">LIVE TRACKING</a>
     </div>
   `;
 
