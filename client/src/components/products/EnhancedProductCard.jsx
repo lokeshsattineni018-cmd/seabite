@@ -144,6 +144,8 @@ const EnhancedProductCard = ({
           <motion.img 
             src={getImageUrl(product.image)} 
             alt={product.name}
+            width={400}
+            height={400}
             initial={{ opacity: 0, scale: 1.1 }}
             animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 1.1 }}
             transition={{ duration: 0.6 }}
@@ -218,9 +220,10 @@ const EnhancedProductCard = ({
           whileTap={{ scale: 0.9 }}
           onClick={handleWishlistToggle}
           disabled={loadingWishlist}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           style={{
             position: "absolute", top: "16px", right: "16px",
-            width: "42px", height: "42px",
+            width: "48px", height: "48px",
             background: "rgba(255,255,255,0.85)",
             backdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.3)",
@@ -232,7 +235,7 @@ const EnhancedProductCard = ({
             zIndex: 5
           }}
         >
-          <FiHeart size={18} fill={isWishlisted ? "currentColor" : "none"} strokeWidth={2.5} />
+          <FiHeart size={20} fill={isWishlisted ? "currentColor" : "none"} strokeWidth={2.5} />
         </motion.button>
       </div>
 
@@ -260,7 +263,7 @@ const EnhancedProductCard = ({
           </Link>
         </div>
 
-        <div style={{ marginTop: "auto", display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+        <div style={{ marginTop: "auto", display: "flex", alignItems: "flex-end", justifyStyle: "space-between", justifyContent: "space-between" }}>
           <div>
             <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
               <span style={{ fontSize: "24px", fontWeight: "800", color: "#1A2E2C" }}>₹{displayPrice}</span>
@@ -278,18 +281,19 @@ const EnhancedProductCard = ({
             whileTap={{ scale: 0.95 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
+            aria-label={isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : `Add ${product.name} to cart`)}
             style={{
               background: isOutOfStock ? "#F1F5F5" : "#5BBFB5",
               color: isOutOfStock ? "#9CA3AF" : "#FFF",
               border: "none",
-              borderRadius: "10px",
-              height: "38px",
-              padding: "0 12px",
+              borderRadius: "12px",
+              height: "44px",
+              padding: "0 16px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "6px",
-              fontSize: "12px",
+              gap: "8px",
+              fontSize: "12.5px",
               fontWeight: "700",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
               boxShadow: isOutOfStock ? "none" : "0 4px 14px rgba(91,191,181,0.25)",
@@ -297,7 +301,7 @@ const EnhancedProductCard = ({
               fontFamily: "inherit"
             }}
           >
-            {isAdding ? <FiCheck size={14} /> : <FiShoppingCart size={14} />}
+            {isAdding ? <FiCheck size={15} /> : <FiShoppingCart size={15} />}
             {isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : "Add")}
           </motion.button>
         </div>

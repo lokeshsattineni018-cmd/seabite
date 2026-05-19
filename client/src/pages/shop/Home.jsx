@@ -150,25 +150,33 @@ const Hero = () => {
     <section className="relative h-screen min-h-[680px] max-h-[960px] overflow-hidden">
       <motion.div 
         style={{ y, opacity }}
-        className="absolute inset-0 z-0"
+        className="absolute inset-0 z-0 bg-[#1A2B35]"
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 z-10" />
         
-        {!isVideoLoaded && (
-          <div className="absolute inset-0 z-40 bg-[#1A2B35] flex items-center justify-center">
-            <SeaBiteLoader />
-          </div>
-        )}
-
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          onCanPlayThrough={() => setIsVideoLoaded(true)}
-          src="1.mp4"
-          className="w-full h-full object-cover scale-105"
+        {/* Instant lightweight poster background for perfect LCP and FCP */}
+        <img
+          src="/banner.webp"
+          alt="SeaBite Fresh Seafood Background"
+          width={1920}
+          height={1080}
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000"
+          style={{ opacity: isVideoLoaded ? 0 : 1 }}
         />
+
+        {/* Dynamic high-fidelity video: loaded on desktop only, keeping mobile weight near-zero */}
+        {typeof window !== 'undefined' && window.innerWidth > 768 && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            onLoadedData={() => setIsVideoLoaded(true)}
+            src="fishermen.mp4"
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 scale-105"
+            style={{ opacity: isVideoLoaded ? 1 : 0 }}
+          />
+        )}
       </motion.div>
 
       <div className="relative z-20 h-full flex items-center">
@@ -312,7 +320,7 @@ const CategorySection = () => {
                       <ArrowRight size={14} className="text-[#8BA5B3]" />
                     </motion.div>
                   </div>
-                  <motion.img src={cat.img} alt={cat.title} animate={{ scale: hovered === i ? 1.06 : 1, rotate: hovered === i ? 3 : 0 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} className="absolute bottom-4 right-4 w-36 h-36 object-contain drop-shadow-lg" />
+                  <motion.img src={cat.img} alt={cat.title} width={144} height={144} animate={{ scale: hovered === i ? 1.06 : 1, rotate: hovered === i ? 3 : 0 }} transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }} className="absolute bottom-4 right-4 w-36 h-36 object-contain drop-shadow-lg" />
                   <div className="absolute bottom-5 left-6">
                     <motion.div animate={{ opacity: hovered === i ? 1 : 0, y: hovered === i ? 0 : 6 }} transition={{ duration: 0.25 }} className="text-xs font-bold text-white px-3 py-1.5 rounded-full" style={{ backgroundColor: cat.accent }}>
                       Explore →
@@ -613,7 +621,7 @@ const Reviews = () => {
                     <div className="flex gap-2 mb-6 overflow-x-auto pb-2 scrollbar-hide">
                       {r.images.map((img, idx) => (
                         <div key={idx} className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 border-2 border-white shadow-sm">
-                          <img src={getFullImageUrl(img)} alt="Customer review" className="w-full h-full object-cover transition-transform group-hover:scale-110" />
+                          <img src={getFullImageUrl(img)} alt="Customer review" width={80} height={80} className="w-full h-full object-cover transition-transform group-hover:scale-110" />
                         </div>
                       ))}
                     </div>
