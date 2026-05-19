@@ -9,7 +9,7 @@ import ActivityLog from "../models/ActivityLog.js"; // 🟢 Added
 import Coupon from "../models/Coupon.js"; // 🟢 Added
 import Contact from "../models/Contact.js"; // 🟢 Added
 import Notification from "../models/notification.js"; // 🟢 Added
-import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail, sendEmail, sendWinBackEmail } from "../utils/emailService.js";
+import { sendStatusUpdateEmail, sendMarketingEmail, sendBatchMarketingEmails, sendOtpEmail, sendEmail, sendWinBackEmail, sendAbandonedCartEmail } from "../utils/emailService.js";
 import logger from "../utils/logger.js";
 import { runAbandonedCartWorker } from "../cron/abandonedCartWorker.js";
 
@@ -979,27 +979,11 @@ router.get("/carts/abandoned", adminAuth, async (req, res) => {
 
 router.post("/carts/remind/:userId", adminAuth, async (req, res) => {
   try {
-    const user = await User.findById(req.params.userId).populate("cart.product", "name basePrice");
+    const user = await User.findById(req.params.userId).populate("cart.product", "name basePrice price flashSale image");
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // 🟢 Send Real Email
-    const cartItemsList = user.cart
-      .filter(item => item.product)
-      .map(item => `<li>${item.product.name} (Qty: ${item.qty})</li>`)
-      .join("");
-
-    const emailContent = `
-      <h2 style="color: #38bdf8;">You left something behind!</h2>
-      <p>Hi ${user.name}, checking out is easy. Here's what you left in your cart:</p>
-      <ul>${cartItemsList}</ul>
-      <p><strong>Total Value: ₹${user.cart.reduce((sum, item) => sum + (item.product?.basePrice || 0) * item.qty, 0)}</strong></p>
-      <p>Return to your cart to complete your purchase using the link below:</p>
-      <div style="text-align: center; margin-top: 20px;">
-        <a href="https://seabite.co.in/cart" style="background: #38bdf8; color: #020617; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">Return to Cart</a>
-      </div>
-    `;
-
-    await sendEmail(user.email, "Your Cart is Waiting! 🛒", emailContent);
+    // 🟢 Send the real, premium abandoned cart email template!
+    await sendAbandonedCartEmail(user.email, user.name, user.cart);
 
     res.json({ message: `Reminder sent to ${user.email}` });
   } catch (err) {
