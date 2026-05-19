@@ -63,7 +63,7 @@ const aestheticWrapper = (content, subtitle) => `
     .header { padding: 45px 30px 30px 30px; text-align: center; background-color: #ffffff; border-bottom: 1px solid #E2EEEC; }
     .content { padding: 40px; line-height: 1.6; }
     .footer { padding: 30px; text-align: center; font-size: 12px; color: #6B8F8A; background-color: #F9FBFA; border-top: 1px solid #f0f0f0; }
-    .btn, .cta-button { display: inline-block; padding: 14px 32px; background-color: #E8816A; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 14px; letter-spacing: 0.05em; text-align: center; border: none; box-shadow: 0 4px 12px rgba(232, 129, 106, 0.25); }
+    .btn, .cta-button { display: inline-block; padding: 14px 32px; background-color: #5BA8A0; color: #ffffff !important; text-decoration: none; border-radius: 8px; font-weight: 800; font-size: 14px; letter-spacing: 0.05em; text-align: center; border: none; box-shadow: 0 4px 12px rgba(91, 168, 160, 0.25); }
   </style>
 </head>
 <body>
