@@ -24,7 +24,7 @@ import socket from "../../utils/socket";
 import { v4 as uuidv4 } from 'uuid';
 
 // ─── Bundle Section ───────────────────────────────────────────────────────────
-const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshCartCount }) => {
+const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshCartCount, viewerCount }) => {
   const [selectedItems, setSelectedItems] = useState(relatedProducts.map((p) => p._id));
   const [isAdding, setIsAdding] = useState(false);
 
@@ -503,8 +503,29 @@ export default function ProductDetails() {
   const flyIdRef = useRef(0);
   const [recentItems, setRecentItems] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [viewerCount, setViewerCount] = useState(1);
 
+  // 🛰️ Real-Time Pulse Tracking
+  useEffect(() => {
+    if (!id) return;
+    
+    socket.emit("join-product", id);
+    socket.on("PRODUCT_VIEWER_COUNT", (data) => {
+      if (data.productId === id) setViewerCount(data.count);
+    });
 
+    let guestId = localStorage.getItem("seabite_guest_id");
+    if (!guestId) {
+      guestId = uuidv4();
+      localStorage.setItem("seabite_guest_id", guestId);
+    }
+    axios.post(`${API_URL}/api/pulse/track/${id}`, { guestId }).catch(() => {});
+
+    return () => {
+      socket.emit("leave-product", id);
+      socket.off("PRODUCT_VIEWER_COUNT");
+    };
+  }, [id]);
 
   const isWishlisted = user?.wishlist?.some(
     (item) => (typeof item === "string" ? item : item._id) === id
@@ -1020,7 +1041,7 @@ export default function ProductDetails() {
               {/* Related / Bundle */}
               {product.relatedProducts?.length > 0 && (
                 <div style={{ marginTop: "40px" }}>
-                   <BundleSection mainProduct={product} relatedProducts={product.relatedProducts} getFullImageUrl={getFullImageUrl} refreshCartCount={refreshCartCount} />
+                   <BundleSection mainProduct={product} relatedProducts={product.relatedProducts} getFullImageUrl={getFullImageUrl} refreshCartCount={refreshCartCount} viewerCount={viewerCount} />
                 </div>
               )}
             </div>
