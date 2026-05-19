@@ -469,8 +469,31 @@ export const sendEmail = async (to, subject, content) => {
  * 🟢 8. AUTOMATION: ABANDONED CART RECOVERY
  */
 export const sendAbandonedCartEmail = async (email, name, cartItems) => {
-  console.log(`🔍 [DEBUG] sendAbandonedCartEmail triggered for: ${email} (Items: ${cartItems.length})`);
-  if (!resend) return;
+  console.log(`🔍 [DEBUG] sendAbandonedCartEmail triggered for: ${email} (Items: ${cartItems?.length})`);
+  if (!resend || !cartItems) return;
+
+  // Modern mapper supporting both raw and pre-populated schema variants
+  const formattedItems = cartItems.map(item => {
+    const product = item.product || {};
+    
+    // Resolve name
+    const name = item.name || product.name || "Premium Item";
+    
+    // Resolve image
+    const image = item.image || product.image || "";
+    
+    // Resolve quantity
+    const qty = item.qty || 1;
+    
+    // Resolve price (handling flash sales or base prices correctly)
+    let price = item.price || 0;
+    if (!price && product) {
+      const isFlashSale = product.flashSale?.isFlashSale && new Date(product.flashSale.saleEndDate) > new Date();
+      price = isFlashSale ? product.flashSale.discountPrice : (product.price || product.basePrice || 0);
+    }
+    
+    return { name, image, qty, price };
+  });
 
   const content = `
     <h1 style="color: ${T.primary}; font-size: 32px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.03em;">You Left Something Behind!</h1>
@@ -479,26 +502,32 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
       Our fresh supply is limited and moves fast. Secure your order before it's gone!
     </p>
 
-    <div style="background-color: ${T.bg}; border-radius: 20px; padding: 32px; margin-bottom: 40px; text-align: center; border: 1px solid ${T.border};">
-      <div style="font-size: 11px; color: ${T.textLight}; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; font-weight: 800;">Items in your cart</div>
-      <div style="color: ${T.primary}; font-weight: 800; font-size: 20px;">${cartItems.length} Products Reserved</div>
+    <div style="background-color: ${T.bg}; border-radius: 12px; padding: 24px 32px; margin-bottom: 40px; text-align: left; border: 1px solid ${T.border}; border-left: 4px solid #5BA8A0;">
+      <div style="font-size: 11px; color: ${T.textLight}; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; font-weight: 800;">Items in your cart</div>
+      <div style="color: ${T.primary}; font-weight: 800; font-size: 20px;">${formattedItems.length} Products Reserved</div>
     </div>
 
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-bottom: 40px; border-collapse: separate; border-spacing: 0;">
-      ${cartItems.map(item => `
+      ${formattedItems.map(item => `
         <tr>
           <td style="padding: 20px 0; border-bottom: 1px solid ${T.border};">
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
               <tr>
                 <td width="72" style="vertical-align: top;">
-                  <img src="${getEmailImageUrl(item.image)}" width="64" height="64" style="border-radius: 12px; object-fit: cover; display: block; border: 1px solid ${T.border}; background: ${T.bg};">
+                  ${item.image && !item.image.includes('placeholder') && !item.image.includes('No+Image') ? `
+                    <img src="${getEmailImageUrl(item.image)}" width="64" height="64" style="border-radius: 12px; object-fit: cover; display: block; border: 1px solid ${T.border}; background: ${T.bg};">
+                  ` : `
+                    <div style="width: 64px; height: 64px; border-radius: 12px; background-color: rgba(91, 168, 160, 0.1); border: 1px solid rgba(91, 168, 160, 0.2); text-align: center; line-height: 64px;">
+                      <span style="font-size: 28px;">🐟</span>
+                    </div>
+                  `}
                 </td>
                 <td style="padding-left: 20px; vertical-align: middle;">
                   <div style="font-size: 15px; font-weight: 800; color: ${T.primary}; margin-bottom: 4px;">${item.name}</div>
-                  <div style="font-size: 12px; color: ${T.textLight}; font-weight: 600;">Qty: ${item.qty || 1}</div>
+                  <div style="font-size: 12px; color: ${T.textLight}; font-weight: 600;">Qty: ${item.qty}</div>
                 </td>
                 <td align="right" style="vertical-align: middle;">
-                  <div style="font-size: 16px; font-weight: 800; color: ${T.primary};">₹${item.price || 0}</div>
+                  <div style="font-size: 16px; font-weight: 800; color: ${T.primary};">₹${item.price.toLocaleString()}</div>
                 </td>
               </tr>
             </table>
@@ -508,7 +537,7 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
     </table>
 
     <div style="text-align: center; margin: 40px 0;">
-      <a href="https://seabite.co.in/cart" class="cta-button">COMPLETE MY ORDER</a>
+      <a href="${API_URL}/cart" class="cta-button">COMPLETE MY ORDER</a>
     </div>
   `;
 
