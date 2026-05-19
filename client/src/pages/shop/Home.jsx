@@ -164,19 +164,17 @@ const Hero = () => {
           style={{ opacity: isVideoLoaded ? 0 : 1 }}
         />
 
-        {/* Dynamic high-fidelity video: loaded on desktop only, keeping mobile weight near-zero */}
-        {typeof window !== 'undefined' && window.innerWidth > 768 && (
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            onLoadedData={() => setIsVideoLoaded(true)}
-            src="fishermen.mp4"
-            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 scale-105"
-            style={{ opacity: isVideoLoaded ? 1 : 0 }}
-          />
-        )}
+        {/* Dynamic high-fidelity video: loaded on all devices using 1.mp4 as requested, smoothly fading in over the poster once cached */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          onLoadedData={() => setIsVideoLoaded(true)}
+          src="1.mp4"
+          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 scale-105"
+          style={{ opacity: isVideoLoaded ? 1 : 0 }}
+        />
       </motion.div>
 
       <div className="relative z-20 h-full flex items-center">
