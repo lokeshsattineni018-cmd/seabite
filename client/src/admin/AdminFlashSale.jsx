@@ -21,7 +21,7 @@ const staggerContainer = {
     hidden: {},
     visible: { transition: { staggerChildren: 0.05 } },
 };
-// hfhh
+// hf
 export default function AdminFlashSale() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
