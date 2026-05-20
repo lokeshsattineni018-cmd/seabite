@@ -36,7 +36,7 @@ export const generateInvoicePDF = async (order) => {
     // ─── ADD LOGO ───
     try {
         // Fallback to logo.png if roundlogo.png is missing or fails
-        const logoData = await getBase64ImageFromURL("/roundlogo.png") || await getBase64ImageFromURL("/logo.png");
+        const logoData = await getBase64ImageFromURL("/roundlogo.webp") || await getBase64ImageFromURL("/logo.webp");
         if (logoData) {
             doc.addImage(logoData, "PNG", 14, 12, 22, 22);
         }

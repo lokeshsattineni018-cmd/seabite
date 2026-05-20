@@ -242,7 +242,7 @@ export default function CartSidebar({ onClose }) {
                     }} />
                     
                     <img 
-                      src="/empty-cart.png" 
+                      src="/empty-cart.webp" 
                       alt="Empty Cart" 
                       style={{ 
                         width: "100%", 

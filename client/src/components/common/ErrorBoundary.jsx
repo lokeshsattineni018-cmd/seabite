@@ -208,7 +208,7 @@ export function SeaBiteError() {
                             boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
                             backdropFilter: "blur(8px)",
                         }}>
-                            <img src="/logo.png" alt="SeaBite" style={{ width: 44, height: 44, objectFit: "contain" }} />
+                            <img src="/logo.webp" alt="SeaBite" style={{ width: 44, height: 44, objectFit: "contain" }} />
                         </div>
                     </div>
 

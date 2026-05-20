@@ -34,7 +34,7 @@ export default function Invoice({ order, type = "invoice" }) {
           {/* Brand left */}
           <div className="inv-brand">
             <div className="inv-logo-row">
-              <img src="/roundlogo.png" alt="SeaBite" className="inv-logo" />
+              <img src="/roundlogo.webp" alt="SeaBite" width={48} height={48} className="inv-logo" />
               <div>
                 <p className="inv-brand-name">SeaBite</p>
                 <p className="inv-brand-sub">Fresh Seafood Delivered</p>

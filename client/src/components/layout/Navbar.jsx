@@ -94,7 +94,7 @@ export default function Navbar({ announcementActive = false }) {
   const [authLoading, setAuthLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [authImgIdx, setAuthImgIdx] = useState(0);
-  const authImages = ["/auth-prawn.png", "/auth-fish.png", "/auth-crab.png"];
+  const authImages = ["/auth-prawn.webp", "/auth-fish.webp", "/auth-crab.webp"];
 
   useEffect(() => {
     if (!isLoginOpen) {
@@ -447,8 +447,6 @@ export default function Navbar({ announcementActive = false }) {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
         .nav-root * { box-sizing: border-box; }
         .nav-ul { position: relative; text-decoration: none; font-family: 'Manrope', sans-serif; }
         .nav-ul::after { content: ''; display: block; height: 2px; border-radius: 2px; margin-top: 4px; background: ${T.underline}; transform: scaleX(0); transform-origin: left; transition: transform 0.25s ease; }
@@ -501,7 +499,7 @@ export default function Navbar({ announcementActive = false }) {
           <div className="hidden-mobile" style={{ width: "100%", display: "flex", alignItems: "center" }}>
             <div style={{ marginRight: "36px", flexShrink: 0 }}>
               <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-                <img src="/logo.png" alt="SeaBite" width={110} height={76} style={{ height: "76px", width: "auto" }} />
+                <img src="/logo.webp" alt="SeaBite" width={110} height={76} style={{ height: "76px", width: "110px", objectFit: "contain" }} />
               </Link>
             </div>
 
@@ -768,13 +766,14 @@ export default function Navbar({ announcementActive = false }) {
           <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", pointerEvents: "none" }}>
             <Link to="/" style={{ textDecoration: "none", pointerEvents: "auto" }}>
               <img 
-                src="/logo.png" 
+                src="/logo.webp" 
                 alt="SeaBite" 
                 width={78}
                 height={54}
                 style={{ 
-                  height: "54px", width: "auto", 
-                  transition: "all 0.3s ease"
+                  height: "54px", width: "78px", 
+                  transition: "all 0.3s ease",
+                  objectFit: "contain"
                 }} 
               />
             </Link>
@@ -970,7 +969,7 @@ export default function Navbar({ announcementActive = false }) {
             >
               {/* Header */}
               <div style={{ padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f0f0f0", flexShrink: 0 }}>
-                <img src="/logo.png" width={64} height={44} style={{ height: "44px" }} alt="SeaBite" />
+                <img src="/logo.webp" width={64} height={44} style={{ height: "44px", width: "64px", objectFit: "contain" }} alt="SeaBite" />
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setMobileOpen(false)}
@@ -1133,7 +1132,7 @@ export default function Navbar({ announcementActive = false }) {
                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 1 }} />
                  
                  <div style={{ position: "relative", zIndex: 2, display: "flex", justifyContent: "center", alignItems: "center", width: "100%", paddingTop: "32px" }}>
-                    <img src="/logo.png" width={92} height={64} style={{ height: "64px", width: "auto", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.2))", objectFit: "contain" }} />
+                    <img src="/logo.webp" width={92} height={64} style={{ height: "64px", width: "92px", filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.2))", objectFit: "contain" }} />
                  </div>
                  
                  <div style={{ position: "relative", zIndex: 2, flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "32px", paddingBottom: "60px", textAlign: "left" }}>
@@ -1170,7 +1169,7 @@ export default function Navbar({ announcementActive = false }) {
                     
                     <div style={{ textAlign: "center", marginBottom: "24px" }}>
                        <div className="mobile-only" style={{ marginBottom: "20px" }}>
-                          <img src="/logo.png" width={58} height={40} style={{ height: "40px", width: "auto", margin: "0 auto" }} />
+                          <img src="/logo.webp" width={58} height={40} style={{ height: "40px", width: "58px", margin: "0 auto", objectFit: "contain" }} />
                        </div>
                        <h2 style={{ fontSize: "24px", fontWeight: "800", fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#111827", margin: "0 0 8px", lineHeight: 1.1, letterSpacing: "-0.03em" }}>
                           {authMode === "LOGIN" ? "Unlock Ocean's Finest" 

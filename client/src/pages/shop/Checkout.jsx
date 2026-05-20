@@ -458,7 +458,23 @@ export default function Checkout() {
         },
       };
 
-      if (window.Razorpay) {
+      const loadRazorpayScript = () => {
+        return new Promise((resolve) => {
+          if (window.Razorpay) {
+            resolve(true);
+            return;
+          }
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.async = true;
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+      };
+
+      const isLoaded = await loadRazorpayScript();
+      if (isLoaded && window.Razorpay) {
         new window.Razorpay(options).open();
       } else {
         throw new Error("Razorpay SDK failed to load. Please check your connection.");

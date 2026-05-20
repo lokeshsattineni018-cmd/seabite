@@ -142,7 +142,17 @@ const CTAButton = ({ children, to, variant = "primary", className = "" }) => {
 // ══════════════════════════════════════════════
 const Hero = () => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+  const [videoSrc, setVideoSrc] = useState("");
   const { scrollY } = useScroll();
+
+  useEffect(() => {
+    // Completely defer downloading the 7.7 MB video until after the critical first paint/interactive metrics are finished
+    const timer = setTimeout(() => {
+      setVideoSrc("1.mp4");
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const y = useTransform(scrollY, [0, 700], [0, 140]);
   const opacity = useTransform(scrollY, [0, 500], [1, 0.25]);
 
@@ -171,7 +181,7 @@ const Hero = () => {
           muted
           playsInline
           onLoadedData={() => setIsVideoLoaded(true)}
-          src="1.mp4"
+          src={videoSrc}
           className="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 scale-105"
           style={{ opacity: isVideoLoaded ? 1 : 0 }}
         />
@@ -280,9 +290,9 @@ const WaveTicker = () => {
 //  CATEGORIES
 // ══════════════════════════════════════════════
 const categories = [
-  { title: "Premium Fish", sub: "20+ varieties", img: "/fish.png", tag: "Fish", bg: "from-[#EAF6F5] to-[#F8FAFB]", accent: "#5BA8A0" },
-  { title: "Jumbo Prawns", sub: "Wild-caught daily", img: "/prawn.png", tag: "Prawn", bg: "from-[#EDF5FB] to-[#F8FAFB]", accent: "#89C2D9" },
-  { title: "Live Crabs", sub: "Ships in tank water", img: "/crab.png", tag: "Crab", bg: "from-[#FEF0EC] to-[#F8FAFB]", accent: "#E8816A" },
+  { title: "Premium Fish", sub: "20+ varieties", img: "/fish.webp", tag: "Fish", bg: "from-[#EAF6F5] to-[#F8FAFB]", accent: "#5BA8A0" },
+  { title: "Jumbo Prawns", sub: "Wild-caught daily", img: "/prawn.webp", tag: "Prawn", bg: "from-[#EDF5FB] to-[#F8FAFB]", accent: "#89C2D9" },
+  { title: "Live Crabs", sub: "Ships in tank water", img: "/crab.webp", tag: "Crab", bg: "from-[#FEF0EC] to-[#F8FAFB]", accent: "#E8816A" },
 ];
 
 const CategorySection = () => {
@@ -676,7 +686,6 @@ export default function Home() {
           <meta name="twitter:card" content="summary_large_image" />
         </Helmet>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
           * { -webkit-font-smoothing: antialiased; }
         `}</style>
   

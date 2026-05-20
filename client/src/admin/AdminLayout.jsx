@@ -119,7 +119,7 @@ export default function AdminLayout() {
         style={{ top: settings?.announcement?.active ? "36px" : 0 }}
       >
         <div className="flex items-center gap-3">
-          <img src="/roundlogo.png" alt="SeaBite" className="h-8 w-auto mix-blend-multiply" />
+          <img src="/roundlogo.webp" alt="SeaBite" width={32} height={32} className="h-8 w-8 mix-blend-multiply" />
           <span className="font-bold text-lg tracking-tight text-stone-800">Admin</span>
         </div>
         <button
