@@ -36,7 +36,19 @@ export default function CartSidebar({ onClose }) {
     }
   }, [isCartOpen, cartItems.length]);
 
-  // Use eitherprop onClose OR context setIsCartOpen(false)
+  // Prevent background scrolling to eliminate compositing paint jank while the sidebar is active
+  useEffect(() => {
+    if (isCartOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isCartOpen]);
+
+  // Use either prop onClose OR context setIsCartOpen(false)
   const closeCart = onClose || (() => setIsCartOpen(false));
 
   const subtotal = parseFloat(subtotalStr || "0");
@@ -71,17 +83,17 @@ export default function CartSidebar({ onClose }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.28 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
             onClick={closeCart}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1500 }}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1500, willChange: "opacity" }}
           />
 
           {/* SIDEBAR DRAWER */}
           <motion.div
-            initial={{ x: "100%", opacity: 0.6 }}
+            initial={{ x: "100%", opacity: 0.8 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
-            transition={{ type: "spring", damping: 30, stiffness: 260, mass: 0.8 }}
+            transition={{ type: "tween", ease: [0.16, 1, 0.3, 1], duration: 0.35 }}
             style={{
               position: "fixed", top: 0, right: 0, height: "100%",
               width: "85vw", maxWidth: 400,
@@ -90,6 +102,7 @@ export default function CartSidebar({ onClose }) {
               borderLeft: `1px solid ${T.border}`,
               boxShadow: "-8px 0 48px rgba(0,0,0,0.15)",
               fontFamily: font,
+              willChange: "transform",
             }}
           >
             {/* ── HEADER ── */}

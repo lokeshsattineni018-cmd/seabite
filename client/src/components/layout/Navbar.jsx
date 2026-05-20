@@ -591,22 +591,25 @@ export default function Navbar({ announcementActive = false }) {
                     whileHover={{ scale: 1.05 }} 
                     whileTap={{ scale: 0.98 }}
                     onClick={() => setShowNotifications(!showNotifications)}
-                    style={{
-                      background: "none", border: "none", padding: "8px",
-                      cursor: "pointer", color: T.iconColor,
-                      position: "relative", display: "flex", alignItems: "center",
-                    }}
+                    className="nav-ib"
+                    style={{ ...iconBtn, position: "relative" }}
                   >
-                    <FiBell size={18} />
+                    <FiBell size={15} />
                     {unreadCount > 0 && (
                       <span style={{
-                        position: "absolute", top: "0px", right: "0px",
-                        background: "#F07468", color: "white",
-                        fontSize: "9px", fontWeight: "800",
-                        width: "14px", height: "14px",
-                        borderRadius: "50%", display: "flex",
-                        alignItems: "center", justifyContent: "center",
-                        border: `1.5px solid ${isTransparent ? "transparent" : "#fff"}`,
+                        position: "absolute",
+                        top: "-5px",
+                        right: "-5px",
+                        background: "#F07468",
+                        color: "#fff",
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "50%",
+                        fontSize: "9px",
+                        fontWeight: "800",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}>
                         {unreadCount}
                       </span>
