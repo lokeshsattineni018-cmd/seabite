@@ -148,7 +148,7 @@ const Hero = () => {
   useEffect(() => {
     // Completely defer downloading the 7.7 MB video until after the critical first paint/interactive metrics are finished
     const timer = setTimeout(() => {
-      setVideoSrc("1.mp4");
+      setVideoSrc("fishermen.mp4");
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
