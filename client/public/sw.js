@@ -2,8 +2,9 @@ const CACHE_NAME = 'seabite-v1.1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/logo.png',
-  '/favicon.png',
+  '/logo.webp',
+  '/favicon.webp',
+  '/roundlogo.webp',
   '/manifest.json'
 ];
 
