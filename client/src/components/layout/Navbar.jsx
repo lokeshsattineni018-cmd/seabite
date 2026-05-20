@@ -421,7 +421,7 @@ export default function Navbar({ announcementActive = false }) {
     navBlur: isTransparent ? "none" : "blur(20px) saturate(1.8)",
     navBorder: isTransparent ? "transparent" : "rgba(0,0,0,0.06)",
     navShadow: isTransparent ? "none" : "0 4px 30px rgba(0,0,0,0.04)",
-    navPy: isTransparent ? "20px 0" : "12px 0",
+    navPy: isTransparent ? "10px 0" : "6px 0",
     link: isTransparent ? "#ffffff" : "#1A2E2C",
     linkActive: isTransparent ? "#ffffff" : "#5BBFB5",
     underline: isTransparent ? "#ffffff" : "#5BBFB5",
@@ -483,7 +483,7 @@ export default function Navbar({ announcementActive = false }) {
         animate={{ y: 0 }}
         style={{
           position: "fixed",
-          top: announcementActive && !scrolled ? 36 : 0,
+          top: announcementActive && !scrolled ? 30 : 0,
           left: 0, right: 0, zIndex: 1100,
           background: isTransparent ? "transparent" : "rgba(255,255,255,0.98)",
           backdropFilter: isTransparent ? "none" : "blur(20px) saturate(1.8)",
@@ -499,7 +499,7 @@ export default function Navbar({ announcementActive = false }) {
           <div className="hidden-mobile" style={{ width: "100%", display: "flex", alignItems: "center" }}>
             <div style={{ marginRight: "36px", flexShrink: 0 }}>
               <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-                <img src="/logo.webp" alt="SeaBite" width={110} height={76} style={{ height: "76px", width: "110px", objectFit: "contain" }} />
+                <img src="/logo.webp" alt="SeaBite" width={80} height={50} style={{ height: "50px", width: "80px", objectFit: "contain" }} />
               </Link>
             </div>
 
@@ -821,7 +821,7 @@ export default function Navbar({ announcementActive = false }) {
                 transition={{ duration: 0.2 }}
                 style={{
                   position: "fixed",
-                  top: announcementActive && !scrolled ? "108px" : "72px",
+                  top: announcementActive && !scrolled ? "94px" : "64px",
                   left: 0, right: 0,
                   background: "rgba(255,255,255,0.98)",
                   backdropFilter: "blur(20px)",
@@ -939,7 +939,7 @@ export default function Navbar({ announcementActive = false }) {
       </motion.nav>
 
       {/* MOBILE HEADER SPACER */}
-      {!isHome && <div className="show-mobile" style={{ height: announcementActive ? "108px" : "72px", width: "100%" }} />}
+      {!isHome && <div className="show-mobile" style={{ height: announcementActive ? "94px" : "64px", width: "100%" }} />}
 
       {/* --- MOBILE DRAWER (outside motion.nav to avoid backdropFilter stacking context bug) --- */}
       <AnimatePresence>
