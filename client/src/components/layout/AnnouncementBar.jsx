@@ -22,7 +22,7 @@ export default function AnnouncementBar({ settings }) {
                 <motion.div
                     key="announcement"
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "36px", opacity: 1 }}
+                    animate={{ height: "30px", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                     style={{
