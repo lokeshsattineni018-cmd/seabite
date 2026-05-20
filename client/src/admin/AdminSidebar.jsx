@@ -54,7 +54,7 @@ export default function AdminSidebar({ settings, onUpdateBanner }) {
       <div className="h-20 flex items-center px-8">
         <Link to="/admin/dashboard" className="flex items-center gap-3 group">
           <div className="relative flex items-center justify-center w-9 h-9 group-hover:scale-105 transition-transform duration-300">
-            <img src="/logo.png" alt="SeaBite Logo" className="w-full h-full object-contain drop-shadow-sm" />
+            <img src="/logo.webp" alt="SeaBite Logo" width={36} height={36} className="w-full h-full object-contain drop-shadow-sm" />
           </div>
           <div>
             <h2 className="font-bold text-base text-stone-900 tracking-tight leading-tight group-hover:text-stone-600 transition-colors">SeaBite</h2>

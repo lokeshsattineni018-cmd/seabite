@@ -38,7 +38,7 @@ const Maintenance = ({ message }) => {
             {/* Main content */}
             <div className="relative z-10 text-center px-6 animate-gentle-float">
                 <div className="mb-6 flex justify-center">
-                    <img src="/logo.png" alt="SeaBite Logo" className="h-16 md:h-20 drop-shadow-md" />
+                    <img src="/logo.webp" alt="SeaBite Logo" width={116} height={80} className="h-16 md:h-20 w-auto drop-shadow-md" />
                 </div>
                 <div className="w-16 h-0.5 bg-blue-500 mx-auto mb-6 rounded-full" />
                 <p className="text-lg md:text-xl text-slate-500 dark:text-slate-300 font-light mb-2">

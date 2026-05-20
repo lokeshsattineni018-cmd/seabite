@@ -298,10 +298,9 @@ function MainLayout() {
                   </Routes>
                 </AnimatePresence>
               )}
+              {!isAdminRoute && location.pathname !== "/success" && <Footer />}
             </Suspense>
           </div>
-
-          {!isAdminRoute && location.pathname !== "/success" && <Footer />}
           {!isAdminRoute && <SupportWidget />}
 
           {!isAdminRoute && <ComparisonDrawer />}

@@ -51,11 +51,11 @@ export default function Footer() {
           <div>
             <Link to="/" style={{ textDecoration: "none", display: "inline-block", marginBottom: "16px" }}>
               <img
-                src="/logo.png"
+                src="/logo.webp"
                 alt="SeaBite"
                 width={75}
                 height={52}
-                style={{ height: "52px", width: "auto" }}
+                style={{ height: "52px", width: "75px", objectFit: "contain" }}
               />
             </Link>
             <p style={{
