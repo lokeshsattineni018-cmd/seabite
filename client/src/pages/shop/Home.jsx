@@ -46,7 +46,7 @@ const Reveal = ({ children, delay = 0, y = 28, x = 0, duration = 0.65 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-6% 0px" });
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, y, x }} animate={isInView ? { opacity: 1, y: 0, x: 0 } : {}} transition={{ duration, delay, ease: [0.22, 1, 0.36, 1] }}>
+    <motion.div ref={ref} initial={{ opacity: 0, y, x }} animate={isInView ? { opacity: 1, y: 0, x: 0 } : {}} style={{ willChange: "transform, opacity" }} transition={{ duration, delay, ease: [0.22, 1, 0.36, 1] }}>
       {children}
     </motion.div>
   );
@@ -59,7 +59,7 @@ const ScaleReveal = ({ children, delay = 0 }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-4% 0px" });
   return (
-    <motion.div ref={ref} initial={{ opacity: 0, scale: 0.96 }} animate={isInView ? { opacity: 1, scale: 1 } : {}} transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}>
+    <motion.div ref={ref} initial={{ opacity: 0, scale: 0.96 }} animate={isInView ? { opacity: 1, scale: 1 } : {}} style={{ willChange: "transform, opacity" }} transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}>
       {children}
     </motion.div>
   );
@@ -81,6 +81,7 @@ const Stagger = ({ children, className = "", staggerDelay = 0.09 }) => {
 const SI = ({ children, className = "" }) => (
   <motion.div
     variants={{ hidden: { opacity: 0, y: 22 }, visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}
+    style={{ willChange: "transform, opacity" }}
     className={className}
   >
     {children}
@@ -144,22 +145,34 @@ const Hero = () => {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
   const [videoSrc, setVideoSrc] = useState("");
   const { scrollY } = useScroll();
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    
     // Completely defer downloading the 7.7 MB video until after the critical first paint/interactive metrics are finished
     const timer = setTimeout(() => {
       setVideoSrc("1.mp4");
     }, 2000);
-    return () => clearTimeout(timer);
+    
+    return () => {
+      window.removeEventListener("resize", checkMobile);
+      clearTimeout(timer);
+    };
   }, []);
 
-  const y = useTransform(scrollY, [0, 700], [0, 140]);
-  const opacity = useTransform(scrollY, [0, 500], [1, 0.25]);
+  const yVal = useTransform(scrollY, [0, 700], [0, 140]);
+  const opacityVal = useTransform(scrollY, [0, 500], [1, 0.25]);
+
+  const y = isMobile ? 0 : yVal;
+  const opacity = isMobile ? 1 : opacityVal;
 
   return (
     <section className="relative h-screen min-h-[680px] max-h-[960px] overflow-hidden">
       <motion.div 
-        style={{ y, opacity }}
+        style={{ y, opacity, willChange: "transform, opacity" }}
         className="absolute inset-0 z-0 bg-[#1A2B35]"
       >
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/80 z-10" />

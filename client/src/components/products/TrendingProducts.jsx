@@ -74,6 +74,7 @@ export default function TrendingProducts() {
         <motion.div
           className="flex gap-6 w-max pl-6"
           animate={{ x: ["0%", "-33.33%"] }}
+          style={{ willChange: "transform" }}
           transition={{
             repeat: Infinity,
             duration: 40,

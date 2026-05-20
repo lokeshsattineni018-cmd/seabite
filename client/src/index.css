@@ -63,7 +63,7 @@ html.dark body {
 }
 
 /* 🧬 GLOBAL TRANSITIONS */
-* {
+a, button, input, select, textarea, [role="button"] {
   @apply transition-colors duration-300;
 }
 
