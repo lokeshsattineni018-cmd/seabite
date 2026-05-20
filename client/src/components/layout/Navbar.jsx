@@ -499,7 +499,7 @@ export default function Navbar({ announcementActive = false }) {
           <div className="hidden-mobile" style={{ width: "100%", display: "flex", alignItems: "center" }}>
             <div style={{ marginRight: "36px", flexShrink: 0 }}>
               <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
-                <img src="/logo.webp" alt="SeaBite" width={80} height={50} style={{ height: "50px", width: "80px", objectFit: "contain" }} />
+                <img src="/logo.webp" alt="SeaBite" width={110} height={62} style={{ height: "62px", width: "110px", objectFit: "contain" }} />
               </Link>
             </div>
 
