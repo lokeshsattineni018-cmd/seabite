@@ -523,11 +523,12 @@ export default function ProductDetails() {
 
   // 🛰️ Real-Time Pulse Tracking
   useEffect(() => {
-    if (!id) return;
+    if (!product?._id) return;
+    const prodId = product._id;
     
-    socket.emit("join-product", id);
+    socket.emit("join-product", prodId);
     socket.on("PRODUCT_VIEWER_COUNT", (data) => {
-      if (data.productId === id) setViewerCount(data.count);
+      if (data.productId === prodId) setViewerCount(data.count);
     });
 
     let guestId = localStorage.getItem("seabite_guest_id");
@@ -535,16 +536,16 @@ export default function ProductDetails() {
       guestId = uuidv4();
       localStorage.setItem("seabite_guest_id", guestId);
     }
-    axios.post(`${API_URL}/api/pulse/track/${id}`, { guestId }).catch(() => {});
+    axios.post(`${API_URL}/api/pulse/track/${prodId}`, { guestId }).catch(() => {});
 
     return () => {
-      socket.emit("leave-product", id);
+      socket.emit("leave-product", prodId);
       socket.off("PRODUCT_VIEWER_COUNT");
     };
-  }, [id]);
+  }, [product?._id]);
 
   const isWishlisted = user?.wishlist?.some(
-    (item) => (typeof item === "string" ? item : item._id) === id
+    (item) => (typeof item === "string" ? item : item._id) === product?._id
   );
 
   const isActiveFlashSale =
@@ -603,13 +604,13 @@ export default function ProductDetails() {
   useEffect(() => { window.scrollTo(0, 0); fetchProduct(); }, [fetchProduct]);
 
   useEffect(() => {
-    if (user && id) {
+    if (user && product?._id) {
       axios
-        .get(`${API_URL}/api/products/${id}/can-review`, { withCredentials: true })
+        .get(`${API_URL}/api/products/${product._id}/can-review`, { withCredentials: true })
         .then((res) => setCanReview(res.data.canReview))
         .catch(() => setCanReview(false));
     }
-  }, [user, id]);
+  }, [user, product?._id]);
 
   useEffect(() => {
     if (user && product?.waitlist) {
@@ -623,12 +624,12 @@ export default function ProductDetails() {
     if (product && product.name) {
       const slug = slugify(product.name);
       const pathParts = window.location.pathname.split("/");
-      const currentSlug = pathParts[3];
-      if (currentSlug !== slug) {
+      const currentSlug = pathParts[pathParts.length - 1];
+      if (currentSlug !== slug || pathParts.length > 3) {
         window.history.replaceState(
           null,
           "",
-          `/products/${product._id}/${slug}`
+          `/products/${slug}`
         );
       }
     }
@@ -638,7 +639,7 @@ export default function ProductDetails() {
     triggerHaptic("soft");
     if (!product) return;
     const slug = slugify(product.name);
-    const shareUrl = `${window.location.origin}/products/${product._id}/${slug}`;
+    const shareUrl = `${window.location.origin}/products/${slug}`;
     const shareTitle = `${product.name} | SeaBite`;
     const shareText = `Check out this fresh catch on SeaBite: ${product.name}!`;
 
@@ -819,12 +820,12 @@ export default function ProductDetails() {
         <Helmet>
           <title>{product.name} | SeaBite - Fresh Seafood Delivery</title>
           <meta name="description" content={`Buy fresh ${product.name} online from SeaBite. ${product.description?.slice(0, 120) || "Sourced daily from the coast, delivered fresh to your door. Chemical-free and 100% traceable."}`} />
-          <link rel="canonical" href={`https://seabite.co.in/products/${product._id}/${slugify(product.name)}`} />
+          <link rel="canonical" href={`https://seabite.co.in/products/${slugify(product.name)}`} />
           <meta property="og:title" content={`${product.name} | SeaBite`} />
           <meta property="og:description" content={product.description?.slice(0, 160) || "Fresh coastal seafood from SeaBite."} />
           <meta property="og:image" content={getFullImageUrl(product.image)} />
           <meta property="og:type" content="product" />
-          <meta property="og:url" content={`https://seabite.co.in/products/${product._id}/${slugify(product.name)}`} />
+          <meta property="og:url" content={`https://seabite.co.in/products/${slugify(product.name)}`} />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={`${product.name} | SeaBite`} />
           <meta name="twitter:description" content={product.description?.slice(0, 120) || "Fresh coastal seafood from SeaBite."} />
@@ -844,7 +845,7 @@ export default function ProductDetails() {
               "price": Number(unitPrice).toFixed(0),
               "priceValidUntil": new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
               "availability": product?.stock === "out" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-              "url": `https://seabite.co.in/products/${product?._id}/${slugify(product.name)}`,
+              "url": `https://seabite.co.in/products/${slugify(product.name)}`,
               "seller": { "@type": "Organization", "name": "SeaBite Seafoods" }
             },
             ...(product?.numReviews > 0 && {
