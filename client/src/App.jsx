@@ -283,6 +283,7 @@ function MainLayout() {
                     <Route path="/" element={<Home />} />
                     <Route path="/products" element={<Products />} />
                     <Route path="/products/:id" element={<ProductDetails />} />
+                    <Route path="/products/:id/:slug" element={<ProductDetails />} />
                     <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
                     <Route path="/refer-earn" element={<PrivateRoute><ReferEarn /></PrivateRoute>} />

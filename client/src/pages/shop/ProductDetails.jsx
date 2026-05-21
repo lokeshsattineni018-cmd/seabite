@@ -11,7 +11,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiArrowLeft, FiMinus, FiPlus, FiShoppingBag, FiTruck,
   FiInfo, FiCheck, FiPackage, FiStar, FiMessageSquare,
-  FiHeart, FiZap, FiChevronRight, FiBox, FiX, FiAlertCircle
+  FiHeart, FiZap, FiChevronRight, FiBox, FiX, FiAlertCircle,
+  FiShare2
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import toast from "../../utils/toast"; // Custom SeaBite toast
@@ -22,6 +23,19 @@ import RecommendationBlock from "../../components/common/RecommendationBlock";
 const API_URL = import.meta.env.VITE_API_URL || "";
 import socket from "../../utils/socket";
 import { v4 as uuidv4 } from 'uuid';
+
+const slugify = (text) => {
+  if (!text) return "";
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+};
 
 // ─── Bundle Section ───────────────────────────────────────────────────────────
 const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshCartCount, viewerCount }) => {
@@ -605,6 +619,60 @@ export default function ProductDetails() {
     }
   }, [user, product]);
 
+  useEffect(() => {
+    if (product && product.name) {
+      const slug = slugify(product.name);
+      const pathParts = window.location.pathname.split("/");
+      const currentSlug = pathParts[3];
+      if (currentSlug !== slug) {
+        window.history.replaceState(
+          null,
+          "",
+          `/products/${product._id}/${slug}`
+        );
+      }
+    }
+  }, [product]);
+
+  const handleShare = async () => {
+    triggerHaptic("soft");
+    if (!product) return;
+    const slug = slugify(product.name);
+    const shareUrl = `${window.location.origin}/products/${product._id}/${slug}`;
+    const shareTitle = `${product.name} | SeaBite`;
+    const shareText = `Check out this fresh catch on SeaBite: ${product.name}!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Error sharing:", err);
+        }
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Product link copied!", {
+          icon: "🔗",
+          style: {
+            background: "#1A2E2C",
+            color: "#fff",
+            borderRadius: "12px",
+            fontSize: "13px",
+            fontFamily: "'Plus Jakarta Sans', sans-serif"
+          }
+        });
+      } catch (err) {
+        toast.error("Failed to copy link");
+      }
+    }
+  };
+
   const handleAddToCart = (e) => {
     if (!product || isAdded) return;
     
@@ -751,12 +819,12 @@ export default function ProductDetails() {
         <Helmet>
           <title>{product.name} | SeaBite - Fresh Seafood Delivery</title>
           <meta name="description" content={`Buy fresh ${product.name} online from SeaBite. ${product.description?.slice(0, 120) || "Sourced daily from the coast, delivered fresh to your door. Chemical-free and 100% traceable."}`} />
-          <link rel="canonical" href={`https://seabite.co.in/products/${product._id}`} />
+          <link rel="canonical" href={`https://seabite.co.in/products/${product._id}/${slugify(product.name)}`} />
           <meta property="og:title" content={`${product.name} | SeaBite`} />
           <meta property="og:description" content={product.description?.slice(0, 160) || "Fresh coastal seafood from SeaBite."} />
           <meta property="og:image" content={product.image ? `${API_URL}${product.image}` : "https://seabite.co.in/fisherman.jpg"} />
           <meta property="og:type" content="product" />
-          <meta property="og:url" content={`https://seabite.co.in/products/${product._id}`} />
+          <meta property="og:url" content={`https://seabite.co.in/products/${product._id}/${slugify(product.name)}`} />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={`${product.name} | SeaBite`} />
           <meta name="twitter:description" content={product.description?.slice(0, 120) || "Fresh coastal seafood from SeaBite."} />
@@ -776,7 +844,7 @@ export default function ProductDetails() {
               "price": Number(unitPrice).toFixed(0),
               "priceValidUntil": new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
               "availability": product?.stock === "out" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
-              "url": `https://seabite.co.in/products/${product?._id}`,
+              "url": `https://seabite.co.in/products/${product?._id}/${slugify(product.name)}`,
               "seller": { "@type": "Organization", "name": "SeaBite Seafoods" }
             },
             ...(product?.numReviews > 0 && {
@@ -879,7 +947,7 @@ export default function ProductDetails() {
               style={{ position: "sticky", top: "108px" }}
             >
               <div style={{ position: "relative", background: "#fff" }}>
-                <div style={{ position: "absolute", top: "16px", right: "16px", zIndex: 10 }}>
+                <div style={{ position: "absolute", top: "16px", right: "16px", zIndex: 10, display: "flex", flexDirection: "column", gap: "10px" }}>
                   <button
                     onClick={handleWishlistToggle}
                     disabled={loadingWishlist}
@@ -888,11 +956,32 @@ export default function ProductDetails() {
                       borderRadius: "50%", background: "rgba(255,255,255,0.9)",
                       border: "1px solid #eee", color: isWishlisted ? "#F07468" : "#ccc",
                       display: "flex", alignItems: "center", justifyContent: "center",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease"
                     }}
                   >
                     <FiHeart size={20} fill={isWishlisted ? "currentColor" : "none"} />
                   </button>
+                  <motion.button
+                    whileHover={{ scale: 1.08, backgroundColor: "#fff", boxShadow: "0 6px 20px rgba(91,191,181,0.15)" }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleShare}
+                    style={{
+                      width: "40px", height: "40px",
+                      borderRadius: "50%", background: "rgba(255,255,255,0.9)",
+                      backdropFilter: "blur(4px)",
+                      border: "1px solid #eee", color: "#6B8F8A",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+                      cursor: "pointer",
+                      transition: "color 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = "#5BBFB5"}
+                    onMouseLeave={(e) => e.currentTarget.style.color = "#6B8F8A"}
+                  >
+                    <FiShare2 size={18} />
+                  </motion.button>
                 </div>
                 
                 <div style={{ width: "100%", aspectRatio: "1/1", display: "flex", alignItems: "center", justifyContent: "center" }}>
