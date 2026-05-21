@@ -503,6 +503,239 @@ function VerticalTracker({ currentStepIndex, order, reduced }) {
 }
 
 // ─────────────────────────────────────────────────────────────
+// FRESHNESS REFUND CLAIM MODAL
+// ─────────────────────────────────────────────────────────────
+function ReturnClaimModal({ order, product, onClose, onSuccess }) {
+  const [reason, setReason] = useState("");
+  const [description, setDescription] = useState("");
+  const [images, setImages] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    const h = e => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", h);
+    return () => document.removeEventListener("keydown", h);
+  }, [onClose]);
+
+  const mockPhotoUpload = () => {
+    setUploading(true);
+    setTimeout(() => {
+      const randFishImages = [
+        "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&q=80&w=300",
+        "https://images.unsplash.com/photo-1534482421-64566f976cfa?auto=format&fit=crop&q=80&w=300"
+      ];
+      const selectedImg = randFishImages[Math.floor(Math.random() * randFishImages.length)];
+      setImages([...images, selectedImg]);
+      setUploading(false);
+      toast.success("Freshness validation photo uploaded!");
+    }, 1200);
+  };
+
+  const submit = async () => {
+    if (!reason) { toast.error("Please select a claim reason"); return; }
+    if (images.length === 0) { toast.error("Please upload at least one freshness verification photo"); return; }
+    
+    setSubmitting(true);
+    try {
+      const pid = product.productId
+        ? (typeof product.productId === "object" ? product.productId._id : product.productId)
+        : product.product
+          ? (typeof product.product === "object" ? product.product._id : product.product)
+          : product._id;
+
+      await axios.post(
+        `${API_URL}/api/enterprise/returns`,
+        { 
+          orderId: order._id, 
+          items: [{ productId: pid, qty: product.qty || 1 }], 
+          reason: `${reason}: ${description}`,
+          images
+        },
+        { withCredentials: true }
+      );
+      toast.success("Refund claim submitted. Sourced team will review within 2 hours!", { icon: "🐟" });
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit claim. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      style={{ position: "fixed", inset: 0, zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+      role="dialog" aria-modal="true"
+    >
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{ position: "absolute", inset: 0, background: "rgba(13,17,23,0.55)", backdropFilter: "blur(8px)" }}
+      />
+      <motion.div
+        initial={{ scale: 0.93, opacity: 0, y: 16 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.93, opacity: 0, y: 16 }}
+        style={{
+          position: "relative", width: "100%", maxWidth: 460,
+          background: T.surface, borderRadius: 24,
+          padding: 32, boxShadow: "0 25px 60px rgba(0,0,0,0.1)",
+          fontFamily: "'DM Sans', sans-serif",
+          zIndex: 10
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: "flex", gap: 14, marginBottom: 24 }}>
+          <div style={{
+            width: 50, height: 50, borderRadius: 14,
+            background: "rgba(240,116,104,0.1)", color: "#F07468", flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <FiRotateCcw size={22} />
+          </div>
+          <div>
+            <h3 style={{
+              fontFamily: "'Sora', sans-serif",
+              margin: "0 0 4px", fontSize: 18, fontWeight: 700, color: T.ink,
+            }}>
+              Freshness Refund Claim
+            </h3>
+            <p style={{ margin: 0, color: T.inkSoft, fontSize: 12, fontWeight: 500 }}>
+              SeaBite 100% Direct Dock Freshness Guarantee
+            </p>
+          </div>
+        </div>
+
+        {/* Product details info card */}
+        <div style={{ background: "#F8FAFB", borderRadius: 16, padding: 14, display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 10, overflow: "hidden", background: "#E8EEF2", flexShrink: 0 }}>
+            <img 
+              src={`${API_URL}/uploads/${product.image?.replace("uploads/", "")}`} 
+              alt={product.name} 
+              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/100?text=SeaBite"; }}
+            />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <h4 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: T.ink, truncate: "true" }}>{product.name}</h4>
+            <p style={{ margin: "2px 0 0", fontSize: 11, color: T.inkSoft, fontWeight: 500 }}>Qty: {product.qty || 1} • Item cost: ₹{product.price}</p>
+          </div>
+        </div>
+
+        {/* Reason Select */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.1em", display: "block", marginBottom: 8 }}>
+            Select claim reason
+          </label>
+          <select
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            style={{
+              width: "100%", padding: "12px 16px", borderRadius: 12,
+              border: `1.5px solid ${T.border}`, background: T.surface,
+              fontSize: 13.5, color: T.ink, outline: "none"
+            }}
+          >
+            <option value="">Choose freshness issue…</option>
+            <option value="🧊 Cold-chain broken (arrived warm)">🧊 Cold-chain broken (arrived warm)</option>
+            <option value="🐟 Product not fresh / odor">🐟 Product not fresh / odor</option>
+            <option value="📦 Damaged packing / leakage">📦 Damaged packing / leakage</option>
+            <option value="⚖️ Underweight or incorrect cut">⚖️ Underweight or incorrect cut</option>
+          </select>
+        </div>
+
+        {/* Comments input */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.1em", display: "block", marginBottom: 8 }}>
+            Details (Optional)
+          </label>
+          <textarea
+            rows={2}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Tell us what went wrong..."
+            style={{
+              width: "100%", padding: "12px 16px", borderRadius: 12,
+              border: `1.5px solid ${T.border}`, background: T.surface,
+              fontSize: 13.5, color: T.ink, outline: "none", resize: "none"
+            }}
+          />
+        </div>
+
+        {/* Photo Upload area */}
+        <div style={{ marginBottom: 24 }}>
+          <label style={{ fontSize: 11, fontWeight: 700, color: T.inkSoft, textTransform: "uppercase", letterSpacing: "0.1em", display: "block", marginBottom: 8 }}>
+            Photo Verification (Required)
+          </label>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {images.map((img, i) => (
+              <div key={i} style={{ width: 64, height: 64, borderRadius: 12, overflow: "hidden", border: `1.5px solid ${T.border}`, position: "relative" }}>
+                <img src={img} alt="Verification" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                <button 
+                  onClick={() => setImages(images.filter((_, idx) => idx !== i))}
+                  style={{ position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, cursor: "pointer" }}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            
+            <button
+              onClick={mockPhotoUpload}
+              disabled={uploading}
+              style={{
+                width: 64, height: 64, borderRadius: 12,
+                border: `1.5px dashed ${T.border}`, background: "#F8FAFB",
+                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                color: T.inkSoft, cursor: "pointer", outline: "none", gap: 4
+              }}
+            >
+              {uploading ? (
+                <motion.span animate={{ rotate: 360 }} transition={{ duration: 0.7, repeat: Infinity, ease: "linear" }} style={{ width: 14, height: 14, border: "2px solid #5BA8A0", borderTopColor: "transparent", borderRadius: "50%" }} />
+              ) : (
+                <>
+                  <span style={{ fontSize: 16 }}>📷</span>
+                  <span style={{ fontSize: 8, fontWeight: 700, textTransform: "uppercase" }}>Upload</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Footer Actions */}
+        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: "11px 20px", borderRadius: 12,
+              border: `1.5px solid ${T.border}`, background: T.bg,
+              cursor: "pointer", fontWeight: 500, fontSize: 13,
+              color: T.inkMid, outline: "none"
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            disabled={submitting || uploading}
+            style={{
+              padding: "11px 24px", borderRadius: 12, border: "none",
+              cursor: (submitting || uploading) ? "not-allowed" : "pointer",
+              fontWeight: 700, fontSize: 13, color: "#fff",
+              background: "#F07468", outline: "none"
+            }}
+          >
+            {submitting ? "Submitting..." : "Submit Claim"}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
 // QUALITY COMPLAINT MODAL
 // ─────────────────────────────────────────────────────────────
 function QualityComplaintModal({ order, onClose, onSuccess }) {
@@ -733,6 +966,8 @@ export default function OrderDetails() {
   const [reordering, setReordering] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewProduct, setReviewProduct] = useState(null);
+  const [returnOpen, setReturnOpen] = useState(false);
+  const [returnProduct, setReturnProduct] = useState(null);
   const [stickyVisible, setStickyVisible] = useState(false);
 
   const headerRef = useRef(null);
@@ -1026,6 +1261,20 @@ export default function OrderDetails() {
             }}
           />
         )}
+        {returnOpen && returnProduct && (
+          <ReturnClaimModal
+            order={order}
+            product={returnProduct}
+            onClose={() => { setReturnOpen(false); setReturnProduct(null); }}
+            onSuccess={() => {
+              // Re-fetch order to refresh complaints/returns
+              setLoading(true);
+              axios.get(`${API_URL}/api/orders/${order._id || order.orderId}`, { withCredentials: true })
+                .then(res => setOrder(res.data))
+                .finally(() => setLoading(false));
+            }}
+          />
+        )}
       </AnimatePresence>
 
       {/* ── Main content ─────────────────────────────────── */}
@@ -1292,7 +1541,7 @@ export default function OrderDetails() {
                           </div>
 
                           {delivered && (
-                            <div style={{ marginTop: 8 }}>
+                            <div style={{ marginTop: 8, display: "flex", gap: 16 }}>
                               <button
                                 onClick={() => openReview(item)}
                                 className="lx-focus"
@@ -1303,6 +1552,21 @@ export default function OrderDetails() {
                                 }}
                               >
                                 <FiStar size={12} /> Write a Review
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  setReturnProduct(item);
+                                  setReturnOpen(true);
+                                }}
+                                className="lx-focus"
+                                style={{
+                                  display: "inline-flex", alignItems: "center", gap: 4,
+                                  padding: 0, border: "none", background: "transparent",
+                                  color: "#F07468", cursor: "pointer", fontSize: 12, fontWeight: 600,
+                                }}
+                              >
+                                <FiRotateCcw size={12} /> Request Freshness Refund
                               </button>
                             </div>
                           )}

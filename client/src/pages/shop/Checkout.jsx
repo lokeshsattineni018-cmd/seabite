@@ -6,7 +6,7 @@ import {
   FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield,
   FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiCreditCard,
   FiTruck, FiLoader, FiAlertCircle, FiGift, FiChevronRight,
-  FiClock, FiPercent, FiCheck, FiPlus as FiPlusIcon,
+  FiClock, FiPercent, FiCheck, FiPlus as FiPlusIcon, FiAward,
 } from "react-icons/fi";
 import AddressForm from "../../components/forms/AddressForm";
 import PopupModal from "../../components/common/PopupModal";
@@ -200,6 +200,18 @@ export default function Checkout() {
   const [isItemsCollapsed, setIsItemsCollapsed] = useState(window.innerWidth < 768);
   const navigate = useNavigate();
 
+  // 🕒 Enterprise Schedule, Gifting & Loyalty
+  const [deliverySlot, setDeliverySlot] = useState("Morning (07:00 AM - 10:00 AM)");
+  const [deliveryDate, setDeliveryDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow.toISOString().substring(0, 10);
+  });
+  const [isGift, setIsGift] = useState(false);
+  const [giftMessage, setGiftMessage] = useState("");
+  const [loyaltyBalance, setLoyaltyBalance] = useState(0);
+  const [useLoyalty, setUseLoyalty] = useState(false);
+
   // 🔍 X-Ray: Frustration Tracking
   const [couponFailCount, setCouponFailCount] = useState(0);
   const hoverTimer = useRef(null);
@@ -266,6 +278,11 @@ export default function Checkout() {
     axios.get(`${API_URL}/api/coupons/public`, { withCredentials: true })
       .then(res => setAvailableCoupons(Array.isArray(res.data) ? res.data : []))
       .catch(() => { });
+
+    // Fetch loyalty points balance
+    axios.get(`${API_URL}/api/enterprise/loyalty`, { withCredentials: true })
+      .then(res => setLoyaltyBalance(res.data.loyaltyPoints || 0))
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -317,7 +334,8 @@ export default function Checkout() {
 
   const taxableAmount = Math.max(0, itemTotal - discountAmount);
   const gst = Math.round(taxableAmount * taxRate);
-  const grandTotal = taxableAmount + deliveryCharge + gst;
+  const loyaltyDiscount = useLoyalty ? Math.min(loyaltyBalance * 0.5, taxableAmount + deliveryCharge + gst) : 0;
+  const grandTotal = Math.max(0, taxableAmount + deliveryCharge + gst - loyaltyDiscount);
 
   const clearCoupon = () => { setAppliedCoupon(null); setCouponCode(""); setCouponMessage(null); };
 
@@ -419,6 +437,11 @@ export default function Checkout() {
       items: (cartItems || []).map(item => ({ productId: item._id, name: item.name, price: item.price || 0, qty: item.qty || 1, image: item.image })),
       shippingAddress: { fullName: deliveryAddress.name, phone: deliveryAddress.phone, houseNo: deliveryAddress.houseNo, street: deliveryAddress.street, city: deliveryAddress.city, state: deliveryAddress.state, zip: deliveryAddress.postalCode },
       itemsPrice: itemTotal, taxPrice: gst, shippingPrice: deliveryCharge, discount: discountAmount, paymentMethod,
+      deliverySlot,
+      deliveryDate,
+      isGift,
+      giftMessage,
+      useLoyalty
     };
     try {
       const { data } = await axios.post(`${API_URL}/api/payment/checkout`, orderDetails, { withCredentials: true });
@@ -551,6 +574,132 @@ export default function Checkout() {
                     <FiCheckCircle size={12} /> Delivering to: {formatAddress(`${deliveryAddress.city}, ${deliveryAddress.state}`)}
                   </div>
                 )}
+              </SectionCard>
+            </motion.div>
+
+            {/* ── DELIVERY SCHEDULE & GIFTING ── */}
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14, duration: 0.5, ease }}>
+              <SectionCard>
+                <SectionHead icon={<FiClock size={16} />} title="Delivery Preferences" />
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                  
+                  {/* Date and Slot Grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16 }}>
+                    {/* Date Selector */}
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 700, color: T.textMid, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 8 }}>
+                        Delivery Date
+                      </label>
+                      <input
+                        type="date"
+                        value={deliveryDate}
+                        min={(() => {
+                          const tomorrow = new Date();
+                          tomorrow.setDate(tomorrow.getDate() + 1);
+                          return tomorrow.toISOString().substring(0, 10);
+                        })()}
+                        onChange={(e) => setDeliveryDate(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "12px 14px",
+                          borderRadius: 12,
+                          border: `1.5px solid ${T.border}`,
+                          background: T.bg,
+                          color: T.textDark,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          fontFamily: font,
+                          outline: "none"
+                        }}
+                      />
+                    </div>
+
+                    {/* Slot Selector */}
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 700, color: T.textMid, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 8 }}>
+                        Delivery Time Slot
+                      </label>
+                      <select
+                        value={deliverySlot}
+                        onChange={(e) => setDeliverySlot(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "12px 14px",
+                          borderRadius: 12,
+                          border: `1.5px solid ${T.border}`,
+                          background: T.bg,
+                          color: T.textDark,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          fontFamily: font,
+                          outline: "none",
+                          cursor: "pointer"
+                        }}
+                      >
+                        <option value="Morning (07:00 AM - 10:00 AM)">Morning (07:00 AM - 10:00 AM)</option>
+                        <option value="Mid-Day (11:00 AM - 02:00 PM)">Mid-Day (11:00 AM - 02:00 PM)</option>
+                        <option value="Evening (04:00 PM - 07:00 PM)">Evening (04:00 PM - 07:00 PM)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div style={{ height: 1, background: T.border, margin: "4px 0" }} />
+
+                  {/* Gifting Box */}
+                  <div>
+                    <label style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13, fontWeight: 700, color: T.textDark }}>
+                      <input
+                        type="checkbox"
+                        checked={isGift}
+                        onChange={(e) => setIsGift(e.target.checked)}
+                        style={{
+                          accentColor: T.primary,
+                          width: 16,
+                          height: 16,
+                          cursor: "pointer"
+                        }}
+                      />
+                      <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <FiGift size={15} style={{ color: T.coral }} /> Send this order as a gift
+                      </span>
+                    </label>
+
+                    <AnimatePresence>
+                      {isGift && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                          animate={{ opacity: 1, height: "auto", marginTop: 12 }}
+                          exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                          style={{ overflow: "hidden" }}
+                        >
+                          <p style={{ fontSize: 11, color: T.textMid, margin: "0 0 8px 0" }}>
+                            We'll print a premium custom card inside the delivery box. Add your personalized greeting message:
+                          </p>
+                          <textarea
+                            placeholder="Enter your personal gift card message..."
+                            value={giftMessage}
+                            onChange={(e) => setGiftMessage(e.target.value)}
+                            rows={3}
+                            style={{
+                              width: "100%",
+                              padding: "12px 14px",
+                              borderRadius: 12,
+                              border: `1.5px solid ${T.border}`,
+                              background: T.bg,
+                              color: T.textDark,
+                              fontSize: 13,
+                              fontWeight: 500,
+                              fontFamily: font,
+                              outline: "none",
+                              resize: "none"
+                            }}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                </div>
               </SectionCard>
             </motion.div>
 
@@ -812,7 +961,64 @@ export default function Checkout() {
                     <span>GST ({Math.round(taxRate * 100)}%)</span>
                     <span style={{ fontWeight: 700, color: T.textDark }}>₹{gst.toFixed(2)}</span>
                   </div>
+                  <AnimatePresence>
+                    {useLoyalty && loyaltyDiscount > 0 && (
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+                        style={{ display: "flex", justifyContent: "space-between", color: "#10b981", overflow: "hidden" }}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiAward size={11} />Loyalty Discount</span>
+                        <span style={{ fontWeight: 700 }}>-₹{loyaltyDiscount.toFixed(2)}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
+
+                {/* Loyalty Points Redemption Widget */}
+                {loyaltyBalance > 0 && (
+                  <div style={{
+                    marginTop: 16,
+                    padding: "12px 14px",
+                    borderRadius: 16,
+                    background: "linear-gradient(135deg, rgba(91,168,160,0.06) 0%, rgba(137,194,217,0.06) 100%)",
+                    border: "1px solid rgba(91,168,160,0.18)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: T.textDark, display: "flex", alignItems: "center", gap: 6 }}>
+                        <FiAward size={14} style={{ color: T.primary }} /> Loyalty Rewards
+                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: T.primary }}>
+                        {loyaltyBalance} Pts (₹{(loyaltyBalance * 0.5).toFixed(2)})
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
+                      <label style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                        cursor: "pointer",
+                        fontSize: 11,
+                        color: T.textMid,
+                        fontWeight: 600,
+                        width: "100%"
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={useLoyalty}
+                          onChange={(e) => setUseLoyalty(e.target.checked)}
+                          style={{
+                            accentColor: T.primary,
+                            width: 15,
+                            height: 15,
+                            cursor: "pointer"
+                          }}
+                        />
+                        <span>Redeem points to save ₹{Math.min(loyaltyBalance * 0.5, taxableAmount + deliveryCharge + gst).toFixed(2)}</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ height: 1, background: T.border, margin: "16px 0" }} />
 
