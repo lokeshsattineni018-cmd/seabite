@@ -209,7 +209,25 @@ router.get("/search/trending", async (req, res) => {
 // --- GET SINGLE PRODUCT WITH RELATED ITEMS ---
 router.get("/:id", async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('reviews.user', 'name');
+    let product;
+    if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+      product = await Product.findById(req.params.id).populate('reviews.user', 'name');
+    } else {
+      const allProducts = await Product.find({ active: true }).populate('reviews.user', 'name');
+      const slugify = (text) => {
+        if (!text) return "";
+        return text
+          .toString()
+          .toLowerCase()
+          .trim()
+          .replace(/\s+/g, "-")
+          .replace(/[^\w\-]+/g, "")
+          .replace(/\-\-+/g, "-")
+          .replace(/^-+/, "")
+          .replace(/-+$/, "");
+      };
+      product = allProducts.find(p => slugify(p.name) === req.params.id);
+    }
     if (!product) return res.status(404).json({ message: "Product not found" });
 
     // 🟢 NEW: Fetch Related Products (Same category, excluding current)
