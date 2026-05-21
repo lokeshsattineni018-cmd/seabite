@@ -506,6 +506,7 @@ function VerticalTracker({ currentStepIndex, order, reduced }) {
 // FRESHNESS REFUND CLAIM MODAL
 // ─────────────────────────────────────────────────────────────
 function ReturnClaimModal({ order, product, onClose, onSuccess }) {
+  const fileInputRef = useRef(null);
   const [reason, setReason] = useState("");
   const [description, setDescription] = useState("");
   const [images, setImages] = useState([]);
@@ -518,18 +519,32 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
     return () => document.removeEventListener("keydown", h);
   }, [onClose]);
 
-  const mockPhotoUpload = () => {
+  const handlePhotoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
     setUploading(true);
-    setTimeout(() => {
-      const randFishImages = [
-        "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?auto=format&fit=crop&q=80&w=300",
-        "https://images.unsplash.com/photo-1534482421-64566f976cfa?auto=format&fit=crop&q=80&w=300"
-      ];
-      const selectedImg = randFishImages[Math.floor(Math.random() * randFishImages.length)];
-      setImages([...images, selectedImg]);
+    const formData = new FormData();
+    files.forEach((file) => formData.append("images", file));
+
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/enterprise/returns/upload`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+          withCredentials: true,
+        }
+      );
+      if (res.data.success && res.data.urls) {
+        setImages([...images, ...res.data.urls]);
+        toast.success("Freshness verification photos uploaded successfully!");
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to upload images. Please try again.");
+    } finally {
       setUploading(false);
-      toast.success("Freshness validation photo uploaded!");
-    }, 1200);
+    }
   };
 
   const submit = async () => {
@@ -548,7 +563,7 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
         `${API_URL}/api/enterprise/returns`,
         { 
           orderId: order._id, 
-          items: [{ productId: pid, qty: product.qty || 1 }], 
+          items: [{ productId: pid, name: product.name || "Fresh Catch", qty: product.qty || 1 }], 
           reason: `${reason}: ${description}`,
           images
         },
@@ -683,7 +698,7 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
             ))}
             
             <button
-              onClick={mockPhotoUpload}
+              onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
               style={{
                 width: 64, height: 64, borderRadius: 12,
@@ -701,6 +716,14 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
                 </>
               )}
             </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handlePhotoUpload} 
+              accept="image/*" 
+              multiple 
+              style={{ display: "none" }} 
+            />
           </div>
         </div>
 

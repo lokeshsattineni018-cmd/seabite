@@ -287,6 +287,39 @@ export const updateReturnStatus = async (req, res) => {
 };
 
 // ----------------------------------------------------
+// 6.5 UPLOAD RETURN IMAGES
+// ----------------------------------------------------
+export const uploadReturnImages = async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ success: false, message: "No files provided" });
+    }
+
+    const { v2: cloudinary } = await import("cloudinary");
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
+    const uploadedUrls = [];
+    for (const file of req.files) {
+      const b64 = Buffer.from(file.buffer).toString("base64");
+      let dataURI = "data:" + file.mimetype + ";base64," + b64;
+      const cloudinaryResponse = await cloudinary.uploader.upload(dataURI, {
+        folder: "seabite-returns",
+      });
+      uploadedUrls.push(cloudinaryResponse.secure_url);
+    }
+
+    res.json({ success: true, urls: uploadedUrls });
+  } catch (error) {
+    console.error("❌ CLOUDINARY UPLOAD ERROR:", error);
+    res.status(500).json({ success: false, message: "Failed to upload images" });
+  }
+};
+
+// ----------------------------------------------------
 // 7. LOYALTY BALANCE
 // ----------------------------------------------------
 export const getLoyaltyBalance = async (req, res) => {
