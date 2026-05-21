@@ -545,6 +545,21 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
               </p>
             </div>
 
+            {/* Gift Message Card */}
+            {order.giftMessage && (
+              <div className="col-span-1 md:col-span-2 bg-[#5BBFB5]/10 p-6 rounded-3xl border border-[#5BBFB5]/20 flex items-start gap-4">
+                <div className="w-10 h-10 bg-[#5BBFB5] text-white rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg">🎁</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-[10px] font-bold text-[#5BBFB5] uppercase tracking-widest">Personalized Gift Card Message</h4>
+                  <p className="text-sm font-semibold text-stone-800 mt-1.5 italic bg-white/60 p-3.5 rounded-2xl border border-[#5BBFB5]/10 leading-relaxed shadow-sm">
+                    "{order.giftMessage}"
+                  </p>
+                </div>
+              </div>
+            )}
+
             {canAutoRefund && (
               <div className={`col-span-1 md:col-span-2 p-6 rounded-2xl border border-stone-200 ${order.refundStatus === "Success" ? "bg-emerald-50/50" : "bg-blue-50/50"}`}>
                 <div className="flex justify-between items-center mb-4">

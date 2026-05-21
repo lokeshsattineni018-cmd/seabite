@@ -162,7 +162,6 @@ export default function AdminLayout() {
       {/* 🟢 Mobile Header */}
       <header 
         className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-stone-200/60 z-40 flex items-center justify-between px-6"
-        style={{ top: settings?.announcement?.active ? "36px" : 0 }}
       >
         <div className="flex items-center gap-3">
           <img src="/roundlogo.webp" alt="SeaBite" width={32} height={32} className="h-8 w-8 mix-blend-multiply" />
@@ -179,15 +178,13 @@ export default function AdminLayout() {
       {/* 🟢 Sidebar (Desktop) */}
       <aside 
         className="hidden md:flex flex-col w-[280px] bg-stone-50/50 border-r border-stone-200/60 z-30 h-full"
-        style={{ marginTop: settings?.announcement?.active ? "36px" : 0 }}
       >
         <AdminSidebar settings={settings} onUpdateBanner={updateBanner} />
       </aside>
 
       {/* 🟢 Main Content Area */}
       <main 
-        className="flex-1 relative overflow-y-auto overflow-x-hidden h-full pt-16 md:pt-0 scroll-smooth bg-[#fafaf9]"
-        style={{ marginTop: settings?.announcement?.active ? "36px" : 0 }}
+        className="flex-1 relative overflow-y-auto overflow-x-hidden pt-16 md:pt-0 scroll-smooth bg-[#fafaf9] h-full"
       >
         {/* Top Navigation Bar (Desktop) - Unified Dashboard Header */}
         <div className="hidden md:flex items-center justify-between px-8 py-3 sticky top-0 bg-[#fafaf9]/95 backdrop-blur-md z-20 border-b border-stone-200/40">
