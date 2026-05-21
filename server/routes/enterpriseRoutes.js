@@ -1,9 +1,5 @@
 import express from "express";
 import {
-  createSubscription,
-  getSubscriptions,
-  cancelSubscription,
-  toggleSubscriptionStatus,
   purchaseGiftCard,
   applyGiftCard,
   getRecommendations,
@@ -21,11 +17,7 @@ import {
 
 const router = express.Router();
 
-// Subscriptions
-router.post("/subscriptions", createSubscription);
-router.get("/subscriptions", getSubscriptions);
-router.put("/subscriptions/cancel/:id", cancelSubscription);
-router.put("/subscriptions/:id/status", toggleSubscriptionStatus);
+
 
 // Gift Cards
 router.post("/giftcards/purchase", purchaseGiftCard);

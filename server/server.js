@@ -47,7 +47,6 @@ import compression from "compression";
 // [Import Cron Workers]
 import { initAbandonedCartWorker } from "./cron/abandonedCartWorker.js";
 import happyHourCron from "./cron/happyHour.js";
-import subscriptionCron from "./cron/subscriptionCron.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -459,7 +458,6 @@ const server = httpServer.listen(PORT, () => {
   // 🟢 Start Background Workers
   initAbandonedCartWorker();
   happyHourCron.start();
-  subscriptionCron.start();
 
   // 🟢 Start System Pulse
   setInterval(() => {

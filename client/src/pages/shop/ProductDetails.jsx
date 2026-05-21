@@ -505,34 +505,7 @@ export default function ProductDetails() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [viewerCount, setViewerCount] = useState(1);
 
-  // 🕒 Enterprise subscription states
-  const [subscribeMode, setSubscribeMode] = useState(false);
-  const [frequency, setFrequency] = useState("weekly");
-  const [showSubModal, setShowSubModal] = useState(false);
-  const [subAddress, setSubAddress] = useState({ fullName: "", phone: "", street: "", city: "", state: "", zip: "" });
-  const [subPaymentMethod, setSubPaymentMethod] = useState("COD");
-  const [submittingSub, setSubmittingSub] = useState(false);
 
-  // Prefill address fields when user details are available
-  useEffect(() => {
-    if (user && user.addresses && user.addresses.length > 0) {
-      const defAddr = user.addresses.find(a => a.isDefault) || user.addresses[0];
-      setSubAddress({
-        fullName: defAddr.name || user.name || "",
-        phone: defAddr.phone || user.phone || "",
-        street: `${defAddr.houseNo || ""} ${defAddr.street || ""}`.trim(),
-        city: defAddr.city || "",
-        state: defAddr.state || "",
-        zip: defAddr.postalCode || ""
-      });
-    } else if (user) {
-      setSubAddress(prev => ({
-        ...prev,
-        fullName: user.name || "",
-        phone: user.phone || ""
-      }));
-    }
-  }, [user]);
 
   // 🛰️ Real-Time Pulse Tracking
   useEffect(() => {
@@ -744,44 +717,7 @@ export default function ProductDetails() {
     finally { setIsWaitlisting(false); }
   };
 
-  const handleSubscribeSubmit = async (e) => {
-    e.preventDefault();
-    if (!user) {
-      toast.error("Please login to subscribe");
-      return window.dispatchEvent(new CustomEvent('open-auth-drawer'));
-    }
-    
-    const { fullName, phone, street, city, state, zip } = subAddress;
-    if (!fullName || !phone || !street || !city || !state || !zip) {
-      toast.error("Please fill in all shipping details");
-      return;
-    }
 
-    setSubmittingSub(true);
-    try {
-      const payload = {
-        items: [{
-          product: product._id,
-          qty,
-          priceSnapshot: Math.round(unitPrice * 0.95)
-        }],
-        frequency,
-        shippingAddress: subAddress,
-        paymentMethod: subPaymentMethod
-      };
-      
-      const res = await axios.post(`${API_URL}/api/enterprise/subscriptions`, payload, { withCredentials: true });
-      if (res.data.success) {
-        toast.success("Subscription activated successfully!", { icon: "📅" });
-        setShowSubModal(false);
-        setSubscribeMode(false);
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to create subscription");
-    } finally {
-      setSubmittingSub(false);
-    }
-  };
 
   if (loading) {
     return <SeaBiteLoader fullScreen />;
@@ -1070,138 +1006,31 @@ export default function ProductDetails() {
               <FreshnessMeter productId={product._id} />
               <PincodeChecker />
 
-              {/* 📅 Subscribe & Save Option Selector */}
-              {product.stock !== "out" && (
-                <div style={{
-                  marginBottom: "20px",
-                  padding: "16px",
-                  borderRadius: "16px",
-                  border: `1.5px solid ${subscribeMode ? "#5BBFB5" : "#E2EEEC"}`,
-                  background: subscribeMode ? "rgba(91,168,160,0.04)" : "#fff",
-                  boxShadow: "0 4px 16px rgba(91,168,160,0.03)",
-                  transition: "all 0.3s ease"
-                }}>
-                  <div style={{ display: "flex", gap: "12px", flexDirection: "column" }}>
-                    <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
-                      <input
-                        type="radio"
-                        name="purchase_mode"
-                        checked={!subscribeMode}
-                        onChange={() => setSubscribeMode(false)}
-                        style={{ accentColor: "#5BBFB5", width: 16, height: 16 }}
-                      />
-                      <div>
-                        <span style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C" }}>One-time Purchase</span>
-                        <span style={{ fontSize: "11px", color: "#6B8F8A", display: "block", marginTop: "2px" }}>Buy once for standard delivery</span>
-                      </div>
-                    </label>
-                    
-                    <div style={{ height: "1px", background: "#E2EEEC" }} />
-
-                    <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
-                      <input
-                        type="radio"
-                        name="purchase_mode"
-                        checked={subscribeMode}
-                        onChange={() => setSubscribeMode(true)}
-                        style={{ accentColor: "#5BBFB5", width: 16, height: 16 }}
-                      />
-                      <div style={{ flex: 1 }}>
-                        <span style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", display: "flex", alignItems: "center", gap: "6px" }}>
-                          Subscribe & Save 5% <span style={{ fontSize: "8px", background: "#E8816A", color: "#fff", padding: "2px 6px", borderRadius: "10px", textTransform: "uppercase", fontWeight: "800" }}>Popular</span>
-                        </span>
-                        <span style={{ fontSize: "11px", color: "#6B8F8A", display: "block", marginTop: "2px" }}>Get fresh catch delivered periodically</span>
-                      </div>
-                    </label>
-
-                    {subscribeMode && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        style={{ marginTop: "4px", paddingLeft: "26px", overflow: "hidden" }}
-                      >
-                        <label style={{ fontSize: "10px", fontWeight: "700", color: "#6B8F8A", textTransform: "uppercase", display: "block", marginBottom: "6px", letterSpacing: "0.05em" }}>
-                          Delivery Frequency
-                        </label>
-                        <select
-                          value={frequency}
-                          onChange={(e) => setFrequency(e.target.value)}
-                          style={{
-                            width: "100%",
-                            padding: "10px 12px",
-                            borderRadius: "10px",
-                            border: "1.5px solid #E2EEEC",
-                            background: "#fff",
-                            fontSize: "13px",
-                            fontWeight: "600",
-                            fontFamily: "'Plus Jakarta Sans', sans-serif",
-                            outline: "none",
-                            color: "#1A2E2C",
-                            cursor: "pointer"
-                          }}
-                        >
-                          <option value="weekly">Weekly (Every 7 days)</option>
-                          <option value="bi-weekly">Bi-weekly (Every 14 days)</option>
-                          <option value="monthly">Monthly (Every 30 days)</option>
-                        </select>
-                        <p style={{ fontSize: "11px", color: "#5BBFB5", fontWeight: "700", marginTop: "8px", marginHorizontal: 0 }}>
-                          ✨ Price: ₹{(unitPrice * 0.95).toFixed(0)} per delivery. Pause/cancel anytime!
-                        </p>
-                      </motion.div>
-                    )}
-                  </div>
-                </div>
-              )}
-
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "32px" }}>
-                {subscribeMode ? (
-                  <button
-                    onClick={() => {
-                      if (!user) {
-                        toast.error("Please login to subscribe");
-                        window.dispatchEvent(new CustomEvent('open-auth-drawer'));
-                        return;
-                      }
-                      setShowSubModal(true);
-                    }}
-                    disabled={product.stock === "out"}
-                    style={{
-                      width: "100%", height: "48px", borderRadius: "100px", border: "none",
-                      background: "linear-gradient(90deg, #1A2E2C, #2D4A47)", color: "#FFFFFF", fontSize: "14px", fontWeight: "700",
-                      cursor: "pointer", boxShadow: "0 6px 20px rgba(26,46,44,0.2)",
-                      transition: "all 0.2s ease", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px"
-                    }}
-                  >
-                    Subscribe Now · ₹{(unitPrice * 0.95 * qty).toFixed(0)}/{frequency === "weekly" ? "wk" : frequency === "bi-weekly" ? "2wk" : "mo"}
-                  </button>
-                ) : (
-                  <>
-                    <button
-                      onClick={handleAddToCart}
-                      disabled={isAdded || product.stock === "out"}
-                      style={{
-                        width: "100%", height: "48px", borderRadius: "100px", border: "none",
-                        background: "#1A2E2C", color: "#FFFFFF", fontSize: "14px", fontWeight: "600",
-                        cursor: "pointer", boxShadow: "0 4px 12px rgba(26,46,44,0.15)",
-                        transition: "all 0.2s ease"
-                      }}
-                    >
-                      {isAdded ? "✓ Added to Cart" : "Add to Cart"}
-                    </button>
-                    <button
-                      onClick={handleBuyNow}
-                      disabled={product.stock === "out"}
-                      style={{
-                        width: "100%", height: "48px", borderRadius: "100px", border: "none",
-                        background: "#5BBFB5", color: "#FFFFFF", fontSize: "14px", fontWeight: "600",
-                        cursor: "pointer", boxShadow: "0 4px 12px rgba(91,191,181,0.15)",
-                        transition: "all 0.2s ease"
-                      }}
-                    >
-                      Buy Now
-                    </button>
-                  </>
-                )}
+                <button
+                  onClick={handleAddToCart}
+                  disabled={isAdded || product.stock === "out"}
+                  style={{
+                    width: "100%", height: "48px", borderRadius: "100px", border: "none",
+                    background: "#1A2E2C", color: "#FFFFFF", fontSize: "14px", fontWeight: "600",
+                    cursor: "pointer", boxShadow: "0 4px 12px rgba(26,46,44,0.15)",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  {isAdded ? "✓ Added to Cart" : "Add to Cart"}
+                </button>
+                <button
+                  onClick={handleBuyNow}
+                  disabled={product.stock === "out"}
+                  style={{
+                    width: "100%", height: "48px", borderRadius: "100px", border: "none",
+                    background: "#5BBFB5", color: "#FFFFFF", fontSize: "14px", fontWeight: "600",
+                    cursor: "pointer", boxShadow: "0 4px 12px rgba(91,191,181,0.15)",
+                    transition: "all 0.2s ease"
+                  }}
+                >
+                  Buy Now
+                </button>
               </div>
 
               <div style={{ height: "1px", background: "#f0f0f0", marginBottom: "20px" }} />
@@ -1246,193 +1075,7 @@ export default function ProductDetails() {
         onSuccess={fetchProduct}
       />
 
-      {/* 📅 Premium Subscription Modal */}
-      <AnimatePresence>
-        {showSubModal && (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center px-4 bg-black/60 backdrop-blur-md">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2rem] w-full max-w-xl shadow-2xl border border-slate-200 dark:border-slate-800 relative overflow-y-auto max-h-[90vh] font-sans"
-              style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
-            >
-              {/* Header */}
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-                    📅 Configure Subscription
-                  </h3>
-                  <p className="text-sm text-slate-500 font-medium">Subscribe to {product.name}</p>
-                </div>
-                <button
-                  onClick={() => setShowSubModal(false)}
-                  className="p-2 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-white transition-all"
-                >
-                  <FiX size={20} />
-                </button>
-              </div>
 
-              <form onSubmit={handleSubscribeSubmit} className="space-y-4">
-                {/* Delivery details form */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Shipping Details</h4>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Full Name</label>
-                      <input
-                        type="text"
-                        className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:border-emerald-500 dark:text-white"
-                        value={subAddress.fullName}
-                        onChange={(e) => setSubAddress({ ...subAddress, fullName: e.target.value })}
-                        placeholder="John Doe"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Phone Number</label>
-                      <input
-                        type="tel"
-                        className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:border-emerald-500 dark:text-white"
-                        value={subAddress.phone}
-                        onChange={(e) => setSubAddress({ ...subAddress, phone: e.target.value })}
-                        placeholder="9876543210"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Street Address</label>
-                    <input
-                      type="text"
-                      className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:border-emerald-500 dark:text-white"
-                      value={subAddress.street}
-                      onChange={(e) => setSubAddress({ ...subAddress, street: e.target.value })}
-                      placeholder="Apartment, building, house no, street..."
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">City</label>
-                      <input
-                        type="text"
-                        className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:border-emerald-500 dark:text-white"
-                        value={subAddress.city}
-                        onChange={(e) => setSubAddress({ ...subAddress, city: e.target.value })}
-                        placeholder="Mogalthur"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">State</label>
-                      <input
-                        type="text"
-                        className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:border-emerald-500 dark:text-white"
-                        value={subAddress.state}
-                        onChange={(e) => setSubAddress({ ...subAddress, state: e.target.value })}
-                        placeholder="Andhra Pradesh"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-bold uppercase text-slate-500 mb-1">Zip Code</label>
-                      <input
-                        type="text"
-                        className="w-full p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl text-sm outline-none focus:border-emerald-500 dark:text-white"
-                        value={subAddress.zip}
-                        onChange={(e) => setSubAddress({ ...subAddress, zip: e.target.value })}
-                        placeholder="534281"
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Payment Method */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-black uppercase tracking-widest text-slate-400">Payment Option</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <label className={`
-                      flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
-                      ${subPaymentMethod === "COD" ? "border-emerald-500 bg-emerald-50/5 dark:bg-emerald-950/10 text-emerald-600 dark:text-emerald-400" : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300"}
-                    `}>
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        checked={subPaymentMethod === "COD"}
-                        onChange={() => setSubPaymentMethod("COD")}
-                        className="accent-emerald-500"
-                      />
-                      <div>
-                        <span className="text-xs font-bold block">Cash on Delivery</span>
-                        <span className="text-[10px] text-slate-500">Pay at your doorstep</span>
-                      </div>
-                    </label>
-
-                    <label className={`
-                      flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all
-                      ${subPaymentMethod === "Wallet" ? "border-emerald-500 bg-emerald-50/5 dark:bg-emerald-950/10 text-emerald-600 dark:text-emerald-400" : "border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300"}
-                    `}>
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        checked={subPaymentMethod === "Wallet"}
-                        onChange={() => setSubPaymentMethod("Wallet")}
-                        className="accent-emerald-500"
-                      />
-                      <div>
-                        <span className="text-xs font-bold block">SeaBite Wallet</span>
-                        <span className="text-[10px] text-slate-500">Balance: ₹{user?.walletBalance || 0}</span>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Subscription Summary Info Card */}
-                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 space-y-2">
-                  <div className="flex justify-between text-xs text-slate-500">
-                    <span>Delivery Frequency:</span>
-                    <span className="font-bold text-slate-700 dark:text-slate-200 capitalize">{frequency}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-slate-500">
-                    <span>Discounted Price (5% Off):</span>
-                    <span className="text-slate-700 dark:text-slate-200">₹{(unitPrice * 0.95).toFixed(0)} / catch</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-slate-500">
-                    <span>Quantity:</span>
-                    <span className="text-slate-700 dark:text-slate-200">{qty} units</span>
-                  </div>
-                  <div className="h-px bg-slate-200 dark:bg-slate-700 my-2" />
-                  <div className="flex justify-between text-sm font-black text-slate-900 dark:text-white">
-                    <span>Total per delivery:</span>
-                    <span className="text-emerald-500 text-base">₹{(unitPrice * 0.95 * qty).toFixed(0)}</span>
-                  </div>
-                </div>
-
-                {/* Submit Action */}
-                <button
-                  type="submit"
-                  disabled={submittingSub}
-                  className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-black rounded-2xl transition-all shadow-xl shadow-emerald-600/10 disabled:opacity-50 flex items-center justify-center gap-2 group cursor-pointer"
-                >
-                  {submittingSub ? (
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <span>Activate Subscription</span>
-                      <FiCheck className="group-hover:scale-110 transition-transform" />
-                    </>
-                  )}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (min-width: 769px) { .show-mobile { display: none !important; } }

@@ -295,18 +295,18 @@ export default function BlogDetail() {
                 </div>
               )}
 
-              {/* Recipe card note */}
+              {/* Fresh catch pledge */}
               <div className="bg-slate-900 dark:bg-[#121E2A] text-white rounded-[2rem] p-6 relative overflow-hidden group shadow-xl">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#5BA8A0]/10 rounded-full blur-2xl -z-10 group-hover:bg-[#5BA8A0]/20 transition-all duration-500" />
-                <h3 className="font-extrabold text-sm mb-2 text-white">✨ Locked 5% Off</h3>
+                <h3 className="font-extrabold text-sm mb-2 text-white">✨ 100% Dock Fresh</h3>
                 <p className="text-slate-400 font-semibold text-[11px] leading-relaxed mb-4">
-                  Love this recipe? Subscribe to recurring deliveries of its premium ingredients and secure a fixed 5% discount lock on every shipping cycle!
+                  All ingredients are sourced directly from boat landings at Mogalthur, packed in temperature-controlled cold-chain boxes, and delivered to your doorstep.
                 </p>
                 <Link 
                   to="/products"
                   className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#5BA8A0] hover:text-[#72c2ba] transition-all"
                 >
-                  Explore subscription catches <FiChevronRight size={12} />
+                  Explore Premium Catches <FiChevronRight size={12} />
                 </Link>
               </div>
 
