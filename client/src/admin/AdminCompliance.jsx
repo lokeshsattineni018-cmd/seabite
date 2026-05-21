@@ -108,14 +108,12 @@ export default function AdminCompliance() {
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-black text-stone-900 flex items-center gap-3">
-          📋 Cold-Chain Compliance Audit Panel
-        </h1>
-        <p className="text-sm text-stone-500 font-semibold mt-1">
-          Trace transit temperature coordinates and execute proactive quality-recovery protocols before complaints happen.
-        </p>
+      {/* Unified Controls / Telemetry Status Bar */}
+      <div className="flex items-center justify-between pb-4 border-b border-stone-200/40 mt-2 mb-4">
+        <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Cold-Chain Sensor Array Operational
+        </span>
       </div>
 
       {loading ? (

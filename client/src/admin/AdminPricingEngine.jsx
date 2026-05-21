@@ -86,21 +86,19 @@ export default function AdminPricingEngine() {
 
   return (
     <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Unified Controls / Actions Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 mt-2 pb-4 border-b border-stone-200/40">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-stone-900 flex items-center gap-3">
-            🌦️ AI Dynamic Pricing Engine
-          </h1>
-          <p className="text-sm text-stone-500 font-semibold mt-1">
-            Weather-adaptive pricing curves linked to real-time supply scarcity at Mogalthur Boat Landings.
-          </p>
+          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            AI Pricing Matrix Active
+          </span>
         </div>
         
         <button
           onClick={handleApplyBulkPrices}
           disabled={updating || loading}
-          className="px-6 py-3 bg-stone-900 hover:bg-stone-850 text-white font-bold text-sm rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          className="px-5 py-2.5 bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50 active:scale-95"
         >
           {updating ? (
             <FiRefreshCw className="animate-spin" />

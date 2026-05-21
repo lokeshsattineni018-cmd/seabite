@@ -1,6 +1,6 @@
 // AdminLayout.jsx
 import { useState, Suspense, useEffect, useCallback } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import axios from "axios";
 import toast from "react-hot-toast";
@@ -30,6 +30,37 @@ const AdminPageLoader = () => (
   </div>
 );
 
+const ROUTE_METADATA = {
+  "/admin": { title: "Command Center", subtitle: "Real-time commerce operations & telemetry hub", emoji: "📡" },
+  "/admin/": { title: "Command Center", subtitle: "Real-time commerce operations & telemetry hub", emoji: "📡" },
+  "/admin/dashboard": { title: "Command Center", subtitle: "Real-time commerce operations & telemetry hub", emoji: "📡" },
+  "/admin/products": { title: "Inventory & Catch Catalog", subtitle: "Manage species, pricing, and stock levels", emoji: "🐟" },
+  "/admin/add-product": { title: "Register New Catch", subtitle: "Introduce fresh marine arrivals to the catalog", emoji: "➕" },
+  "/admin/orders": { title: "Order Fulfillment Matrix", subtitle: "Fulfill, dispatch, and track live order lifecycles", emoji: "📦" },
+  "/admin/users": { title: "Identity & Accounts Management", subtitle: "Manage customers, vendors, and operator accounts", emoji: "👥" },
+  "/admin/messages": { title: "Communications Hub", subtitle: "Real-time chat and operator interventions", emoji: "💬" },
+  "/admin/reviews": { title: "Reputation Audit", subtitle: "Verify customer reviews, feedback, and ratings", emoji: "⭐️" },
+  "/admin/pos": { title: "Point of Sale (POS)", subtitle: "Direct-to-customer retail billing checkout console", emoji: "🖨️" },
+  "/admin/coupons": { title: "Loyalty & Promotion Center", subtitle: "Configure dynamic discount rates and vouchers", emoji: "🎟️" },
+  "/admin/flash-sale": { title: "Flash Sales Coordinator", subtitle: "Schedule time-locked discount campaigns", emoji: "⚡" },
+  "/admin/marketing": { title: "Marketing Campaigns", subtitle: "Enterprise promotion strategies and user banners", emoji: "📢" },
+  "/admin/watchtower": { title: "Enterprise Watchtower", subtitle: "High-integrity audit trails, errors, and system activity logs", emoji: "🛡️" },
+  "/admin/carts": { title: "Abandoned Cart Recovery", subtitle: "Analyze and incentivize pending checkouts", emoji: "🛒" },
+  "/admin/settings": { title: "Enterprise Settings", subtitle: "Global flags, operational banners, and key configuration", emoji: "⚙️" },
+  "/admin/analytics": { title: "Performance Analytics", subtitle: "Aggregated growth, margins, and sales metrics", emoji: "📈" },
+  "/admin/delivery": { title: "Logistics & Fleet Registry", subtitle: "Active dispatch vehicles, routes, and agents", emoji: "🚚" },
+  "/admin/fleet": { title: "Logistics & Fleet Registry", subtitle: "Active dispatch vehicles, routes, and agents", emoji: "🚚" },
+  "/admin/iam": { title: "Team Identity Management (IAM)", subtitle: "System operator credentials and permissions", emoji: "🔑" },
+  "/admin/registry": { title: "Vendor & Partner Registry", subtitle: "Authorized landing harbor coordinates and profiles", emoji: "⚓" },
+  "/admin/discovery": { title: "Search & Discovery Engine", subtitle: "Manage query redirects, synonyms, and smart search tracking", emoji: "🔍" },
+  "/admin/complaints": { title: "Escalation & Resolution Center", subtitle: "Verify refunds, disputes, and customer complaints", emoji: "🚨" },
+  "/admin/radar": { title: "Live Satellite Radar", subtitle: "Simulated fleet coordination and vessel tracking", emoji: "🛰️" },
+  "/admin/pulse": { title: "Storefront Pulse Monitor", subtitle: "Real-time telemetry of user sessions and cart actions", emoji: "💓" },
+  "/admin/xray": { title: "System X-Ray Audits", subtitle: "Low-level API logs, query benchmarks, and server telemetry", emoji: "💀" },
+  "/admin/pricing-engine": { title: "AI Dynamic Pricing Engine", subtitle: "Weather-adaptive pricing curves linked to landing scarcity", emoji: "🌦️" },
+  "/admin/compliance": { title: "Cold-Chain Compliance Audit Panel", subtitle: "Transit temperature coordinates & proactive quality-recovery logs", emoji: "📋" }
+};
+
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -37,7 +68,22 @@ export default function AdminLayout() {
   const [notifications, setNotifications] = useState([]); 
   const [unreadCount, setUnreadCount] = useState(0); 
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+
+  const getMetadata = () => {
+    const path = location.pathname.replace(/\/$/, "");
+    if (path.startsWith("/admin/edit-product/")) {
+      return { title: "Edit Catch", subtitle: "Update inventory catalog parameters", emoji: "📝" };
+    }
+    return ROUTE_METADATA[path] || ROUTE_METADATA[`${path}/`] || {
+      title: "System Control",
+      subtitle: "SeaBite Enterprise Administration Portal",
+      emoji: "🛡️"
+    };
+  };
+
+  const currentRoute = getMetadata();
 
   const fetchSettings = useCallback(async () => {
     try {
@@ -143,20 +189,27 @@ export default function AdminLayout() {
         className="flex-1 relative overflow-y-auto overflow-x-hidden h-full pt-16 md:pt-0 scroll-smooth bg-[#fafaf9]"
         style={{ marginTop: settings?.announcement?.active ? "36px" : 0 }}
       >
-        {/* Top Navigation Bar (Desktop) - Tightened and Search Removed */}
+        {/* Top Navigation Bar (Desktop) - Unified Dashboard Header */}
         <div className="hidden md:flex items-center justify-between px-8 py-3 sticky top-0 bg-[#fafaf9]/95 backdrop-blur-md z-20 border-b border-stone-200/40">
           <div className="flex items-center gap-6">
-            <div>
-              <h1 className="text-xl font-bold text-stone-900 tracking-tight">System Control</h1>
-              <p className="text-[10px] text-stone-400 font-bold uppercase tracking-widest mt-0.5 flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                Live: {user?.name?.split(" ")[0] || "Operator"}
-              </p>
+            <div className="flex items-center gap-3">
+              <span className="text-xl select-none" role="img" aria-label={currentRoute.title}>
+                {currentRoute.emoji}
+              </span>
+              <div>
+                <h1 className="text-base font-black text-stone-900 tracking-tight leading-tight">
+                  {currentRoute.title}
+                </h1>
+                <p className="text-[10px] text-stone-500 font-bold uppercase tracking-widest mt-0.5 flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  {currentRoute.subtitle}
+                </p>
+              </div>
             </div>
             <div className="h-8 w-px bg-stone-200/60" />
             <div className="px-3 py-1.5 bg-stone-100/50 rounded-full border border-stone-200/40 flex items-center gap-2">
-              <span className="text-[9px] font-bold text-stone-500 uppercase tracking-tighter">Status:</span>
-              <span className="text-[10px] font-bold text-stone-800 uppercase">Operational</span>
+              <span className="text-[9px] font-bold text-stone-500 uppercase tracking-tighter">Operator:</span>
+              <span className="text-[10px] font-bold text-stone-800 uppercase">{user?.name?.split(" ")[0] || "Operator"}</span>
             </div>
           </div>
 
