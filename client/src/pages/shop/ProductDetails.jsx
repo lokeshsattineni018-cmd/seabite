@@ -567,9 +567,9 @@ export default function ProductDetails() {
     if (!imagePath) return "https://placehold.co/400?text=No+Image";
     if (imagePath.startsWith("http")) return imagePath;
     const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
-    return cleanPath.startsWith("/uploads")
-      ? `${API_URL}${cleanPath}`
-      : `${API_URL}/uploads${cleanPath}`;
+    const pathWithUploads = cleanPath.startsWith("/uploads") ? cleanPath : `/uploads${cleanPath}`;
+    const base = API_URL || (typeof window !== "undefined" ? window.location.origin : "https://seabite.co.in");
+    return `${base}${pathWithUploads}`;
   };
 
   const fetchProduct = useCallback(() => {
@@ -822,13 +822,13 @@ export default function ProductDetails() {
           <link rel="canonical" href={`https://seabite.co.in/products/${product._id}/${slugify(product.name)}`} />
           <meta property="og:title" content={`${product.name} | SeaBite`} />
           <meta property="og:description" content={product.description?.slice(0, 160) || "Fresh coastal seafood from SeaBite."} />
-          <meta property="og:image" content={product.image ? `${API_URL}${product.image}` : "https://seabite.co.in/fisherman.jpg"} />
+          <meta property="og:image" content={getFullImageUrl(product.image)} />
           <meta property="og:type" content="product" />
           <meta property="og:url" content={`https://seabite.co.in/products/${product._id}/${slugify(product.name)}`} />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={`${product.name} | SeaBite`} />
           <meta name="twitter:description" content={product.description?.slice(0, 120) || "Fresh coastal seafood from SeaBite."} />
-          <meta name="twitter:image" content={product.image ? `${API_URL}${product.image}` : "https://seabite.co.in/fisherman.jpg"} />
+          <meta name="twitter:image" content={getFullImageUrl(product.image)} />
           <script type="application/ld+json">{JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Product",
