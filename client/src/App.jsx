@@ -75,6 +75,8 @@ const AdminCoupons = lazy(() => import("./admin/AdminCoupons")); // 🏷️ Adde
 const AdminLiveRadar = lazy(() => import("./admin/AdminLiveRadar")); // 📡 Added Live Radar
 const AdminStorefrontPulse = lazy(() => import("./admin/AdminStorefrontPulse")); // 🛰️ Added Storefront Pulse
 const AdminXRay = lazy(() => import("./admin/AdminXRay")); // 🔍 Added X-Ray Monitor
+const AdminPricingEngine = lazy(() => import("./admin/AdminPricingEngine")); // 🌦️ Added AI Pricing Engine
+const AdminCompliance = lazy(() => import("./admin/AdminCompliance")); // 📋 Added Compliance Audits
 
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -271,6 +273,8 @@ function MainLayout() {
                     <Route path="radar" element={<AdminLiveRadar />} />
                     <Route path="pulse" element={<AdminStorefrontPulse />} />
                     <Route path="xray" element={<AdminXRay />} />
+                    <Route path="pricing-engine" element={<AdminPricingEngine />} />
+                    <Route path="compliance" element={<AdminCompliance />} />
                   </Route>
                 </Routes>
               ) : (
