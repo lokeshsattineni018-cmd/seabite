@@ -35,7 +35,6 @@ const OrderSuccess = lazy(() => import("./pages/shop/OrderSuccess"));
 const Orders = lazy(() => import("./pages/user/Orders"));
 const OrderDetails = lazy(() => import("./pages/user/OrderDetails"));
 const Notifications = lazy(() => import("./pages/user/Notifications"));
-const MySubscriptions = lazy(() => import("./pages/user/MySubscriptions"));
 const Spin = lazy(() => import("./pages/general/Spin"));
 const About = lazy(() => import("./pages/general/About"));
 const Blog = lazy(() => import("./pages/general/Blog"));
@@ -288,7 +287,6 @@ function MainLayout() {
                     <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
                     <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
                     <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
-                    <Route path="/my-subscriptions" element={<PrivateRoute><MySubscriptions /></PrivateRoute>} />
                     <Route path="/login" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=login" replace />} />
                     <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=signup" replace />} />
                     <Route path="/about" element={<About />} />

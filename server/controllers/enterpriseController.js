@@ -1,4 +1,3 @@
-import Subscription from "../models/Subscription.js";
 import GiftCard from "../models/GiftCard.js";
 import BlogPost from "../models/BlogPost.js";
 import GroupCart from "../models/GroupCart.js";
@@ -9,93 +8,7 @@ import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// ----------------------------------------------------
-// 1. SUBSCRIPTION CONTROLLER
-// ----------------------------------------------------
-export const createSubscription = async (req, res) => {
-  try {
-    const { items, frequency, shippingAddress, paymentMethod } = req.body;
-    if (!items || items.length === 0 || !frequency || !shippingAddress) {
-      return res.status(400).json({ success: false, message: "Missing required subscription details" });
-    }
 
-    // Compute next billing date based on frequency
-    const nextBillingDate = new Date();
-    if (frequency === "weekly") {
-      nextBillingDate.setDate(nextBillingDate.getDate() + 7);
-    } else if (frequency === "bi-weekly") {
-      nextBillingDate.setDate(nextBillingDate.getDate() + 14);
-    } else if (frequency === "monthly") {
-      nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
-    }
-
-    const newSub = await Subscription.create({
-      user: req.session.userId || req.user?._id || req.body.userId, // session support
-      items,
-      frequency,
-      shippingAddress,
-      paymentMethod: paymentMethod || "COD",
-      nextBillingDate
-    });
-
-    res.status(201).json({ success: true, message: "Subscription created successfully", subscription: newSub });
-  } catch (error) {
-    console.error("❌ CREATE SUBSCRIPTION ERROR:", error);
-    res.status(500).json({ success: false, message: "Failed to create subscription" });
-  }
-};
-
-export const getSubscriptions = async (req, res) => {
-  try {
-    const userId = req.session.userId || req.user?._id;
-    if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
-
-    const subs = await Subscription.find({ user: userId }).populate("items.product");
-    res.json({ success: true, subscriptions: subs });
-  } catch (error) {
-    console.error("❌ GET SUBSCRIPTIONS ERROR:", error);
-    res.status(500).json({ success: false, message: "Failed to fetch subscriptions" });
-  }
-};
-
-export const cancelSubscription = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const sub = await Subscription.findById(id);
-    if (!sub) return res.status(404).json({ success: false, message: "Subscription not found" });
-
-    sub.status = "cancelled";
-    await sub.save();
-    res.json({ success: true, message: "Subscription cancelled successfully", subscription: sub });
-  } catch (error) {
-    console.error("❌ CANCEL SUBSCRIPTION ERROR:", error);
-    res.status(500).json({ success: false, message: "Failed to cancel subscription" });
-  }
-};
-
-export const toggleSubscriptionStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
-    if (!["active", "paused"].includes(status)) {
-      return res.status(400).json({ success: false, message: "Invalid status update" });
-    }
-
-    const sub = await Subscription.findById(id);
-    if (!sub) return res.status(404).json({ success: false, message: "Subscription not found" });
-
-    if (sub.status === "cancelled") {
-      return res.status(400).json({ success: false, message: "Cannot modify a cancelled subscription" });
-    }
-
-    sub.status = status;
-    await sub.save();
-    res.json({ success: true, message: `Subscription is now ${status}`, subscription: sub });
-  } catch (error) {
-    console.error("❌ TOGGLE SUBSCRIPTION STATUS ERROR:", error);
-    res.status(500).json({ success: false, message: "Failed to update subscription status" });
-  }
-};
 
 // ----------------------------------------------------
 // 2. GIFT CARD CONTROLLER
