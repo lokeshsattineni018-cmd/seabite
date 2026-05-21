@@ -7,7 +7,7 @@ import Vendor from "../models/Vendor.js";
 import User from "../models/User.js";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
-import { GoogleGenAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // ----------------------------------------------------
 // 1. SUBSCRIPTION CONTROLLER
@@ -173,8 +173,8 @@ export const getRecommendations = async (req, res) => {
     // AI recommendation using Gemini if available, or fall back to high-rated
     if (process.env.GEMINI_API_KEY) {
       try {
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-        const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
         
         let promptText = `Given this catalog of seafood: ${JSON.stringify(products.map(p => ({ id: p._id, name: p.name, category: p.category, rating: p.rating })))}, select the top 4 products perfect for a customer looking for premium fresh coastal catches. Return only a JSON array of the string IDs.`;
         
