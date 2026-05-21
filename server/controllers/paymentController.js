@@ -12,13 +12,52 @@ const instance = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// Helper for vendor split credit payouts
+const processVendorSplits = async (orderItems) => {
+  try {
+    const Vendor = (await import("../models/Vendor.js")).default;
+    const Product = (await import("../models/Product.js")).default;
+    for (const item of orderItems) {
+      const product = await Product.findById(item.productId);
+      if (product && product.vendor) {
+        const vendor = await Vendor.findById(product.vendor);
+        if (vendor) {
+          // Credit 85% of item price * qty to vendor balance, remaining 15% is platform commission
+          const creditAmount = Math.round((item.price || product.price || 0) * item.qty * 0.85);
+          vendor.balance = (vendor.balance || 0) + creditAmount;
+          await vendor.save();
+          console.log(`⚓ [VENDOR SPLIT] Credited ₹${creditAmount} to Fisherman Vendor: ${vendor.name} for item: ${product.name}`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("❌ VENDOR SPLIT ERROR:", err);
+  }
+};
+
 // 1. Checkout
 export const checkout = async (req, res) => {
   const traceId = req.traceId;
   const idempotencyKey = req.headers["idempotency-key"];
 
   try {
-    const { amount, items, shippingAddress, itemsPrice, taxPrice, shippingPrice, discount, paymentMethod } = req.body;
+    const {
+      amount,
+      items,
+      shippingAddress,
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      discount,
+      paymentMethod,
+      deliverySlot,
+      deliveryDate,
+      isGift,
+      giftMessage,
+      useLoyalty,
+      loyaltyPointsToRedeem,
+      giftCardCode
+    } = req.body;
 
     if (!req.user || !req.user._id) return res.status(401).json({ success: false, message: "Auth failed" });
 
@@ -49,6 +88,50 @@ export const checkout = async (req, res) => {
       }
     }
 
+    const userDoc = await User.findById(req.user._id);
+    if (!userDoc) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    let loyaltyDiscount = 0;
+    let pointsUsed = 0;
+    if (useLoyalty && userDoc.loyaltyPoints > 0) {
+      const requestedPoints = loyaltyPointsToRedeem !== undefined ? Math.min(Number(loyaltyPointsToRedeem), userDoc.loyaltyPoints) : userDoc.loyaltyPoints;
+      const calculatedSubtotal = Number(itemsPrice || 0) - Number(discount || 0);
+      const calculatedTax = Math.round(calculatedSubtotal * 0.05);
+      const maxDiscountable = calculatedSubtotal + Number(shippingPrice || 0) + calculatedTax;
+
+      loyaltyDiscount = Math.min(requestedPoints * 0.5, maxDiscountable);
+      pointsUsed = Math.min(requestedPoints, Math.ceil(loyaltyDiscount / 0.5));
+
+      userDoc.loyaltyPoints = Math.max(0, userDoc.loyaltyPoints - pointsUsed);
+      await userDoc.save();
+    }
+
+    // Apply Gift Card Code if provided
+    let giftCardDiscount = 0;
+    if (giftCardCode) {
+      const GiftCard = (await import("../models/GiftCard.js")).default;
+      const card = await GiftCard.findOne({ code: giftCardCode.trim().toUpperCase(), active: true });
+      if (card) {
+        if (new Date() > card.expiryDate) {
+          card.active = false;
+          await card.save();
+        } else {
+          const calculatedSubtotal = Number(itemsPrice || 0) - Number(discount || 0) - loyaltyDiscount;
+          const calculatedTax = Math.round(calculatedSubtotal * 0.05);
+          const currentTotal = Math.max(0, calculatedSubtotal + Number(shippingPrice || 0) + calculatedTax);
+
+          giftCardDiscount = Math.min(card.currentBalance, currentTotal);
+          card.currentBalance = Math.max(0, card.currentBalance - giftCardDiscount);
+          if (card.currentBalance <= 0) {
+            card.active = false;
+          }
+          await card.save();
+        }
+      }
+    }
+
     let razorpayOrder = null;
 
     if (paymentMethod === "Prepaid") {
@@ -66,12 +149,16 @@ export const checkout = async (req, res) => {
       itemsPrice,
       taxPrice,
       shippingPrice,
-      discount,
+      discount: Number(discount || 0) + loyaltyDiscount + giftCardDiscount,
       totalAmount: amount,
       paymentMethod: paymentMethod || "COD",
       razorpay_order_id: razorpayOrder ? razorpayOrder.id : null,
       status: "Pending",
       isPaid: false,
+      deliverySlot,
+      deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined,
+      isGift: !!isGift,
+      giftMessage: giftMessage || "",
     };
 
     if (idempotencyKey) {
@@ -94,9 +181,10 @@ export const checkout = async (req, res) => {
       }
     }
 
-    await User.findByIdAndUpdate(req.user._id, { cart: [] });
+    userDoc.cart = [];
+    await userDoc.save();
 
-    // ✅ TRIGGER EMAIL: ONLY for COD orders here
+    // ✅ TRIGGER EMAIL & WHATSAPP: ONLY for COD orders here
     if (paymentMethod === "COD") {
       try {
         await sendOrderPlacedEmail(
@@ -111,12 +199,25 @@ export const checkout = async (req, res) => {
         logger.error("COD Confirmation Email Failed", { traceId, error: mailErr.message, orderId: savedOrder._id });
       }
 
+      try {
+        const { sendWhatsAppNotification } = await import("../utils/whatsapp.js");
+        await sendWhatsAppNotification(
+          shippingAddress.phone || req.user.phone || "9999999999",
+          `🚢 SeaBite: Ahoy ${req.user.name}! Your fresh catch order #${savedOrder.orderId} of ₹${savedOrder.totalAmount} has been placed successfully via COD. Selected slot: ${deliverySlot || 'Standard Delivery'}.`
+        );
+      } catch (waErr) {
+        logger.error("COD WhatsApp Dispatch Failed", { traceId, error: waErr.message });
+      }
+
       await Notification.create({
         user: req.user._id,
         message: `Order #${savedOrder.orderId} placed successfully via COD!`,
         orderId: savedOrder._id,
         statusType: "Pending"
       });
+
+      // Split payout splits for COD orders
+      await processVendorSplits(savedOrder.items);
     }
 
     logger.info("Order created in checkout", { traceId, orderId: savedOrder.orderId, paymentMethod });
@@ -147,10 +248,10 @@ export const paymentVerification = async (req, res) => {
         { razorpay_order_id: razorpay_order_id },
         { status: "Processing", paymentId: razorpay_payment_id, paidAt: Date.now(), isPaid: true },
         { returnDocument: 'after' }
-      ).populate('user', 'name email');
+      ).populate('user', 'name email phone');
 
       if (updatedOrder) {
-        // ✅ TRIGGER EMAIL: For Successful Prepaid Payment
+        // ✅ TRIGGER EMAIL & WHATSAPP: For Successful Prepaid Payment
         try {
           await sendOrderPlacedEmail(
             updatedOrder.user.email,
@@ -164,12 +265,25 @@ export const paymentVerification = async (req, res) => {
           logger.error("Prepaid Confirmation Email Failed", { traceId: req.traceId, error: mailErr.message, orderId: updatedOrder._id });
         }
 
+        try {
+          const { sendWhatsAppNotification } = await import("../utils/whatsapp.js");
+          await sendWhatsAppNotification(
+            updatedOrder.shippingAddress.phone || updatedOrder.user.phone || "9999999999",
+            `🚢 SeaBite: Ahoy ${updatedOrder.user.name}! Your payment of ₹${updatedOrder.totalAmount} for order #${updatedOrder.orderId} was verified successfully. Selected slot: ${updatedOrder.deliverySlot || 'Standard Delivery'}.`
+          );
+        } catch (waErr) {
+          logger.error("Prepaid WhatsApp Dispatch Failed", { traceId: req.traceId, error: waErr.message });
+        }
+
         await Notification.create({
-          user: req.user._id,
+          user: updatedOrder.user._id,
           message: `Payment Successful! Order #${updatedOrder.orderId} is now Processing.`,
           orderId: updatedOrder._id,
           statusType: "Processing"
         });
+
+        // Split payout splits for Prepaid orders upon verification
+        await processVendorSplits(updatedOrder.items);
       }
 
       res.status(200).json({ success: true, message: "Payment Verified", dbId: updatedOrder._id });

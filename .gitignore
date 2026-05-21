@@ -1,3 +1,6 @@
 .env
 node_modules
-.DS_Storeclient/build_log.txt
+.DS_Store
+dist/
+build/
+scratch/

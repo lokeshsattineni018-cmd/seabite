@@ -48,6 +48,11 @@ const productSchema = new mongoose.Schema(
 
     // --- ENTERPRISE: WAITLIST ---
     waitlist: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+
+    // --- MULTI-VENDOR & SEASONAL CATCH ---
+    vendor: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor' },
+    catchOfTheDay: { type: Boolean, default: false },
+    dockSource: { type: String, default: "Mogalthur Docks" }
   },
   { timestamps: true }
 );

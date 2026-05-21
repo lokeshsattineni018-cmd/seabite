@@ -186,6 +186,24 @@ export const updateOrderStatus = async (req, res) => {
                     }
                 }).catch(err => console.error("[REFERRAL] Failed to process referral reward:", err));
             }
+
+            // 🎁 Loyalty Points System: Earn ₹10 spent = 1 point
+            if (status === "Delivered" && order.user) {
+                import("../models/User.js").then(async ({ default: User }) => {
+                    const user = await User.findById(order.user._id);
+                    if (user) {
+                        const pointsEarned = Math.floor(order.totalAmount / 10);
+                        if (pointsEarned > 0) {
+                            user.loyaltyPoints = (user.loyaltyPoints || 0) + pointsEarned;
+                            await user.save();
+                            console.log(`[LOYALTY] Credited ${pointsEarned} loyalty points to ${user.email} for order #${order.orderId}`);
+                            sendLoyaltyCreditEmail(user.email, user.name, pointsEarned, `Purchase Rewards from Order #${order.orderId}`).catch(e =>
+                                console.error("[LOYALTY] Email notification failed:", e.message)
+                            );
+                        }
+                    }
+                }).catch(err => console.error("[LOYALTY] Failed to process loyalty reward:", err));
+            }
         }
         if (refundStatus) {
             order.refundStatus = refundStatus;

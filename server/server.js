@@ -29,6 +29,7 @@ import settingsRoutes from "./routes/settingsRoutes.js";
 import watchtowerRoutes from "./routes/watchtowerRoutes.js";
 import complaintRoutes from "./routes/complaintRoutes.js"; // [Added]
 import deliveryRoutes from "./routes/deliveryRoutes.js"; // [New: Delivery Management]
+import enterpriseRoutes from "./routes/enterpriseRoutes.js"; // [New: Enterprise Suite]
 import checkMaintenance from "./middleware/checkMaintenance.js";
 import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
@@ -46,6 +47,7 @@ import compression from "compression";
 // [Import Cron Workers]
 import { initAbandonedCartWorker } from "./cron/abandonedCartWorker.js";
 import happyHourCron from "./cron/happyHour.js";
+import subscriptionCron from "./cron/subscriptionCron.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -397,6 +399,7 @@ app.use("/api/spin", spinRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/telemetry", telemetryRoutes);
+app.use("/api/enterprise", enterpriseRoutes);
 import pulseRoutes from "./routes/pulseRoutes.js";
 app.use("/api/pulse", pulseRoutes);
 
@@ -456,6 +459,7 @@ const server = httpServer.listen(PORT, () => {
   // 🟢 Start Background Workers
   initAbandonedCartWorker();
   happyHourCron.start();
+  subscriptionCron.start();
 
   // 🟢 Start System Pulse
   setInterval(() => {
