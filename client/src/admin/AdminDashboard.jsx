@@ -330,43 +330,35 @@ export default function AdminDashboard() {
           )}
         </AnimatePresence>
 
-        {/* Sticky Header */}
-        <motion.div 
-          variants={fadeUp} 
-          className="sticky top-0 z-30 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white border-b border-stone-200/50 pb-4 pt-0 mb-8 -mx-4 px-4 md:-mx-6 md:px-6"
-        >
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-light text-stone-900 tracking-tight">
-                Command Center
-              </h1>
-              <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live Hub • Last sync {lastUpdated?.toLocaleTimeString()}
-              </p>
-            </div>
+        {/* Unified Dashboard Controls Row */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 mt-2 pb-4 border-b border-stone-200/40">
+          <div>
+            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Telemetry Sync • last sync {lastUpdated?.toLocaleTimeString() || "Live"}
+            </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <div className="relative hidden md:block">
+            <div className="relative">
               <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
               <input 
                 type="text" 
                 placeholder="Find orders, customers..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-stone-100 border border-stone-200 rounded-2xl text-xs w-64 focus:bg-white focus:ring-4 focus:ring-stone-100 transition-all outline-none"
+                className="pl-10 pr-4 py-2.5 bg-white border border-stone-200/80 rounded-2xl text-xs w-64 focus:bg-white focus:ring-4 focus:ring-stone-100 transition-all outline-none shadow-sm"
               />
             </div>
             <button
               onClick={() => fetchDashboardData(true)}
               disabled={isRefreshing}
-              className="p-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl transition-all disabled:opacity-50"
+              className="p-2.5 bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 rounded-2xl transition-all disabled:opacity-50 shadow-sm cursor-pointer"
             >
               <FiRefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
             </button>
           </div>
-        </motion.div>
+        </div>
 
         {/* 🚨 CRITICAL ALERTS (SLA & STOCK) */}
         {(alerts.slaBreaches.length > 0 || alerts.stockRisks.length > 0) && (
