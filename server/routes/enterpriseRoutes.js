@@ -12,8 +12,11 @@ import {
   createReturnRequest,
   getReturnRequests,
   updateReturnStatus,
-  getLoyaltyBalance
+  getLoyaltyBalance,
+  uploadReturnImages
 } from "../controllers/enterpriseController.js";
+import { protect } from "../middleware/authMiddleware.js";
+import upload from "../config/multerConfig.js";
 
 const router = express.Router();
 
@@ -37,9 +40,10 @@ router.get("/group-cart/:code", getGroupCart);
 router.post("/group-cart/:code/join", joinGroupCart);
 
 // Returns
-router.post("/returns", createReturnRequest);
-router.get("/returns", getReturnRequests);
-router.put("/returns/:id", updateReturnStatus);
+router.post("/returns", protect, createReturnRequest);
+router.post("/returns/upload", protect, upload.array("images", 5), uploadReturnImages);
+router.get("/returns", protect, getReturnRequests);
+router.put("/returns/:id", protect, updateReturnStatus);
 
 // Loyalty Points
 router.get("/loyalty", getLoyaltyBalance);
