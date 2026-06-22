@@ -107,7 +107,7 @@ export default function Profile() {
   const totalSpent = orders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 font-sans selection:bg-blue-100 pt-32">
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 selection:bg-blue-100 pt-8">
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         
@@ -139,6 +139,11 @@ export default function Profile() {
               </div>
               <h2 className="text-xl font-bold tracking-tight">{user.name}</h2>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{user.role || 'Member'}</p>
+              {user.isPrime && (
+                <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 bg-gradient-to-r from-slate-900 via-[#1A2E2C] to-[#5BBFB5] text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-sm">
+                  ✨ SeaBite Prime
+                </div>
+              )}
               
               <button 
                 onClick={handleLogout}
@@ -228,6 +233,43 @@ export default function Profile() {
                         </div>
                       </div>
                     </div>
+
+                    {/* 💎 SEABITE PRIME CARD / UPSELL */}
+                    {user.isPrime ? (
+                      <div className="bg-gradient-to-br from-slate-900 via-[#1A2E2C] to-[#5BBFB5] rounded-[2.5rem] p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)] pointer-events-none" />
+                        <div className="relative z-10">
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5BBFB5] mb-2 block">Active Membership</span>
+                          <h3 className="text-2xl font-bold tracking-tight mb-1">You are a SeaBite Prime Member!</h3>
+                          <p className="text-xs text-slate-300 font-medium">
+                            Enjoy unlimited FREE delivery, exclusive pricing, and priority support.
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-start md:items-end shrink-0 relative z-10">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-[#5BBFB5] mb-1">Membership Expiry</span>
+                          <div className="flex items-center gap-2 text-sm font-bold">
+                            <FiCalendar size={16} />
+                            <span>{user.primeExpiry ? new Date(user.primeExpiry).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "N/A"}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:border-[#5BBFB5]/30 transition-all">
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-2 block">SeaBite Prime</span>
+                          <h3 className="text-xl font-bold tracking-tight mb-1">Get Free Delivery on Every Catch!</h3>
+                          <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                            Join SeaBite Prime today for unlimited free delivery, exclusive deals, and premium early catch access.
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => navigate("/prime")}
+                          className="w-full md:w-auto px-6 py-3.5 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-[#5BBFB5] transition-all shrink-0 shadow-lg shadow-slate-950/5"
+                        >
+                          Join Prime
+                        </button>
+                      </div>
+                    )}
 
                     <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
                        <h3 className="text-xl font-bold tracking-tight mb-8">Personal Information</h3>

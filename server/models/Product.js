@@ -34,6 +34,21 @@ const productSchema = new mongoose.Schema(
     stockThreshold: { type: Number, default: 2 }, // 🟢 NEW: Warning trigger (e.g. 2kg)
     active: { type: Boolean, default: true },
 
+    // 🔪 CHOOSE YOUR CUT
+    cuts: [{
+      name: { type: String }, // e.g. "Whole", "Cleaned & Gutted", "Steaks", "Fillets", "Boneless Cubes"
+      priceAdjustmentPct: { type: Number, default: 0 }, // % added to basePrice
+      available: { type: Boolean, default: true },
+      emoji: { type: String, default: "🐟" },
+    }],
+    hasCuts: { type: Boolean, default: false }, // Toggle to enable cut selector on PDP
+
+    // ⚖️ LIVE WEIGHT-BASED PRICING
+    pricePerKg: { type: Number, default: 0 }, // For products sold by weight
+    minOrderWeight: { type: Number, default: 250 }, // Min grams (250g default)
+    maxOrderWeight: { type: Number, default: 5000 }, // Max grams (5kg default)
+    weightVariancePct: { type: Number, default: 5 }, // e.g. 5 = ±5% variance guarantee
+
     // --- FLASH SALE ---
     flashSale: {
       discountPrice: { type: Number, default: 0 },

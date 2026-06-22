@@ -302,7 +302,7 @@ router.post("/", upload.single('image'), async (req, res) => {
 });
 
 // 🟢 ADD OR UPDATE REVIEW ROUTE (Restricted to Valid Buyers) - With Photos (Cloudinary Optimized)
-router.post("/:id/reviews", protect, upload.array('images', 5), async (req, res) => {
+router.post("/:id/reviews", protect, upload.array('images', 3), async (req, res) => {
   const { rating, comment } = req.body;
 
   try {

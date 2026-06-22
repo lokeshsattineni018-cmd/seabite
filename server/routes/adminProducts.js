@@ -81,6 +81,15 @@ router.post(
         mainImageUrl = galleryImageUrls[0];
       }
 
+      let parsedCuts = [];
+      if (req.body.cuts) {
+        try {
+          parsedCuts = typeof req.body.cuts === "string" ? JSON.parse(req.body.cuts) : req.body.cuts;
+        } catch (e) {
+          console.error("Failed to parse cuts:", e);
+        }
+      }
+
       const product = await Product.create({
         name: name,
         category: category,
@@ -94,6 +103,12 @@ router.post(
         buyingPrice: Number(req.body.buyingPrice || 0),
         unit: unit,
         countInStock: countInStock !== undefined ? Number(countInStock) : (stock === "out" ? 0 : 10),
+        hasCuts: req.body.hasCuts === "true" || req.body.hasCuts === true,
+        cuts: parsedCuts,
+        pricePerKg: req.body.pricePerKg ? Number(req.body.pricePerKg) : 0,
+        minOrderWeight: req.body.minOrderWeight ? Number(req.body.minOrderWeight) : 250,
+        maxOrderWeight: req.body.maxOrderWeight ? Number(req.body.maxOrderWeight) : 5000,
+        weightVariancePct: req.body.weightVariancePct ? Number(req.body.weightVariancePct) : 5,
       });
 
       res.status(201).json(product);
@@ -137,6 +152,18 @@ router.put("/:id", adminAuth, async (req, res) => {
     if (req.body.buyingPrice !== undefined) updateData.buyingPrice = Number(req.body.buyingPrice);
     if (unit !== undefined) updateData.unit = unit;
     if (finalCount !== undefined) updateData.countInStock = finalCount;
+    if (req.body.hasCuts !== undefined) updateData.hasCuts = req.body.hasCuts === "true" || req.body.hasCuts === true;
+    if (req.body.cuts !== undefined) {
+      try {
+        updateData.cuts = typeof req.body.cuts === "string" ? JSON.parse(req.body.cuts) : req.body.cuts;
+      } catch (e) {
+        console.error("Failed to parse cuts:", e);
+      }
+    }
+    if (req.body.pricePerKg !== undefined) updateData.pricePerKg = Number(req.body.pricePerKg);
+    if (req.body.minOrderWeight !== undefined) updateData.minOrderWeight = Number(req.body.minOrderWeight);
+    if (req.body.maxOrderWeight !== undefined) updateData.maxOrderWeight = Number(req.body.maxOrderWeight);
+    if (req.body.weightVariancePct !== undefined) updateData.weightVariancePct = Number(req.body.weightVariancePct);
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,

@@ -210,6 +210,7 @@ export default function AdminOrders() {
             onClose={() => setSelectedOrder(null)}
             updateRefundStatus={updateRefundStatus}
             onProcessRefund={handleRazorpayRefund}
+            fetchOrders={fetchOrders}
           />
         )}
       </AnimatePresence>
@@ -455,7 +456,7 @@ function StatusPill({ status }) {
   return <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${styles[status] || styles.Pending}`}>{status}</span>;
 }
 
-function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund }) {
+function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund, fetchOrders }) {
   const getFullImageUrl = (imagePath) => {
     if (!imagePath) return "https://placehold.co/400?text=No+Image";
     if (imagePath.startsWith("http")) return imagePath;
@@ -464,6 +465,37 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
   };
 
   const canAutoRefund = order.paymentMethod === "Prepaid" && order.isPaid && order.paymentId;
+
+  const [actualWeights, setActualWeights] = useState(
+    order.items.reduce((acc, item, idx) => {
+      if (item.orderedWeightGrams > 0) {
+        acc[idx] = item.actualWeightGrams || item.orderedWeightGrams;
+      }
+      return acc;
+    }, {})
+  );
+  const [submittingWeight, setSubmittingWeight] = useState(false);
+
+  const handleConfirmWeights = async () => {
+    setSubmittingWeight(true);
+    const itemWeights = Object.keys(actualWeights).map((key) => ({
+      itemIndex: Number(key),
+      actualWeightGrams: Number(actualWeights[key]),
+    }));
+    try {
+      const res = await axios.post(`/api/admin/orders/${order._id}/confirm-weight`, { itemWeights }, { withCredentials: true });
+      toast.success(res.data.message);
+      if (fetchOrders) fetchOrders(true);
+      onClose();
+    } catch (err) {
+      toast.error("Failed to confirm weights");
+    } finally {
+      setSubmittingWeight(false);
+    }
+  };
+
+  const hasWeightItems = order.items.some(item => item.orderedWeightGrams > 0);
+  const showConfirmButton = hasWeightItems && !order.weightVarianceRefundIssued;
 
   return (
     <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -583,16 +615,81 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
             <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Order Items</h4>
             <div className="space-y-3">
               {order.items.map((item, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 bg-white border border-stone-100 rounded-2xl shadow-sm">
-                  <img src={getFullImageUrl(item.image)} className="w-12 h-12 object-contain bg-stone-50 rounded-lg p-1" />
-                  <div className="flex-1">
-                    <p className="font-bold text-stone-900 text-sm">{item.name}</p>
-                    <p className="text-xs text-stone-500 font-medium">Qty: {item.qty}</p>
+                <div key={i} className="flex flex-col gap-2 p-4 bg-white border border-stone-100 rounded-2xl shadow-sm">
+                  <div className="flex items-center gap-4">
+                    <img src={getFullImageUrl(item.image)} className="w-12 h-12 object-contain bg-stone-50 rounded-lg p-1" />
+                    <div className="flex-1">
+                      <p className="font-bold text-stone-900 text-sm">{item.name}</p>
+                      <div className="flex flex-wrap gap-2 items-center text-xs text-stone-500 font-medium mt-0.5">
+                        <span>Qty: {item.qty}</span>
+                        {item.selectedCut && (
+                          <span className="bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded text-[10px] font-bold">
+                            Cut: {item.selectedCut}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="font-mono font-bold text-stone-900">₹{(item.price * item.qty).toLocaleString()}</p>
                   </div>
-                  <p className="font-mono font-bold text-stone-900">₹{(item.price * item.qty).toLocaleString()}</p>
+                  {item.orderedWeightGrams > 0 && (
+                    <div className="border-t border-stone-50 pt-2 mt-1 flex flex-col gap-1">
+                      <div className="text-xs text-stone-500 font-semibold flex justify-between">
+                        <span>Ordered Weight:</span>
+                        <span>{item.orderedWeightGrams >= 1000 ? `${item.orderedWeightGrams/1000}kg` : `${item.orderedWeightGrams}g`}</span>
+                      </div>
+                      {order.weightVarianceRefundIssued ? (
+                        <div className="text-xs text-stone-500 font-semibold flex justify-between">
+                          <span>Packed Weight:</span>
+                          <span>{item.actualWeightGrams || item.orderedWeightGrams}g</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between gap-2 mt-1 bg-stone-50/50 p-2 rounded-xl">
+                          <span className="text-[11px] text-stone-500 font-bold uppercase tracking-wider">Packed Weight:</span>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              value={actualWeights[i] || ""}
+                              onChange={(e) => setActualWeights({ ...actualWeights, [i]: Number(e.target.value) })}
+                              className="w-20 bg-white border border-stone-200 rounded-lg px-2 py-1 text-xs font-bold text-stone-900 outline-none text-right"
+                              placeholder="grams"
+                            />
+                            <span className="text-xs text-stone-400 font-semibold">g</span>
+                          </div>
+                        </div>
+                      )}
+                      {!order.weightVarianceRefundIssued && actualWeights[i] < item.orderedWeightGrams && (
+                        <div className="text-[10px] font-bold text-amber-600 bg-amber-50/50 px-2.5 py-1 rounded-lg border border-amber-100 flex justify-between items-center">
+                          <span>Shortfall Refund Preview:</span>
+                          <span className="font-mono">₹{Math.round((item.orderedWeightGrams - (actualWeights[i] || 0)) * (item.price / item.orderedWeightGrams))}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
+
+            {showConfirmButton && (
+              <div className="mt-4 p-4 bg-stone-50 rounded-2xl border border-stone-200/60 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                <div className="text-[11px] text-stone-500 font-medium leading-relaxed max-w-lg">
+                  ⚖️ Confirm actual packed weights for items. If the packed weight is less than ordered, the difference will be automatically refunded to the user's wallet.
+                </div>
+                <button
+                  onClick={handleConfirmWeights}
+                  disabled={submittingWeight}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-stone-900 hover:bg-stone-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+                >
+                  {submittingWeight ? "Confirming..." : "Confirm Weights"}
+                </button>
+              </div>
+            )}
+
+            {order.weightVarianceRefundIssued && (
+              <div className="mt-4 p-4 bg-emerald-50 text-emerald-800 rounded-2xl border border-emerald-100 flex items-center gap-2">
+                <span>⚖️</span>
+                <span className="text-xs font-bold">Packed weights confirmed! Refund of ₹{order.weightVarianceRefundAmount || 0} issued to wallet.</span>
+              </div>
+            )}
           </div>
         </div>
 

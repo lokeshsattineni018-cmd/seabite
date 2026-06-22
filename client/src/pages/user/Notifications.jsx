@@ -289,7 +289,7 @@ export default function Notifications() {
       minHeight: "100vh",
       background: T.bg,
       fontFamily: "'DM Sans', sans-serif",
-      padding: "100px 20px 72px",
+      padding: "24px 20px 72px",
       overflowX: "hidden",
     }}>
       {/* Ambient gradient */}
