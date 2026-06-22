@@ -37,6 +37,11 @@ const orderSchema = new mongoose.Schema(
         buyingPrice: { type: Number, default: 0 }, // 🟢 NEW: Snapshot of Cost Price
         qty: { type: Number, default: 1 }, // Used for Top Selling aggregation
         image: { type: String, required: true }, // Required for Dashboard thumbnails
+        // ⚖️ Weight Variance Guarantee
+        orderedWeightGrams: { type: Number, default: 0 }, // Weight customer selected
+        actualWeightGrams: { type: Number, default: 0 }, // Weight admin confirms on pack
+        selectedCut: { type: String, default: "" }, // e.g. "Fillets"
+        cutPriceAdjustmentPct: { type: Number, default: 0 },
       },
     ],
     itemsPrice: { type: Number, default: 0 },
@@ -106,7 +111,11 @@ const orderSchema = new mongoose.Schema(
     deliverySlot: { type: String },
     deliveryDate: { type: Date },
     isGift: { type: Boolean, default: false },
-    giftMessage: { type: String }
+    giftMessage: { type: String },
+
+    // ⚖️ Weight Variance Guarantee
+    weightVarianceRefundIssued: { type: Boolean, default: false },
+    weightVarianceRefundAmount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

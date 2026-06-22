@@ -151,6 +151,60 @@ export default function Products() {
         .search-input:focus { border-color: #5BBFB5 !important; box-shadow: 0 0 0 3px rgba(91,191,181,0.12) !important; }
         .filter-btn:hover { border-color: #5BBFB5; color: #5BBFB5; }
         
+        .products-layout-container {
+          display: flex;
+          gap: 28px;
+          align-items: flex-start;
+        }
+        @media (max-width: 1024px) {
+          .products-layout-container {
+            display: block;
+          }
+        }
+        .products-container {
+          padding: 0 24px;
+        }
+        @media (max-width: 768px) {
+          .products-container {
+            padding: 0;
+          }
+        }
+        .sticky-filter-bar {
+          position: sticky;
+          top: 74px;
+          z-index: 100;
+          background: rgba(255, 255, 255, 0.98);
+          backdrop-filter: blur(20px) saturate(1.8);
+          WebkitBackdropFilter: blur(20px) saturate(1.8);
+          margin-bottom: 20px;
+          padding: 10px 0;
+          margin-left: -24px;
+          margin-right: -24px;
+          padding-left: 16px;
+          padding-right: 16px;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 30px rgba(0,0,0,0.02);
+          transition: all 0.3s ease;
+        }
+        @media (max-width: 480px) {
+          .sticky-filter-bar {
+            top: 64px;
+            margin-left: -12px;
+            margin-right: -12px;
+            padding-left: 12px;
+            padding-right: 12px;
+          }
+        }
+        @media (min-width: 481px) and (max-width: 768px) {
+          .sticky-filter-bar {
+            top: 64px;
+            margin-left: -16px;
+            margin-right: -16px;
+            padding-left: 16px;
+            padding-right: 16px;
+          }
+        }
+        
         @media (max-width: 900px) {
           .mobile-filter-btn { display: flex !important; }
         }
@@ -166,7 +220,7 @@ export default function Products() {
           pointerEvents: "none", zIndex: 0,
         }} />
 
-        <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 24px", position: "relative", zIndex: 1 }}>
+        <div className="products-container" style={{ maxWidth: "1280px", margin: "0 auto", position: "relative", zIndex: 1 }}>
 
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -210,21 +264,7 @@ export default function Products() {
           </motion.div>
 
           {/* ── STICKY FILTER BAR ── */}
-          <div style={{
-            position: "sticky",
-            top: "108px",
-            zIndex: 100,
-            background: "rgba(244,249,248,0.97)",
-            backdropFilter: "blur(16px)",
-            WebkitBackdropFilter: "blur(16px)",
-            marginBottom: "20px",
-            padding: "10px 0",
-            marginLeft: "-24px",
-            marginRight: "-24px",
-            paddingLeft: "16px",
-            paddingRight: "16px",
-            borderBottom: "1px solid rgba(91,191,181,0.15)",
-          }}>
+          <div className="sticky-filter-bar">
             {/* Single row: Filters + Search + Pills */}
             <div style={{ display: "flex", gap: "8px", alignItems: "center", overflowX: "auto" }} className="no-scrollbar">
               <button
@@ -293,7 +333,7 @@ export default function Products() {
           </div>
 
 
-          <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
+          <div className="products-layout-container">
             <FilterSidebar
               isOpen={isSidebarOpen}
               onClose={() => setIsSidebarOpen(false)}

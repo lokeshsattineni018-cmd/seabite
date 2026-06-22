@@ -37,7 +37,8 @@ const CATEGORIES = [
       { name: "Flash Sales", path: "/admin/flash-sale", icon: <FiZap size={16} /> },
       { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={16} /> },
       { name: "Abandoned Cart", path: "/admin/carts", icon: <FiShoppingCart size={16} /> },
-      { name: "AI Pricing Engine", path: "/admin/pricing-engine", icon: <FiTrendingUp size={16} /> }, // 🌦️ Added
+      { name: "AI Pricing Engine", path: "/admin/pricing-engine", icon: <FiTrendingUp size={16} /> },
+      { name: "Recipes", path: "/admin/recipes", icon: <FiTag size={16} /> },
     ]
   },
   {
@@ -47,6 +48,14 @@ const CATEGORIES = [
       { name: "Messages", path: "/admin/messages", icon: <FiMail size={16} /> },
       { name: "Reviews", path: "/admin/reviews", icon: <FiStar size={16} /> },
       { name: "Search Discovery", path: "/admin/discovery", icon: <FiTarget size={16} /> },
+    ]
+  },
+  {
+    title: "Business Intelligence",
+    links: [
+      { name: "Demand Forecast", path: "/admin/forecast", icon: <FiTrendingUp size={16} /> },
+      { name: "Customer Segments", path: "/admin/rfm", icon: <FiUsers size={16} /> },
+      { name: "Inventory Alerts", path: "/admin/inventory-alerts", icon: <FiArchive size={16} /> },
     ]
   },
   {
@@ -73,6 +82,7 @@ export default function AdminSidebar() {
     "Operations & Logistics": true,
     "Marketing & Growth": false,
     "Engagement & Support": false,
+    "Business Intelligence": false,
     "Security & Intelligence": false
   });
 

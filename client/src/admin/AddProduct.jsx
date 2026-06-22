@@ -22,6 +22,15 @@ const fadeUp = {
 export default function AddProduct() {
   const [form, setForm] = useState({
     name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in", countInStock: 10,
+    hasCuts: false,
+    cuts: [
+      { name: "Whole", priceAdjustmentPct: 0, available: true, emoji: "🐟" },
+      { name: "Cleaned & Gutted", priceAdjustmentPct: 5, available: true, emoji: "🧼" },
+      { name: "Steaks", priceAdjustmentPct: 10, available: true, emoji: "🥩" },
+      { name: "Fillets", priceAdjustmentPct: 15, available: true, emoji: "🍣" },
+      { name: "Boneless Cubes", priceAdjustmentPct: 20, available: true, emoji: "🧊" },
+    ],
+    pricePerKg: "", minOrderWeight: 250, maxOrderWeight: 5000, weightVariancePct: 5
   });
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -103,7 +112,13 @@ export default function AddProduct() {
     }
     try {
       const data = new FormData();
-      Object.keys(form).forEach(key => data.append(key, form[key]));
+      Object.keys(form).forEach(key => {
+        if (key === "cuts") {
+          data.append("cuts", JSON.stringify(form.cuts));
+        } else {
+          data.append(key, form[key]);
+        }
+      });
       if (image) data.append("image", image);
       galleryImages.forEach(img => data.append("images", img));
       await axios.post(`${backendBase}/api/admin/products`, data, {
@@ -111,7 +126,18 @@ export default function AddProduct() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setModal({ show: true, message: "Product added successfully", type: "success" });
-      setForm({ name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in", countInStock: 10 });
+      setForm({
+        name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in", countInStock: 10,
+        hasCuts: false,
+        cuts: [
+          { name: "Whole", priceAdjustmentPct: 0, available: true, emoji: "🐟" },
+          { name: "Cleaned & Gutted", priceAdjustmentPct: 5, available: true, emoji: "🧼" },
+          { name: "Steaks", priceAdjustmentPct: 10, available: true, emoji: "🥩" },
+          { name: "Fillets", priceAdjustmentPct: 15, available: true, emoji: "🍣" },
+          { name: "Boneless Cubes", priceAdjustmentPct: 20, available: true, emoji: "🧊" },
+        ],
+        pricePerKg: "", minOrderWeight: 250, maxOrderWeight: 5000, weightVariancePct: 5
+      });
       removeImage();
       setGalleryImages([]);
       setGalleryPreviews([]);
@@ -319,6 +345,141 @@ export default function AddProduct() {
                   <button type="button" onClick={() => setForm({ ...form, stock: "out", countInStock: 0 })} className={`py-3 rounded-xl border-2 font-bold text-xs uppercase flex items-center justify-center gap-2 transition-all ${form.stock === "out" ? "border-rose-500 bg-rose-50 text-rose-700" : "border-stone-100 text-stone-400 hover:border-stone-200"}`}>
                     Out of Stock {form.stock === "out" && <FiCheck />}
                   </button>
+                </div>
+              </div>
+
+              {/* 🔪 CHOOSE YOUR CUT SECTION */}
+              <div className="space-y-4 border-t border-stone-100 pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-stone-900 text-sm">🔪 Custom Cut Settings</h4>
+                    <p className="text-xs text-stone-400">Offer users cut selection on PDP</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={form.hasCuts} onChange={(e) => setForm({ ...form, hasCuts: e.target.checked })} />
+                    <div className="w-11 h-6 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-stone-800 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                  </label>
+                </div>
+
+                {form.hasCuts && (
+                  <div className="space-y-3 bg-stone-50 p-4 rounded-2xl border border-stone-150">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest px-2">
+                      <div className="col-span-2 text-center">Emoji</div>
+                      <div className="col-span-5">Cut Name</div>
+                      <div className="col-span-3">Fee %</div>
+                      <div className="col-span-2 text-center">Active</div>
+                    </div>
+                    {form.cuts.map((cut, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-2">
+                          <input
+                            type="text"
+                            value={cut.emoji}
+                            onChange={(e) => {
+                              const newCuts = [...form.cuts];
+                              newCuts[index].emoji = e.target.value;
+                              setForm({ ...form, cuts: newCuts });
+                            }}
+                            className="w-full bg-white border border-stone-200 rounded-lg px-1.5 py-1 text-center text-sm outline-none"
+                          />
+                        </div>
+                        <div className="col-span-5 text-sm font-semibold text-stone-800">
+                          {cut.name}
+                        </div>
+                        <div className="col-span-3">
+                          <div className="relative">
+                            <input
+                              type="number"
+                              value={cut.priceAdjustmentPct}
+                              onChange={(e) => {
+                                const newCuts = [...form.cuts];
+                                newCuts[index].priceAdjustmentPct = Number(e.target.value);
+                                setForm({ ...form, cuts: newCuts });
+                              }}
+                              className="w-full bg-white border border-stone-200 rounded-lg pl-2 pr-5 py-1 text-xs font-mono font-bold outline-none"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-xs font-bold">%</span>
+                          </div>
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={cut.available}
+                            onChange={(e) => {
+                              const newCuts = [...form.cuts];
+                              newCuts[index].available = e.target.checked;
+                              setForm({ ...form, cuts: newCuts });
+                            }}
+                            className="w-4 h-4 rounded text-stone-800 focus:ring-stone-800"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ⚖️ LIVE WEIGHT-BASED PRICING SECTION */}
+              <div className="space-y-4 border-t border-stone-100 pt-6">
+                <div>
+                  <h4 className="font-bold text-stone-900 text-sm">⚖️ Weight-Based Pricing Parameters</h4>
+                  <p className="text-xs text-stone-400">Configure parameters for fish/prawn products sold by weight</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Price per Kilogram (₹/kg)</label>
+                    <div className="relative">
+                      <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
+                      <input
+                        type="number"
+                        name="pricePerKg"
+                        value={form.pricePerKg}
+                        onChange={handleChange}
+                        placeholder="e.g. 800"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Weight Variance Guarantee (%)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="weightVariancePct"
+                        value={form.weightVariancePct}
+                        onChange={handleChange}
+                        placeholder="e.g. 5"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 text-xs font-bold">%</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Min Order Weight (Grams)</label>
+                    <input
+                      type="number"
+                      name="minOrderWeight"
+                      value={form.minOrderWeight}
+                      onChange={handleChange}
+                      placeholder="e.g. 250"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Max Order Weight (Grams)</label>
+                    <input
+                      type="number"
+                      name="maxOrderWeight"
+                      value={form.maxOrderWeight}
+                      onChange={handleChange}
+                      placeholder="e.g. 5000"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 

@@ -1397,4 +1397,253 @@ router.post("/compliance/shipments/:id/apology-credit", adminAuth, async (req, r
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 💼 BUSINESS INTELLIGENCE SUITE
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 📊 DEMAND FORECASTING — GET /api/admin/bi/forecast/:productId
+router.get("/bi/forecast/:productId", adminAuth, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const days = parseInt(req.query.days) || 30;
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+
+    // Daily sales aggregation for this product
+    const dailySales = await Order.aggregate([
+      { $match: { createdAt: { $gte: since }, status: { $ne: "Cancelled" } } },
+      { $unwind: "$items" },
+      { $match: { "items.productId": new (await import("mongoose")).default.Types.ObjectId(productId) } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          qty: { $sum: "$items.qty" },
+          revenue: { $sum: { $multiply: ["$items.price", "$items.qty"] } },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Fill in zeros for missing days
+    const filledData = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
+      const key = d.toISOString().split("T")[0];
+      const found = dailySales.find((r) => r._id === key);
+      filledData.push({ date: key, qty: found?.qty || 0, revenue: found?.revenue || 0 });
+    }
+
+    // Simple 7-day moving average forecast for next 7 days
+    const recent7 = filledData.slice(-7);
+    const avgQty = recent7.reduce((s, d) => s + d.qty, 0) / 7;
+    const forecast = [];
+    for (let i = 1; i <= 7; i++) {
+      const d = new Date(Date.now() + i * 24 * 60 * 60 * 1000);
+      forecast.push({ date: d.toISOString().split("T")[0], qty: Math.round(avgQty), isForecast: true });
+    }
+
+    const product = await Product.findById(productId).select("name image unit countInStock stockThreshold");
+
+    res.json({
+      product,
+      history: filledData,
+      forecast,
+      avgDailyQty: Math.round(avgQty * 10) / 10,
+      daysToStockout: avgQty > 0 ? Math.floor((product?.countInStock || 0) / avgQty) : null,
+    });
+  } catch (err) {
+    console.error("Forecast Error:", err);
+    res.status(500).json({ message: "Forecast failed" });
+  }
+});
+
+// 📊 ALL PRODUCTS FORECAST SUMMARY — GET /api/admin/bi/forecast
+router.get("/bi/forecast", adminAuth, async (req, res) => {
+  try {
+    const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const salesData = await Order.aggregate([
+      { $match: { createdAt: { $gte: since30 }, status: { $ne: "Cancelled" } } },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.productId",
+          name: { $first: "$items.name" },
+          totalQty: { $sum: "$items.qty" },
+          totalRevenue: { $sum: { $multiply: ["$items.price", "$items.qty"] } },
+        },
+      },
+      { $sort: { totalQty: -1 } },
+    ]);
+
+    // Enrich with stock data
+    const productIds = salesData.map((s) => s._id);
+    const products = await Product.find({ _id: { $in: productIds } }).select("name image countInStock stockThreshold unit");
+    const productMap = {};
+    products.forEach((p) => { productMap[p._id.toString()] = p; });
+
+    const result = salesData.map((s) => {
+      const p = productMap[s._id?.toString()];
+      const avgDailyQty = s.totalQty / 30;
+      const daysToStockout = avgDailyQty > 0 && p ? Math.floor(p.countInStock / avgDailyQty) : null;
+      const urgency = daysToStockout === null ? "ok" : daysToStockout <= 3 ? "critical" : daysToStockout <= 7 ? "warning" : "ok";
+      return {
+        productId: s._id,
+        name: s.name,
+        image: p?.image,
+        unit: p?.unit,
+        countInStock: p?.countInStock,
+        avgDailyQty: Math.round(avgDailyQty * 10) / 10,
+        totalQty30d: s.totalQty,
+        totalRevenue30d: Math.round(s.totalRevenue),
+        daysToStockout,
+        urgency,
+      };
+    });
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: "Forecast summary failed" });
+  }
+});
+
+// 👥 RFM CUSTOMER SEGMENTATION — GET /api/admin/bi/rfm
+router.get("/bi/rfm", adminAuth, async (req, res) => {
+  try {
+    const userOrders = await Order.aggregate([
+      { $match: { status: { $ne: "Cancelled" } } },
+      {
+        $group: {
+          _id: "$user",
+          lastOrderDate: { $max: "$createdAt" },
+          orderCount: { $sum: 1 },
+          totalSpent: { $sum: "$totalAmount" },
+        },
+      },
+    ]);
+
+    const now = Date.now();
+    const segments = { champions: [], loyal: [], at_risk: [], hibernating: [], churned: [], new: [] };
+
+    const scored = userOrders.map((u) => {
+      const recencyDays = Math.floor((now - new Date(u.lastOrderDate)) / (1000 * 60 * 60 * 24));
+      const r = recencyDays <= 7 ? 5 : recencyDays <= 14 ? 4 : recencyDays <= 30 ? 3 : recencyDays <= 60 ? 2 : 1;
+      const f = u.orderCount >= 10 ? 5 : u.orderCount >= 5 ? 4 : u.orderCount >= 3 ? 3 : u.orderCount >= 2 ? 2 : 1;
+      const m = u.totalSpent >= 10000 ? 5 : u.totalSpent >= 5000 ? 4 : u.totalSpent >= 2000 ? 3 : u.totalSpent >= 500 ? 2 : 1;
+      const rfmScore = r + f + m;
+
+      let segment;
+      if (rfmScore >= 13) segment = "champions";
+      else if (rfmScore >= 10) segment = "loyal";
+      else if (recencyDays > 60 && f >= 2) segment = "at_risk";
+      else if (recencyDays > 90) segment = "hibernating";
+      else if (u.orderCount === 1 && recencyDays > 30) segment = "churned";
+      else segment = "new";
+
+      return { userId: u._id, recencyDays, orderCount: u.orderCount, totalSpent: u.totalSpent, rfmScore, segment, r, f, m };
+    });
+
+    // Group into segments
+    scored.forEach((s) => { if (segments[s.segment]) segments[s.segment].push(s); });
+
+    // Populate user details for top 10 per segment
+    const userIds = scored.map((s) => s.userId);
+    const users = await User.find({ _id: { $in: userIds } }).select("name email isPrime walletBalance");
+    const userMap = {};
+    users.forEach((u) => { userMap[u._id.toString()] = u; });
+
+    const enrichedSegments = {};
+    for (const [seg, members] of Object.entries(segments)) {
+      enrichedSegments[seg] = members.slice(0, 20).map((m) => ({
+        ...m,
+        user: userMap[m.userId?.toString()] || null,
+      }));
+    }
+
+    const summary = {
+      champions: segments.champions.length,
+      loyal: segments.loyal.length,
+      at_risk: segments.at_risk.length,
+      hibernating: segments.hibernating.length,
+      churned: segments.churned.length,
+      new: segments.new.length,
+      total: scored.length,
+    };
+
+    res.json({ summary, segments: enrichedSegments });
+  } catch (err) {
+    console.error("RFM Error:", err);
+    res.status(500).json({ message: "RFM analysis failed" });
+  }
+});
+
+// ⚖️ CONFIRM PACKED WEIGHT + AUTO WALLET REFUND — POST /api/admin/orders/:id/confirm-weight
+router.post("/orders/:id/confirm-weight", adminAuth, async (req, res) => {
+  try {
+    const { itemWeights } = req.body; // [{ itemIndex, actualWeightGrams }]
+    const order = await Order.findById(req.params.id).populate("user", "name email walletBalance");
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    let totalRefund = 0;
+
+    for (const { itemIndex, actualWeightGrams } of itemWeights) {
+      const item = order.items[itemIndex];
+      if (!item) continue;
+      item.actualWeightGrams = actualWeightGrams;
+
+      // Calculate shortfall refund
+      if (item.orderedWeightGrams > 0 && actualWeightGrams < item.orderedWeightGrams) {
+        const shortfallGrams = item.orderedWeightGrams - actualWeightGrams;
+        const pricePerGram = item.price / item.orderedWeightGrams;
+        const refundAmount = Math.round(shortfallGrams * pricePerGram);
+        totalRefund += refundAmount;
+      }
+    }
+
+    // Auto-credit wallet if refund due
+    if (totalRefund > 0 && !order.weightVarianceRefundIssued) {
+      await User.findByIdAndUpdate(order.user._id, {
+        $inc: { walletBalance: totalRefund },
+      });
+      order.weightVarianceRefundIssued = true;
+      order.weightVarianceRefundAmount = totalRefund;
+    }
+
+    await order.save();
+    res.json({
+      message: `Weights confirmed. ${totalRefund > 0 ? `₹${totalRefund} credited to customer wallet.` : "No variance refund needed."}`,
+      refundAmount: totalRefund,
+    });
+  } catch (err) {
+    console.error("Weight Confirm Error:", err);
+    res.status(500).json({ message: "Failed to confirm weight" });
+  }
+});
+
+// 📦 INVENTORY ALERTS — GET /api/admin/bi/inventory-alerts
+router.get("/bi/inventory-alerts", adminAuth, async (req, res) => {
+  try {
+    // Products at or below their threshold
+    const alerts = await Product.find({
+      $expr: { $lte: ["$countInStock", "$stockThreshold"] },
+      active: true,
+    }).select("name image category unit countInStock stockThreshold basePrice").sort({ countInStock: 1 });
+
+    // Out of stock
+    const outOfStock = await Product.find({ stock: "out", active: true })
+      .select("name image category unit").limit(20);
+
+    // Not sold in 30 days (stagnant)
+    const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const recentlySoldIds = await Order.distinct("items.productId", { createdAt: { $gte: since30 } });
+    const stagnant = await Product.find({
+      _id: { $nin: recentlySoldIds },
+      active: true,
+      countInStock: { $gt: 0 },
+    }).select("name image category countInStock").limit(10);
+
+    res.json({ alerts, outOfStock, stagnant });
+  } catch (err) {
+    res.status(500).json({ message: "Inventory alerts failed" });
+  }
+});
+
 export default router;

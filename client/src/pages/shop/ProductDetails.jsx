@@ -518,6 +518,10 @@ export default function ProductDetails() {
   const [recentItems, setRecentItems] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [viewerCount, setViewerCount] = useState(1);
+  // 🔪 Choose Your Cut + Weight
+  const [selectedCut, setSelectedCut] = useState(null); // { name, priceAdjustmentPct, emoji }
+  const [selectedWeightGrams, setSelectedWeightGrams] = useState(null); // For pricePerKg products
+  const [lightboxImage, setLightboxImage] = useState(null);
 
 
 
@@ -558,7 +562,15 @@ export default function ProductDetails() {
   const globalDiscount = product?.globalDiscount || 0;
   const isGlobalDiscount = !isActiveFlashSale && globalDiscount > 0;
   if (isGlobalDiscount) unitPrice = Math.round(basePrice * (1 - globalDiscount / 100));
-  const totalPrice = (unitPrice * qty).toFixed(2);
+
+  // 🔪 Apply Cut Price Adjustment
+  const cutAdjusted = selectedCut ? Math.round(unitPrice * (1 + (selectedCut.priceAdjustmentPct || 0) / 100)) : unitPrice;
+  // ⚖️ Weight pricing
+  const effectiveWeightGrams = selectedWeightGrams || (product?.minOrderWeight || 0);
+  const priceForWeight = product?.pricePerKg > 0 && effectiveWeightGrams > 0
+    ? Math.round((product.pricePerKg / 1000) * effectiveWeightGrams)
+    : cutAdjusted;
+  const totalPrice = (priceForWeight * qty).toFixed(2);
 
   const discountPct = isActiveFlashSale
     ? Math.round((1 - product.flashSale.discountPrice / basePrice) * 100)
@@ -730,7 +742,15 @@ export default function ProductDetails() {
     setTimeout(() => {
       try {
         triggerHaptic("medium");
-        addToCart({ ...product, quantity: qty, price: parseFloat(unitPrice), originalPrice: parseFloat(basePrice) });
+        addToCart({
+          ...product,
+          quantity: qty,
+          price: parseFloat(priceForWeight),
+          originalPrice: parseFloat(basePrice),
+          selectedCut: selectedCut?.name || "",
+          cutPriceAdjustmentPct: selectedCut?.priceAdjustmentPct || 0,
+          orderedWeightGrams: effectiveWeightGrams,
+        });
         refreshCartCount();
         toast.success(`${product.name} added`, {
           icon: "🛒",
@@ -750,7 +770,7 @@ export default function ProductDetails() {
 
   const handleBuyNow = () => {
     if (!product || product.stock === "out") return;
-    addToCart({ ...product, qty, price: parseFloat(totalPrice) });
+    addToCart({ ...product, qty, price: parseFloat(priceForWeight), selectedCut: selectedCut?.name || "", orderedWeightGrams: effectiveWeightGrams });
     refreshCartCount();
     navigate("/checkout");
   };
@@ -1096,6 +1116,80 @@ export default function ProductDetails() {
               <FreshnessMeter productId={product._id} />
               <PincodeChecker />
 
+              {/* 🔪 CHOOSE YOUR CUT */}
+              {product.hasCuts && product.cuts?.filter(c => c.available).length > 0 && (
+                <div style={{ marginBottom: "20px" }}>
+                  <h3 style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", marginBottom: "10px" }}>🔪 Choose Your Cut</h3>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {product.cuts.filter(c => c.available).map(cut => (
+                      <button
+                        key={cut.name}
+                        onClick={() => setSelectedCut(selectedCut?.name === cut.name ? null : cut)}
+                        style={{
+                          padding: "8px 14px", borderRadius: "100px", border: "2px solid",
+                          borderColor: selectedCut?.name === cut.name ? "#1A2E2C" : "#E2EEEC",
+                          background: selectedCut?.name === cut.name ? "#1A2E2C" : "#fff",
+                          color: selectedCut?.name === cut.name ? "#fff" : "#4A6A67",
+                          fontSize: "12px", fontWeight: "700", cursor: "pointer",
+                          fontFamily: "'Plus Jakarta Sans', sans-serif",
+                          transition: "all 0.2s",
+                          display: "flex", alignItems: "center", gap: "6px",
+                        }}
+                      >
+                        {cut.emoji || "🐟"} {cut.name}
+                        {cut.priceAdjustmentPct > 0 && (
+                          <span style={{ fontSize: "10px", color: selectedCut?.name === cut.name ? "rgba(255,255,255,0.7)" : "#5BBFB5" }}>
+                            +{cut.priceAdjustmentPct}%
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedCut && (
+                    <p style={{ fontSize: "11px", color: "#5BBFB5", marginTop: "8px", fontWeight: "600" }}>
+                      ✓ {selectedCut.name} selected{selectedCut.priceAdjustmentPct > 0 ? ` (+${selectedCut.priceAdjustmentPct}% processing fee)` : ""}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* ⚖️ WEIGHT SELECTOR */}
+              {product.pricePerKg > 0 && product.minOrderWeight > 0 && (
+                <div style={{ marginBottom: "20px" }}>
+                  <h3 style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", marginBottom: "10px" }}>
+                    ⚖️ Select Weight
+                    <span style={{ fontSize: "11px", color: "#5BBFB5", marginLeft: "8px", fontWeight: "600" }}>₹{product.pricePerKg}/kg</span>
+                  </h3>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {[250, 500, 750, 1000, 1500, 2000].filter(g => g >= product.minOrderWeight && g <= (product.maxOrderWeight || 5000)).map(grams => (
+                      <button
+                        key={grams}
+                        onClick={() => setSelectedWeightGrams(grams)}
+                        style={{
+                          padding: "8px 14px", borderRadius: "100px", border: "2px solid",
+                          borderColor: selectedWeightGrams === grams ? "#5BBFB5" : "#E2EEEC",
+                          background: selectedWeightGrams === grams ? "rgba(91,191,181,0.08)" : "#fff",
+                          color: selectedWeightGrams === grams ? "#5BBFB5" : "#4A6A67",
+                          fontSize: "12px", fontWeight: "700", cursor: "pointer",
+                          fontFamily: "'Plus Jakarta Sans', sans-serif",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        {grams >= 1000 ? `${grams/1000}kg` : `${grams}g`}
+                        <span style={{ display: "block", fontSize: "10px", marginTop: "1px", color: selectedWeightGrams === grams ? "#5BBFB5" : "#6B8F8A" }}>
+                          ₹{Math.round((product.pricePerKg / 1000) * grams)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {/* Weight Variance Guarantee */}
+                  <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", fontSize: "11px", color: "#6B8F8A", fontWeight: "600", background: "#F4F9F8", padding: "8px 12px", borderRadius: "8px" }}>
+                    <span>⚖️</span>
+                    <span>Weight Variance Guarantee: if actual weight differs by more than {product.weightVariancePct || 5}%, we auto-refund the difference to your wallet.</span>
+                  </div>
+                </div>
+              )}
+
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "32px" }}>
                 <button
                   onClick={handleAddToCart}
@@ -1140,6 +1234,172 @@ export default function ProductDetails() {
               )}
             </div>
           </div>
+
+          {/* 🟢 TABS SECTION */}
+          <div style={{ marginTop: "48px", borderTop: "1px solid #E2EEEC", paddingTop: "32px", marginBottom: "40px" }}>
+            <div style={{ display: "flex", gap: "24px", borderBottom: "2px solid #E2EEEC", marginBottom: "24px" }}>
+              {TABS.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  style={{
+                    paddingBottom: "12px",
+                    background: "none",
+                    border: "none",
+                    borderBottom: activeTab === tab.id ? "3px solid #5BBFB5" : "3px solid transparent",
+                    color: activeTab === tab.id ? "#1A2E2C" : "#6B8F8A",
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    fontFamily: "'Plus Jakarta Sans', sans-serif",
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ minHeight: "150px" }}>
+              {activeTab === "desc" && (
+                <div style={{ color: "#4A6A67", fontSize: "14px", lineHeight: 1.6 }}>
+                  <p>{product.desc || "Premium fresh seafood sourced daily. Hand-picked for quality and freshness."}</p>
+                  <p style={{ marginTop: "12px" }}><strong>Category:</strong> {product.category}</p>
+                  <p><strong>Dock Source:</strong> {product.dockSource || "Mogalthur Docks"}</p>
+                  {product.catchOfTheDay && <p style={{ color: "#5BBFB5", fontWeight: "700", marginTop: "8px" }}>🌟 Catch of the Day</p>}
+                </div>
+              )}
+
+              {activeTab === "shipping" && (
+                <div style={{ color: "#4A6A67", fontSize: "14px", lineHeight: 1.6 }}>
+                  <p>🌊 Freshness is our guarantee. All orders are packed in temperature-controlled ice boxes to ensure zero spoilage during transit.</p>
+                  <ul style={{ marginTop: "12px", listStyleType: "disc", paddingLeft: "20px" }}>
+                    <li>Orders placed before 8 PM will be delivered tomorrow morning.</li>
+                    <li>Delivery hours: 6 AM to 11 AM.</li>
+                    <li>Free shipping for SeaBite Prime members.</li>
+                  </ul>
+                </div>
+              )}
+
+              {activeTab === "reviews" && (
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px", flexWrap: "wrap", gap: "16px" }}>
+                    <div>
+                      <h3 style={{ fontSize: "20px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>Customer Reviews</h3>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+                        <div style={{ display: "flex" }}>
+                          {[...Array(5)].map((_, i) => (
+                            <FiStar key={i} size={16} style={{ color: i < Math.round(product.rating || 0) ? "#F59E0B" : "#eee" }} fill={i < Math.round(product.rating || 0) ? "#F59E0B" : "none"} />
+                          ))}
+                        </div>
+                        <span style={{ fontSize: "14px", fontWeight: "600", color: "#1A2E2C" }}>
+                          {product.rating ? `${product.rating.toFixed(1)} out of 5` : "No ratings yet"}
+                        </span>
+                        <span style={{ fontSize: "14px", color: "#6B8F8A" }}>({product.numReviews || 0} reviews)</span>
+                      </div>
+                    </div>
+                    {canReview && (
+                      <button
+                        onClick={() => setIsReviewOpen(true)}
+                        style={{
+                          padding: "10px 20px",
+                          background: "#5BBFB5",
+                          color: "#fff",
+                          border: "none",
+                          borderRadius: "100px",
+                          fontWeight: "700",
+                          fontSize: "13px",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          boxShadow: "0 4px 12px rgba(91,191,181,0.2)",
+                        }}
+                      >
+                        Write a Review
+                      </button>
+                    )}
+                  </div>
+
+                  {(!product.reviews || product.reviews.length === 0) ? (
+                    <div style={{ textAlign: "center", padding: "40px 20px", border: "1px dashed #E2EEEC", borderRadius: "16px" }}>
+                      <p style={{ color: "#6B8F8A", fontSize: "14px", margin: 0 }}>No reviews for this product yet. Be the first to share your thoughts!</p>
+                      {canReview && (
+                        <button
+                          onClick={() => setIsReviewOpen(true)}
+                          style={{
+                            marginTop: "12px",
+                            padding: "8px 16px",
+                            background: "none",
+                            border: "1.5px solid #5BBFB5",
+                            color: "#5BBFB5",
+                            borderRadius: "100px",
+                            fontWeight: "700",
+                            fontSize: "12px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Write a Review
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      {product.reviews.map((rev) => (
+                        <div
+                          key={rev._id}
+                          className="review-card"
+                          style={{
+                            padding: "16px",
+                            border: "1px solid #E2EEEC",
+                            borderRadius: "16px",
+                            background: "#fff",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "8px" }}>
+                            <div>
+                              <h4 style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{rev.name}</h4>
+                              <div style={{ display: "flex", gap: "1px", marginTop: "2px" }}>
+                                {[...Array(5)].map((_, i) => (
+                                  <FiStar key={i} size={12} style={{ color: i < rev.rating ? "#F59E0B" : "#eee" }} fill={i < rev.rating ? "#F59E0B" : "none"} />
+                                ))}
+                              </div>
+                            </div>
+                            <span style={{ fontSize: "11px", color: "#6B8F8A" }}>
+                              {new Date(rev.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            </span>
+                          </div>
+                          <p style={{ fontSize: "13px", color: "#4A6A67", margin: "8px 0 0 0", lineHeight: 1.5 }}>{rev.comment}</p>
+                          
+                          {/* Review Images */}
+                          {rev.images && rev.images.length > 0 && (
+                            <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                              {rev.images.map((imgUrl, imgIdx) => (
+                                <div
+                                  key={imgIdx}
+                                  onClick={() => setLightboxImage(imgUrl)}
+                                  style={{
+                                    width: "64px",
+                                    height: "64px",
+                                    borderRadius: "8px",
+                                    overflow: "hidden",
+                                    cursor: "pointer",
+                                    border: "1px solid #E2EEEC",
+                                    boxShadow: "0 2px 6px rgba(0,0,0,0.05)",
+                                  }}
+                                >
+                                  <img src={imgUrl} alt={`Review by ${rev.name}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
           
           {recentItems.length > 0 && (
             <RecentlyViewed items={recentItems} getFullImageUrl={getFullImageUrl} />
@@ -1155,6 +1415,67 @@ export default function ProductDetails() {
       </div>
 
 
+
+      {/* Lightbox for review images */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100vw",
+              height: "100vh",
+              background: "rgba(0,0,0,0.85)",
+              backdropFilter: "blur(8px)",
+              zIndex: 1000000,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "zoom-out",
+            }}
+          >
+            <button
+              onClick={() => setLightboxImage(null)}
+              style={{
+                position: "absolute",
+                top: "24px",
+                right: "24px",
+                background: "rgba(255,255,255,0.15)",
+                border: "none",
+                borderRadius: "50%",
+                width: "40px",
+                height: "40px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#fff",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+            >
+              <FiX size={24} />
+            </button>
+            <motion.img
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              src={lightboxImage}
+              alt="Review Image Enlarged"
+              style={{
+                maxWidth: "90%",
+                maxHeight: "85%",
+                borderRadius: "12px",
+                boxShadow: "0 20px 50px rgba(0,0,0,0.5)",
+              }}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ReviewModal
         isOpen={isReviewOpen}

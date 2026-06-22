@@ -379,7 +379,7 @@ a, button, input, select, textarea, [role="button"] {
 
   /* Products */
   .products-wrapper {
-    padding: 80px 12px 40px !important;
+    padding: 20px 12px 40px !important;
   }
 
   .products-header {
@@ -465,7 +465,7 @@ a, button, input, select, textarea, [role="button"] {
 
   /* Products */
   .products-wrapper {
-    padding: 88px 16px 48px !important;
+    padding: 24px 16px 48px !important;
   }
 
   .products-header {

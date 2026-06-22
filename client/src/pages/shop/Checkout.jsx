@@ -11,6 +11,7 @@ import {
 import AddressForm from "../../components/forms/AddressForm";
 import PopupModal from "../../components/common/PopupModal";
 import { CartContext } from "../../context/CartContext";
+import { AuthContext } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 
@@ -184,6 +185,7 @@ function CouponDrawer({ isOpen, onClose, coupons, appliedCoupon, onApply, onClea
 
 export default function Checkout() {
   const { cartItems, subtotal, storeSettings, refreshCartCount, clearCart, updateQuantity, removeFromCart, cartLoaded } = useContext(CartContext);
+  const { user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -320,7 +322,8 @@ export default function Checkout() {
   const deliveryFee = storeSettings?.deliveryFee !== undefined ? parseFloat(storeSettings.deliveryFee) : 99;
   const freeThreshold = storeSettings?.freeDeliveryThreshold !== undefined ? parseFloat(storeSettings.freeDeliveryThreshold) : 1000;
   const isShippingCoupon = appliedCoupon?.discountType === "shipping";
-  const deliveryCharge = (itemTotal >= freeThreshold || isShippingCoupon) ? 0 : deliveryFee;
+  const isPrime = user?.isPrime;
+  const deliveryCharge = (itemTotal >= freeThreshold || isShippingCoupon || isPrime) ? 0 : deliveryFee;
   const freeDeliveryProgress = freeThreshold > 0 ? Math.min((itemTotal / freeThreshold) * 100, 100) : 100;
 
   const discountAmount = useMemo(() => {
@@ -952,7 +955,12 @@ export default function Checkout() {
                     )}
                   </AnimatePresence>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiTruck size={11} /> Shipping</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <FiTruck size={11} /> Shipping
+                      {isPrime && (
+                        <span style={{ fontSize: 9, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg, #1A2E2C, #5BBFB5)", padding: "2px 6px", borderRadius: 4, marginLeft: 4 }}>PRIME</span>
+                      )}
+                    </span>
                     <span style={{ fontWeight: 800, color: deliveryCharge === 0 ? "#10B981" : T.textDark }}>
                       {deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge.toFixed(2)}`}
                     </span>
@@ -1035,7 +1043,7 @@ export default function Checkout() {
                 </div>
 
                 {/* Free delivery progress */}
-                {itemTotal < freeThreshold && (
+                {itemTotal < freeThreshold && !isPrime && (
                   <div style={{ marginBottom: 18, padding: "12px 14px", borderRadius: 12, background: "rgba(91,168,160,0.06)", border: "1px solid rgba(91,168,160,0.15)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.08em" }}>Free Delivery</span>

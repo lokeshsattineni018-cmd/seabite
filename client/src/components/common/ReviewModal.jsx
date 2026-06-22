@@ -29,8 +29,8 @@ const ReviewModal = ({ isOpen, onClose, product, existingReview, token, API_URL,
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length + images.length > 5) {
-      alert("You can only upload up to 5 images.");
+    if (files.length + images.length > 3) {
+      alert("You can only upload up to 3 images.");
       return;
     }
 
@@ -148,23 +148,23 @@ const ReviewModal = ({ isOpen, onClose, product, existingReview, token, API_URL,
             {/* Photo Upload Zone */}
             <div>
               <label className="block text-xs font-black uppercase tracking-widest text-slate-400 mb-3 ml-1">
-                Add Photos (Max 5)
+                Add Photos (Max 3)
               </label>
               
               <div 
                 className={`
                   p-6 rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center gap-3 cursor-pointer
-                  ${imagePreviews.length >= 5 ? 'opacity-50 cursor-not-allowed border-slate-200' : 'border-slate-200 dark:border-slate-800 hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10'}
+                  ${imagePreviews.length >= 3 ? 'opacity-50 cursor-not-allowed border-slate-200' : 'border-slate-200 dark:border-slate-800 hover:border-blue-500 hover:bg-blue-50/30 dark:hover:bg-blue-900/10'}
                 `}
                 onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 onDrop={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (imagePreviews.length >= 5) return;
+                  if (imagePreviews.length >= 3) return;
                   const files = Array.from(e.dataTransfer.files);
                   handleImageChange({ target: { files } });
                 }}
-                onClick={() => imagePreviews.length < 5 && fileInputRef.current?.click()}
+                onClick={() => imagePreviews.length < 3 && fileInputRef.current?.click()}
               >
                 <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center text-blue-500">
                   <FiCamera size={24} />

@@ -26,6 +26,15 @@ export default function EditProduct() {
 
   const [form, setForm] = useState({
     name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", image: "", images: [], trending: false, stock: "in", countInStock: 0,
+    hasCuts: false,
+    cuts: [
+      { name: "Whole", priceAdjustmentPct: 0, available: true, emoji: "🐟" },
+      { name: "Cleaned & Gutted", priceAdjustmentPct: 5, available: true, emoji: "🧼" },
+      { name: "Steaks", priceAdjustmentPct: 10, available: true, emoji: "🥩" },
+      { name: "Fillets", priceAdjustmentPct: 15, available: true, emoji: "🍣" },
+      { name: "Boneless Cubes", priceAdjustmentPct: 20, available: true, emoji: "🧊" },
+    ],
+    pricePerKg: "", minOrderWeight: 250, maxOrderWeight: 5000, weightVariancePct: 5
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -50,7 +59,19 @@ export default function EditProduct() {
           unit: data.unit || "kg", 
           stock: data.stock || "in", 
           countInStock: data.countInStock || 0,
-          images: data.images || []
+          images: data.images || [],
+          hasCuts: data.hasCuts || false,
+          cuts: data.cuts && data.cuts.length > 0 ? data.cuts : [
+            { name: "Whole", priceAdjustmentPct: 0, available: true, emoji: "🐟" },
+            { name: "Cleaned & Gutted", priceAdjustmentPct: 5, available: true, emoji: "🧼" },
+            { name: "Steaks", priceAdjustmentPct: 10, available: true, emoji: "🥩" },
+            { name: "Fillets", priceAdjustmentPct: 15, available: true, emoji: "🍣" },
+            { name: "Boneless Cubes", priceAdjustmentPct: 20, available: true, emoji: "🧊" },
+          ],
+          pricePerKg: data.pricePerKg !== undefined ? data.pricePerKg : "",
+          minOrderWeight: data.minOrderWeight || 250,
+          maxOrderWeight: data.maxOrderWeight || 5000,
+          weightVariancePct: data.weightVariancePct || 5
         });
         setLoading(false);
       })
@@ -129,6 +150,12 @@ export default function EditProduct() {
       await axios.put(`${backendBase}/api/admin/products/${id}`, {
         name: form.name, category: form.category, basePrice: Number(form.basePrice), buyingPrice: Number(form.buyingPrice),
         unit: form.unit, desc: form.desc, image: form.image, images: form.images, trending: form.trending, stock: form.stock, countInStock: Number(form.countInStock),
+        hasCuts: form.hasCuts,
+        cuts: form.cuts,
+        pricePerKg: form.pricePerKg ? Number(form.pricePerKg) : 0,
+        minOrderWeight: form.minOrderWeight ? Number(form.minOrderWeight) : 250,
+        maxOrderWeight: form.maxOrderWeight ? Number(form.maxOrderWeight) : 5000,
+        weightVariancePct: form.weightVariancePct ? Number(form.weightVariancePct) : 5,
       }, { withCredentials: true });
       setModal({ show: true, message: "Product updated successfully!", type: "success" });
       setTimeout(() => navigate("/admin/products"), 1500);
@@ -312,6 +339,141 @@ export default function EditProduct() {
                   <motion.div whileTap={{ scale: 0.98 }} onClick={() => setForm({ ...form, stock: "out", countInStock: 0 })} className={`cursor-pointer rounded-2xl p-4 border-2 flex items-center justify-center gap-3 transition-all ${form.stock === "out" ? "border-rose-500 bg-rose-50 text-rose-800" : "border-stone-100 bg-stone-50 text-stone-400 hover:border-stone-200"}`}>
                     <span className="text-sm font-bold">Out of Stock</span>{form.stock === "out" && <FiCheck size={18} />}
                   </motion.div>
+                </div>
+              </div>
+
+              {/* 🔪 CHOOSE YOUR CUT SECTION */}
+              <div className="space-y-4 border-t border-stone-100 pt-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="font-bold text-stone-900 text-sm">🔪 Custom Cut Settings</h4>
+                    <p className="text-xs text-stone-400">Offer users cut selection on PDP</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" checked={form.hasCuts} onChange={(e) => setForm({ ...form, hasCuts: e.target.checked })} />
+                    <div className="w-11 h-6 bg-stone-200 rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-stone-800 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all shadow-inner"></div>
+                  </label>
+                </div>
+
+                {form.hasCuts && (
+                  <div className="space-y-3 bg-stone-50 p-4 rounded-2xl border border-stone-150">
+                    <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-stone-400 uppercase tracking-widest px-2">
+                      <div className="col-span-2 text-center">Emoji</div>
+                      <div className="col-span-5">Cut Name</div>
+                      <div className="col-span-3">Fee %</div>
+                      <div className="col-span-2 text-center">Active</div>
+                    </div>
+                    {form.cuts.map((cut, index) => (
+                      <div key={index} className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-2">
+                          <input
+                            type="text"
+                            value={cut.emoji}
+                            onChange={(e) => {
+                              const newCuts = [...form.cuts];
+                              newCuts[index].emoji = e.target.value;
+                              setForm({ ...form, cuts: newCuts });
+                            }}
+                            className="w-full bg-white border border-stone-200 rounded-lg px-1.5 py-1 text-center text-sm outline-none"
+                          />
+                        </div>
+                        <div className="col-span-5 text-sm font-semibold text-stone-800">
+                          {cut.name}
+                        </div>
+                        <div className="col-span-3">
+                          <div className="relative">
+                            <input
+                              type="number"
+                              value={cut.priceAdjustmentPct}
+                              onChange={(e) => {
+                                const newCuts = [...form.cuts];
+                                newCuts[index].priceAdjustmentPct = Number(e.target.value);
+                                setForm({ ...form, cuts: newCuts });
+                              }}
+                              className="w-full bg-white border border-stone-200 rounded-lg pl-2 pr-5 py-1 text-xs font-mono font-bold outline-none"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-stone-400 text-xs font-bold">%</span>
+                          </div>
+                        </div>
+                        <div className="col-span-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={cut.available}
+                            onChange={(e) => {
+                              const newCuts = [...form.cuts];
+                              newCuts[index].available = e.target.checked;
+                              setForm({ ...form, cuts: newCuts });
+                            }}
+                            className="w-4 h-4 rounded text-stone-800 focus:ring-stone-800"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* ⚖️ LIVE WEIGHT-BASED PRICING SECTION */}
+              <div className="space-y-4 border-t border-stone-100 pt-6">
+                <div>
+                  <h4 className="font-bold text-stone-900 text-sm">⚖️ Weight-Based Pricing Parameters</h4>
+                  <p className="text-xs text-stone-400">Configure parameters for fish/prawn products sold by weight</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Price per Kilogram (₹/kg)</label>
+                    <div className="relative">
+                      <FiDollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
+                      <input
+                        type="number"
+                        name="pricePerKg"
+                        value={form.pricePerKg}
+                        onChange={handleChange}
+                        placeholder="e.g. 800"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 pl-9 pr-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Weight Variance Guarantee (%)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        name="weightVariancePct"
+                        value={form.weightVariancePct}
+                        onChange={handleChange}
+                        placeholder="e.g. 5"
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 text-xs font-bold">%</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Min Order Weight (Grams)</label>
+                    <input
+                      type="number"
+                      name="minOrderWeight"
+                      value={form.minOrderWeight}
+                      onChange={handleChange}
+                      placeholder="e.g. 250"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Max Order Weight (Grams)</label>
+                    <input
+                      type="number"
+                      name="maxOrderWeight"
+                      value={form.maxOrderWeight}
+                      onChange={handleChange}
+                      placeholder="e.g. 5000"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
                 </div>
               </div>
 
