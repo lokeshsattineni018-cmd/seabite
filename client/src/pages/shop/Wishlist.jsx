@@ -73,17 +73,6 @@ export default function Wishlist() {
         <>
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
-                .wishlist-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-                    gap: 24px;
-                }
-                @media (max-width: 640px) {
-                    .wishlist-grid {
-                        grid-template-columns: repeat(2, 1fr);
-                        gap: 14px;
-                    }
-                }
             `}</style>
 
             <div style={{
@@ -131,7 +120,7 @@ export default function Wishlist() {
 
                     {/* ── GRID ── */}
                     {wishlist.length > 0 ? (
-                        <div className="wishlist-grid">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 product-grid">
                             {wishlist.map((product) => (
                                 <EnhancedProductCard
                                     key={product._id}
@@ -166,7 +155,7 @@ export default function Wishlist() {
                             {trending.length > 0 && (
                                 <div style={{ marginTop: 80, textAlign: "left" }}>
                                     <h3 style={{ fontSize: 18, fontWeight: 800, color: "#1A2E2C", marginBottom: 24 }}>Recommended for you</h3>
-                                    <div className="wishlist-grid">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 product-grid">
                                         {trending.map(p => (
                                             <EnhancedProductCard key={p._id} product={p} globalDiscount={globalDiscount} />
                                         ))}

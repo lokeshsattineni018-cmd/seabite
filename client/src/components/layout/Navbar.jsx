@@ -527,9 +527,6 @@ export default function Navbar({ announcementActive = false }) {
               <Link to="/about" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>About</Link>
               <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>Orders</Link>
               <Link to="/recipes" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>Recipes</Link>
-              <Link to="/prime" style={{ padding: "5px 12px", textDecoration: "none", fontSize: "11px", fontWeight: "900", textTransform: "uppercase", letterSpacing: "0.06em", color: "#5BBFB5", background: "rgba(91,191,181,0.1)", border: "1.5px solid rgba(91,191,181,0.25)", borderRadius: "100px", display: "flex", alignItems: "center", gap: "5px" }}>
-                <span>💎</span> Prime
-              </Link>
             </div>
 
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>

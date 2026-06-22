@@ -94,7 +94,7 @@ export default function SeaBitePrime() {
   const primeExpiry = primeStatus?.primeExpiry ? new Date(primeStatus.primeExpiry) : null;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#F4F9F8", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-16">
       <Helmet>
         <title>SeaBite Prime — Exclusive Membership</title>
         <meta name="description" content="Join SeaBite Prime for free delivery, early flash sale access, and 5% extra off every order." />
@@ -102,151 +102,146 @@ export default function SeaBitePrime() {
         <script src="https://checkout.razorpay.com/v1/checkout.js" />
       </Helmet>
 
-      {/* Hero */}
-      <div style={{
-        background: "linear-gradient(135deg, #0D1B1A 0%, #1A2E2C 50%, #0D2822 100%)",
-        padding: "100px 24px 80px", textAlign: "center", position: "relative", overflow: "hidden"
-      }}>
-        {/* Background orbs */}
-        <div style={{ position: "absolute", top: "20%", left: "10%", width: "300px", height: "300px", background: "radial-gradient(circle, rgba(91,191,181,0.15), transparent 70%)", borderRadius: "50%" }} />
-        <div style={{ position: "absolute", bottom: "10%", right: "10%", width: "250px", height: "250px", background: "radial-gradient(circle, rgba(91,191,181,0.1), transparent 70%)", borderRadius: "50%" }} />
-
-        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(91,191,181,0.15)", border: "1px solid rgba(91,191,181,0.3)", borderRadius: "100px", padding: "8px 18px", marginBottom: "28px" }}>
-            <span style={{ fontSize: "16px" }}>💎</span>
-            <span style={{ fontSize: "12px", fontWeight: "900", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.12em" }}>SeaBite Prime</span>
-          </div>
-          <h1 style={{ fontSize: "clamp(36px, 6vw, 64px)", fontWeight: "900", color: "#fff", letterSpacing: "-0.04em", margin: "0 0 20px", lineHeight: 1.05 }}>
-            Elevate Your<br />Seafood Experience
-          </h1>
-          <p style={{ fontSize: "18px", color: "rgba(255,255,255,0.6)", maxWidth: "520px", margin: "0 auto 48px", lineHeight: 1.6, fontWeight: "500" }}>
-            Free delivery, exclusive discounts, and early access to the freshest deals — all in one membership.
-          </p>
-
-          {/* Prime Status Banner */}
-          {isPrime && primeExpiry && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              style={{ display: "inline-flex", alignItems: "center", gap: "12px", background: "linear-gradient(135deg, rgba(91,191,181,0.2), rgba(91,191,181,0.1))", border: "1.5px solid rgba(91,191,181,0.4)", borderRadius: "16px", padding: "16px 24px", marginBottom: "32px" }}
-            >
-              <span style={{ fontSize: "24px" }}>💎</span>
-              <div style={{ textAlign: "left" }}>
-                <p style={{ color: "#5BBFB5", fontWeight: "900", fontSize: "14px", margin: 0 }}>You're a Prime Member!</p>
-                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "12px", margin: "2px 0 0", fontWeight: "600" }}>
-                  Active until {primeExpiry.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
-                </p>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
+        {/* 💎 Hero Banner Card */}
+        <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-slate-900 via-[#1A2E2C] to-[#5BBFB5] px-6 py-16 md:py-20 text-white shadow-xl text-center mb-12">
+          {/* Glowing backgrounds */}
+          <div className="absolute top-[-20%] left-[-10%] w-[300px] h-[300px] bg-white/5 rounded-full blur-[80px] pointer-events-none" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] bg-[#5BBFB5]/10 rounded-full blur-[80px] pointer-events-none" />
+          
+          <div className="relative z-10 max-w-2xl mx-auto">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-xs font-black uppercase tracking-widest text-[#5BBFB5] mb-6">
+              <span>💎</span> SeaBite Prime
+            </div>
+            <h1 className="text-4xl md:text-6xl font-extralight tracking-tight text-white mb-6 leading-tight">
+              Elevate Your <span className="font-bold">Seafood Experience</span>
+            </h1>
+            <p className="text-sm md:text-base text-slate-200 font-medium leading-relaxed max-w-xl mx-auto mb-8">
+              Enjoy unlimited free delivery, exclusive member pricing, early access to fresh catches, and priority support.
+            </p>
+            
+            {/* Active prime notification */}
+            {isPrime && primeExpiry && (
+              <div className="inline-flex items-center gap-4 bg-white/10 border border-white/20 rounded-2xl p-4 md:px-6">
+                <span className="text-2xl">💎</span>
+                <div className="text-left">
+                  <p className="text-[#5BBFB5] font-black uppercase tracking-wider text-[10px]">Active Membership</p>
+                  <p className="text-slate-200 text-xs font-semibold mt-0.5">
+                    Valid until {primeExpiry.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
+                  </p>
+                </div>
               </div>
-            </motion.div>
-          )}
-        </motion.div>
-      </div>
+            )}
+          </div>
+        </div>
 
-      {/* Plans */}
-      <div style={{ maxWidth: "900px", margin: "-40px auto 0", padding: "0 24px", position: "relative", zIndex: 10 }}>
+        {/* Subscription Plan selection */}
         {!isPrime && (
-          <motion.div initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "48px" }}>
+          <div className="max-w-3xl mx-auto mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
               {Object.entries(PLANS).map(([key, plan]) => (
-                <motion.div
+                <div
                   key={key}
-                  whileTap={{ scale: 0.98 }}
                   onClick={() => setSelectedPlan(key)}
-                  style={{
-                    background: "#fff", borderRadius: "24px", padding: "28px",
-                    border: `2.5px solid ${selectedPlan === key ? "#5BBFB5" : "#E2EEEC"}`,
-                    cursor: "pointer", position: "relative", transition: "all 0.2s",
-                    boxShadow: selectedPlan === key ? "0 16px 48px rgba(91,191,181,0.18)" : "0 4px 16px rgba(0,0,0,0.03)",
-                    transform: selectedPlan === key ? "translateY(-4px)" : "none",
-                  }}
+                  className={`bg-white rounded-[2.5rem] p-8 border-2 cursor-pointer transition-all duration-300 relative flex flex-col justify-between ${
+                    selectedPlan === key
+                      ? "border-[#5BBFB5] shadow-[0_20px_50px_rgba(91,191,181,0.12)] scale-[1.02]"
+                      : "border-slate-100 hover:border-slate-200 hover:scale-[1.01] shadow-[0_20px_50px_rgba(0,0,0,0.02)]"
+                  }`}
                 >
                   {plan.tag && (
-                    <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "#5BBFB5", color: "#fff", fontSize: "9px", fontWeight: "900", padding: "4px 12px", borderRadius: "20px", letterSpacing: "0.12em" }}>
+                    <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 bg-[#5BBFB5] text-white text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-sm">
                       {plan.tag}
                     </div>
                   )}
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                    <span style={{ fontSize: "14px", fontWeight: "700", color: "#6B8F8A" }}>{plan.label}</span>
-                    <div style={{ width: "22px", height: "22px", borderRadius: "50%", border: `2.5px solid ${selectedPlan === key ? "#5BBFB5" : "#E2EEEC"}`, background: selectedPlan === key ? "#5BBFB5" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
+                  
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">{plan.label} Plan</span>
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                      selectedPlan === key ? "border-[#5BBFB5] bg-[#5BBFB5]" : "border-slate-200 bg-transparent"
+                    }`}>
                       {selectedPlan === key && <FiCheck size={12} color="#fff" strokeWidth={3} />}
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-                    <span style={{ fontSize: "40px", fontWeight: "900", color: "#1A2E2C", letterSpacing: "-0.04em" }}>₹{plan.price}</span>
-                    <span style={{ fontSize: "14px", color: "#6B8F8A", fontWeight: "600" }}>{plan.period}</span>
+                  
+                  <div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">₹{plan.price}</span>
+                      <span className="text-sm font-semibold text-slate-400">{plan.period}</span>
+                    </div>
+                    {plan.savings && (
+                      <p className="text-xs font-bold text-emerald-500 mt-2 bg-emerald-50 inline-block px-2.5 py-1 rounded-lg">{plan.savings} vs monthly</p>
+                    )}
+                    <p className="text-[11px] font-medium text-slate-400 mt-3">Billed for {plan.duration} · Cancel anytime</p>
                   </div>
-                  {plan.savings && (
-                    <p style={{ fontSize: "12px", fontWeight: "800", color: "#10B981", margin: "6px 0 0" }}>{plan.savings} vs monthly</p>
-                  )}
-                  <p style={{ fontSize: "12px", color: "#6B8F8A", margin: "4px 0 0", fontWeight: "600" }}>Billed for {plan.duration}</p>
-                </motion.div>
+                </div>
               ))}
             </div>
 
-            {/* Subscribe Button */}
+            {/* Subscribe CTA */}
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleSubscribe}
               disabled={loading}
-              style={{
-                width: "100%", padding: "20px", borderRadius: "16px",
-                background: loading ? "#B8CFCC" : "linear-gradient(135deg, #5BBFB5, #3D9E94)",
-                border: "none", color: "#fff", fontSize: "17px", fontWeight: "800",
-                cursor: loading ? "not-allowed" : "pointer",
-                fontFamily: "'Plus Jakarta Sans', sans-serif",
-                boxShadow: "0 12px 32px rgba(91,191,181,0.35)",
-                letterSpacing: "0.01em", marginBottom: "16px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px"
-              }}
+              className={`w-full py-5 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl ${
+                loading 
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none" 
+                  : "bg-slate-900 hover:bg-[#5BBFB5] text-white shadow-slate-900/10"
+              }`}
             >
-              {loading ? "Processing…" : <><span>💎</span> Get SeaBite Prime — ₹{PLANS[selectedPlan].price}{PLANS[selectedPlan].period}</>}
+              {loading ? "Processing…" : <><span className="text-sm">💎</span> Get SeaBite Prime — ₹{PLANS[selectedPlan].price}{PLANS[selectedPlan].period}</>}
             </motion.button>
-            <p style={{ textAlign: "center", fontSize: "12px", color: "#6B8F8A", fontWeight: "600" }}>
+            <p className="text-center text-[11px] font-semibold text-slate-400 mt-4">
               🔒 Secure payment via Razorpay · Cancel anytime after expiry
             </p>
-          </motion.div>
+          </div>
         )}
 
-        {/* Benefits Comparison */}
-        <div style={{ background: "#fff", borderRadius: "24px", border: "1.5px solid #E2EEEC", overflow: "hidden", marginBottom: "48px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", borderBottom: "1.5px solid #E2EEEC" }}>
-            <div style={{ padding: "20px 24px" }}>
-              <p style={{ fontSize: "11px", fontWeight: "900", color: "#6B8F8A", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>Benefits</p>
+        {/* Benefits Comparison Grid */}
+        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] overflow-hidden mb-16">
+          <div className="grid grid-cols-12 border-b border-slate-100 bg-slate-50/50">
+            <div className="col-span-8 p-6">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Membership Benefits</span>
             </div>
-            <div style={{ padding: "20px 24px", textAlign: "center", minWidth: "100px" }}>
-              <p style={{ fontSize: "12px", fontWeight: "700", color: "#6B8F8A", margin: 0 }}>Free</p>
+            <div className="col-span-2 p-6 text-center">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Free</span>
             </div>
-            <div style={{ padding: "20px 24px", textAlign: "center", minWidth: "100px", background: "rgba(91,191,181,0.05)", borderLeft: "2px solid rgba(91,191,181,0.2)" }}>
-              <p style={{ fontSize: "12px", fontWeight: "900", color: "#5BBFB5", margin: 0 }}>💎 Prime</p>
+            <div className="col-span-2 p-6 text-center bg-[#5BBFB5]/5 border-l border-slate-100">
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#5BBFB5]">Prime</span>
             </div>
           </div>
+          
           {BENEFITS.map((b, i) => (
-            <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr auto auto", borderBottom: i < BENEFITS.length - 1 ? "1px solid #E2EEEC" : "none" }}>
-              <div style={{ padding: "18px 24px", display: "flex", alignItems: "center", gap: "14px" }}>
-                <div style={{ color: "#5BBFB5" }}>{b.icon}</div>
+            <div key={i} className="grid grid-cols-12 border-b border-slate-100 last:border-0 hover:bg-slate-50/30 transition-colors">
+              <div className="col-span-8 p-6 flex items-start gap-4">
+                <div className="text-[#5BBFB5] p-2 bg-[#5BBFB5]/10 rounded-xl mt-0.5 shrink-0">{b.icon}</div>
                 <div>
-                  <p style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{b.title}</p>
-                  <p style={{ fontSize: "12px", color: "#6B8F8A", margin: "2px 0 0", fontWeight: "500" }}>{b.desc}</p>
+                  <p className="font-bold text-slate-900 text-sm md:text-base">{b.title}</p>
+                  <p className="text-xs text-slate-400 font-semibold mt-0.5 leading-relaxed">{b.desc}</p>
                 </div>
               </div>
-              <div style={{ padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "100px" }}>
-                {b.free === true ? <FiCheck size={18} color="#10B981" strokeWidth={3} /> :
-                 b.free === false ? <FiX size={18} color="#E2EEEC" strokeWidth={3} /> :
-                 <span style={{ fontSize: "12px", fontWeight: "700", color: "#6B8F8A" }}>{b.free}</span>}
+              
+              <div className="col-span-2 p-6 flex items-center justify-center">
+                {b.free === true ? <FiCheck size={18} className="text-emerald-500" strokeWidth={3} /> :
+                 b.free === false ? <FiX size={18} className="text-slate-200" strokeWidth={3} /> :
+                 <span className="text-xs font-bold text-slate-400">{b.free}</span>}
               </div>
-              <div style={{ padding: "18px 24px", display: "flex", alignItems: "center", justifyContent: "center", minWidth: "100px", background: "rgba(91,191,181,0.03)", borderLeft: "2px solid rgba(91,191,181,0.2)" }}>
-                {b.prime === true ? <FiCheck size={18} color="#5BBFB5" strokeWidth={3} /> :
-                 b.prime === false ? <FiX size={18} color="#E2EEEC" strokeWidth={3} /> :
-                 <span style={{ fontSize: "12px", fontWeight: "700", color: "#5BBFB5" }}>{b.prime}</span>}
+              
+              <div className="col-span-2 p-6 flex items-center justify-center bg-[#5BBFB5]/5 border-l border-slate-100">
+                {b.prime === true ? <FiCheck size={18} className="text-[#5BBFB5]" strokeWidth={3} /> :
+                 b.prime === false ? <FiX size={18} className="text-slate-200" strokeWidth={3} /> :
+                 <span className="text-xs font-black text-[#5BBFB5]">{b.prime}</span>}
               </div>
             </div>
           ))}
         </div>
 
-        {/* FAQ */}
-        <div style={{ paddingBottom: "80px" }}>
-          <h2 style={{ fontSize: "24px", fontWeight: "800", color: "#1A2E2C", letterSpacing: "-0.02em", marginBottom: "24px", textAlign: "center" }}>
-            Frequently Asked
+        {/* FAQs */}
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8 text-center">
+            Frequently Asked Questions
           </h2>
           {[
             { q: "Can I cancel my Prime membership?", a: "You can cancel anytime. Your benefits continue until your current billing period ends — no early termination." },
@@ -265,14 +260,14 @@ export default function SeaBitePrime() {
 function FAQItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
-    <div style={{ border: "1.5px solid #E2EEEC", borderRadius: "16px", marginBottom: "12px", overflow: "hidden", background: "#fff" }}>
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.02)] mb-4 overflow-hidden transition-all duration-300">
       <button
         onClick={() => setOpen(!open)}
-        style={{ width: "100%", padding: "18px 24px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "transparent", border: "none", cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+        className="w-full p-6 flex justify-between items-center bg-transparent border-none cursor-pointer outline-none text-left"
       >
-        <span style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", textAlign: "left" }}>{q}</span>
+        <span className="text-sm font-bold text-slate-900 pr-4">{q}</span>
         <motion.div animate={{ rotate: open ? 45 : 0 }} transition={{ duration: 0.2 }}>
-          <FiCheck size={18} color={open ? "#5BBFB5" : "#B8CFCC"} />
+          <FiCheck size={18} className={open ? "text-[#5BBFB5]" : "text-slate-350"} />
         </motion.div>
       </button>
       <AnimatePresence>
@@ -283,7 +278,7 @@ function FAQItem({ q, a }) {
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
           >
-            <p style={{ padding: "0 24px 18px", fontSize: "14px", color: "#6B8F8A", lineHeight: 1.65, margin: 0, fontWeight: "500" }}>{a}</p>
+            <p className="px-6 pb-6 text-xs md:text-sm text-slate-400 font-semibold leading-relaxed">{a}</p>
           </motion.div>
         )}
       </AnimatePresence>
