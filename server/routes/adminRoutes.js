@@ -1546,7 +1546,7 @@ router.get("/bi/rfm", adminAuth, async (req, res) => {
 
     // Populate user details for top 10 per segment
     const userIds = scored.map((s) => s.userId);
-    const users = await User.find({ _id: { $in: userIds } }).select("name email isPrime walletBalance");
+    const users = await User.find({ _id: { $in: userIds } }).select("name email walletBalance");
     const userMap = {};
     users.forEach((u) => { userMap[u._id.toString()] = u; });
 
