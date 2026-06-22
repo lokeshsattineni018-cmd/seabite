@@ -6,7 +6,9 @@ import { motion } from "framer-motion";
 import {
   FiType, FiDollarSign, FiTag, FiImage,
   FiTrendingUp, FiCheck, FiArrowLeft, FiSave, FiBox,
+  FiPlus, FiX,
 } from "react-icons/fi";
+import toast from "react-hot-toast";
 import PopupModal from "../components/common/PopupModal";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
 
