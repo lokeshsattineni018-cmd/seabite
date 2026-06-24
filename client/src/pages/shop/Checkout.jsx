@@ -369,8 +369,14 @@ export default function Checkout() {
     try {
       const res = await axios.post(`${API_URL}/api/coupons/validate`, { code: code.trim().toUpperCase(), cartTotal: itemTotal, email: currentEmail || undefined }, { withCredentials: true });
       if (res.data.success) {
-        setAppliedCoupon({ code: code.trim().toUpperCase(), discountType: "flat", discountValue: res.data.discountAmount, description: res.data.message });
-        setCouponCode(code.trim().toUpperCase());
+        setAppliedCoupon({
+          code: res.data.code || code.trim().toUpperCase(),
+          discountType: res.data.discountType || "percent",
+          value: res.data.value || 0,
+          minOrderAmount: res.data.minOrderAmount || 0,
+          description: res.data.message
+        });
+        setCouponCode(res.data.code || code.trim().toUpperCase());
         setCouponMessage({ type: "success", text: res.data.message });
       }
     } catch (err) {

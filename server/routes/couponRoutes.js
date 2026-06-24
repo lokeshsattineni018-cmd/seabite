@@ -85,6 +85,9 @@ router.post("/validate", async (req, res) => {
       success: true,
       discountAmount: Math.floor(discountAmount),
       code: coupon.code,
+      discountType: coupon.discountType,
+      value: coupon.value,
+      minOrderAmount: coupon.minOrderAmount,
       message: `${coupon.value}${coupon.discountType === 'percent' ? '%' : '₹'} discount applied!`,
     });
   } catch (error) {
@@ -98,7 +101,7 @@ router.post("/", async (req, res) => {
   try {
     console.log("📥 Received coupon creation request:", req.body);
 
-    const { code, value, minOrderAmount, discountType, maxDiscount, isActive, expiresAt, maxUses, firstTimeOnly } = req.body;
+    const { code, value, minOrderAmount, discountType, maxDiscount, isActive, expiresAt, maxUses, firstTimeOnly, userEmail } = req.body;
 
     // ✅ Validation
     if (!code || code.trim() === "") {
@@ -131,6 +134,7 @@ router.post("/", async (req, res) => {
       maxUses: maxUses ? Number(maxUses) : 0,
       usedCount: 0, // ✅ Initialize usedCount
       firstTimeOnly: !!firstTimeOnly,
+      userEmail: userEmail && userEmail.trim() !== "" ? userEmail.toLowerCase().trim() : null,
     };
 
     console.log("💾 Creating coupon with data:", couponData);
@@ -178,6 +182,7 @@ router.get("/public", async (req, res) => {
     const coupons = await Coupon.find({
       isActive: true,
       isSpinCoupon: false, // ✅ Only admin coupons
+      userEmail: null,     // ✅ Do not show user-specific coupons in public list
       $or: [
         { expiresAt: { $gte: new Date() } },
         { expiresAt: null }
