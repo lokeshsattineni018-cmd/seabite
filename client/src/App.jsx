@@ -47,6 +47,7 @@ const Maintenance = lazy(() => import("./pages/general/Maintenance"));
 const Contact = lazy(() => import("./pages/general/Contact"));
 const Signup = lazy(() => import("./pages/auth/Signup"));
 const ReferEarn = lazy(() => import("./pages/user/ReferEarn"));
+const SeaBitePrime = lazy(() => import("./pages/user/SeaBitePrime")); // 💎 Prime
 const Recipes = lazy(() => import("./pages/general/Recipes")); // 🍳 Recipes
 const RecipeDetail = lazy(() => import("./pages/general/RecipeDetail")); // 🍳 Recipe Detail
 const NotFound = lazy(() => import("./pages/general/NotFound"));
@@ -297,6 +298,7 @@ function MainLayout() {
                     <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
                     <Route path="/refer-earn" element={<PrivateRoute><ReferEarn /></PrivateRoute>} />
+                    <Route path="/prime" element={<SeaBitePrime />} />
                     <Route path="/recipes" element={<Recipes />} />
                     <Route path="/recipes/:slug" element={<RecipeDetail />} />
                     <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
