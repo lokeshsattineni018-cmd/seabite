@@ -76,6 +76,11 @@ const userSchema = new mongoose.Schema(
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     walletBalance: { type: Number, default: 0 },
     loyaltyPoints: { type: Number, default: 0 },
+
+    // 💎 SeaBite Prime
+    isPrime: { type: Boolean, default: false },
+    primeExpiry: { type: Date, default: null },
+    primePlan: { type: String, enum: ['monthly', 'yearly', null], default: null },
   },
   { timestamps: true }
 );
