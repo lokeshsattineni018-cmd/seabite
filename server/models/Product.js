@@ -67,7 +67,19 @@ const productSchema = new mongoose.Schema(
     // --- MULTI-VENDOR & SEASONAL CATCH ---
     vendor: { type: mongoose.Schema.Types.ObjectId, ref: 'Vendor' },
     catchOfTheDay: { type: Boolean, default: false },
-    dockSource: { type: String, default: "Mogalthur Docks" }
+    dockSource: { type: String, default: "Mogalthur Docks" },
+
+    // --- CATCH LIFE CYCLE & SCARCITY SCALING ---
+    catchDate: { type: Date, default: Date.now },
+    shelfLifeHours: { type: Number, default: 48 },
+    sourceOrigin: { type: String, default: "Bhimavaram Farm Gate" },
+    algorithmicScaling: { type: Boolean, default: false },
+    scalingRule: {
+      minStockThreshold: { type: Number, default: 50 },
+      discountIncreasePct: { type: Number, default: 5 },
+      intervalHours: { type: Number, default: 1 },
+      maxDiscountPct: { type: Number, default: 50 }
+    }
   },
   { timestamps: true }
 );

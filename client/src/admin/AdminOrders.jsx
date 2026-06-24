@@ -1,16 +1,18 @@
 // AdminOrders.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiRefreshCw, FiTruck, FiPrinter,
-  FiXCircle, FiPackage, FiArrowUpRight, FiFilter, FiTrash2, FiDollarSign
+  FiXCircle, FiPackage, FiArrowUpRight, FiFilter, FiTrash2, FiDollarSign,
+  FiSettings, FiActivity
 } from "react-icons/fi";
 import PopupModal from "../components/common/PopupModal";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
 import Invoice from "../components/content/Invoice";
 import { generateInvoicePDF } from "../utils/pdfGenerator";
 import toast from "react-hot-toast";
+import { useSocket } from "../context/SocketContext";
 
 const STATUS_OPTIONS = [
   "All", "Pending", "Processing", "Shipped", "Delivered", "Cancelled", "Cancelled by User",
@@ -40,6 +42,23 @@ export default function AdminOrders() {
   const [partners, setPartners] = useState([]);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
 
+  // New real-time, telemetry, and control states
+  const { socket } = useSocket();
+  const [pageSize, setPageSize] = useState(() => Number(localStorage.getItem("adminOrdersPageSize")) || 10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showPageSizeSettings, setShowPageSizeSettings] = useState(false);
+  const [pendingCancelOrder, setPendingCancelOrder] = useState(null);
+  const [shimmeringOrderIds, setShimmeringOrderIds] = useState([]);
+  const [flashingOrderIds, setFlashingOrderIds] = useState([]);
+
+  // Telemetry popover states
+  const [activeTelemetryOrderId, setActiveTelemetryOrderId] = useState(null);
+  const [telemetryData, setTelemetryData] = useState(null);
+  const [loadingTelemetry, setLoadingTelemetry] = useState(false);
+
+  const settingsRef = useRef(null);
+  const telemetryPopoverRef = useRef(null);
+
   const fetchOrders = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
     try {
@@ -57,6 +76,21 @@ export default function AdminOrders() {
   };
 
   useEffect(() => {
+    function handleClickOutside(event) {
+      if (settingsRef.current && !settingsRef.current.contains(event.target)) {
+        setShowPageSizeSettings(false);
+      }
+      if (telemetryPopoverRef.current && !telemetryPopoverRef.current.contains(event.target)) {
+        setActiveTelemetryOrderId(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
     fetchOrders();
     const fetchPartners = async () => {
       try {
@@ -66,6 +100,93 @@ export default function AdminOrders() {
     };
     fetchPartners();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleOrderPlaced = (newOrder) => {
+      setOrders((prevOrders) => {
+        if (prevOrders.some((o) => o._id === newOrder._id)) return prevOrders;
+        return [newOrder, ...prevOrders];
+      });
+
+      setShimmeringOrderIds((prev) => [...prev, newOrder._id]);
+      setTimeout(() => {
+        setShimmeringOrderIds((prev) => prev.filter((id) => id !== newOrder._id));
+      }, 3000);
+    };
+
+    const handleAdminOrderUpdated = ({ order, operator }) => {
+      setOrders((prevOrders) => {
+        return prevOrders.map((o) => (o._id === order._id ? order : o));
+      });
+
+      setFlashingOrderIds((prev) => [...prev, order._id]);
+      setTimeout(() => {
+        setFlashingOrderIds((prev) => prev.filter((id) => id !== order._id));
+      }, 1500);
+
+      toast.custom((t) => (
+        <motion.div
+          initial={{ opacity: 0, y: -20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -20, scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          className={`${
+            t.visible ? 'animate-enter' : 'animate-leave'
+          } max-w-md w-full bg-amber-50 border border-amber-200 shadow-xl rounded-2xl pointer-events-auto flex ring-1 ring-black ring-opacity-5 p-4 z-[9999]`}
+        >
+          <div className="flex-1 w-0">
+            <div className="flex items-start">
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-bold text-amber-900">
+                  Order Status Updated
+                </p>
+                <p className="mt-1 text-xs text-amber-700">
+                  Order #{order.orderId} was updated by Operator: {operator}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex border-l border-amber-100 pl-3 ml-3 items-center">
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="text-xs font-bold text-amber-600 hover:text-amber-800 focus:outline-none"
+            >
+              Close
+            </button>
+          </div>
+        </motion.div>
+      ), { duration: 4000 });
+    };
+
+    socket.on("ORDER_PLACED", handleOrderPlaced);
+    socket.on("ADMIN_ORDER_UPDATED", handleAdminOrderUpdated);
+
+    return () => {
+      socket.off("ORDER_PLACED", handleOrderPlaced);
+      socket.off("ADMIN_ORDER_UPDATED", handleAdminOrderUpdated);
+    };
+  }, [socket]);
+
+  const handleTelemetryClick = async (orderId) => {
+    if (activeTelemetryOrderId === orderId) {
+      setActiveTelemetryOrderId(null);
+      return;
+    }
+    setActiveTelemetryOrderId(orderId);
+    setLoadingTelemetry(true);
+    setTelemetryData(null);
+    try {
+      const { data } = await axios.get(`/api/orders/${orderId}/telemetry`, { withCredentials: true });
+      setTelemetryData(data);
+    } catch {
+      toast.error("Failed to load telemetry");
+      setActiveTelemetryOrderId(null);
+    } finally {
+      setLoadingTelemetry(false);
+    }
+  };
 
   const updateStatus = async (id, status) => {
     if (orders.find((o) => o._id === id)?.status.includes("Cancelled")) {
@@ -195,6 +316,19 @@ export default function AdminOrders() {
     );
   });
 
+  const totalPages = Math.ceil(filteredOrders.length / pageSize) || 1;
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [filteredOrders.length, pageSize, totalPages, currentPage]);
+
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   const pendingCount = orders.filter((o) => o.status === "Pending").length;
   const processingCount = orders.filter((o) => o.status === "Processing").length;
   const deliveredCount = orders.filter((o) => o.status === "Delivered").length;
@@ -234,6 +368,52 @@ export default function AdminOrders() {
                 className="w-full pl-11 pr-5 py-3 rounded-2xl bg-stone-50 border border-stone-200/50 text-stone-800 font-medium placeholder:text-stone-400 focus:bg-white focus:border-stone-300 focus:ring-2 focus:ring-stone-200/50 transition-all outline-none"
               />
             </div>
+
+            <div className="relative" ref={settingsRef}>
+              <button
+                onClick={() => setShowPageSizeSettings(!showPageSizeSettings)}
+                className="p-3.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-2xl transition-colors"
+                title="Page Size Preferences"
+              >
+                <FiSettings size={18} />
+              </button>
+
+              <AnimatePresence>
+                {showPageSizeSettings && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 mt-2 w-44 bg-white border border-stone-200 shadow-xl rounded-2xl p-3.5 z-50 text-left"
+                  >
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400 block mb-2 px-1">Items Per Page</span>
+                    <div className="flex flex-col gap-1">
+                      {[10, 25, 50].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => {
+                            setPageSize(size);
+                            localStorage.setItem("adminOrdersPageSize", size);
+                            setCurrentPage(1);
+                            setShowPageSizeSettings(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-xs font-semibold transition-colors flex justify-between items-center ${
+                            pageSize === size
+                              ? "bg-stone-900 text-white"
+                              : "text-stone-600 hover:bg-stone-50"
+                          }`}
+                        >
+                          <span>{size} items</span>
+                          {pageSize === size && <span className="text-[10px] font-bold">✓</span>}
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             <button onClick={() => fetchOrders()} className="p-3.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-2xl transition-colors">
               <FiRefreshCw className={loading ? "animate-spin" : ""} size={18} />
             </button>
@@ -367,65 +547,198 @@ export default function AdminOrders() {
               <tbody className="divide-y divide-stone-50">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="py-20">
+                    <td colSpan={7} className="py-20">
                       <SeaBiteLoader />
                     </td>
                   </tr>
                 ) : filteredOrders.length === 0 ? (
-                  <tr><td colSpan={6} className="py-12 text-center text-stone-400 font-medium">No orders found</td></tr>
+                  <tr><td colSpan={7} className="py-12 text-center text-stone-400 font-medium">No orders found</td></tr>
                 ) : (
-                  filteredOrders.map((o) => (
-                    <tr
-                      key={o._id}
-                      onClick={() => setSelectedOrder(o)}
-                      className={`group transition-colors cursor-pointer ${selectedOrderIds.includes(o._id) ? 'bg-stone-100/80 hover:bg-stone-100' : 'hover:bg-stone-50/50'}`}
-                    >
-                      <td className="px-6 py-4" onClick={(e) => toggleSelectOrder(o._id, e)}>
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900 cursor-pointer"
-                          checked={selectedOrderIds.includes(o._id)}
-                          readOnly
-                        />
-                      </td>
-                      <td className="px-6 py-4 font-mono text-sm font-medium text-stone-500 group-hover:text-blue-600 transition-colors">#{o.orderId}</td>
-                      <td className="px-6 py-4 text-sm font-semibold text-stone-900">{o.user?.name || "Guest"}</td>
-                      <td className="px-6 py-4">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wide border ${o.paymentMethod === "Prepaid" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-amber-50 text-amber-700 border-amber-100"}`}>
-                          {o.paymentMethod}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 font-mono text-sm font-bold text-stone-900">₹{o.totalAmount.toLocaleString()}</td>
-                      <td className="px-6 py-4"><StatusPill status={o.status} /></td>
-                      <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-end gap-2">
-                          <select
-                            value={o.status}
-                            disabled={o.status.includes("Cancelled")}
-                            onChange={(e) => updateStatus(o._id, e.target.value)}
-                            className="bg-white border border-stone-200 rounded-lg py-1.5 px-2 text-xs font-bold text-stone-600 outline-none cursor-pointer hover:border-blue-400 transition-colors disabled:opacity-50"
-                          >
-                            {STATUS_OPTIONS.filter((s) => s !== "All").map((s) => (
-                              <option key={s} value={s}>
-                                {s}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            onClick={() => handleDeleteOrder(o._id, o.orderId)}
-                            className="p-2 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Delete Order"
-                          >
-                            <FiTrash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  paginatedOrders.map((o) => {
+                    const isShimmering = shimmeringOrderIds.includes(o._id);
+                    const isFlashing = flashingOrderIds.includes(o._id);
+                    return (
+                      <tr
+                        key={o._id}
+                        onClick={() => setSelectedOrder(o)}
+                        className={`group transition-colors cursor-pointer ${
+                          isShimmering 
+                            ? "shimmer-row-green hover:bg-emerald-50/30" 
+                            : isFlashing 
+                            ? "flash-row-amber hover:bg-amber-50/30" 
+                            : selectedOrderIds.includes(o._id) 
+                            ? 'bg-stone-100/80 hover:bg-stone-100' 
+                            : 'hover:bg-stone-50/50'
+                        }`}
+                      >
+                        <td className="px-6 py-4" onClick={(e) => toggleSelectOrder(o._id, e)}>
+                          <input
+                            type="checkbox"
+                            className="w-4 h-4 rounded border-stone-300 text-stone-900 focus:ring-stone-900 cursor-pointer"
+                            checked={selectedOrderIds.includes(o._id)}
+                            readOnly
+                          />
+                        </td>
+                        <td className="px-6 py-4 font-mono text-sm font-medium text-stone-500 group-hover:text-blue-600 transition-colors relative">
+                          <div className="flex items-center gap-2">
+                            <span>#{o.orderId}</span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTelemetryClick(o._id);
+                              }}
+                              className="text-stone-400 hover:text-blue-600 transition-colors p-1"
+                              title="View Execution Telemetry"
+                            >
+                              <FiActivity size={14} className="opacity-60 hover:opacity-100" />
+                            </button>
+                          </div>
+
+                          {activeTelemetryOrderId === o._id && (
+                            <div
+                              ref={telemetryPopoverRef}
+                              onClick={(e) => e.stopPropagation()}
+                              className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 w-64 bg-white border border-stone-200 shadow-2xl rounded-2xl p-4 z-50 text-left font-sans"
+                            >
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center pb-1.5 border-b border-stone-100">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-stone-400">Trace Telemetry</span>
+                                  {loadingTelemetry ? (
+                                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
+                                  ) : (
+                                    <span className="text-[9px] font-mono text-stone-400 bg-stone-100 px-1.5 py-0.5 rounded">{telemetryData?.traceId}</span>
+                                  )}
+                                </div>
+                                {loadingTelemetry ? (
+                                  <div className="py-4 text-center text-xs text-stone-400">Fetching spans...</div>
+                                ) : (
+                                  <div className="space-y-1.5 text-xs text-stone-700">
+                                    <div className="flex justify-between">
+                                      <span>API Latency:</span>
+                                      <span className="font-mono font-bold text-emerald-600">{telemetryData?.apiLatency}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span>DB Execution:</span>
+                                      <span className="font-mono font-bold text-blue-600">{telemetryData?.dbExecution}</span>
+                                    </div>
+                                    <div className="text-[10px] text-stone-400 mt-2 border-t border-stone-100 pt-1.5">
+                                      Trace fetched from traceMiddleware
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm font-semibold text-stone-900">{o.user?.name || "Guest"}</td>
+                        <td className="px-6 py-4">
+                          <span className={`text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wide border ${o.paymentMethod === "Prepaid" ? "bg-emerald-50 text-emerald-700 border-emerald-100" : "bg-amber-50 text-amber-700 border-amber-100"}`}>
+                            {o.paymentMethod}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 font-mono text-sm font-bold text-stone-900">₹{o.totalAmount.toLocaleString()}</td>
+                        <td className="px-6 py-4"><StatusPill status={o.status} /></td>
+                        <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                          <AnimatePresence mode="wait">
+                            {pendingCancelOrder?.id === o._id ? (
+                              <motion.div
+                                key="safeguard"
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1, transition: { type: "spring", stiffness: 350, damping: 22 } }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="flex items-center gap-2 bg-rose-50 border border-rose-100 rounded-xl p-1.5 shadow-sm inline-flex"
+                              >
+                                <span className="text-[10px] font-bold text-rose-700 whitespace-nowrap pl-1">Confirm Cancel?</span>
+                                <button
+                                  onClick={() => {
+                                    updateStatus(o._id, pendingCancelOrder.status);
+                                    setPendingCancelOrder(null);
+                                  }}
+                                  className="px-2.5 py-1 bg-rose-600 text-white text-[10px] font-bold rounded-lg hover:bg-rose-700 transition-colors shadow-sm"
+                                >
+                                  Yes
+                                </button>
+                                <button
+                                  onClick={() => setPendingCancelOrder(null)}
+                                  className="px-2.5 py-1 bg-stone-200 text-stone-700 text-[10px] font-bold rounded-lg hover:bg-stone-300 transition-colors"
+                                >
+                                  No
+                                </button>
+                              </motion.div>
+                            ) : (
+                              <motion.div
+                                key="actions"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="flex items-center justify-end gap-2"
+                              >
+                                <select
+                                  value={o.status}
+                                  disabled={o.status.includes("Cancelled")}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === "Cancelled" || val === "Cancelled by User") {
+                                      setPendingCancelOrder({ id: o._id, status: val });
+                                    } else {
+                                      updateStatus(o._id, val);
+                                    }
+                                  }}
+                                  className="bg-white border border-stone-200 rounded-lg py-1.5 px-2 text-xs font-bold text-stone-600 outline-none cursor-pointer hover:border-blue-400 transition-colors disabled:opacity-50"
+                                >
+                                  {STATUS_OPTIONS.filter((s) => s !== "All").map((s) => (
+                                    <option key={s} value={s}>
+                                      {s}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  onClick={() => handleDeleteOrder(o._id, o.orderId)}
+                                  className="p-2 text-stone-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                  title="Delete Order"
+                                >
+                                  <FiTrash2 size={16} />
+                                </button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {filteredOrders.length > 0 && (
+            <div className="px-6 py-4 bg-stone-50/50 border-t border-stone-100 flex items-center justify-between">
+              <span className="text-xs font-semibold text-stone-500">
+                Showing {Math.min(filteredOrders.length, (currentPage - 1) * pageSize + 1)} to{" "}
+                {Math.min(filteredOrders.length, currentPage * pageSize)} of {filteredOrders.length} orders
+              </span>
+              <div className="flex gap-2">
+                <button
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  className="px-3.5 py-1.5 bg-white border border-stone-200 text-stone-600 rounded-xl text-xs font-bold transition-all disabled:opacity-50 hover:bg-stone-50"
+                >
+                  Prev
+                </button>
+                <div className="flex items-center text-xs font-bold text-stone-700 px-1">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <button
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  className="px-3.5 py-1.5 bg-white border border-stone-200 text-stone-600 rounded-xl text-xs font-bold transition-all disabled:opacity-50 hover:bg-stone-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </motion.div>
 
       </div >

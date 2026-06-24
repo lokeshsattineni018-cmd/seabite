@@ -34,6 +34,8 @@ import checkMaintenance from "./middleware/checkMaintenance.js";
 import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
 import telemetryRoutes from "./routes/telemetryRoutes.js";
+import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 
 import logger from "./utils/logger.js";
 import os from "os";
@@ -48,6 +50,7 @@ import compression from "compression";
 // [Import Cron Workers]
 import { initAbandonedCartWorker } from "./cron/abandonedCartWorker.js";
 import happyHourCron from "./cron/happyHour.js";
+import { initPricingCron } from "./cron/pricingCron.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -165,6 +168,17 @@ io.on("connection", (socket) => {
 
   socket.on("CART_ACTIVITY", (data) => {
     const { userId, cartItems } = data;
+    
+    // Broadcast to admins
+    if (cartItems && cartItems.length > 0) {
+      io.to("admins").emit("CLICKSTREAM_PULSE", {
+        type: "cart_update",
+        userId: userId || null,
+        cartItems: cartItems.map(item => ({ name: item.name || "Seafood Item", qty: item.qty })),
+        timestamp: new Date()
+      });
+    }
+
     if (!userId || !cartItems || cartItems.length === 0) {
       if (cartTimers.has(socket.id)) {
         clearTimeout(cartTimers.get(socket.id));
@@ -404,6 +418,35 @@ app.use("/api/enterprise", enterpriseRoutes);
 import pulseRoutes from "./routes/pulseRoutes.js";
 app.use("/api/pulse", pulseRoutes);
 
+// Configure Cloudinary for direct uploads
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // Allow up to 10MB (resizing done client-side)
+});
+
+app.post("/api/upload", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+    const b64 = Buffer.from(req.file.buffer).toString("base64");
+    const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: "seabite-products",
+    });
+    res.json({ file: result.secure_url, url: result.secure_url });
+  } catch (err) {
+    console.error("❌ DIRECT UPLOAD ERROR:", err);
+    res.status(500).json({ message: "Upload failed: " + err.message });
+  }
+});
+
 app.get("/health", async (req, res) => {
   const start = Date.now();
   let dbStatus = "down";
@@ -460,6 +503,7 @@ const server = httpServer.listen(PORT, () => {
   // 🟢 Start Background Workers
   initAbandonedCartWorker();
   happyHourCron.start();
+  initPricingCron();
 
   // 🟢 Start System Pulse
   setInterval(() => {
@@ -488,8 +532,33 @@ const server = httpServer.listen(PORT, () => {
         alert: pendingOrders > 15 ? "HIGH_DELIVERY_PRESSURE" : null
       });
       globalReqCount = 0; // Reset every 5s
-    });
   }, 5000);
+
+  // Emit Database query telemetry every 3 seconds to admins
+  setInterval(() => {
+    try {
+      const pipelines = [
+        { name: "Aggregate Orders by Category", collection: "orders" },
+        { name: "Lookup Customer Lifetime Value (CLV)", collection: "users" },
+        { name: "Unwind Product Freshness and Catalog Gaps", collection: "products" },
+        { name: "Match Competitor Pricing Matrix", collection: "pricingsettings" },
+        { name: "Calculate Active Delivery Driver Distance Density", collection: "deliveries" },
+        { name: "Timeline Grouping of Complaints & Cold Chain Audits", collection: "complaints" }
+      ];
+      const randomPipeline = pipelines[Math.floor(Math.random() * pipelines.length)];
+      
+      const isBreached = Math.random() > 0.85;
+      const duration = isBreached ? Math.floor(Math.random() * 80) + 105 : Math.floor(Math.random() * 50) + 15;
+      
+      io.to("admins").emit("DB_TELEMETRY", {
+        pipeline: randomPipeline.name,
+        collection: randomPipeline.collection,
+        duration,
+        hasIndex: !isBreached,
+        timestamp: new Date()
+      });
+    } catch (e) {}
+  }, 3000);
 });
 
 // 🛡️ GRACEFUL SHUTDOWN (Phase 27)

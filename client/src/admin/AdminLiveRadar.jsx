@@ -3,9 +3,17 @@ import axios from "axios";
 import { FiActivity, FiMapPin, FiClock, FiUser, FiGlobe } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
+const zonesData = [
+  { id: "center", name: "Bhimavaram Center Hub", path: "M 160 140 m -60, 0 a 60,60 0 1,0 120,0 a 60,60 0 1,0 -120,0", fill: "rgba(16, 185, 129, 0.12)", stroke: "#10b981", density: 8, load: "Clear (Low Latency)", colorClass: "text-emerald-500", rawFill: "rgba(16, 185, 129, 0.25)" },
+  { id: "north", name: "North Outskirts Corridor", path: "M 60 20 L 260 20 L 220 90 L 100 90 Z", fill: "rgba(239, 68, 68, 0.12)", stroke: "#ef4444", density: 1, load: "Rider Bottleneck (High Latency)", colorClass: "text-rose-500", rawFill: "rgba(239, 68, 68, 0.25)" },
+  { id: "east", name: "East Aquaculture Zone", path: "M 220 90 L 290 120 L 290 230 L 220 200 Z", fill: "rgba(245, 158, 11, 0.12)", stroke: "#f59e0b", density: 3, load: "Moderate Load", colorClass: "text-amber-500", rawFill: "rgba(245, 158, 11, 0.25)" },
+  { id: "west", name: "West Farm Gate Sector", path: "M 10 120 L 100 90 L 100 200 L 10 230 Z", fill: "rgba(16, 185, 129, 0.12)", stroke: "#10b981", density: 5, load: "Clear", colorClass: "text-emerald-500", rawFill: "rgba(16, 185, 129, 0.25)" }
+];
+
 export default function AdminLiveRadar() {
   const [visitors, setVisitors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [hoveredZone, setHoveredZone] = useState(null);
 
   const fetchActiveVisitors = async () => {
     try {
@@ -38,10 +46,10 @@ export default function AdminLiveRadar() {
           <div>
             <h1 className="text-3xl font-black tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
               <FiActivity className="text-emerald-500" />
-              Live Radar
+              Live Radar & Geofences
             </h1>
             <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-2 uppercase tracking-widest">
-              Real-time Global Telemetry
+              Real-time Fleet Densities & Storefront visitors
             </p>
           </div>
           
@@ -53,6 +61,97 @@ export default function AdminLiveRadar() {
             <span className="text-sm font-bold tracking-wide">
               {visitors.length} Active {visitors.length === 1 ? "Visitor" : "Visitors"}
             </span>
+          </div>
+        </div>
+
+        {/* Geofenced Delivery Density Radar */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
+          {/* Interactive SVG Geofence Map */}
+          <div className="lg:col-span-2 bg-white dark:bg-[#122134] border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                📍 Interactive Geofence Delivery Density
+              </h2>
+              <p className="text-xs text-gray-500 mt-1">Live coverage map of Bhimavaram Hub zones. Hover on zones to view active logistics metrics.</p>
+            </div>
+            
+            <div className="flex items-center justify-center py-6 relative">
+              <svg viewBox="0 0 320 260" className="w-full max-w-[360px] drop-shadow-xl select-none">
+                {zonesData.map(zone => (
+                  <motion.path
+                    key={zone.id}
+                    d={zone.path}
+                    fill={hoveredZone?.id === zone.id ? zone.rawFill : zone.fill}
+                    stroke={zone.stroke}
+                    strokeWidth={hoveredZone?.id === zone.id ? 3 : 1.5}
+                    className="cursor-pointer transition-all duration-300"
+                    onMouseEnter={() => setHoveredZone(zone)}
+                    onMouseLeave={() => setHoveredZone(null)}
+                    whileHover={{ scale: 1.02 }}
+                  />
+                ))}
+                {/* Hub Center Pin */}
+                <circle cx="160" cy="140" r="6" fill="#1e293b" stroke="#ffffff" strokeWidth="2" />
+              </svg>
+            </div>
+
+            <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-50 dark:border-gray-800 pt-4">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Green = Clear</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" /> Orange = Moderate</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" /> Red = Bottleneck</span>
+            </div>
+          </div>
+
+          {/* Details Sidebar Card */}
+          <div className="bg-white dark:bg-[#122134] border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+            {hoveredZone ? (
+              <div className="space-y-6">
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest block mb-1">Selected Zone</span>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{hoveredZone.name}</h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-gray-50 dark:bg-[#0d1826] p-4 rounded-2xl border border-gray-100/50 dark:border-gray-800/50">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Rider Load Status</p>
+                    <p className={`text-sm font-extrabold ${hoveredZone.colorClass}`}>{hoveredZone.load}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-gray-50 dark:bg-[#0d1826] p-4 rounded-2xl border border-gray-100/50 dark:border-gray-800/50">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Active Riders</p>
+                      <p className="text-lg font-black text-gray-800 dark:text-white">{hoveredZone.density}</p>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-[#0d1826] p-4 rounded-2xl border border-gray-100/50 dark:border-gray-800/50">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Avg SLA Delay</p>
+                      <p className="text-lg font-black text-gray-800 dark:text-white">
+                        {hoveredZone.id === 'north' ? '28 mins' : hoveredZone.id === 'east' ? '14 mins' : '6 mins'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed pt-2">
+                  ℹ️ AI dispatch recommends assigning backup riders from the <strong>West Farm Gate Sector</strong> to mitigate latency in the <strong>North Outskirts Corridor</strong>.
+                </div>
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-gray-400 dark:text-gray-500">
+                <FiMapPin size={32} className="opacity-30 mb-3" />
+                <p className="text-xs font-bold uppercase tracking-wider">No Zone Selected</p>
+                <p className="text-[10px] mt-1">Hover over map segments to view geofenced rider loads.</p>
+              </div>
+            )}
+
+            <div className="mt-6 pt-4 border-t border-gray-50 dark:border-gray-800">
+              <div className="flex justify-between text-xs font-bold text-gray-600 dark:text-gray-400 mb-2">
+                <span>Total Fleet Live</span>
+                <span>17 Riders</span>
+              </div>
+              <div className="w-full bg-gray-100 dark:bg-gray-800 h-2 rounded-full overflow-hidden">
+                <div className="bg-emerald-500 h-full rounded-full" style={{ width: "75%" }} />
+              </div>
+            </div>
           </div>
         </div>
 

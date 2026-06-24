@@ -1260,7 +1260,7 @@ router.get("/pricing-engine", adminAuth, async (req, res) => {
 
 router.post("/pricing-engine/sync", adminAuth, async (req, res) => {
   try {
-    const { aiEnabled, stormOverride, marginOffset } = req.body;
+    const { aiEnabled, stormOverride, marginOffset, competitorMatch, demandDensity } = req.body;
     
     // 1. Save pricing settings
     let settings = await PricingSetting.findOne();
@@ -1270,6 +1270,8 @@ router.post("/pricing-engine/sync", adminAuth, async (req, res) => {
     settings.aiEnabled = aiEnabled;
     settings.stormOverride = stormOverride;
     settings.marginOffset = marginOffset;
+    settings.competitorMatch = competitorMatch;
+    settings.demandDensity = demandDensity;
     await settings.save();
 
     // 2. Perform price recalculations for all active products
@@ -1284,6 +1286,8 @@ router.post("/pricing-engine/sync", adminAuth, async (req, res) => {
     if (aiEnabled) {
       multiplier *= weather.scarcityIndex;
       multiplier += marginOffset / 100;
+      if (competitorMatch) multiplier -= 0.05; // 5% discount to match competitors
+      if (demandDensity) multiplier += 0.08; // 8% surge for high density demand
     }
 
     const products = await Product.find({ active: true });

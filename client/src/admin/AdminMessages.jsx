@@ -59,6 +59,36 @@ export default function AdminMessages() {
     }
   }, [selectedMsg]);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.ctrlKey && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        if (!selectedMsg) {
+          toast.error("Please select a message first to trigger Co-Pilot draft.");
+          return;
+        }
+        
+        const text = selectedMsg.message?.toLowerCase() || "";
+        let draft = "";
+        if (text.includes("delivery") || text.includes("time") || text.includes("late")) {
+          draft = "Hi! We've checked your delivery status. Our logistics partner is currently delivering your order. You can expect delivery within the next 30-45 minutes. Thank you for your patience!";
+        } else if (text.includes("quality") || text.includes("fresh") || text.includes("smell") || text.includes("bad")) {
+          draft = "Hello! We are extremely sorry to hear about the quality issue with your seafood. We take freshness very seriously. We have initiated a full refund of the item cost to your SeaBite wallet.";
+        } else if (text.includes("refund") || text.includes("money") || text.includes("payment")) {
+          draft = "Hello! We've verified your transaction. A refund of the order amount has been processed and credited directly to your SeaBite wallet. Let us know if you need anything else!";
+        } else {
+          draft = "Hi! Thank you for reaching out to SeaBite Support. We have received your query regarding your order and our support team is currently reviewing it. We will update you shortly!";
+        }
+        
+        setReplyText(draft);
+        setReplyModal(true);
+        toast.success("🤖 Support Co-Pilot: Context-aware reply drafted!", { icon: "🤖" });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedMsg]);
+
   const fetchCustomerContext = async (email) => {
     setContextLoading(true);
     try {

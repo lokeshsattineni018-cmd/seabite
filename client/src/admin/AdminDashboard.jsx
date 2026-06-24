@@ -66,7 +66,10 @@ export default function AdminDashboard() {
     todayRevenue: 0, 
     pendingOrders: 0, 
     awaitingPickup: 0, 
-    outForDelivery: 0 
+    outForDelivery: 0,
+    opmHistory: [],
+    currentOpm: 0,
+    revenuePacing: ""
   });
   const [alerts, setAlerts] = useState({ slaBreaches: [], stockRisks: [] });
   const [graph, setGraph] = useState([]);
@@ -76,6 +79,7 @@ export default function AdminDashboard() {
   const [searchInsights, setSearchInsights] = useState([]); // 🟢 Added
   const [frustrationEvents, setFrustrationEvents] = useState([]); // 🚨 Added
   const [happyHourTimeLeft, setHappyHourTimeLeft] = useState(null); // ⏳ Added
+  const [aiSummary, setAiSummary] = useState(""); // 🤖 Executive Summary AI Insight
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -96,13 +100,14 @@ export default function AdminDashboard() {
     }
 
     try {
-      const [dashboardRes, messagesRes, reviewsRes, lowStockRes, settingsRes, insightsRes] = await Promise.all([
+      const [dashboardRes, messagesRes, reviewsRes, lowStockRes, settingsRes, insightsRes, aiSummaryRes] = await Promise.all([
         axios.get("/api/admin", { params: { range: timeFilter }, withCredentials: true }),
         axios.get("/api/contact", { withCredentials: true }),
         axios.get("/api/admin/reviews/all", { withCredentials: true }),
         axios.get("/api/admin/inventory/low-stock", { withCredentials: true }),
         axios.get("/api/admin/enterprise/settings", { withCredentials: true }),
         axios.get("/api/admin/insights/search", { withCredentials: true }),
+        axios.get("/api/admin/ai-summary", { withCredentials: true }).catch(() => ({ data: { summary: "AI summary currently unavailable" } })),
       ]);
 
       if (!isMounted.current) return;
@@ -114,6 +119,7 @@ export default function AdminDashboard() {
       setRecentMessages(messagesRes.data.slice(0, 5));
       setAllReviews(reviewsRes.data?.slice(0, 6) || []);
       setSearchInsights(insightsRes.data || []);
+      setAiSummary(aiSummaryRes.data?.summary || "");
 
       setLoading(false);
       setError(null);
@@ -330,6 +336,25 @@ export default function AdminDashboard() {
           )}
         </AnimatePresence>
 
+        {/* Executive Summary AI Insight Banner */}
+        {aiSummary && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-[#fafaf9] border border-stone-200 rounded-3xl p-5 flex items-center gap-4 shadow-sm"
+          >
+            <div className="w-10 h-10 bg-stone-900 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md">
+              <FiZap className="text-amber-400 animate-pulse" size={18} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest block">Executive Summary AI Insight</span>
+              <p className="text-xs font-semibold text-stone-700 mt-0.5 leading-relaxed">
+                {aiSummary}
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* Unified Dashboard Controls Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 mt-2 pb-4 border-b border-stone-200/40">
           <div>
@@ -409,15 +434,30 @@ export default function AdminDashboard() {
             icon={<FiDollarSign size={20} />}
             color="from-emerald-50 to-teal-50"
             index={0}
-            subtitle={`Net Profit: ₹${stats.netProfit?.toLocaleString() || 0} (${Math.round((stats.netProfit / (stats.totalRevenue || 1)) * 100)}% Margin)`}
+            subtitle={stats.revenuePacing || `Checking pacing...`}
           />
           <StatCard
-            title="Orders"
-            value={stats.totalOrders || 0}
+            title="Live Velocity"
+            value={`${stats.currentOpm || 0} OPM`}
             icon={<FiShoppingBag size={20} />}
             color="from-blue-50 to-cyan-50"
             index={1}
-          />
+            subtitle={`Total Orders: ${stats.totalOrders || 0}`}
+          >
+             <div className="h-[40px] w-full mt-2 relative overflow-hidden rounded-xl border border-blue-100/40 bg-white/40">
+                <ResponsiveContainer width="100%" height="100%">
+                   <AreaChart data={stats.opmHistory || []} margin={{ top: 2, right: 2, left: -2, bottom: 2 }}>
+                      <defs>
+                         <linearGradient id="opmGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#2563eb" stopOpacity={0.15} />
+                            <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                         </linearGradient>
+                      </defs>
+                      <Area type="monotone" dataKey="opm" stroke="#2563eb" strokeWidth={1.5} fill="url(#opmGrad)" dot={false} />
+                   </AreaChart>
+                </ResponsiveContainer>
+             </div>
+          </StatCard>
           <StatCard
             title="Customers"
             value={stats.activeUsers || 0}

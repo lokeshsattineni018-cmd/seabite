@@ -8,6 +8,7 @@ import {
 import { toast } from "react-hot-toast";
 import PopupModal from "../components/common/PopupModal";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
+import { getOfflineOrders, saveOfflineOrder, deleteOfflineOrder } from "../utils/posIndexedDB";
 
 // ── Shared motion helpers ──────────
 const ease = [0.16, 1, 0.3, 1];
@@ -39,7 +40,133 @@ export default function AdminPOS() {
     const [currentTime, setCurrentTime] = useState(new Date());
     const [activeCategory, setActiveCategory] = useState("All");
 
+    // Offline-First states
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+    const [queuedCount, setQueuedCount] = useState(0);
+    const [conflicts, setConflicts] = useState([]);
+    const [resolvingConflict, setResolvingConflict] = useState(null);
+
     const backendBase = import.meta.env.VITE_API_URL || "";
+
+    const syncOfflineOrders = async () => {
+        try {
+            const queued = await getOfflineOrders();
+            if (!queued || queued.length === 0) {
+                setQueuedCount(0);
+                setConflicts([]);
+                return;
+            }
+            
+            // Filter out conflict items so we don't spam the server
+            const toSync = queued.filter(o => o.syncStatus !== "Conflict");
+            setQueuedCount(queued.length);
+            setConflicts(queued.filter(o => o.syncStatus === "Conflict"));
+
+            for (const order of toSync) {
+                try {
+                    // Send to backend
+                    const syncPayload = { ...order };
+                    // remove client-side metadata before sync
+                    delete syncPayload.id;
+                    delete syncPayload.syncStatus;
+                    delete syncPayload.offlineCreatedAt;
+                    delete syncPayload.errorMsg;
+
+                    await axios.post(`${backendBase}/api/admin/orders/manual`, syncPayload, { withCredentials: true });
+                    // Delete from local queue on success
+                    await deleteOfflineOrder(order.id);
+                } catch (err) {
+                    console.error("❌ Sync error for order:", order.id, err);
+                    if (err.response?.status === 400 || err.response?.data?.message?.toLowerCase().includes("stock")) {
+                        const conflictOrder = {
+                            ...order,
+                            syncStatus: "Conflict",
+                            errorMsg: err.response?.data?.message || "Out of stock / inventory mismatch"
+                        };
+                        await saveOfflineOrder(conflictOrder);
+                    } else {
+                        // Network error, keep trying later
+                        break;
+                    }
+                }
+            }
+
+            // Refresh queue counts
+            const refreshed = await getOfflineOrders();
+            setQueuedCount(refreshed.length);
+            setConflicts(refreshed.filter(o => o.syncStatus === "Conflict"));
+        } catch (e) {
+            console.error("❌ Failed to sync offline POS queue:", e);
+        }
+    };
+
+    useEffect(() => {
+        const handleOnline = () => {
+            setIsOnline(true);
+            toast.success("🌐 Connected! Syncing offline orders...");
+            syncOfflineOrders();
+        };
+        const handleOffline = () => {
+            setIsOnline(false);
+            toast.error("🔌 Connection lost. POS in offline queue mode.");
+        };
+
+        window.addEventListener("online", handleOnline);
+        window.addEventListener("offline", handleOffline);
+        
+        syncOfflineOrders();
+
+        return () => {
+            window.removeEventListener("online", handleOnline);
+            window.removeEventListener("offline", handleOffline);
+        };
+    }, []);
+
+    const handleRefundConflict = async (orderId) => {
+        try {
+            await deleteOfflineOrder(orderId);
+            toast.success("Conflict resolved: Refund processed and cart deleted.");
+            syncOfflineOrders();
+        } catch (e) {
+            toast.error("Failed to delete conflict");
+        }
+    };
+
+    const handleSwapConflictProduct = (order) => {
+        setResolvingConflict(order);
+    };
+
+    const executeSwap = async (replacementProduct) => {
+        if (!resolvingConflict) return;
+        try {
+            const updatedItems = resolvingConflict.items.map(item => {
+                return {
+                    ...item,
+                    productId: replacementProduct._id,
+                    name: replacementProduct.name,
+                    price: replacementProduct.basePrice,
+                    buyingPrice: replacementProduct.buyingPrice,
+                    image: replacementProduct.image
+                };
+            });
+            const updatedTotal = updatedItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            
+            const updatedOrder = {
+                ...resolvingConflict,
+                items: updatedItems,
+                totalAmount: updatedTotal,
+                syncStatus: "Pending",
+                errorMsg: null
+            };
+            
+            await saveOfflineOrder(updatedOrder);
+            setResolvingConflict(null);
+            toast.success("Species swapped! Re-syncing order...");
+            syncOfflineOrders();
+        } catch (e) {
+            toast.error("Failed to swap product");
+        }
+    };
 
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -103,30 +230,51 @@ export default function AdminPOS() {
             if (!customer.houseNo || !customer.street) return toast.error("Address required");
         }
 
+        const payload = {
+            customer: { ...customer },
+            items: cart.map(i => ({
+                productId: i._id,
+                name: i.name,
+                price: i.basePrice,
+                buyingPrice: i.buyingPrice,
+                qty: i.qty,
+                image: i.image
+            })),
+            totalAmount: cartTotal,
+            paymentMethod,
+            deliveryType: customer.deliveryType,
+            address: customer.deliveryType === "Delivery" ? {
+                houseNo: customer.houseNo,
+                street: customer.street,
+                city: customer.city,
+                zip: customer.zip
+            } : null,
+            source: "POS"
+        };
+
+        if (!isOnline) {
+            // Queue offline
+            const offlinePayload = {
+                ...payload,
+                id: "pos-" + Date.now() + "-" + Math.floor(Math.random() * 1000),
+                offlineCreatedAt: new Date().toISOString(),
+                syncStatus: "Pending"
+            };
+            try {
+                await saveOfflineOrder(offlinePayload);
+                setModal({ show: true, message: `Offline Checkout Saved (₹${cartTotal}). It will sync once connection is restored!`, type: "success" });
+                setCart([]);
+                setCustomer({ phone: "", name: "", email: "", deliveryType: "Walk-in", houseNo: "", street: "", city: "Vizag", zip: "530001" });
+                const refreshed = await getOfflineOrders();
+                setQueuedCount(refreshed.length);
+            } catch (err) {
+                toast.error("Failed to queue offline: " + err);
+            }
+            return;
+        }
+
         setProcessing(true);
         try {
-            const payload = {
-                customer: { ...customer },
-                items: cart.map(i => ({
-                    productId: i._id,
-                    name: i.name,
-                    price: i.basePrice,
-                    buyingPrice: i.buyingPrice,
-                    qty: i.qty,
-                    image: i.image
-                })),
-                totalAmount: cartTotal,
-                paymentMethod,
-                deliveryType: customer.deliveryType,
-                address: customer.deliveryType === "Delivery" ? {
-                    houseNo: customer.houseNo,
-                    street: customer.street,
-                    city: customer.city,
-                    zip: customer.zip
-                } : null,
-                source: "POS"
-            };
-
             await axios.post(`${backendBase}/api/admin/orders/manual`, payload, { withCredentials: true });
 
             setModal({ show: true, message: `Transaction Complete: ₹${cartTotal}`, type: "success" });
@@ -160,8 +308,8 @@ export default function AdminPOS() {
                             Sea<span className="font-extrabold">Bite</span>
                         </h1>
                         <p className="text-[10px] font-bold text-stone-400 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_6px_rgba(16,185,129,0.3)]" />
-                            Retail System
+                            <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${isOnline ? "bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.3)]" : "bg-rose-500 shadow-[0_0_6px_rgba(244,63,94,0.3)]"}`} />
+                            {isOnline ? "Retail System" : `Offline (${queuedCount} Queued)`}
                         </p>
                     </div>
 
@@ -260,6 +408,33 @@ export default function AdminPOS() {
                         </button>
                     )}
                 </div>
+
+                {/* Conflict Resolutions Queue */}
+                {conflicts.length > 0 && (
+                    <div className="bg-amber-50 border-b border-amber-200/50 p-6 space-y-3">
+                        <h3 className="text-xs font-extrabold text-amber-800 uppercase tracking-widest flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
+                            ⚠️ Sync Conflict Resolution Queue ({conflicts.length})
+                        </h3>
+                        <div className="space-y-3 max-h-48 overflow-y-auto no-scrollbar">
+                            {conflicts.map(c => (
+                                <div key={c.id} className="bg-white border border-amber-200 rounded-2xl p-4 space-y-3 shadow-sm">
+                                    <div className="flex justify-between items-start">
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold text-stone-900 truncate">{c.customer.name} ({c.customer.phone})</p>
+                                            <p className="text-[10px] text-rose-500 font-bold mt-1 line-clamp-2">⚠️ {c.errorMsg || "Stock conflict"}</p>
+                                        </div>
+                                        <span className="text-[10px] font-mono font-bold text-stone-400 ml-2 shrink-0">₹{c.totalAmount}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button onClick={() => handleSwapConflictProduct(c)} className="flex-1 py-2 bg-stone-900 text-white rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-stone-850 transition-colors">Swap Species</button>
+                                        <button onClick={() => handleRefundConflict(c.id)} className="flex-1 py-2 border border-rose-200 text-rose-600 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-rose-50 transition-colors">Refund</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Cart Items */}
                 <div className="flex-1 overflow-y-auto p-8 space-y-4 pos-grid bg-stone-50/20">
@@ -407,6 +582,31 @@ export default function AdminPOS() {
                     </p>
                 </div>
             </div>
+
+            {/* Swap Species Modal */}
+            {resolvingConflict && (
+                <div className="absolute inset-0 bg-stone-950/20 backdrop-blur-sm flex items-center justify-center z-50 p-6">
+                    <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-[2rem] p-8 max-w-md w-full shadow-2xl border border-stone-200">
+                        <h3 className="text-lg font-bold text-stone-900 mb-2">🔄 Swap Species</h3>
+                        <p className="text-xs text-stone-500 mb-6">Select a replacement species for customer <strong>{resolvingConflict.customer.name}</strong></p>
+                        
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-2 pos-grid">
+                            {products.filter(p => p.stock === "in" && p.countInStock > 0).map(p => (
+                                <div key={p._id} onClick={() => executeSwap(p)} className="flex items-center gap-3 p-3 border border-stone-150 rounded-2xl hover:bg-stone-50 cursor-pointer transition-all active:scale-[0.98]">
+                                    <img src={p.image} className="w-10 h-10 object-contain p-1 bg-stone-50 rounded-lg" />
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-bold text-stone-950 truncate">{p.name}</p>
+                                        <p className="text-[10px] text-stone-400 font-bold">₹{p.basePrice} / {p.unit}</p>
+                                    </div>
+                                    <FiChevronRight size={16} className="text-stone-400" />
+                                </div>
+                            ))}
+                        </div>
+                        
+                        <button onClick={() => setResolvingConflict(null)} className="w-full mt-6 py-3 border border-stone-200 rounded-xl text-xs font-bold uppercase tracking-wider text-stone-400 hover:bg-stone-50">Cancel</button>
+                    </motion.div>
+                </div>
+            )}
         </motion.div>
     );
 }

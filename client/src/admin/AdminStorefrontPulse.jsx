@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiActivity, FiZap, FiUsers, FiClock, FiEye, FiArrowRight, FiX, FiCheckCircle } from "react-icons/fi";
+import { FiActivity, FiZap, FiUsers, FiClock, FiEye, FiArrowRight, FiX, FiCheckCircle, FiShoppingBag, FiGlobe } from "react-icons/fi";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
 import toast from "../utils/toast";
+import { useSocket } from "../context/SocketContext";
 
 export default function AdminStorefrontPulse() {
+  const { socket, isConnected } = useSocket();
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -14,12 +16,27 @@ export default function AdminStorefrontPulse() {
   const [showFlashModal, setShowFlashModal] = useState(false);
   const [flashPrice, setFlashPrice] = useState("");
   const [duration, setDuration] = useState(30);
+  const [livePulses, setLivePulses] = useState([]);
 
   useEffect(() => {
     fetchStats();
     const interval = setInterval(fetchStats, 30000); // Auto refresh every 30s
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.emit("join-admin");
+
+    const handlePulse = (pulse) => {
+      setLivePulses((prev) => [pulse, ...prev].slice(0, 20));
+    };
+
+    socket.on("CLICKSTREAM_PULSE", handlePulse);
+    return () => {
+      socket.off("CLICKSTREAM_PULSE", handlePulse);
+    };
+  }, [socket]);
 
   const fetchStats = async () => {
     try {
@@ -75,9 +92,9 @@ export default function AdminStorefrontPulse() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
           {/* Main Pulse List */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="xl:col-span-2 space-y-4">
             {stats.map((item) => (
               <motion.div 
                 key={item.productId}
@@ -111,7 +128,7 @@ export default function AdminStorefrontPulse() {
           </div>
 
           {/* Detailed Pulse & History */}
-          <div className="lg:col-span-1">
+          <div className="xl:col-span-1">
             <AnimatePresence mode="wait">
               {selectedProduct ? (
                 <motion.div 
@@ -168,6 +185,82 @@ export default function AdminStorefrontPulse() {
                 </div>
               )}
             </AnimatePresence>
+          </div>
+
+          {/* Live Activity Feed Canvas */}
+          <div className="xl:col-span-1">
+            <div className="bg-white rounded-3xl border border-stone-200 shadow-sm sticky top-24 overflow-hidden">
+              <div className="p-6 border-b border-stone-100 bg-stone-50/50">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="font-bold text-stone-900 flex items-center gap-2">
+                    <FiActivity size={18} className="text-emerald-500 animate-pulse" />
+                    Live Activity Feed
+                  </h2>
+                  <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                    {isConnected ? "Live" : "Offline"}
+                  </div>
+                </div>
+                <p className="text-xs text-stone-500 font-medium">Real-time clickstream events from active shoppers.</p>
+              </div>
+
+              <div className="max-h-[60vh] overflow-y-auto p-4 space-y-3">
+                <AnimatePresence>
+                  {livePulses.length > 0 ? (
+                    livePulses.map((pulse, idx) => {
+                      const isCart = pulse.type === "cart_update";
+                      return (
+                        <motion.div
+                          key={pulse.timestamp + idx}
+                          initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, transition: { duration: 0.15 } }}
+                          className={`p-3.5 rounded-2xl border transition-all ${isCart ? "bg-rose-50/30 border-rose-100" : "bg-stone-50/30 border-stone-100"}`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${isCart ? "bg-rose-50 text-rose-600" : "bg-stone-50 text-stone-600"}`}>
+                              {isCart ? <FiShoppingBag size={14} /> : <FiGlobe size={14} />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-stone-900">
+                                {pulse.userId ? "Registered User" : "Guest shopper"}
+                              </p>
+                              <p className="text-xs text-stone-600 mt-0.5 leading-relaxed">
+                                {isCart ? (
+                                  <span>
+                                    Updated cart:{" "}
+                                    {pulse.cartItems?.map((item, i) => (
+                                      <strong key={i} className="text-stone-950 font-semibold">
+                                        {item.qty}x {item.name}
+                                      </strong>
+                                    ))}
+                                  </span>
+                                ) : (
+                                  <span>
+                                    Viewed <code className="text-stone-700 font-mono bg-stone-100 px-1 py-0.5 rounded">{pulse.currentPath}</code>
+                                  </span>
+                                )}
+                              </p>
+                              {pulse.city && (
+                                <p className="text-[10px] text-stone-400 mt-1 font-medium flex items-center gap-1">
+                                  <span>📍 {pulse.city}</span>
+                                  {pulse.ipAddress && <span>• {pulse.ipAddress.split('.').slice(0,2).join('.')}.*.*</span>}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </motion.div>
+                      );
+                    })
+                  ) : (
+                    <div className="py-20 text-center text-stone-400 text-xs font-bold flex flex-col items-center justify-center gap-3">
+                      <FiActivity size={24} className="opacity-30" />
+                      <span>Waiting for live storefront events...</span>
+                    </div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
           </div>
         </div>
       </div>

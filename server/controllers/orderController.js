@@ -261,7 +261,10 @@ export const updateOrderStatus = async (req, res) => {
         try {
             if (req.io) {
                 req.io.to(`order_${order._id}`).emit('ORDER_UPDATED', updatedOrder);
-                req.io.emit('ADMIN_ORDER_UPDATED', updatedOrder);
+                req.io.emit('ADMIN_ORDER_UPDATED', {
+                    order: updatedOrder,
+                    operator: req.user?.name || "Admin"
+                });
             }
         } catch (socketErr) {
             console.error("[STATUS_UPDATE] Socket notification failed:", socketErr.message);

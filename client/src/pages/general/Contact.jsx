@@ -63,7 +63,7 @@ export default function Contact() {
               <div>
                 <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1A2E2C", margin: "0 0 4px" }}>Phone Support</h3>
                 <p style={{ fontSize: "14px", color: "#6B8F8A", margin: "0 0 12px", lineHeight: 1.5 }}>Mon-Sat from 8am to 8pm.</p>
-                <a href="tel:+919866635566" style={{ fontSize: "15px", fontWeight: 800, color: "#5BBFB5", textDecoration: "none" }}>+91 9866635566</a>
+                <a href="tel:+919866635566" style={{ fontSize: "15px", fontWeight: 800, color: "#000000", textDecoration: "none" }}>+91 9866635566</a>
                 <br />
                 <a href="https://wa.me/919866635566" target="_blank" rel="noreferrer" style={{ fontSize: "13px", fontWeight: 600, color: "#25D366", textDecoration: "none", marginTop: "6px", display: "inline-flex", alignItems: "center", gap: "4px" }}>💬 WhatsApp Us</a>
               </div>
@@ -76,7 +76,7 @@ export default function Contact() {
               <div>
                 <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#1A2E2C", margin: "0 0 4px" }}>Email Us</h3>
                 <p style={{ fontSize: "14px", color: "#6B8F8A", margin: "0 0 12px", lineHeight: 1.5 }}>We aim to reply within 2 hours.</p>
-                <a href="mailto:support@seabite.co.in" style={{ fontSize: "15px", fontWeight: 800, color: "#E8816A", textDecoration: "none" }}>support@seabite.co.in</a>
+                <a href="mailto:support@seabite.co.in" style={{ fontSize: "15px", fontWeight: 800, color: "#000000", textDecoration: "none" }}>support@seabite.co.in</a>
               </div>
             </div>
 

@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import {
   FiType, FiDollarSign, FiTag, FiImage,
   FiTrendingUp, FiCheck, FiArrowLeft, FiSave, FiBox,
-  FiPlus, FiX,
+  FiPlus, FiX, FiCalendar, FiClock, FiMapPin,
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import PopupModal from "../components/common/PopupModal";
@@ -36,7 +36,12 @@ export default function EditProduct() {
       { name: "Fillets", priceAdjustmentPct: 15, available: true, emoji: "🍣" },
       { name: "Boneless Cubes", priceAdjustmentPct: 20, available: true, emoji: "🧊" },
     ],
-    pricePerKg: "", minOrderWeight: 250, maxOrderWeight: 5000, weightVariancePct: 5
+    pricePerKg: "", minOrderWeight: 250, maxOrderWeight: 5000, weightVariancePct: 5,
+    catchDate: new Date().toISOString().slice(0, 16),
+    shelfLifeHours: 48,
+    sourceOrigin: "Bhimavaram Farm Gate",
+    algorithmicScaling: false,
+    scalingRule: { minStockThreshold: 10, discountIncreasePct: 5, intervalHours: 1, maxDiscountPct: 30 }
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -73,7 +78,12 @@ export default function EditProduct() {
           pricePerKg: data.pricePerKg !== undefined ? data.pricePerKg : "",
           minOrderWeight: data.minOrderWeight || 250,
           maxOrderWeight: data.maxOrderWeight || 5000,
-          weightVariancePct: data.weightVariancePct || 5
+          weightVariancePct: data.weightVariancePct || 5,
+          catchDate: data.catchDate ? new Date(data.catchDate).toISOString().slice(0, 16) : new Date().toISOString().slice(0, 16),
+          shelfLifeHours: data.shelfLifeHours || 48,
+          sourceOrigin: data.sourceOrigin || "Bhimavaram Farm Gate",
+          algorithmicScaling: data.algorithmicScaling || false,
+          scalingRule: data.scalingRule || { minStockThreshold: 10, discountIncreasePct: 5, intervalHours: 1, maxDiscountPct: 30 }
         });
         setLoading(false);
       })
@@ -84,19 +94,66 @@ export default function EditProduct() {
       });
   }, [id, backendBase]);
 
+  // Client-side Canvas Image Resizer to WebP (max-width 1200px)
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith("image/")) {
+        resolve(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+          const MAX_DIM = 1200;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                type: "image/webp",
+                lastModified: Date.now()
+              });
+              resolve(processedFile);
+            } else {
+              resolve(file);
+            }
+          }, "image/webp", 0.82);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setSubmitting(true);
-    const formData = new FormData();
-    formData.append("image", file);
     try {
+      const compressedFile = await compressImage(file);
+      const formData = new FormData();
+      formData.append("image", compressedFile);
       const { data } = await axios.post(`${backendBase}/api/upload`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true
       });
       setForm({ ...form, image: data.file || data.url });
-      setModal({ show: true, message: "Main image uploaded!", type: "success" });
+      setModal({ show: true, message: "Main image compressed and uploaded!", type: "success" });
     } catch (err) {
       setModal({ show: true, message: "Image upload failed.", type: "error" });
     } finally {
@@ -112,13 +169,14 @@ export default function EditProduct() {
     }
 
     setSubmitting(true);
-    const toastId = toast.loading("Uploading gallery images...");
+    const toastId = toast.loading("Compressing and uploading gallery images...");
 
     try {
       const uploadedUrls = [];
       for (const file of files) {
+        const compressedFile = await compressImage(file);
         const formData = new FormData();
-        formData.append("image", file);
+        formData.append("image", compressedFile);
         const { data } = await axios.post(`${backendBase}/api/upload`, formData, {
           headers: { "Content-Type": "multipart/form-data" },
           withCredentials: true
@@ -150,14 +208,15 @@ export default function EditProduct() {
     setSubmitting(true);
     try {
       await axios.put(`${backendBase}/api/admin/products/${id}`, {
-        name: form.name, category: form.category, basePrice: Number(form.basePrice), buyingPrice: Number(form.buyingPrice),
-        unit: form.unit, desc: form.desc, image: form.image, images: form.images, trending: form.trending, stock: form.stock, countInStock: Number(form.countInStock),
-        hasCuts: form.hasCuts,
-        cuts: form.cuts,
+        ...form,
+        basePrice: Number(form.basePrice),
+        buyingPrice: Number(form.buyingPrice),
+        countInStock: Number(form.countInStock),
         pricePerKg: form.pricePerKg ? Number(form.pricePerKg) : 0,
         minOrderWeight: form.minOrderWeight ? Number(form.minOrderWeight) : 250,
         maxOrderWeight: form.maxOrderWeight ? Number(form.maxOrderWeight) : 5000,
         weightVariancePct: form.weightVariancePct ? Number(form.weightVariancePct) : 5,
+        shelfLifeHours: Number(form.shelfLifeHours)
       }, { withCredentials: true });
       setModal({ show: true, message: "Product updated successfully!", type: "success" });
       setTimeout(() => navigate("/admin/products"), 1500);
@@ -474,6 +533,57 @@ export default function EditProduct() {
                       onChange={handleChange}
                       placeholder="e.g. 5000"
                       className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 🕒 FRESHNESS & LIFECYCLE TRACKER SECTION */}
+              <div className="space-y-4 border-t border-stone-100 pt-6">
+                <div>
+                  <h4 className="font-bold text-stone-900 text-sm">🕒 Freshness & Lifecycle Parameters</h4>
+                  <p className="text-xs text-stone-400">Configure traceability details for catch-to-cart logs</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                      <FiCalendar size={12} /> Catch Date & Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      name="catchDate"
+                      value={form.catchDate}
+                      onChange={handleChange}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                      <FiClock size={12} /> Shelf Life (Hours)
+                    </label>
+                    <input
+                      type="number"
+                      name="shelfLifeHours"
+                      value={form.shelfLifeHours}
+                      onChange={handleChange}
+                      placeholder="e.g. 48"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                      <FiMapPin size={12} /> Source Origin
+                    </label>
+                    <input
+                      type="text"
+                      name="sourceOrigin"
+                      value={form.sourceOrigin}
+                      onChange={handleChange}
+                      placeholder="e.g. Bhimavaram Farm Gate"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all"
                     />
                   </div>
                 </div>

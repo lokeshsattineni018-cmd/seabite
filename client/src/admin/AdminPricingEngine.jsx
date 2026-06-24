@@ -15,6 +15,8 @@ export default function AdminPricingEngine() {
   const [aiEnabled, setAiEnabled] = useState(true);
   const [stormOverride, setStormOverride] = useState(false);
   const [marginOffset, setMarginOffset] = useState(15);
+  const [competitorMatch, setCompetitorMatch] = useState(false);
+  const [demandDensity, setDemandDensity] = useState(false);
   const [products, setProducts] = useState([]);
   
   const [loading, setLoading] = useState(true);
@@ -28,6 +30,8 @@ export default function AdminPricingEngine() {
         setAiEnabled(data.settings.aiEnabled);
         setStormOverride(data.settings.stormOverride);
         setMarginOffset(data.settings.marginOffset);
+        setCompetitorMatch(data.settings.competitorMatch || false);
+        setDemandDensity(data.settings.demandDensity || false);
       }
       setProducts(data.products || []);
     } catch (err) {
@@ -54,6 +58,8 @@ export default function AdminPricingEngine() {
     if (aiEnabled) {
       multiplier *= weather.scarcityIndex;
       multiplier += marginOffset / 100;
+      if (competitorMatch) multiplier -= 0.05;
+      if (demandDensity) multiplier += 0.08;
     }
     return Math.round(base * multiplier);
   };
@@ -73,7 +79,9 @@ export default function AdminPricingEngine() {
       const { data } = await axios.post("/api/admin/pricing-engine/sync", {
         aiEnabled,
         stormOverride,
-        marginOffset
+        marginOffset,
+        competitorMatch,
+        demandDensity
       });
       toast.success(data.message || "AI Weather-Adaptive dynamic prices pushed successfully!", { icon: "🌦️" });
       await loadPricingData();
@@ -209,6 +217,50 @@ export default function AdminPricingEngine() {
                     layout
                     className="w-4.5 h-4.5 bg-white rounded-full shadow-sm"
                     animate={{ x: stormOverride ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                </button>
+              </div>
+
+              {/* Competitor Price Matching Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-stone-800 block">Competitor Price Match</span>
+                  <span className="text-[10px] text-stone-400 block mt-0.5">Dynamically match competitor discounts (-5% offset)</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCompetitorMatch(!competitorMatch)}
+                  className={`w-12 h-6.5 rounded-full p-1 transition-all duration-300 relative cursor-pointer ${
+                    competitorMatch ? "bg-amber-500" : "bg-stone-200"
+                  }`}
+                >
+                  <motion.div
+                    layout
+                    className="w-4.5 h-4.5 bg-white rounded-full shadow-sm"
+                    animate={{ x: competitorMatch ? 20 : 0 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                </button>
+              </div>
+
+              {/* Demand Density Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-stone-800 block">Demand Density Surge</span>
+                  <span className="text-[10px] text-stone-400 block mt-0.5">Surge price in high order density areas (+8% offset)</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDemandDensity(!demandDensity)}
+                  className={`w-12 h-6.5 rounded-full p-1 transition-all duration-300 relative cursor-pointer ${
+                    demandDensity ? "bg-purple-500" : "bg-stone-200"
+                  }`}
+                >
+                  <motion.div
+                    layout
+                    className="w-4.5 h-4.5 bg-white rounded-full shadow-sm"
+                    animate={{ x: demandDensity ? 20 : 0 }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 </button>
