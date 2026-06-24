@@ -93,6 +93,17 @@ export const checkout = async (req, res) => {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
+    // Apply Wallet Balance if requested
+    const useWallet = !!req.body.useWallet;
+    const walletAppliedAmount = req.body.walletAppliedAmount ? Number(req.body.walletAppliedAmount) : 0;
+    if (useWallet && walletAppliedAmount > 0) {
+      if (userDoc.walletBalance < walletAppliedAmount) {
+        return res.status(400).json({ success: false, message: "Insufficient wallet balance" });
+      }
+      userDoc.walletBalance -= walletAppliedAmount;
+      await userDoc.save();
+    }
+
     let loyaltyDiscount = 0;
     let pointsUsed = 0;
     if (useLoyalty && userDoc.loyaltyPoints > 0) {
@@ -134,7 +145,7 @@ export const checkout = async (req, res) => {
 
     let razorpayOrder = null;
 
-    if (paymentMethod === "Prepaid") {
+    if (paymentMethod === "Prepaid" && Number(amount) > 0) {
       razorpayOrder = await instance.orders.create({
         amount: Math.round(Number(amount) * 100),
         currency: "INR",
@@ -149,12 +160,13 @@ export const checkout = async (req, res) => {
       itemsPrice,
       taxPrice,
       shippingPrice,
-      discount: Number(discount || 0) + loyaltyDiscount + giftCardDiscount,
+      discount: Number(discount || 0) + loyaltyDiscount + giftCardDiscount + walletAppliedAmount,
       totalAmount: amount,
       paymentMethod: paymentMethod || "COD",
       razorpay_order_id: razorpayOrder ? razorpayOrder.id : null,
-      status: "Pending",
-      isPaid: false,
+      status: paymentMethod === "Wallet" ? "Processing" : "Pending",
+      isPaid: paymentMethod === "Wallet" ? true : false,
+      paidAt: paymentMethod === "Wallet" ? new Date() : undefined,
       deliverySlot,
       deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined,
       isGift: !!isGift,
@@ -168,6 +180,20 @@ export const checkout = async (req, res) => {
     const newOrder = new Order(orderData);
 
     const savedOrder = await newOrder.save();
+
+    // Log the wallet transaction
+    if (useWallet && walletAppliedAmount > 0) {
+      if (!userDoc.walletTransactions) {
+        userDoc.walletTransactions = [];
+      }
+      userDoc.walletTransactions.push({
+        amount: walletAppliedAmount,
+        type: "Debit",
+        description: `Applied to Order #${savedOrder.orderId || savedOrder._id.toString().substring(18)}`,
+        date: new Date()
+      });
+      await userDoc.save();
+    }
 
     // 🟢 STOCK DEDUCTION & CART CLEARING
     for (const item of items) {
@@ -184,8 +210,8 @@ export const checkout = async (req, res) => {
     userDoc.cart = [];
     await userDoc.save();
 
-    // ✅ TRIGGER EMAIL & WHATSAPP: ONLY for COD orders here
-    if (paymentMethod === "COD") {
+    // ✅ TRIGGER EMAIL & WHATSAPP: ONLY for COD or Wallet orders here
+    if (paymentMethod === "COD" || paymentMethod === "Wallet") {
       try {
         await sendOrderPlacedEmail(
           req.user.email,
@@ -196,27 +222,27 @@ export const checkout = async (req, res) => {
           savedOrder.paymentMethod
         );
       } catch (mailErr) {
-        logger.error("COD Confirmation Email Failed", { traceId, error: mailErr.message, orderId: savedOrder._id });
+        logger.error("Order Confirmation Email Failed", { traceId, error: mailErr.message, orderId: savedOrder._id });
       }
 
       try {
         const { sendWhatsAppNotification } = await import("../utils/whatsapp.js");
         await sendWhatsAppNotification(
           shippingAddress.phone || req.user.phone || "9999999999",
-          `🚢 SeaBite: Ahoy ${req.user.name}! Your fresh catch order #${savedOrder.orderId} of ₹${savedOrder.totalAmount} has been placed successfully via COD. Selected slot: ${deliverySlot || 'Standard Delivery'}.`
+          `🚢 SeaBite: Your order #${savedOrder.orderId} of ₹${savedOrder.totalAmount} has been placed successfully via ${paymentMethod === "Wallet" ? "Wallet" : "COD"}. Selected slot: ${deliverySlot || 'Standard Delivery'}.`
         );
       } catch (waErr) {
-        logger.error("COD WhatsApp Dispatch Failed", { traceId, error: waErr.message });
+        logger.error("WhatsApp Dispatch Failed", { traceId, error: waErr.message });
       }
 
       await Notification.create({
         user: req.user._id,
-        message: `Order #${savedOrder.orderId} placed successfully via COD!`,
+        message: `Order #${savedOrder.orderId} placed successfully via ${paymentMethod === "Wallet" ? "Wallet" : "COD"}!`,
         orderId: savedOrder._id,
-        statusType: "Pending"
+        statusType: paymentMethod === "Wallet" ? "Processing" : "Pending"
       });
 
-      // Split payout splits for COD orders
+      // Split payout splits for COD or Wallet orders
       await processVendorSplits(savedOrder.items);
     }
 
