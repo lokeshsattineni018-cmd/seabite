@@ -62,7 +62,11 @@ html.dark body {
   @apply bg-blue-500;
 }
 
-/* 🧬 GLOBAL TRANSITIONS */
+/* 🧬 GLOBAL TRANSITIONS & INTERACTIVE CURSORS */
+a, button, select, [role="button"], input[type="button"], input[type="submit"], input[type="checkbox"], input[type="radio"], .cursor-pointer {
+  cursor: pointer !important;
+}
+
 a, button, input, select, textarea, [role="button"] {
   @apply transition-colors duration-300;
 }

@@ -38,7 +38,7 @@ export default function SupportWidget() {
       {/* Main Trigger Button (Headset Icon) */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-14 h-14 bg-[#1A2B35] hover:bg-[#253d4a] text-white rounded-full shadow-[0_8px_30px_rgba(26,43,53,0.3)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
+        className="w-14 h-14 bg-[#1A2B35] hover:bg-[#253d4a] text-white rounded-full shadow-[0_8px_30px_rgba(26,43,53,0.3)] flex items-center justify-center transition-transform hover:scale-105 active:scale-95 cursor-pointer"
       >
         {isOpen ? (
           // Close Icon (X)

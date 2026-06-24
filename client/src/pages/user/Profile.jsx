@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { 
-  FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiLock, 
-  FiEye, FiEyeOff, FiShoppingBag, FiShield, FiX, 
+import {
+  FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiLock,
+  FiEye, FiEyeOff, FiShoppingBag, FiShield, FiX,
   FiCheckCircle, FiUser, FiChevronRight, FiCreditCard,
   FiBell, FiSettings, FiPackage, FiCalendar
 } from "react-icons/fi";
@@ -24,7 +24,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [showPassModal, setShowPassModal] = useState(false);
-  
+
   // Password States
   const [oldPass, setOldPass] = useState("");
   const [newPass, setNewPass] = useState("");
@@ -55,9 +55,9 @@ export default function Profile() {
     }
   }, [navigate, authUser]);
 
-  useEffect(() => { 
+  useEffect(() => {
     if (!authLoading) {
-      fetchUserAndOrders(); 
+      fetchUserAndOrders();
     }
   }, [fetchUserAndOrders, authLoading]);
 
@@ -77,7 +77,7 @@ export default function Profile() {
     if (!oldPass || !newPass) return toast.error("Please fill both fields");
     if (newPass.length < 6) return toast.error("New password must be at least 6 characters");
     if (newPass !== confirmPass) return toast.error("Passwords do not match");
-    
+
     setPassLoading(true);
     try {
       await axios.put(`${API_URL}/api/auth/change-password`, { oldPassword: oldPass, newPassword: newPass }, { withCredentials: true });
@@ -108,12 +108,12 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 selection:bg-blue-100 pt-8">
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        
+
         {/* 🔙 Navigation */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-10">
-          <button 
+          <button
             onClick={() => navigate("/")}
             className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all"
           >
@@ -122,9 +122,9 @@ export default function Profile() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-          
+
           {/* 📱 Left Sidebar */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
             className="lg:col-span-3 space-y-6 lg:sticky lg:top-32"
           >
@@ -144,8 +144,8 @@ export default function Profile() {
                   ✨ SeaBite Prime
                 </div>
               )}
-              
-              <button 
+
+              <button
                 onClick={handleLogout}
                 className="mt-8 w-full py-3 rounded-2xl bg-red-50 text-red-500 text-xs font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
               >
@@ -158,11 +158,10 @@ export default function Profile() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl transition-all ${
-                    activeTab === tab.id 
-                      ? 'bg-slate-900 text-white shadow-xl' 
+                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl transition-all ${activeTab === tab.id
+                      ? 'bg-slate-900 text-white shadow-xl'
                       : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
+                    }`}
                 >
                   <tab.icon size={18} />
                   <span className="text-sm font-bold">{tab.label}</span>
@@ -176,9 +175,8 @@ export default function Profile() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-shrink-0 flex items-center gap-3 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${
-                    activeTab === tab.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border border-slate-100'
-                  }`}
+                  className={`flex-shrink-0 flex items-center gap-3 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border border-slate-100'
+                    }`}
                 >
                   <tab.icon size={16} /> {tab.label}
                 </button>
@@ -198,27 +196,27 @@ export default function Profile() {
                   <>
                     {/* Animated Ocean Header */}
                     <div className="relative group">
-                       <AnimatedOceanBanner />
-                       <div className="absolute inset-0 flex flex-col justify-center px-10 lg:px-16 pointer-events-none">
-                          <motion.span 
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                            className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 mb-2"
-                          >
-                            Welcome Back
-                          </motion.span>
-                          <motion.h1 
-                            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}
-                            className="text-3xl lg:text-5xl font-extralight tracking-tight text-slate-900"
-                          >
-                            Good morning, <span className="font-bold">{user.name.split(' ')[0]}</span>.
-                          </motion.h1>
-                       </div>
+                      <AnimatedOceanBanner />
+                      <div className="absolute inset-0 flex flex-col justify-center px-10 lg:px-16 pointer-events-none">
+                        <motion.span
+                          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+                          className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 mb-2"
+                        >
+                          Welcome Back
+                        </motion.span>
+                        <motion.h1
+                          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}
+                          className="text-3xl lg:text-5xl font-extralight tracking-tight text-slate-900"
+                        >
+                          Good morning, <span className="font-bold">{user.name.split(' ')[0]}</span>.
+                        </motion.h1>
+                      </div>
                     </div>
 
                     {/* Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-blue-200 transition-all">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Real-time Orders</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Orders</p>
                         <p className="text-5xl font-extralight tracking-tighter">{orders.length}</p>
                       </div>
                       <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-indigo-200 transition-all">
@@ -228,8 +226,8 @@ export default function Profile() {
                       <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-green-200 transition-all">
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Profile Status</p>
                         <div className="flex items-center gap-3">
-                           <div className="w-2 h-2 rounded-full bg-green-500 animate-ping"></div>
-                           <span className="text-lg font-bold">Verified</span>
+                          <div className="w-2 h-2 rounded-full bg-green-500 animate-ping"></div>
+                          <span className="text-lg font-bold">Verified</span>
                         </div>
                       </div>
                     </div>
@@ -272,8 +270,8 @@ export default function Profile() {
                     )}
 
                     <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
-                       <h3 className="text-xl font-bold tracking-tight mb-8">Personal Information</h3>
-                       <UserInfo user={user} onUpdate={fetchUserAndOrders} />
+                      <h3 className="text-xl font-bold tracking-tight mb-8">Personal Information</h3>
+                      <UserInfo user={user} onUpdate={fetchUserAndOrders} />
                     </div>
                   </>
                 )}
@@ -281,10 +279,10 @@ export default function Profile() {
                 {activeTab === "orders" && (
                   <div className="space-y-6">
                     <div className="flex items-center justify-between px-2">
-                       <h2 className="text-2xl font-bold tracking-tight">Recent Orders</h2>
-                       <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{orders.length} total</span>
+                      <h2 className="text-2xl font-bold tracking-tight">Recent Orders</h2>
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{orders.length} total</span>
                     </div>
-                    
+
                     {orders.length === 0 ? (
                       <div className="bg-white rounded-[2.5rem] p-20 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 text-center">
                         <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
@@ -300,29 +298,28 @@ export default function Profile() {
                       <div className="grid grid-cols-1 gap-4">
                         {orders.slice(0, 5).map((order) => (
                           <div key={order._id} className="bg-white rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center justify-between group hover:border-slate-300 transition-all">
-                             <div className="flex items-center gap-6">
-                                <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
-                                   <FiPackage size={24} />
+                            <div className="flex items-center gap-6">
+                              <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
+                                <FiPackage size={24} />
+                              </div>
+                              <div>
+                                <h4 className="font-bold text-slate-900">Order #{order.orderId || order._id.slice(-6).toUpperCase()}</h4>
+                                <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 font-medium">
+                                  <span className="flex items-center gap-1"><FiCalendar size={12} /> {new Date(order.createdAt).toLocaleDateString()}</span>
+                                  <span className="w-1 h-1 rounded-full bg-slate-200"></span>
+                                  <span>{order.items?.length || 0} items</span>
                                 </div>
-                                <div>
-                                   <h4 className="font-bold text-slate-900">Order #{order.orderId || order._id.slice(-6).toUpperCase()}</h4>
-                                   <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 font-medium">
-                                      <span className="flex items-center gap-1"><FiCalendar size={12}/> {new Date(order.createdAt).toLocaleDateString()}</span>
-                                      <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                                      <span>{order.items?.length || 0} items</span>
-                                   </div>
-                                </div>
-                             </div>
-                             <div className="text-right">
-                                <p className="font-bold text-slate-900">₹{order.totalAmount}</p>
-                                <span className={`text-[10px] font-black uppercase tracking-widest mt-1 block ${
-                                  order.status === 'Delivered' ? 'text-green-500' : 'text-blue-500'
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-slate-900">₹{order.totalAmount}</p>
+                              <span className={`text-[10px] font-black uppercase tracking-widest mt-1 block ${order.status === 'Delivered' ? 'text-green-500' : 'text-blue-500'
                                 }`}>{order.status}</span>
-                             </div>
+                            </div>
                           </div>
                         ))}
                         <button onClick={() => navigate("/orders")} className="w-full py-4 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-sm font-bold hover:bg-slate-50 transition-all">
-                           View All Orders
+                          View All Orders
                         </button>
                       </div>
                     )}
@@ -338,26 +335,26 @@ export default function Profile() {
                 {activeTab === "security" && (
                   <div className="bg-white rounded-[2.5rem] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
                     <div className="flex flex-col lg:flex-row justify-between gap-12">
-                       <div className="max-w-md">
-                          <h2 className="text-2xl font-bold mb-4 tracking-tight">Security Protocol</h2>
-                          <p className="text-slate-400 font-medium leading-relaxed mb-6">Manage your security keys and account protection settings.</p>
-                          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-green-50 text-green-600 border border-green-100">
-                             <FiCheckCircle size={16} />
-                             <span className="text-[10px] font-black uppercase tracking-widest">Multi-Factor Enabled</span>
+                      <div className="max-w-md">
+                        <h2 className="text-2xl font-bold mb-4 tracking-tight">Security Protocol</h2>
+                        <p className="text-slate-400 font-medium leading-relaxed mb-6">Manage your security keys and account protection settings.</p>
+                        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-green-50 text-green-600 border border-green-100">
+                          <FiCheckCircle size={16} />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Multi-Factor Enabled</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-3 justify-center">
+                        {user.isGoogleUser ? (
+                          <div className="flex items-center gap-4 px-8 py-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <FiLock className="text-slate-400" />
+                            <span className="text-sm font-bold">Authenticated via Google</span>
                           </div>
-                       </div>
-                       <div className="flex flex-col gap-3 justify-center">
-                          {user.isGoogleUser ? (
-                            <div className="flex items-center gap-4 px-8 py-4 bg-slate-50 rounded-2xl border border-slate-100">
-                               <FiLock className="text-slate-400" />
-                               <span className="text-sm font-bold">Authenticated via Google</span>
-                            </div>
-                          ) : (
-                            <button onClick={() => setShowPassModal(true)} className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-slate-900/20">
-                              Change Password
-                            </button>
-                          )}
-                       </div>
+                        ) : (
+                          <button onClick={() => setShowPassModal(true)} className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-slate-900/20">
+                            Change Password
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -371,7 +368,7 @@ export default function Profile() {
       <AnimatePresence>
         {showPassModal && (
           <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
               className="bg-white rounded-[3rem] p-12 w-full max-w-lg shadow-[0_50px_100px_rgba(0,0,0,0.1)] border border-slate-100 relative overflow-hidden"
             >
@@ -380,23 +377,23 @@ export default function Profile() {
               </button>
               <h2 className="text-2xl font-bold mb-2 tracking-tight">Update Security</h2>
               <p className="text-slate-400 font-medium mb-10 text-sm">Ensure your account stays protected with a high-entropy key.</p>
-              
+
               <div className="space-y-4 mb-8">
-                 <input 
-                   type={showOld ? "text" : "password"} placeholder="Current Password" value={oldPass} onChange={e => setOldPass(e.target.value)}
-                   className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-sm font-medium"
-                 />
-                 <input 
-                   type={showNew ? "text" : "password"} placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)}
-                   className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-sm font-medium"
-                 />
-                 <input 
-                   type="password" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
-                   className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-sm font-medium"
-                 />
+                <input
+                  type={showOld ? "text" : "password"} placeholder="Current Password" value={oldPass} onChange={e => setOldPass(e.target.value)}
+                  className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-sm font-medium"
+                />
+                <input
+                  type={showNew ? "text" : "password"} placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)}
+                  className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-sm font-medium"
+                />
+                <input
+                  type="password" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
+                  className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-sm font-medium"
+                />
               </div>
 
-              <button 
+              <button
                 onClick={handleChangePassword} disabled={passLoading}
                 className="w-full py-4 rounded-2xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-slate-900/10 disabled:opacity-50"
               >
