@@ -1,7 +1,7 @@
 // AdminCoupons.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import { FiTrash2, FiTag, FiPlus, FiRefreshCw, FiPercent, FiDollarSign, FiCopy, FiCheck } from "react-icons/fi";
+import { FiTrash2, FiTag, FiPlus, FiRefreshCw, FiPercent, FiDollarSign, FiCopy, FiCheck, FiX } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
@@ -25,9 +25,14 @@ export default function AdminCoupons() {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [userSearch, setUserSearch] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [formData, setFormData] = useState({
     code: "", value: "", minOrderAmount: "", discountType: "percent", firstTimeOnly: false, expiresAt: "", userEmail: "", maxUses: ""
   });
+
+  const dropdownRef = useRef(null);
 
   const fetchCoupons = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -41,8 +46,28 @@ export default function AdminCoupons() {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      const { data } = await axios.get(`${API_URL}/api/admin/users`, { withCredentials: true });
+      setUsers(data || []);
+    } catch (err) {
+      console.error("Failed to load users", err);
+    }
+  };
+
   useEffect(() => {
     fetchCoupons();
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleCreate = async (e) => {
@@ -64,6 +89,7 @@ export default function AdminCoupons() {
 
       await axios.post(`${API_URL}/api/coupons`, couponData, { withCredentials: true });
       setFormData({ code: "", value: "", minOrderAmount: "", discountType: "percent", firstTimeOnly: false, expiresAt: "", userEmail: "", maxUses: "" });
+      setUserSearch("");
       fetchCoupons(true);
       toast.success("Coupon created successfully");
     } catch (err) {
@@ -106,11 +132,11 @@ export default function AdminCoupons() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Create Form */}
-          <motion.div variants={fadeUp} custom={1} className="lg:col-span-1 h-fit bg-white p-8 rounded-3xl shadow-sm border border-stone-200/60 sticky top-4">
-            <h3 className="text-lg font-bold text-stone-900 mb-6 flex items-center gap-2">
+          <motion.div variants={fadeUp} custom={1} className="lg:col-span-1 h-fit bg-white p-10 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.02)] border border-stone-200/60 sticky top-4">
+            <h3 className="text-xl font-bold text-stone-900 mb-8 flex items-center gap-2">
               Create New Offer
             </h3>
-            <form onSubmit={handleCreate} className="space-y-4">
+            <form onSubmit={handleCreate} className="space-y-6">
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Coupon Code</label>
                 <div className="relative">
@@ -119,7 +145,7 @@ export default function AdminCoupons() {
                     placeholder="e.g. WELCOME50"
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                    className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 uppercase font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300"
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3.5 pl-11 pr-4 uppercase font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300"
                     required
                   />
                 </div>
@@ -135,7 +161,7 @@ export default function AdminCoupons() {
                       placeholder="0"
                       value={formData.value}
                       onChange={(e) => setFormData({ ...formData, value: e.target.value })}
-                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3.5 pl-11 pr-4 font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300"
                       required
                       min="1"
                       max="100"
@@ -151,22 +177,70 @@ export default function AdminCoupons() {
                       placeholder="0"
                       value={formData.minOrderAmount}
                       onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
-                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 pl-11 pr-4 font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3.5 pl-11 pr-4 font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300"
                       min="0"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 relative" ref={dropdownRef}>
                 <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Restrict to Account (Email)</label>
-                <input
-                  type="email"
-                  placeholder="e.g. user@example.com (optional)"
-                  value={formData.userEmail}
-                  onChange={(e) => setFormData({ ...formData, userEmail: e.target.value })}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 font-medium text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300 text-sm"
-                />
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search by name or email (optional)..."
+                    value={userSearch}
+                    onChange={(e) => {
+                      setUserSearch(e.target.value);
+                      setShowUserDropdown(true);
+                      setFormData({ ...formData, userEmail: e.target.value });
+                    }}
+                    onFocus={() => setShowUserDropdown(true)}
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3.5 px-4 pr-10 font-medium text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300 text-sm"
+                  />
+                  {formData.userEmail && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({ ...formData, userEmail: "" });
+                        setUserSearch("");
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-rose-500"
+                    >
+                      <FiX size={16} />
+                    </button>
+                  )}
+                </div>
+
+                {showUserDropdown && (
+                  <div className="absolute z-50 left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white border border-stone-200 rounded-2xl shadow-xl no-scrollbar">
+                    {users.filter(u => 
+                      u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
+                      u.email?.toLowerCase().includes(userSearch.toLowerCase())
+                    ).length === 0 ? (
+                      <div className="p-4 text-xs text-stone-400 text-center font-medium">No users found</div>
+                    ) : (
+                      users.filter(u => 
+                        u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
+                        u.email?.toLowerCase().includes(userSearch.toLowerCase())
+                      ).map((u) => (
+                        <div
+                          key={u._id}
+                          onClick={() => {
+                            setFormData({ ...formData, userEmail: u.email });
+                            setUserSearch(`${u.name} (${u.email})`);
+                            setShowUserDropdown(false);
+                          }}
+                          className="px-4 py-2.5 hover:bg-stone-50 cursor-pointer border-b border-stone-50 last:border-0 transition-colors text-left"
+                        >
+                          <div className="text-xs font-bold text-stone-800">{u.name}</div>
+                          <div className="text-[10px] text-stone-400 font-medium">{u.email}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -175,7 +249,7 @@ export default function AdminCoupons() {
                   type="datetime-local"
                   value={formData.expiresAt}
                   onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
-                  className="w-full bg-[#FAFAFA] border border-stone-200 rounded-xl py-3 px-4 font-medium text-stone-700 outline-none focus:bg-white focus:border-stone-400 transition-all text-sm"
+                  className="w-full bg-[#FAFAFA] border border-stone-200 rounded-xl py-3.5 px-4 font-medium text-stone-700 outline-none focus:bg-white focus:border-stone-400 transition-all text-sm"
                 />
               </div>
 
@@ -186,7 +260,7 @@ export default function AdminCoupons() {
                   placeholder="e.g. 50 (optional)"
                   value={formData.maxUses}
                   onChange={(e) => setFormData({ ...formData, maxUses: e.target.value })}
-                  className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300 text-sm"
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3.5 px-4 font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300 text-sm"
                   min="0"
                 />
               </div>

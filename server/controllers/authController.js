@@ -162,7 +162,7 @@ export const getLoggedUser = async (req, res) => {
   try {
     // Full DB fetch to get createdAt, picture, phone, addresses
     const dbUser = await User.findById(req.user.id || req.user._id)
-      .select("name email role phone picture avatar addresses wishlist createdAt googleId")
+      .select("name email role phone picture avatar addresses wishlist createdAt googleId walletBalance walletTransactions")
       .lean();
 
     if (!dbUser) return res.status(404).json({ message: "User not found" });
@@ -180,7 +180,9 @@ export const getLoggedUser = async (req, res) => {
       wishlist: dbUser.wishlist || [],
       createdAt: dbUser.createdAt,
       isGoogleUser: !!dbUser.googleId,
-      totalOrders: totalOrders
+      totalOrders: totalOrders,
+      walletBalance: dbUser.walletBalance || 0,
+      walletTransactions: dbUser.walletTransactions || []
     });
   } catch (err) {
     logger.error("getLoggedUser DB failure", { traceId: req.traceId, error: err.message });

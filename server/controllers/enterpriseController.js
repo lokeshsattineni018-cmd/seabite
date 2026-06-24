@@ -274,6 +274,15 @@ export const updateReturnStatus = async (req, res) => {
       const user = await User.findById(request.user._id);
       const refundAmount = request.refundedAmount || request.order.totalAmount;
       user.walletBalance = (user.walletBalance || 0) + refundAmount;
+      if (!user.walletTransactions) {
+        user.walletTransactions = [];
+      }
+      user.walletTransactions.push({
+        amount: refundAmount,
+        type: "Credit",
+        description: `Approved Return Request for Order #${request.order.orderId || request.order._id}`,
+        date: new Date()
+      });
       await user.save();
       request.refundedAmount = refundAmount;
     }

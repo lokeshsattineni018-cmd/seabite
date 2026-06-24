@@ -22,15 +22,16 @@ export const refundToWallet = async (req, res) => {
     const user = await User.findById(order.user._id);
     user.walletBalance = (user.walletBalance || 0) + order.totalAmount;
     
-    // Add transaction to history if it exists
-    if (user.walletTransactions) {
-      user.walletTransactions.push({
-        amount: order.totalAmount,
-        type: "Credit",
-        description: `Refund for Order #${order.orderId}`,
-        date: new Date()
-      });
+    // Add transaction to history
+    if (!user.walletTransactions) {
+      user.walletTransactions = [];
     }
+    user.walletTransactions.push({
+      amount: order.totalAmount,
+      type: "Credit",
+      description: `Refund for Order #${order.orderId || order._id}`,
+      date: new Date()
+    });
     
     await user.save();
 
