@@ -234,18 +234,17 @@ export default function Profile() {
 
                     {/* 💎 SEABITE PRIME CARD / UPSELL */}
                     {user.isPrime ? (
-                      <div className="bg-gradient-to-br from-slate-900 via-[#1A2E2C] to-[#5BBFB5] rounded-[2.5rem] p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6 relative overflow-hidden group">
-                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent_50%)] pointer-events-none" />
-                        <div className="relative z-10">
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5BBFB5] mb-2 block">Active Membership</span>
-                          <h3 className="text-2xl font-bold tracking-tight mb-1">You are a SeaBite Prime Member!</h3>
-                          <p className="text-xs text-slate-300 font-medium">
+                      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 group hover:border-[#5BBFB5]/30 transition-all">
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5BBFB5] mb-2 block font-black">Active Membership</span>
+                          <h3 className="text-2xl font-bold tracking-tight mb-1 text-slate-900">You are a SeaBite Prime Member!</h3>
+                          <p className="text-xs text-slate-500 font-medium">
                             Enjoy unlimited FREE delivery, exclusive pricing, and priority support.
                           </p>
                         </div>
-                        <div className="flex flex-col items-start md:items-end shrink-0 relative z-10">
+                        <div className="flex flex-col items-start md:items-end shrink-0">
                           <span className="text-[9px] font-black uppercase tracking-widest text-[#5BBFB5] mb-1">Membership Expiry</span>
-                          <div className="flex items-center gap-2 text-sm font-bold">
+                          <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
                             <FiCalendar size={16} />
                             <span>{user.primeExpiry ? new Date(user.primeExpiry).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "N/A"}</span>
                           </div>
@@ -336,18 +335,17 @@ export default function Profile() {
                       <h2 className="text-2xl font-bold tracking-tight">My Wallet</h2>
                     </div>
 
-                    <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-[2.5rem] p-10 text-white shadow-xl relative overflow-hidden group">
-                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_50%)] pointer-events-none" />
+                    <div className="bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 relative overflow-hidden group hover:border-green-200 transition-all">
                       <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                         <div>
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-2 block">Total Balance</span>
-                          <h3 className="text-5xl font-extralight tracking-tighter mb-2">₹{Number(user.walletBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5BBFB5] mb-2 block font-black">Total Balance</span>
+                          <h3 className="text-5xl font-extralight tracking-tighter mb-2 text-slate-900">₹{Number(user.walletBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
                           <p className="text-xs text-slate-400 font-medium">Use wallet credits at checkout for instant payments.</p>
                         </div>
-                        <div className="px-6 py-4 rounded-3xl bg-white/5 border border-white/10 text-center shrink-0">
+                        <div className="px-6 py-4 rounded-3xl bg-slate-50 border border-slate-100 text-center shrink-0">
                           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Status</span>
-                          <span className="text-sm font-bold text-green-400 flex items-center justify-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-green-400 animate-ping"></span> Active
+                          <span className="text-sm font-bold text-emerald-600 flex items-center justify-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Active
                           </span>
                         </div>
                       </div>

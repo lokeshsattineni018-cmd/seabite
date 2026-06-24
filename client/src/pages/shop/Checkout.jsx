@@ -365,7 +365,7 @@ export default function Checkout() {
       setCouponMessage({ type: "success", text: local.description || "Coupon applied!" });
       setVerifyingCoupon(false); return;
     }
-    const currentEmail = localStorage.getItem("userEmail")?.toLowerCase();
+    const currentEmail = user?.email?.toLowerCase();
     try {
       const res = await axios.post(`${API_URL}/api/coupons/validate`, { code: code.trim().toUpperCase(), cartTotal: itemTotal, email: currentEmail || undefined }, { withCredentials: true });
       if (res.data.success) {
