@@ -5,7 +5,7 @@ import { AuthContext } from "../../context/AuthContext";
 import toast from "../../utils/toast";
 import { Helmet } from "react-helmet-async";
 import {
-  FiCheck, FiZap, FiTruck, FiStar, FiShield, FiGift, FiClock, FiX
+  FiCheck, FiZap, FiTruck, FiStar, FiShield, FiGift, FiClock, FiX, FiCalendar
 } from "react-icons/fi";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -16,12 +16,42 @@ const PLANS = {
 };
 
 const BENEFITS = [
-  { icon: <FiTruck size={20} />, title: "Free Delivery", desc: "On every order, no minimum required", free: false, prime: true },
-  { icon: <FiZap size={20} />, title: "Early Flash Sale Access", desc: "Shop 30 mins before everyone else", free: false, prime: true },
-  { icon: <FiStar size={20} />, title: "5% Extra Discount", desc: "On top of any existing offers", free: false, prime: true },
-  { icon: <FiShield size={20} />, title: "Priority Support", desc: "Dedicated support lane, 2h response", free: false, prime: true },
-  { icon: <FiGift size={20} />, title: "Birthday Surprise", desc: "Special gift on your birthday month", free: false, prime: true },
-  { icon: <FiClock size={20} />, title: "Same-Day Delivery", desc: "Express slots on select orders", free: "Paid", prime: "Free" },
+  { 
+    icon: <FiTruck size={24} />, 
+    title: "Free Delivery", 
+    desc: "On every order, no minimum required",
+    compare: { free: "₹49/order", prime: "FREE" }
+  },
+  { 
+    icon: <FiZap size={24} />, 
+    title: "Early Flash Sale Access", 
+    desc: "Shop 30 mins before everyone else", 
+    compare: { free: "Standard Access", prime: "30m Headstart" }
+  },
+  { 
+    icon: <FiStar size={24} />, 
+    title: "5% Extra Discount", 
+    desc: "On top of any existing offers", 
+    compare: { free: "None", prime: "Extra 5% Off" }
+  },
+  { 
+    icon: <FiShield size={24} />, 
+    title: "Priority Support", 
+    desc: "Dedicated support lane, 2h response", 
+    compare: { free: "Standard", prime: "2h Fast Lane" }
+  },
+  { 
+    icon: <FiGift size={24} />, 
+    title: "Birthday Surprise", 
+    desc: "Special gift on your birthday month", 
+    compare: { free: "None", prime: "Gift Box 🎁" }
+  },
+  { 
+    icon: <FiClock size={24} />, 
+    title: "Same-Day Delivery", 
+    desc: "Express slots on select orders", 
+    compare: { free: "Paid Slots", prime: "Free Slots" }
+  },
 ];
 
 export default function SeaBitePrime() {
@@ -94,86 +124,107 @@ export default function SeaBitePrime() {
   const primeExpiry = primeStatus?.primeExpiry ? new Date(primeStatus.primeExpiry) : null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-16">
+    <div className="min-h-screen bg-[#060F18] text-white pb-20 relative overflow-hidden font-['Plus_Jakarta_Sans',sans-serif]">
       <Helmet>
         <title>SeaBite Prime — Exclusive Membership</title>
         <meta name="description" content="Join SeaBite Prime for free delivery, early flash sale access, and 5% extra off every order." />
-        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
         <script src="https://checkout.razorpay.com/v1/checkout.js" />
       </Helmet>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {/* Decorative Glow Spots */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-[#5BBFB5]/10 to-[#3b82f6]/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-gradient-to-tr from-[#6366f1]/5 to-[#5BBFB5]/10 rounded-full blur-[160px] pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 relative z-10">
         
         {/* 💎 Hero Banner Card */}
-        <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-slate-900 via-[#1A2E2C] to-[#5BBFB5] px-6 py-16 md:py-20 text-white shadow-xl text-center mb-12">
-          {/* Glowing backgrounds */}
-          <div className="absolute top-[-20%] left-[-10%] w-[300px] h-[300px] bg-white/5 rounded-full blur-[80px] pointer-events-none" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] bg-[#5BBFB5]/10 rounded-full blur-[80px] pointer-events-none" />
+        <div className="relative overflow-hidden rounded-[3rem] bg-gradient-to-br from-[#0c1928] via-[#0f2d2b] to-[#12423c] border border-white/5 px-6 py-20 text-white shadow-2xl text-center mb-16">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(91,191,181,0.08),transparent_50%)] pointer-events-none" />
           
           <div className="relative z-10 max-w-2xl mx-auto">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 text-xs font-black uppercase tracking-widest text-[#5BBFB5] mb-6">
-              <span>💎</span> SeaBite Prime
-            </div>
-            <h1 className="text-4xl md:text-6xl font-extralight tracking-tight text-white mb-6 leading-tight">
-              Elevate Your <span className="font-bold">Seafood Experience</span>
-            </h1>
-            <p className="text-sm md:text-base text-slate-200 font-medium leading-relaxed max-w-xl mx-auto mb-8">
-              Enjoy unlimited free delivery, exclusive member pricing, early access to fresh catches, and priority support.
-            </p>
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-[#5BBFB5] mb-6"
+            >
+              <span>💎</span> SeaBite Prime Membership
+            </motion.div>
+            <motion.h1 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-4xl md:text-6xl lg:text-7xl font-extralight tracking-tight text-white mb-6 leading-tight font-['Outfit',sans-serif]"
+            >
+              Elevate Your <span className="font-bold bg-gradient-to-r from-white via-[#e2f3f1] to-[#5BBFB5] bg-clip-text text-transparent">Seafood Experience</span>
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-sm md:text-base text-slate-300 font-medium leading-relaxed max-w-xl mx-auto mb-10"
+            >
+              Unlock unlimited free delivery, exclusive member-only pricing, early access to premium fresh catches, and priority support.
+            </motion.p>
             
             {/* Active prime notification */}
             {isPrime && primeExpiry && (
-              <div className="inline-flex items-center gap-4 bg-white/10 border border-white/20 rounded-2xl p-4 md:px-6">
-                <span className="text-2xl">💎</span>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="inline-flex items-center gap-4 bg-white/5 border border-white/10 rounded-[2rem] p-5 md:px-8 shadow-inner"
+              >
+                <div className="w-12 h-12 bg-gradient-to-br from-[#5BBFB5] to-[#2e7d75] rounded-full flex items-center justify-center text-xl shadow-lg shadow-[#5BBFB5]/20">💎</div>
                 <div className="text-left">
-                  <p className="text-[#5BBFB5] font-black uppercase tracking-wider text-[10px]">Active Membership</p>
-                  <p className="text-slate-200 text-xs font-semibold mt-0.5">
+                  <p className="text-[#5BBFB5] font-black uppercase tracking-wider text-[9px]">Active VIP Membership</p>
+                  <p className="text-slate-100 text-xs font-semibold mt-0.5">
                     Valid until {primeExpiry.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             )}
           </div>
         </div>
 
         {/* Subscription Plan selection */}
         {!isPrime && (
-          <div className="max-w-3xl mx-auto mb-16">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+          <div className="max-w-4xl mx-auto mb-20">
+            <h2 className="text-center text-[10px] font-black uppercase tracking-[0.25em] text-[#5BBFB5] mb-10">Choose Your Membership Plan</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
               {Object.entries(PLANS).map(([key, plan]) => (
                 <div
                   key={key}
                   onClick={() => setSelectedPlan(key)}
-                  className={`bg-white rounded-[2.5rem] p-8 border-2 cursor-pointer transition-all duration-300 relative flex flex-col justify-between ${
+                  className={`bg-[#0d1622]/85 backdrop-blur-md rounded-[2.5rem] p-10 border-2 cursor-pointer transition-all duration-300 relative flex flex-col justify-between group ${
                     selectedPlan === key
-                      ? "border-[#5BBFB5] shadow-[0_20px_50px_rgba(91,191,181,0.12)] scale-[1.02]"
-                      : "border-slate-100 hover:border-slate-200 hover:scale-[1.01] shadow-[0_20px_50px_rgba(0,0,0,0.02)]"
+                      ? "border-[#5BBFB5] shadow-[0_20px_50px_rgba(91,191,181,0.12)] scale-[1.03]"
+                      : "border-white/5 hover:border-white/10 hover:scale-[1.01] shadow-2xl"
                   }`}
                 >
                   {plan.tag && (
-                    <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 bg-[#5BBFB5] text-white text-[9px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full shadow-sm">
+                    <div className="absolute top-[-14px] left-1/2 -translate-x-1/2 bg-[#5BBFB5] text-slate-900 text-[9px] font-black uppercase tracking-widest px-5 py-1.5 rounded-full shadow-lg shadow-[#5BBFB5]/30">
                       {plan.tag}
                     </div>
                   )}
                   
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">{plan.label} Plan</span>
-                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                      selectedPlan === key ? "border-[#5BBFB5] bg-[#5BBFB5]" : "border-slate-200 bg-transparent"
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="text-xs font-black uppercase tracking-widest text-[#5BBFB5]">{plan.label} Plan</span>
+                    <div className={`w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ${
+                      selectedPlan === key ? "border-[#5BBFB5] bg-[#5BBFB5]" : "border-white/10 bg-transparent"
                     }`}>
-                      {selectedPlan === key && <FiCheck size={12} color="#fff" strokeWidth={3} />}
+                      {selectedPlan === key && <FiCheck size={14} color="#0d1622" strokeWidth={3} />}
                     </div>
                   </div>
                   
                   <div>
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">₹{plan.price}</span>
+                      <span className="text-5xl font-black text-white tracking-tight font-['Outfit',sans-serif]">₹{plan.price}</span>
                       <span className="text-sm font-semibold text-slate-400">{plan.period}</span>
                     </div>
                     {plan.savings && (
-                      <p className="text-xs font-bold text-emerald-500 mt-2 bg-emerald-50 inline-block px-2.5 py-1 rounded-lg">{plan.savings} vs monthly</p>
+                      <p className="text-xs font-bold text-emerald-400 mt-3 bg-emerald-950/50 border border-emerald-800/30 inline-block px-3 py-1 rounded-xl">{plan.savings} vs monthly</p>
                     )}
-                    <p className="text-[11px] font-medium text-slate-400 mt-3">Billed for {plan.duration} · Cancel anytime</p>
+                    <p className="text-[11px] font-medium text-slate-400 mt-4">Billed for {plan.duration} · Cancel anytime after expiration</p>
                   </div>
                 </div>
               ))}
@@ -185,66 +236,64 @@ export default function SeaBitePrime() {
               whileTap={{ scale: 0.98 }}
               onClick={handleSubscribe}
               disabled={loading}
-              className={`w-full py-5 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-xl ${
+              className={`w-full py-5 rounded-[1.5rem] font-bold text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-3 shadow-2xl ${
                 loading 
-                  ? "bg-slate-200 text-slate-400 cursor-not-allowed shadow-none" 
-                  : "bg-slate-900 hover:bg-[#5BBFB5] text-white shadow-slate-900/10"
+                  ? "bg-slate-800 text-slate-500 cursor-not-allowed shadow-none" 
+                  : "bg-[#5BBFB5] hover:bg-[#4eb0a6] text-slate-900 shadow-[#5BBFB5]/20"
               }`}
             >
               {loading ? "Processing…" : <><span className="text-sm">💎</span> Get SeaBite Prime — ₹{PLANS[selectedPlan].price}{PLANS[selectedPlan].period}</>}
             </motion.button>
-            <p className="text-center text-[11px] font-semibold text-slate-400 mt-4">
-              🔒 Secure payment via Razorpay · Cancel anytime after expiry
+            <p className="text-center text-[10px] font-bold text-slate-500 mt-4 tracking-wider">
+              🔒 Secure payment via Razorpay · Fast activation
             </p>
           </div>
         )}
 
-        {/* Benefits Comparison Grid */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-[0_20px_50px_rgba(0,0,0,0.03)] overflow-hidden mb-16">
-          <div className="grid grid-cols-12 border-b border-slate-100 bg-slate-50/50">
-            <div className="col-span-8 p-6">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Membership Benefits</span>
-            </div>
-            <div className="col-span-2 p-6 text-center">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Free</span>
-            </div>
-            <div className="col-span-2 p-6 text-center bg-[#5BBFB5]/5 border-l border-slate-100">
-              <span className="text-[10px] font-black uppercase tracking-widest text-[#5BBFB5]">Prime</span>
-            </div>
+        {/* Benefits Grid */}
+        <div className="mb-20">
+          <div className="text-center max-w-xl mx-auto mb-12">
+            <span className="text-xs font-black uppercase tracking-[0.25em] text-[#5BBFB5]">Member Privilege</span>
+            <h2 className="text-3xl font-extralight tracking-tight font-['Outfit',sans-serif] mt-2 text-white">Compare Benefits</h2>
           </div>
-          
-          {BENEFITS.map((b, i) => (
-            <div key={i} className="grid grid-cols-12 border-b border-slate-100 last:border-0 hover:bg-slate-50/30 transition-colors">
-              <div className="col-span-8 p-6 flex items-start gap-4">
-                <div className="text-[#5BBFB5] p-2 bg-[#5BBFB5]/10 rounded-xl mt-0.5 shrink-0">{b.icon}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {BENEFITS.map((b, i) => (
+              <div 
+                key={i}
+                className="bg-[#0d1622]/60 backdrop-blur-md rounded-[2.5rem] p-8 border border-white/5 hover:border-white/10 hover:shadow-2xl transition-all duration-300 flex flex-col justify-between group"
+              >
                 <div>
-                  <p className="font-bold text-slate-900 text-sm md:text-base">{b.title}</p>
-                  <p className="text-xs text-slate-400 font-semibold mt-0.5 leading-relaxed">{b.desc}</p>
+                  <div className="w-12 h-12 rounded-2xl bg-[#5BBFB5]/10 border border-[#5BBFB5]/20 flex items-center justify-center text-[#5BBFB5] mb-6 group-hover:scale-110 transition-transform">
+                    {b.icon}
+                  </div>
+                  <h3 className="font-bold text-lg text-white mb-2">{b.title}</h3>
+                  <p className="text-xs text-slate-400 font-semibold leading-relaxed mb-6">{b.desc}</p>
+                </div>
+                
+                {/* Comparison Details */}
+                <div className="grid grid-cols-2 gap-3 pt-4 border-t border-white/5 text-[11px] font-bold">
+                  <div className="bg-white/5 rounded-xl p-3 border border-white/5">
+                    <p className="text-slate-500 uppercase tracking-widest text-[8px]">Regular</p>
+                    <p className="text-slate-350 mt-1">{b.compare.free}</p>
+                  </div>
+                  <div className="bg-[#5BBFB5]/5 rounded-xl p-3 border border-[#5BBFB5]/10">
+                    <p className="text-[#5BBFB5] uppercase tracking-widest text-[8px]">Prime VIP</p>
+                    <p className="text-[#5BBFB5] mt-1">{b.compare.prime}</p>
+                  </div>
                 </div>
               </div>
-              
-              <div className="col-span-2 p-6 flex items-center justify-center">
-                {b.free === true ? <FiCheck size={18} className="text-emerald-500" strokeWidth={3} /> :
-                 b.free === false ? <FiX size={18} className="text-slate-200" strokeWidth={3} /> :
-                 <span className="text-xs font-bold text-slate-400">{b.free}</span>}
-              </div>
-              
-              <div className="col-span-2 p-6 flex items-center justify-center bg-[#5BBFB5]/5 border-l border-slate-100">
-                {b.prime === true ? <FiCheck size={18} className="text-[#5BBFB5]" strokeWidth={3} /> :
-                 b.prime === false ? <FiX size={18} className="text-slate-200" strokeWidth={3} /> :
-                 <span className="text-xs font-black text-[#5BBFB5]">{b.prime}</span>}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
         {/* FAQs */}
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-8 text-center">
-            Frequently Asked Questions
-          </h2>
+          <div className="text-center mb-10">
+            <span className="text-xs font-black uppercase tracking-[0.25em] text-[#5BBFB5]">Have Questions?</span>
+            <h2 className="text-3xl font-extralight tracking-tight font-['Outfit',sans-serif] mt-2 text-white">Membership FAQs</h2>
+          </div>
           {[
-            { q: "Can I cancel my Prime membership?", a: "You can cancel anytime. Your benefits continue until your current billing period ends — no early termination." },
+            { q: "Can I cancel my Prime membership?", a: "You can cancel anytime. Your benefits continue until your current billing period ends — no early termination fees." },
             { q: "How does free delivery work?", a: "Prime members get free delivery on every order, regardless of order value, for the entire membership duration." },
             { q: "What is Early Flash Sale Access?", a: "Prime members get a 30-minute head start on all flash sales — ensuring you never miss out on the best deals." },
             { q: "Is my payment secure?", a: "Absolutely. Payments are processed via Razorpay, India's most trusted payment gateway, with 256-bit SSL encryption." },
@@ -260,14 +309,14 @@ export default function SeaBitePrime() {
 function FAQItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-[0_10px_30px_rgba(0,0,0,0.02)] mb-4 overflow-hidden transition-all duration-300">
+    <div className="bg-[#0d1622]/60 backdrop-blur-md rounded-2xl border border-white/5 shadow-2xl mb-4 overflow-hidden transition-all duration-300">
       <button
         onClick={() => setOpen(!open)}
         className="w-full p-6 flex justify-between items-center bg-transparent border-none cursor-pointer outline-none text-left"
       >
-        <span className="text-sm font-bold text-slate-900 pr-4">{q}</span>
+        <span className="text-sm font-bold text-white pr-4">{q}</span>
         <motion.div animate={{ rotate: open ? 45 : 0 }} transition={{ duration: 0.2 }}>
-          <FiCheck size={18} className={open ? "text-[#5BBFB5]" : "text-slate-350"} />
+          <FiCheck size={18} className={open ? "text-[#5BBFB5]" : "text-slate-500"} />
         </motion.div>
       </button>
       <AnimatePresence>
