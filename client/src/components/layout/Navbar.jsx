@@ -507,10 +507,10 @@ export default function Navbar({ announcementActive = false }) {
       >
         {/* --- DESKTOP VIEW --- */}
         <div className="hidden-mobile" style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-          {/* Top Tier (White) */}
+          {/* Top Tier (Cream) */}
           <div style={{
-            background: "#FFFFFF",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            background: "#FAF6F0",
+            borderBottom: "1px solid #EFEAE2",
             width: "100%",
             boxShadow: "0 2px 10px rgba(0,0,0,0.01)"
           }}>
@@ -523,10 +523,18 @@ export default function Navbar({ announcementActive = false }) {
               alignItems: "center",
               justifyContent: "space-between"
             }}>
-              {/* Left: Logo Image */}
+              {/* Left: Text Logo */}
               <div style={{ flexShrink: 0 }}>
                 <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-                  <img src="/logo.webp" alt="SeaBite Logo" style={{ height: "45px", objectFit: "contain" }} />
+                  <span style={{
+                    fontFamily: "'Playfair Display', serif",
+                    fontSize: "26px",
+                    fontWeight: "900",
+                    color: "#A3835B",
+                    letterSpacing: "-0.5px"
+                  }}>
+                    SeaBite.
+                  </span>
                 </Link>
               </div>
 
@@ -536,7 +544,7 @@ export default function Navbar({ announcementActive = false }) {
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  background: "#F3F4F6",
+                  background: "#F3ECE2",
                   borderRadius: "30px",
                   padding: "8px 16px",
                   width: "100%",
@@ -942,8 +950,8 @@ export default function Navbar({ announcementActive = false }) {
           className="show-mobile" 
           style={{ 
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px", 
-            background: "#FFFFFF", 
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
+            background: "#FAF6F0", 
+            borderBottom: "1px solid #EFEAE2",
             padding: "0", 
             transition: "all 0.3s ease",
             position: "relative"
@@ -962,10 +970,18 @@ export default function Navbar({ announcementActive = false }) {
             </div>
           </motion.button>
 
-          {/* Center: Logo Image */}
+          {/* Center: Big Text Logo */}
           <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", pointerEvents: "none" }}>
             <Link to="/" style={{ textDecoration: "none", pointerEvents: "auto" }}>
-              <img src="/logo.webp" alt="SeaBite Logo" style={{ height: "35px", objectFit: "contain" }} />
+              <span style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: "22px",
+                fontWeight: "900",
+                color: "#A3835B",
+                letterSpacing: "-0.5px"
+              }}>
+                SeaBite.
+              </span>
             </Link>
           </div>
 
