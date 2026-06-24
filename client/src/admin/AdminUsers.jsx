@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiUsers, FiRefreshCw,
   FiShield, FiUser, FiArrowUpRight, FiX, FiCheck,
-  FiActivity, FiClock, FiShoppingBag, FiAlertTriangle, FiTarget, FiMail, FiCalendar
+  FiActivity, FiClock, FiShoppingBag, FiAlertTriangle, FiTarget, FiMail, FiCalendar, FiDollarSign
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
@@ -29,6 +29,35 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [editingUser, setEditingUser] = useState(null);
+  const [walletAdjustAmount, setWalletAdjustAmount] = useState("");
+  const [walletAdjustReason, setWalletAdjustReason] = useState("");
+  const [adjustingWallet, setAdjustingWallet] = useState(false);
+
+  const handleAdjustWallet = async () => {
+    if (!editingUser) return;
+    const amount = Number(walletAdjustAmount);
+    if (isNaN(amount) || amount === 0) {
+      return toast.error("Please enter a valid non-zero adjustment amount");
+    }
+
+    setAdjustingWallet(true);
+    try {
+      const { data } = await axios.post(`/api/admin/users/${editingUser._id}/adjust-wallet`, {
+        amount,
+        reason: walletAdjustReason
+      }, { withCredentials: true });
+
+      toast.success("Wallet adjusted successfully!");
+      setEditingUser(data.user);
+      setUsers(users.map(u => u._id === editingUser._id ? { ...u, walletBalance: data.user.walletBalance, walletTransactions: data.user.walletTransactions } : u));
+      setWalletAdjustAmount("");
+      setWalletAdjustReason("");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to adjust wallet");
+    } finally {
+      setAdjustingWallet(false);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -71,9 +100,15 @@ export default function AdminUsers() {
   const getTimeline = (user) => {
     if (!user) return [];
     const timeline = [
-      ...(user.intelligence.recentActivity || []),
-      ...(user.intelligence.recentOrders || []),
-      ...(user.intelligence.recentMessages || [])
+      ...(user.intelligence?.recentActivity || []),
+      ...(user.intelligence?.recentOrders || []),
+      ...(user.intelligence?.recentMessages || []),
+      ...(user.walletTransactions || []).map(tx => ({
+        type: 'wallet',
+        action: tx.type === 'Credit' ? 'Wallet Credit' : 'Wallet Debit',
+        details: `${tx.description} (${tx.type === 'Credit' ? '+' : '-'}₹${tx.amount})`,
+        time: tx.date
+      }))
     ].sort((a, b) => new Date(b.time || b.date) - new Date(a.time || a.date));
     return timeline;
   };
@@ -194,7 +229,11 @@ export default function AdminUsers() {
                       <td className="px-6 py-4 text-right">
                         {u.role !== "admin" ? (
                           <button
-                            onClick={() => setEditingUser(u)}
+                            onClick={() => {
+                              setEditingUser(u);
+                              setWalletAdjustAmount("");
+                              setWalletAdjustReason("");
+                            }}
                             className="px-4 py-2 bg-white hover:bg-white text-stone-600 hover:text-blue-600 border border-stone-200 hover:border-blue-200 rounded-xl font-medium text-xs transition-all shadow-sm hover:shadow active:scale-95"
                           >
                             360° View
@@ -264,6 +303,37 @@ export default function AdminUsers() {
                       </div>
                     </div>
 
+                    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-100 w-full text-left">
+                      <div className="text-[10px] uppercase font-bold text-stone-400 tracking-wider mb-2 text-center">Wallet Balance</div>
+                      <div className="text-center mb-3">
+                        <span className="text-2xl font-light text-emerald-700">₹{editingUser.walletBalance || 0}</span>
+                      </div>
+                      <div className="space-y-2">
+                        <input
+                          type="number"
+                          placeholder="Amount (e.g. 100 or -50)"
+                          value={walletAdjustAmount}
+                          onChange={(e) => setWalletAdjustAmount(e.target.value)}
+                          className="w-full bg-white border border-stone-200 rounded-xl py-2 px-3 text-xs outline-none focus:border-stone-400 transition-all font-bold text-stone-800"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Reason for adjustment..."
+                          value={walletAdjustReason}
+                          onChange={(e) => setWalletAdjustReason(e.target.value)}
+                          className="w-full bg-white border border-stone-200 rounded-xl py-2 px-3 text-xs outline-none focus:border-stone-400 transition-all text-stone-700"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAdjustWallet}
+                          disabled={adjustingWallet}
+                          className="w-full py-2 bg-stone-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-stone-800 transition-all disabled:opacity-50"
+                        >
+                          {adjustingWallet ? "Adjusting..." : "Adjust Wallet"}
+                        </button>
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => setEditingUser({ ...editingUser, isBanned: !editingUser.isBanned })}
                       className={`w-full py-3 rounded-xl font-bold text-[11px] flex items-center justify-center gap-2 transition-all border ${editingUser.isBanned
@@ -320,9 +390,11 @@ export default function AdminUsers() {
                         <div key={i} className="flex gap-4 relative">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center z-10 shrink-0 shadow-sm 
                             ${evt.type === 'order' ? 'bg-amber-100 text-amber-600' :
-                              evt.type === 'message' ? 'bg-indigo-100 text-indigo-600' : 'bg-blue-100 text-blue-600'}`}>
+                              evt.type === 'message' ? 'bg-indigo-100 text-indigo-600' :
+                              evt.type === 'wallet' ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 text-blue-600'}`}>
                             {evt.type === 'order' ? <FiShoppingBag size={14} /> :
-                              evt.type === 'message' ? <FiMail size={14} /> : <FiActivity size={14} />}
+                              evt.type === 'message' ? <FiMail size={14} /> :
+                              evt.type === 'wallet' ? <FiDollarSign size={14} /> : <FiActivity size={14} />}
                           </div>
 
                           <div className="flex-1 bg-white p-4 rounded-2xl border border-stone-100 shadow-sm">
