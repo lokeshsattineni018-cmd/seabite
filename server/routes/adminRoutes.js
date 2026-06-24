@@ -835,7 +835,9 @@ router.get("/users/intelligence", adminAuth, async (req, res) => {
           email: u.email.toLowerCase(),
           role: u.role,
           createdAt: u.createdAt,
-          isBanned: u.isBanned, // Ensure this is sent
+          isBanned: u.isBanned,
+          walletBalance: u.walletBalance || 0,
+          walletTransactions: u.walletTransactions || [],
           intelligence: {
             totalSpent: Math.round(totalSpent),
             orderCount,
@@ -897,6 +899,45 @@ router.put("/users/:id", adminAuth, async (req, res) => {
   } catch (err) {
     console.error("User Update Error:", err);
     res.status(500).json({ message: "Failed to update user" });
+  }
+});
+
+// 4.2 ADJUST USER WALLET
+router.post("/users/:id/adjust-wallet", adminAuth, async (req, res) => {
+  try {
+    const { amount, reason } = req.body;
+    if (typeof amount !== "number") {
+      return res.status(400).json({ message: "Amount must be a number" });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.walletBalance = (user.walletBalance || 0) + amount;
+    if (!user.walletTransactions) {
+      user.walletTransactions = [];
+    }
+
+    user.walletTransactions.push({
+      amount: Math.abs(amount),
+      type: amount >= 0 ? "Credit" : "Debit",
+      description: reason || "Manual admin adjustment",
+      date: new Date()
+    });
+
+    await user.save();
+
+    await ActivityLog.create({
+      user: req.user?._id || null,
+      action: "MANUAL_WALLET_ADJUSTMENT",
+      details: `Manually adjusted ${user.email}'s wallet by ₹${amount >= 0 ? "+" : ""}${amount}. Reason: ${reason || "None"}.`,
+      meta: { userId: user._id, amount, reason }
+    });
+
+    res.json({ message: "Wallet adjusted successfully", user });
+  } catch (err) {
+    console.error("Wallet Adjustment Error:", err);
+    res.status(500).json({ message: "Failed to adjust wallet" });
   }
 });
 
