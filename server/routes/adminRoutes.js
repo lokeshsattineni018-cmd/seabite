@@ -1341,9 +1341,28 @@ router.post("/compliance/shipments/:id/refund", adminAuth, async (req, res) => {
     const order = await Order.findById(orderDbId);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    order.refundStatus = "Refunded";
+    order.refundStatus = "Refunded to Wallet";
     order.status = "Cancelled";
     await order.save();
+
+    // Refund to user's wallet
+    const userId = order.user?._id || order.user;
+    if (userId) {
+      const user = await User.findById(userId);
+      if (user) {
+        user.walletBalance = (user.walletBalance || 0) + order.totalAmount;
+        if (!user.walletTransactions) {
+          user.walletTransactions = [];
+        }
+        user.walletTransactions.push({
+          amount: order.totalAmount,
+          type: "Credit",
+          description: `Proactive Cold-Chain Refund for Order #${order.orderId || order._id}`,
+          date: new Date()
+        });
+        await user.save();
+      }
+    }
 
     await ReturnRequest.updateMany({ order: orderDbId }, { status: "Approved", adminComment: "Refunded proactively due to Cold-Chain temperature threshold breach." });
 

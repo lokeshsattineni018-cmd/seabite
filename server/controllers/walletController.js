@@ -18,8 +18,15 @@ export const refundToWallet = async (req, res) => {
     order.refundStatus = "Refunded to Wallet";
     await order.save();
 
-    // 2. Add to User Wallet (assuming User model has a wallet balance)
-    const user = await User.findById(order.user._id);
+    // 2. Add to User Wallet
+    const userId = order.user?._id || order.user;
+    if (!userId) {
+      return res.status(400).json({ message: "No customer associated with this order." });
+    }
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "Customer account not found." });
+    }
     user.walletBalance = (user.walletBalance || 0) + order.totalAmount;
     
     // Add transaction to history
