@@ -31,13 +31,17 @@ const showToast = {
              <span style={{ fontSize: "18px" }}>{options.icon || "🛒"}</span>
              <p>{message}</p>
           </div>
-          <div className="flex border-l border-white/20 pl-3">
+          <div className="flex border-l border-white/20 pl-3" style={{ pointerEvents: "auto" }}>
             <button
-              onClick={() => toast.dismiss(t.id)}
-              className="w-full border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none"
-              style={{ transition: "color 0.2s", pointerEvents: "auto" }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toast.dismiss(t.id);
+              }}
+              className="border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none cursor-pointer"
+              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "32px", height: "32px" }}
             >
-              <FiX size={16} />
+              <FiX size={16} style={{ pointerEvents: "none" }} />
             </button>
           </div>
         </div>
@@ -75,13 +79,17 @@ const showToast = {
              <span style={{ fontSize: "18px" }}>{options.icon || "❌"}</span>
              <p>{message}</p>
           </div>
-          <div className="flex border-l border-white/20 pl-3">
+          <div className="flex border-l border-white/20 pl-3" style={{ pointerEvents: "auto" }}>
             <button
-              onClick={() => toast.dismiss(t.id)}
-              className="w-full border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none"
-              style={{ transition: "color 0.2s", pointerEvents: "auto" }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toast.dismiss(t.id);
+              }}
+              className="border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none cursor-pointer"
+              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "32px", height: "32px" }}
             >
-              <FiX size={16} />
+              <FiX size={16} style={{ pointerEvents: "none" }} />
             </button>
           </div>
         </div>
