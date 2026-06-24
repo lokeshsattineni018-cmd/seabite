@@ -202,7 +202,7 @@ export default function Checkout() {
   const [isItemsCollapsed, setIsItemsCollapsed] = useState(window.innerWidth < 768);
   const navigate = useNavigate();
 
-  // 🕒 Enterprise Schedule, Gifting & Loyalty
+  // 🕒 Enterprise Schedule & Gifting
   const [deliverySlot, setDeliverySlot] = useState("Morning (07:00 AM - 10:00 AM)");
   const [deliveryDate, setDeliveryDate] = useState(() => {
     const tomorrow = new Date();
@@ -319,8 +319,7 @@ export default function Checkout() {
   const deliveryFee = storeSettings?.deliveryFee !== undefined ? parseFloat(storeSettings.deliveryFee) : 99;
   const freeThreshold = storeSettings?.freeDeliveryThreshold !== undefined ? parseFloat(storeSettings.freeDeliveryThreshold) : 1000;
   const isShippingCoupon = appliedCoupon?.discountType === "shipping";
-  const isPrime = user?.isPrime;
-  const deliveryCharge = (itemTotal >= freeThreshold || isShippingCoupon || isPrime) ? 0 : deliveryFee;
+  const deliveryCharge = (itemTotal >= freeThreshold || isShippingCoupon) ? 0 : deliveryFee;
   const freeDeliveryProgress = freeThreshold > 0 ? Math.min((itemTotal / freeThreshold) * 100, 100) : 100;
 
   const discountAmount = useMemo(() => {
@@ -988,9 +987,6 @@ export default function Checkout() {
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
                       <FiTruck size={11} /> Shipping
-                      {isPrime && (
-                        <span style={{ fontSize: 9, fontWeight: 800, color: "#fff", background: "linear-gradient(135deg, #1A2E2C, #5BBFB5)", padding: "2px 6px", borderRadius: 4, marginLeft: 4 }}>PRIME</span>
-                      )}
                     </span>
                     <span style={{ fontWeight: 800, color: deliveryCharge === 0 ? "#10B981" : T.textDark }}>
                       {deliveryCharge === 0 ? "FREE" : `₹${deliveryCharge.toFixed(2)}`}
@@ -1078,7 +1074,7 @@ export default function Checkout() {
                 </div>
 
                 {/* Free delivery progress */}
-                {itemTotal < freeThreshold && !isPrime && (
+                {itemTotal < freeThreshold && (
                   <div style={{ marginBottom: 18, padding: "12px 14px", borderRadius: 12, background: "rgba(91,168,160,0.06)", border: "1px solid rgba(91,168,160,0.15)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                       <span style={{ fontSize: 10, fontWeight: 700, color: T.primary, textTransform: "uppercase", letterSpacing: "0.08em" }}>Free Delivery</span>

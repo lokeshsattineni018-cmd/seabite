@@ -1283,7 +1283,7 @@ export default function ProductDetails() {
                   <ul style={{ marginTop: "12px", listStyleType: "disc", paddingLeft: "20px" }}>
                     <li>Orders placed before 8 PM will be delivered tomorrow morning.</li>
                     <li>Delivery hours: 6 AM to 11 AM.</li>
-                    <li>Free shipping for SeaBite Prime members.</li>
+                    <li>Free shipping on orders above ₹1,000.</li>
                   </ul>
                 </div>
               )}

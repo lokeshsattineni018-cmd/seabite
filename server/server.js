@@ -34,7 +34,7 @@ import checkMaintenance from "./middleware/checkMaintenance.js";
 import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
 import telemetryRoutes from "./routes/telemetryRoutes.js";
-import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+
 import logger from "./utils/logger.js";
 import os from "os";
 import osUtils from "os-utils";
@@ -400,7 +400,7 @@ app.use("/api/user", userRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/telemetry", telemetryRoutes);
 app.use("/api/enterprise", enterpriseRoutes);
-app.use("/api/subscription", subscriptionRoutes); // 💎 SeaBite Prime
+
 import pulseRoutes from "./routes/pulseRoutes.js";
 app.use("/api/pulse", pulseRoutes);
 

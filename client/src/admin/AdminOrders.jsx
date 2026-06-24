@@ -211,6 +211,7 @@ export default function AdminOrders() {
             updateRefundStatus={updateRefundStatus}
             onProcessRefund={handleRazorpayRefund}
             fetchOrders={fetchOrders}
+            handleDeleteOrder={handleDeleteOrder}
           />
         )}
       </AnimatePresence>
@@ -456,7 +457,7 @@ function StatusPill({ status }) {
   return <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${styles[status] || styles.Pending}`}>{status}</span>;
 }
 
-function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund, fetchOrders }) {
+function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund, fetchOrders, handleDeleteOrder }) {
   const getFullImageUrl = (imagePath) => {
     if (!imagePath) return "https://placehold.co/400?text=No+Image";
     if (imagePath.startsWith("http")) return imagePath;
@@ -559,16 +560,7 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
           </div>
         )}
 
-        {/* Delete Banner (Warning) */}
-        <div className="px-8 py-2 bg-stone-50 border-b border-stone-100 flex justify-between items-center group">
-          <p className="text-[10px] font-bold text-rose-600 uppercase tracking-widest">Danger Zone: Permanent Deletion</p>
-          <button
-            onClick={() => handleDeleteOrder(order._id, order.orderId)}
-            className="flex items-center gap-1.5 text-[10px] font-bold text-rose-500 hover:text-rose-700 uppercase tracking-wider transition-colors"
-          >
-            <FiTrash2 size={12} /> Delete Order
-          </button>
-        </div>
+
 
         {/* content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
