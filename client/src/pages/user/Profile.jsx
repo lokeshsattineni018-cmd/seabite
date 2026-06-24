@@ -297,7 +297,11 @@ export default function Profile() {
                     ) : (
                       <div className="grid grid-cols-1 gap-4">
                         {orders.slice(0, 5).map((order) => (
-                          <div key={order._id} className="bg-white rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center justify-between group hover:border-slate-300 transition-all">
+                          <div 
+                            key={order._id} 
+                            onClick={() => navigate(`/orders/${order._id}`)}
+                            className="bg-white rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center justify-between group hover:border-slate-300 transition-all cursor-pointer"
+                          >
                             <div className="flex items-center gap-6">
                               <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
                                 <FiPackage size={24} />

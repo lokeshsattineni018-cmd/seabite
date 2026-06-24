@@ -26,7 +26,7 @@ export default function AdminCoupons() {
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState(null);
   const [formData, setFormData] = useState({
-    code: "", value: "", minOrderAmount: "", discountType: "percent", firstTimeOnly: false
+    code: "", value: "", minOrderAmount: "", discountType: "percent", firstTimeOnly: false, expiresAt: "", userEmail: "", maxUses: ""
   });
 
   const fetchCoupons = async (isSilent = false) => {
@@ -57,10 +57,13 @@ export default function AdminCoupons() {
         isActive: true,
         isSpinCoupon: false,
         firstTimeOnly: formData.firstTimeOnly,
+        expiresAt: formData.expiresAt ? new Date(formData.expiresAt) : null,
+        userEmail: formData.userEmail && formData.userEmail.trim() !== "" ? formData.userEmail.toLowerCase().trim() : null,
+        maxUses: formData.maxUses ? Number(formData.maxUses) : 0,
       };
 
       await axios.post(`${API_URL}/api/coupons`, couponData, { withCredentials: true });
-      setFormData({ code: "", value: "", minOrderAmount: "", discountType: "percent", firstTimeOnly: false });
+      setFormData({ code: "", value: "", minOrderAmount: "", discountType: "percent", firstTimeOnly: false, expiresAt: "", userEmail: "", maxUses: "" });
       fetchCoupons(true);
       toast.success("Coupon created successfully");
     } catch (err) {
@@ -155,6 +158,39 @@ export default function AdminCoupons() {
                 </div>
               </div>
 
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Restrict to Account (Email)</label>
+                <input
+                  type="email"
+                  placeholder="e.g. user@example.com (optional)"
+                  value={formData.userEmail}
+                  onChange={(e) => setFormData({ ...formData, userEmail: e.target.value })}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 font-medium text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300 text-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Expiration Date & Time</label>
+                <input
+                  type="datetime-local"
+                  value={formData.expiresAt}
+                  onChange={(e) => setFormData({ ...formData, expiresAt: e.target.value })}
+                  className="w-full bg-[#FAFAFA] border border-stone-200 rounded-xl py-3 px-4 font-medium text-stone-700 outline-none focus:bg-white focus:border-stone-400 transition-all text-sm"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Total Usage Limit (0 = Unlimited)</label>
+                <input
+                  type="number"
+                  placeholder="e.g. 50 (optional)"
+                  value={formData.maxUses}
+                  onChange={(e) => setFormData({ ...formData, maxUses: e.target.value })}
+                  className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3 px-4 font-bold text-stone-800 outline-none focus:bg-white focus:border-stone-400 transition-all placeholder:text-stone-300 text-sm"
+                  min="0"
+                />
+              </div>
+
               <div className="flex items-center gap-3 py-2 border-t border-stone-100 mt-2">
                 <input
                   type="checkbox"
@@ -220,6 +256,20 @@ export default function AdminCoupons() {
                         </p>
                         {coupon.firstTimeOnly && (
                           <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider">New Users</span>
+                        )}
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-2 mt-2 text-[10px] font-bold text-stone-400">
+                        {coupon.userEmail && (
+                          <span className="bg-stone-100 text-stone-600 px-2.5 py-1 rounded-lg">📧 {coupon.userEmail}</span>
+                        )}
+                        {coupon.expiresAt && (
+                          <span className="bg-stone-100 text-stone-600 px-2.5 py-1 rounded-lg">🕒 Exp: {new Date(coupon.expiresAt).toLocaleString("en-IN")}</span>
+                        )}
+                        {coupon.maxUses > 0 ? (
+                          <span className="bg-stone-100 text-stone-600 px-2.5 py-1 rounded-lg">📊 Uses: {coupon.usedCount} / {coupon.maxUses}</span>
+                        ) : (
+                          <span className="bg-stone-100 text-stone-600 px-2.5 py-1 rounded-lg">📊 Uses: {coupon.usedCount} / ∞</span>
                         )}
                       </div>
                     </div>

@@ -1553,6 +1553,20 @@ export default function OrderDetails() {
                               <p style={{ fontSize: 13, color: T.inkSoft, margin: 0 }}>
                                 Quantity: {item.qty || 0} × ₹{(item.price || 0).toFixed(2)}
                               </p>
+                              {(item.selectedCut || item.orderedWeightGrams > 0) && (
+                                <div style={{ fontSize: "11px", color: T.teal, fontWeight: "750", marginTop: "4px", display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                                  {item.selectedCut && (
+                                    <span style={{ background: "rgba(91,168,160,0.08)", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(91,168,160,0.18)" }}>
+                                      Cut: {item.selectedCut}
+                                    </span>
+                                  )}
+                                  {item.orderedWeightGrams > 0 && (
+                                    <span style={{ background: "rgba(91,168,160,0.08)", padding: "2px 6px", borderRadius: "4px", border: "1px solid rgba(91,168,160,0.18)" }}>
+                                      Weight: {item.orderedWeightGrams >= 1000 ? `${item.orderedWeightGrams / 1000}kg` : `${item.orderedWeightGrams}g`}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
                             <span style={{
                               fontFamily: "'Sora', sans-serif",
