@@ -175,6 +175,15 @@ export const updateOrderStatus = async (req, res) => {
                         const referrer = await User.findById(order.user.referredBy);
                         if (referrer) {
                             referrer.walletBalance += 100;
+                            if (!referrer.walletTransactions) {
+                                referrer.walletTransactions = [];
+                            }
+                            referrer.walletTransactions.push({
+                                amount: 100,
+                                type: "Credit",
+                                description: `Referral Reward: ${order.user.name}'s first order!`,
+                                date: new Date()
+                            });
                             await referrer.save();
                             console.log(`[REFERRAL] Rewarded user ${referrer.email} with ₹100 for referring ${order.user.name}`);
                             

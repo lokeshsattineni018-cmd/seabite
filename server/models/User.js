@@ -78,6 +78,14 @@ const userSchema = new mongoose.Schema(
     referralCode: { type: String, unique: true, sparse: true },
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     walletBalance: { type: Number, default: 0 },
+    walletTransactions: [
+      {
+        amount: { type: Number, required: true },
+        type: { type: String, enum: ["Credit", "Debit"], required: true },
+        description: { type: String, required: true },
+        date: { type: Date, default: Date.now }
+      }
+    ],
     loyaltyPoints: { type: Number, default: 0 },
 
     // 💎 SeaBite Prime

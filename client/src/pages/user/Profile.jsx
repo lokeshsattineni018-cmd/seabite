@@ -100,6 +100,7 @@ export default function Profile() {
   const tabs = [
     { id: "overview", icon: FiHome, label: "Overview" },
     { id: "orders", icon: FiShoppingBag, label: "Orders" },
+    { id: "wallet", icon: FiCreditCard, label: "Wallet" },
     { id: "addresses", icon: FiMapPin, label: "Addresses" },
     { id: "security", icon: FiShield, label: "Security" },
   ];
@@ -223,11 +224,10 @@ export default function Profile() {
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Total Spent</p>
                         <p className="text-5xl font-extralight tracking-tighter">₹{Number(totalSpent || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                       </div>
-                      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-green-200 transition-all">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Profile Status</p>
-                        <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-green-500 animate-ping"></div>
-                          <span className="text-lg font-bold">Verified</span>
+                      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-green-200 transition-all cursor-pointer" onClick={() => setActiveTab("wallet")}>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Wallet Balance</p>
+                        <div className="flex items-baseline gap-1">
+                          <span className="text-5xl font-extralight tracking-tighter">₹{Number(user.walletBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </div>
                       </div>
                     </div>
@@ -327,6 +327,63 @@ export default function Profile() {
                         </button>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {activeTab === "wallet" && (
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between px-2">
+                      <h2 className="text-2xl font-bold tracking-tight">My Wallet</h2>
+                    </div>
+
+                    <div className="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-[2.5rem] p-10 text-white shadow-xl relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.08),transparent_50%)] pointer-events-none" />
+                      <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                        <div>
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400 mb-2 block">Total Balance</span>
+                          <h3 className="text-5xl font-extralight tracking-tighter mb-2">₹{Number(user.walletBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                          <p className="text-xs text-slate-400 font-medium">Use wallet credits at checkout for instant payments.</p>
+                        </div>
+                        <div className="px-6 py-4 rounded-3xl bg-white/5 border border-white/10 text-center shrink-0">
+                          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Status</span>
+                          <span className="text-sm font-bold text-green-400 flex items-center justify-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-green-400 animate-ping"></span> Active
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
+                      <h3 className="text-xl font-bold tracking-tight mb-6">Transaction History</h3>
+
+                      {!user.walletTransactions || user.walletTransactions.length === 0 ? (
+                        <div className="text-center py-12 text-slate-400">
+                          <FiCreditCard className="mx-auto mb-3 opacity-30" size={36} />
+                          <p className="text-sm font-medium">No transactions found.</p>
+                          <p className="text-xs">Refunds or credits will show up here.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {user.walletTransactions.map((tx, idx) => (
+                            <div key={tx._id || idx} className="flex items-center justify-between p-5 rounded-3xl border border-slate-50 bg-slate-50/50 hover:bg-slate-50 transition-all">
+                              <div className="space-y-1">
+                                <h4 className="text-sm font-bold text-slate-800">{tx.description}</h4>
+                                <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                                  <FiCalendar size={12} />
+                                  <span>{new Date(tx.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <span className={`text-base font-extrabold ${tx.type === "Credit" ? "text-emerald-600" : "text-rose-500"}`}>
+                                  {tx.type === "Credit" ? "+" : "-"} ₹{Number(tx.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                                <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mt-1">{tx.type}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 

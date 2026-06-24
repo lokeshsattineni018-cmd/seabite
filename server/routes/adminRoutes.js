@@ -1377,6 +1377,15 @@ router.post("/compliance/shipments/:id/apology-credit", adminAuth, async (req, r
       if (user) {
         user.walletBalance = (user.walletBalance || 0) + 150;
         user.loyaltyPoints = (user.loyaltyPoints || 0) + 100;
+        if (!user.walletTransactions) {
+          user.walletTransactions = [];
+        }
+        user.walletTransactions.push({
+          amount: 150,
+          type: "Credit",
+          description: `Cold-chain apology credit for Order ${orderText || "N/A"}`,
+          date: new Date()
+        });
         await user.save();
 
         await ActivityLog.create({
@@ -1602,6 +1611,14 @@ router.post("/orders/:id/confirm-weight", adminAuth, async (req, res) => {
     if (totalRefund > 0 && !order.weightVarianceRefundIssued) {
       await User.findByIdAndUpdate(order.user._id, {
         $inc: { walletBalance: totalRefund },
+        $push: {
+          walletTransactions: {
+            amount: totalRefund,
+            type: "Credit",
+            description: `Weight shortfall refund for Order #${order.orderId || order._id}`,
+            date: new Date()
+          }
+        }
       });
       order.weightVarianceRefundIssued = true;
       order.weightVarianceRefundAmount = totalRefund;
