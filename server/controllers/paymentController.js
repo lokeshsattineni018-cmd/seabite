@@ -56,7 +56,8 @@ export const checkout = async (req, res) => {
       giftMessage,
       useLoyalty,
       loyaltyPointsToRedeem,
-      giftCardCode
+      giftCardCode,
+      couponCode: reqCouponCode
     } = req.body;
 
     if (!req.user || !req.user._id) return res.status(401).json({ success: false, message: "Auth failed" });
@@ -161,6 +162,9 @@ export const checkout = async (req, res) => {
       taxPrice,
       shippingPrice,
       discount: Number(discount || 0) + loyaltyDiscount + giftCardDiscount + walletAppliedAmount,
+      couponCode: reqCouponCode || undefined,
+      couponDiscount: Number(discount || 0),
+      walletAppliedAmount: walletAppliedAmount || 0,
       totalAmount: amount,
       paymentMethod: paymentMethod || "COD",
       razorpay_order_id: razorpayOrder ? razorpayOrder.id : null,

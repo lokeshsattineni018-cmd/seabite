@@ -105,6 +105,8 @@ const orderSchema = new mongoose.Schema(
     },
     // 🛡️ Fraud Protection
     couponCode: { type: String },
+    couponDiscount: { type: Number, default: 0 },
+    walletAppliedAmount: { type: Number, default: 0 },
     fraudFingerprint: { type: String, index: true },
 
     // 🕒 Scheduled Slot Delivery & Gifting
