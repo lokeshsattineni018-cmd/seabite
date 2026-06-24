@@ -48,8 +48,6 @@ const Contact = lazy(() => import("./pages/general/Contact"));
 const Signup = lazy(() => import("./pages/auth/Signup"));
 const ReferEarn = lazy(() => import("./pages/user/ReferEarn"));
 const SeaBitePrime = lazy(() => import("./pages/user/SeaBitePrime")); // 💎 Prime
-const Recipes = lazy(() => import("./pages/general/Recipes")); // 🍳 Recipes
-const RecipeDetail = lazy(() => import("./pages/general/RecipeDetail")); // 🍳 Recipe Detail
 const NotFound = lazy(() => import("./pages/general/NotFound"));
 
 // Admin Lazy Imports
@@ -83,7 +81,6 @@ const AdminCompliance = lazy(() => import("./admin/AdminCompliance")); // 📋 A
 const AdminDemandForecast = lazy(() => import("./admin/AdminDemandForecast")); // 📊 BI: Demand Forecast
 const AdminRFM = lazy(() => import("./admin/AdminRFM")); // 👥 BI: RFM Segments
 const AdminInventoryAlerts = lazy(() => import("./admin/AdminInventoryAlerts")); // 📦 BI: Inventory Alerts
-const AdminRecipes = lazy(() => import("./admin/AdminRecipes")); // 🍳 Recipes CRUD
 
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -285,7 +282,6 @@ function MainLayout() {
                     <Route path="forecast" element={<AdminDemandForecast />} />
                     <Route path="rfm" element={<AdminRFM />} />
                     <Route path="inventory-alerts" element={<AdminInventoryAlerts />} />
-                    <Route path="recipes" element={<AdminRecipes />} />
                   </Route>
                 </Routes>
               ) : (
@@ -299,8 +295,6 @@ function MainLayout() {
                     <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
                     <Route path="/refer-earn" element={<PrivateRoute><ReferEarn /></PrivateRoute>} />
                     <Route path="/prime" element={<SeaBitePrime />} />
-                    <Route path="/recipes" element={<Recipes />} />
-                    <Route path="/recipes/:slug" element={<RecipeDetail />} />
                     <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
                     <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
                     <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />

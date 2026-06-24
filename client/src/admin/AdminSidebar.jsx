@@ -38,7 +38,6 @@ const CATEGORIES = [
       { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={16} /> },
       { name: "Abandoned Cart", path: "/admin/carts", icon: <FiShoppingCart size={16} /> },
       { name: "AI Pricing Engine", path: "/admin/pricing-engine", icon: <FiTrendingUp size={16} /> },
-      { name: "Recipes", path: "/admin/recipes", icon: <FiTag size={16} /> },
     ]
   },
   {

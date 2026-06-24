@@ -58,12 +58,12 @@ export default function CartSidebar({ onClose }) {
 
   const handleUpdate = (item, newQty) => {
     if (newQty < 1) return;
-    updateQty(item._id, newQty);
+    updateQty(item._id, newQty, item.selectedCut, item.orderedWeightGrams);
     refreshCartCount();
   };
 
-  const handleRemove = (id) => {
-    removeFromCart(id);
+  const handleRemove = (item) => {
+    removeFromCart(item._id, item.selectedCut, item.orderedWeightGrams);
     refreshCartCount();
   };
 
@@ -400,7 +400,7 @@ export default function CartSidebar({ onClose }) {
                 <AnimatePresence mode="popLayout">
                   {cartItems.map((item, index) => (
                     <motion.div
-                      key={item._id}
+                      key={`${item._id}-${item.selectedCut || ""}-${item.orderedWeightGrams || 0}`}
                       layout
                       initial={{ opacity: 0, x: 40 }}
                       animate={{ opacity: 1, x: 0, transition: { delay: index * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] } }}
@@ -432,13 +432,22 @@ export default function CartSidebar({ onClose }) {
                       {/* Details */}
                       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                          <h4 style={{ fontSize: 13, fontWeight: 700, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>
-                            {item.name}
-                          </h4>
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <h4 style={{ fontSize: 13, fontWeight: 700, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>
+                              {item.name}
+                            </h4>
+                            {(item.selectedCut || item.orderedWeightGrams > 0) && (
+                              <div style={{ fontSize: "11px", color: T.primary, fontWeight: "600", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                {item.selectedCut && `Cut: ${item.selectedCut}`}
+                                {item.selectedCut && item.orderedWeightGrams > 0 && " | "}
+                                {item.orderedWeightGrams > 0 && `Weight: ${item.orderedWeightGrams >= 1000 ? `${item.orderedWeightGrams/1000}kg` : `${item.orderedWeightGrams}g`}`}
+                              </div>
+                            )}
+                          </div>
                           <motion.button
                             whileHover={{ scale: 1.2, color: T.coral }}
-                            whileTap={{ scale: 0.8 }}
-                            onClick={(e) => { e.stopPropagation(); handleRemove(item._id); }}
+                            whileTap={{ scale: 0.85 }}
+                            onClick={(e) => { e.stopPropagation(); handleRemove(item); }}
                             style={{ color: T.textLite, background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
                             title="Remove item"
                           >

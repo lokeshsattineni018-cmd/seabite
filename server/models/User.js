@@ -60,6 +60,9 @@ const userSchema = new mongoose.Schema(
       {
         product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
         qty: { type: Number, default: 1 },
+        selectedCut: { type: String, default: "" },
+        cutPriceAdjustmentPct: { type: Number, default: 0 },
+        orderedWeightGrams: { type: Number, default: 0 },
       }
     ],
 

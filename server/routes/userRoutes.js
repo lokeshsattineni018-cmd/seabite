@@ -88,7 +88,10 @@ router.post("/cart", protect, async (req, res) => {
             if (!item) return null;
             return {
                 product: item.product?._id || item.product || item._id, // Handle full object or ID
-                qty: item.qty || 1
+                qty: item.qty || 1,
+                selectedCut: item.selectedCut || "",
+                cutPriceAdjustmentPct: Number(item.cutPriceAdjustmentPct || 0),
+                orderedWeightGrams: Number(item.orderedWeightGrams || 0),
             };
         }).filter(item => item && item.product != null); // remove any null products
 
