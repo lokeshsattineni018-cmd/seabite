@@ -33,51 +33,7 @@ export default function Profile() {
   const [showNew, setShowNew] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
 
-  // Wallet States
-  const [topUpAmount, setTopUpAmount] = useState("");
-  const [topUpLoading, setTopUpLoading] = useState(false);
-  const [pointsToConvert, setPointsToConvert] = useState("");
-  const [convertLoading, setConvertLoading] = useState(false);
 
-  const handleTopUp = async () => {
-    const amt = parseFloat(topUpAmount);
-    if (isNaN(amt) || amt <= 0) return toast.error("Please enter a valid deposit amount.");
-    setTopUpLoading(true);
-    try {
-      const res = await axios.post(`${API_URL}/api/user/wallet/deposit`, { amount: amt }, { withCredentials: true });
-      if (res.data.success) {
-        toast.success(`Successfully added ₹${amt} to your wallet!`);
-        setTopUpAmount("");
-        await fetchUserAndOrders();
-        if (refreshMe) await refreshMe();
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to complete deposit");
-    } finally {
-      setTopUpLoading(false);
-    }
-  };
-
-  const handleConvertLoyalty = async () => {
-    const pts = parseInt(pointsToConvert, 10);
-    if (isNaN(pts) || pts <= 0) return toast.error("Please enter a valid points value.");
-    if (pts > (user?.loyaltyPoints || 0)) return toast.error("Insufficient loyalty points balance.");
-    if (pts < 2) return toast.error("You must convert at least 2 points (₹1).");
-    setConvertLoading(true);
-    try {
-      const res = await axios.post(`${API_URL}/api/user/wallet/convert-loyalty`, { points: pts }, { withCredentials: true });
-      if (res.data.success) {
-        toast.success(res.data.message || `Successfully converted ${pts} points!`);
-        setPointsToConvert("");
-        await fetchUserAndOrders();
-        if (refreshMe) await refreshMe();
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to convert points");
-    } finally {
-      setConvertLoading(false);
-    }
-  };
 
   const navigate = useNavigate();
 
@@ -397,76 +353,7 @@ export default function Profile() {
                       </div>
                     </div>
 
-                    {/* Simulated Wallet deposit & Loyalty Redemption cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                      {/* Top Up Card */}
-                      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
-                        <h3 className="text-xl font-bold tracking-tight mb-4">Simulated Wallet Deposit</h3>
-                        <p className="text-xs text-slate-400 mb-6">Add simulated funds to test your checkout wallet flow.</p>
-                        <div className="space-y-4">
-                          <div>
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Deposit Amount</label>
-                            <input
-                              type="number"
-                              value={topUpAmount}
-                              onChange={(e) => setTopUpAmount(e.target.value)}
-                              placeholder="Enter amount (e.g. 500)"
-                              className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-bold placeholder:text-slate-300 focus:outline-none focus:bg-white focus:border-[#5BBFB5] transition-all"
-                            />
-                          </div>
-                          <div className="flex gap-2 flex-wrap">
-                            {[500, 1000, 2000].map(val => (
-                              <button
-                                key={val}
-                                onClick={() => setTopUpAmount(val.toString())}
-                                className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-100 hover:bg-slate-50 transition-all text-slate-600"
-                              >
-                                +₹{val}
-                              </button>
-                            ))}
-                          </div>
-                          <button
-                            onClick={handleTopUp}
-                            disabled={topUpLoading}
-                            className="w-full py-4 rounded-2xl bg-slate-900 text-white text-xs font-bold uppercase tracking-widest hover:bg-[#5BBFB5] transition-all shadow-xl shadow-slate-950/5 flex items-center justify-center gap-2"
-                          >
-                            {topUpLoading ? "Depositing..." : "Add Money"}
-                          </button>
-                        </div>
-                      </div>
 
-                      {/* Loyalty Convert Card */}
-                      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
-                        <h3 className="text-xl font-bold tracking-tight mb-4">Redeem Loyalty Points</h3>
-                        <p className="text-xs text-slate-400 mb-6">Convert your loyalty points to wallet balance at a 2:1 rate (2 Pts = ₹1).</p>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-center bg-slate-50 border border-slate-100 rounded-2xl p-4">
-                            <div>
-                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Available Loyalty Points</span>
-                              <span className="text-lg font-bold text-slate-900">{user.loyaltyPoints || 0} Points</span>
-                            </div>
-                            <span className="text-xs font-medium text-slate-400">Equivalent to ₹{((user.loyaltyPoints || 0) * 0.5).toFixed(2)}</span>
-                          </div>
-                          <div>
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">Points to Convert</label>
-                            <input
-                              type="number"
-                              value={pointsToConvert}
-                              onChange={(e) => setPointsToConvert(e.target.value)}
-                              placeholder="Enter points (e.g. 50)"
-                              className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm font-bold placeholder:text-slate-300 focus:outline-none focus:bg-white focus:border-[#5BBFB5] transition-all"
-                            />
-                          </div>
-                          <button
-                            onClick={handleConvertLoyalty}
-                            disabled={convertLoading || !user.loyaltyPoints}
-                            className="w-full py-4 rounded-2xl bg-slate-900 text-white text-xs font-bold uppercase tracking-widest hover:bg-[#5BBFB5] transition-all shadow-xl shadow-slate-950/5 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {convertLoading ? "Converting..." : "Convert to Wallet Cash"}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
 
                     <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
                       <h3 className="text-xl font-bold tracking-tight mb-6">Transaction History</h3>
