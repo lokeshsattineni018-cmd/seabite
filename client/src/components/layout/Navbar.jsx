@@ -507,10 +507,10 @@ export default function Navbar({ announcementActive = false }) {
       >
         {/* --- DESKTOP VIEW --- */}
         <div className="hidden-mobile" style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-          {/* Top Tier (Cream) */}
+          {/* Top Tier (White) */}
           <div style={{
-            background: "#FAF6F0",
-            borderBottom: "1px solid #EFEAE2",
+            background: "#FFFFFF",
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
             width: "100%",
             boxShadow: "0 2px 10px rgba(0,0,0,0.01)"
           }}>
@@ -523,18 +523,10 @@ export default function Navbar({ announcementActive = false }) {
               alignItems: "center",
               justifyContent: "space-between"
             }}>
-              {/* Left: Text Logo */}
+              {/* Left: Logo Image */}
               <div style={{ flexShrink: 0 }}>
                 <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-                  <span style={{
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: "26px",
-                    fontWeight: "900",
-                    color: "#A3835B",
-                    letterSpacing: "-0.5px"
-                  }}>
-                    SeaBite.
-                  </span>
+                  <img src="/logo.webp" alt="SeaBite Logo" style={{ height: "45px", objectFit: "contain" }} />
                 </Link>
               </div>
 
@@ -544,7 +536,7 @@ export default function Navbar({ announcementActive = false }) {
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  background: "#F3ECE2",
+                  background: "#F3F4F6",
                   borderRadius: "30px",
                   padding: "8px 16px",
                   width: "100%",
@@ -934,9 +926,6 @@ export default function Navbar({ announcementActive = false }) {
                 <Link to="/about" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   ABOUT US
                 </Link>
-                <Link to="/contact" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  OUR STORES
-                </Link>
                 <Link to="/faq" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   HELP & FAQS
                 </Link>
@@ -953,8 +942,8 @@ export default function Navbar({ announcementActive = false }) {
           className="show-mobile" 
           style={{ 
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px", 
-            background: "#FAF6F0", 
-            borderBottom: "1px solid #EFEAE2",
+            background: "#FFFFFF", 
+            borderBottom: "1px solid rgba(0,0,0,0.06)",
             padding: "0", 
             transition: "all 0.3s ease",
             position: "relative"
@@ -973,18 +962,10 @@ export default function Navbar({ announcementActive = false }) {
             </div>
           </motion.button>
 
-          {/* Center: Big Text Logo */}
+          {/* Center: Logo Image */}
           <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", pointerEvents: "none" }}>
             <Link to="/" style={{ textDecoration: "none", pointerEvents: "auto" }}>
-              <span style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: "22px",
-                fontWeight: "900",
-                color: "#A3835B",
-                letterSpacing: "-0.5px"
-              }}>
-                SeaBite.
-              </span>
+              <img src="/logo.webp" alt="SeaBite Logo" style={{ height: "35px", objectFit: "contain" }} />
             </Link>
           </div>
 

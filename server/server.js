@@ -532,6 +532,7 @@ const server = httpServer.listen(PORT, () => {
         alert: pendingOrders > 15 ? "HIGH_DELIVERY_PRESSURE" : null
       });
       globalReqCount = 0; // Reset every 5s
+    });
   }, 5000);
 
   // Emit Database query telemetry every 3 seconds to admins
