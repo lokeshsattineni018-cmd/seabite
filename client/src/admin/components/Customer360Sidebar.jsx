@@ -20,7 +20,21 @@ export default function Customer360Sidebar({ context, loading }) {
         </div>
     );
 
-    const { user, recentOrders } = context;
+    const { user, recentOrders = [] } = context;
+    const totalSpent = recentOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
+    
+    let clvTag = "New Buyer";
+    let clvColor = "bg-stone-50 border-stone-200 text-stone-600";
+    if (totalSpent > 50000) {
+        clvTag = "Wholesale Tier 1";
+        clvColor = "bg-purple-50 border-purple-200 text-purple-750";
+    } else if (totalSpent > 10000) {
+        clvTag = "High-Frequency Buyer";
+        clvColor = "bg-blue-50 border-blue-200 text-blue-750";
+    } else if (recentOrders.length > 0 && (Date.now() - new Date(recentOrders[0].createdAt).getTime()) > 30 * 24 * 60 * 60 * 1000) {
+        clvTag = "Churn Risk";
+        clvColor = "bg-rose-50 border-rose-250 text-rose-700";
+    }
 
     return (
         <motion.div 
@@ -29,10 +43,23 @@ export default function Customer360Sidebar({ context, loading }) {
             className="w-80 h-full border-l border-stone-100 overflow-y-auto custom-scrollbar"
         >
             <div className="p-6 space-y-8">
-                {/* Wallet & Points */}
+                {/* Wallet & CLV Tiers */}
                 {user && (
                     <div className="space-y-4">
                         <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Customer Context</p>
+                        
+                        {/* CLV Tier Badge */}
+                        <div className={`p-4 border rounded-2xl flex items-center gap-3 ${clvColor}`}>
+                            <div className="w-10 h-10 bg-stone-900 text-white rounded-xl flex items-center justify-center shadow-md">
+                                <FiTag size={18} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[9px] uppercase tracking-wider opacity-85">CLV Tier Status</p>
+                                <h4 className="text-xs font-black truncate">{clvTag}</h4>
+                                <p className="text-[9px] opacity-75 mt-0.5">Total spent: ₹{totalSpent.toLocaleString()}</p>
+                            </div>
+                        </div>
+
                         <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-4">
                             <div className="flex items-center gap-3">
                                 <div className="w-10 h-10 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">

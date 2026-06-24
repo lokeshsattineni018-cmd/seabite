@@ -242,11 +242,11 @@ function MainLayout() {
             </>
           )}
 
-          <div className="flex-grow" style={{ 
-            paddingTop: (!isAdminRoute && location.pathname !== "/" && location.pathname !== "/login" && location.pathname !== "/signup") 
-              ? (announcement?.active ? "100px" : "64px") 
-              : 0 
-          }}>
+          <div className={`flex-grow ${
+            (!isAdminRoute && location.pathname !== "/" && location.pathname !== "/login" && location.pathname !== "/signup")
+              ? (announcement?.active ? "page-content-container announcement-active" : "page-content-container")
+              : ""
+          }`}>
             <Suspense fallback={<SeaBiteLoader fullScreen />}>
               {isAdminRoute ? (
                 <Routes>

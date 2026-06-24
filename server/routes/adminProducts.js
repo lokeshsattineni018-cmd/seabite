@@ -90,6 +90,15 @@ router.post(
         }
       }
 
+      let parsedScalingRule = {};
+      if (req.body.scalingRule) {
+        try {
+          parsedScalingRule = typeof req.body.scalingRule === "string" ? JSON.parse(req.body.scalingRule) : req.body.scalingRule;
+        } catch (e) {
+          console.error("Failed to parse scalingRule:", e);
+        }
+      }
+
       const product = await Product.create({
         name: name,
         category: category,
@@ -109,6 +118,11 @@ router.post(
         minOrderWeight: req.body.minOrderWeight ? Number(req.body.minOrderWeight) : 250,
         maxOrderWeight: req.body.maxOrderWeight ? Number(req.body.maxOrderWeight) : 5000,
         weightVariancePct: req.body.weightVariancePct ? Number(req.body.weightVariancePct) : 5,
+        catchDate: req.body.catchDate || Date.now(),
+        shelfLifeHours: req.body.shelfLifeHours ? Number(req.body.shelfLifeHours) : 48,
+        sourceOrigin: req.body.sourceOrigin || "Bhimavaram Farm Gate",
+        algorithmicScaling: req.body.algorithmicScaling === "true" || req.body.algorithmicScaling === true,
+        scalingRule: parsedScalingRule
       });
 
       res.status(201).json(product);
@@ -122,7 +136,7 @@ router.post(
 
 /* ========== UPDATE PRODUCT (PUT /api/admin/products/:id) ========== */
 router.put("/:id", adminAuth, async (req, res) => {
-  const { name, category, desc, trending, stock, basePrice, unit, image, images, countInStock } = req.body;
+  const { name, category, desc, trending, stock, basePrice, unit, image, images, countInStock, catchDate, shelfLifeHours, sourceOrigin, algorithmicScaling, scalingRule } = req.body;
   try {
     const oldProduct = await Product.findById(req.params.id);
     if (!oldProduct) return res.status(404).json({ message: "Product not found" });
@@ -164,6 +178,17 @@ router.put("/:id", adminAuth, async (req, res) => {
     if (req.body.minOrderWeight !== undefined) updateData.minOrderWeight = Number(req.body.minOrderWeight);
     if (req.body.maxOrderWeight !== undefined) updateData.maxOrderWeight = Number(req.body.maxOrderWeight);
     if (req.body.weightVariancePct !== undefined) updateData.weightVariancePct = Number(req.body.weightVariancePct);
+    if (catchDate !== undefined) updateData.catchDate = catchDate;
+    if (shelfLifeHours !== undefined) updateData.shelfLifeHours = Number(shelfLifeHours);
+    if (sourceOrigin !== undefined) updateData.sourceOrigin = sourceOrigin;
+    if (algorithmicScaling !== undefined) updateData.algorithmicScaling = algorithmicScaling === "true" || algorithmicScaling === true;
+    if (scalingRule !== undefined) {
+      try {
+        updateData.scalingRule = typeof scalingRule === "string" ? JSON.parse(scalingRule) : scalingRule;
+      } catch (e) {
+        console.error("Failed to parse scalingRule:", e);
+      }
+    }
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,

@@ -1,10 +1,10 @@
 // AdminLayout.jsx
-import { useState, Suspense, useEffect, useCallback } from "react";
+import { useState, Suspense, useEffect, useCallback, useRef } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { FiMenu, FiX, FiSearch, FiBell } from "react-icons/fi";
+import { FiMenu, FiX, FiSearch, FiBell, FiLock, FiTerminal, FiDatabase, FiLayers } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
 import { useAuth } from "../context/AuthContext";
@@ -52,7 +52,7 @@ const ROUTE_METADATA = {
   "/admin/fleet": { title: "Logistics & Fleet Registry", subtitle: "Active dispatch vehicles, routes, and agents", emoji: "🚚" },
   "/admin/iam": { title: "Team Identity Management (IAM)", subtitle: "System operator credentials and permissions", emoji: "🔑" },
   "/admin/registry": { title: "Vendor & Partner Registry", subtitle: "Authorized landing harbor coordinates and profiles", emoji: "⚓" },
-  "/admin/discovery": { title: "Search & Discovery Engine", subtitle: "Manage query redirects, synonyms, and smart search tracking", emoji: "🔍" },
+  "/admin/discovery": { title: "Search & Discovery Engine", subtitle: "Synonyms, redirects, and search gaps analyzer", emoji: "🔍" },
   "/admin/complaints": { title: "Escalation & Resolution Center", subtitle: "Verify refunds, disputes, and customer complaints", emoji: "🚨" },
   "/admin/radar": { title: "Live Satellite Radar", subtitle: "Simulated fleet coordination and vessel tracking", emoji: "🛰️" },
   "/admin/pulse": { title: "Storefront Pulse Monitor", subtitle: "Real-time telemetry of user sessions and cart actions", emoji: "💓" },
@@ -60,6 +60,23 @@ const ROUTE_METADATA = {
   "/admin/pricing-engine": { title: "AI Dynamic Pricing Engine", subtitle: "Weather-adaptive pricing curves linked to landing scarcity", emoji: "🌦️" },
   "/admin/compliance": { title: "Cold-Chain Compliance Audit Panel", subtitle: "Transit temperature coordinates & proactive quality-recovery logs", emoji: "📋" }
 };
+
+const COMMANDS = [
+  { category: "Navigation", title: "Go to Dashboard / Command Center", path: "/admin/dashboard", icon: "📊" },
+  { category: "Navigation", title: "Go to POS Terminal", path: "/admin/pos", icon: "🖨️" },
+  { category: "Navigation", title: "Go to Products Catalog", path: "/admin/products", icon: "🐟" },
+  { category: "Navigation", title: "Register New Fresh Catch", path: "/admin/add-product", icon: "➕" },
+  { category: "Navigation", title: "Go to Orders matrix", path: "/admin/orders", icon: "📦" },
+  { category: "Navigation", title: "Go to Live Delivery Radar", path: "/admin/radar", icon: "🛰️" },
+  { category: "Navigation", title: "Go to Storefront Pulse Monitor", path: "/admin/pulse", icon: "💓" },
+  { category: "Navigation", title: "Go to X-Ray observatory", path: "/admin/xray", icon: "💀" },
+  { category: "Navigation", title: "Go to AI Pricing Engine", path: "/admin/pricing-engine", icon: "🌦️" },
+  { category: "Navigation", title: "Go to Registry Audit Ledger", path: "/admin/registry", icon: "⚓" },
+  
+  { category: "Actions", title: "Switch to Bhimavaram Hub", action: "switch_bhimavaram", icon: "🏢" },
+  { category: "Actions", title: "Switch to Vijayawada Hub", action: "switch_vijayawada", icon: "🏢" },
+  { category: "Actions", title: "Logout / Lock Session", action: "logout", icon: "🔒" }
+];
 
 export default function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -70,6 +87,25 @@ export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  
+  // Hub states
+  const [activeHub, setActiveHub] = useState("Bhimavaram Hub");
+  const [loadingHub, setLoadingHub] = useState(false);
+
+  // Command palette states
+  const [cmdKOpen, setCmdKOpen] = useState(false);
+  const [cmdQuery, setCmdQuery] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const cmdInputRef = useRef(null);
+
+  const switchHub = (hub) => {
+    setLoadingHub(true);
+    setActiveHub(hub);
+    toast.success(`Switched active context to ${hub}`);
+    setTimeout(() => {
+      setLoadingHub(false);
+    }, 600);
+  };
 
   const getMetadata = () => {
     const path = location.pathname.replace(/\/$/, "");
@@ -146,6 +182,25 @@ export default function AdminLayout() {
     return () => socket.off('ORDER_PLACED', handleNewOrder);
   }, [socket]);
 
+  // Keyboard shortcut listener (Cmd+K / Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCmdKOpen(prev => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (cmdKOpen && cmdInputRef.current) {
+      cmdInputRef.current.focus();
+      setSelectedIndex(0);
+    }
+  }, [cmdKOpen]);
+
   const updateBanner = async (newBanner) => {
     try {
       const { data } = await axios.put(`${API_URL}/api/admin/enterprise/settings`, { ...settings, banner: newBanner }, { withCredentials: true });
@@ -153,6 +208,44 @@ export default function AdminLayout() {
       toast.success("Banner updated successfully");
     } catch (err) {
       toast.error("Failed to update banner");
+    }
+  };
+
+  const filteredCommands = COMMANDS.filter(cmd =>
+    cmd.title.toLowerCase().includes(cmdQuery.toLowerCase()) ||
+    cmd.category.toLowerCase().includes(cmdQuery.toLowerCase())
+  );
+
+  const handleCommandSelect = (cmd) => {
+    setCmdKOpen(false);
+    setCmdQuery("");
+    if (cmd.path) {
+      navigate(cmd.path);
+    } else if (cmd.action) {
+      if (cmd.action === "switch_bhimavaram") {
+        switchHub("Bhimavaram Hub");
+      } else if (cmd.action === "switch_vijayawada") {
+        switchHub("Vijayawada Hub");
+      } else if (cmd.action === "logout") {
+        navigate("/login");
+      }
+    }
+  };
+
+  const handlePaletteKeyDown = (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev + 1) % filteredCommands.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredCommands[selectedIndex]) {
+        handleCommandSelect(filteredCommands[selectedIndex]);
+      }
+    } else if (e.key === "Escape") {
+      setCmdKOpen(false);
     }
   };
 
@@ -204,6 +297,20 @@ export default function AdminLayout() {
               </div>
             </div>
             <div className="h-8 w-px bg-stone-200/60" />
+            
+            {/* Multi-Tenant Hub Selector */}
+            <div className="relative flex items-center">
+              <select
+                value={activeHub}
+                onChange={(e) => switchHub(e.target.value)}
+                className="bg-stone-100 border border-stone-200 rounded-xl px-3 py-1.5 text-xs font-bold text-stone-800 focus:outline-none cursor-pointer hover:bg-stone-200/60 transition-colors"
+              >
+                <option value="Bhimavaram Hub">🏢 Bhimavaram Hub</option>
+                <option value="Vijayawada Hub">🏢 Vijayawada Hub</option>
+              </select>
+            </div>
+            
+            <div className="h-8 w-px bg-stone-200/60" />
             <div className="px-3 py-1.5 bg-stone-100/50 rounded-full border border-stone-200/40 flex items-center gap-2">
               <span className="text-[9px] font-bold text-stone-500 uppercase tracking-tighter">Operator:</span>
               <span className="text-[10px] font-bold text-stone-800 uppercase">{user?.name?.split(" ")[0] || "Operator"}</span>
@@ -211,6 +318,11 @@ export default function AdminLayout() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Hotkeys helper info */}
+            <span className="text-[10px] text-stone-400 font-bold bg-stone-100 border border-stone-200/40 px-2.5 py-1.5 rounded-xl uppercase">
+              Press <kbd className="font-mono bg-white px-1.5 py-0.5 rounded border shadow-sm">⌘K</kbd> to search
+            </span>
+
             {/* Notifications Dropdown */}
             <div className="relative">
               <button
@@ -243,7 +355,7 @@ export default function AdminLayout() {
                       </div>
                       <div className="max-h-80 overflow-y-auto custom-scrollbar">
                         {notifications.length === 0 ? (
-                          <div className="p-6 text-center">
+                           <div className="p-6 text-center">
                             <div className="w-12 h-12 bg-stone-50 rounded-full flex items-center justify-center mx-auto mb-3 text-stone-300">
                               <FiBell size={20} />
                             </div>
@@ -288,9 +400,13 @@ export default function AdminLayout() {
         </div>
 
         <div className="px-4 md:px-8 pb-6 min-h-full">
-          <Suspense fallback={<AdminPageLoader />}>
-            <Outlet context={{ settings, setSettings, fetchSettings }} />
-          </Suspense>
+          {loadingHub ? (
+            <AdminPageLoader />
+          ) : (
+            <Suspense fallback={<AdminPageLoader />}>
+              <Outlet context={{ settings, setSettings, fetchSettings, activeHub, switchHub }} />
+            </Suspense>
+          )}
         </div>
       </main>
 
@@ -327,6 +443,86 @@ export default function AdminLayout() {
           </>
         )}
       </AnimatePresence>
+
+      {/* ⌨️ Immersive Keyboard Command Modal (Cmd+K) */}
+      <AnimatePresence>
+        {cmdKOpen && (
+          <div className="fixed inset-0 z-[99999] flex items-start justify-center pt-24 px-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setCmdKOpen(false)}
+              className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.97, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.97, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onKeyDown={handlePaletteKeyDown}
+              className="relative w-full max-w-xl bg-white border border-stone-200 shadow-2xl rounded-3xl overflow-hidden"
+            >
+              <div className="flex items-center gap-3 px-6 py-4 border-b border-stone-100 bg-stone-50/50">
+                <FiSearch className="text-stone-400" size={18} />
+                <input
+                  ref={cmdInputRef}
+                  type="text"
+                  placeholder="Type a navigation command or action..."
+                  value={cmdQuery}
+                  onChange={(e) => { setCmdQuery(e.target.value); setSelectedIndex(0); }}
+                  className="w-full bg-transparent border-none outline-none text-stone-800 text-sm font-semibold placeholder-stone-400"
+                />
+                <span className="text-[10px] text-stone-400 font-bold bg-white px-2 py-1 rounded border shadow-sm select-none">ESC</span>
+              </div>
+
+              <div className="max-h-[350px] overflow-y-auto p-2">
+                {filteredCommands.length > 0 ? (
+                  <div>
+                    {/* Render Category Grouped Lists */}
+                    {["Navigation", "Actions"].map(cat => {
+                      const categoryItems = filteredCommands.filter(c => c.category === cat);
+                      if (categoryItems.length === 0) return null;
+                      
+                      return (
+                        <div key={cat} className="mb-2">
+                          <div className="px-4 py-2 text-[9px] font-black text-stone-400 uppercase tracking-widest">{cat}</div>
+                          {categoryItems.map(cmd => {
+                            // Find absolute index in filtered list
+                            const absIndex = filteredCommands.indexOf(cmd);
+                            const active = absIndex === selectedIndex;
+                            return (
+                              <div
+                                key={cmd.title}
+                                onClick={() => handleCommandSelect(cmd)}
+                                onMouseEnter={() => setSelectedIndex(absIndex)}
+                                className={`px-4 py-3 rounded-2xl cursor-pointer transition-all flex items-center justify-between ${active ? 'bg-stone-100 text-stone-900 font-bold' : 'text-stone-600'}`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <span className="text-base select-none">{cmd.icon}</span>
+                                  <span className="text-xs">{cmd.title}</span>
+                                </div>
+                                {active && (
+                                  <span className="text-[9px] text-stone-400 font-mono bg-white border px-1.5 py-0.5 rounded shadow-sm">⏎ ENTER</span>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="py-12 text-center text-stone-400 text-xs font-bold">
+                    No matching commands found.
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

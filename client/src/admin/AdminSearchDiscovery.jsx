@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { motion } from "framer-motion";
 import { FiSearch, FiTarget, FiTrendingUp, FiAlertCircle, FiTag, FiShoppingBag } from "react-icons/fi";
@@ -18,6 +19,7 @@ const T = {
 };
 
 export default function AdminSearchDiscovery() {
+    const navigate = useNavigate();
     const [data, setData] = useState({ topSearches: [], zeroResults: [] });
     const [loading, setLoading] = useState(true);
 
@@ -118,8 +120,25 @@ export default function AdminSearchDiscovery() {
                                     <div style={{ fontSize: 12, color: T.orange, marginTop: 4, fontWeight: 500 }}>{item.count} missed intents</div>
                                 </div>
                                 <div style={{ display: 'flex', gap: 8 }}>
-                                    <button title="Stock this product" style={{ width: 36, height: 36, borderRadius: 10, background: '#fff', border: `1px solid ${T.border}`, color: T.textSoft, cursor: "pointer", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                        <FiTag size={16} />
+                                    <button 
+                                        onClick={() => navigate("/admin/add-product", { state: { prefillName: item.query } })}
+                                        title="Stock this product" 
+                                        style={{ 
+                                            padding: "6px 12px", 
+                                            borderRadius: 8, 
+                                            background: T.tealL, 
+                                            border: `1px solid ${T.teal}`, 
+                                            color: T.teal, 
+                                            cursor: "pointer", 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            gap: 4,
+                                            fontSize: 12,
+                                            fontWeight: 600
+                                        }}
+                                    >
+                                        <FiTag size={12} />
+                                        Stock Now
                                     </button>
                                 </div>
                             </div>

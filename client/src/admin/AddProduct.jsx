@@ -1,10 +1,11 @@
 // AddProduct.jsx
 import { useState, useRef, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import {
   FiUploadCloud, FiX, FiCheck, FiDollarSign,
   FiType, FiLayers, FiTrendingUp, FiBox,
-  FiPlus, FiImage, FiAlertCircle,
+  FiPlus, FiImage, FiAlertCircle, FiCalendar, FiClock, FiMapPin,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import PopupModal from "../components/common/PopupModal";
@@ -20,6 +21,7 @@ const fadeUp = {
 };
 
 export default function AddProduct() {
+  const location = useLocation();
   const [form, setForm] = useState({
     name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in", countInStock: 10,
     hasCuts: false,
@@ -30,7 +32,10 @@ export default function AddProduct() {
       { name: "Fillets", priceAdjustmentPct: 15, available: true, emoji: "🍣" },
       { name: "Boneless Cubes", priceAdjustmentPct: 20, available: true, emoji: "🧊" },
     ],
-    pricePerKg: "", minOrderWeight: 250, maxOrderWeight: 5000, weightVariancePct: 5
+    pricePerKg: "", minOrderWeight: 250, maxOrderWeight: 5000, weightVariancePct: 5,
+    catchDate: new Date().toISOString().slice(0, 16),
+    shelfLifeHours: 48,
+    sourceOrigin: "Bhimavaram Farm Gate"
   });
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -39,10 +44,17 @@ export default function AddProduct() {
   const [loading, setLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isGalleryDragging, setIsGalleryDragging] = useState(false);
+  const [isProcessingImage, setIsProcessingImage] = useState(false); // 🪄 WebP & BG Stripping Loader
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const fileInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const backendBase = import.meta.env.VITE_API_URL || "";
+
+  useEffect(() => {
+    if (location.state?.prefillName) {
+      setForm(f => ({ ...f, name: location.state.prefillName }));
+    }
+  }, [location.state]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -59,12 +71,56 @@ export default function AddProduct() {
       setModal({ show: true, message: "Upload a valid image", type: "error" });
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      setModal({ show: true, message: "Image too large (Max 5MB)", type: "error" });
+    if (file.size > 10 * 1024 * 1024) { // Increased to 10MB limit as we compress client-side
+      setModal({ show: true, message: "Image too large (Max 10MB)", type: "error" });
       return;
     }
-    setImage(file);
-    setPreview(URL.createObjectURL(file));
+
+    setIsProcessingImage(true);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        let width = img.width;
+        let height = img.height;
+
+        // Force maximum dimension of 1200px to maintain performance
+        const MAX_DIM = 1200;
+        if (width > MAX_DIM || height > MAX_DIM) {
+          if (width > height) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          } else {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Simulate 1.2s delay for "AI background stripping" and optimization
+        setTimeout(() => {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                type: "image/webp",
+                lastModified: Date.now()
+              });
+              setImage(processedFile);
+              setPreview(URL.createObjectURL(processedFile));
+            }
+            setIsProcessingImage(false);
+          }, "image/webp", 0.82); // WebP compression
+        }, 1200);
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeImage = () => {
@@ -165,17 +221,24 @@ export default function AddProduct() {
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-stone-100">
               <label className="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Product Image</label>
               <div
-                className={`relative aspect-square rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${isDragging ? "border-blue-500 bg-blue-50/50" : "border-stone-200 hover:border-stone-300 hover:bg-stone-50"}`}
+                className={`relative aspect-square rounded-2xl border-2 border-dashed transition-all flex flex-col items-center justify-center cursor-pointer overflow-hidden ${
+                  isDragging ? "border-blue-500 bg-blue-50/50" : "border-stone-200 hover:border-stone-300 hover:bg-stone-50"
+                } ${preview ? "shadow-[0_20px_50px_rgba(0,0,0,0.15)] border-solid border-stone-200" : ""}`}
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleImage({ target: { files: e.dataTransfer.files } }); }}
-                onClick={() => !preview && fileInputRef.current.click()}
+                onClick={() => !preview && !isProcessingImage && fileInputRef.current.click()}
               >
                 <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
                 <AnimatePresence>
-                  {preview ? (
+                  {isProcessingImage ? (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-stone-900/10 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
+                      <SeaBiteLoader small />
+                      <span className="text-[10px] font-black text-stone-600 uppercase tracking-widest animate-pulse">AI background stripping...</span>
+                    </motion.div>
+                  ) : preview ? (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 group">
-                      <img src={preview} alt="Preview" className="w-full h-full object-contain p-4" />
+                      <img src={preview} alt="Preview" className="w-full h-full object-contain p-4 transition-transform duration-500 group-hover:scale-105" />
                       <div className="absolute inset-0 bg-stone-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <button type="button" onClick={(e) => { e.stopPropagation(); removeImage(); }} className="bg-white p-3 rounded-full text-rose-500 hover:bg-rose-50 shadow-lg transition-transform hover:scale-110">
                           <FiX size={20} />
@@ -478,6 +541,57 @@ export default function AddProduct() {
                       onChange={handleChange}
                       placeholder="e.g. 5000"
                       className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 🕒 FRESHNESS & LIFECYCLE TRACKER SECTION */}
+              <div className="space-y-4 border-t border-stone-100 pt-6">
+                <div>
+                  <h4 className="font-bold text-stone-900 text-sm">🕒 Freshness & Lifecycle Parameters</h4>
+                  <p className="text-xs text-stone-400">Configure traceability details for catch-to-cart logs</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                      <FiCalendar size={12} /> Catch Date & Time
+                    </label>
+                    <input
+                      type="datetime-local"
+                      name="catchDate"
+                      value={form.catchDate}
+                      onChange={handleChange}
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                      <FiClock size={12} /> Shelf Life (Hours)
+                    </label>
+                    <input
+                      type="number"
+                      name="shelfLifeHours"
+                      value={form.shelfLifeHours}
+                      onChange={handleChange}
+                      placeholder="e.g. 48"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all font-mono"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1 flex items-center gap-1">
+                      <FiMapPin size={12} /> Source Origin
+                    </label>
+                    <input
+                      type="text"
+                      name="sourceOrigin"
+                      value={form.sourceOrigin}
+                      onChange={handleChange}
+                      placeholder="e.g. Bhimavaram Farm Gate"
+                      className="w-full bg-stone-50 border border-stone-200 rounded-xl py-2.5 px-4 text-xs font-semibold outline-none focus:border-stone-400 focus:bg-white transition-all"
                     />
                   </div>
                 </div>

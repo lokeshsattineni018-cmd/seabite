@@ -45,6 +45,18 @@ router.post("/ping", async (req, res) => {
       { returnDocument: 'after', upsert: true }
     );
 
+    if (req.io) {
+      req.io.to("admins").emit("CLICKSTREAM_PULSE", {
+        type: "page_view",
+        visitorId,
+        userId: userId || null,
+        currentPath,
+        ipAddress,
+        city,
+        timestamp: new Date()
+      });
+    }
+
     res.status(200).json({ success: true, visitor });
   } catch (error) {
     console.error("Telemetry Ping Error:", error);

@@ -67,7 +67,6 @@ export default function Navbar({ announcementActive = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [searchExpanded, setSearchExpanded] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showSpinWheel, setShowSpinWheel] = useState(false);
   const [showCatOpen, setShowCatOpen] = useState(true);
@@ -238,9 +237,6 @@ export default function Navbar({ announcementActive = false }) {
       if (searchExpanded && searchRef.current && !searchRef.current.contains(e.target) && !e.target.closest('.search-container')) {
         setSearchExpanded(false);
         setSuggestions([]);
-      }
-      if (!e.target.closest('.search-container')) {
-        setSearchFocused(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -461,18 +457,6 @@ export default function Navbar({ announcementActive = false }) {
         .si:focus { outline: none; }
         .drawer-scrollbar::-webkit-scrollbar { width: 4px; }
         .drawer-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        .bottom-tier-link-cat {
-          transition: color 0.2s ease;
-        }
-        .bottom-tier-link-cat:hover {
-          color: #A3835B !important;
-        }
-        .bottom-tier-link-page {
-          transition: color 0.2s ease;
-        }
-        .bottom-tier-link-page:hover {
-          color: #1A2E2C !important;
-        }
         @media (max-width: 768px) { 
           .hidden-mobile { display: none !important; } 
           .show-mobile { display: flex !important; } 
@@ -501,449 +485,258 @@ export default function Navbar({ announcementActive = false }) {
           position: "fixed",
           top: announcementActive && !scrolled ? 30 : 0,
           left: 0, right: 0, zIndex: 1100,
-          padding: 0,
-          transition: "top 0.3s ease",
+          background: isTransparent ? "transparent" : "rgba(255,255,255,0.98)",
+          backdropFilter: isTransparent ? "none" : "blur(20px) saturate(1.8)",
+          borderBottom: isTransparent ? "none" : "1px solid rgba(0,0,0,0.06)",
+          boxShadow: isTransparent ? "none" : "0 4px 30px rgba(0,0,0,0.04)",
+          padding: T.navPy,
+          transition: "background 0.4s ease, padding 0.4s ease, border 0.4s ease, top 0.3s ease",
         }}
       >
-        {/* --- DESKTOP VIEW --- */}
-        <div className="hidden-mobile" style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-          {/* Top Tier (Cream) */}
-          <div style={{
-            background: "#FAF6F0",
-            borderBottom: "1px solid #EFEAE2",
-            width: "100%",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.01)"
-          }}>
-            <div style={{
-              maxWidth: "1440px",
-              margin: "0 auto",
-              padding: "0 40px",
-              height: "70px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between"
-            }}>
-              {/* Left: Text Logo */}
-              <div style={{ flexShrink: 0 }}>
-                <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-                  <span style={{
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: "26px",
-                    fontWeight: "900",
-                    color: "#A3835B",
-                    letterSpacing: "-0.5px"
-                  }}>
-                    SeaBite.
-                  </span>
-                </Link>
-              </div>
+        <div style={{ maxWidth: "1440px", margin: "0 auto", padding: "0 40px", display: "flex", alignItems: "center" }}>
 
-              {/* Center: Search Pill (Centered, Always Visible) */}
-              <div style={{ position: "relative", width: "100%", maxWidth: "320px" }} className="search-container">
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  background: "#F3ECE2",
-                  borderRadius: "30px",
-                  padding: "8px 16px",
-                  width: "100%",
-                  transition: "all 0.25s ease",
-                  border: searchFocused ? "1.5px solid #A3835B" : "1.5px solid transparent",
-                  boxShadow: searchFocused ? "0 0 0 3px rgba(163,131,91,0.1)" : "none"
-                }}>
-                  <FiSearch size={16} style={{ color: "#8A8279", flexShrink: 0 }} />
-                  <input
-                    ref={searchRef}
-                    className="si"
-                    value={searchTerm}
-                    onChange={e => handleSearchInput(e.target.value)}
-                    onKeyDown={handleSearchSubmit}
-                    onFocus={() => setSearchFocused(true)}
-                    placeholder="Search for anything..."
-                    style={{
-                      border: "none",
-                      background: "none",
-                      fontSize: "14px",
-                      color: "#1A2E2C",
-                      width: "100%",
-                      outline: "none",
-                      fontFamily: "'Plus Jakarta Sans', sans-serif",
-                      fontWeight: "500"
-                    }}
-                  />
-                  {searchTerm && (
-                    <button 
-                      onClick={() => { setSearchTerm(""); setSuggestions([]); }} 
-                      style={{ background: "none", border: "none", cursor: "pointer", color: "#8A8279", display: "flex", padding: 0 }}
-                    >
-                      <FiX size={14} />
-                    </button>
-                  )}
-                </div>
-                
-                {/* Suggestions Dropdown */}
+          {/* --- DESKTOP VIEW --- */}
+          <div className="hidden-mobile" style={{ width: "100%", display: "flex", alignItems: "center" }}>
+            <div style={{ marginRight: "36px", flexShrink: 0 }}>
+              <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "10px" }}>
+                <img src="/logo.webp" alt="SeaBite" width={110} height={62} style={{ height: "62px", width: "110px", objectFit: "contain" }} />
+              </Link>
+            </div>
+
+            <div className="hidden-mobile" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ position: "relative" }} onMouseEnter={() => setShowShop(true)} onMouseLeave={() => setShowShop(false)}>
+                <button className="nav-ul" style={{ display: "flex", alignItems: "center", gap: "4px", padding: "6px 12px", border: "none", background: "none", fontSize: "14px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link, cursor: "pointer", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  Shop <FiChevronDown size={12} style={{ transform: showShop ? "rotate(180deg)" : "none", transition: "all 0.22s" }} />
+                </button>
                 <AnimatePresence>
-                  {searchFocused && (suggestions.length > 0 || (searchTerm.length > 1 && suggestions.length === 0)) && (
+                  {showShop && (
                     <motion.div 
-                      initial={{ opacity: 0, y: -6 }} 
-                      animate={{ opacity: 1, y: 0 }} 
-                      exit={{ opacity: 0, y: -6 }} 
-                      style={{ 
-                        position: "absolute", 
-                        top: "calc(100% + 8px)", 
-                        left: 0, 
-                        right: 0, 
-                        background: "#fff", 
-                        border: "1.5px solid #E2EEEC", 
-                        borderRadius: "18px", 
-                        overflow: "hidden", 
-                        zIndex: 300, 
-                        boxShadow: "0 20px 50px rgba(26,46,44,0.12)" 
-                      }}
+                      className="dropdown-bridge"
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }} 
+                      animate={{ opacity: 1, y: 0, scale: 1 }} 
+                      exit={{ opacity: 0, y: -8, scale: 0.97 }} 
+                      style={{ position: "absolute", top: "calc(100% + 5px)", left: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "14px", padding: "5px", minWidth: "170px", zIndex: 200, boxShadow: "0 12px 40px rgba(0,0,0,0.1)" }}
                     >
-                      {suggestions.length > 0 ? (
-                        <>
-                          <div style={{ padding: "12px 16px 8px", borderBottom: "1px solid #F4F9F8" }}>
-                            <span style={{ fontSize: "10px", fontWeight: "800", color: "#A8C5C0", textTransform: "uppercase", letterSpacing: "0.1em" }}>Top Results</span>
-                          </div>
-                          <div style={{ maxHeight: "300px", overflowY: "auto" }} className="drawer-scrollbar">
-                            {suggestions.map(item => (
-                              <div 
-                                key={item._id} 
-                                className="prof-item" 
-                                onClick={() => handleSuggestionClick(item)} 
-                                style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid #F4F9F8", transition: "background 0.2s" }}
-                              >
-                                <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "#F8FAFB", overflow: "hidden", flexShrink: 0, border: "1px solid #E8EEF2" }}>
-                                  <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                  <p style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", margin: "0 0 2px" }}>{item.name}</p>
-                                  <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-                                    <p style={{ fontSize: "12px", fontWeight: "500", color: "#5BBFB5" }}>
-                                      ₹{(() => {
-                                        const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
-                                        const disc = hasFlash ? item.flashSale.discountPrice : (searchGlobalDiscount > 0 ? item.basePrice * (1 - searchGlobalDiscount / 100) : item.basePrice);
-                                        return disc.toFixed(0);
-                                      })()}
-                                    </p>
-                                    {(() => {
-                                      const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
-                                      const isDisc = hasFlash || searchGlobalDiscount > 0;
-                                      return isDisc && <span style={{ fontSize: "10px", color: "#A8C5C0", textDecoration: "line-through" }}>₹{item.basePrice}</span>;
-                                    })()}
-                                    <span style={{ color: "#A8C5C0", fontSize: "11px" }}>/ kg</span>
-                                  </div>
-                                </div>
-                                <FiArrowRight size={14} style={{ color: "#E2EEEC" }} />
+                      {NAV_LINKS.map(link => (
+                        <button key={link.path} className="dd-item" onClick={() => { navigate(link.path); setShowShop(false); }} style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 13px", border: "none", background: "none", borderRadius: "9px", fontSize: "13.5px", fontWeight: "600", color: "#1A2E2C", cursor: "pointer" }}>{link.label}</button>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              <Link to="/about" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>About</Link>
+              <Link to="/orders" className="nav-ul" style={{ padding: "6px 12px", textDecoration: "none", fontSize: "13.5px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.05em", color: T.link }}>Orders</Link>
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginLeft: "auto" }}>
+            <div style={{ position: "relative" }} className="search-container">
+                <AnimatePresence>
+                  {searchExpanded ? (
+                    <motion.div key="open" initial={{ width: 36, opacity: 0.4 }} animate={{ width: 230, opacity: 1 }} exit={{ width: 36, opacity: 0 }} transition={{ duration: 0.28 }} style={{ display: "flex", alignItems: "center", gap: "8px", background: "#fff", border: "1.5px solid #5BBFB5", borderRadius: "10px", padding: "7px 12px", boxShadow: "0 0 0 3px rgba(91,191,181,0.10)" }}>
+                      <FiSearch size={13} style={{ color: "#5BBFB5", flexShrink: 0 }} />
+                      <input ref={searchRef} className="si" value={searchTerm} onChange={e => handleSearchInput(e.target.value)} onKeyDown={handleSearchSubmit} placeholder="Search fresh catch…" style={{ border: "none", background: "none", fontSize: "13px", color: "#1A2E2C", width: "100%" }} />
+                      {searchTerm && <button onClick={() => { setSearchTerm(""); setSuggestions([]); }} style={{ background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex", padding: 0 }}><FiX size={12} /></button>}
+                    </motion.div>
+                  ) : (
+                    <motion.button key="icon" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} onClick={() => setSearchExpanded(true)} className="nav-ib search-container" style={iconBtn}><FiSearch size={15} /></motion.button>
+                  )}
+                </AnimatePresence>
+                <AnimatePresence>
+                  {suggestions.length > 0 && searchExpanded && (
+                    <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} style={{ position: "absolute", top: "calc(100% + 12px)", right: 0, background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "18px", overflow: "hidden", zIndex: 300, minWidth: "320px", boxShadow: "0 20px 50px rgba(26,46,44,0.12)" }}>
+                      <div style={{ padding: "12px 16px 8px", borderBottom: "1px solid #F4F9F8" }}>
+                        <span style={{ fontSize: "10px", fontWeight: "800", color: "#A8C5C0", textTransform: "uppercase", letterSpacing: "0.1em" }}>Top Results</span>
+                      </div>
+                      <div style={{ maxHeight: "380px", overflowY: "auto" }} className="drawer-scrollbar">
+                        {suggestions.map(item => (
+                          <div key={item._id} className="prof-item" onClick={() => handleSuggestionClick(item)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid #F4F9F8", transition: "background 0.2s" }}>
+                            <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "#F8FAFB", overflow: "hidden", flexShrink: 0, border: "1px solid #E8EEF2" }}>
+                              <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                              <p style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", margin: "0 0 2px" }}>{item.name}</p>
+                              <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
+                                <p style={{ fontSize: "12px", fontWeight: "500", color: "#5BBFB5" }}>
+                                  ₹{(() => {
+                                    const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
+                                    const disc = hasFlash ? item.flashSale.discountPrice : (searchGlobalDiscount > 0 ? item.basePrice * (1 - searchGlobalDiscount / 100) : item.basePrice);
+                                    return disc.toFixed(0);
+                                  })()}
+                                </p>
+                                {(() => {
+                                  const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
+                                  const isDisc = hasFlash || searchGlobalDiscount > 0;
+                                  return isDisc && <span style={{ fontSize: "10px", color: "#A8C5C0", textDecoration: "line-through" }}>₹{item.basePrice}</span>;
+                                })()}
+                                <span style={{ color: "#A8C5C0", fontSize: "11px" }}>/ kg</span>
                               </div>
-                            ))}
+                            </div>
+                            <FiArrowRight size={14} style={{ color: "#E2EEEC" }} />
                           </div>
-                          <div style={{ padding: "10px", background: "#F4F9F8", textAlign: "center" }}>
-                             <button onClick={() => { saveRecentSearch(searchTerm); navigate(`/products?search=${encodeURIComponent(searchTerm)}`); setSearchFocused(false); }} style={{ background: "none", border: "none", fontSize: "12px", fontWeight: "700", color: "#5BBFB5", cursor: "pointer" }}>View all results</button>
-                          </div>
-                        </>
-                      ) : (
-                        <div style={{ padding: "20px 16px", textAlign: "center", color: "#B8CFCC", fontSize: "13px" }}>
-                          No results for "<span style={{ color: "#6B8F8A", fontWeight: 700 }}>{searchTerm}</span>"
-                        </div>
-                      )}
+                        ))}
+                      </div>
+                      <div style={{ padding: "10px", background: "#F4F9F8", textAlign: "center" }}>
+                         <button onClick={() => { saveRecentSearch(searchTerm); navigate(`/products?search=${encodeURIComponent(searchTerm)}`); setSearchExpanded(false); }} style={{ background: "none", border: "none", fontSize: "12px", fontWeight: "700", color: "#5BBFB5", cursor: "pointer" }}>View all results</button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {/* Right: Actions */}
-              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                {/* Wishlist */}
-                <motion.button 
-                  whileHover={{ scale: 1.05 }} 
-                  whileTap={{ scale: 0.98 }} 
-                  onClick={() => user ? navigate("/wishlist") : setIsLoginOpen(true)} 
-                  style={{ ...iconBtn, position: "relative" }} 
-                  className="nav-ib"
-                >
-                  <FiHeart size={20} style={{ color: "#1A2E2C" }} />
-                  {user?.wishlist?.length > 0 && (
-                    <span style={{ 
-                      position: "absolute", 
-                      top: "-5px", 
-                      right: "-5px", 
-                      background: "#B91C1C", 
-                      color: "#fff", 
-                      width: "16px", 
-                      height: "16px", 
-                      borderRadius: "50%", 
-                      fontSize: "9px", 
-                      fontWeight: "800", 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "center" 
-                    }}>
-                      {user.wishlist.length}
-                    </span>
-                  )}
-                </motion.button>
 
-                {/* Notifications */}
-                {user && (
-                  <div style={{ position: "relative" }} className="notif-container">
-                    <motion.button 
-                      whileHover={{ scale: 1.05 }} 
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setShowNotifications(!showNotifications)}
-                      className="nav-ib"
-                      style={{ ...iconBtn, position: "relative" }}
-                    >
-                      <FiBell size={20} style={{ color: "#1A2E2C" }} />
-                      {unreadCount > 0 && (
-                        <span style={{
-                          position: "absolute",
-                          top: "-5px",
-                          right: "-5px",
-                          background: "#B91C1C",
-                          color: "#fff",
-                          width: "16px",
-                          height: "16px",
-                          borderRadius: "50%",
-                          fontSize: "9px",
-                          fontWeight: "800",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}>
-                          {unreadCount}
-                        </span>
-                      )}
-                    </motion.button>
 
-                    <AnimatePresence>
-                      {showNotifications && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          style={{
-                            position: "absolute", top: "100%", right: 0, marginTop: "12px",
-                            width: "320px", background: "white", borderRadius: "20px",
-                            boxShadow: "0 20px 50px rgba(0,0,0,0.12)", border: "1.5px solid #E2EEEC",
-                            zIndex: 1000, overflow: "hidden"
-                          }}
-                        >
-                          <div style={{ padding: "18px", borderBottom: "1.5px solid #F4F9F8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "800", color: "#1A2E2C" }}>Notifications</h3>
-                            {unreadCount > 0 && (
-                              <button onClick={markAllAsRead} style={{ background: "none", border: "none", color: "#5BBFB5", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Mark all read</button>
-                            )}
-                          </div>
-                          <div style={{ maxHeight: "360px", overflowY: "auto" }} className="drawer-scrollbar">
-                            {notifications.length > 0 ? (
-                              notifications.map(n => (
-                                <div key={n._id} style={{ padding: "16px", borderBottom: "1px solid #F4F9F8", background: n.read ? "transparent" : "#F4FBF9" }}>
-                                  <p style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: "700", color: "#1A2E2C" }}>{n.title}</p>
-                                  <p style={{ margin: 0, fontSize: "12px", color: "#6B8F8A", lineHeight: 1.4 }}>{n.message}</p>
-                                  <p style={{ margin: "8px 0 0", fontSize: "10px", color: "#B8CFCC", fontWeight: "600" }}>{new Date(n.createdAt).toLocaleDateString()}</p>
-                                </div>
-                              ))
-                            ) : (
-                              <div style={{ padding: "60px 20px", textAlign: "center" }}>
-                                <div style={{ fontSize: "24px", marginBottom: "12px" }}>🔔</div>
-                                <p style={{ fontSize: "13px", color: "#B8CFCC", margin: 0, fontWeight: "600" }}>All caught up!</p>
-                              </div>
-                            )}
-                          </div>
-                          <button onClick={() => { navigate("/notifications"); setShowNotifications(false); }} style={{ width: "100%", padding: "16px", background: "#F4F9F8", border: "none", color: "#1A2E2C", fontSize: "13px", fontWeight: "800", cursor: "pointer", borderTop: "1.5px solid #E2EEEC" }}>View All Notifications</button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
-
-                {/* Profile / Avatar */}
-                {user ? (
-                  <div style={{ position: "relative" }} className="profile-container" onMouseEnter={() => setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
-                    <motion.button 
-                      whileHover={{ scale: 1.03 }} 
-                      onClick={() => setShowProfile(!showProfile)}
-                      style={{ 
-                        display: "flex", 
-                        alignItems: "center", 
-                        justifyContent: "center",
-                        width: "36px", 
-                        height: "36px", 
-                        borderRadius: "50%", 
-                        background: "#B91C1C", 
-                        border: "none",
-                        cursor: "pointer",
-                        color: "#FFFFFF",
-                        fontWeight: "800",
-                        fontSize: "14px",
-                        fontFamily: "'Plus Jakarta Sans', sans-serif"
-                      }}
-                    >
-                      {user.name[0].toUpperCase()}
-                    </motion.button>
-                    <AnimatePresence>
-                      {showProfile && (
-                        <motion.div 
-                          className="dropdown-bridge"
-                          initial={{ opacity: 0, y: -8, scale: 0.97 }} 
-                          animate={{ opacity: 1, y: 0, scale: 1 }} 
-                          exit={{ opacity: 0, y: -8, scale: 0.97 }}
-                          style={{ position: "absolute", top: "100%", right: 0, paddingTop: "6px", minWidth: "240px", zIndex: 200 }}
-                        >
-                          <div style={{ background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.1)" }}>
-                            <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #F0F5F4", background: "#F4F9F8" }}>
-                              <p style={{ fontSize: "10px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 3px" }}>Signed in as</p>
-                              <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{user.email}</p>
-                            </div>
-                            <div style={{ padding: "6px" }}>
-                              {user.role === "admin" && (
-                                <div style={{ padding: "8px 12px", background: systemAlert ? "#FEF2F2" : "#F0FDF4", borderRadius: "10px", marginBottom: "6px", border: `1px solid ${systemAlert ? "#FEE2E2" : "#DCFCE7"}` }}>
-                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                      <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: systemAlert ? '#EF4444' : '#22C55E', boxShadow: `0 0 8px ${systemAlert ? '#EF4444' : '#22C55E'}` }}></div>
-                                      <span style={{ fontSize: '11px', fontWeight: '800', color: systemAlert ? '#B91C1C' : '#15803D' }}>
-                                        {systemAlert ? "HIGH PRESSURE" : "SYSTEM HEALTHY"}
-                                      </span>
-                                   </div>
-                                </div>
-                              )}
-                            </div>
-                            <div style={{ padding: "8px" }}>
-                              <Link to="/profile" onClick={() => setShowProfile(false)} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textDecoration: "none" }}><FiUser size={16}/> Profile</Link>
-                              <Link to="/notifications" onClick={() => setShowProfile(false)} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textDecoration: "none", position: "relative" }}>
-                                <FiBell size={16}/> Notifications
-                                {unreadCount > 0 && <span style={{ position: "absolute", right: "12px", background: "#F07468", color: "#fff", padding: "2px 6px", borderRadius: "10px", fontSize: "10px", fontWeight: "800" }}>{unreadCount}</span>}
-                              </Link>
-                              <Link to="/orders" onClick={() => setShowProfile(false)} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textDecoration: "none" }}><FiPackage size={16}/> Orders</Link>
-                              {user.role === "admin" && (
-                                <Link to="/admin/dashboard" onClick={() => setShowProfile(false)} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "800", color: "#5BBFB5", marginTop: "4px", textDecoration: "none" }}><FiGrid size={16}/> Admin Dashboard</Link>
-                              )}
-                            </div>
-                            <div style={{ borderTop: "1px solid #FEE2E2", padding: "8px" }}>
-                              <button onClick={handleLogout} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", color: "#DC2626", fontSize: "14px", fontWeight: "600", textAlign: "left" }}><FiLogOut size={16}/> Logout</button>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                ) : (
+              {user && (
+                <div style={{ position: "relative" }} className="notif-container">
                   <motion.button 
-                    whileHover={{ scale: 1.1 }} 
-                    whileTap={{ scale: 0.96 }} 
-                    onClick={() => setIsLoginOpen(true)} 
-                    style={{ 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "center",
-                      width: "36px", 
-                      height: "36px", 
-                      borderRadius: "50%", 
-                      background: "#FAF6F0", 
-                      border: "1.5px solid #EFEAE2",
-                      cursor: "pointer",
-                      color: "#1A2E2C"
-                    }}
+                    whileHover={{ scale: 1.05 }} 
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="nav-ib"
+                    style={{ ...iconBtn, position: "relative" }}
                   >
-                    <FiUser size={18} />
-                  </motion.button>
-                )}
-
-                {/* Cart Button */}
-                <motion.button 
-                  whileHover={{ scale: 1.03 }} 
-                  whileTap={{ scale: 0.98 }} 
-                  onClick={() => setIsCartOpen(true)} 
-                  style={{
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: "8px", 
-                    background: "none", 
-                    border: "none", 
-                    cursor: "pointer",
-                    padding: "6px 12px",
-                    borderRadius: "20px",
-                    position: "relative"
-                  }}
-                >
-                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A2E2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                      <line x1="3" y1="6" x2="21" y2="6"></line>
-                      <path d="M16 10a4 4 0 0 1-8 0"></path>
-                    </svg>
-                    {cartCount > 0 && (
-                      <span style={{ 
-                        position: "absolute", 
-                        top: "-5px", 
-                        right: "-5px", 
-                        background: "#B91C1C", 
-                        color: "#fff", 
-                        width: "16px", 
-                        height: "16px", 
-                        borderRadius: "50%", 
-                        fontSize: "9px", 
-                        fontWeight: "800", 
-                        display: "flex", 
-                        alignItems: "center", 
-                        justifyContent: "center" 
+                    <FiBell size={15} />
+                    {unreadCount > 0 && (
+                      <span style={{
+                        position: "absolute",
+                        top: "-5px",
+                        right: "-5px",
+                        background: "#F07468",
+                        color: "#fff",
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "50%",
+                        fontSize: "9px",
+                        fontWeight: "800",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}>
-                        {cartCount}
+                        {unreadCount}
                       </span>
                     )}
-                  </div>
-                  <span style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cart</span>
-                </motion.button>
-              </div>
-            </div>
-          </div>
+                  </motion.button>
 
-          {/* Bottom Tier (White) */}
-          <div style={{
-            background: "#FFFFFF",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
-            width: "100%"
-          }}>
-            <div style={{
-              maxWidth: "1440px",
-              margin: "0 auto",
-              padding: "0 40px",
-              height: "48px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-                <Link to="/products" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14px", fontWeight: "700", color: "#A3835B", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  Daily Deals
-                </Link>
-                <Link to="/products?category=Fish" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14px", fontWeight: "700", color: "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  Fish
-                </Link>
-                <Link to="/products?category=Prawn" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14px", fontWeight: "700", color: "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  Prawns
-                </Link>
-                <Link to="/products?category=Crab" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14px", fontWeight: "700", color: "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  Crabs
-                </Link>
-                
-                <span style={{ color: "#E2EEEC", margin: "0 8px", fontSize: "16px" }}>|</span>
-                
-                <Link to="/about" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  ABOUT US
-                </Link>
-                <Link to="/contact" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  OUR STORES
-                </Link>
-                <Link to="/faq" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  HELP & FAQS
-                </Link>
-                <Link to="/contact" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  CONTACT
-                </Link>
-              </div>
+                  <AnimatePresence>
+                    {showNotifications && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        style={{
+                          position: "absolute", top: "100%", right: 0, marginTop: "12px",
+                          width: "320px", background: "white", borderRadius: "20px",
+                          boxShadow: "0 20px 50px rgba(0,0,0,0.12)", border: "1.5px solid #E2EEEC",
+                          zIndex: 1000, overflow: "hidden"
+                        }}
+                      >
+                        <div style={{ padding: "18px", borderBottom: "1.5px solid #F4F9F8", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <h3 style={{ margin: 0, fontSize: "14px", fontWeight: "800", color: "#1A2E2C" }}>Notifications</h3>
+                          {unreadCount > 0 && (
+                            <button onClick={markAllAsRead} style={{ background: "none", border: "none", color: "#5BBFB5", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Mark all read</button>
+                          )}
+                        </div>
+                        <div style={{ maxHeight: "360px", overflowY: "auto" }} className="no-scrollbar">
+                          {notifications.length > 0 ? (
+                            notifications.map(n => (
+                              <div key={n._id} style={{ padding: "16px", borderBottom: "1px solid #F4F9F8", background: n.read ? "transparent" : "#F4FBF9" }}>
+                                <p style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: "700", color: "#1A2E2C" }}>{n.title}</p>
+                                <p style={{ margin: 0, fontSize: "12px", color: "#6B8F8A", lineHeight: 1.4 }}>{n.message}</p>
+                                <p style={{ margin: "8px 0 0", fontSize: "10px", color: "#B8CFCC", fontWeight: "600" }}>{new Date(n.createdAt).toLocaleDateString()}</p>
+                              </div>
+                            ))
+                          ) : (
+                            <div style={{ padding: "60px 20px", textAlign: "center" }}>
+                              <div style={{ fontSize: "24px", marginBottom: "12px" }}>🔔</div>
+                              <p style={{ fontSize: "13px", color: "#B8CFCC", margin: 0, fontWeight: "600" }}>All caught up!</p>
+                            </div>
+                          )}
+                        </div>
+                        <button onClick={() => { navigate("/notifications"); setShowNotifications(false); }} style={{ width: "100%", padding: "16px", background: "#F4F9F8", border: "none", color: "#1A2E2C", fontSize: "13px", fontWeight: "800", cursor: "pointer", borderTop: "1.5px solid #E2EEEC" }}>View All Notifications</button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
+
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} onClick={() => user ? navigate("/wishlist") : setIsLoginOpen(true)} style={{ ...iconBtn, position: "relative" }} className="nav-ib">
+                <FiHeart size={15} />
+                {user?.wishlist?.length > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#F07468", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{user.wishlist.length}</span>}
+              </motion.button>
+
+              <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} onClick={() => setIsCartOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative" }}>
+                <FiShoppingCart size={15} />
+                {cartCount > 0 && <span style={{ position: "absolute", top: "-5px", right: "-5px", background: "#5BBFB5", color: "#fff", width: "16px", height: "16px", borderRadius: "50%", fontSize: "9px", fontWeight: "800", display: "flex", alignItems: "center", justifyContent: "center" }}>{cartCount}</span>}
+              </motion.button>
+
+              {user ? (
+                <div style={{ position: "relative", marginLeft: "4px" }} onMouseEnter={() => setShowProfile(true)} onMouseLeave={() => setShowProfile(false)}>
+                  <motion.button 
+                    whileHover={{ scale: 1.03 }} 
+                    onClick={() => setShowProfile(!showProfile)}
+                    style={{ display: "flex", alignItems: "center", gap: "8px", padding: "5px 11px 5px 5px", border: `1.5px solid ${T.pillBorder}`, borderRadius: "20px", background: T.pillBg, backdropFilter: T.pillBlur, cursor: "pointer" }}
+                  >
+                    <div style={{ width: "27px", height: "27px", borderRadius: "50%", background: "linear-gradient(135deg,#5BBFB5,#7EB8D4)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "800", fontSize: "11px" }}>{user.name[0].toUpperCase()}</div>
+                    <span style={{ fontSize: "13px", fontWeight: "700", color: T.pillName }}>{user.name.split(" ")[0]}</span>
+                    <FiChevronDown size={11} style={{ color: T.pillChevron, transform: showProfile ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                  </motion.button>
+                  <AnimatePresence>
+                    {showProfile && (
+                      <motion.div 
+                        className="dropdown-bridge"
+                        initial={{ opacity: 0, y: -8, scale: 0.97 }} 
+                        animate={{ opacity: 1, y: 0, scale: 1 }} 
+                        exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                        style={{ position: "absolute", top: "100%", right: 0, paddingTop: "6px", minWidth: "240px", zIndex: 200 }}
+                      >
+                        <div style={{ background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.1)" }}>
+                        <div style={{ padding: "14px 16px 12px", borderBottom: "1px solid #F0F5F4", background: "#F4F9F8" }}>
+                          <p style={{ fontSize: "10px", fontWeight: "800", color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 3px" }}>Signed in as</p>
+                          <p style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", margin: 0 }}>{user.email}</p>
+                        </div>
+                        <div style={{ padding: "6px" }}>
+                          {user.role === "admin" && (
+                            <div style={{ padding: "8px 12px", background: systemAlert ? "#FEF2F2" : "#F0FDF4", borderRadius: "10px", marginBottom: "6px", border: `1px solid ${systemAlert ? "#FEE2E2" : "#DCFCE7"}` }}>
+                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: systemAlert ? '#EF4444' : '#22C55E', boxShadow: `0 0 8px ${systemAlert ? '#EF4444' : '#22C55E'}` }}></div>
+                                  <span style={{ fontSize: '11px', fontWeight: '800', color: systemAlert ? '#B91C1C' : '#15803D' }}>
+                                    {systemAlert ? "HIGH PRESSURE" : "SYSTEM HEALTHY"}
+                                  </span>
+                               </div>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ padding: "8px" }}>
+                          <Link to="/profile" onClick={() => setShowProfile(false)} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textDecoration: "none" }}><FiUser size={16}/> Profile</Link>
+                          <Link to="/notifications" onClick={() => setShowProfile(false)} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textDecoration: "none", position: "relative" }}>
+                            <FiBell size={16}/> Notifications
+                            {unreadCount > 0 && <span style={{ position: "absolute", right: "12px", background: "#F07468", color: "#fff", padding: "2px 6px", borderRadius: "10px", fontSize: "10px", fontWeight: "800" }}>{unreadCount}</span>}
+                          </Link>
+                          <Link to="/orders" onClick={() => setShowProfile(false)} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#1A2E2C", textDecoration: "none" }}><FiPackage size={16}/> Orders</Link>
+                          {user.role === "admin" && (
+                            <Link to="/admin/dashboard" onClick={() => setShowProfile(false)} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", fontSize: "14px", fontWeight: "800", color: "#5BBFB5", marginTop: "4px", textDecoration: "none" }}><FiGrid size={16}/> Admin Dashboard</Link>
+                          )}
+                        </div>
+                        <div style={{ borderTop: "1px solid #FEE2E2", padding: "8px" }}>
+                          <button onClick={handleLogout} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", color: "#DC2626", fontSize: "14px", fontWeight: "600", textAlign: "left" }}><FiLogOut size={16}/> Logout</button>
+                        </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.96 }} onClick={() => setIsLoginOpen(true)} className="nav-ib" style={{ ...iconBtn, position: "relative", marginLeft: "14px", background: "none", border: "none", padding: 0 }}>
+                  <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center", padding: "4px" }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={T.iconColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                       <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                       <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#F97316" stroke="#F97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", right: "0px", top: "0px" }}>
+                       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                    </svg>
+                  </div>
+                </motion.button>
+              )}
             </div>
           </div>
         </div>
@@ -953,9 +746,8 @@ export default function Navbar({ announcementActive = false }) {
           className="show-mobile" 
           style={{ 
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px", 
-            background: "#FAF6F0", 
-            borderBottom: "1px solid #EFEAE2",
-            padding: "0", 
+            background: isTransparent ? "transparent" : "#fff", 
+            padding: "0", // ABSOLUTE EXTREME
             transition: "all 0.3s ease",
             position: "relative"
           }}
@@ -967,24 +759,26 @@ export default function Navbar({ announcementActive = false }) {
             style={{ background: "none", border: "none", cursor: "pointer", padding: "0 12px", height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start" }}
           >
             <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-              <div style={{ width: "20px", height: "1.5px", background: "#1A2E2C", borderRadius: "1px" }} />
-              <div style={{ width: "12px", height: "1.5px", background: "#1A2E2C", borderRadius: "1px" }} />
-              <div style={{ width: "20px", height: "1.5px", background: "#1A2E2C", borderRadius: "1px" }} />
+              <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+              <div style={{ width: "12px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
+              <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#fff" : "#000", borderRadius: "1px" }} />
             </div>
           </motion.button>
 
-          {/* Center: Big Text Logo */}
+          {/* Center: Big Logo */}
           <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", pointerEvents: "none" }}>
             <Link to="/" style={{ textDecoration: "none", pointerEvents: "auto" }}>
-              <span style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: "22px",
-                fontWeight: "900",
-                color: "#A3835B",
-                letterSpacing: "-0.5px"
-              }}>
-                SeaBite.
-              </span>
+              <img 
+                src="/logo.webp" 
+                alt="SeaBite" 
+                width={78}
+                height={54}
+                style={{ 
+                  height: "54px", width: "78px", 
+                  transition: "all 0.3s ease",
+                  objectFit: "contain"
+                }} 
+              />
             </Link>
           </div>
 
@@ -993,20 +787,20 @@ export default function Navbar({ announcementActive = false }) {
             <motion.button 
               whileTap={{ scale: 0.88 }} 
               onClick={() => setSearchExpanded(true)} 
-              style={{ background: "none", border: "none", padding: "0 10px", color: "#1A2E2C", height: "100%" }}
+              style={{ background: "none", border: "none", padding: "0 10px", color: isTransparent ? "#fff" : "#000", height: "100%" }}
             >
               <FiSearch size={20} />
             </motion.button>
             <motion.button 
               whileTap={{ scale: 0.88 }} 
               onClick={() => setIsCartOpen(true)} 
-              style={{ background: "none", border: "none", padding: "0 12px", color: "#1A2E2C", height: "100%", position: "relative", display: "flex", alignItems: "center", justifyContent: "flex-end" }}
+              style={{ background: "none", border: "none", padding: "0 12px", color: isTransparent ? "#fff" : "#000", height: "100%", position: "relative", display: "flex", alignItems: "center", justifyContent: "flex-end" }}
             >
               <FiShoppingCart size={20} />
               {cartCount > 0 && (
                 <span style={{ 
                   position: "absolute", top: "18px", right: "2px", 
-                  background: "#B91C1C", color: "#fff", 
+                  background: "#F07468", color: "#fff", 
                   width: "14px", height: "14px", borderRadius: "50%", fontSize: "8px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" 
                 }}>
                   {cartCount}
@@ -1016,131 +810,132 @@ export default function Navbar({ announcementActive = false }) {
           </div>
         </div>
 
-        {/* Mobile Search Overlay */}
-        <AnimatePresence>
-          {searchExpanded && (
-            <motion.div
-              className="search-container mobile-search-overlay"
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.2 }}
-              style={{
-                position: "fixed",
-                top: announcementActive && !scrolled ? "94px" : "64px",
-                left: 0, right: 0,
-                background: "rgba(255,255,255,0.98)",
-                backdropFilter: "blur(20px)",
-                WebkitBackdropFilter: "blur(20px)",
-                zIndex: 1300,
-                boxShadow: "0 12px 40px rgba(26,46,44,0.13)",
-                borderBottom: "1px solid rgba(91,191,181,0.12)",
-                padding: "14px 16px 8px",
-              }}
-            >
-              {/* Pill input row */}
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-                <div style={{
-                  flex: 1, display: "flex", alignItems: "center", gap: "10px",
-                  background: "#fff",
-                  border: "2px solid #5BBFB5",
-                  borderRadius: "50px",
-                  padding: "10px 16px",
-                  boxShadow: "0 0 0 4px rgba(91,191,181,0.1)",
-                }}>
-                  <FiSearch size={17} color="#5BBFB5" />
-                  <input
-                    autoFocus
-                    placeholder="Search fresh catch..."
-                    value={searchTerm}
-                    onChange={e => handleSearchInput(e.target.value)}
-                    onKeyDown={handleSearchSubmit}
-                    style={{
-                      border: "none", background: "none", flex: 1,
-                      fontSize: "15px", outline: "none", color: "#1A2E2C",
-                      fontFamily: "'Manrope', sans-serif", fontWeight: 500,
-                    }}
-                  />
-                  {searchTerm && (
-                    <FiX size={16} color="#B8CFCC" style={{ cursor: "pointer", flexShrink: 0 }}
-                      onClick={() => { setSearchTerm(""); setSuggestions([]); }} />
-                  )}
-                </div>
-                <button
-                  onClick={() => { setSearchExpanded(false); setSuggestions([]); setSearchTerm(""); }}
-                  style={{
-                    background: "none", border: "none", color: "#6B8F8A",
-                    fontWeight: "700", fontSize: "13px",
-                    fontFamily: "'Manrope', sans-serif", cursor: "pointer",
-                    flexShrink: 0, padding: "8px 4px",
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-
-              {/* Live results */}
-              {suggestions.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  style={{ borderTop: "1px solid #EEF5F4", maxHeight: "50vh", overflowY: "auto", marginTop: "8px" }}
-                >
-                  {suggestions.map((item, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        navigate(`/products/${item._id}`);
-                        setSearchExpanded(false);
-                        setSuggestions([]);
-                        setSearchTerm("");
-                      }}
+          {/* Mobile Search Overlay */}
+          <AnimatePresence>
+            {searchExpanded && (
+              <motion.div
+                className="search-container mobile-search-overlay"
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+                style={{
+                  position: "fixed",
+                  top: announcementActive && !scrolled ? "94px" : "64px",
+                  left: 0, right: 0,
+                  background: "rgba(255,255,255,0.98)",
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                  zIndex: 1300,
+                  boxShadow: "0 12px 40px rgba(26,46,44,0.13)",
+                  borderBottom: "1px solid rgba(91,191,181,0.12)",
+                  padding: "14px 16px 8px",
+                }}
+              >
+                {/* Pill input row */}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+                  <div style={{
+                    flex: 1, display: "flex", alignItems: "center", gap: "10px",
+                    background: "#fff",
+                    border: "2px solid #5BBFB5",
+                    borderRadius: "50px",
+                    padding: "10px 16px",
+                    boxShadow: "0 0 0 4px rgba(91,191,181,0.1)",
+                  }}>
+                    <FiSearch size={17} color="#5BBFB5" />
+                    <input
+                      autoFocus
+                      placeholder="Search fresh catch..."
+                      value={searchTerm}
+                      onChange={e => handleSearchInput(e.target.value)}
+                      onKeyDown={handleSearchSubmit}
                       style={{
-                        display: "flex", alignItems: "center", gap: "12px",
-                        padding: "11px 4px", cursor: "pointer",
-                        borderBottom: idx < suggestions.length - 1 ? "1px solid #f5f5f5" : "none",
+                        border: "none", background: "none", flex: 1,
+                        fontSize: "15px", outline: "none", color: "#1A2E2C",
+                        fontFamily: "'Manrope', sans-serif", fontWeight: 500,
                       }}
-                    >
-                      {item.image ? (
-                        <img src={item.image} alt={item.name}
-                          style={{ width: "46px", height: "46px", borderRadius: "10px", objectFit: "cover", flexShrink: 0, border: "1px solid #EEF5F4" }} />
-                      ) : (
-                        <div style={{ width: "46px", height: "46px", borderRadius: "10px", background: "#EEF5F4", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>🐟</div>
-                      )}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#1A2E2C", fontFamily: "'Manrope', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                          {item.name}
-                        </p>
-                        <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginTop: "2px" }}>
-                          <p style={{ margin: 0, fontSize: "13px", color: "#5BBFB5", fontWeight: "800", fontFamily: "'Manrope', sans-serif" }}>
-                            ₹{(() => {
-                              const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
-                              const disc = hasFlash ? item.flashSale.discountPrice : (searchGlobalDiscount > 0 ? item.basePrice * (1 - searchGlobalDiscount / 100) : item.basePrice);
-                              return disc.toFixed(0);
-                            })()}
-                          </p>
-                          {(() => {
-                            const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
-                            const isDisc = hasFlash || searchGlobalDiscount > 0;
-                            return isDisc && <span style={{ fontSize: "11px", color: "#A8C5C0", textDecoration: "line-through" }}>₹{item.basePrice}</span>;
-                          })()}
-                        </div>
-                      </div>
-                      <FiChevronRight size={14} color="#D8ECEA" />
-                    </div>
-                  ))}
-                </motion.div>
-              )}
-
-              {/* No results */}
-              {searchTerm.length > 1 && suggestions.length === 0 && (
-                <div style={{ padding: "20px 4px 12px", textAlign: "center", color: "#B8CFCC", fontSize: "13px", fontFamily: "'Manrope', sans-serif" }}>
-                  No results for "<span style={{ color: "#6B8F8A", fontWeight: 700 }}>{searchTerm}</span>"
+                    />
+                    {searchTerm && (
+                      <FiX size={16} color="#B8CFCC" style={{ cursor: "pointer", flexShrink: 0 }}
+                        onClick={() => { setSearchTerm(""); setSuggestions([]); }} />
+                    )}
+                  </div>
+                  <button
+                    onClick={() => { setSearchExpanded(false); setSuggestions([]); setSearchTerm(""); }}
+                    style={{
+                      background: "none", border: "none", color: "#6B8F8A",
+                      fontWeight: "700", fontSize: "13px",
+                      fontFamily: "'Manrope', sans-serif", cursor: "pointer",
+                      flexShrink: 0, padding: "8px 4px",
+                    }}
+                  >
+                    Cancel
+                  </button>
                 </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+
+                {/* Live results */}
+                {suggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    style={{ borderTop: "1px solid #EEF5F4", maxHeight: "50vh", overflowY: "auto", marginTop: "8px" }}
+                  >
+                    {suggestions.map((item, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          navigate(`/products/${item._id}`);
+                          setSearchExpanded(false);
+                          setSuggestions([]);
+                          setSearchTerm("");
+                        }}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "12px",
+                          padding: "11px 4px", cursor: "pointer",
+                          borderBottom: idx < suggestions.length - 1 ? "1px solid #f5f5f5" : "none",
+                        }}
+                      >
+                        {item.image ? (
+                          <img src={item.image} alt={item.name}
+                            style={{ width: "46px", height: "46px", borderRadius: "10px", objectFit: "cover", flexShrink: 0, border: "1px solid #EEF5F4" }} />
+                        ) : (
+                          <div style={{ width: "46px", height: "46px", borderRadius: "10px", background: "#EEF5F4", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>🐟</div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#1A2E2C", fontFamily: "'Manrope', sans-serif", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {item.name}
+                          </p>
+                          <div style={{ display: "flex", alignItems: "baseline", gap: "6px", marginTop: "2px" }}>
+                            <p style={{ margin: 0, fontSize: "13px", color: "#5BBFB5", fontWeight: "800", fontFamily: "'Manrope', sans-serif" }}>
+                              ₹{(() => {
+                                const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
+                                const disc = hasFlash ? item.flashSale.discountPrice : (searchGlobalDiscount > 0 ? item.basePrice * (1 - searchGlobalDiscount / 100) : item.basePrice);
+                                return disc.toFixed(0);
+                              })()}
+                            </p>
+                            {(() => {
+                              const hasFlash = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
+                              const isDisc = hasFlash || searchGlobalDiscount > 0;
+                              return isDisc && <span style={{ fontSize: "11px", color: "#A8C5C0", textDecoration: "line-through" }}>₹{item.basePrice}</span>;
+                            })()}
+                          </div>
+                        </div>
+                        <FiChevronRight size={14} color="#D8ECEA" />
+                      </div>
+                    ))}
+                  </motion.div>
+                )}
+
+                {/* No results */}
+                {searchTerm.length > 1 && suggestions.length === 0 && (
+                  <div style={{ padding: "20px 4px 12px", textAlign: "center", color: "#B8CFCC", fontSize: "13px", fontFamily: "'Manrope', sans-serif" }}>
+                    No results for "<span style={{ color: "#6B8F8A", fontWeight: 700 }}>{searchTerm}</span>"
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
       </motion.nav>
 
       {/* MOBILE HEADER SPACER REMOVED (App.jsx handles page padding-top) */}
@@ -1176,15 +971,7 @@ export default function Navbar({ announcementActive = false }) {
             >
               {/* Header */}
               <div style={{ padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f0f0f0", flexShrink: 0 }}>
-                <span style={{
-                  fontFamily: "'Playfair Display', serif",
-                  fontSize: "22px",
-                  fontWeight: "900",
-                  color: "#A3835B",
-                  letterSpacing: "-0.5px"
-                }}>
-                  SeaBite.
-                </span>
+                <img src="/logo.webp" width={64} height={44} style={{ height: "44px", width: "64px", objectFit: "contain" }} alt="SeaBite" />
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setMobileOpen(false)}
