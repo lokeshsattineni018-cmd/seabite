@@ -12,6 +12,9 @@ export const refundToWallet = async (req, res) => {
     
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (order.status === "Cancelled") return res.status(400).json({ message: "Already cancelled" });
+    if (order.refundStatus === "Refunded to Wallet" || order.refundStatus === "Success" || order.refundStatus === "Processing") {
+      return res.status(400).json({ message: "Refund already processed for this order." });
+    }
 
     // 1. Update Order Status
     order.status = "Cancelled";

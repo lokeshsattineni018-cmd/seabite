@@ -17,6 +17,6 @@ router.post("/refund-wallet", protect, admin, refundToWallet);
 router.post("/verify", protect, paymentVerification);
 
 // Secure Refund Route
-router.put("/refund", protect, refundPayment);
+router.put("/refund", protect, admin, refundPayment);
 
 export default router;
