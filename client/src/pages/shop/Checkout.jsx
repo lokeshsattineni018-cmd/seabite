@@ -214,8 +214,6 @@ export default function Checkout() {
   const [loyaltyBalance, setLoyaltyBalance] = useState(0);
   const [useLoyalty, setUseLoyalty] = useState(false);
   const [useWallet, setUseWallet] = useState(false);
-  const [isTopUpLoading, setIsTopUpLoading] = useState(false);
-  const [topUpAmountInput, setTopUpAmountInput] = useState("");
 
   // 🔍 X-Ray: Frustration Tracking
   const [couponFailCount, setCouponFailCount] = useState(0);
@@ -1075,26 +1073,26 @@ export default function Checkout() {
                 )}
 
                 {/* 💰 SeaBite Wallet Widget */}
-                <div style={{
-                  marginTop: 16,
-                  padding: "12px 14px",
-                  borderRadius: 16,
-                  background: "linear-gradient(135deg, rgba(137,194,217,0.06) 0%, rgba(91,168,160,0.06) 100%)",
-                  border: "1px solid rgba(91,168,160,0.18)",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 10
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: T.textDark, display: "flex", alignItems: "center", gap: 6 }}>
-                      <FiCreditCard size={14} style={{ color: T.primary }} /> SeaBite Wallet
-                    </span>
-                    <span style={{ fontSize: 11, fontWeight: 800, color: T.primary }}>
-                      ₹{walletBalance.toFixed(2)}
-                    </span>
-                  </div>
+                {walletBalance > 0 && (
+                  <div style={{
+                    marginTop: 16,
+                    padding: "12px 14px",
+                    borderRadius: 16,
+                    background: "linear-gradient(135deg, rgba(137,194,217,0.06) 0%, rgba(91,168,160,0.06) 100%)",
+                    border: "1px solid rgba(91,168,160,0.18)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: T.textDark, display: "flex", alignItems: "center", gap: 6 }}>
+                        <FiCreditCard size={14} style={{ color: T.primary }} /> SeaBite Wallet
+                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: T.primary }}>
+                        ₹{walletBalance.toFixed(2)}
+                      </span>
+                    </div>
 
-                  {walletBalance > 0 ? (
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <label style={{
                         display: "flex",
@@ -1120,91 +1118,8 @@ export default function Checkout() {
                         <span>Use wallet cash to save ₹{walletAppliedAmount.toFixed(2)}</span>
                       </label>
                     </div>
-                  ) : (
-                    <p style={{ fontSize: 10, color: T.textLite, margin: 0 }}>Your wallet balance is ₹0.00</p>
-                  )}
-
-                  {/* Quick Top-up Expandable section */}
-                  <div style={{ borderTop: `1px dashed ${T.border}`, paddingTop: 10, marginTop: 4 }}>
-                    <p style={{ fontSize: 10, fontWeight: 700, color: T.textMid, margin: "0 0 6px 0" }}>Quick Top-up</p>
-                    <div style={{ display: "flex", gap: 6 }}>
-                      <input
-                        type="number"
-                        placeholder="₹ Amount"
-                        value={topUpAmountInput}
-                        onChange={(e) => setTopUpAmountInput(e.target.value)}
-                        style={{
-                          flex: 1,
-                          padding: "6px 10px",
-                          borderRadius: 8,
-                          border: `1px solid ${T.border}`,
-                          fontSize: 11,
-                          fontWeight: 600,
-                          fontFamily: font,
-                          outline: "none",
-                          background: "#fff"
-                        }}
-                      />
-                      <button
-                        onClick={async () => {
-                          const amt = parseFloat(topUpAmountInput);
-                          if (isNaN(amt) || amt <= 0) {
-                            toast.error("Please enter a valid deposit amount.");
-                            return;
-                          }
-                          setIsTopUpLoading(true);
-                          try {
-                            const res = await axios.post(`${API_URL}/api/user/wallet/deposit`, { amount: amt }, { withCredentials: true });
-                            if (res.data.success) {
-                              toast.success(`Successfully added ₹${amt} to your wallet!`);
-                              setTopUpAmountInput("");
-                              if (refreshMe) await refreshMe();
-                            }
-                          } catch (err) {
-                            toast.error(err.response?.data?.message || "Failed to deposit.");
-                          } finally {
-                            setIsTopUpLoading(false);
-                          }
-                        }}
-                        disabled={isTopUpLoading}
-                        style={{
-                          padding: "6px 12px",
-                          borderRadius: 8,
-                          background: T.primary,
-                          color: "#fff",
-                          border: "none",
-                          fontSize: 10,
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          opacity: isTopUpLoading ? 0.7 : 1
-                        }}
-                      >
-                        {isTopUpLoading ? "Adding..." : "Add Cash"}
-                      </button>
-                    </div>
-                    {/* Quick presets */}
-                    <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-                      {[500, 1000, 2000].map(val => (
-                        <button
-                          key={val}
-                          onClick={() => setTopUpAmountInput(val.toString())}
-                          style={{
-                            padding: "4px 8px",
-                            borderRadius: 6,
-                            border: `1.5px solid ${T.border}`,
-                            background: "transparent",
-                            fontSize: 9,
-                            fontWeight: 700,
-                            color: T.textMid,
-                            cursor: "pointer"
-                          }}
-                        >
-                          +₹{val}
-                        </button>
-                      ))}
-                    </div>
                   </div>
-                </div>
+                )}
 
                 <div style={{ height: 1, background: T.border, margin: "16px 0" }} />
 
