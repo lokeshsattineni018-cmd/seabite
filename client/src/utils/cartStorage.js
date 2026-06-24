@@ -25,28 +25,33 @@ export const getCart = () => {
 
 export const addToCart = (product) => {
   const cart = getCart();
-  const existing = cart.find((item) => item._id === product._id);
+  const targetCut = product.selectedCut || "";
+  const targetWeight = product.orderedWeightGrams || 0;
+  const existing = cart.find(
+    (item) => item._id === product._id && (item.selectedCut || "") === targetCut && (item.orderedWeightGrams || 0) === targetWeight
+  );
 
-  // 🔴 FIX: Derive stable unitPrice to prevent "Price Doubling"
-  const derivedUnitPrice = product.qty > 0 ? (product.price / product.qty) : product.price;
+  const qtyToAdd = Number(product.qty || product.quantity || 1);
+  const unitPrice = !isNaN(parseFloat(product.price)) ? parseFloat(product.price) : (parseFloat(product.basePrice) || 0);
 
   if (existing) {
-    // Increment quantity only
-    existing.qty += (product.qty || 1);
-    existing.unitPrice = existing.unitPrice || derivedUnitPrice;
-    existing.price = existing.unitPrice;
+    existing.qty += qtyToAdd;
+    existing.unitPrice = unitPrice;
+    existing.price = unitPrice;
   } else {
-    // ✅ OPTIMIZATION: Create a clean object to save memory
     const newItem = {
       _id: product._id,
       name: product.name,
       image: product.image,
-      unitPrice: derivedUnitPrice,
-      basePrice: product.basePrice || derivedUnitPrice, // 🟢 Save Base Price
-      price: derivedUnitPrice, // Keep as unit price for calculation safety
-      qty: product.qty || 1,
+      unitPrice: unitPrice,
+      basePrice: parseFloat(product.basePrice) || unitPrice,
+      price: unitPrice,
+      qty: qtyToAdd,
       unit: product.unit || 'kg',
-      flashSale: product.flashSale, // 🟢 Save Flash Sale Data if present
+      flashSale: product.flashSale,
+      selectedCut: targetCut,
+      cutPriceAdjustmentPct: Number(product.cutPriceAdjustmentPct || 0),
+      orderedWeightGrams: targetWeight,
     };
     cart.push(newItem);
   }
@@ -54,28 +59,29 @@ export const addToCart = (product) => {
   saveCart(cart);
 };
 
-export const removeFromCart = (id) => {
+export const removeFromCart = (id, selectedCut = "", orderedWeightGrams = 0) => {
   const cart = getCart();
-  const updatedCart = cart.filter((item) => item._id !== id);
+  const updatedCart = cart.filter(
+    (item) => !(item._id === id && (item.selectedCut || "") === selectedCut && (item.orderedWeightGrams || 0) === orderedWeightGrams)
+  );
   saveCart(updatedCart);
 };
 
-export const updateQty = (id, newQty) => {
+export const updateQty = (id, newQty, selectedCut = "", orderedWeightGrams = 0) => {
   const cart = getCart();
-  const item = cart.find((item) => item._id === id);
+  const item = cart.find(
+    (item) => item._id === id && (item.selectedCut || "") === selectedCut && (item.orderedWeightGrams || 0) === orderedWeightGrams
+  );
 
   if (item) {
     if (newQty > 0) {
       item.qty = newQty;
       const stablePrice = item.unitPrice || item.price;
-
-      // 🔴 PREVENT CORRUPTION: Keep price as the UNIT price
       item.price = stablePrice;
       item.unitPrice = stablePrice;
-
       saveCart(cart);
     } else {
-      removeFromCart(id);
+      removeFromCart(id, selectedCut, orderedWeightGrams);
     }
   }
 };

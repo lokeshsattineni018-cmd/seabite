@@ -563,13 +563,13 @@ export default function ProductDetails() {
   const isGlobalDiscount = !isActiveFlashSale && globalDiscount > 0;
   if (isGlobalDiscount) unitPrice = Math.round(basePrice * (1 - globalDiscount / 100));
 
-  // 🔪 Apply Cut Price Adjustment
-  const cutAdjusted = selectedCut ? Math.round(unitPrice * (1 + (selectedCut.priceAdjustmentPct || 0) / 100)) : unitPrice;
   // ⚖️ Weight pricing
   const effectiveWeightGrams = selectedWeightGrams || (product?.minOrderWeight || 0);
-  const priceForWeight = product?.pricePerKg > 0 && effectiveWeightGrams > 0
+  const weightPrice = product?.pricePerKg > 0 && effectiveWeightGrams > 0
     ? Math.round((product.pricePerKg / 1000) * effectiveWeightGrams)
-    : cutAdjusted;
+    : unitPrice;
+  // 🔪 Apply Cut Price Adjustment (applies to either weight price or standard unitPrice)
+  const priceForWeight = selectedCut ? Math.round(weightPrice * (1 + (selectedCut.priceAdjustmentPct || 0) / 100)) : weightPrice;
   const totalPrice = (priceForWeight * qty).toFixed(2);
 
   const discountPct = isActiveFlashSale
@@ -770,7 +770,14 @@ export default function ProductDetails() {
 
   const handleBuyNow = () => {
     if (!product || product.stock === "out") return;
-    addToCart({ ...product, qty, price: parseFloat(priceForWeight), selectedCut: selectedCut?.name || "", orderedWeightGrams: effectiveWeightGrams });
+    addToCart({ 
+      ...product, 
+      quantity: qty, 
+      price: parseFloat(priceForWeight), 
+      selectedCut: selectedCut?.name || "", 
+      cutPriceAdjustmentPct: selectedCut?.priceAdjustmentPct || 0,
+      orderedWeightGrams: effectiveWeightGrams 
+    });
     refreshCartCount();
     navigate("/checkout");
   };

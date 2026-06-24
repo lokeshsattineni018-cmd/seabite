@@ -437,7 +437,16 @@ export default function Checkout() {
     setLoading(true);
     const orderDetails = {
       amount: grandTotal,
-      items: (cartItems || []).map(item => ({ productId: item._id, name: item.name, price: item.price || 0, qty: item.qty || 1, image: item.image })),
+      items: (cartItems || []).map(item => ({
+        productId: item._id,
+        name: item.name,
+        price: item.price || 0,
+        qty: item.qty || 1,
+        image: item.image,
+        selectedCut: item.selectedCut || "",
+        cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
+        orderedWeightGrams: item.orderedWeightGrams || 0,
+      })),
       shippingAddress: { fullName: deliveryAddress.name, phone: deliveryAddress.phone, houseNo: deliveryAddress.houseNo, street: deliveryAddress.street, city: deliveryAddress.city, state: deliveryAddress.state, zip: deliveryAddress.postalCode },
       itemsPrice: itemTotal, taxPrice: gst, shippingPrice: deliveryCharge, discount: discountAmount, paymentMethod,
       deliverySlot,
@@ -778,7 +787,7 @@ export default function Checkout() {
                   <AnimatePresence mode="popLayout">
                     {(cartItems || []).map((item, index) => (
                       <motion.div
-                        key={item._id} layout
+                        key={`${item._id}-${item.selectedCut || ""}-${item.orderedWeightGrams || 0}`} layout
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0, transition: { delay: index * 0.03, ease } }}
                         exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
@@ -789,6 +798,13 @@ export default function Checkout() {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <h4 style={{ fontWeight: 700, fontSize: 13, color: T.textDark, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</h4>
+                          {(item.selectedCut || item.orderedWeightGrams > 0) && (
+                            <div style={{ fontSize: "10px", color: T.primary, fontWeight: "600", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              {item.selectedCut && `Cut: ${item.selectedCut}`}
+                              {item.selectedCut && item.orderedWeightGrams > 0 && " | "}
+                              {item.orderedWeightGrams > 0 && `Weight: ${item.orderedWeightGrams >= 1000 ? `${item.orderedWeightGrams/1000}kg` : `${item.orderedWeightGrams}g`}`}
+                            </div>
+                          )}
                           <p style={{ fontSize: 10, color: T.textLite, margin: "3px 0 0" }}>₹{(item.price || 0).toFixed(2)} / unit</p>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
@@ -796,7 +812,7 @@ export default function Checkout() {
                             <motion.button 
                               whileHover={{ background: "rgba(232,129,106,0.05)", color: T.coral }}
                               whileTap={{ scale: 0.9 }} 
-                              onClick={() => updateQuantity(item._id, item.qty - 1)}
+                              onClick={() => updateQuantity(item._id, item.qty - 1, item.selectedCut, item.orderedWeightGrams)}
                               style={{ width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer", transition: "all 0.2s" }}
                             >
                               <FiMinus size={12} strokeWidth={3} />
@@ -807,14 +823,14 @@ export default function Checkout() {
                             <motion.button 
                               whileHover={{ background: "rgba(91,168,160,0.05)", color: T.primary }}
                               whileTap={{ scale: 0.9 }} 
-                              onClick={() => updateQuantity(item._id, item.qty + 1)}
+                              onClick={() => updateQuantity(item._id, item.qty + 1, item.selectedCut, item.orderedWeightGrams)}
                               style={{ width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", color: T.textLite, background: "none", border: "none", cursor: "pointer", transition: "all 0.2s" }}
                             >
                               <FiPlus size={12} strokeWidth={3} />
                             </motion.button>
                           </div>
                           <span style={{ fontWeight: 700, fontSize: 13, color: T.textDark, minWidth: 60, textAlign: "right" }}>₹{(item.price * item.qty).toFixed(2)}</span>
-                          <motion.button whileTap={{ scale: 0.85 }} onClick={() => removeFromCart(item._id)}
+                          <motion.button whileTap={{ scale: 0.85 }} onClick={() => removeFromCart(item._id, item.selectedCut, item.orderedWeightGrams)}
                             style={{ color: T.border, background: "none", border: "none", cursor: "pointer", padding: 4 }}>
                             <FiTrash2 size={13} />
                           </motion.button>

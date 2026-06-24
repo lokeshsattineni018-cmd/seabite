@@ -3,6 +3,7 @@ import axios from "axios";
 import { AuthContext } from "./AuthContext";
 import socket from "../utils/socket";
 import CartNudge from "../components/common/CartNudge";
+import { addToCart as apiAddToCart, removeFromCart as apiRemoveFromCart, updateQty as apiUpdateQty, clearCart as apiClearCart } from "../utils/cartStorage";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -19,11 +20,23 @@ const calculateTotals = (cart, globalDiscount = 0, settings = {}) => {
         let basePrice = parseFloat(item.basePrice);
         if (isNaN(basePrice)) basePrice = parseFloat(item.price) || 0;
 
+        if (item.pricePerKg > 0 && item.orderedWeightGrams > 0) {
+            basePrice = Math.round((parseFloat(item.pricePerKg) / 1000) * item.orderedWeightGrams);
+            if (item.selectedCut && item.cutPriceAdjustmentPct > 0) {
+                basePrice = Math.round(basePrice * (1 + parseFloat(item.cutPriceAdjustmentPct) / 100));
+            }
+        } else if (item.selectedCut && item.cutPriceAdjustmentPct > 0) {
+            basePrice = Math.round(basePrice * (1 + parseFloat(item.cutPriceAdjustmentPct) / 100));
+        }
+
         let price = basePrice;
         const isFlashSale = item.flashSale?.isFlashSale && new Date(item.flashSale.saleEndDate) > new Date();
 
         if (isFlashSale) {
             price = parseFloat(item.flashSale.discountPrice);
+            if (item.selectedCut && item.cutPriceAdjustmentPct > 0) {
+                price = Math.round(price * (1 + parseFloat(item.cutPriceAdjustmentPct) / 100));
+            }
         } else if (globalDiscount > 0) {
             price = Math.round(basePrice * (1 - globalDiscount / 100));
         }
@@ -171,6 +184,9 @@ export const CartProvider = ({ children }) => {
                             .map(item => ({
                                 ...item.product,
                                 qty: item.qty,
+                                selectedCut: item.selectedCut || "",
+                                cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
+                                orderedWeightGrams: item.orderedWeightGrams || 0,
                                 price: item.product.price || item.product.basePrice
                             }));
                         localStorage.setItem("cart", JSON.stringify(dbCart));
@@ -181,7 +197,13 @@ export const CartProvider = ({ children }) => {
                 try {
                     const payload = localCart
                         .filter(item => item && item._id)
-                        .map(item => ({ product: item._id, qty: item.qty }));
+                        .map(item => ({
+                            product: item._id,
+                            qty: item.qty,
+                            selectedCut: item.selectedCut || "",
+                            cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
+                            orderedWeightGrams: item.orderedWeightGrams || 0
+                        }));
                     await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
                 } catch (err) { }
             }
@@ -197,7 +219,13 @@ export const CartProvider = ({ children }) => {
             try {
                 const payload = localCart
                     .filter(item => item && item._id)
-                    .map(item => ({ product: item._id, qty: item.qty }));
+                    .map(item => ({
+                        product: item._id,
+                        qty: item.qty,
+                        selectedCut: item.selectedCut || "",
+                        cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
+                        orderedWeightGrams: item.orderedWeightGrams || 0
+                    }));
                 await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
             } catch (err) { }
         }, 2000);
@@ -205,51 +233,23 @@ export const CartProvider = ({ children }) => {
     }, [cartState, user]);
 
     const addToCart = (product) => {
-        try {
-            const currentCart = JSON.parse(localStorage.getItem("cart") || "[]");
-            const existingItemIndex = currentCart.findIndex((item) => item._id === product._id);
-            if (existingItemIndex > -1) {
-                currentCart[existingItemIndex].qty += product.quantity || 1;
-            } else {
-                let finalPrice = parseFloat(product.price);
-                if (isNaN(finalPrice)) finalPrice = parseFloat(product.basePrice);
-                if (isNaN(finalPrice)) finalPrice = 0;
-                currentCart.push({ ...product, qty: product.quantity || 1, price: finalPrice });
-            }
-            localStorage.setItem("cart", JSON.stringify(currentCart));
-            updateCartState();
-            window.dispatchEvent(new Event("storage"));
-        } catch (error) { }
+        apiAddToCart(product);
+        updateCartState();
     };
 
-    const removeFromCart = (productId) => {
-        try {
-            const currentCart = JSON.parse(localStorage.getItem("cart") || "[]");
-            const updatedCart = currentCart.filter((item) => item._id !== productId);
-            localStorage.setItem("cart", JSON.stringify(updatedCart));
-            updateCartState();
-            window.dispatchEvent(new Event("storage"));
-        } catch (error) { }
+    const removeFromCart = (productId, selectedCut = "", orderedWeightGrams = 0) => {
+        apiRemoveFromCart(productId, selectedCut, orderedWeightGrams);
+        updateCartState();
     };
 
-    const updateQuantity = (productId, newQty) => {
-        try {
-            if (newQty < 1) return;
-            const currentCart = JSON.parse(localStorage.getItem("cart") || "[]");
-            const itemIndex = currentCart.findIndex((item) => item._id === productId);
-            if (itemIndex > -1) {
-                currentCart[itemIndex].qty = newQty;
-                localStorage.setItem("cart", JSON.stringify(currentCart));
-                updateCartState();
-                window.dispatchEvent(new Event("storage"));
-            }
-        } catch (error) { }
+    const updateQuantity = (productId, newQty, selectedCut = "", orderedWeightGrams = 0) => {
+        apiUpdateQty(productId, newQty, selectedCut, orderedWeightGrams);
+        updateCartState();
     };
 
     const clearCart = () => {
-        localStorage.removeItem("cart");
+        apiClearCart();
         updateCartState();
-        window.dispatchEvent(new Event("storage"));
     };
 
     const contextValue = {
