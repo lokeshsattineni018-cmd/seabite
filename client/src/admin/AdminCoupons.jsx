@@ -213,34 +213,46 @@ export default function AdminCoupons() {
                   )}
                 </div>
 
-                {showUserDropdown && (
-                  <div className="absolute z-50 left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white border border-stone-200 rounded-2xl shadow-xl no-scrollbar">
-                    {users.filter(u => 
-                      u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
-                      u.email?.toLowerCase().includes(userSearch.toLowerCase())
-                    ).length === 0 ? (
-                      <div className="p-4 text-xs text-stone-400 text-center font-medium">No users found</div>
-                    ) : (
-                      users.filter(u => 
-                        u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
-                        u.email?.toLowerCase().includes(userSearch.toLowerCase())
-                      ).map((u) => (
-                        <div
-                          key={u._id}
-                          onClick={() => {
-                            setFormData({ ...formData, userEmail: u.email });
-                            setUserSearch(`${u.name} (${u.email})`);
-                            setShowUserDropdown(false);
-                          }}
-                          className="px-4 py-2.5 hover:bg-stone-50 cursor-pointer border-b border-stone-50 last:border-0 transition-colors text-left"
-                        >
-                          <div className="text-xs font-bold text-stone-800">{u.name}</div>
-                          <div className="text-[10px] text-stone-400 font-medium">{u.email}</div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
+                {showUserDropdown && (() => {
+                  const selectedUser = users.find(usr => usr.email === formData.userEmail);
+                  const isExactMatch = selectedUser && userSearch === `${selectedUser.name} (${selectedUser.email})`;
+                  
+                  const filteredUsers = users.filter(u => {
+                    if (isExactMatch) return true;
+                    if (!userSearch) return true;
+                    return u.name?.toLowerCase().includes(userSearch.toLowerCase()) || 
+                           u.email?.toLowerCase().includes(userSearch.toLowerCase());
+                  });
+
+                  return (
+                    <div className="absolute z-50 left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white border border-stone-200 rounded-2xl shadow-xl no-scrollbar">
+                      {filteredUsers.length === 0 ? (
+                        <div className="p-4 text-xs text-stone-400 text-center font-medium">No users found</div>
+                      ) : (
+                        filteredUsers.map((u) => {
+                          const isSelected = formData.userEmail === u.email;
+                          return (
+                            <div
+                              key={u._id}
+                              onClick={() => {
+                                setFormData({ ...formData, userEmail: u.email });
+                                setUserSearch(`${u.name} (${u.email})`);
+                                setShowUserDropdown(false);
+                              }}
+                              className={`px-4 py-2.5 hover:bg-stone-50 cursor-pointer border-b border-stone-50 last:border-0 transition-colors text-left flex justify-between items-center ${isSelected ? 'bg-stone-50' : ''}`}
+                            >
+                              <div>
+                                <div className="text-xs font-bold text-stone-800">{u.name}</div>
+                                <div className="text-[10px] text-stone-400 font-medium">{u.email}</div>
+                              </div>
+                              {isSelected && <FiCheck className="text-stone-900" size={14} />}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div className="space-y-1.5">
