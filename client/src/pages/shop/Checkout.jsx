@@ -6,7 +6,7 @@ import {
   FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield,
   FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiCreditCard,
   FiTruck, FiLoader, FiAlertCircle, FiGift, FiChevronRight,
-  FiClock, FiPercent, FiCheck, FiPlus as FiPlusIcon, FiAward,
+  FiClock, FiPercent, FiCheck, FiPlus as FiPlusIcon,
 } from "react-icons/fi";
 import AddressForm from "../../components/forms/AddressForm";
 import PopupModal from "../../components/common/PopupModal";
@@ -211,8 +211,7 @@ export default function Checkout() {
   });
   const [isGift, setIsGift] = useState(false);
   const [giftMessage, setGiftMessage] = useState("");
-  const [loyaltyBalance, setLoyaltyBalance] = useState(0);
-  const [useLoyalty, setUseLoyalty] = useState(false);
+
   const [useWallet, setUseWallet] = useState(false);
 
   // 🔍 X-Ray: Frustration Tracking
@@ -282,10 +281,7 @@ export default function Checkout() {
       .then(res => setAvailableCoupons(Array.isArray(res.data) ? res.data : []))
       .catch(() => { });
 
-    // Fetch loyalty points balance
-    axios.get(`${API_URL}/api/enterprise/loyalty`, { withCredentials: true })
-      .then(res => setLoyaltyBalance(res.data.loyaltyPoints || 0))
-      .catch(() => { });
+
   }, []);
 
   useEffect(() => {
@@ -338,8 +334,7 @@ export default function Checkout() {
 
   const taxableAmount = Math.max(0, itemTotal - discountAmount);
   const gst = Math.round(taxableAmount * taxRate);
-  const loyaltyDiscount = useLoyalty ? Math.min(loyaltyBalance * 0.5, taxableAmount + deliveryCharge + gst) : 0;
-  const grandTotalBeforeWallet = Math.max(0, taxableAmount + deliveryCharge + gst - loyaltyDiscount);
+  const grandTotalBeforeWallet = Math.max(0, taxableAmount + deliveryCharge + gst);
   const walletBalance = user?.walletBalance || 0;
   const walletAppliedAmount = useWallet ? Math.min(walletBalance, grandTotalBeforeWallet) : 0;
   const grandTotal = Math.max(0, grandTotalBeforeWallet - walletAppliedAmount);
@@ -464,9 +459,10 @@ export default function Checkout() {
       deliveryDate,
       isGift,
       giftMessage,
-      useLoyalty,
+
       useWallet,
-      walletAppliedAmount
+      walletAppliedAmount,
+      couponCode: appliedCoupon?.code || undefined
     };
     try {
       const { data } = await axios.post(`${API_URL}/api/payment/checkout`, orderDetails, { withCredentials: true });
@@ -1004,15 +1000,7 @@ export default function Checkout() {
                     <span>GST ({Math.round(taxRate * 100)}%)</span>
                     <span style={{ fontWeight: 700, color: T.textDark }}>₹{gst.toFixed(2)}</span>
                   </div>
-                  <AnimatePresence>
-                    {useLoyalty && loyaltyDiscount > 0 && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-                        style={{ display: "flex", justifyContent: "space-between", color: "#10b981", overflow: "hidden" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: 5 }}><FiAward size={11} />Loyalty Discount</span>
-                        <span style={{ fontWeight: 700 }}>-₹{loyaltyDiscount.toFixed(2)}</span>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+
                   <AnimatePresence>
                     {useWallet && walletAppliedAmount > 0 && (
                       <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
@@ -1024,53 +1012,7 @@ export default function Checkout() {
                   </AnimatePresence>
                 </div>
 
-                {/* Loyalty Points Redemption Widget */}
-                {loyaltyBalance > 0 && (
-                  <div style={{
-                    marginTop: 16,
-                    padding: "12px 14px",
-                    borderRadius: 16,
-                    background: "linear-gradient(135deg, rgba(91,168,160,0.06) 0%, rgba(137,194,217,0.06) 100%)",
-                    border: "1px solid rgba(91,168,160,0.18)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8
-                  }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: T.textDark, display: "flex", alignItems: "center", gap: 6 }}>
-                        <FiAward size={14} style={{ color: T.primary }} /> Loyalty Rewards
-                      </span>
-                      <span style={{ fontSize: 11, fontWeight: 800, color: T.primary }}>
-                        {loyaltyBalance} Pts (₹{(loyaltyBalance * 0.5).toFixed(2)})
-                      </span>
-                    </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
-                      <label style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 8,
-                        cursor: "pointer",
-                        fontSize: 11,
-                        color: T.textMid,
-                        fontWeight: 600,
-                        width: "100%"
-                      }}>
-                        <input
-                          type="checkbox"
-                          checked={useLoyalty}
-                          onChange={(e) => setUseLoyalty(e.target.checked)}
-                          style={{
-                            accentColor: T.primary,
-                            width: 15,
-                            height: 15,
-                            cursor: "pointer"
-                          }}
-                        />
-                        <span>Redeem points to save ₹{Math.min(loyaltyBalance * 0.5, taxableAmount + deliveryCharge + gst).toFixed(2)}</span>
-                      </label>
-                    </div>
-                  </div>
-                )}
+
 
                 {/* 💰 SeaBite Wallet Widget */}
                 {walletBalance > 0 && (

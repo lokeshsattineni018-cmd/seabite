@@ -4,7 +4,7 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiRefreshCw, FiTruck, FiPrinter,
-  FiXCircle, FiPackage, FiArrowUpRight, FiFilter, FiTrash2
+  FiXCircle, FiPackage, FiArrowUpRight, FiFilter, FiTrash2, FiDollarSign
 } from "react-icons/fi";
 import PopupModal from "../components/common/PopupModal";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
@@ -475,6 +475,22 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
     }, {})
   );
   const [submittingWeight, setSubmittingWeight] = useState(false);
+  const [refunding, setRefunding] = useState(false);
+
+  const handleWalletRefund = async () => {
+    if (!window.confirm(`Refund ₹${order.totalAmount} to customer's wallet and cancel this order?`)) return;
+    setRefunding(true);
+    try {
+      const { data } = await axios.post("/api/payment/refund-wallet", { orderId: order._id }, { withCredentials: true });
+      toast.success(data.message || "Refund processed!");
+      if (fetchOrders) fetchOrders(true);
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Wallet refund failed");
+    } finally {
+      setRefunding(false);
+    }
+  };
 
   const handleConfirmWeights = async () => {
     setSubmittingWeight(true);
@@ -496,6 +512,7 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
 
   const hasWeightItems = order.items.some(item => item.orderedWeightGrams > 0);
   const showConfirmButton = hasWeightItems && !order.weightVarianceRefundIssued;
+  const canWalletRefund = !order.status?.includes("Cancelled") && order.refundStatus !== "Refunded to Wallet";
 
   return (
     <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -555,17 +572,55 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
 
         {/* content */}
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
+
+          {/* Row 1: Order Timeline & Payment Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Payment Info */}
+            {/* Order Timeline */}
             <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
-              <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Payment Information</h4>
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-stone-900 flex justify-between">Method <span>{order.paymentMethod}</span></p>
-                <p className="text-sm font-medium text-stone-900 flex justify-between">Transaction ID <span className="font-mono text-stone-500">{order.paymentId || "N/A"}</span></p>
-                <p className="text-sm font-medium text-stone-900 flex justify-between">Paid Status <span className={order.isPaid ? "text-emerald-600" : "text-amber-600"}>{order.isPaid ? "Paid" : "Unpaid"}</span></p>
+              <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Order Timeline</h4>
+              <div className="space-y-2.5">
+                <p className="text-sm font-medium text-stone-900 flex justify-between">
+                  Created <span className="font-mono text-stone-500 text-xs">{new Date(order.createdAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+                </p>
+                {order.paidAt && (
+                  <p className="text-sm font-medium text-stone-900 flex justify-between">
+                    Paid <span className="font-mono text-stone-500 text-xs">{new Date(order.paidAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+                  </p>
+                )}
+                {order.deliveredAt && (
+                  <p className="text-sm font-medium text-stone-900 flex justify-between">
+                    Delivered <span className="font-mono text-stone-500 text-xs">{new Date(order.deliveredAt).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</span>
+                  </p>
+                )}
+                {order.deliverySlot && (
+                  <p className="text-sm font-medium text-stone-900 flex justify-between">
+                    Slot <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">{order.deliverySlot}</span>
+                  </p>
+                )}
+                {order.deliveryDate && (
+                  <p className="text-sm font-medium text-stone-900 flex justify-between">
+                    Delivery Date <span className="font-mono text-stone-500 text-xs">{new Date(order.deliveryDate).toLocaleDateString("en-IN", { dateStyle: "medium" })}</span>
+                  </p>
+                )}
               </div>
             </div>
 
+            {/* Payment Info */}
+            <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+              <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Payment Information</h4>
+              <div className="space-y-2.5">
+                <p className="text-sm font-medium text-stone-900 flex justify-between">Method <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${order.paymentMethod === "Prepaid" ? "bg-emerald-50 text-emerald-700" : order.paymentMethod === "Wallet" ? "bg-purple-50 text-purple-700" : "bg-amber-50 text-amber-700"}`}>{order.paymentMethod}</span></p>
+                <p className="text-sm font-medium text-stone-900 flex justify-between">Transaction ID <span className="font-mono text-stone-500 text-xs">{order.paymentId || "N/A"}</span></p>
+                <p className="text-sm font-medium text-stone-900 flex justify-between">Paid Status <span className={order.isPaid ? "text-emerald-600 font-bold text-xs" : "text-amber-600 font-bold text-xs"}>{order.isPaid ? "✓ Paid" : "Unpaid"}</span></p>
+                {order.refundStatus && order.refundStatus !== "None" && (
+                  <p className="text-sm font-medium text-stone-900 flex justify-between">Refund <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md">{order.refundStatus}</span></p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Row 2: Shipping & Price Breakdown */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Shipping Info */}
             <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
               <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Shipping Information</h4>
@@ -577,25 +632,89 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
               </p>
             </div>
 
-            {/* Gift Message Card */}
-            {order.giftMessage && (
-              <div className="col-span-1 md:col-span-2 bg-[#5BBFB5]/10 p-6 rounded-3xl border border-[#5BBFB5]/20 flex items-start gap-4">
-                <div className="w-10 h-10 bg-[#5BBFB5] text-white rounded-xl flex items-center justify-center flex-shrink-0">
-                  <span className="text-lg">🎁</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-[10px] font-bold text-[#5BBFB5] uppercase tracking-widest">Personalized Gift Card Message</h4>
-                  <p className="text-sm font-semibold text-stone-800 mt-1.5 italic bg-white/60 p-3.5 rounded-2xl border border-[#5BBFB5]/10 leading-relaxed shadow-sm">
-                    "{order.giftMessage}"
+            {/* Price Breakdown */}
+            <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+              <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Price Breakdown</h4>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-stone-700 flex justify-between">Subtotal <span className="font-mono font-bold text-stone-900">₹{order.itemsPrice?.toLocaleString() || 0}</span></p>
+                <p className="text-sm font-medium text-stone-700 flex justify-between">Tax (GST) <span className="font-mono font-bold text-stone-900">₹{order.taxPrice?.toLocaleString() || 0}</span></p>
+                <p className="text-sm font-medium text-stone-700 flex justify-between">Shipping <span className="font-mono font-bold text-stone-900">₹{order.shippingPrice?.toLocaleString() || 0}</span></p>
+                {order.couponCode && (
+                  <p className="text-sm font-medium text-emerald-700 flex justify-between bg-emerald-50/50 px-2 py-1 rounded-lg -mx-2">
+                    <span className="flex items-center gap-1.5">🏷️ Coupon <code className="text-[10px] bg-emerald-100 px-1.5 py-0.5 rounded font-bold">{order.couponCode}</code></span>
+                    <span className="font-mono font-bold">-₹{order.couponDiscount?.toLocaleString() || order.discount?.toLocaleString() || 0}</span>
                   </p>
+                )}
+                {!order.couponCode && order.discount > 0 && (
+                  <p className="text-sm font-medium text-emerald-700 flex justify-between">Discount <span className="font-mono font-bold">-₹{order.discount?.toLocaleString()}</span></p>
+                )}
+                {order.walletAppliedAmount > 0 && (
+                  <p className="text-sm font-medium text-purple-700 flex justify-between bg-purple-50/50 px-2 py-1 rounded-lg -mx-2">
+                    <span className="flex items-center gap-1.5">💰 Wallet Used</span>
+                    <span className="font-mono font-bold">-₹{order.walletAppliedAmount?.toLocaleString()}</span>
+                  </p>
+                )}
+                <div className="border-t border-stone-200 pt-2 mt-2">
+                  <p className="text-base font-bold text-stone-900 flex justify-between">Grand Total <span className="font-mono">₹{order.totalAmount?.toLocaleString()}</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Gift Message Card */}
+          {order.giftMessage && (
+            <div className="bg-[#5BBFB5]/10 p-6 rounded-3xl border border-[#5BBFB5]/20 flex items-start gap-4">
+              <div className="w-10 h-10 bg-[#5BBFB5] text-white rounded-xl flex items-center justify-center flex-shrink-0">
+                <span className="text-lg">🎁</span>
+              </div>
+              <div className="flex-1">
+                <h4 className="text-[10px] font-bold text-[#5BBFB5] uppercase tracking-widest">Personalized Gift Card Message</h4>
+                <p className="text-sm font-semibold text-stone-800 mt-1.5 italic bg-white/60 p-3.5 rounded-2xl border border-[#5BBFB5]/10 leading-relaxed shadow-sm">
+                  "{order.giftMessage}"
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Refund Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Wallet Refund */}
+            {canWalletRefund && (
+              <div className="p-6 rounded-2xl border border-purple-200 bg-purple-50/50">
+                <div className="flex justify-between items-center mb-4">
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-600">Refund to Wallet</h4>
+                  <span className="text-xs font-bold text-purple-700">₹{order.totalAmount?.toLocaleString()}</span>
+                </div>
+                <p className="text-[11px] text-stone-500 mb-4 leading-relaxed">Cancel order and refund the full amount to the customer's wallet balance instantly.</p>
+                <button
+                  onClick={handleWalletRefund}
+                  disabled={refunding}
+                  className="w-full py-3 bg-purple-600 text-white rounded-xl font-bold text-xs uppercase hover:bg-purple-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  <FiDollarSign size={14} />
+                  {refunding ? "Processing Refund..." : "Refund to Wallet"}
+                </button>
+              </div>
+            )}
+
+            {/* Already refunded badge */}
+            {order.refundStatus === "Refunded to Wallet" && (
+              <div className="p-6 rounded-2xl border border-emerald-200 bg-emerald-50/50 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <FiDollarSign size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest">Refunded to Wallet</p>
+                  <p className="text-sm text-emerald-600 mt-0.5">₹{order.totalAmount?.toLocaleString()} credited to customer wallet</p>
                 </div>
               </div>
             )}
 
+            {/* Razorpay Refund */}
             {canAutoRefund && (
-              <div className={`col-span-1 md:col-span-2 p-6 rounded-2xl border border-stone-200 ${order.refundStatus === "Success" ? "bg-emerald-50/50" : "bg-blue-50/50"}`}>
+              <div className={`p-6 rounded-2xl border border-stone-200 ${order.refundStatus === "Success" ? "bg-emerald-50/50" : "bg-blue-50/50"}`}>
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Refund Console</h4>
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Razorpay Refund</h4>
                   <span className="text-xs font-bold px-2 py-0.5 bg-white rounded-md border border-stone-200">{order.refundStatus || "None"}</span>
                 </div>
                 {order.refundStatus !== "Success" && (
@@ -612,7 +731,7 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
 
           {/* Items */}
           <div>
-            <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Order Items</h4>
+            <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">Order Items ({order.items.length})</h4>
             <div className="space-y-3">
               {order.items.map((item, i) => (
                 <div key={i} className="flex flex-col gap-2 p-4 bg-white border border-stone-100 rounded-2xl shadow-sm">
@@ -696,11 +815,20 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
         {/* Footer */}
         <div className="px-8 py-6 bg-stone-50 border-t border-stone-100">
           <div className="flex justify-between items-end">
-            <button onClick={onClose} className="px-6 py-3 bg-white border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-100 text-xs uppercase">Close</button>
+            <div className="flex items-center gap-3">
+              <button onClick={onClose} className="px-6 py-3 bg-white border border-stone-200 text-stone-600 font-bold rounded-xl hover:bg-stone-100 text-xs uppercase">Close</button>
+              <button
+                onClick={() => handleDeleteOrder(order._id, order.orderId)}
+                className="px-4 py-3 bg-white border border-rose-200 text-rose-500 font-bold rounded-xl hover:bg-rose-50 text-xs uppercase flex items-center gap-1.5 transition-colors"
+              >
+                <FiTrash2 size={13} /> Delete
+              </button>
+            </div>
             <div className="text-right space-y-1">
-              <p className="text-xs text-stone-500">Subtotal: <span className="font-bold text-stone-900">₹{order.itemsPrice}</span></p>
-              <p className="text-xs text-stone-500">Tax: <span className="font-bold text-stone-900">₹{order.taxPrice}</span></p>
-              <p className="text-xl font-light text-stone-900 mt-2">Total: <span className="font-bold">₹{order.totalAmount.toLocaleString()}</span></p>
+              <p className="text-xs text-stone-500">Subtotal: <span className="font-bold text-stone-900">₹{order.itemsPrice?.toLocaleString() || 0}</span></p>
+              {order.discount > 0 && <p className="text-xs text-emerald-600">Discount: <span className="font-bold">-₹{order.discount?.toLocaleString()}</span></p>}
+              <p className="text-xs text-stone-500">Tax: <span className="font-bold text-stone-900">₹{order.taxPrice?.toLocaleString() || 0}</span></p>
+              <p className="text-xl font-light text-stone-900 mt-2">Total: <span className="font-bold">₹{order.totalAmount?.toLocaleString()}</span></p>
             </div>
           </div>
           <div className="hidden"><Invoice order={order} /></div>
