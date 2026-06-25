@@ -19,7 +19,7 @@ import toast from "../../utils/toast"; // Custom SeaBite toast
 import triggerHaptic from "../../utils/haptics"; // 📱 Haptic feedback
 import ReviewModal from "../../components/common/ReviewModal";
 import RecommendationBlock from "../../components/common/RecommendationBlock";
-import ProductCard from "../../components/common/ProductCard";
+import EnhancedProductCard from "../../components/products/EnhancedProductCard";
 
 import { slugify } from "../../utils/slugify";
 
@@ -514,7 +514,7 @@ const RecentlyViewed = ({ items }) => {
       </h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "16px" }}>
         {items.map(item => (
-          <ProductCard key={item._id} product={item} />
+          <EnhancedProductCard key={item._id} product={item} />
         ))}
       </div>
     </div>
