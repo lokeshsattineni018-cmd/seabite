@@ -543,7 +543,7 @@ export default function Checkout() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: font, padding: "100px 20px 60px", overflowX: "hidden" }}>
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: font, padding: "16px 20px 60px", overflowX: "hidden" }}>
       <CouponDrawer 
         isOpen={showCouponDrawer} 
         onClose={() => setShowCouponDrawer(false)}
