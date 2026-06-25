@@ -20,6 +20,7 @@ const reviewSchema = new mongoose.Schema(
 const productSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
+    slug: { type: String, index: true },
     basePrice: { type: Number, required: true },
     price: { type: Number, default: 0 }, // 🟢 Current Selling Price
     buyingPrice: { type: Number, default: 0 }, // 🟢 NEW: Cost Price for Profit Calc
@@ -83,5 +84,58 @@ const productSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+productSchema.pre("save", function(next) {
+  if (this.isModified("name")) {
+    const slugify = (text) => {
+      if (!text) return "";
+      return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\-]+/g, "")
+        .replace(/\-\-+/g, "-")
+        .replace(/^-+/, "")
+        .replace(/-+$/, "");
+    };
+    this.slug = slugify(this.name);
+  }
+  next();
+});
+
+productSchema.pre(["findOneAndUpdate", "update", "updateOne"], function(next) {
+  const update = this.getUpdate();
+  if (update.$set && update.$set.name) {
+    const slugify = (text) => {
+      if (!text) return "";
+      return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\-]+/g, "")
+        .replace(/\-\-+/g, "-")
+        .replace(/^-+/, "")
+        .replace(/-+$/, "");
+    };
+    update.$set.slug = slugify(update.$set.name);
+  } else if (update.name) {
+    const slugify = (text) => {
+      if (!text) return "";
+      return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-")
+        .replace(/[^\w\-]+/g, "")
+        .replace(/\-\-+/g, "-")
+        .replace(/^-+/, "")
+        .replace(/-+$/, "");
+    };
+    update.slug = slugify(update.name);
+  }
+  next();
+});
 
 export default mongoose.models.Product || mongoose.model("Product", productSchema);
