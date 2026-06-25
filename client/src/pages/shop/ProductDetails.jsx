@@ -579,28 +579,37 @@ export default function ProductDetails() {
     axios
       .get(`${API_URL}/api/products/${id}`, { withCredentials: true })
       .then((res) => { 
-        setProduct(res.data); 
-        setSelectedImage(res.data.image);
+        const p = res.data;
+        setProduct(p); 
+        setSelectedImage(p.image);
         setLoading(false); 
         
         // Save to Recently Viewed
         try {
+          const isActiveFlashSale = p.flashSale?.isFlashSale && p.flashSale?.saleEndDate && new Date(p.flashSale.saleEndDate) > new Date();
+          const basePrice = parseFloat(p.basePrice) || 0;
+          let calculatedPrice = isActiveFlashSale ? p.flashSale.discountPrice : basePrice;
+          const globalDiscount = p.globalDiscount || 0;
+          if (!isActiveFlashSale && globalDiscount > 0) {
+            calculatedPrice = Math.round(basePrice * (1 - globalDiscount / 100));
+          }
+
           const recent = JSON.parse(localStorage.getItem("seabite_recent") || "[]");
-          const filtered = recent.filter(p => p._id !== res.data._id);
+          const filtered = recent.filter(item => item._id !== p._id);
           filtered.unshift({
-            _id: res.data._id,
-            name: res.data.name,
-            image: res.data.image,
-            basePrice: res.data.basePrice,
-            price: unitPrice // Store the actual discounted price
+            _id: p._id,
+            name: p.name,
+            image: p.image,
+            basePrice: p.basePrice,
+            price: calculatedPrice
           });
           const newRecent = filtered.slice(0, 4);
           localStorage.setItem("seabite_recent", JSON.stringify(newRecent));
-          setRecentItems(newRecent.filter(p => p._id !== res.data._id));
+          setRecentItems(newRecent.filter(item => item._id !== p._id));
         } catch {}
       })
       .catch(() => setLoading(false));
-  }, [id, unitPrice]);
+  }, [id]);
 
   useEffect(() => { window.scrollTo(0, 0); fetchProduct(); }, [fetchProduct]);
 
@@ -805,7 +814,77 @@ export default function ProductDetails() {
 
 
   if (loading) {
-    return <SeaBiteLoader fullScreen />;
+    return (
+      <div className="detail-root" style={{ minHeight: "100vh", background: "#fff", paddingTop: "88px", paddingBottom: "100px", paddingLeft: "24px", paddingRight: "24px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+        <style>{`
+          .shimmer-block {
+            background: linear-gradient(90deg, #f0f4f4 25%, #e2eeec 50%, #f0f4f4 75%);
+            background-size: 200% 100%;
+            animation: shimmer-anim 1.5s infinite;
+            border-radius: 12px;
+          }
+          @keyframes shimmer-anim {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+          }
+          @media (max-width: 767px) {
+            .product-grid { display: block !important; }
+            .hero-image-container { width: 100% !important; aspect-ratio: 1/1 !important; margin-bottom: 24px; }
+          }
+        `}</style>
+        <div style={{ maxWidth: "1200px", margin: "0 auto" }}>
+          {/* Breadcrumb Shimmer */}
+          <div className="shimmer-block" style={{ width: "150px", height: "16px", marginBottom: "20px" }} />
+          
+          <div className="product-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "start" }}>
+            {/* Left Column: Image Shimmer */}
+            <div className="hero-image-container" style={{ position: "sticky", top: "108px" }}>
+              <div className="shimmer-block" style={{ width: "100%", aspectRatio: "1/1", borderRadius: "24px" }} />
+              <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="shimmer-block" style={{ width: "70px", height: "70px", borderRadius: "12px" }} />
+                ))}
+              </div>
+            </div>
+
+            {/* Right Column: Info Shimmer */}
+            <div style={{ padding: "10px 0" }}>
+              <div className="shimmer-block" style={{ width: "80px", height: "14px", marginBottom: "12px" }} />
+              <div className="shimmer-block" style={{ width: "80%", height: "36px", marginBottom: "8px" }} />
+              <div className="shimmer-block" style={{ width: "60%", height: "24px", marginBottom: "24px" }} />
+              
+              {/* Price Shimmer */}
+              <div className="shimmer-block" style={{ width: "140px", height: "32px", marginBottom: "28px" }} />
+              
+              {/* Divider */}
+              <div style={{ height: "1px", background: "#f0f4f4", margin: "24px 0" }} />
+              
+              {/* Selector Shimmers */}
+              <div className="shimmer-block" style={{ width: "120px", height: "16px", marginBottom: "12px" }} />
+              <div style={{ display: "flex", gap: "12px", marginBottom: "24px" }}>
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="shimmer-block" style={{ width: "100px", height: "40px", borderRadius: "100px" }} />
+                ))}
+              </div>
+
+              {/* Qty & Add Button Shimmer */}
+              <div style={{ display: "flex", gap: "16px", marginTop: "32px", alignItems: "center" }}>
+                <div className="shimmer-block" style={{ width: "120px", height: "48px", borderRadius: "12px" }} />
+                <div className="shimmer-block" style={{ flex: 1, height: "48px", borderRadius: "12px" }} />
+              </div>
+
+              {/* Description Shimmer */}
+              <div style={{ marginTop: "40px" }}>
+                <div className="shimmer-block" style={{ width: "100px", height: "18px", marginBottom: "16px" }} />
+                <div className="shimmer-block" style={{ width: "100%", height: "14px", marginBottom: "8px" }} />
+                <div className="shimmer-block" style={{ width: "95%", height: "14px", marginBottom: "8px" }} />
+                <div className="shimmer-block" style={{ width: "70%", height: "14px" }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
 
@@ -835,22 +914,22 @@ export default function ProductDetails() {
       {product && (
         <Helmet>
           <title>{product.name} | SeaBite - Fresh Seafood Delivery</title>
-          <meta name="description" content={`Buy fresh ${product.name} online from SeaBite. ${product.description?.slice(0, 120) || "Sourced daily from the coast, delivered fresh to your door. Chemical-free and 100% traceable."}`} />
+          <meta name="description" content={`Buy fresh ${product.name} online from SeaBite. ${product.desc?.slice(0, 120) || product.description?.slice(0, 120) || "Sourced daily from the coast, delivered fresh to your door. Chemical-free and 100% traceable."}`} />
           <link rel="canonical" href={`https://seabite.co.in/products/${slugify(product.name)}`} />
           <meta property="og:title" content={`${product.name} | SeaBite`} />
-          <meta property="og:description" content={product.description?.slice(0, 160) || "Fresh coastal seafood from SeaBite."} />
+          <meta property="og:description" content={product.desc?.slice(0, 160) || product.description?.slice(0, 160) || "Fresh coastal seafood from SeaBite."} />
           <meta property="og:image" content={getFullImageUrl(product.image)} />
           <meta property="og:type" content="product" />
           <meta property="og:url" content={`https://seabite.co.in/products/${slugify(product.name)}`} />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content={`${product.name} | SeaBite`} />
-          <meta name="twitter:description" content={product.description?.slice(0, 120) || "Fresh coastal seafood from SeaBite."} />
+          <meta name="twitter:description" content={product.desc?.slice(0, 120) || product.description?.slice(0, 120) || "Fresh coastal seafood from SeaBite."} />
           <meta name="twitter:image" content={getFullImageUrl(product.image)} />
           <script type="application/ld+json">{JSON.stringify({
             "@context": "https://schema.org",
             "@type": "Product",
             "name": product.name,
-            "description": product.description || product.desc || `Fresh ${product.name} from SeaBite Mogalthur`,
+            "description": product.desc || product.description || `Fresh ${product.name} from SeaBite Mogalthur`,
             "image": [getFullImageUrl(product.image), ...((product.images || []).map(img => getFullImageUrl(img)))],
             "brand": { "@type": "Brand", "name": "SeaBite" },
             "sku": product._id,
@@ -872,7 +951,18 @@ export default function ProductDetails() {
                 "bestRating": "5",
                 "worstRating": "1"
               }
-            })
+            }),
+            "review": (product.reviews || []).map(r => ({
+              "@type": "Review",
+              "author": { "@type": "Person", "name": r.name },
+              "datePublished": r.createdAt ? new Date(r.createdAt).toISOString().split('T')[0] : undefined,
+              "reviewBody": r.comment,
+              "reviewRating": {
+                "@type": "Rating",
+                "ratingValue": r.rating,
+                "bestRating": "5"
+              }
+            }))
           })}</script>
         </Helmet>
       )}

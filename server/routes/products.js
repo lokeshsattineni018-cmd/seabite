@@ -213,20 +213,26 @@ router.get("/:id", async (req, res) => {
     if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
       product = await Product.findById(req.params.id).populate('reviews.user', 'name');
     } else {
-      const allProducts = await Product.find({ active: true }).populate('reviews.user', 'name');
-      const slugify = (text) => {
-        if (!text) return "";
-        return text
-          .toString()
-          .toLowerCase()
-          .trim()
-          .replace(/\s+/g, "-")
-          .replace(/[^\w\-]+/g, "")
-          .replace(/\-\-+/g, "-")
-          .replace(/^-+/, "")
-          .replace(/-+$/, "");
-      };
-      product = allProducts.find(p => slugify(p.name) === req.params.id);
+      // 🚀 Performance: Query directly by slug first (O(1) database read)
+      product = await Product.findOne({ slug: req.params.id, active: true }).populate('reviews.user', 'name');
+      
+      // Fallback: If not found (legacy products without slug field populated), match in memory
+      if (!product) {
+        const allProducts = await Product.find({ active: true }).populate('reviews.user', 'name');
+        const slugify = (text) => {
+          if (!text) return "";
+          return text
+            .toString()
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w\-]+/g, "")
+            .replace(/\-\-+/g, "-")
+            .replace(/^-+/, "")
+            .replace(/-+$/, "");
+        };
+        product = allProducts.find(p => slugify(p.name) === req.params.id);
+      }
     }
     if (!product) return res.status(404).json({ message: "Product not found" });
 
