@@ -8,6 +8,7 @@ import { AuthContext } from "../../context/AuthContext";
 import { CartContext } from "../../context/CartContext";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { slugify } from "../../utils/slugify";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -100,7 +101,7 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
           50% { box-shadow: 0 4px 40px rgba(91, 168, 160, 0.3); border-color: rgba(91, 168, 160, 0.6); }
         }
       `}</style>
-      <Link to={`/products/${product._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}>
         {/* Image Section */}
         <div style={{
           backgroundColor: colors.grayscaleBackground,

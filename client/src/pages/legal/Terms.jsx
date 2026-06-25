@@ -74,7 +74,7 @@ export default function Terms() {
           background: "#F8FAFB",
           fontFamily: "'Plus Jakarta Sans', sans-serif",
           color: "#1A2B35",
-          paddingTop: "96px",
+          paddingTop: "0px",
         }}
       >
         {/* ── HEADER ─────────────────────────────────────── */}

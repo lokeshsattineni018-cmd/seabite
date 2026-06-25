@@ -108,7 +108,7 @@ export default function About() {
           background: "#F8FAFB",
           fontFamily: "'Plus Jakarta Sans', sans-serif",
           color: "#1A2B35",
-          paddingTop: "100px",
+          paddingTop: "0px",
           overflowX: "hidden",
         }}
       >

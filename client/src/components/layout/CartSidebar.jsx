@@ -8,6 +8,7 @@ import {
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { removeFromCart, updateQty } from "../../utils/cartStorage";
+import { slugify } from "../../utils/slugify";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -336,7 +337,7 @@ export default function CartSidebar({ onClose }) {
                             initial={{ opacity: 0, x: 20 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ delay: 0.5 + (idx * 0.1) }}
-                            onClick={() => { navigate(`/products/${p._id}`); closeCart(); }}
+                            onClick={() => { navigate(`/products/${slugify(p.name)}`); closeCart(); }}
                             whileHover={{ x: 8, background: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}
                             style={{ 
                               display: "flex", 

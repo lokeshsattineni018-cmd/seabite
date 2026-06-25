@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CompareContext } from "../../context/CompareContext";
 import { FiX, FiCheck, FiShoppingBag, FiLayers } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
+import { slugify } from "../../utils/slugify";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -145,7 +146,7 @@ export default function ComparisonDrawer() {
                       {compareItems.map(item => (
                         <td key={item._id} style={{ padding: "24px 0", textAlign: "center" }}>
                           <button 
-                            onClick={() => { navigate(`/products/${item._id}`); setIsOpen(false); }} 
+                            onClick={() => { navigate(`/products/${slugify(item.name)}`); setIsOpen(false); }} 
                             style={{ 
                               width: "100%", 
                               padding: "12px 0", 
