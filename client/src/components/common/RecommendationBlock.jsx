@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import ProductCard from './ProductCard';
+import EnhancedProductCard from '../products/EnhancedProductCard';
 import { tokens } from '../../utils/design-tokens';
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -69,7 +69,7 @@ const RecommendationBlock = ({ currentProductId, category, title = "Recommended 
         }}
       >
         {recommendations.map(product => (
-          <ProductCard key={product._id} product={product} globalDiscount={globalDiscount} />
+          <EnhancedProductCard key={product._id} product={product} globalDiscount={globalDiscount} />
         ))}
       </div>
     </section>
