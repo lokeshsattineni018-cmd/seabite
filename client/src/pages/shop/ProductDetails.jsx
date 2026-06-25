@@ -410,29 +410,29 @@ const PincodeChecker = () => {
         if (hour >= 17) {
           // Evening / Night: No dispatches possible today
           if (zone === "A") {
-            deliveryText = `Tomorrow Morning (by 11:00 AM) • Dispatched tomorrow 6:00 AM (Distance: ${distanceKm} km)`;
+            deliveryText = "Tomorrow Morning (by 11:00 AM) • Dispatched tomorrow 6:00 AM";
           } else if (zone === "B") {
-            deliveryText = `Tomorrow Afternoon (by 3:00 PM) • Dispatched tomorrow 7:00 AM (Distance: ${distanceKm} km)`;
+            deliveryText = "Tomorrow Afternoon (by 3:00 PM) • Dispatched tomorrow 7:00 AM";
           } else {
-            deliveryText = `Day after tomorrow (by 12:00 PM) • Dispatched tomorrow 8:00 AM (Distance: ${distanceKm} km)`;
+            deliveryText = "Day after tomorrow (by 12:00 PM) • Dispatched tomorrow 8:00 AM";
           }
         } else if (hour >= 12) {
           // Afternoon: Local can still be dispatched for tonight, others tomorrow
           if (zone === "A") {
-            deliveryText = `Today Evening (by 7:00 PM) • Dispatched today 4:00 PM (Distance: ${distanceKm} km)`;
+            deliveryText = "Today Evening (by 7:00 PM) • Dispatched today 4:00 PM";
           } else if (zone === "B") {
-            deliveryText = `Tomorrow Morning (by 11:00 AM) • Dispatched tomorrow 6:00 AM (Distance: ${distanceKm} km)`;
+            deliveryText = "Tomorrow Morning (by 11:00 AM) • Dispatched tomorrow 6:00 AM";
           } else {
-            deliveryText = `Tomorrow Afternoon (by 4:00 PM) • Dispatched tomorrow 7:00 AM (Distance: ${distanceKm} km)`;
+            deliveryText = "Tomorrow Afternoon (by 4:00 PM) • Dispatched tomorrow 7:00 AM";
           }
         } else {
           // Morning: Can dispatch today
           if (zone === "A") {
-            deliveryText = `Today Afternoon (by 2:00 PM) • Dispatched today 12:00 PM (Distance: ${distanceKm} km)`;
+            deliveryText = "Today Afternoon (by 2:00 PM) • Dispatched today 12:00 PM";
           } else if (zone === "B") {
-            deliveryText = `Today Evening (by 7:00 PM) • Dispatched today 1:00 PM (Distance: ${distanceKm} km)`;
+            deliveryText = "Today Evening (by 7:00 PM) • Dispatched today 1:00 PM";
           } else {
-            deliveryText = `Tomorrow Morning (by 11:00 AM) • Dispatched today evening (Distance: ${distanceKm} km)`;
+            deliveryText = "Tomorrow Morning (by 11:00 AM) • Dispatched today evening";
           }
         }
         
