@@ -19,6 +19,7 @@ import toast from "../../utils/toast"; // Custom SeaBite toast
 import triggerHaptic from "../../utils/haptics"; // 📱 Haptic feedback
 import ReviewModal from "../../components/common/ReviewModal";
 import RecommendationBlock from "../../components/common/RecommendationBlock";
+import ProductCard from "../../components/common/ProductCard";
 
 import { slugify } from "../../utils/slugify";
 
@@ -503,39 +504,23 @@ const PincodeChecker = () => {
 
 
 // ─── Recently Viewed Component ──────────────────────────────────────────────────
-const RecentlyViewed = ({ items, getFullImageUrl }) => {
+const RecentlyViewed = ({ items }) => {
   if (!items || items.length === 0) return null;
 
   return (
-    <div style={{ marginTop: "48px" }}>
-      <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#1A2E2C", marginBottom: "20px" }}>
+    <div style={{ marginTop: "48px", borderTop: "1px solid rgba(0,0,0,0.05)", paddingTop: "24px" }}>
+      <h3 style={{ fontSize: "18px", fontWeight: "700", color: "#1A2E2C", marginBottom: "20px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         Recently Viewed
       </h3>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "16px" }}>
         {items.map(item => (
-          <Link key={item._id} to={`/products/${slugify(item.name)}`} style={{ textDecoration: "none" }}>
-            <div style={{ 
-              background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", padding: "16px",
-              textAlign: "center", transition: "all 0.2s", cursor: "pointer", height: "100%"
-            }} className="recent-card">
-              <div style={{ width: "100%", aspectRatio: "1/1", background: "#F4F9F8", borderRadius: "12px", padding: "10px", marginBottom: "12px" }}>
-                <img src={getFullImageUrl(item.image)} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-              </div>
-              <p style={{ fontSize: "12px", fontWeight: "700", color: "#1A2E2C", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: "4px" }}>{item.name}</p>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", flexWrap: "wrap" }}>
-                <p style={{ fontSize: "13px", fontWeight: "800", color: "#5BBFB5" }}>₹{item.price || item.basePrice}</p>
-                {item.basePrice > (item.price || item.basePrice) && (
-                  <p style={{ fontSize: "10px", color: "#A8C5C0", textDecoration: "line-through" }}>₹{item.basePrice}</p>
-                )}
-              </div>
-            </div>
-          </Link>
+          <ProductCard key={item._id} product={item} />
         ))}
       </div>
-      <style>{`.recent-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(26,46,44,0.06); border-color: #B8DDD9 !important; }`}</style>
     </div>
   );
 };
+
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ProductDetails() {
@@ -662,7 +647,13 @@ export default function ProductDetails() {
             name: p.name,
             image: p.image,
             basePrice: p.basePrice,
-            price: calculatedPrice
+            price: calculatedPrice,
+            flashSale: p.flashSale,
+            globalDiscount: p.globalDiscount,
+            countInStock: p.countInStock,
+            unit: p.unit,
+            category: p.category,
+            trending: p.trending
           });
           const newRecent = filtered.slice(0, 4);
           localStorage.setItem("seabite_recent", JSON.stringify(newRecent));
@@ -1549,7 +1540,7 @@ export default function ProductDetails() {
           </div>
           
           {recentItems.length > 0 && (
-            <RecentlyViewed items={recentItems} getFullImageUrl={getFullImageUrl} />
+            <RecentlyViewed items={recentItems} />
           )}
 
           {/* 🟢 Recommendation Engine Integration */}
