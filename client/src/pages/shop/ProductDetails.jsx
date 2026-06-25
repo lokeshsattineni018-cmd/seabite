@@ -574,8 +574,17 @@ export default function ProductDetails() {
     return `${base}${pathWithUploads}`;
   };
 
+  const productRef = useRef(null);
+  useEffect(() => {
+    productRef.current = product;
+  }, [product]);
+
   const fetchProduct = useCallback(() => {
-    setLoading(true);
+    const currentProduct = productRef.current;
+    const isAlreadyLoaded = currentProduct && (currentProduct._id === id || slugify(currentProduct.name) === id);
+    if (!isAlreadyLoaded) {
+      setLoading(true);
+    }
     axios
       .get(`${API_URL}/api/products/${id}`, { withCredentials: true })
       .then((res) => { 

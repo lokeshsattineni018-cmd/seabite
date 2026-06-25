@@ -959,8 +959,8 @@ export default function Navbar({ announcementActive = false }) {
           className="show-mobile" 
           style={{ 
             width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px", 
-            background: "#FAF6F0", 
-            borderBottom: "1px solid #EFEAE2",
+            background: isTransparent ? "transparent" : "#FFFFFF", 
+            borderBottom: isTransparent ? "none" : "1px solid #f0f0f0",
             padding: "0", 
             transition: "all 0.3s ease",
             position: "relative"
@@ -973,9 +973,9 @@ export default function Navbar({ announcementActive = false }) {
             style={{ background: "none", border: "none", cursor: "pointer", padding: "0 12px", height: "100%", display: "flex", alignItems: "center", justifyContent: "flex-start" }}
           >
             <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-              <div style={{ width: "20px", height: "1.5px", background: "#1A2E2C", borderRadius: "1px" }} />
-              <div style={{ width: "12px", height: "1.5px", background: "#1A2E2C", borderRadius: "1px" }} />
-              <div style={{ width: "20px", height: "1.5px", background: "#1A2E2C", borderRadius: "1px" }} />
+              <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#FFFFFF" : "#1A2E2C", borderRadius: "1px" }} />
+              <div style={{ width: "12px", height: "1.5px", background: isTransparent ? "#FFFFFF" : "#1A2E2C", borderRadius: "1px" }} />
+              <div style={{ width: "20px", height: "1.5px", background: isTransparent ? "#FFFFFF" : "#1A2E2C", borderRadius: "1px" }} />
             </div>
           </motion.button>
 
@@ -990,7 +990,8 @@ export default function Navbar({ announcementActive = false }) {
                 style={{
                   height: "46px",
                   width: "auto",
-                  objectFit: "contain"
+                  objectFit: "contain",
+                  filter: isTransparent ? "brightness(0) invert(1)" : "none"
                 }}
               />
             </Link>
@@ -1001,14 +1002,14 @@ export default function Navbar({ announcementActive = false }) {
             <motion.button 
               whileTap={{ scale: 0.88 }} 
               onClick={() => setSearchExpanded(true)} 
-              style={{ background: "none", border: "none", padding: "0 10px", color: "#1A2E2C", height: "100%" }}
+              style={{ background: "none", border: "none", padding: "0 10px", color: isTransparent ? "#FFFFFF" : "#1A2E2C", height: "100%" }}
             >
               <FiSearch size={20} />
             </motion.button>
             <motion.button 
               whileTap={{ scale: 0.88 }} 
               onClick={() => setIsCartOpen(true)} 
-              style={{ background: "none", border: "none", padding: "0 12px", color: "#1A2E2C", height: "100%", position: "relative", display: "flex", alignItems: "center", justifyContent: "flex-end" }}
+              style={{ background: "none", border: "none", padding: "0 12px", color: isTransparent ? "#FFFFFF" : "#1A2E2C", height: "100%", position: "relative", display: "flex", alignItems: "center", justifyContent: "flex-end" }}
             >
               <FiShoppingCart size={20} />
               {cartCount > 0 && (
@@ -1184,15 +1185,19 @@ export default function Navbar({ announcementActive = false }) {
             >
               {/* Header */}
               <div style={{ padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f0f0f0", flexShrink: 0 }}>
-                <span style={{
-                  fontFamily: "'Playfair Display', serif",
-                  fontSize: "22px",
-                  fontWeight: "900",
-                  color: "#A3835B",
-                  letterSpacing: "-0.5px"
-                }}>
-                  SeaBite.
-                </span>
+                <Link to="/" onClick={() => setMobileOpen(false)} style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
+                  <img
+                    src="/logo.webp"
+                    alt="SeaBite"
+                    width={66}
+                    height={46}
+                    style={{
+                      height: "46px",
+                      width: "auto",
+                      objectFit: "contain"
+                    }}
+                  />
+                </Link>
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setMobileOpen(false)}
