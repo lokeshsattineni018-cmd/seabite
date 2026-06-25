@@ -85,7 +85,7 @@ export const googleLogin = async (req, res) => {
     if (user.isBanned) {
       console.log("❌ Login blocked: User is banned.");
       logger.security("Banned user attempted login", { traceId: req.traceId, email: user.email });
-      return res.status(403).json({ message: "Access Denied: Your account has been suspended." });
+      return res.status(403).json({ message: "Your account is restricted, please contact customer care" });
     }
 
     // ✅ Reset login attempts on success
