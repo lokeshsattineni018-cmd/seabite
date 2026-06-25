@@ -343,6 +343,39 @@ const connectDB = async () => {
 (async () => {
   try {
     await connectDB();
+    // 🚀 Startup Migration: Populate missing product slugs for O(1) fast-path queries
+    try {
+      const Product = (await import("./models/Product.js")).default;
+      const productsWithoutSlugs = await Product.find({
+        $or: [
+          { slug: { $exists: false } },
+          { slug: "" },
+          { slug: null }
+        ]
+      });
+      if (productsWithoutSlugs.length > 0) {
+        console.log(`[Migration] Found ${productsWithoutSlugs.length} products without slugs. Migrating...`);
+        const slugify = (text) => {
+          if (!text) return "";
+          return text
+            .toString()
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w\-]+/g, "")
+            .replace(/\-\-+/g, "-")
+            .replace(/^-+/, "")
+            .replace(/-+$/, "");
+        };
+        for (const prod of productsWithoutSlugs) {
+          prod.slug = slugify(prod.name);
+          await prod.save();
+        }
+        console.log("[Migration] Slug migration completed successfully.");
+      }
+    } catch (err) {
+      console.error("[Migration] Slug migration failed:", err);
+    }
   } catch (err) {
     logger.error("Initial DB Connection Failed", { error: err.message });
   }

@@ -37,18 +37,17 @@ const staggerContainer = {
   visible: { transition: { staggerChildren: 0.06 } },
 };
 
-// --- Skeleton ---
 const DashboardSkeleton = () => (
-  <div className="space-y-8 animate-pulse p-8">
-    <div className="h-9 w-72 bg-gradient-to-r from-stone-100 to-stone-50 rounded-2xl" />
+  <div className="space-y-8 animate-pulse p-8 bg-[#f5f5f7] dark:bg-[#0c1017]">
+    <div className="h-9 w-72 bg-stone-200 dark:bg-stone-800 rounded-xl" />
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
       {[...Array(4)].map((_, i) => (
-        <div key={i} className="h-40 bg-gradient-to-br from-stone-50 to-white border border-stone-100 rounded-3xl" />
+        <div key={i} className="h-40 bg-white dark:bg-[#161b22] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.02)]" />
       ))}
     </div>
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-      <div className="lg:col-span-8 h-[420px] bg-gradient-to-br from-stone-50 to-white border border-stone-100 rounded-3xl" />
-      <div className="lg:col-span-4 h-[420px] bg-gradient-to-br from-stone-50 to-white border border-stone-100 rounded-3xl" />
+      <div className="lg:col-span-8 h-[420px] bg-white dark:bg-[#161b22] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.02)]" />
+      <div className="lg:col-span-4 h-[420px] bg-white dark:bg-[#161b22] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.02)]" />
     </div>
   </div>
 );
@@ -265,7 +264,7 @@ export default function AdminDashboard() {
   return (
     <motion.div
       initial="hidden" animate="visible" variants={staggerContainer}
-      className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white p-4 md:px-6 md:py-2 font-sans"
+      className="min-h-screen bg-[#f5f5f7] dark:bg-[#0c1017] p-4 md:px-6 md:py-6 font-sans"
     >
       <div className="max-w-[1600px] mx-auto space-y-6">
         <OrderDrawer 
@@ -281,7 +280,7 @@ export default function AdminDashboard() {
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-stone-900/60"
+                className="absolute inset-0 bg-stone-955/40 backdrop-blur-sm"
                 onClick={() => setShowOtpModal(false)}
               />
               <motion.div
@@ -289,21 +288,21 @@ export default function AdminDashboard() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
-                className="relative w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-stone-200"
+                className="relative w-full max-w-md bg-white dark:bg-[#161b22] rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] p-10"
               >
                 <button
                   onClick={() => setShowOtpModal(false)}
-                  className="absolute top-5 right-5 text-stone-300 hover:text-stone-600 p-2 rounded-full hover:bg-stone-50 transition-all"
+                  className="absolute top-5 right-5 text-stone-300 hover:text-stone-600 dark:hover:text-stone-400 p-2 rounded-full hover:bg-stone-50 dark:hover:bg-stone-800 transition-all"
                 >
                   <FiX size={20} />
                 </button>
 
                 <div className="text-center mb-8">
-                  <div className="w-16 h-16 bg-gradient-to-br from-stone-100 to-stone-50 text-stone-400 rounded-3xl flex items-center justify-center mx-auto mb-5 border border-stone-200">
+                  <div className="w-16 h-16 bg-[#f5f5f7] dark:bg-stone-800 text-stone-500 rounded-2xl flex items-center justify-center mx-auto mb-5">
                     <FiLock size={28} />
                   </div>
-                  <h3 className="text-2xl font-light text-stone-900 mb-2 tracking-tight">Verify Identity</h3>
-                  <p className="text-sm text-stone-500">Enter the code sent to your email</p>
+                  <h3 className="text-2xl font-light text-stone-900 dark:text-stone-100 mb-2 tracking-tight">Verify Identity</h3>
+                  <p className="text-sm text-stone-500 dark:text-stone-400">Enter the code sent to your email</p>
                 </div>
 
                 <form onSubmit={handleVerifyOtp} className="space-y-6">
@@ -311,7 +310,7 @@ export default function AdminDashboard() {
                     type="text"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    className="w-full px-5 py-5 bg-stone-50 border border-stone-200 rounded-2xl font-mono text-3xl text-center tracking-[0.5em] focus:bg-white focus:border-stone-400 focus:ring-2 focus:ring-stone-300/50 transition-all outline-none text-stone-800 placeholder:text-stone-300"
+                    className="w-full px-5 py-5 bg-[#f5f5f7] dark:bg-stone-800 border-none rounded-2xl font-mono text-3xl text-center tracking-[0.5em] focus:bg-white dark:focus:bg-[#161b22] focus:ring-4 focus:ring-stone-200/50 dark:focus:ring-stone-700/50 transition-all outline-none text-stone-800 dark:text-stone-100 placeholder:text-stone-300 dark:placeholder:text-stone-600"
                     placeholder="000000"
                     autoFocus
                   />
@@ -319,7 +318,8 @@ export default function AdminDashboard() {
                   <button
                     type="submit"
                     disabled={verifyingOtp || otp.length !== 6}
-                    className="w-full py-4 bg-stone-900 hover:bg-stone-800 text-white font-medium rounded-2xl transition-all shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-95"
+                    className="w-full py-4 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-stone-200 text-white dark:text-stone-900 font-medium rounded-2xl transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 active:scale-95"
+                    style={{ transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
                   >
                     {verifyingOtp ? (
                       <>
@@ -341,14 +341,14 @@ export default function AdminDashboard() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#fafaf9] border border-stone-200 rounded-3xl p-5 flex items-center gap-4 shadow-sm"
+            className="bg-white dark:bg-[#161b22] rounded-2xl p-5 flex items-center gap-4 shadow-[0_8px_30px_rgba(0,0,0,0.02)]"
           >
-            <div className="w-10 h-10 bg-stone-900 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-md">
+            <div className="w-10 h-10 bg-stone-900 dark:bg-stone-800 text-white rounded-xl flex items-center justify-center shrink-0 shadow-sm">
               <FiZap className="text-amber-400 animate-pulse" size={18} />
             </div>
             <div className="flex-1 min-w-0">
               <span className="text-[9px] font-bold text-stone-400 uppercase tracking-widest block">Executive Summary AI Insight</span>
-              <p className="text-xs font-semibold text-stone-700 mt-0.5 leading-relaxed">
+              <p className="text-xs font-semibold text-stone-700 dark:text-stone-300 mt-0.5 leading-relaxed">
                 {aiSummary}
               </p>
             </div>
@@ -356,9 +356,9 @@ export default function AdminDashboard() {
         )}
 
         {/* Unified Dashboard Controls Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 mt-2 pb-4 border-b border-stone-200/40">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 mt-2 pb-4 border-b border-stone-200/20">
           <div>
-            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
+            <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2 font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Telemetry Sync • last sync {lastUpdated?.toLocaleTimeString() || "Live"}
             </span>
@@ -372,13 +372,15 @@ export default function AdminDashboard() {
                 placeholder="Find orders, customers..." 
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 bg-white border border-stone-200/80 rounded-2xl text-xs w-64 focus:bg-white focus:ring-4 focus:ring-stone-100 transition-all outline-none shadow-sm"
+                className="pl-10 pr-4 py-2.5 bg-white dark:bg-[#161b22] border-none rounded-2xl text-xs w-64 focus:bg-white focus:ring-4 focus:ring-stone-100 dark:focus:ring-stone-800 transition-all outline-none shadow-[0_8px_30px_rgba(0,0,0,0.02)]"
+                style={{ transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
               />
             </div>
             <button
               onClick={() => fetchDashboardData(true)}
               disabled={isRefreshing}
-              className="p-2.5 bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 rounded-2xl transition-all disabled:opacity-50 shadow-sm cursor-pointer"
+              className="p-2.5 bg-white dark:bg-[#161b22] hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 rounded-2xl transition-all disabled:opacity-50 shadow-[0_8px_30px_rgba(0,0,0,0.02)] cursor-pointer"
+              style={{ transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}
             >
               <FiRefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
             </button>
@@ -389,32 +391,32 @@ export default function AdminDashboard() {
         {(alerts.slaBreaches.length > 0 || alerts.stockRisks.length > 0) && (
           <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {alerts.slaBreaches.length > 0 && (
-              <div className="bg-rose-50 border border-rose-200 rounded-3xl p-5 flex items-start gap-4">
-                <div className="w-12 h-12 bg-rose-500 text-white rounded-2xl flex items-center justify-center flex-shrink-0 animate-bounce">
+              <div className="bg-rose-50/50 dark:bg-rose-955/10 rounded-2xl p-5 flex items-start gap-4 shadow-[0_8px_30px_rgba(244,63,94,0.02)]">
+                <div className="w-12 h-12 bg-rose-500 text-white rounded-xl flex items-center justify-center flex-shrink-0">
                   <FiAlertCircle size={24} />
                 </div>
                 <div>
-                  <h3 className="text-rose-900 font-bold text-sm">Action Required: SLA Breached</h3>
-                  <p className="text-rose-700 text-xs mt-1">
+                  <h3 className="text-rose-900 dark:text-rose-400 font-bold text-sm">Action Required: SLA Breached</h3>
+                  <p className="text-rose-700 dark:text-rose-500 text-xs mt-1 font-mono">
                     {alerts.slaBreaches.length} orders have exceeded the 24h processing window.
                   </p>
-                  <button onClick={() => navigate("/admin/orders")} className="mt-3 px-4 py-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-xl uppercase tracking-wider hover:bg-rose-600 transition-colors">
+                  <button onClick={() => navigate("/admin/orders")} className="mt-3 px-4 py-1.5 bg-rose-500 text-white text-[10px] font-bold rounded-xl uppercase tracking-wider hover:bg-rose-600 transition-all" style={{ transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}>
                     Fulfill Now
                   </button>
                 </div>
               </div>
             )}
             {alerts.stockRisks.length > 0 && (
-              <div className="bg-amber-50 border border-amber-200 rounded-3xl p-5 flex items-start gap-4">
-                <div className="w-12 h-12 bg-amber-500 text-white rounded-2xl flex items-center justify-center flex-shrink-0">
+              <div className="bg-amber-50/50 dark:bg-amber-955/10 rounded-2xl p-5 flex items-start gap-4 shadow-[0_8px_30px_rgba(245,158,11,0.02)]">
+                <div className="w-12 h-12 bg-amber-500 text-white rounded-xl flex items-center justify-center flex-shrink-0">
                   <FiPackage size={24} />
                 </div>
                 <div>
-                  <h3 className="text-amber-900 font-bold text-sm">Stock-Out Risk</h3>
-                  <p className="text-amber-700 text-xs mt-1">
+                  <h3 className="text-amber-900 dark:text-amber-400 font-bold text-sm">Stock-Out Risk</h3>
+                  <p className="text-amber-700 dark:text-amber-500 text-xs mt-1 font-mono">
                     {alerts.stockRisks[0].name} {alerts.stockRisks.length > 1 ? `& ${alerts.stockRisks.length - 1} more` : ""} is running low ({alerts.stockRisks[0].countInStock}{alerts.stockRisks[0].unit}).
                   </p>
-                  <button onClick={() => navigate("/admin/products")} className="mt-3 px-4 py-1.5 bg-amber-500 text-white text-[10px] font-bold rounded-xl uppercase tracking-wider hover:bg-amber-600 transition-colors">
+                  <button onClick={() => navigate("/admin/products")} className="mt-3 px-4 py-1.5 bg-amber-500 text-white text-[10px] font-bold rounded-xl uppercase tracking-wider hover:bg-amber-600 transition-all" style={{ transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)" }}>
                     Restock
                   </button>
                 </div>
@@ -432,7 +434,6 @@ export default function AdminDashboard() {
             title="Today's Revenue"
             value={`₹${stats.todayRevenue?.toLocaleString() || 0}`}
             icon={<FiDollarSign size={20} />}
-            color="from-emerald-50 to-teal-50"
             index={0}
             subtitle={stats.revenuePacing || `Checking pacing...`}
           />
@@ -440,20 +441,19 @@ export default function AdminDashboard() {
             title="Live Velocity"
             value={`${stats.currentOpm || 0} OPM`}
             icon={<FiShoppingBag size={20} />}
-            color="from-blue-50 to-cyan-50"
             index={1}
             subtitle={`Total Orders: ${stats.totalOrders || 0}`}
           >
-             <div className="h-[40px] w-full mt-2 relative overflow-hidden rounded-xl border border-blue-100/40 bg-white/40">
+             <div className="h-[40px] w-full mt-2 relative overflow-hidden rounded-xl bg-stone-50 dark:bg-stone-850">
                 <ResponsiveContainer width="100%" height="100%">
                    <AreaChart data={stats.opmHistory || []} margin={{ top: 2, right: 2, left: -2, bottom: 2 }}>
                       <defs>
                          <linearGradient id="opmGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="#2563eb" stopOpacity={0.15} />
-                            <stop offset="100%" stopColor="#2563eb" stopOpacity={0} />
+                            <stop offset="0%" stopColor="#78716c" stopOpacity={0.15} />
+                            <stop offset="100%" stopColor="#78716c" stopOpacity={0} />
                          </linearGradient>
                       </defs>
-                      <Area type="monotone" dataKey="opm" stroke="#2563eb" strokeWidth={1.5} fill="url(#opmGrad)" dot={false} />
+                      <Area type="monotone" dataKey="opm" stroke="#78716c" strokeWidth={1.5} fill="url(#opmGrad)" dot={false} />
                    </AreaChart>
                 </ResponsiveContainer>
              </div>
@@ -462,21 +462,19 @@ export default function AdminDashboard() {
             title="Customers"
             value={stats.activeUsers || 0}
             icon={<FiUsers size={20} />}
-            color="from-teal-50 to-emerald-50"
             index={2}
           />
           <StatCard
             title="Pending & Dispatch"
             value={stats.pendingOrders || 0}
             icon={<FiClock size={20} />}
-            color="from-rose-50 to-pink-50"
             index={3}
             subtitle={`Pressure: Awaiting (${stats.awaitingPickup || 0}) vs Out (${stats.outForDelivery || 0})`}
           >
              <div className="mt-3">
-                <div className="w-full h-1.5 bg-white/40 rounded-full overflow-hidden flex">
-                   <div style={{ width: `${(stats.awaitingPickup / ((stats.awaitingPickup + stats.outForDelivery) || 1)) * 100}%` }} className="bg-amber-400 h-full transition-all duration-500"></div>
-                   <div style={{ width: `${(stats.outForDelivery / ((stats.awaitingPickup + stats.outForDelivery) || 1)) * 100}%` }} className="bg-emerald-400 h-full transition-all duration-500"></div>
+                <div className="w-full h-1.5 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden flex">
+                   <div style={{ width: `${(stats.awaitingPickup / ((stats.awaitingPickup + stats.outForDelivery) || 1)) * 100}%` }} className="bg-stone-400 h-full transition-all duration-500"></div>
+                   <div style={{ width: `${(stats.outForDelivery / ((stats.awaitingPickup + stats.outForDelivery) || 1)) * 100}%` }} className="bg-stone-750 h-full transition-all duration-500"></div>
                 </div>
              </div>
           </StatCard>
@@ -488,19 +486,19 @@ export default function AdminDashboard() {
           <motion.div
             variants={fadeUp}
             custom={4}
-            className="lg:col-span-8 bg-white rounded-3xl border border-stone-200/50 shadow-sm p-8 hover:shadow-md transition-shadow"
+            className="lg:col-span-8 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] p-8 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] border-none"
           >
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <div>
                 <h3 className="text-xl font-light text-stone-900 mb-1">Revenue Trend</h3>
                 <p className="text-xs text-stone-400 uppercase tracking-wide">Last {timeFilter === "6months" ? "6 months" : "year"}</p>
               </div>
-              <div className="flex bg-stone-100/60 p-1 rounded-2xl gap-1">
+              <div className="flex bg-[#f5f5f7] p-1 rounded-xl gap-1">
                 {["6months", "1year"].map((f) => (
                   <button
                     key={f}
                     onClick={() => setTimeFilter(f)}
-                    className={`px-5 py-2 rounded-xl text-xs font-medium transition-all ${timeFilter === f ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
+                    className={`px-5 py-2 rounded-lg text-xs font-semibold transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${timeFilter === f ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-700"}`}
                   >
                     {f === "6months" ? "6M" : "1Y"}
                   </button>
@@ -518,8 +516,8 @@ export default function AdminDashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e7e5e4" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#a8a29e" }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#a8a29e" }} tickFormatter={(v) => `₹${v / 1000}k`} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#a8a29e", fontFamily: "ui-monospace, monospace" }} />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "#a8a29e", fontFamily: "ui-monospace, monospace" }} tickFormatter={(v) => `₹${v / 1000}k`} />
                   <Tooltip content={<ChartTooltip />} />
                   <Area type="monotone" dataKey="revenue" stroke="#f97316" strokeWidth={2.5} fill="url(#revenueGrad)" animationDuration={1200} />
                 </AreaChart>
@@ -536,20 +534,20 @@ export default function AdminDashboard() {
             {/* Maintenance */}
             <div
               onClick={toggleMaintenanceClick}
-              className={`rounded-3xl p-5 border cursor-pointer transition-all ${settings.isMaintenanceMode ? "bg-rose-50/40 border-rose-200/50 hover:border-rose-300" : "bg-stone-50/30 border-stone-200/40 hover:border-stone-300"}`}
+              className={`rounded-2xl p-5 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer bg-white shadow-[0_8px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-2xl ${settings.isMaintenanceMode ? "bg-rose-100 text-rose-600" : "bg-stone-200 text-stone-600"}`}>
+                  <div className={`p-3 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${settings.isMaintenanceMode ? "bg-rose-50 text-rose-600" : "bg-[#f5f5f7] text-stone-600"}`}>
                     {settings.isMaintenanceMode ? <FiLock size={18} /> : <FiUnlock size={18} />}
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-stone-900">Maintenance</h3>
+                    <h3 className="text-sm font-semibold text-stone-900">Maintenance</h3>
                     <p className="text-xs text-stone-500 mt-0.5">{settings.isMaintenanceMode ? "Store locked" : "Store live"}</p>
                   </div>
                 </div>
-                <div className={`w-12 h-7 rounded-full p-1 transition-all ${settings.isMaintenanceMode ? "bg-rose-400" : "bg-stone-300"}`}>
-                  <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.isMaintenanceMode ? "translate-x-5" : "translate-x-0"}`} />
+                <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${settings.isMaintenanceMode ? "bg-rose-500" : "bg-[#e8e8ed]"}`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${settings.isMaintenanceMode ? "translate-x-5" : "translate-x-0"}`} />
                 </div>
               </div>
             </div>
@@ -564,40 +562,40 @@ export default function AdminDashboard() {
                   toast.success(newDiscount > 0 ? "Happy Hour On!" : "Happy Hour Off");
                 } catch (err) { toast.error("Update failed"); }
               }}
-              className={`rounded-3xl p-5 border cursor-pointer transition-all ${settings.globalDiscount > 0 ? "bg-amber-50/40 border-amber-200/50 hover:border-amber-300" : "bg-stone-50/30 border-stone-200/40 hover:border-stone-300"}`}
+              className={`rounded-2xl p-5 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer bg-white shadow-[0_8px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-3 rounded-2xl ${settings.globalDiscount > 0 ? "bg-amber-100 text-amber-600" : "bg-stone-200 text-stone-600"}`}>
+                  <div className={`p-3 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${settings.globalDiscount > 0 ? "bg-amber-50 text-amber-600" : "bg-[#f5f5f7] text-stone-600"}`}>
                     {settings.globalDiscount > 0 ? <FiZap size={18} /> : <FiClock size={18} />}
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-stone-900">Happy Hour</h3>
-                    <p className="text-xs text-stone-500 mt-0.5">
+                    <h3 className="text-sm font-semibold text-stone-900">Happy Hour</h3>
+                    <p className="text-xs text-stone-500 mt-0.5 font-mono">
                       {settings.globalDiscount > 0 
                         ? `${Math.floor(happyHourTimeLeft / 60)}:${String(happyHourTimeLeft % 60).padStart(2, '0')} remaining` 
                         : "Normal pricing"}
                     </p>
                   </div>
                 </div>
-                <div className={`w-12 h-7 rounded-full p-1 transition-all ${settings.globalDiscount > 0 ? "bg-amber-400" : "bg-stone-300"}`}>
-                  <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.globalDiscount > 0 ? "translate-x-5" : "translate-x-0"}`} />
+                <div className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${settings.globalDiscount > 0 ? "bg-amber-500" : "bg-[#e8e8ed]"}`}>
+                  <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${settings.globalDiscount > 0 ? "translate-x-5" : "translate-x-0"}`} />
                 </div>
               </div>
             </div>
 
             {/* 🚨 Live Frustration Monitor */}
-            <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] p-6 overflow-hidden">
                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold text-stone-900 uppercase tracking-widest flex items-center gap-2">
+                  <h3 className="text-xs font-bold text-stone-900 uppercase tracking-widest flex items-center gap-2">
                     <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
                     Live Pulse
                   </h3>
-                  <span className="text-[10px] font-bold text-stone-400 bg-stone-50 px-2 py-0.5 rounded-full border border-stone-100">REAL-TIME</span>
+                  <span className="text-[10px] font-bold text-stone-400 bg-stone-50 px-2.5 py-1 rounded-full">REAL-TIME</span>
                </div>
                <div className="space-y-3">
                   {frustrationEvents.length === 0 ? (
-                    <div className="py-8 text-center border-2 border-dashed border-stone-100 rounded-2xl">
+                    <div className="py-8 text-center border-2 border-dashed border-[#f5f5f7] rounded-xl">
                        <p className="text-[10px] font-bold text-stone-300 uppercase tracking-widest">System Healthy</p>
                     </div>
                   ) : (
@@ -606,15 +604,15 @@ export default function AdminDashboard() {
                         initial={{ x: 20, opacity: 0 }} 
                         animate={{ x: 0, opacity: 1 }} 
                         key={e.id} 
-                        className="p-3 bg-rose-50/50 border border-rose-100/50 rounded-2xl flex items-center justify-between"
+                        className="p-3 bg-rose-50/50 rounded-xl flex items-center justify-between"
                       >
                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-rose-500 shadow-sm border border-rose-100">
+                            <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-rose-500 shadow-sm">
                                <FiAlertCircle size={14} />
                             </div>
                             <div>
                                <p className="text-[11px] font-bold text-stone-900 line-clamp-1">{e.userName || 'Guest'}: {e.reason}</p>
-                               <p className="text-[9px] text-stone-400">{e.time} • {e.page}</p>
+                               <p className="text-[9px] text-stone-400 font-mono">{e.time} • {e.page}</p>
                             </div>
                          </div>
                          <button 
@@ -622,7 +620,7 @@ export default function AdminDashboard() {
                              toast.success(`Incentive sent to ${e.userName || 'Guest'}!`);
                              setFrustrationEvents(prev => prev.filter(item => item.id !== e.id));
                            }}
-                           className="p-2 bg-stone-900 text-white rounded-xl hover:bg-stone-800 transition-all active:scale-90"
+                           className="p-2 bg-stone-900 text-white rounded-xl hover:bg-stone-800 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-90"
                          >
                            <FiZap size={12} />
                          </button>
@@ -700,13 +698,13 @@ export default function AdminDashboard() {
           <motion.div
             variants={fadeUp}
             custom={7}
-            className="lg:col-span-8 bg-white rounded-3xl border border-stone-200/50 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+            className="lg:col-span-8 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] overflow-hidden hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
           >
-            <div className="p-6 border-b border-stone-100/50 flex justify-between items-center">
+            <div className="p-6 border-b border-stone-100 flex justify-between items-center">
               <h3 className="text-lg font-light text-stone-900">Recent Orders</h3>
               <button
                 onClick={() => navigate("/admin/orders")}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-2xl text-xs font-medium transition-all"
+                className="px-4 py-2 bg-[#f5f5f7] hover:bg-[#e8e8ed] text-stone-750 rounded-xl text-xs font-semibold transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
               >
                 View All
               </button>
@@ -724,31 +722,31 @@ export default function AdminDashboard() {
                     <div
                       key={order._id}
                       onClick={() => setSelectedDrawerOrder(order)}
-                      className="flex items-center justify-between p-4 bg-stone-50/30 hover:bg-stone-100/50 rounded-2xl border border-transparent hover:border-stone-200 transition-all cursor-pointer group"
+                      className="flex items-center justify-between p-4 bg-[#fafafa] hover:bg-[#f5f5f7] rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer group hover:scale-[1.005] active:scale-[0.995]"
                     >
                       <div className="flex items-center gap-4 flex-1">
                         {order.items?.[0] ? (
                           <img
                             src={getImageUrl(order.items[0].image)}
-                            className="w-12 h-12 object-cover rounded-xl bg-stone-50 border border-stone-100"
+                            className="w-12 h-12 object-cover rounded-xl bg-white border border-stone-100"
                             alt="product"
                           />
                         ) : (
-                          <div className="w-12 h-12 rounded-xl bg-stone-100 flex items-center justify-center text-stone-400">
+                          <div className="w-12 h-12 rounded-xl bg-[#f5f5f7] flex items-center justify-center text-stone-400">
                             <FiPackage size={20} />
                           </div>
                         )}
                         <div>
-                          <h4 className="text-sm font-bold text-stone-900">
+                          <h4 className="font-semibold text-stone-900 text-sm">
                             {order.user?.name || "Customer"}
                           </h4>
-                          <p className="text-[10px] text-stone-500 font-medium uppercase tracking-wider">
+                          <p className="text-[10px] text-stone-400 font-mono mt-0.5 uppercase tracking-wider">
                             #{order.orderId || order._id.slice(-6).toUpperCase()} • {new Date(order.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <p className="font-medium text-stone-900">₹{(order.totalAmount || 0).toLocaleString()}</p>
+                        <p className="font-semibold text-stone-900 font-mono">₹{(order.totalAmount || 0).toLocaleString()}</p>
                         <StatusPill status={order.status} />
                       </div>
                     </div>
@@ -761,8 +759,8 @@ export default function AdminDashboard() {
           {/* Activity */}
           <motion.div variants={fadeUp} custom={8} className="lg:col-span-4 space-y-5">
             {/* Quick Actions Hub */}
-            <div className="bg-gradient-to-br from-stone-900 to-stone-800 rounded-3xl p-6 shadow-xl relative overflow-hidden group">
-               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16 blur-3xl group-hover:bg-white/10 transition-all" />
+            <div className="bg-stone-900 rounded-2xl p-6 shadow-xl relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16 blur-3xl group-hover:bg-white/10 transition-all duration-300" />
                <h3 className="text-white text-lg font-light mb-5 flex items-center gap-2">
                   <FiZap className="text-amber-400" />
                   Quick Actions
@@ -780,7 +778,7 @@ export default function AdminDashboard() {
                         toast.error("Clearance failed", { id: tid });
                       }
                     }}
-                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-xl flex flex-col items-center gap-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-95"
                   >
                      <FiTrendingUp className="text-rose-400" size={20} />
                      <span className="text-[10px] font-bold uppercase tracking-widest text-center">Clearance</span>
@@ -797,21 +795,21 @@ export default function AdminDashboard() {
                         toast.error("Reset failed", { id: tid });
                       }
                     }}
-                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-xl flex flex-col items-center gap-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-95"
                   >
-                     <FiRefreshCw className="text-stone-300" size={20} />
+                     <FiRefreshCw className="text-stone-350" size={20} />
                      <span className="text-[10px] font-bold uppercase tracking-widest text-center">Reset Price</span>
                   </button>
                   <button 
                     onClick={() => navigate("/admin/delivery")}
-                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-xl flex flex-col items-center gap-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-95"
                   >
                      <FiActivity className="text-blue-400" size={20} />
                      <span className="text-[10px] font-bold uppercase tracking-widest text-center">Fleet Map</span>
                   </button>
                   <button 
                     onClick={() => navigate("/admin/messages")}
-                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-xl flex flex-col items-center gap-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-95"
                   >
                      <FiMail className="text-teal-400" size={20} />
                      <span className="text-[10px] font-bold uppercase tracking-widest text-center">Inbox</span>
@@ -825,7 +823,7 @@ export default function AdminDashboard() {
                        // Simulation for now
                        toast.success("Broadcast queued!");
                     }}
-                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-xl flex flex-col items-center gap-2 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] active:scale-95"
                   >
                      <FiStar className="text-amber-400" size={20} />
                      <span className="text-[10px] font-bold uppercase tracking-widest text-center">Broadcast</span>
@@ -834,8 +832,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Messages */}
-            <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 h-[280px] flex flex-col hover:shadow-md transition-shadow">
-               {/* ... (rest of messages) ... */}
+            <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] p-6 h-[280px] flex flex-col hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
                <div className="flex justify-between items-center mb-4 shrink-0">
                 <h3 className="text-lg font-light text-stone-900">Recent Inbox</h3>
                 <button onClick={() => navigate("/admin/messages")} className="text-stone-400 hover:text-stone-600 transition-colors">
@@ -854,11 +851,11 @@ export default function AdminDashboard() {
                     <div
                       key={msg._id}
                       onClick={() => navigate("/admin/messages")}
-                      className="p-3 bg-stone-50/40 hover:bg-stone-100/50 rounded-2xl cursor-pointer transition-all border border-transparent hover:border-stone-200 group"
+                      className="p-3 bg-[#fafafa] hover:bg-[#f5f5f7] rounded-xl cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <h4 className="text-xs font-medium text-stone-900 truncate max-w-[120px]">{msg.email}</h4>
-                        <span className="text-[10px] text-stone-400">{new Date(msg.createdAt).toLocaleDateString()}</span>
+                        <h4 className="text-xs font-semibold text-stone-900 truncate max-w-[120px]">{msg.email}</h4>
+                        <span className="text-[10px] text-stone-400 font-mono">{new Date(msg.createdAt).toLocaleDateString()}</span>
                       </div>
                       <p className="text-xs text-stone-600 line-clamp-1">{msg.message}</p>
                     </div>
@@ -868,10 +865,10 @@ export default function AdminDashboard() {
             </div>
 
             {/* Reviews */}
-            <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 h-[280px] flex flex-col hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] p-6 h-[280px] flex flex-col hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
               <div className="flex justify-between items-center mb-4 shrink-0">
                 <h3 className="text-lg font-light text-stone-900">Reviews</h3>
-                <span className="text-xs font-medium text-stone-500 bg-stone-100/50 px-2.5 py-1 rounded-full">{allReviews.length}</span>
+                <span className="text-xs font-semibold text-stone-500 bg-[#f5f5f7] px-2.5 py-1 rounded-full font-mono">{allReviews.length}</span>
               </div>
 
               <div className="flex-1 overflow-y-auto space-y-2">
@@ -882,10 +879,10 @@ export default function AdminDashboard() {
                   </div>
                 ) : (
                   allReviews?.map((rev) => (
-                    <div key={rev._id} className="p-3 bg-stone-50/40 rounded-2xl group relative border border-transparent hover:border-stone-200 transition-all hover:bg-stone-100/50">
+                    <div key={rev._id} className="p-3 bg-[#fafafa] rounded-xl group relative transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[#f5f5f7]">
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteReviewHandler(rev.productId, rev._id); }}
-                        className="absolute top-2 right-2 text-stone-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all p-1 hover:scale-110"
+                        className="absolute top-2 right-2 text-stone-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] p-1 hover:scale-110"
                       >
                         <FiTrash2 size={12} />
                       </button>
@@ -896,7 +893,7 @@ export default function AdminDashboard() {
                       </div>
                       <p className="text-xs text-stone-700 line-clamp-1">"{rev.comment}"</p>
                       <div className="flex justify-between items-center text-[10px] mt-2 text-stone-500">
-                        <span>{rev.userName}</span>
+                        <span className="font-medium">{rev.userName}</span>
                         <span className="text-stone-400">{rev.productName}</span>
                       </div>
                     </div>
@@ -917,22 +914,26 @@ export default function AdminDashboard() {
 
 // --- Components ---
 
-function StatCard({ title, value, icon, color, index, subtitle, children }) {
+function StatCard({ title, value, icon, index, subtitle, children }) {
   return (
     <motion.div
       variants={fadeUp}
       custom={index}
-      className={`bg-gradient-to-br ${color} rounded-3xl p-6 border border-stone-200/30 shadow-sm hover:shadow-md transition-all group relative overflow-hidden`}
+      className="bg-white rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group relative overflow-hidden hover:scale-[1.01] active:scale-[0.99]"
     >
-      <div className="absolute top-0 right-0 w-24 h-24 bg-white/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
-      <div className="relative z-10">
-        <div className="text-stone-600 mb-3 opacity-60 group-hover:opacity-100 transition-opacity">
-          {icon}
+      <div className="absolute top-0 right-0 w-24 h-24 bg-[#f5f5f7]/50 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="relative z-10 flex flex-col h-full justify-between">
+        <div>
+          <div className="text-stone-550 mb-3 opacity-90 group-hover:opacity-100 transition-opacity duration-300">
+            {icon}
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-stone-400 mb-2">{title}</p>
+          <h4 className="text-2xl font-semibold text-stone-900 font-mono tracking-tight">{value}</h4>
         </div>
-        <p className="text-xs font-medium uppercase tracking-wide text-stone-500 mb-2">{title}</p>
-        <h4 className="text-2xl font-light text-stone-900">{value}</h4>
-        {subtitle && <p className="text-[10px] font-semibold text-stone-500 uppercase mt-1">{subtitle}</p>}
-        {children}
+        <div>
+          {subtitle && <p className="text-[10px] font-medium text-stone-400 uppercase mt-1.5 font-mono">{subtitle}</p>}
+          {children}
+        </div>
       </div>
     </motion.div>
   );
@@ -940,16 +941,16 @@ function StatCard({ title, value, icon, color, index, subtitle, children }) {
 
 function StatusPill({ status }) {
   const map = {
-    "Pending": "bg-amber-100/60 text-amber-700 border-amber-200/50",
-    "Cooking": "bg-blue-100/60 text-blue-700 border-blue-200/50",
-    "Ready": "bg-teal-100/60 text-teal-700 border-teal-200/50",
-    "Completed": "bg-emerald-100/60 text-emerald-700 border-emerald-200/50",
-    "Cancelled": "bg-rose-100/60 text-rose-700 border-rose-200/50"
+    "Pending": "bg-amber-50 text-amber-600",
+    "Cooking": "bg-blue-50 text-blue-600",
+    "Ready": "bg-teal-50 text-teal-600",
+    "Completed": "bg-emerald-50 text-emerald-600",
+    "Cancelled": "bg-rose-50 text-rose-600"
   };
-  const s = map[status] || "bg-stone-100/60 text-stone-600 border-stone-200/50";
+  const s = map[status] || "bg-stone-50 text-stone-600";
 
   return (
-    <span className={`px-3 py-1.5 rounded-full text-xs font-medium border ${s}`}>
+    <span className={`px-2.5 py-1 rounded-full text-[10px] font-semibold tracking-wide ${s}`}>
       {status}
     </span>
   );
@@ -957,16 +958,16 @@ function StatusPill({ status }) {
 
 function ExportCard({ title, desc, icon, onClick }) {
   return (
-    <div onClick={onClick} className="bg-gradient-to-br from-stone-50 to-white rounded-3xl p-6 border border-stone-200/50 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+    <div onClick={onClick} className="bg-white rounded-2xl p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer group hover:scale-[1.01] active:scale-[0.99]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="text-stone-600 opacity-60 group-hover:opacity-100 transition-opacity">{icon}</div>
+          <div className="text-stone-600 opacity-60 group-hover:opacity-100 transition-opacity duration-300">{icon}</div>
           <div>
-            <h3 className="font-medium text-stone-900 text-sm">{title}</h3>
+            <h3 className="font-semibold text-stone-900 text-sm">{title}</h3>
             <p className="text-xs text-stone-500 mt-0.5">{desc}</p>
           </div>
         </div>
-        <FiDownload className="text-stone-400 group-hover:text-stone-600 transition-colors" size={18} />
+        <FiDownload className="text-stone-400 group-hover:text-stone-600 transition-colors duration-300" size={18} />
       </div>
     </div>
   );
@@ -974,9 +975,9 @@ function ExportCard({ title, desc, icon, onClick }) {
 
 function SearchInsightsCard({ insights }) {
   return (
-    <div className="bg-white rounded-3xl border border-stone-200/50 shadow-sm p-6 max-h-[200px] flex flex-col hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.02)] p-6 max-h-[200px] flex flex-col hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]">
       <div className="flex justify-between items-center mb-4">
-        <h3 className="text-sm font-medium text-stone-900">Top Searches</h3>
+        <h3 className="text-sm font-semibold text-stone-900">Top Searches</h3>
         <FiSearch className="text-stone-400" size={16} />
       </div>
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
@@ -985,9 +986,9 @@ function SearchInsightsCard({ insights }) {
         ) : (
           <div className="flex flex-wrap gap-2">
             {insights.map((item, i) => (
-              <div key={i} className="flex items-center gap-1.5 bg-stone-50 border border-stone-100 px-2.5 py-1 rounded-lg">
-                <span className="text-xs font-medium text-stone-700">{item.query}</span>
-                <span className={`text-[9px] font-bold px-1 rounded ${item.found ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"}`}>
+              <div key={i} className="flex items-center gap-1.5 bg-[#f5f5f7] px-2.5 py-1 rounded-xl">
+                <span className="text-xs font-semibold text-stone-700">{item.query}</span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded font-mono ${item.found ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
                   {item.count}
                 </span>
               </div>
@@ -1036,14 +1037,14 @@ function BannerControl({ settings, setSettings }) {
   };
 
   return (
-    <div className={`rounded-3xl p-5 border transition-all ${settings.banner?.active ? "bg-teal-50/40 border-teal-200/50 hover:border-teal-300" : "bg-stone-50/30 border-stone-200/40 hover:border-stone-300"}`}>
+    <div className={`rounded-2xl p-5 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] bg-white shadow-[0_8px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.04)]`}>
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-3 rounded-2xl ${settings.banner?.active ? "bg-teal-100 text-teal-600" : "bg-stone-200 text-stone-600"}`}>
+          <div className={`p-3 rounded-xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${settings.banner?.active ? "bg-teal-50 text-teal-600" : "bg-[#f5f5f7] text-stone-600"}`}>
             <FiStar size={18} />
           </div>
           <div>
-            <h3 className="text-sm font-medium text-stone-900">Promo Banner</h3>
+            <h3 className="text-sm font-semibold text-stone-900">Promo Banner</h3>
             <p className="text-xs text-stone-500 mt-0.5">{settings.banner?.active ? "Visible" : "Hidden"}</p>
           </div>
         </div>
@@ -1058,14 +1059,14 @@ function BannerControl({ settings, setSettings }) {
               toast.success(next ? "Published!" : "Hidden");
             } catch (err) { toast.error("Update failed"); }
           }}
-          className={`w-12 h-7 rounded-full p-1 transition-all ${settings.banner?.active ? "bg-teal-400" : "bg-stone-300"}`}
+          className={`w-11 h-6 rounded-full p-0.5 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none ${settings.banner?.active ? "bg-emerald-500" : "bg-[#e8e8ed]"}`}
         >
-          <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform ${settings.banner?.active ? "translate-x-5" : "translate-x-0"}`} />
+          <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${settings.banner?.active ? "translate-x-5" : "translate-x-0"}`} />
         </button>
       </div>
 
       <div
-        className={`relative border-2 border-dashed rounded-2xl p-3 flex flex-col items-center justify-center text-center transition-all cursor-pointer ${isDragging ? "border-teal-400 bg-teal-50/50" : "border-stone-200 hover:border-stone-300 bg-stone-50/30"}`}
+        className={`relative border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center text-center transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer ${isDragging ? "border-teal-400 bg-teal-50/50" : "border-stone-200 hover:border-stone-300 bg-[#f5f5f7]"}`}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={(e) => {
@@ -1089,12 +1090,12 @@ function BannerControl({ settings, setSettings }) {
         ) : settings.banner?.imageUrl ? (
           <div className="w-full group">
             <img src={settings.banner.imageUrl} alt="Banner" className="h-16 w-full object-cover rounded-lg" />
-            <p className="text-xs text-stone-500 mt-2 group-hover:text-stone-700 transition-colors">Click to change</p>
+            <p className="text-xs text-stone-500 mt-2 group-hover:text-stone-700 transition-colors duration-300">Click to change</p>
           </div>
         ) : (
           <div className="py-4">
             <FiCheckCircle className="mx-auto text-stone-300 mb-2" size={20} />
-            <p className="text-xs font-medium text-stone-600">Drop image here</p>
+            <p className="text-xs font-semibold text-stone-600">Drop image here</p>
           </div>
         )}
       </div>
@@ -1104,7 +1105,7 @@ function BannerControl({ settings, setSettings }) {
 
 function LiveFleetRadar({ fleet }) {
   return (
-    <div className="bg-stone-900 rounded-3xl border border-stone-800 shadow-2xl p-6 h-[280px] flex flex-col relative overflow-hidden group">
+    <div className="bg-stone-900 rounded-2xl shadow-2xl p-6 h-[280px] flex flex-col relative overflow-hidden group">
       <div className="absolute inset-0 opacity-20 pointer-events-none">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/20 via-transparent to-transparent animate-pulse" />
         <div className="grid grid-cols-6 h-full border-l border-white/5">
