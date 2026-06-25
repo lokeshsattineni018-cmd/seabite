@@ -20,22 +20,11 @@ import triggerHaptic from "../../utils/haptics"; // 📱 Haptic feedback
 import ReviewModal from "../../components/common/ReviewModal";
 import RecommendationBlock from "../../components/common/RecommendationBlock";
 
+import { slugify } from "../../utils/slugify";
+
 const API_URL = import.meta.env.VITE_API_URL || "";
 import socket from "../../utils/socket";
 import { v4 as uuidv4 } from 'uuid';
-
-const slugify = (text) => {
-  if (!text) return "";
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\-]+/g, "")
-    .replace(/\-\-+/g, "-")
-    .replace(/^-+/, "")
-    .replace(/-+$/, "");
-};
 
 // ─── Bundle Section ───────────────────────────────────────────────────────────
 const BundleSection = ({ mainProduct, relatedProducts, getFullImageUrl, refreshCartCount, viewerCount }) => {
@@ -472,7 +461,7 @@ const RecentlyViewed = ({ items, getFullImageUrl }) => {
       </h3>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "16px" }}>
         {items.map(item => (
-          <Link key={item._id} to={`/products/${item._id}`} style={{ textDecoration: "none" }}>
+          <Link key={item._id} to={`/products/${slugify(item.name)}`} style={{ textDecoration: "none" }}>
             <div style={{ 
               background: "#fff", border: "1.5px solid #E2EEEC", borderRadius: "16px", padding: "16px",
               textAlign: "center", transition: "all 0.2s", cursor: "pointer", height: "100%"

@@ -34,6 +34,10 @@ export default function Products() {
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+  const [localSearch, setLocalSearch] = useState("");
+  const searchDebounceRef = useRef(null);
+  const productsLengthRef = useRef(0);
+
   const [filters, setFilters] = useState({
     category: "All",
     search: "",
@@ -57,6 +61,7 @@ export default function Products() {
         : "All",
       search: search || "",
     }));
+    setLocalSearch(search || "");
 
     // 🚀 Performance: Try to load from cache immediately on mount
     const cacheKey = `seabite_products_cache_${location.search}`;
@@ -72,7 +77,7 @@ export default function Products() {
   }, [location.search]);
 
   const fetchProducts = useCallback(async (isInitial = true) => {
-    if (isInitial && products.length === 0) setLoading(true);
+    if (isInitial && productsLengthRef.current === 0) setLoading(true);
     setError(null);
     try {
       const params = {
@@ -88,6 +93,7 @@ export default function Products() {
       const fetchedDiscount = res.data.globalDiscount || 0;
       
       setProducts(fetchedProducts);
+      productsLengthRef.current = fetchedProducts.length;
       setGlobalDiscount(fetchedDiscount);
 
       // 🚀 Performance: Update cache
@@ -99,19 +105,19 @@ export default function Products() {
       }));
     } catch (err) {
       console.error("Products fetch error:", err);
-      if (products.length === 0) setError("Failed to fetch fresh catch. Please try again.");
+      if (productsLengthRef.current === 0) setError("Failed to fetch fresh catch. Please try again.");
     } finally {
       setLoading(false);
     }
-  }, [filters, location.search, products.length]);
+  }, [filters, location.search]);
 
   useEffect(() => {
-    const t = setTimeout(fetchProducts, 300);
-    return () => clearTimeout(t);
+    fetchProducts();
   }, [fetchProducts]);
 
   const clearFilters = () => {
     setFilters({ category: "All", search: "", minPrice: "", maxPrice: "", inStock: false, sort: "newest" });
+    setLocalSearch("");
     navigate("/products");
   };
 
@@ -291,8 +297,15 @@ export default function Products() {
                 <input
                   type="text"
                   placeholder="Search…"
-                  value={filters.search}
-                  onChange={(e) => setFilters((p) => ({ ...p, search: e.target.value }))}
+                  value={localSearch}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setLocalSearch(val);
+                    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+                    searchDebounceRef.current = setTimeout(() => {
+                      setFilters((p) => ({ ...p, search: val }));
+                    }, 150);
+                  }}
                   style={{
                     width: "100%", paddingLeft: "28px", paddingRight: filters.search ? "28px" : "10px",
                     paddingTop: "8px", paddingBottom: "8px",
@@ -302,7 +315,7 @@ export default function Products() {
                   }}
                 />
                 {filters.search && (
-                  <button onClick={() => setFilters((p) => ({ ...p, search: "" }))}
+                  <button onClick={() => { setFilters((p) => ({ ...p, search: "" })); setLocalSearch(""); }}
                     style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#B8CFCC", display: "flex" }}>
                     <FiX size={11} />
                   </button>

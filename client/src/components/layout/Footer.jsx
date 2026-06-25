@@ -53,26 +53,26 @@ export default function Footer() {
               <img
                 src="/logo.webp"
                 alt="SeaBite"
-                width={75}
-                height={52}
-                style={{ height: "52px", width: "75px", objectFit: "contain" }}
+                width={105}
+                height={72}
+                style={{ height: "72px", width: "105px", objectFit: "contain" }}
               />
             </Link>
             <p style={{
-              fontSize: "13px", color: "#6B8F8A",
+              fontSize: "13px", color: "#374947",
               lineHeight: "1.75", maxWidth: "240px",
               marginBottom: "22px",
             }}>
               Premium seafood sourced from the Andhra Pradesh coastline. Chemical-free, fresh every morning.
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "9px" }}>
-              <a href="tel:+919866635566" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6B8F8A", textDecoration: "none", fontSize: "13px" }}>
+              <a href="tel:+919866635566" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#374947", textDecoration: "none", fontSize: "13px" }}>
                 <FiPhone size={13} color="#5BBFB5" /> +91 98666 35566
               </a>
-              <a href="mailto:support@seabite.co.in" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6B8F8A", textDecoration: "none", fontSize: "13px" }}>
+              <a href="mailto:support@seabite.co.in" style={{ display: "flex", alignItems: "center", gap: "8px", color: "#374947", textDecoration: "none", fontSize: "13px" }}>
                 <FiMail size={13} color="#5BBFB5" /> support@seabite.co.in
               </a>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#6B8F8A", fontSize: "13px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#374947", fontSize: "13px" }}>
                 <FiMapPin size={13} color="#5BBFB5" /> Mogalthur, AP 534281, Andhra Pradesh, India
               </div>
             </div>
@@ -82,7 +82,7 @@ export default function Footer() {
           {COLS.map((col) => (
             <div key={col.title}>
               <h4 style={{
-                fontSize: "10px", fontWeight: "800", color: "#1A2E2C",
+                fontSize: "11px", fontWeight: "800", color: "#1A2E2C",
                 textTransform: "uppercase", letterSpacing: "0.13em",
                 margin: "0 0 16px",
               }}>
@@ -93,9 +93,9 @@ export default function Footer() {
                   <li key={link.to}>
                     <Link
                       to={link.to}
-                      style={{ color: "#6B8F8A", textDecoration: "none", fontSize: "13px", fontWeight: "500", transition: "color 0.2s" }}
+                      style={{ color: "#374947", textDecoration: "none", fontSize: "13px", fontWeight: "500", transition: "color 0.2s" }}
                       onMouseEnter={e => e.currentTarget.style.color = "#1A2E2C"}
-                      onMouseLeave={e => e.currentTarget.style.color = "#6B8F8A"}
+                      onMouseLeave={e => e.currentTarget.style.color = "#374947"}
                     >
                       {link.label}
                     </Link>
@@ -115,16 +115,16 @@ export default function Footer() {
           alignItems: "center", justifyContent: "space-between",
           gap: "8px",
         }}>
-          <p style={{ fontSize: "12px", color: "#B8CFCC", margin: 0, fontWeight: 500 }}>
+          <p style={{ fontSize: "12px", color: "#5A7774", margin: 0, fontWeight: 500 }}>
             © {new Date().getFullYear()} SeaBite Seafoods Pvt. Ltd. All rights reserved.
           </p>
           <div style={{ display: "flex", gap: "18px" }}>
             {[{ to: "/terms", label: "Terms" }, { to: "/privacy", label: "Privacy" }, { to: "/cancellation", label: "Refunds" }].map(l => (
               <Link
                 key={l.to} to={l.to}
-                style={{ fontSize: "12px", color: "#B8CFCC", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }}
-                onMouseEnter={e => e.currentTarget.style.color = "#6B8F8A"}
-                onMouseLeave={e => e.currentTarget.style.color = "#B8CFCC"}
+                style={{ fontSize: "12px", color: "#5A7774", textDecoration: "none", fontWeight: 500, transition: "color 0.2s" }}
+                onMouseEnter={e => e.currentTarget.style.color = "#1A2E2C"}
+                onMouseLeave={e => e.currentTarget.style.color = "#5A7774"}
               >
                 {l.label}
               </Link>

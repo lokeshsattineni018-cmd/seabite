@@ -11,6 +11,7 @@ import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
 import Spin from "../../pages/general/Spin";
 import toast from "react-hot-toast";
+import { slugify } from "../../utils/slugify";
 import { useGoogleLogin } from "@react-oauth/google";
 import { io } from "socket.io-client"; // [Real-time Pulse]
 
@@ -265,7 +266,7 @@ export default function Navbar({ announcementActive = false }) {
         setSuggestions(r.data.suggestions || []);
         setSearchGlobalDiscount(r.data.globalDiscount || 0);
       } catch { }
-    }, 300);
+    }, 75);
   };
 
   const saveRecentSearch = (term) => {
@@ -286,7 +287,7 @@ export default function Navbar({ announcementActive = false }) {
 
   const handleSuggestionClick = (item) => {
     saveRecentSearch(item.name);
-    navigate(`/products/${item._id}`);
+    navigate(`/products/${slugify(item.name)}`);
     setSearchExpanded(false); setSuggestions([]); setSearchTerm("");
   };
 
@@ -459,13 +460,14 @@ export default function Navbar({ announcementActive = false }) {
         .dd-item:hover { background: #f8f8f8 !important; color: #000 !important; }
         .prof-item:hover { background: #f9f9f9 !important; }
         .si:focus { outline: none; }
+        .si::placeholder { color: ${isTransparent ? 'rgba(255,255,255,0.5)' : '#8A8279'}; transition: color 0.4s ease; }
         .drawer-scrollbar::-webkit-scrollbar { width: 4px; }
         .drawer-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         .bottom-tier-link-cat {
           transition: color 0.2s ease;
         }
         .bottom-tier-link-cat:hover {
-          color: #A3835B !important;
+          color: #5BA8A0 !important;
         }
         .bottom-tier-link-page {
           transition: color 0.2s ease;
@@ -507,12 +509,13 @@ export default function Navbar({ announcementActive = false }) {
       >
         {/* --- DESKTOP VIEW --- */}
         <div className="hidden-mobile" style={{ width: "100%", display: "flex", flexDirection: "column" }}>
-          {/* Top Tier (Cream) */}
+          {/* Top Tier */}
           <div style={{
-            background: "#FAF6F0",
-            borderBottom: "1px solid #EFEAE2",
+            background: isTransparent ? "transparent" : "#FFFFFF",
+            borderBottom: isTransparent ? "none" : "1px solid #E2EEEC",
             width: "100%",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.01)"
+            boxShadow: isTransparent ? "none" : "0 2px 10px rgba(0,0,0,0.03)",
+            transition: "background 0.4s ease, border-bottom 0.4s ease, box-shadow 0.4s ease"
           }}>
             <div style={{
               maxWidth: "1440px",
@@ -523,18 +526,20 @@ export default function Navbar({ announcementActive = false }) {
               alignItems: "center",
               justifyContent: "space-between"
             }}>
-              {/* Left: Text Logo */}
+              {/* Left: Logo */}
               <div style={{ flexShrink: 0 }}>
                 <Link to="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
-                  <span style={{
-                    fontFamily: "'Playfair Display', serif",
-                    fontSize: "26px",
-                    fontWeight: "900",
-                    color: "#A3835B",
-                    letterSpacing: "-0.5px"
-                  }}>
-                    SeaBite.
-                  </span>
+                  <img
+                    src="/logo.webp"
+                    alt="SeaBite"
+                    width={90}
+                    height={62}
+                    style={{
+                      height: "60px",
+                      width: "auto",
+                      objectFit: "contain"
+                    }}
+                  />
                 </Link>
               </div>
 
@@ -544,15 +549,16 @@ export default function Navbar({ announcementActive = false }) {
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
-                  background: "#F3ECE2",
+                  background: isTransparent ? "rgba(255,255,255,0.15)" : "#F0F2F4",
                   borderRadius: "30px",
                   padding: "8px 16px",
                   width: "100%",
-                  transition: "all 0.25s ease",
-                  border: searchFocused ? "1.5px solid #A3835B" : "1.5px solid transparent",
-                  boxShadow: searchFocused ? "0 0 0 3px rgba(163,131,91,0.1)" : "none"
+                  transition: "all 0.4s ease",
+                  border: searchFocused ? "1.5px solid #5BA8A0" : "1.5px solid transparent",
+                  boxShadow: searchFocused ? "0 0 0 3px rgba(91,168,160,0.15)" : "none",
+                  backdropFilter: isTransparent ? "blur(12px)" : "none"
                 }}>
-                  <FiSearch size={16} style={{ color: "#8A8279", flexShrink: 0 }} />
+                  <FiSearch size={16} style={{ color: isTransparent ? "rgba(255,255,255,0.7)" : "#8A8279", flexShrink: 0 }} />
                   <input
                     ref={searchRef}
                     className="si"
@@ -565,7 +571,7 @@ export default function Navbar({ announcementActive = false }) {
                       border: "none",
                       background: "none",
                       fontSize: "14px",
-                      color: "#1A2E2C",
+                      color: isTransparent ? "#FFFFFF" : "#1A2E2C",
                       width: "100%",
                       outline: "none",
                       fontFamily: "'Plus Jakarta Sans', sans-serif",
@@ -664,13 +670,13 @@ export default function Navbar({ announcementActive = false }) {
                   style={{ ...iconBtn, position: "relative" }} 
                   className="nav-ib"
                 >
-                  <FiHeart size={20} style={{ color: "#1A2E2C" }} />
+                  <FiHeart size={20} style={{ color: isTransparent ? "#FFFFFF" : "#1A2E2C" }} />
                   {user?.wishlist?.length > 0 && (
                     <span style={{ 
                       position: "absolute", 
                       top: "-5px", 
                       right: "-5px", 
-                      background: "#B91C1C", 
+                      background: "#5BA8A0", 
                       color: "#fff", 
                       width: "16px", 
                       height: "16px", 
@@ -696,13 +702,13 @@ export default function Navbar({ announcementActive = false }) {
                       className="nav-ib"
                       style={{ ...iconBtn, position: "relative" }}
                     >
-                      <FiBell size={20} style={{ color: "#1A2E2C" }} />
+                      <FiBell size={20} style={{ color: isTransparent ? "#FFFFFF" : "#1A2E2C" }} />
                       {unreadCount > 0 && (
                         <span style={{
                           position: "absolute",
                           top: "-5px",
                           right: "-5px",
-                          background: "#B91C1C",
+                          background: "#5BA8A0",
                           color: "#fff",
                           width: "16px",
                           height: "16px",
@@ -773,7 +779,7 @@ export default function Navbar({ announcementActive = false }) {
                         width: "36px", 
                         height: "36px", 
                         borderRadius: "50%", 
-                        background: "#B91C1C", 
+                        background: "#5BA8A0", 
                         border: "none",
                         cursor: "pointer",
                         color: "#FFFFFF",
@@ -841,10 +847,11 @@ export default function Navbar({ announcementActive = false }) {
                       width: "36px", 
                       height: "36px", 
                       borderRadius: "50%", 
-                      background: "#FAF6F0", 
-                      border: "1.5px solid #EFEAE2",
+                      background: "transparent", 
+                      border: "none",
                       cursor: "pointer",
-                      color: "#1A2E2C"
+                      color: isTransparent ? "#FFFFFF" : "#1A2E2C",
+                      transition: "color 0.4s ease"
                     }}
                   >
                     <FiUser size={18} />
@@ -869,7 +876,7 @@ export default function Navbar({ announcementActive = false }) {
                   }}
                 >
                   <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1A2E2C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={isTransparent ? "#FFFFFF" : "#1A2E2C"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
                       <line x1="3" y1="6" x2="21" y2="6"></line>
                       <path d="M16 10a4 4 0 0 1-8 0"></path>
@@ -879,7 +886,7 @@ export default function Navbar({ announcementActive = false }) {
                         position: "absolute", 
                         top: "-5px", 
                         right: "-5px", 
-                        background: "#B91C1C", 
+                        background: "#5BA8A0", 
                         color: "#fff", 
                         width: "16px", 
                         height: "16px", 
@@ -894,51 +901,53 @@ export default function Navbar({ announcementActive = false }) {
                       </span>
                     )}
                   </div>
-                  <span style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cart</span>
+                  <span style={{ fontSize: "14px", fontWeight: "700", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cart</span>
                 </motion.button>
               </div>
             </div>
           </div>
 
-          {/* Bottom Tier (White) */}
+          {/* Bottom Tier */}
           <div style={{
-            background: "#FFFFFF",
-            borderBottom: "1px solid rgba(0,0,0,0.06)",
-            width: "100%"
+            background: isTransparent ? "transparent" : "#FFFFFF",
+            borderBottom: isTransparent ? "none" : "1.5px solid #E2EEEC",
+            borderTop: isTransparent ? "1px solid rgba(255,255,255,0.12)" : "none",
+            width: "100%",
+            transition: "all 0.4s ease"
           }}>
             <div style={{
               maxWidth: "1440px",
               margin: "0 auto",
               padding: "0 40px",
-              height: "48px",
+              height: "44px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center"
             }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
-                <Link to="/products" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14px", fontWeight: "700", color: "#A3835B", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
+                <Link to="/products" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Daily Deals
                 </Link>
-                <Link to="/products?category=Fish" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14px", fontWeight: "700", color: "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <Link to="/products?category=Fish" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Fish
                 </Link>
-                <Link to="/products?category=Prawn" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14px", fontWeight: "700", color: "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <Link to="/products?category=Prawn" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Prawns
                 </Link>
-                <Link to="/products?category=Crab" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14px", fontWeight: "700", color: "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <Link to="/products?category=Crab" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Crabs
                 </Link>
                 
-                <span style={{ color: "#E2EEEC", margin: "0 8px", fontSize: "16px" }}>|</span>
+                <span style={{ color: isTransparent ? "rgba(255,255,255,0.35)" : "#E2EEEC", fontSize: "14px" }}>|</span>
                 
-                <Link to="/about" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  ABOUT US
+                <Link to="/about" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "rgba(255,255,255,0.85)" : "#4A6572", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  About Us
                 </Link>
-                <Link to="/faq" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  HELP & FAQS
+                <Link to="/faq" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "rgba(255,255,255,0.85)" : "#4A6572", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  Help & FAQs
                 </Link>
-                <Link to="/contact" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "12px", fontWeight: "600", color: "#71717A", letterSpacing: "0.05em", textTransform: "uppercase", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                  CONTACT
+                <Link to="/contact" className="bottom-tier-link-page" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "rgba(255,255,255,0.85)" : "#4A6572", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                  Contact
                 </Link>
               </div>
             </div>
@@ -970,18 +979,20 @@ export default function Navbar({ announcementActive = false }) {
             </div>
           </motion.button>
 
-          {/* Center: Big Text Logo */}
+          {/* Center: Big Logo Image */}
           <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", pointerEvents: "none" }}>
-            <Link to="/" style={{ textDecoration: "none", pointerEvents: "auto" }}>
-              <span style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: "22px",
-                fontWeight: "900",
-                color: "#A3835B",
-                letterSpacing: "-0.5px"
-              }}>
-                SeaBite.
-              </span>
+            <Link to="/" style={{ textDecoration: "none", pointerEvents: "auto", display: "flex", alignItems: "center" }}>
+              <img
+                src="/logo.webp"
+                alt="SeaBite"
+                width={66}
+                height={46}
+                style={{
+                  height: "46px",
+                  width: "auto",
+                  objectFit: "contain"
+                }}
+              />
             </Link>
           </div>
 
@@ -1003,7 +1014,7 @@ export default function Navbar({ announcementActive = false }) {
               {cartCount > 0 && (
                 <span style={{ 
                   position: "absolute", top: "18px", right: "2px", 
-                  background: "#B91C1C", color: "#fff", 
+                  background: "#5BA8A0", color: "#fff", 
                   width: "14px", height: "14px", borderRadius: "50%", fontSize: "8px", fontWeight: "900", display: "flex", alignItems: "center", justifyContent: "center" 
                 }}>
                   {cartCount}
@@ -1087,7 +1098,7 @@ export default function Navbar({ announcementActive = false }) {
                     <div
                       key={idx}
                       onClick={() => {
-                        navigate(`/products/${item._id}`);
+                        navigate(`/products/${slugify(item.name)}`);
                         setSearchExpanded(false);
                         setSuggestions([]);
                         setSearchTerm("");
@@ -1320,7 +1331,7 @@ export default function Navbar({ announcementActive = false }) {
 
       <AnimatePresence>
         {isLoginOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(0,0,0,0.4)" }}>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ position: "fixed", inset: 0, zIndex: 1200, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px", background: "rgba(0,0,0,0.4)" }}>
             <div onClick={() => setIsLoginOpen(false)} style={{ position: "absolute", inset: 0 }} />
             
             <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ type: "spring", damping: 25, stiffness: 300 }} style={{ position: "relative", background: "#fff", width: "100%", maxWidth: "760px", borderRadius: "16px", boxShadow: "0 24px 60px rgba(0,0,0,0.2)", display: "flex", fontFamily: "'Inter', sans-serif", overflow: "hidden" }}>

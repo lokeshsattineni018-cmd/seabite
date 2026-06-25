@@ -37,6 +37,7 @@ import toast from "react-hot-toast";
 import { generateInvoicePDF } from "../../utils/pdfGenerator";
 import OrderTrackerMap from "../../components/orders/OrderTrackerMap";
 import triggerHaptic from "../../utils/haptics";
+import { slugify } from "../../utils/slugify";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -1524,7 +1525,7 @@ export default function OrderDetails() {
                     return (
                       <div key={i} style={{ display: "flex", gap: 16, alignItems: "center", borderBottom: i !== order.items.length - 1 ? `1px solid ${T.border}` : "none", paddingBottom: i !== order.items.length - 1 ? 16 : 0 }}>
                         {/* Compact Thumbnail */}
-                        <Link to={`/products/${pid}`} style={{ display: "block", flexShrink: 0 }}>
+                        <Link to={`/products/${slugify(item.name || pid)}`} style={{ display: "block", flexShrink: 0 }}>
                           <ShimmerImage
                             className="lx-item-image"
                             src={`${API_URL}/uploads/${item.image?.replace("uploads/", "")}`}
@@ -1541,7 +1542,7 @@ export default function OrderDetails() {
                         <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
                             <div>
-                              <Link to={`/products/${pid}`} style={{ textDecoration: "none" }}>
+                              <Link to={`/products/${slugify(item.name || pid)}`} style={{ textDecoration: "none" }}>
                                 <p title={item.name} style={{
                                   fontFamily: "'Sora', sans-serif",
                                   fontSize: 15, fontWeight: 600, color: T.ink,

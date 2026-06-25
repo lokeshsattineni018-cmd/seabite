@@ -6,6 +6,7 @@ import { FiLogOut, FiArrowRight } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext, useAuth } from "../../context/AuthContext";
 import axios from "axios";
+import { slugify } from "../../utils/slugify";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -125,7 +126,7 @@ const MobileNav = () => {
                     initial={{ opacity: 0, y: 10 }} 
                     animate={{ opacity: 1, y: 0 }} 
                     transition={{ delay: i * 0.03 }} 
-                    onClick={() => { navigate(`/products/${p._id}`); setShowSearch(false); }} 
+                    onClick={() => { navigate(`/products/${slugify(p.name)}`); setShowSearch(false); }} 
                     className="flex gap-4 p-3 bg-white rounded-xl shadow-sm border border-gray-100 active:bg-gray-50 transition-all"
                   >
                     {/* Image Column */}

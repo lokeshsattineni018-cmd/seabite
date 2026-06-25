@@ -42,6 +42,7 @@ import PopupModal from "../../components/common/PopupModal";
 import { generateInvoicePDF } from "../../utils/pdfGenerator";
 import { CartContext } from "../../context/CartContext";
 import toast from "react-hot-toast";
+import { slugify } from "../../utils/slugify";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -293,7 +294,7 @@ const ItemRow = React.memo(function ItemRow({ item, index, isFrequent }) {
       }}
     >
       <Link
-        to={`/products/${id}`}
+        to={`/products/${slugify(item.name || id)}`}
         style={{ display: "flex", alignItems: "center", gap: 11, textDecoration: "none", flex: 1, minWidth: 0 }}
       >
         {/* Thumbnail */}
@@ -1159,7 +1160,7 @@ export default function Order() {
                   {frequentItems.map(fi => (
                     <div
                       key={fi.id}
-                      onClick={() => navigate(`/products/${fi.id}`)}
+                      onClick={() => navigate(`/products/${slugify(fi.name || fi.id)}`)}
                       style={{
                         flexShrink: 0, width: 120, cursor: "pointer",
                         background: T.surface, borderRadius: 16, border: `1px solid ${T.border}`,

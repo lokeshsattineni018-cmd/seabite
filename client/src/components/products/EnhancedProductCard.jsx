@@ -8,6 +8,7 @@ import { AuthContext } from "../../context/AuthContext";
 import toast from "../../utils/toast"; 
 import triggerHaptic from "../../utils/haptics"; 
 import axios from "axios";
+import { slugify } from "../../utils/slugify";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -140,7 +141,7 @@ const EnhancedProductCard = ({
     >
       {/* 🖼️ Premium Image Container */}
       <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", overflow: "hidden", background: "#F9FBFA" }}>
-        <Link to={`/products/${product._id}`} style={{ display: "block", width: "100%", height: "100%" }}>
+        <Link to={`/products/${slugify(product.name)}`} style={{ display: "block", width: "100%", height: "100%" }}>
           <motion.img 
             src={getImageUrl(product.image)} 
             alt={product.name}
@@ -245,7 +246,7 @@ const EnhancedProductCard = ({
           <span style={{ fontSize: "11px", fontWeight: "700", color: "#6B8F8A", textTransform: "uppercase", letterSpacing: "0.1em" }}>
             {product.category || "Fresh Catch"}
           </span>
-          <Link to={`/products/${product._id}`} style={{ textDecoration: "none" }}>
+          <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: "none" }}>
             <h3 style={{ 
               fontSize: "17px", 
               fontWeight: "700", 
