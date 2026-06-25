@@ -23,6 +23,9 @@ router.post("/login", authLimiter, async (req, res) => {
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
+    if (user.isBanned) {
+      return res.status(403).json({ message: "Your account is restricted, please contact customer care" });
+    }
     if (user.googleId && !user.password) {
       return res.status(400).json({ message: "You have an account via Google login. Please use Google to sign in." });
     }

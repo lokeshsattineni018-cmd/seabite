@@ -163,29 +163,15 @@ export default function AdminDashboard() {
     };
     document.body.appendChild(script);
 
-    // 🛰️ NEW: Live Fleet Tracking simulation
-    const fleetInterval = setInterval(() => {
-      setFleet(prev => prev.map(p => ({
-        ...p,
-        lat: p.lat + (Math.random() - 0.5) * 0.001,
-        lng: p.lng + (Math.random() - 0.5) * 0.001,
-      })));
-    }, 3000);
-
     return () => {
       if (socket) socket.disconnect();
-      clearInterval(fleetInterval);
       if (document.body.contains(script)) {
         document.body.removeChild(script);
       }
     };
   }, []);
 
-  const [fleet, setFleet] = useState([
-    { id: 1, name: "Ravi", status: "active", lat: 17.3850, lng: 78.4867 },
-    { id: 2, name: "Anil", status: "active", lat: 17.3950, lng: 78.4967 },
-    { id: 3, name: "Suresh", status: "idle", lat: 17.4050, lng: 78.5067 },
-  ]);
+
 
   // ⏳ Happy Hour Countdown
   useEffect(() => {
@@ -905,8 +891,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Live Fleet Radar */}
-            <LiveFleetRadar fleet={fleet} />
+
           </motion.div>
         </div>
 
@@ -1102,57 +1087,7 @@ function BannerControl({ settings, setSettings }) {
   );
 }
 
-function LiveFleetRadar({ fleet }) {
-  return (
-    <div className="bg-stone-900 rounded-3xl border border-stone-800 shadow-2xl p-6 h-[280px] flex flex-col relative overflow-hidden group">
-      <div className="absolute inset-0 opacity-20 pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-emerald-500/20 via-transparent to-transparent animate-pulse" />
-        <div className="grid grid-cols-6 h-full border-l border-white/5">
-          {[...Array(6)].map((_, i) => <div key={i} className="border-r border-white/5" />)}
-        </div>
-      </div>
-      
-      <div className="flex justify-between items-center mb-4 shrink-0 relative z-10">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-          <h3 className="text-lg font-light text-white">Live Fleet Radar</h3>
-        </div>
-        <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Operational</span>
-      </div>
 
-      <div className="flex-1 relative border border-white/10 rounded-2xl overflow-hidden bg-black/40 backdrop-blur-sm">
-        {/* Simulated Radar Sweep */}
-        <motion.div 
-          animate={{ rotate: 360 }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] bg-gradient-to-t from-emerald-500/10 via-transparent to-transparent origin-center pointer-events-none"
-        />
-        
-        {fleet.map((p) => (
-          <motion.div
-            key={p.id}
-            animate={{ 
-              x: (p.lng - 78.4867) * 5000 + 100, 
-              y: (p.lat - 17.3850) * 5000 + 100 
-            }}
-            className="absolute"
-          >
-            <div className="relative group/marker">
-              <div className={`w-2 h-2 rounded-full ${p.status === 'active' ? 'bg-emerald-400' : 'bg-stone-500'} shadow-[0_0_10px_rgba(52,211,153,0.5)]`} />
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 opacity-0 group-hover/marker:opacity-100 transition-opacity bg-white text-[9px] font-bold px-1.5 py-0.5 rounded text-stone-900 whitespace-nowrap shadow-xl">
-                {p.name}
-              </div>
-            </div>
-          </motion.div>
-        ))}
-        
-        <div className="absolute bottom-3 right-3 text-[10px] text-white/40 font-mono">
-          SAT: ACTIVE | LAT: 17.38 | LNG: 78.48
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ChartTooltip({ active, payload, label }) {
   if (active && payload && payload.length) {
