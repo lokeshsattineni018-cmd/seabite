@@ -373,15 +373,70 @@ const ImageMagnifier = ({ src, alt, productId }) => {
 const PincodeChecker = () => {
   const [pincode, setPincode] = useState("");
   const [status, setStatus] = useState(null);
+  const [deliveryInfo, setDeliveryInfo] = useState("");
 
   const checkPincode = () => {
     if (pincode.length !== 6) return setStatus("error");
     setStatus("loading");
     setTimeout(() => {
-      // AP & TS pin codes: 500001–535999 (prefixes 50, 51, 52, 53)
       const num = parseInt(pincode, 10);
-      if (num >= 500001 && num <= 535999) {
+      
+      // AP & TS pin codes: 500001–539999 (prefixes 50, 51, 52, 53)
+      if (num >= 500001 && num <= 539999) {
         setStatus("success");
+        
+        const now = new Date();
+        const hour = now.getHours();
+        
+        let distanceKm = 0;
+        let zone = "C";
+        
+        if (pincode === "534281") {
+          distanceKm = 2;
+          zone = "A";
+        } else if (pincode.startsWith("5342")) {
+          distanceKm = 8 + (Math.abs(parseInt(pincode.slice(4), 10) - 81) % 15);
+          zone = "A";
+        } else if (pincode.startsWith("534") || pincode.startsWith("533") || pincode.startsWith("520") || pincode.startsWith("521")) {
+          distanceKm = 30 + (parseInt(pincode.slice(3), 10) % 70);
+          zone = "B";
+        } else {
+          distanceKm = 120 + (parseInt(pincode.slice(3), 10) % 280);
+          zone = "C";
+        }
+        
+        let deliveryText = "";
+        
+        if (hour >= 17) {
+          // Evening / Night: No dispatches possible today
+          if (zone === "A") {
+            deliveryText = `Tomorrow Morning (by 11:00 AM) • Dispatched tomorrow 6:00 AM (Distance: ${distanceKm} km)`;
+          } else if (zone === "B") {
+            deliveryText = `Tomorrow Afternoon (by 3:00 PM) • Dispatched tomorrow 7:00 AM (Distance: ${distanceKm} km)`;
+          } else {
+            deliveryText = `Day after tomorrow (by 12:00 PM) • Dispatched tomorrow 8:00 AM (Distance: ${distanceKm} km)`;
+          }
+        } else if (hour >= 12) {
+          // Afternoon: Local can still be dispatched for tonight, others tomorrow
+          if (zone === "A") {
+            deliveryText = `Today Evening (by 7:00 PM) • Dispatched today 4:00 PM (Distance: ${distanceKm} km)`;
+          } else if (zone === "B") {
+            deliveryText = `Tomorrow Morning (by 11:00 AM) • Dispatched tomorrow 6:00 AM (Distance: ${distanceKm} km)`;
+          } else {
+            deliveryText = `Tomorrow Afternoon (by 4:00 PM) • Dispatched tomorrow 7:00 AM (Distance: ${distanceKm} km)`;
+          }
+        } else {
+          // Morning: Can dispatch today
+          if (zone === "A") {
+            deliveryText = `Today Afternoon (by 2:00 PM) • Dispatched today 12:00 PM (Distance: ${distanceKm} km)`;
+          } else if (zone === "B") {
+            deliveryText = `Today Evening (by 7:00 PM) • Dispatched today 1:00 PM (Distance: ${distanceKm} km)`;
+          } else {
+            deliveryText = `Tomorrow Morning (by 11:00 AM) • Dispatched today evening (Distance: ${distanceKm} km)`;
+          }
+        }
+        
+        setDeliveryInfo(deliveryText);
       } else {
         setStatus("unavailable");
       }
@@ -424,17 +479,14 @@ const PincodeChecker = () => {
       </div>
       <AnimatePresence>
         {status === 'success' && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: "12px", fontSize: "12px", color: "#059669", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px", fontWeight: "600" }}>
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} style={{ marginTop: "12px", fontSize: "12px", color: "#059669", display: "flex", flexDirection: "column", gap: "4px", fontWeight: "600" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-              <FiCheck /> Express delivery available: Get it by {(() => {
-                const now = new Date();
-                const hour = now.getHours();
-                if (hour < 11) return "2 PM today";
-                if (hour < 17) return "9 PM today";
-                return "11 AM tomorrow";
-              })()}.
+              <FiCheck /> Express delivery available!
             </div>
-            <span style={{ fontSize: "10px", color: "#B8CFCC", marginLeft: "auto", fontWeight: "500" }}>
+            <div style={{ fontSize: "11px", color: "#1F2937", background: "rgba(91,191,181,0.06)", border: "1px dashed rgba(91,191,181,0.3)", padding: "8px 12px", borderRadius: "8px", marginTop: "4px" }}>
+              <strong style={{ color: "#5BBFB5" }}>Est. Delivery:</strong> {deliveryInfo}
+            </div>
+            <span style={{ fontSize: "9px", color: "#9CA3AF", alignSelf: "flex-end", marginTop: "2px", fontWeight: "500" }}>
               Checked at {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </motion.div>
@@ -824,7 +876,7 @@ export default function ProductDetails() {
 
   if (loading) {
     return (
-      <div className="detail-root" style={{ minHeight: "100vh", background: "#fff", paddingTop: "88px", paddingBottom: "100px", paddingLeft: "24px", paddingRight: "24px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <div className="detail-root" style={{ minHeight: "100vh", background: "#fff", paddingTop: "16px", paddingBottom: "100px", paddingLeft: "24px", paddingRight: "24px", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
         <style>{`
           .shimmer-block {
             background: linear-gradient(90deg, #f0f4f4 25%, #e2eeec 50%, #f0f4f4 75%);
@@ -1043,7 +1095,7 @@ export default function ProductDetails() {
 
       <div
         className="detail-root"
-        style={{ minHeight: "100vh", background: "#fff", paddingTop: "88px", paddingBottom: "100px", paddingLeft: "24px", paddingRight: "24px" }}
+        style={{ minHeight: "100vh", background: "#fff", paddingTop: "16px", paddingBottom: "100px", paddingLeft: "24px", paddingRight: "24px" }}
       >
         <div style={{ maxWidth: "1200px", margin: "0 auto", position: "relative", zIndex: 1 }}>
           <motion.div className="breadcrumb-hide" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.4 }} style={{ marginBottom: "20px", display: "flex", alignItems: "center", gap: "6px" }}>
