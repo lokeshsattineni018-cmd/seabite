@@ -414,7 +414,9 @@ export default function Navbar({ announcementActive = false }) {
         toast.success("Success!");
         setIsLoginOpen(false);
         await refreshMe?.();
-      } catch { toast.error("Google login failed"); }
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Google login failed");
+      }
     }
   });
 

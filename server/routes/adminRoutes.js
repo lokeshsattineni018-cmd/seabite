@@ -14,6 +14,7 @@ import logger from "../utils/logger.js";
 import { runAbandonedCartWorker } from "../cron/abandonedCartWorker.js";
 import PricingSetting from "../models/PricingSetting.js";
 import ReturnRequest from "../models/ReturnRequest.js";
+import { sendPushNotification, broadcastPushNotification } from "../utils/webPush.js";
 
 const router = express.Router();
 
@@ -391,7 +392,14 @@ router.post("/inventory/evening-clearance", adminAuth, async (req, res) => {
       };
       
       await product.save();
-      updatedCount++;
+    }
+
+    if (updatedCount > 0) {
+      broadcastPushNotification(
+        "🦐 Evening Seafood Flash Sale!",
+        `Prices slashed by 15% on ${updatedCount} fresh items! Offer ends tonight at midnight.`,
+        "/products"
+      ).catch(e => console.error("Error broadcasting push notification:", e));
     }
 
     res.json({ message: `Clearance engine complete. ${updatedCount} products marked down until midnight.` });
@@ -809,6 +817,20 @@ router.put("/orders/:id/status", adminAuth, async (req, res) => {
         );
       }
     } catch (e) { console.error("❌ Email notification failed:", e.message); }
+
+    try {
+      if (status && order.user) {
+        const orderIdentifier = order.orderId || order._id.toString().slice(-6).toUpperCase();
+        sendPushNotification(
+          order.user._id,
+          "🚚 Order Status Update",
+          `Your order #${orderIdentifier} is now ${status}.`,
+          "/orders"
+        ).catch(e => console.error("Error sending order status push notification:", e));
+      }
+    } catch (e) {
+      console.error("❌ Push notification trigger failed:", e.message);
+    }
 
     res.json({ message: "Status updated successfully." });
   } catch (err) {

@@ -14,11 +14,13 @@ import SeaBiteLoader from "../../components/common/SeaBiteLoader";
 import AnimatedOceanBanner from "./AnimatedOceanBanner";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
+import { usePushSubscription } from "../../hooks/usePushSubscription";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Profile() {
   const { user: authUser, loading: authLoading, refreshMe } = useAuth();
+  const { isSupported, isSubscribed, loading: pushLoading, subscribeToPush, unsubscribeFromPush } = usePushSubscription();
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,17 @@ export default function Profile() {
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
+
+  const handlePushToggle = async () => {
+    if (isSubscribed) {
+      const success = await unsubscribeFromPush();
+      if (success) toast.success("Push notifications disabled!");
+    } else {
+      const success = await subscribeToPush();
+      if (success) toast.success("Push notifications enabled!");
+      else toast.error("Failed to enable push notifications. Check browser permissions.");
+    }
+  };
 
 
 
@@ -105,6 +118,7 @@ export default function Profile() {
     { id: "wallet", icon: FiCreditCard, label: "Wallet" },
     { id: "addresses", icon: FiMapPin, label: "Addresses" },
     { id: "security", icon: FiShield, label: "Security" },
+    { id: "notifications", icon: FiBell, label: "Notifications" },
   ];
 
   const totalSpent = orders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
@@ -380,6 +394,53 @@ export default function Profile() {
                           </button>
                         )}
                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "notifications" && (
+                  <div className="bg-white rounded-[2.5rem] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
+                    <div className="flex flex-col lg:flex-row justify-between gap-12">
+                      <div className="max-w-md">
+                        <h2 className="text-2xl font-bold mb-4 tracking-tight">Notification Channels</h2>
+                        <p className="text-slate-400 font-medium leading-relaxed mb-6">Stay informed on your fresh seafood delivery status and flash sales.</p>
+                        
+                        {!isSupported ? (
+                          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
+                            <FiBell size={16} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Push Not Supported by Browser</span>
+                          </div>
+                        ) : isSubscribed ? (
+                          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-green-50 text-green-600 border border-green-100">
+                            <FiCheckCircle size={16} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Push Alerts Subscribed</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-50 text-slate-500 border border-slate-100">
+                            <FiBell size={16} />
+                            <span className="text-[10px] font-black uppercase tracking-widest">Push Alerts Disabled</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {isSupported && (
+                        <div className="flex flex-col gap-3 justify-center items-center">
+                          <label className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                              type="checkbox" 
+                              checked={isSubscribed} 
+                              disabled={pushLoading}
+                              onChange={handlePushToggle}
+                              className="sr-only peer"
+                            />
+                            <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500"></div>
+                            <span className="ml-3 text-sm font-bold text-slate-700">Web Push Alerts</span>
+                          </label>
+                          <span className="text-[10px] text-slate-400 text-center font-medium mt-1">
+                            Dispatched catches (4:00 AM) • Order milestones • Price drops
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

@@ -97,3 +97,55 @@ self.addEventListener('fetch', event => {
   );
 });
 
+// ==========================================
+// WEB PUSH NOTIFICATION EVENTS
+// ==========================================
+
+// Push event listener - display notification
+self.addEventListener('push', event => {
+  let data = { title: 'SeaBite Update', body: 'New update from SeaBite!' };
+  try {
+    data = event.data ? event.data.json() : data;
+  } catch (e) {
+    // If not json payload, use text
+    data = { title: 'SeaBite Update', body: event.data ? event.data.text() : 'New update from SeaBite!' };
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/roundlogo.png',
+    badge: '/roundlogo.png',
+    data: data.data || {},
+    vibrate: [100, 50, 100],
+    actions: [
+      { action: 'open', title: 'Open App' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
+  );
+});
+
+// Notification click event handler
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const urlToOpen = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      // Check if there is already a window open with this url and focus it
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // If no window is open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
+
