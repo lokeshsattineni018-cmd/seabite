@@ -16,27 +16,22 @@ const activityLogSchema = new mongoose.Schema({
 activityLogSchema.index({ timestamp: -1 });
 
 // Cryptographic Sequential SHA-256 Blockhashing pre-save hook
-activityLogSchema.pre("save", async function (next) {
+activityLogSchema.pre("save", async function () {
     if (!this.hash) {
-        try {
-            // Find the last activity log document
-            const lastLog = await mongoose.model("ActivityLog")
-                .findOne()
-                .sort({ timestamp: -1, _id: -1 });
+        // Find the last activity log document
+        const lastLog = await mongoose.model("ActivityLog")
+            .findOne()
+            .sort({ timestamp: -1, _id: -1 });
 
-            this.previousHash = lastLog && lastLog.hash 
-                ? lastLog.hash 
-                : "0000000000000000000000000000000000000000000000000000000000000000";
+        this.previousHash = lastLog && lastLog.hash 
+            ? lastLog.hash 
+            : "0000000000000000000000000000000000000000000000000000000000000000";
 
-            // hash = sha256(previousHash + action + timestamp)
-            const timeStr = this.timestamp instanceof Date ? this.timestamp.toISOString() : new Date(this.timestamp).toISOString();
-            const dataToHash = this.previousHash + this.action + timeStr;
-            this.hash = crypto.createHash("sha256").update(dataToHash).digest("hex");
-        } catch (err) {
-            return next(err);
-        }
+        // hash = sha256(previousHash + action + timestamp)
+        const timeStr = this.timestamp instanceof Date ? this.timestamp.toISOString() : new Date(this.timestamp).toISOString();
+        const dataToHash = this.previousHash + this.action + timeStr;
+        this.hash = crypto.createHash("sha256").update(dataToHash).digest("hex");
     }
-    next();
 });
 
 const ActivityLog = mongoose.model("ActivityLog", activityLogSchema);
