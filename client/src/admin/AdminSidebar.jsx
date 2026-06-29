@@ -6,7 +6,7 @@ import {
   FiGrid, FiPlusSquare, FiShoppingBag, FiClipboard,
   FiUsers, FiLogOut, FiGlobe, FiMail, FiTag,
   FiChevronRight, FiChevronDown, FiZap, FiSend, FiShoppingCart, FiCreditCard, FiStar, FiActivity, FiSettings, FiShield,
-  FiArchive, FiTarget, FiMessageSquare, FiTruck, FiThermometer, FiTrendingUp
+  FiArchive, FiTarget, FiMessageSquare, FiTruck, FiThermometer, FiTrendingUp, FiDollarSign
 } from "react-icons/fi";
 import axios from "axios";
 
