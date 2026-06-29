@@ -38,7 +38,7 @@ export default function AIBriefing() {
     );
   }
 
-  if (!briefing) return null;
+  if (!briefing || typeof briefing !== "object" || !briefing.todayStats) return null;
 
   const iconMap = {
     "⚠️": <AlertTriangle size={14} className="text-amber-400" />,

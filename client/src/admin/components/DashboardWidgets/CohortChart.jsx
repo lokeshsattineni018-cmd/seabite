@@ -13,9 +13,10 @@ export default function CohortChart() {
     const fetchCohorts = async () => {
       try {
         const { data } = await axios.get(`${API}/api/admin/dashboard/cohorts?months=6`);
-        setCohorts(data);
+        setCohorts(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Cohort fetch error:", err);
+        setCohorts([]);
       } finally {
         setLoading(false);
       }

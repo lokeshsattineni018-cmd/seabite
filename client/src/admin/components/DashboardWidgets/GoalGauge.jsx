@@ -49,9 +49,10 @@ export default function GoalGauge() {
   const fetchGoals = async () => {
     try {
       const { data } = await axios.get(`${API}/api/admin/dashboard/goals`);
-      setGoals(data);
+      setGoals(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to fetch goals:", err);
+      setGoals([]);
     } finally {
       setLoading(false);
     }
