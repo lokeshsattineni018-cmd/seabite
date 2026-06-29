@@ -7,7 +7,17 @@ import "./index.css";
 import "./i18n";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
+import * as Sentry from "@sentry/react";
+import { BrowserTracing } from "@sentry/tracing";
 import { SocketProvider } from "./context/SocketContext";
+
+if (import.meta.env.PROD) {
+  Sentry.init({
+    dsn: "https://8bf89d53c7a048a1b65e90d238b704cd@o4500000000000000.ingest.sentry.io/4500000000000000",
+    integrations: [new BrowserTracing()],
+    tracesSampleRate: 0.1,
+  });
+}
 
 const GOOGLE_CLIENT_ID =
   "781532512036-kaouiapk5q6akjofr45t7ff7d7t6jm9k.apps.googleusercontent.com";
