@@ -124,7 +124,9 @@ export default function AdminLayout() {
   const fetchSettings = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/admin/enterprise/settings`, { withCredentials: true });
-      setSettings(data);
+      if (data && typeof data === "object") {
+        setSettings(data);
+      }
     } catch (err) {
       if (err.response?.status === 401) navigate("/login");
     }
@@ -137,10 +139,13 @@ export default function AdminLayout() {
   const fetchNotifications = useCallback(async () => {
     try {
       const { data } = await axios.get(`${API_URL}/api/admin/notifications`, { withCredentials: true });
-      setNotifications(data);
-      setUnreadCount(data.filter(n => !n.read).length);
+      const list = Array.isArray(data) ? data : [];
+      setNotifications(list);
+      setUnreadCount(list.filter(n => !n.read).length);
     } catch (err) {
       console.error("Failed to fetch notifications", err);
+      setNotifications([]);
+      setUnreadCount(0);
     }
   }, []);
 
