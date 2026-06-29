@@ -121,12 +121,12 @@ export default function AdminDashboard() {
 
       if (!isMounted.current) return;
 
-      setStats(dashboardRes.data.stats);
-      setAlerts(dashboardRes.data.alerts);
-      setGraph(dashboardRes.data.graph);
-      setRecentOrders(dashboardRes.data.recentOrders);
-      setRecentMessages(messagesRes.data.slice(0, 5));
-      setAllReviews(reviewsRes.data?.slice(0, 6) || []);
+      setStats(dashboardRes.data?.stats || {});
+      setAlerts(dashboardRes.data?.alerts || { slaBreaches: [], stockRisks: [] });
+      setGraph(dashboardRes.data?.graph || []);
+      setRecentOrders(dashboardRes.data?.recentOrders || []);
+      setRecentMessages(Array.isArray(messagesRes.data) ? messagesRes.data.slice(0, 5) : []);
+      setAllReviews(Array.isArray(reviewsRes.data) ? reviewsRes.data.slice(0, 6) : []);
       setSearchInsights(insightsRes.data || []);
       setAiSummary(aiSummaryRes.data?.summary || "");
 

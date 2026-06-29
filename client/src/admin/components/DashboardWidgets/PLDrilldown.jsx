@@ -97,7 +97,7 @@ export default function PLDrilldown() {
           <div className="space-y-2">
             {[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-white/5 rounded-lg animate-pulse" />)}
           </div>
-        ) : data ? (
+        ) : data && data.pnl ? (
           <div className="space-y-0.5">
             {/* Gross Revenue */}
             <PnlRow

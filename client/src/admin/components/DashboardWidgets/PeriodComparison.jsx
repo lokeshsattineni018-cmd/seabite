@@ -44,7 +44,7 @@ export default function PeriodComparison() {
     );
   };
 
-  const metrics = data ? [
+  const metrics = data && data.current && data.previous && data.changes ? [
     { label: "Revenue", current: formatMoney(data.current.revenue), previous: formatMoney(data.previous.revenue), change: data.changes.revenue },
     { label: "Orders", current: data.current.orders, previous: data.previous.orders, change: data.changes.orders },
     { label: "AOV", current: formatMoney(data.current.avgOrderValue), previous: formatMoney(data.previous.avgOrderValue), change: data.changes.avgOrderValue },
