@@ -102,6 +102,65 @@ const userSchema = new mongoose.Schema(
     isPrime: { type: Boolean, default: false },
     primeExpiry: { type: Date, default: null },
     primePlan: { type: String, enum: ['monthly', 'yearly', null], default: null },
+
+    // 🏆 Loyalty & Gamification (Phase: Enterprise Upgrade)
+    loyaltyTier: { type: String, enum: ['Bronze', 'Silver', 'Gold', 'Platinum'], default: 'Bronze' },
+    totalLoyaltyPoints: { type: Number, default: 0 },
+    lifetimeOrderCount: { type: Number, default: 0 },
+    lifetimeOrderValue: { type: Number, default: 0 },
+    badges: [{
+      id: { type: String },
+      name: { type: String },
+      icon: { type: String, default: '🏅' },
+      unlockedAt: { type: Date, default: Date.now }
+    }],
+    currentStreak: { type: Number, default: 0 },
+    longestStreak: { type: Number, default: 0 },
+    lastStreakDate: { type: Date },
+    birthday: { type: Date },
+    anniversary: { type: Date },
+
+    // 🎯 Personalization
+    preferences: {
+      dietaryRestrictions: [{ type: String }],
+      favoriteCategories: [{ type: String }],
+      communicationPrefs: {
+        email: { type: Boolean, default: true },
+        push: { type: Boolean, default: true },
+        whatsapp: { type: Boolean, default: false },
+        sms: { type: Boolean, default: false },
+      }
+    },
+    browsingHistory: [{
+      product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+      viewedAt: { type: Date, default: Date.now },
+      duration: { type: Number, default: 0 } // seconds spent
+    }],
+    personalizedDiscountPct: { type: Number, default: 0 },
+
+    // 🔐 Security (Enterprise)
+    twoFactorEnabled: { type: Boolean, default: false },
+    twoFactorSecret: { type: String },
+    activeSessions: [{
+      sessionId: { type: String },
+      ip: { type: String },
+      userAgent: { type: String },
+      loginAt: { type: Date, default: Date.now },
+      lastActiveAt: { type: Date, default: Date.now },
+      location: { type: String }
+    }],
+    lastLoginIP: { type: String },
+    lastLoginAt: { type: Date },
+
+    // 📱 Notification Preferences
+    notificationPreferences: {
+      orderUpdates: { type: Boolean, default: true },
+      promotions: { type: Boolean, default: true },
+      priceDrops: { type: Boolean, default: true },
+      newArrivals: { type: Boolean, default: true },
+      loyaltyUpdates: { type: Boolean, default: true },
+      weeklyDigest: { type: Boolean, default: false },
+    },
   },
   { timestamps: true }
 );

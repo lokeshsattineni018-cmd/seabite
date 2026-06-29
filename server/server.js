@@ -453,6 +453,57 @@ app.use("/api/enterprise", enterpriseRoutes);
 import pulseRoutes from "./routes/pulseRoutes.js";
 app.use("/api/pulse", pulseRoutes);
 
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+app.use("/api/admin/dashboard", auditTrail, dashboardRoutes);
+
+import aiRoutes from "./routes/aiRoutes.js";
+app.use("/api/admin/ai", auditTrail, aiRoutes);
+
+import workflowRoutes from "./routes/workflowRoutes.js";
+app.use("/api/admin/workflows", auditTrail, workflowRoutes);
+
+import crmRoutes from "./routes/crmRoutes.js";
+app.use("/api/admin/crm", auditTrail, crmRoutes);
+
+import financialRoutes from "./routes/financialRoutes.js";
+app.use("/api/admin/finance", auditTrail, financialRoutes);
+
+import campaignRoutes from "./routes/campaignRoutes.js";
+app.use("/api/admin/campaigns", auditTrail, campaignRoutes);
+
+import personalizationRoutes from "./routes/personalizationRoutes.js";
+app.use("/api/personalization", personalizationRoutes);
+
+import loyaltyRoutes from "./routes/loyaltyRoutes.js";
+app.use("/api/loyalty", loyaltyRoutes);
+
+import deliveryTrackingRoutes from "./routes/deliveryTrackingRoutes.js";
+app.use("/api/delivery-tracking", deliveryTrackingRoutes);
+
+import cmsRoutes from "./routes/cmsRoutes.js";
+app.use("/api/admin/cms", auditTrail, cmsRoutes);
+
+import supportRoutes from "./routes/supportRoutes.js";
+app.use("/api/admin/support", auditTrail, supportRoutes);
+
+import notificationCenterRoutes from "./routes/notificationCenterRoutes.js";
+app.use("/api/admin/notification-center", auditTrail, notificationCenterRoutes);
+
+import biRoutes from "./routes/biRoutes.js";
+app.use("/api/admin/bi", auditTrail, biRoutes);
+
+import multiStoreRoutes from "./routes/multiStoreRoutes.js";
+app.use("/api/admin/multi-store", auditTrail, multiStoreRoutes);
+
+import apiHubRoutes from "./routes/apiHubRoutes.js";
+app.use("/api/admin/api-hub", auditTrail, apiHubRoutes);
+
+import securityRoutes from "./routes/securityRoutes.js";
+app.use("/api/admin/security", auditTrail, securityRoutes);
+
+import devopsRoutes from "./routes/devopsRoutes.js";
+app.use("/api/admin/devops", auditTrail, devopsRoutes);
+
 // Configure Cloudinary for direct uploads
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

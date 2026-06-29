@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiRefreshCw, FiTruck, FiPrinter,
   FiXCircle, FiPackage, FiArrowUpRight, FiFilter, FiTrash2, FiDollarSign,
-  FiSettings, FiActivity
+  FiSettings, FiActivity, FiGrid, FiList
 } from "react-icons/fi";
 import PopupModal from "../components/common/PopupModal";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
@@ -41,6 +41,7 @@ export default function AdminOrders() {
   const [selectedOrderIds, setSelectedOrderIds] = useState([]);
   const [partners, setPartners] = useState([]);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
+  const [viewMode, setViewMode] = useState("table"); // 'table' | 'kanban'
 
   // New real-time, telemetry, and control states
   const { socket } = useSocket();
@@ -414,6 +415,23 @@ export default function AdminOrders() {
               </AnimatePresence>
             </div>
 
+            <div className="flex bg-stone-100 rounded-2xl p-1 gap-1">
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2.5 rounded-xl transition-all ${viewMode === "table" ? "bg-white text-stone-900 shadow-xs font-bold" : "text-stone-500 hover:text-stone-900"}`}
+                title="Table View"
+              >
+                <FiList size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode("kanban")}
+                className={`p-2.5 rounded-xl transition-all ${viewMode === "kanban" ? "bg-white text-stone-900 shadow-xs font-bold" : "text-stone-500 hover:text-stone-900"}`}
+                title="Kanban Pipeline"
+              >
+                <FiGrid size={16} />
+              </button>
+            </div>
+
             <button onClick={() => fetchOrders()} className="p-3.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-2xl transition-colors">
               <FiRefreshCw className={loading ? "animate-spin" : ""} size={18} />
             </button>
@@ -522,9 +540,25 @@ export default function AdminOrders() {
           )}
         </AnimatePresence>
 
-        {/* Table */}
-        <motion.div variants={fadeUp} className="bg-white rounded-3xl border border-stone-200/50 shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
+        {viewMode === "kanban" ? (
+          <KanbanBoard
+            orders={filteredOrders}
+            onUpdateStatus={updateStatus}
+            onSelectOrder={setSelectedOrder}
+            partners={partners}
+            onAssignPartner={async (orderId, partnerId) => {
+              try {
+                await axios.put(`/api/orders/${orderId}/status`, { deliveryPartner: partnerId, deliveryStatus: "Assigned" }, { withCredentials: true });
+                toast.success("Delivery partner assigned");
+                fetchOrders(true);
+              } catch (err) {
+                toast.error("Failed to assign partner");
+              }
+            }}
+          />
+        ) : (
+          <motion.div variants={fadeUp} className="bg-white rounded-3xl border border-stone-200/50 shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead className="bg-stone-50/50 border-b border-stone-100 text-[10px] font-bold uppercase tracking-wider text-stone-400">
                 <tr>
@@ -740,6 +774,7 @@ export default function AdminOrders() {
             </div>
           )}
         </motion.div>
+        )}
 
       </div >
     </motion.div >
@@ -1140,6 +1175,127 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
         </div>
 
       </motion.div>
+    </div>
+  );
+}
+
+function KanbanBoard({ orders, onUpdateStatus, onSelectOrder, partners, onAssignPartner }) {
+  const columns = ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"];
+
+  const handleDragStart = (e, orderId) => {
+    e.dataTransfer.setData("text/plain", orderId);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e, status) => {
+    e.preventDefault();
+    const orderId = e.dataTransfer.getData("text/plain");
+    if (orderId) {
+      onUpdateStatus(orderId, status);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-5 overflow-x-auto pb-6">
+      {columns.map((column) => {
+        const columnOrders = orders.filter(o => o.status === column);
+        return (
+          <div
+            key={column}
+            onDragOver={handleDragOver}
+            onDrop={(e) => handleDrop(e, column)}
+            className="flex flex-col min-w-[280px] bg-stone-50 border border-stone-200/60 rounded-3xl p-4 min-h-[600px] shadow-sm"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4 pb-2 border-b border-stone-200">
+              <span className="text-xs font-bold uppercase tracking-wider text-stone-700">{column}</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-200 text-stone-700">
+                {columnOrders.length}
+              </span>
+            </div>
+
+            {/* Cards list */}
+            <div className="flex-1 space-y-3 overflow-y-auto max-h-[700px] no-scrollbar">
+              {columnOrders.map((order) => (
+                <div
+                  key={order._id}
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, order._id)}
+                  onClick={() => onSelectOrder(order)}
+                  className="bg-white border border-stone-200 hover:border-stone-300 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing text-left"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="font-mono text-xs font-bold text-blue-600">#{order.orderId}</span>
+                    <span className="text-xs font-bold text-stone-800">₹{(order.totalAmount || 0).toLocaleString()}</span>
+                  </div>
+
+                  <p className="text-xs font-bold text-stone-800 truncate mb-1">
+                    {order.shippingAddress?.fullName || order.user?.name}
+                  </p>
+                  
+                  <div className="text-[10px] text-slate-500 truncate mb-3">
+                    {order.items?.map(i => `${i.qty}x ${i.name}`).join(", ")}
+                  </div>
+
+                  {column === "Processing" && partners.length > 0 && (
+                    <div className="mt-2" onClick={e => e.stopPropagation()}>
+                      <select
+                        onChange={(e) => onAssignPartner(order._id, e.target.value)}
+                        value={order.deliveryPartner?._id || ""}
+                        className="w-full bg-stone-50 border border-stone-200 rounded-xl text-[10px] p-2 font-semibold text-stone-600 outline-none cursor-pointer"
+                      >
+                        <option value="" disabled>Assign Partner...</option>
+                        {partners.map(p => <option key={p._id} value={p._id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between mt-4 pt-2 border-t border-stone-100" onClick={e => e.stopPropagation()}>
+                    <span className="text-[9px] text-stone-400">
+                      {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <div className="flex gap-1">
+                      {column !== "Pending" && (
+                        <button
+                          onClick={() => {
+                            const prevStatus = columns[columns.indexOf(column) - 1];
+                            if (prevStatus) onUpdateStatus(order._id, prevStatus);
+                          }}
+                          className="w-6 h-6 rounded bg-stone-100 hover:bg-stone-200 text-stone-600 text-xs font-bold flex items-center justify-center transition-colors"
+                          title="Move Left"
+                        >
+                          ←
+                        </button>
+                      )}
+                      {column !== "Cancelled" && column !== "Delivered" && (
+                        <button
+                          onClick={() => {
+                            const nextStatus = columns[columns.indexOf(column) + 1];
+                            if (nextStatus) onUpdateStatus(order._id, nextStatus);
+                          }}
+                          className="w-6 h-6 rounded bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold flex items-center justify-center transition-colors"
+                          title="Move Right"
+                        >
+                          →
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {columnOrders.length === 0 && (
+                <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-stone-200 rounded-2xl bg-stone-50/20">
+                  <span className="text-xs text-stone-400">Empty column</span>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

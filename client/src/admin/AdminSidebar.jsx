@@ -18,6 +18,8 @@ const CATEGORIES = [
       { name: "Products", path: "/admin/products", icon: <FiShoppingBag size={16} /> },
       { name: "Add Product", path: "/admin/add-product", icon: <FiPlusSquare size={16} /> },
       { name: "Orders", path: "/admin/orders", icon: <FiClipboard size={16} /> },
+      { name: "Returns & Refunds", path: "/admin/returns", icon: <FiArchive size={16} /> },
+      { name: "Finance Ledger", path: "/admin/finance", icon: <FiDollarSign size={16} /> },
       { name: "POS Terminal", path: "/admin/pos", icon: <FiCreditCard size={16} /> },
     ]
   },
@@ -27,6 +29,7 @@ const CATEGORIES = [
       { name: "Logistics", path: "/admin/delivery", icon: <FiTruck size={16} /> },
       { name: "Live Radar", path: "/admin/radar", icon: <FiActivity size={16} /> },
       { name: "Complaints", path: "/admin/complaints", icon: <FiMessageSquare size={16} /> },
+      { name: "Automated Workflows", path: "/admin/workflows", icon: <FiZap size={16} /> },
       { name: "Compliance Audits", path: "/admin/compliance", icon: <FiThermometer size={16} /> }, // 📋 Added
     ]
   },
@@ -35,7 +38,9 @@ const CATEGORIES = [
     links: [
       { name: "Coupons", path: "/admin/coupons", icon: <FiTag size={16} /> },
       { name: "Flash Sales", path: "/admin/flash-sale", icon: <FiZap size={16} /> },
-      { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={16} /> },
+      { name: "Marketing Blast", path: "/admin/marketing", icon: <FiSend size={16} /> },
+      { name: "Notification Center", path: "/admin/notification-center", icon: <FiSend size={16} /> },
+      { name: "CMS Pages", path: "/admin/cms", icon: <FiClipboard size={16} /> },
       { name: "Abandoned Cart", path: "/admin/carts", icon: <FiShoppingCart size={16} /> },
       { name: "AI Pricing Engine", path: "/admin/pricing-engine", icon: <FiTrendingUp size={16} /> },
     ]
@@ -43,6 +48,8 @@ const CATEGORIES = [
   {
     title: "Engagement & Support",
     links: [
+      { name: "Customer Center (CRM)", path: "/admin/crm", icon: <FiUsers size={16} /> },
+      { name: "Support Inbox", path: "/admin/support", icon: <FiMessageSquare size={16} /> },
       { name: "Customers", path: "/admin/users", icon: <FiUsers size={16} /> },
       { name: "Messages", path: "/admin/messages", icon: <FiMail size={16} /> },
       { name: "Reviews", path: "/admin/reviews", icon: <FiStar size={16} /> },
@@ -52,6 +59,8 @@ const CATEGORIES = [
   {
     title: "Business Intelligence",
     links: [
+      { name: "AI Operations Hub", path: "/admin/ai-hub", icon: <FiZap size={16} /> },
+      { name: "BI Engine", path: "/admin/bi-engine", icon: <FiActivity size={16} /> },
       { name: "Demand Forecast", path: "/admin/forecast", icon: <FiTrendingUp size={16} /> },
       { name: "Customer Segments", path: "/admin/rfm", icon: <FiUsers size={16} /> },
       { name: "Inventory Alerts", path: "/admin/inventory-alerts", icon: <FiArchive size={16} /> },
@@ -64,6 +73,10 @@ const CATEGORIES = [
       { name: "Storefront Pulse", path: "/admin/pulse", icon: <FiZap size={16} /> },
       { name: "X-Ray Monitor", path: "/admin/xray", icon: <FiShield size={16} /> },
       { name: "Access Sentinel", path: "/admin/iam", icon: <FiShield size={16} /> },
+      { name: "Multi-Store Manager", path: "/admin/multi-store", icon: <FiGlobe size={16} /> },
+      { name: "Developer APIs", path: "/admin/api-hub", icon: <FiSettings size={16} /> },
+      { name: "DevOps Monitor", path: "/admin/devops", icon: <FiActivity size={16} /> },
+      { name: "System Audit", path: "/admin/security", icon: <FiShield size={16} /> },
       { name: "Audit Registry", path: "/admin/registry", icon: <FiArchive size={16} /> },
       { name: "Analytics", path: "/admin/analytics", icon: <FiActivity size={16} /> },
       { name: "Settings", path: "/admin/settings", icon: <FiSettings size={16} /> },
