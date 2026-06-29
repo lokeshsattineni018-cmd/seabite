@@ -118,6 +118,81 @@ const orderSchema = new mongoose.Schema(
     // ⚖️ Weight Variance Guarantee
     weightVarianceRefundIssued: { type: Boolean, default: false },
     weightVarianceRefundAmount: { type: Number, default: 0 },
+
+    // 📝 Order Modification (Enterprise)
+    modificationWindow: { type: Date }, // Timestamp until modification allowed
+    modifications: [{
+      modifiedAt: { type: Date, default: Date.now },
+      modifiedBy: { type: String }, // 'customer' or 'admin'
+      changes: { type: mongoose.Schema.Types.Mixed }, // What was changed
+      reason: { type: String }
+    }],
+    isModifiable: { type: Boolean, default: true },
+
+    // ✂️ Split Orders
+    splitOrders: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Order' }],
+    parentOrder: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+    isSplitChild: { type: Boolean, default: false },
+
+    // 📸 Delivery Proof
+    deliveryProof: {
+      photoUrl: { type: String },
+      gpsLat: { type: Number },
+      gpsLng: { type: Number },
+      capturedAt: { type: Date },
+      signature: { type: String } // base64 signature image
+    },
+
+    // ⏱️ Smart ETA
+    estimatedDeliveryTime: { type: Date },
+    actualDeliveryTime: { type: Date },
+    etaUpdates: [{
+      eta: { type: Date },
+      updatedAt: { type: Date, default: Date.now },
+      reason: { type: String }
+    }],
+
+    // 🎁 Gift Wrapping (per-item)
+    giftWrapping: [{
+      itemIndex: { type: Number },
+      wrapType: { type: String, default: 'standard' },
+      message: { type: String },
+      recipientName: { type: String },
+      price: { type: Number, default: 0 }
+    }],
+
+    // 🏢 Warehouse / Multi-location
+    assignedWarehouse: { type: String, default: 'main' },
+    warehouseAssignedAt: { type: Date },
+
+    // ⚙️ Custom Statuses & Workflows
+    customStatus: { type: String },
+    workflowLogs: [{
+      workflowName: { type: String },
+      action: { type: String },
+      executedAt: { type: Date, default: Date.now },
+      success: { type: Boolean, default: true },
+      details: { type: String }
+    }],
+
+    // 📊 NPS & Feedback
+    npsScore: { type: Number, min: 0, max: 10 },
+    npsFeedback: { type: String },
+    npsSubmittedAt: { type: Date },
+
+    // 📦 Return/Refund Workflow
+    returnRequest: {
+      status: { type: String, enum: ['none', 'requested', 'approved', 'rejected', 'picked_up', 'received', 'refunded'], default: 'none' },
+      reason: { type: String },
+      requestedAt: { type: Date },
+      approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      approvedAt: { type: Date },
+      refundAmount: { type: Number, default: 0 },
+      refundMethod: { type: String, enum: ['wallet', 'original', 'bank_transfer', null], default: null },
+      refundedAt: { type: Date },
+      images: [{ type: String }], // Customer uploads
+      adminNotes: { type: String },
+    },
   },
   { timestamps: true }
 );

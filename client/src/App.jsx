@@ -47,6 +47,8 @@ const Maintenance = lazy(() => import("./pages/general/Maintenance"));
 const Contact = lazy(() => import("./pages/general/Contact"));
 const Signup = lazy(() => import("./pages/auth/Signup"));
 const ReferEarn = lazy(() => import("./pages/user/ReferEarn"));
+const LoyaltyCenter = lazy(() => import("./pages/user/LoyaltyCenter")); // 🏆 Rewards & Loyalty Program
+const DeliveryTracker = lazy(() => import("./pages/user/DeliveryTracker")); // 🚚 Real-time Delivery Tracker
 
 const NotFound = lazy(() => import("./pages/general/NotFound"));
 
@@ -81,6 +83,21 @@ const AdminCompliance = lazy(() => import("./admin/AdminCompliance")); // 📋 A
 const AdminDemandForecast = lazy(() => import("./admin/AdminDemandForecast")); // 📊 BI: Demand Forecast
 const AdminRFM = lazy(() => import("./admin/AdminRFM")); // 👥 BI: RFM Segments
 const AdminInventoryAlerts = lazy(() => import("./admin/AdminInventoryAlerts")); // 📦 BI: Inventory Alerts
+const AdminAIHub = lazy(() => import("./admin/AdminAIHub")); // 🧠 AI Operations Hub
+const AdminWorkflows = lazy(() => import("./admin/AdminWorkflows")); // ⚙️ Automated Workflows
+const AdminReturns = lazy(() => import("./admin/AdminReturns")); // 🔄 Returns & Refunds Management
+const AdminCRM = lazy(() => import("./admin/AdminCRM")); // 👥 CRM Customer Center
+const AdminFinance = lazy(() => import("./admin/AdminFinance")); // 💰 Finance & Ledger Management
+const AdminCMS = lazy(() => import("./admin/AdminCMS")); // 📝 CMS Content Editor
+const AdminSupport = lazy(() => import("./admin/AdminSupport")); // 💬 Support & SLA Center
+const AdminNotificationCenter = lazy(() => import("./admin/AdminNotificationCenter")); // 📢 Notification Blast Hub
+const AdminBIEngine = lazy(() => import("./admin/AdminBIEngine")); // 📊 Business Intelligence Engine
+const AdminMultiStore = lazy(() => import("./admin/AdminMultiStore")); // 🌐 Multi-Store Manager
+const AdminAPIHub = lazy(() => import("./admin/AdminAPIHub")); // 🔌 API Webhooks Hub
+const AdminSecurity = lazy(() => import("./admin/AdminSecurity")); // 🛡️ Compliance & Security Audit
+const AdminDevOps = lazy(() => import("./admin/AdminDevOps")); // 🖥️ DevOps Hardware Telemetry
+
+
 
 import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -282,6 +299,19 @@ function MainLayout() {
                     <Route path="forecast" element={<AdminDemandForecast />} />
                     <Route path="rfm" element={<AdminRFM />} />
                     <Route path="inventory-alerts" element={<AdminInventoryAlerts />} />
+                    <Route path="ai-hub" element={<AdminAIHub />} />
+                    <Route path="workflows" element={<AdminWorkflows />} />
+                    <Route path="returns" element={<AdminReturns />} />
+                    <Route path="crm" element={<AdminCRM />} />
+                    <Route path="finance" element={<AdminFinance />} />
+                    <Route path="cms" element={<AdminCMS />} />
+                    <Route path="support" element={<AdminSupport />} />
+                    <Route path="notification-center" element={<AdminNotificationCenter />} />
+                    <Route path="bi-engine" element={<AdminBIEngine />} />
+                    <Route path="multi-store" element={<AdminMultiStore />} />
+                    <Route path="api-hub" element={<AdminAPIHub />} />
+                    <Route path="security" element={<AdminSecurity />} />
+                    <Route path="devops" element={<AdminDevOps />} />
                   </Route>
                 </Routes>
               ) : (
@@ -294,6 +324,8 @@ function MainLayout() {
                     <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
                     <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
                     <Route path="/refer-earn" element={<PrivateRoute><ReferEarn /></PrivateRoute>} />
+                    <Route path="/loyalty" element={<PrivateRoute><LoyaltyCenter /></PrivateRoute>} />
+                    <Route path="/track/:orderId" element={<PrivateRoute><DeliveryTracker /></PrivateRoute>} />
 
                     <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
                     <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
