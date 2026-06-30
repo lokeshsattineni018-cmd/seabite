@@ -255,7 +255,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#fafaf9] font-sans text-stone-900 overflow-hidden selection:bg-stone-200 selection:text-stone-900">
+    <div className="admin-root flex h-screen w-full bg-[#fafaf9] font-sans text-stone-900 overflow-hidden selection:bg-stone-200 selection:text-stone-900">
 
       {/* 🟢 Mobile Header */}
       <header 

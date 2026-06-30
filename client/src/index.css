@@ -595,3 +595,8 @@ a, button, input, select, textarea, [role="button"] {
 .flash-row-amber {
   animation: amber-flash 1.5s ease-in-out 1;
 }
+
+/* Force clean sans-serif/Plus Jakarta Sans on all admin components including inputs and buttons */
+.admin-root, .admin-root button, .admin-root input, .admin-root select, .admin-root textarea {
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
