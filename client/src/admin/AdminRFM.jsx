@@ -50,6 +50,57 @@ export default function AdminRFM() {
     }
   };
 
+  const [acting, setActing] = useState(false);
+
+  const handleSendPromo = async () => {
+    const members = data?.segments?.[activeSegment] || [];
+    if (!members.length) return;
+    const confirmSend = window.confirm(`Generate and email a 15% off discount coupon (valid 48h) to all ${members.length} customers in the "${seg.label}" segment?`);
+    if (!confirmSend) return;
+
+    setActing(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/admin/bi/rfm/send-promo`, {
+        segment: activeSegment
+      }, { withCredentials: true });
+      alert(`✅ Success: ${res.data.message}`);
+    } catch (err) {
+      alert("Failed to send promo: " + (err.response?.data?.message || err.message));
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const handleCreditWallet = async () => {
+    const members = data?.segments?.[activeSegment] || [];
+    if (!members.length) return;
+    const amountStr = prompt(`Enter amount in ₹ to credit to all ${members.length} customers in "${seg.label}":`, "100");
+    if (!amountStr) return;
+    const amount = Number(amountStr);
+    if (isNaN(amount) || amount <= 0) return alert("Please enter a valid positive number");
+
+    const reason = prompt("Enter reason for wallet credit:", `Cohort reward for ${seg.label}`);
+    if (!reason) return;
+
+    setActing(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/admin/bi/rfm/credit-wallet`, {
+        segment: activeSegment,
+        amount,
+        reason
+      }, { withCredentials: true });
+      alert(`✅ Success: ${res.data.message}`);
+      
+      // Reload page data
+      const rfmRes = await axios.get(`${API_URL}/api/admin/bi/rfm`, { withCredentials: true });
+      setData(rfmRes.data);
+    } catch (err) {
+      alert("Failed to credit wallets: " + (err.response?.data?.message || err.message));
+    } finally {
+      setActing(false);
+    }
+  };
+
   if (loading) return (
     <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <div style={{ textAlign: "center" }}>
@@ -114,20 +165,56 @@ export default function AdminRFM() {
               <p style={{ fontSize: "12px", color: "#6B8F8A", margin: 0, fontWeight: "500" }}>{seg.desc}</p>
             </div>
           </div>
-          <button
-            onClick={handleSendCampaign}
-            disabled={sendingCampaign || activeMembers.length === 0}
-            style={{
-              display: "flex", alignItems: "center", gap: "8px",
-              padding: "10px 20px", borderRadius: "10px",
-              background: seg.color, color: "#fff", border: "none",
-              fontSize: "13px", fontWeight: "800", cursor: "pointer",
-              fontFamily: "'Plus Jakarta Sans', sans-serif",
-              opacity: activeMembers.length === 0 ? 0.5 : 1,
-            }}
-          >
-            <FiSend size={14} /> {sendingCampaign ? "Sending…" : "Email This Segment"}
-          </button>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <button
+              onClick={handleSendCampaign}
+              disabled={sendingCampaign || acting || activeMembers.length === 0}
+              style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "10px 16px", borderRadius: "10px",
+                background: seg.color, color: "#fff", border: "none",
+                fontSize: "12px", fontWeight: "800", cursor: "pointer",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                opacity: (sendingCampaign || acting || activeMembers.length === 0) ? 0.55 : 1,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+                transition: "all 0.2s"
+              }}
+            >
+              <FiSend size={12} /> Email Segment
+            </button>
+            <button
+              onClick={handleSendPromo}
+              disabled={sendingCampaign || acting || activeMembers.length === 0}
+              style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "10px 16px", borderRadius: "10px",
+                background: "#E2F0ED", color: "#2B524E", border: "1.5px solid #5BBFB5",
+                fontSize: "12px", fontWeight: "800", cursor: "pointer",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                opacity: (sendingCampaign || acting || activeMembers.length === 0) ? 0.55 : 1,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                transition: "all 0.2s"
+              }}
+            >
+              <FiZap size={12} /> Send 15% Promo
+            </button>
+            <button
+              onClick={handleCreditWallet}
+              disabled={sendingCampaign || acting || activeMembers.length === 0}
+              style={{
+                display: "flex", alignItems: "center", gap: "8px",
+                padding: "10px 16px", borderRadius: "10px",
+                background: "#FEF3C7", color: "#92400E", border: "1.5px solid #F59E0B",
+                fontSize: "12px", fontWeight: "800", cursor: "pointer",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                opacity: (sendingCampaign || acting || activeMembers.length === 0) ? 0.55 : 1,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                transition: "all 0.2s"
+              }}
+            >
+              <FiDollarSign size={12} /> Credit Wallet
+            </button>
+          </div>
         </div>
 
         {/* RFM Score Legend */}
