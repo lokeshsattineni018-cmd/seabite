@@ -18,13 +18,7 @@ if (import.meta.env.PROD && typeof window !== "undefined") {
   window.console.warn = () => {};
 }
 
-if (import.meta.env.PROD) {
-  Sentry.init({
-    dsn: "https://8bf89d53c7a048a1b65e90d238b704cd@o4500000000000000.ingest.sentry.io/4500000000000000",
-    integrations: [Sentry.browserTracingIntegration()],
-    tracesSampleRate: 0.1,
-  });
-}
+
 
 const GOOGLE_CLIENT_ID =
   "781532512036-kaouiapk5q6akjofr45t7ff7d7t6jm9k.apps.googleusercontent.com";
