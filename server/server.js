@@ -1,5 +1,14 @@
 /* --- 1. LOAD ENV VARIABLES FIRST --- */
 import "dotenv/config";
+
+// Suppress non-error logs in server logs in production (Vercel)
+if (process.env.NODE_ENV === "production") {
+  console.log = () => {};
+  console.info = () => {};
+  console.debug = () => {};
+  console.warn = () => {};
+}
+
 import express from "express";
 // 🛰️ System Pulse: Force-triggering server deployment sync (Deploy Hook Triggered)
 
