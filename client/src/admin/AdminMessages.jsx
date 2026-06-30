@@ -264,13 +264,15 @@ export default function AdminMessages() {
           <div className="flex-1 flex flex-col min-w-0">
             {selectedMsg ? (
               <>
-                <div className="p-8 border-b border-stone-100 flex justify-between items-start bg-stone-50/30 shrink-0">
-                  <div className="flex gap-4">
-                    <div className="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center font-bold text-stone-500 text-lg">
+                <div className="p-6 md:p-8 border-b border-stone-100 flex justify-between items-center bg-stone-50/30 shrink-0 gap-4">
+                  <div className="flex gap-4 min-w-0 items-center">
+                    <div className="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center font-bold text-stone-500 text-lg shrink-0">
                       {selectedMsg.email.charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <h2 className="text-xl font-bold text-stone-900 mb-1">{selectedMsg.email}</h2>
+                    <div className="min-w-0">
+                      <h2 className="text-lg md:text-xl font-bold text-stone-900 mb-0.5 truncate" title={selectedMsg.email}>
+                        {selectedMsg.email}
+                      </h2>
                       <div className="flex items-center gap-3">
                         <p className="text-xs text-stone-500 font-medium">Customer • {new Date(selectedMsg.createdAt).toLocaleString()}</p>
                         <select 

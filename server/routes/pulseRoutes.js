@@ -12,6 +12,10 @@ router.post("/track/:productId", async (req, res) => {
     const { productId } = req.params;
     const { guestId } = req.body;
     
+    if (!/^[0-9a-fA-F]{24}$/.test(productId)) {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
+    
     await ProductView.create({
       productId,
       userId: req.session?.user?.id || null,
@@ -68,7 +72,12 @@ router.get("/stats", protect, adminAuth, async (req, res) => {
 // 🛰️ Get Detailed History for a Product (Admin Only)
 router.get("/history/:productId", protect, adminAuth, async (req, res) => {
   try {
-    const history = await ProductView.find({ productId: req.params.productId })
+    const { productId } = req.params;
+    if (!/^[0-9a-fA-F]{24}$/.test(productId)) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const history = await ProductView.find({ productId })
       .populate("userId", "name email phone")
       .sort({ viewedAt: -1 })
       .limit(100);
@@ -85,6 +94,10 @@ router.post("/flash/:productId", protect, adminAuth, async (req, res) => {
     const { productId } = req.params;
     const { discountPrice, durationMinutes = 30 } = req.body;
 
+    if (!/^[0-9a-fA-F]{24}$/.test(productId)) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
     const product = await Product.findById(productId);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
@@ -98,11 +111,13 @@ router.post("/flash/:productId", protect, adminAuth, async (req, res) => {
     await product.save();
     
     // Broadcast to all users in the product room
-    req.io.to(`product:${productId}`).emit("FLASH_SALE_STARTED", {
-      productId,
-      discountPrice,
-      endTime: product.flashSale.saleEndDate
-    });
+    if (req.io && typeof req.io.to === "function") {
+      req.io.to(`product:${productId}`).emit("FLASH_SALE_STARTED", {
+        productId,
+        discountPrice,
+        endTime: product.flashSale.saleEndDate
+      });
+    }
 
     res.json({ message: "Pulse Flash Sale started!", product });
   } catch (err) {
