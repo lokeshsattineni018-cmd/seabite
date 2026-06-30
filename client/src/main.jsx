@@ -10,6 +10,14 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import * as Sentry from "@sentry/react";
 import { SocketProvider } from "./context/SocketContext";
 
+// Suppress non-error logs in browser console in production
+if (import.meta.env.PROD && typeof window !== "undefined") {
+  window.console.log = () => {};
+  window.console.info = () => {};
+  window.console.debug = () => {};
+  window.console.warn = () => {};
+}
+
 if (import.meta.env.PROD) {
   Sentry.init({
     dsn: "https://8bf89d53c7a048a1b65e90d238b704cd@o4500000000000000.ingest.sentry.io/4500000000000000",
