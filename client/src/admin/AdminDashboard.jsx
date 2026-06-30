@@ -150,11 +150,16 @@ export default function AdminDashboard() {
 
   // 🚨 Real-time Frustration Monitor & Fleet
   useEffect(() => {
+    const socketUrl = import.meta.env.VITE_API_URL || "";
+    const isProduction = socketUrl.includes('vercel.app') || window.location.hostname.includes('seabite.co.in') || import.meta.env.PROD;
+    
+    if (isProduction) return; // Prevent socket connection spam on Vercel/Production
+
     let socket;
     const script = document.createElement("script");
     script.src = "https://cdn.socket.io/4.7.2/socket.io.min.js";
     script.onload = () => {
-      socket = window.io(import.meta.env.VITE_API_URL || "");
+      socket = window.io(socketUrl);
       socket.on("FRUSTRATION_EVENT", (data) => {
         setFrustrationEvents(prev => [
           { ...data, id: Date.now(), time: new Date().toLocaleTimeString() },
