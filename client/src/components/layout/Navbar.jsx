@@ -197,7 +197,8 @@ export default function Navbar({ announcementActive = false }) {
       if (res.data.globalDiscount > 0) setIsHappyHour(true);
     }).catch(() => {});
 
-    const socket = io(API_URL);
+    const isProd = import.meta.env.PROD || (typeof window !== "undefined" && (window.location.hostname.includes("seabite.co.in") || window.location.hostname.includes("vercel.app") || window.location.hostname !== "localhost"));
+    const socket = isProd ? { on: () => {}, off: () => {}, emit: () => {}, disconnect: () => {} } : io(API_URL);
     socket.on("SYSTEM_PULSE", (data) => {
       if (data.alert) setSystemAlert(data.alert);
       else setSystemAlert(null);

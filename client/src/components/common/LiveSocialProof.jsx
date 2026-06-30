@@ -10,7 +10,8 @@ export default function LiveSocialProof() {
   const [queue, setQueue] = useState([]);
 
   useEffect(() => {
-    const socket = io(API_URL);
+    const isProd = import.meta.env.PROD || (typeof window !== "undefined" && (window.location.hostname.includes("seabite.co.in") || window.location.hostname.includes("vercel.app") || window.location.hostname !== "localhost"));
+    const socket = isProd ? { on: () => {}, off: () => {}, emit: () => {}, disconnect: () => {} } : io(API_URL);
 
     socket.on("LIVE_SALE", (data) => {
       // Add to queue
