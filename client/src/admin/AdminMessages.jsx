@@ -6,6 +6,7 @@ import SeaBiteLoader from "../components/common/SeaBiteLoader";
 import Customer360Sidebar from "./components/Customer360Sidebar";
 import { FiMail, FiRefreshCw, FiSearch, FiInbox, FiSend, FiTrash2, FiX, FiCheck, FiTag, FiArchive, FiAlertCircle, FiChevronDown, FiMessageSquare, FiCreditCard } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { slugify } from "../utils/slugify";
 
 const CANNED_RESPONSES = [
   "Hi! Our standard delivery window is 2-4 hours. You'll receive a live tracking link once dispatched.",
@@ -35,6 +36,16 @@ export default function AdminMessages() {
   const [contextLoading, setContextLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState("All");
   const [showQuickReplies, setShowQuickReplies] = useState(false);
+  const [productsList, setProductsList] = useState([]);
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [productSearch, setProductSearch] = useState("");
+
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get("/api/products");
+      setProductsList(res.data.products || []);
+    } catch (err) {}
+  };
 
   const fetchMessages = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -50,6 +61,7 @@ export default function AdminMessages() {
 
   useEffect(() => {
     fetchMessages();
+    fetchProducts();
   }, []);
 
   useEffect(() => {
@@ -354,20 +366,72 @@ export default function AdminMessages() {
                     >
                       <FiMessageSquare size={12} /> Canned Responses <FiChevronDown size={10} />
                     </button>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => {
-                          const item = prompt("Enter product name (e.g. Vanjaram Fish):", "Vanjaram Fish");
-                          if (item) setReplyText(prev => prev + `\n\n📦 PRODUCT RECOMMENDATION:\nCheck out our fresh ${item} here: https://seabite.com/shop?search=${encodeURIComponent(item)}`);
-                        }}
-                        className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-all uppercase tracking-widest"
-                      >
-                        <FiTag size={10} /> @product
-                      </button>
+                    <div className="flex gap-2 relative">
+                      {/* Product Selector Dropdown */}
+                      <div className="relative">
+                        <button 
+                          onClick={() => setShowProductDropdown(!showProductDropdown)}
+                          className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-100 hover:bg-emerald-100 transition-all uppercase tracking-widest"
+                        >
+                          <FiTag size={10} /> @product
+                        </button>
+                        
+                        <AnimatePresence>
+                          {showProductDropdown && (
+                            <motion.div 
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: 10 }}
+                              className="absolute right-0 md:left-0 top-7 w-64 bg-white border border-stone-200 rounded-2xl shadow-xl z-50 overflow-hidden flex flex-col"
+                              style={{ maxHeight: "250px" }}
+                            >
+                              <div className="p-2 border-b border-stone-100">
+                                <input 
+                                  value={productSearch}
+                                  onChange={e => setProductSearch(e.target.value)}
+                                  placeholder="Search products..."
+                                  className="w-full px-3 py-1.5 bg-stone-50 border border-stone-200 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-300 transition-all font-sans"
+                                />
+                              </div>
+                              <div className="flex-1 overflow-y-auto max-h-[180px] custom-scrollbar">
+                                {productsList
+                                  .filter(p => p.name?.toLowerCase().includes(productSearch.toLowerCase()))
+                                  .map(prod => (
+                                    <button 
+                                      key={prod._id}
+                                      onClick={() => {
+                                        const origin = window.location.origin.includes("localhost") ? "https://www.seabite.co.in" : window.location.origin;
+                                        const url = `${origin}/products/${prod.slug || slugify(prod.name)}`;
+                                        setReplyText(prev => prev + `\n\n📦 PRODUCT RECOMMENDATION:\nCheck out our fresh ${prod.name} here: ${url}`);
+                                        setShowProductDropdown(false);
+                                        setProductSearch("");
+                                      }}
+                                      className="w-full px-4 py-2.5 text-left text-xs hover:bg-stone-50 border-b border-stone-100 last:border-0 transition-colors flex items-center gap-2"
+                                    >
+                                      <img src={prod.image} className="w-6 h-6 rounded-md object-cover flex-shrink-0 bg-stone-50" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-bold text-stone-850 truncate text-[11px]">{prod.name}</p>
+                                        <p className="text-[10px] text-stone-500 font-bold">₹{prod.basePrice}</p>
+                                      </div>
+                                    </button>
+                                  ))
+                                }
+                                {productsList.filter(p => p.name?.toLowerCase().includes(productSearch.toLowerCase())).length === 0 && (
+                                  <div className="text-center py-6 text-stone-400 text-xs">No products found</div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
                       <button 
                         onClick={() => {
                           const amount = prompt("Enter total amount for checkout link:", "1000");
-                          if (amount) setReplyText(prev => prev + `\n\n🔗 FAST CHECKOUT LINK:\nComplete your payment of ₹${amount} here: https://seabite.com/checkout?direct=true&amount=${amount}\n(Link secure & valid for 24h)`);
+                          if (amount) {
+                            const origin = window.location.origin.includes("localhost") ? "https://www.seabite.co.in" : window.location.origin;
+                            setReplyText(prev => prev + `\n\n🔗 FAST CHECKOUT LINK:\nComplete your payment of ₹${amount} here: ${origin}/checkout?direct=true&amount=${amount}\n(Link secure & valid for 24h)`);
+                          }
                         }}
                         className="flex items-center gap-1.5 text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-100 hover:bg-blue-100 transition-all uppercase tracking-widest"
                       >
