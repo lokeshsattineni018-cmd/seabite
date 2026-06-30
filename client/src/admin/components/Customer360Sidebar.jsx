@@ -40,7 +40,7 @@ export default function Customer360Sidebar({ context, loading }) {
         <motion.div 
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className="w-80 h-full border-l border-stone-100 overflow-y-auto custom-scrollbar"
+            className="w-80 h-full border-l border-stone-100 overflow-y-auto custom-scrollbar shrink-0"
         >
             <div className="p-6 space-y-8">
                 {/* Wallet & CLV Tiers */}
