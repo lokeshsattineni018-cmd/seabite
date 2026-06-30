@@ -264,7 +264,7 @@ export default function AdminMessages() {
           <div className="flex-1 flex flex-col min-w-0">
             {selectedMsg ? (
               <>
-                <div className="p-6 md:p-8 border-b border-stone-100 flex justify-between items-center bg-stone-50/30 shrink-0 gap-4">
+                <div className="p-6 md:p-8 border-b border-stone-100 flex justify-between items-center bg-stone-50/30 shrink-0 gap-4 w-full max-w-full">
                   <div className="flex gap-4 min-w-0 items-center">
                     <div className="w-12 h-12 rounded-full bg-stone-200 flex items-center justify-center font-bold text-stone-500 text-lg shrink-0">
                       {selectedMsg.email.charAt(0).toUpperCase()}
@@ -287,7 +287,7 @@ export default function AdminMessages() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 shrink-0">
                     <button onClick={() => archiveMessage(selectedMsg._id)} className="p-3 bg-stone-100 hover:bg-stone-200 text-stone-500 rounded-xl transition-all" title="Archive">
                       <FiArchive size={18} />
                     </button>
