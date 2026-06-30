@@ -85,7 +85,7 @@ const productSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-productSchema.pre("save", function(next) {
+productSchema.pre("save", function() {
   if (this.isModified("name")) {
     const slugify = (text) => {
       if (!text) return "";
@@ -101,7 +101,6 @@ productSchema.pre("save", function(next) {
     };
     this.slug = slugify(this.name);
   }
-  next();
 });
 
 productSchema.pre(["findOneAndUpdate", "update", "updateOne"], function() {
