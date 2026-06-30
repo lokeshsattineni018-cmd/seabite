@@ -86,11 +86,11 @@ export default function CommandPalette() {
       {/* Trigger Button */}
       <button
         onClick={() => { setOpen(true); setQuery(""); }}
-        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
+        className="flex items-center gap-2 px-3 py-2 rounded-xl bg-stone-50 hover:bg-stone-100 border border-stone-200 transition-all group"
       >
-        <Search size={14} className="text-slate-500" />
-        <span className="text-xs text-slate-500">Quick navigation...</span>
-        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[10px] text-slate-500">
+        <Search size={14} className="text-stone-500" />
+        <span className="text-xs text-stone-500">Quick navigation...</span>
+        <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-white border border-stone-200/60 text-[10px] text-stone-500">
           <Command size={10} /> K
         </kbd>
       </button>
@@ -100,47 +100,42 @@ export default function CommandPalette() {
         {open && (
           <>
             <motion.div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+              className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setOpen(false)}
             />
             <motion.div
-              className="fixed top-[15%] left-1/2 w-full max-w-xl -translate-x-1/2 z-50 rounded-2xl overflow-hidden"
-              style={{
-                background: "#0f172a",
-                border: "1px solid rgba(255,255,255,0.1)",
-                boxShadow: "0 25px 50px rgba(0,0,0,0.5)",
-              }}
+              className="fixed top-[15%] left-1/2 w-full max-w-xl -translate-x-1/2 z-50 rounded-2xl overflow-hidden bg-white border border-stone-200 shadow-2xl"
               initial={{ opacity: 0, y: -20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -20, scale: 0.95 }}
               transition={{ duration: 0.15 }}
             >
               {/* Search Input */}
-              <div className="flex items-center gap-3 px-4 py-3 border-b border-white/10">
-                <Search size={18} className="text-slate-500 shrink-0" />
+              <div className="flex items-center gap-3 px-4 py-3 border-b border-stone-100 bg-stone-50/50">
+                <Search size={18} className="text-stone-400 shrink-0" />
                 <input
                   ref={inputRef}
                   type="text"
                   value={query}
                   onChange={e => setQuery(e.target.value)}
                   placeholder="Search commands, pages, actions..."
-                  className="flex-1 bg-transparent text-white text-sm outline-none placeholder-slate-500"
+                  className="flex-1 bg-transparent text-stone-850 text-sm outline-none placeholder-stone-400 font-semibold"
                 />
-                <kbd className="px-1.5 py-0.5 rounded bg-white/5 text-[10px] text-slate-500 border border-white/10">ESC</kbd>
+                <kbd className="px-1.5 py-0.5 rounded bg-white text-[10px] text-stone-400 border border-stone-200/60 font-bold select-none">ESC</kbd>
               </div>
 
               {/* Results */}
               <div className="max-h-[50vh] overflow-y-auto py-2">
                 {Object.entries(grouped).length === 0 ? (
-                  <div className="px-4 py-8 text-center text-slate-500 text-sm">No results found</div>
+                  <div className="px-4 py-8 text-center text-stone-400 text-sm font-bold">No results found</div>
                 ) : (
                   Object.entries(grouped).map(([category, commands]) => (
-                    <div key={category}>
+                    <div key={category} className="mb-2">
                       <div className="px-4 py-1.5">
-                        <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-600">{category}</span>
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-stone-400">{category}</span>
                       </div>
                       {commands.map(cmd => {
                         const globalIndex = flatFiltered.indexOf(cmd);
@@ -148,15 +143,15 @@ export default function CommandPalette() {
                         return (
                           <button
                             key={cmd.id}
-                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                              isSelected ? "bg-white/10" : "hover:bg-white/5"
+                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all ${
+                              isSelected ? "bg-stone-100 text-stone-900 font-bold" : "text-stone-600 hover:bg-stone-50"
                             }`}
                             onClick={() => { navigate(cmd.path); setOpen(false); }}
                             onMouseEnter={() => setSelectedIndex(globalIndex)}
                           >
-                            <span className={`${isSelected ? "text-sky-400" : "text-slate-500"}`}>{cmd.icon}</span>
-                            <span className={`text-sm flex-1 ${isSelected ? "text-white" : "text-slate-300"}`}>{cmd.label}</span>
-                            {isSelected && <ArrowRight size={12} className="text-sky-400" />}
+                            <span className={`${isSelected ? "text-[#5BBFB5]" : "text-stone-450"}`}>{cmd.icon}</span>
+                            <span className="text-xs flex-1">{cmd.label}</span>
+                            {isSelected && <ArrowRight size={12} className="text-[#5BBFB5]" />}
                           </button>
                         );
                       })}
@@ -166,7 +161,7 @@ export default function CommandPalette() {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center gap-4 px-4 py-2 border-t border-white/5 text-[10px] text-slate-600">
+              <div className="flex items-center gap-4 px-6 py-2.5 border-t border-stone-100 text-[10px] text-stone-400 font-bold bg-stone-50/30">
                 <span className="flex items-center gap-1">↑↓ Navigate</span>
                 <span className="flex items-center gap-1">↵ Open</span>
                 <span className="flex items-center gap-1">esc Close</span>

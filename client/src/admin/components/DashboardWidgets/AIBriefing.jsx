@@ -27,12 +27,11 @@ export default function AIBriefing() {
 
   if (loading) {
     return (
-      <div className="rounded-2xl p-6 animate-pulse"
-        style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)", border: "1px solid rgba(139, 92, 246, 0.2)" }}>
-        <div className="h-4 w-32 bg-slate-700 rounded mb-4" />
+      <div className="rounded-2xl p-6 animate-pulse bg-stone-50 border border-stone-200 shadow-sm">
+        <div className="h-4 w-32 bg-stone-200 rounded mb-4" />
         <div className="space-y-2">
-          <div className="h-3 w-full bg-slate-700 rounded" />
-          <div className="h-3 w-3/4 bg-slate-700 rounded" />
+          <div className="h-3 w-full bg-stone-200 rounded" />
+          <div className="h-3 w-3/4 bg-stone-200 rounded" />
         </div>
       </div>
     );
@@ -41,41 +40,35 @@ export default function AIBriefing() {
   if (!briefing || typeof briefing !== "object" || !briefing.todayStats) return null;
 
   const iconMap = {
-    "⚠️": <AlertTriangle size={14} className="text-amber-400" />,
-    "📦": <Package size={14} className="text-blue-400" />,
-    "📉": <TrendingUp size={14} className="text-red-400 rotate-180" />,
-    "📈": <TrendingUp size={14} className="text-emerald-400" />,
+    "⚠️": <AlertTriangle size={14} className="text-amber-600" />,
+    "📦": <Package size={14} className="text-blue-600" />,
+    "📉": <TrendingUp size={14} className="text-red-650 rotate-180" />,
+    "📈": <TrendingUp size={14} className="text-emerald-650" />,
   };
 
   return (
     <motion.div
-      className="rounded-2xl p-6 relative overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1a0f2e 50%, #0f172a 100%)",
-        border: "1px solid rgba(139, 92, 246, 0.25)",
-        boxShadow: "0 0 30px rgba(139, 92, 246, 0.08)",
-      }}
+      className="rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-[#fbfbfa] to-white border border-stone-200 shadow-sm"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
       {/* AI Glow */}
       <div className="absolute top-0 right-0 w-32 h-32 opacity-10"
-        style={{ background: "radial-gradient(circle, #a78bfa 0%, transparent 70%)" }} />
+        style={{ background: "radial-gradient(circle, #8b5cf6 0%, transparent 70%)" }} />
 
       <div className="relative z-10">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(139, 92, 246, 0.15)" }}>
-            <Brain size={16} className="text-violet-400" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-violet-50 border border-violet-100">
+            <Brain size={16} className="text-violet-600" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white flex items-center gap-1">
+            <h3 className="text-sm font-bold text-stone-900 flex items-center gap-1">
               AI Daily Briefing
-              <Sparkles size={12} className="text-violet-400" />
+              <Sparkles size={12} className="text-violet-500" />
             </h3>
-            <p className="text-[10px] text-slate-500">
+            <p className="text-[10px] text-stone-400">
               {new Date(briefing.generatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
             </p>
           </div>
@@ -83,8 +76,8 @@ export default function AIBriefing() {
 
         {/* Greeting & Summary */}
         <div className="mb-4">
-          <p className="text-sm text-slate-300 leading-relaxed">
-            <span className="text-violet-400 font-semibold">{briefing.greeting}!</span>{" "}
+          <p className="text-sm text-stone-700 leading-relaxed">
+            <span className="text-violet-750 font-bold">{briefing.greeting}!</span>{" "}
             {briefing.summary}
           </p>
         </div>
@@ -97,11 +90,11 @@ export default function AIBriefing() {
             { label: "New Users", value: briefing.todayStats.newCustomers, icon: <Users size={12} /> },
             { label: "Pending", value: briefing.pendingOrders, icon: <AlertTriangle size={12} />, warn: briefing.pendingOrders > 10 },
           ].map((stat, i) => (
-            <div key={i} className={`rounded-lg px-3 py-2 ${stat.warn ? "bg-amber-500/10 border border-amber-500/20" : "bg-white/5"}`}>
-              <div className="flex items-center gap-1 text-slate-500 text-[10px] mb-1">
+            <div key={i} className={`rounded-xl px-3 py-2 border ${stat.warn ? "bg-amber-50 border-amber-200" : "bg-stone-50 border-stone-100"}`}>
+              <div className="flex items-center gap-1 text-stone-500 text-[10px] mb-1">
                 {stat.icon} {stat.label}
               </div>
-              <span className={`text-sm font-bold ${stat.warn ? "text-amber-400" : "text-white"}`}>{stat.value}</span>
+              <span className={`text-sm font-bold ${stat.warn ? "text-amber-700" : "text-stone-850"}`}>{stat.value}</span>
             </div>
           ))}
         </div>
@@ -109,12 +102,12 @@ export default function AIBriefing() {
         {/* Top Selling */}
         {briefing.topSelling?.length > 0 && (
           <div className="mb-4">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2">🔥 Top Sellers Today</p>
+            <p className="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-2">🔥 Top Sellers Today</p>
             <div className="space-y-1">
               {briefing.topSelling.slice(0, 3).map((p, i) => (
                 <div key={i} className="flex items-center justify-between text-xs">
-                  <span className="text-slate-300 truncate">{i + 1}. {p.name}</span>
-                  <span className="text-violet-400 font-mono font-semibold">{p.qty} sold</span>
+                  <span className="text-stone-600 truncate">{i + 1}. {p.name}</span>
+                  <span className="text-violet-700 font-mono font-bold">{p.qty} sold</span>
                 </div>
               ))}
             </div>
@@ -127,14 +120,14 @@ export default function AIBriefing() {
             {briefing.alerts.map((alert, i) => (
               <motion.div
                 key={i}
-                className="flex items-start gap-2 rounded-lg px-3 py-2 text-xs"
-                style={{ background: "rgba(251, 191, 36, 0.08)", border: "1px solid rgba(251, 191, 36, 0.15)" }}
+                className="flex items-start gap-2 rounded-xl px-3 py-2 text-xs border"
+                style={{ background: "rgba(245, 158, 11, 0.05)", borderColor: "rgba(245, 158, 11, 0.2)" }}
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 + i * 0.1 }}
               >
-                <AlertTriangle size={12} className="text-amber-400 mt-0.5 shrink-0" />
-                <span className="text-slate-300">{alert.replace(/^[^\s]+\s/, "")}</span>
+                <AlertTriangle size={12} className="text-amber-600 mt-0.5 shrink-0" />
+                <span className="text-stone-700">{alert.replace(/^[^\s]+\s/, "")}</span>
               </motion.div>
             ))}
           </div>

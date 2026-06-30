@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { FiPackage, FiShoppingCart, FiClock, FiDollarSign, FiArrowRight } from "react-icons/fi";
+import { FiPackage, FiShoppingCart, FiClock, FiDollarSign, FiArrowRight, FiTag } from "react-icons/fi";
 
 export default function Customer360Sidebar({ context, loading }) {
     if (loading) return (
