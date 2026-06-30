@@ -1731,6 +1731,148 @@ router.get("/bi/rfm", adminAuth, async (req, res) => {
   }
 });
 
+// Helper for dynamic RFM user filtering
+async function getUsersInSegment(targetSegment) {
+  const userOrders = await Order.aggregate([
+    { $match: { status: { $ne: "Cancelled" } } },
+    {
+      $group: {
+        _id: "$user",
+        lastOrderDate: { $max: "$createdAt" },
+        orderCount: { $sum: 1 },
+        totalSpent: { $sum: "$totalAmount" },
+      },
+    },
+  ]);
+
+  const now = Date.now();
+  const targetUserIds = [];
+
+  userOrders.forEach((u) => {
+    if (!u._id) return;
+    const recencyDays = Math.floor((now - new Date(u.lastOrderDate)) / (1000 * 60 * 60 * 24));
+    const r = recencyDays <= 7 ? 5 : recencyDays <= 14 ? 4 : recencyDays <= 30 ? 3 : recencyDays <= 60 ? 2 : 1;
+    const f = u.orderCount >= 10 ? 5 : u.orderCount >= 5 ? 4 : u.orderCount >= 3 ? 3 : u.orderCount >= 2 ? 2 : 1;
+    const m = u.totalSpent >= 10000 ? 5 : u.totalSpent >= 5000 ? 4 : u.totalSpent >= 2000 ? 3 : u.totalSpent >= 500 ? 2 : 1;
+    const rfmScore = r + f + m;
+
+    let segment;
+    if (rfmScore >= 13) segment = "champions";
+    else if (rfmScore >= 10) segment = "loyal";
+    else if (recencyDays > 60 && f >= 2) segment = "at_risk";
+    else if (recencyDays > 90) segment = "hibernating";
+    else if (u.orderCount === 1 && recencyDays > 30) segment = "churned";
+    else segment = "new";
+
+    if (segment === targetSegment) {
+      targetUserIds.push(u._id);
+    }
+  });
+
+  return targetUserIds;
+}
+
+// 👥 CREDIT WALLET FOR RFM COHORT — POST /api/admin/bi/rfm/credit-wallet
+router.post("/bi/rfm/credit-wallet", adminAuth, async (req, res) => {
+  try {
+    const { segment, amount, reason } = req.body;
+    if (typeof amount !== "number" || amount <= 0) {
+      return res.status(400).json({ message: "Amount must be a positive number" });
+    }
+    if (!segment) {
+      return res.status(400).json({ message: "Segment is required" });
+    }
+
+    const userIds = await getUsersInSegment(segment);
+    if (userIds.length === 0) {
+      return res.json({ message: "No customers found in this segment.", count: 0 });
+    }
+
+    const users = await User.find({ _id: { $in: userIds } });
+    for (const user of users) {
+      user.walletBalance = (user.walletBalance || 0) + amount;
+      if (!user.walletTransactions) user.walletTransactions = [];
+      user.walletTransactions.push({
+        amount,
+        type: "Credit",
+        description: reason || `Cohort credit for ${segment} segment`,
+        date: new Date()
+      });
+      await user.save();
+
+      await ActivityLog.create({
+        user: req.user?._id || null,
+        action: "COHORT_WALLET_CREDIT",
+        details: `Credited ₹${amount} to ${user.email} in segment "${segment}". Reason: ${reason || "None"}.`,
+        meta: { userId: user._id, amount, segment, reason }
+      });
+    }
+
+    res.json({ message: `Successfully credited ₹${amount} to ${users.length} users in ${segment}.`, count: users.length });
+  } catch (err) {
+    console.error("Cohort Wallet Credit Error:", err);
+    res.status(500).json({ message: "Failed to credit wallets." });
+  }
+});
+
+// 👥 SEND PROMO FOR RFM COHORT — POST /api/admin/bi/rfm/send-promo
+router.post("/bi/rfm/send-promo", adminAuth, async (req, res) => {
+  try {
+    const { segment } = req.body;
+    if (!segment) {
+      return res.status(400).json({ message: "Segment is required" });
+    }
+
+    const userIds = await getUsersInSegment(segment);
+    if (userIds.length === 0) {
+      return res.json({ message: "No customers found in this segment.", count: 0 });
+    }
+
+    const users = await User.find({ _id: { $in: userIds } });
+    let sentCount = 0;
+
+    for (const user of users) {
+      const existingCoupon = await Coupon.findOne({
+        code: { $regex: `^WB-${user._id.toString().slice(-4)}` },
+        isActive: true,
+        expiresAt: { $gt: new Date() }
+      });
+
+      if (existingCoupon) continue;
+
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+      const code = `WB-${user._id.toString().slice(-4)}-${randomSuffix}`.toUpperCase();
+
+      await Coupon.create({
+        code,
+        discountType: "percent",
+        value: 15,
+        minOrderAmount: 500,
+        maxUses: 1,
+        userEmail: user.email,
+        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+        isActive: true
+      });
+
+      await sendWinBackEmail(user.email, user.name || "Customer", code);
+
+      await ActivityLog.create({
+        user: req.user?._id || null,
+        action: "COHORT_PROMO_CODE",
+        details: `Sent 15% coupon ${code} to ${user.email} in segment "${segment}".`,
+        meta: { userId: user._id, code, segment }
+      });
+
+      sentCount++;
+    }
+
+    res.json({ message: `Successfully generated and emailed promo codes to ${sentCount} users in ${segment}.`, count: sentCount });
+  } catch (err) {
+    console.error("Cohort Promo Send Error:", err);
+    res.status(500).json({ message: "Failed to send cohort promo codes." });
+  }
+});
+
 // ⚖️ CONFIRM PACKED WEIGHT + AUTO WALLET REFUND — POST /api/admin/orders/:id/confirm-weight
 router.post("/orders/:id/confirm-weight", adminAuth, async (req, res) => {
   try {
