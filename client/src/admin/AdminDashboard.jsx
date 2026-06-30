@@ -804,20 +804,6 @@ export default function AdminDashboard() {
                      <FiMail className="text-teal-400" size={20} />
                      <span className="text-[10px] font-bold uppercase tracking-widest text-center">Inbox</span>
                   </button>
-                  <button 
-                    onClick={() => {
-                       const sub = prompt("Enter Announcement Subject:");
-                       if (!sub) return;
-                       const msg = prompt("Enter Announcement Message:");
-                       if (!msg) return;
-                       // Simulation for now
-                       toast.success("Broadcast queued!");
-                    }}
-                    className="p-4 bg-white/10 hover:bg-white/20 text-white rounded-2xl flex flex-col items-center gap-2 transition-all active:scale-95"
-                  >
-                     <FiStar className="text-amber-400" size={20} />
-                     <span className="text-[10px] font-bold uppercase tracking-widest text-center">Broadcast</span>
-                  </button>
                </div>
             </div>
 
