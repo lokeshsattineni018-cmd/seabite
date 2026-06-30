@@ -563,7 +563,7 @@ export default function Checkout() {
 
       <AnimatePresence>
         {isAddressModalOpen && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 2000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(4px)" }}>
             <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.96 }} style={{ width: "100%", maxWidth: 640 }}>
               <AddressForm onSave={saveNewAddress} onCancel={() => setIsAddressModalOpen(false)} initialData={deliveryAddress} />
             </motion.div>

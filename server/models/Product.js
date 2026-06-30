@@ -104,7 +104,7 @@ productSchema.pre("save", function(next) {
   next();
 });
 
-productSchema.pre(["findOneAndUpdate", "update", "updateOne"], function(next) {
+productSchema.pre(["findOneAndUpdate", "update", "updateOne"], function() {
   const update = this.getUpdate();
   if (update.$set && update.$set.name) {
     const slugify = (text) => {
@@ -135,7 +135,6 @@ productSchema.pre(["findOneAndUpdate", "update", "updateOne"], function(next) {
     };
     update.slug = slugify(update.name);
   }
-  next();
 });
 
 export default mongoose.models.Product || mongoose.model("Product", productSchema);

@@ -19,14 +19,7 @@ import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
 import OrderDrawer from "./components/OrderDrawer";
 
-// 🚀 Command Center Widgets (Phase 2: Enterprise Upgrade)
-import RevenueTicker from "./components/DashboardWidgets/RevenueTicker";
-import AIBriefing from "./components/DashboardWidgets/AIBriefing";
-import GoalGauge from "./components/DashboardWidgets/GoalGauge";
-import PLDrilldown from "./components/DashboardWidgets/PLDrilldown";
-import CohortChart from "./components/DashboardWidgets/CohortChart";
-import PeriodComparison from "./components/DashboardWidgets/PeriodComparison";
-import CommandPalette from "./components/DashboardWidgets/CommandPalette";
+
 
 const PLACEHOLDER_IMG =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
@@ -350,42 +343,6 @@ export default function AdminDashboard() {
           </motion.div>
         )}
 
-        {/* 🚀 COMMAND CENTER — Enterprise Widget Grid */}
-        <div className="mb-6">
-          {/* Top Bar with Command Palette */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-bold text-stone-800 tracking-tight">Command Center</h2>
-              <span className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[9px] font-bold uppercase tracking-widest rounded-full flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Live
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CommandPalette />
-              <button
-                onClick={() => fetchDashboardData(true)}
-                disabled={isRefreshing}
-                className="p-2.5 bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 rounded-2xl transition-all disabled:opacity-50 shadow-sm cursor-pointer"
-              >
-                <FiRefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
-              </button>
-            </div>
-          </div>
-
-          {/* Widget Grid — NASA-style Dark Panels */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            <RevenueTicker revenue={stats.todayRevenue || 0} previousRevenue={stats.totalRevenue ? Math.round(stats.totalRevenue / 30) : 0} label="Today's Revenue" />
-            <AIBriefing />
-            <GoalGauge />
-          </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mt-4">
-            <PLDrilldown />
-            <CohortChart />
-            <PeriodComparison />
-          </div>
-        </div>
-
         {/* Unified Dashboard Controls Row */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 mt-2 pb-4 border-b border-stone-200/40">
           <div>
@@ -406,6 +363,13 @@ export default function AdminDashboard() {
                 className="pl-10 pr-4 py-2.5 bg-white border border-stone-200/80 rounded-2xl text-xs w-64 focus:bg-white focus:ring-4 focus:ring-stone-100 transition-all outline-none shadow-sm"
               />
             </div>
+            <button
+              onClick={() => fetchDashboardData(true)}
+              disabled={isRefreshing}
+              className="p-2.5 bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 rounded-2xl transition-all disabled:opacity-50 shadow-sm cursor-pointer"
+            >
+              <FiRefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+            </button>
           </div>
         </div>
 

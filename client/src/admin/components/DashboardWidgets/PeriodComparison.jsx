@@ -36,7 +36,7 @@ export default function PeriodComparison() {
     const isFlat = value === 0;
     return (
       <span className={`inline-flex items-center gap-0.5 text-xs font-bold ${
-        isFlat ? "text-slate-400" : isUp ? "text-emerald-400" : "text-red-400"
+        isFlat ? "text-stone-400" : isUp ? "text-emerald-700" : "text-rose-700"
       }`}>
         {isFlat ? <Minus size={10} /> : isUp ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
         {isFlat ? "0%" : `${isUp ? "+" : ""}${value}%`}
@@ -53,12 +53,7 @@ export default function PeriodComparison() {
 
   return (
     <motion.div
-      className="rounded-2xl p-6 relative overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-        border: "1px solid rgba(168, 85, 247, 0.2)",
-        boxShadow: "0 0 30px rgba(168, 85, 247, 0.05)",
-      }}
+      className="rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-[#fbfbfa] to-white border border-stone-200 shadow-sm"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.25 }}
@@ -66,11 +61,10 @@ export default function PeriodComparison() {
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: "rgba(168, 85, 247, 0.15)" }}>
-              <GitCompare size={16} className="text-purple-400" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-purple-50 border border-purple-100">
+              <GitCompare size={16} className="text-purple-600" />
             </div>
-            <h3 className="text-sm font-bold text-white">Period Comparison</h3>
+            <h3 className="text-sm font-bold text-stone-900">Period Comparison</h3>
           </div>
           <div className="flex gap-1">
             {[{ label: "7D", value: 7 }, { label: "14D", value: 14 }, { label: "30D", value: 30 }].map(p => (
@@ -79,8 +73,8 @@ export default function PeriodComparison() {
                 onClick={() => setDays(p.value)}
                 className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-colors ${
                   days === p.value
-                    ? "bg-purple-500/20 text-purple-400"
-                    : "bg-white/5 text-slate-400 hover:bg-white/10"
+                    ? "bg-purple-50 border border-purple-200 text-purple-700"
+                    : "bg-stone-50 text-stone-500 border border-stone-250 hover:bg-stone-100"
                 }`}
               >
                 {p.label}
@@ -91,26 +85,26 @@ export default function PeriodComparison() {
 
         {loading ? (
           <div className="space-y-2">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-14 bg-white/5 rounded-xl animate-pulse" />)}
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-14 bg-stone-50 border border-stone-100 rounded-xl animate-pulse" />)}
           </div>
         ) : (
           <div className="space-y-2">
             {metrics.map((metric, i) => (
               <motion.div
                 key={metric.label}
-                className="bg-white/5 rounded-xl p-3"
+                className="bg-stone-50 border border-stone-100 rounded-xl p-3"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.08 }}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] uppercase tracking-wider text-slate-500">{metric.label}</span>
+                  <span className="text-[10px] uppercase tracking-wider text-stone-500 font-bold">{metric.label}</span>
                   <ChangeIndicator value={metric.change} />
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-500 text-xs">{metric.previous}</span>
-                  <ArrowRight size={10} className="text-slate-600" />
-                  <span className="text-white text-sm font-bold">{metric.current}</span>
+                  <span className="text-stone-400 text-xs">{metric.previous}</span>
+                  <ArrowRight size={10} className="text-stone-300" />
+                  <span className="text-stone-900 text-sm font-bold">{metric.current}</span>
                 </div>
               </motion.div>
             ))}

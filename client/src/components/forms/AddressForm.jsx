@@ -153,13 +153,7 @@ export default function AddressForm({ onSave, onCancel, initialData }) {
         else toast.error("Please fix the errors");
     };
 
-    const Field = ({ label, error, children }) => (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-            {label && <label style={labelStyle}>{label}</label>}
-            {children}
-            {error && <p style={{ fontSize: 10, color: T.coral, marginTop: 4, fontWeight: 600 }}>{error}</p>}
-        </div>
-    );
+
 
     return (
         <motion.div
@@ -329,5 +323,16 @@ export default function AddressForm({ onSave, onCancel, initialData }) {
 
             <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
         </motion.div>
+    );
+}
+
+// Field component moved outside parent to prevent re-creation and focus loss on keystrokes
+function Field({ label, error, children }) {
+    return (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+            {label && <label style={labelStyle}>{label}</label>}
+            {children}
+            {error && <p style={{ fontSize: 10, color: T.coral, marginTop: 4, fontWeight: 600 }}>{error}</p>}
+        </div>
     );
 }

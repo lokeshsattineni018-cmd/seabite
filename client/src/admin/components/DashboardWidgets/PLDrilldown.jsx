@@ -39,18 +39,18 @@ export default function PLDrilldown() {
   const PnlRow = ({ label, value, isPositive, indent = 0, expandable, expanded: isExpanded, onToggle, isBold, children }) => (
     <div>
       <div
-        className={`flex items-center justify-between py-2.5 px-3 rounded-lg cursor-pointer hover:bg-white/5 transition-colors ${isBold ? "font-bold" : ""}`}
+        className={`flex items-center justify-between py-2.5 px-3 rounded-lg cursor-pointer hover:bg-stone-50 transition-colors ${isBold ? "font-bold" : ""}`}
         style={{ paddingLeft: `${12 + indent * 20}px` }}
         onClick={onToggle}
       >
         <div className="flex items-center gap-2">
           {expandable && (
-            isExpanded ? <ChevronDown size={14} className="text-slate-500" /> : <ChevronRight size={14} className="text-slate-500" />
+            isExpanded ? <ChevronDown size={14} className="text-stone-400" /> : <ChevronRight size={14} className="text-stone-400" />
           )}
-          <span className={`text-sm ${isBold ? "text-white" : "text-slate-300"}`}>{label}</span>
+          <span className={`text-sm ${isBold ? "text-stone-900" : "text-stone-600"}`}>{label}</span>
         </div>
         <span className={`text-sm font-mono font-semibold ${
-          isPositive === true ? "text-emerald-400" : isPositive === false ? "text-red-400" : "text-white"
+          isPositive === true ? "text-emerald-600" : isPositive === false ? "text-rose-600" : "text-stone-900"
         }`}>
           {formatMoney(value)}
         </span>
@@ -61,12 +61,7 @@ export default function PLDrilldown() {
 
   return (
     <motion.div
-      className="rounded-2xl p-6 relative overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-        border: "1px solid rgba(251, 146, 60, 0.2)",
-        boxShadow: "0 0 30px rgba(251, 146, 60, 0.05)",
-      }}
+      className="rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-[#fbfbfa] to-white border border-stone-200 shadow-sm"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
@@ -74,16 +69,15 @@ export default function PLDrilldown() {
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: "rgba(251, 146, 60, 0.15)" }}>
-              <ArrowUpDown size={16} className="text-orange-400" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-orange-50 border border-orange-100">
+              <ArrowUpDown size={16} className="text-orange-600" />
             </div>
-            <h3 className="text-sm font-bold text-white">P&L Statement</h3>
+            <h3 className="text-sm font-bold text-stone-900">P&L Statement</h3>
           </div>
           <select
             value={period}
             onChange={e => setPeriod(e.target.value)}
-            className="bg-white/5 text-white text-xs rounded-lg px-2 py-1.5 outline-none border border-white/10 cursor-pointer"
+            className="bg-white text-stone-850 text-xs rounded-xl px-2.5 py-1.5 outline-none border border-stone-200 cursor-pointer"
           >
             <option value="day">Today</option>
             <option value="week">This Week</option>
@@ -95,7 +89,7 @@ export default function PLDrilldown() {
 
         {loading ? (
           <div className="space-y-2">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-white/5 rounded-lg animate-pulse" />)}
+            {[1, 2, 3, 4].map(i => <div key={i} className="h-10 bg-stone-50 border border-stone-100 rounded-lg animate-pulse" />)}
           </div>
         ) : data && data.pnl ? (
           <div className="space-y-0.5">
@@ -117,7 +111,7 @@ export default function PLDrilldown() {
             <PnlRow label="(−) Discounts" value={-data.pnl.discounts} isPositive={false} />
 
             {/* Divider */}
-            <div className="border-t border-white/5 my-1" />
+            <div className="border-t border-stone-100 my-1" />
 
             {/* Net Revenue */}
             <PnlRow label="Net Revenue" value={data.pnl.netRevenue} isBold isPositive={true} />
@@ -134,7 +128,7 @@ export default function PLDrilldown() {
               <PnlRow label="Product Costs" value={data.pnl.cogs} indent={1} />
             </PnlRow>
 
-            <div className="border-t border-white/5 my-1" />
+            <div className="border-t border-stone-100 my-1" />
 
             {/* Gross Profit */}
             <PnlRow
@@ -152,33 +146,36 @@ export default function PLDrilldown() {
             {/* Tax */}
             <PnlRow label="Tax Collected (GST)" value={data.pnl.taxCollected} />
 
-            <div className="border-t border-white/10 my-2" />
+            <div className="border-t border-stone-200/60 my-2" />
 
             {/* Net Profit */}
-            <div className="flex items-center justify-between py-3 px-3 rounded-xl"
-              style={{ background: data.pnl.netProfit >= 0 ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)" }}>
-              <span className="text-sm font-bold text-white">Net Profit</span>
-              <span className={`text-lg font-bold font-mono ${data.pnl.netProfit >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+            <div className="flex items-center justify-between py-3 px-3 rounded-xl border"
+              style={{
+                background: data.pnl.netProfit >= 0 ? "rgba(16, 185, 129, 0.05)" : "rgba(239, 68, 68, 0.05)",
+                borderColor: data.pnl.netProfit >= 0 ? "rgba(16, 185, 129, 0.2)" : "rgba(239, 68, 68, 0.2)"
+              }}>
+              <span className="text-sm font-bold text-stone-850">Net Profit</span>
+              <span className={`text-lg font-bold font-mono ${data.pnl.netProfit >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
                 {formatMoney(data.pnl.netProfit)}
               </span>
             </div>
 
             {/* Per Order Stats */}
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div className="bg-white/5 rounded-lg p-2 text-center">
-                <p className="text-[10px] text-slate-500">Avg Order Value</p>
-                <p className="text-sm font-bold text-white">{formatMoney(data.breakdown.avgOrderValue)}</p>
+              <div className="bg-stone-50 border border-stone-100 rounded-xl p-2.5 text-center">
+                <p className="text-[10px] text-stone-500 font-medium">Avg Order Value</p>
+                <p className="text-sm font-bold text-stone-900">{formatMoney(data.breakdown.avgOrderValue)}</p>
               </div>
-              <div className="bg-white/5 rounded-lg p-2 text-center">
-                <p className="text-[10px] text-slate-500">Profit/Order</p>
-                <p className={`text-sm font-bold ${data.breakdown.avgProfitPerOrder >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+              <div className="bg-stone-50 border border-stone-100 rounded-xl p-2.5 text-center">
+                <p className="text-[10px] text-stone-500 font-medium">Profit/Order</p>
+                <p className={`text-sm font-bold ${data.breakdown.avgProfitPerOrder >= 0 ? "text-emerald-700" : "text-rose-700"}`}>
                   {formatMoney(data.breakdown.avgProfitPerOrder)}
                 </p>
               </div>
             </div>
           </div>
         ) : (
-          <p className="text-slate-500 text-sm text-center py-4">No data available</p>
+          <p className="text-stone-400 text-sm text-center py-4">No data available</p>
         )}
       </div>
     </motion.div>

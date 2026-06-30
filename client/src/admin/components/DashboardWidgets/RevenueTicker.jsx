@@ -39,32 +39,26 @@ export default function RevenueTicker({ revenue = 0, previousRevenue = 0, label 
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-2xl p-6"
-      style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
-        border: "1px solid rgba(56, 189, 248, 0.2)",
-        boxShadow: "0 0 40px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255,255,255,0.05)",
-      }}
+      className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-[#fbfbfa] to-white border border-stone-200 shadow-sm"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       {/* Animated glow effect */}
-      <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-20"
-        style={{ background: "radial-gradient(circle, #38bdf8 0%, transparent 70%)" }} />
+      <div className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-10"
+        style={{ background: "radial-gradient(circle, #5BBFB5 0%, transparent 70%)" }} />
 
       <div className="relative z-10">
         <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-            style={{ background: "rgba(56, 189, 248, 0.15)" }}>
-            <DollarSign size={16} className="text-sky-400" />
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-50 border border-emerald-100">
+            <DollarSign size={16} className="text-emerald-600" />
           </div>
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-stone-500">{label}</span>
         </div>
 
         <div className="flex items-end gap-3">
           <motion.span
-            className="text-4xl font-bold text-white tabular-nums"
+            className="text-4xl font-bold text-stone-900 tabular-nums"
             style={{ fontFamily: "'JetBrains Mono', 'SF Mono', monospace" }}
             key={displayValue}
           >
@@ -78,8 +72,8 @@ export default function RevenueTicker({ revenue = 0, previousRevenue = 0, label 
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
-                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold ${
-                  isUp ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
+                className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold border ${
+                  isUp ? "bg-emerald-50 text-emerald-600 border-emerald-100/50" : "bg-rose-50 text-rose-600 border-rose-100/50"
                 }`}
               >
                 {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
@@ -98,7 +92,7 @@ export default function RevenueTicker({ revenue = 0, previousRevenue = 0, label 
               style={{
                 width: 4,
                 height: Math.max(4, Math.random() * 16 + 4),
-                background: i === 11 ? "#38bdf8" : "rgba(56, 189, 248, 0.3)",
+                background: i === 11 ? "#5BBFB5" : "rgba(91, 191, 181, 0.3)",
               }}
             />
           ))}

@@ -12,9 +12,9 @@ const GOAL_ICONS = {
 };
 
 const GOAL_COLORS = {
-  revenue: { ring: "#10b981", bg: "rgba(16, 185, 129, 0.1)", text: "text-emerald-400" },
-  orders: { ring: "#3b82f6", bg: "rgba(59, 130, 246, 0.1)", text: "text-blue-400" },
-  customers: { ring: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)", text: "text-amber-400" },
+  revenue: { ring: "#10b981", bg: "bg-emerald-50 border border-emerald-100/40", text: "text-emerald-700" },
+  orders: { ring: "#3b82f6", bg: "bg-blue-50 border border-blue-100/40", text: "text-blue-700" },
+  customers: { ring: "#f59e0b", bg: "bg-amber-50 border border-amber-100/40", text: "text-amber-700" },
 };
 
 function CircularGauge({ percentage, color, size = 80, strokeWidth = 6 }) {
@@ -26,7 +26,7 @@ function CircularGauge({ percentage, color, size = 80, strokeWidth = 6 }) {
     <svg width={size} height={size} className="transform -rotate-90">
       {/* Background ring */}
       <circle cx={size/2} cy={size/2} r={radius} fill="none"
-        stroke="rgba(255,255,255,0.05)" strokeWidth={strokeWidth} />
+        stroke="rgba(120, 113, 108, 0.1)" strokeWidth={strokeWidth} />
       {/* Progress ring */}
       <motion.circle
         cx={size/2} cy={size/2} r={radius} fill="none"
@@ -99,12 +99,7 @@ export default function GoalGauge() {
 
   return (
     <motion.div
-      className="rounded-2xl p-6 relative overflow-hidden"
-      style={{
-        background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
-        border: "1px solid rgba(16, 185, 129, 0.2)",
-        boxShadow: "0 0 30px rgba(16, 185, 129, 0.05)",
-      }}
+      className="rounded-2xl p-6 relative overflow-hidden bg-gradient-to-br from-[#fbfbfa] to-white border border-stone-200 shadow-sm"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
@@ -112,17 +107,16 @@ export default function GoalGauge() {
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: "rgba(16, 185, 129, 0.15)" }}>
-              <Target size={16} className="text-emerald-400" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-emerald-50 border border-emerald-100">
+              <Target size={16} className="text-emerald-600" />
             </div>
-            <h3 className="text-sm font-bold text-white">Goal Tracking</h3>
+            <h3 className="text-sm font-bold text-stone-900">Goal Tracking</h3>
           </div>
           <button
             onClick={() => setShowForm(!showForm)}
-            className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5 hover:bg-white/10 transition-colors"
+            className="w-7 h-7 rounded-lg flex items-center justify-center bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-600 transition-colors"
           >
-            {showForm ? <X size={14} className="text-slate-400" /> : <Plus size={14} className="text-slate-400" />}
+            {showForm ? <X size={14} /> : <Plus size={14} />}
           </button>
         </div>
 
@@ -133,19 +127,19 @@ export default function GoalGauge() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             onSubmit={handleCreate}
-            className="mb-4 space-y-2 bg-white/5 rounded-xl p-3"
+            className="mb-4 space-y-2 bg-stone-50 border border-stone-100 rounded-xl p-3"
           >
             <input type="text" placeholder="Goal name..." value={form.name} onChange={e => setForm({...form, name: e.target.value})}
-              className="w-full bg-white/5 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 outline-none border border-white/10 focus:border-emerald-500/50" required />
+              className="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs text-stone-850 placeholder-stone-400 outline-none focus:border-stone-400" required />
             <div className="grid grid-cols-2 gap-2">
               <select value={form.type} onChange={e => setForm({...form, type: e.target.value})}
-                className="bg-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none border border-white/10">
+                className="bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs text-stone-800 outline-none">
                 <option value="revenue">Revenue</option>
                 <option value="orders">Orders</option>
                 <option value="customers">Customers</option>
               </select>
               <select value={form.period} onChange={e => setForm({...form, period: e.target.value})}
-                className="bg-white/5 rounded-lg px-3 py-2 text-xs text-white outline-none border border-white/10">
+                className="bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs text-stone-800 outline-none">
                 <option value="daily">Daily</option>
                 <option value="weekly">Weekly</option>
                 <option value="monthly">Monthly</option>
@@ -153,8 +147,8 @@ export default function GoalGauge() {
               </select>
             </div>
             <input type="number" placeholder="Target value..." value={form.target} onChange={e => setForm({...form, target: e.target.value})}
-              className="w-full bg-white/5 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 outline-none border border-white/10 focus:border-emerald-500/50" required />
-            <button type="submit" className="w-full bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 rounded-lg py-2 text-xs font-semibold transition-colors">
+              className="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs text-stone-850 placeholder-stone-400 outline-none focus:border-stone-400" required />
+            <button type="submit" className="w-full bg-[#5BBFB5] hover:bg-[#4faaa0] text-white rounded-lg py-2 text-xs font-semibold shadow-xs transition-colors">
               Create Goal
             </button>
           </motion.form>
@@ -163,10 +157,10 @@ export default function GoalGauge() {
         {/* Goals List */}
         {loading ? (
           <div className="space-y-3">
-            {[1, 2].map(i => <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />)}
+            {[1, 2].map(i => <div key={i} className="h-16 bg-stone-50 border border-stone-100 rounded-xl animate-pulse" />)}
           </div>
         ) : goals.length === 0 ? (
-          <div className="text-center py-6 text-slate-500 text-xs">
+          <div className="text-center py-6 text-stone-400 text-xs">
             No active goals. Click + to set a target.
           </div>
         ) : (
@@ -176,8 +170,7 @@ export default function GoalGauge() {
               return (
                 <motion.div
                   key={goal._id}
-                  className="flex items-center gap-3 rounded-xl p-3"
-                  style={{ background: colors.bg }}
+                  className={`flex items-center gap-3 rounded-xl p-3 ${colors.bg}`}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.1 }}
@@ -189,11 +182,11 @@ export default function GoalGauge() {
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-white truncate">{goal.name}</p>
-                    <p className="text-[10px] text-slate-400">
+                    <p className="text-xs font-bold text-stone-900 truncate">{goal.name}</p>
+                    <p className="text-[10px] text-stone-500 font-medium">
                       {formatValue(goal.current, goal.type)} / {formatValue(goal.target, goal.type)}
                     </p>
-                    <p className="text-[10px] text-slate-500 capitalize">{goal.period}</p>
+                    <p className="text-[10px] text-stone-400 capitalize">{goal.period}</p>
                   </div>
                   {goal.isAchieved && (
                     <span className="text-base">🎯</span>
