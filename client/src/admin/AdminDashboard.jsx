@@ -981,18 +981,64 @@ function BannerControl({ settings, setSettings }) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  // Client-side Canvas Image Resizer to WebP (max-width 1200px)
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      if (!file.type.startsWith("image/")) {
+        resolve(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          let width = img.width;
+          let height = img.height;
+          const MAX_DIM = 1200;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob((blob) => {
+            if (blob) {
+              const processedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                type: "image/webp",
+                lastModified: Date.now()
+              });
+              resolve(processedFile);
+            } else {
+              resolve(file);
+            }
+          }, "image/webp", 0.82);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleFileUpload = async (file) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) return toast.error("Upload an image");
-    if (file.size > 5 * 1024 * 1024) return toast.error("Image too large (Max 5MB)");
-
-    const formData = new FormData();
-    formData.append("image", file);
 
     setUploading(true);
-    const toastId = toast.loading("Uploading...");
+    const toastId = toast.loading("Compressing and uploading banner...");
 
     try {
+      const compressedFile = await compressImage(file);
+      const formData = new FormData();
+      formData.append("image", compressedFile);
+
       const res = await axios.post("/api/upload", formData, {
         headers: { "Content-Type": "multipart/form-data" },
         withCredentials: true
@@ -1007,7 +1053,10 @@ function BannerControl({ settings, setSettings }) {
       setSettings(prev => ({ ...prev, banner: { ...prev.banner, imageUrl } }));
       toast.success("Banner uploaded!", { id: toastId });
     } catch (err) {
-      toast.error("Upload failed", { id: toastId });
+      const errMsg = err.response?.status === 413 
+        ? "File too large (exceeds serverless payload limit). Please try a smaller image."
+        : (err.response?.data?.message || err.message || "Upload failed");
+      toast.error(errMsg, { id: toastId });
     } finally {
       setUploading(false);
     }
