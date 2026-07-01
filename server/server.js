@@ -298,7 +298,11 @@ app.use(hpp());
 // ✅ Handle static uploads
 const uploadDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-app.use("/uploads", express.static(uploadDir));
+app.use("/uploads", express.static(uploadDir, {
+  maxAge: "7d",
+  etag: true,
+  lastModified: true
+}));
 
 /* --- 3. DATABASE CONNECTION (Optimized for Serverless) --- */
 let cached = global.mongoose;
