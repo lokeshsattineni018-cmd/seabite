@@ -625,7 +625,7 @@ export default function Navbar({ announcementActive = false }) {
                                 style={{ display: "flex", alignItems: "center", gap: "14px", padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid #F4F9F8", transition: "background 0.2s" }}
                               >
                                 <div style={{ width: "48px", height: "48px", borderRadius: "12px", background: "#F8FAFB", overflow: "hidden", flexShrink: 0, border: "1px solid #E8EEF2" }}>
-                                  <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                  <img src={item.image} alt={item.name} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                 </div>
                                 <div style={{ flex: 1 }}>
                                   <p style={{ fontSize: "14px", fontWeight: "700", color: "#1A2E2C", margin: "0 0 2px" }}>{item.name}</p>
@@ -1109,7 +1109,7 @@ export default function Navbar({ announcementActive = false }) {
                       }}
                     >
                       {item.image ? (
-                        <img src={item.image} alt={item.name}
+                        <img src={item.image} alt={item.name} loading="lazy"
                           style={{ width: "46px", height: "46px", borderRadius: "10px", objectFit: "cover", flexShrink: 0, border: "1px solid #EEF5F4" }} />
                       ) : (
                         <div style={{ width: "46px", height: "46px", borderRadius: "10px", background: "#EEF5F4", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px" }}>🐟</div>

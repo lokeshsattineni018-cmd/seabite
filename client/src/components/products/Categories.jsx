@@ -78,6 +78,7 @@ export default function Categories() {
                     <img
                       src={cat.img}
                       alt={cat.name}
+                      loading="lazy"
                       className={`w-14 h-14 object-contain transition-all duration-700 group-hover:scale-110 drop-shadow-xl 
                       ${isDarkMode ? 'opacity-70 group-hover:opacity-100' : 'opacity-90 grayscale-[0.2] group-hover:grayscale-0'}`}
                     />
