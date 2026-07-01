@@ -17,6 +17,7 @@ export default function AdminPricingEngine() {
   const [marginOffset, setMarginOffset] = useState(15);
   const [competitorMatch, setCompetitorMatch] = useState(false);
   const [demandDensity, setDemandDensity] = useState(false);
+  const [marketSurgeIndex, setMarketSurgeIndex] = useState(1.0);
   const [products, setProducts] = useState([]);
   
   const [loading, setLoading] = useState(true);
@@ -32,6 +33,7 @@ export default function AdminPricingEngine() {
         setMarginOffset(data.settings.marginOffset);
         setCompetitorMatch(data.settings.competitorMatch || false);
         setDemandDensity(data.settings.demandDensity || false);
+        setMarketSurgeIndex(data.settings.marketSurgeIndex || 1.0);
       }
       setProducts(data.products || []);
     } catch (err) {
@@ -45,18 +47,17 @@ export default function AdminPricingEngine() {
     loadPricingData();
   }, []);
 
-  // Weather state (Simulating Mogalthur Marine landing parameters)
-  const weather = {
-    condition: stormOverride ? "Severe Storm" : "Heavy Rain",
-    windSpeed: stormOverride ? 48 : 34,
-    waveHeight: stormOverride ? 4.2 : 2.8,
-    scarcityIndex: stormOverride ? 1.35 : 1.18 // 35% or 18% scarcity multiplier
+  // Market Price Indices state (Simulating open wholesale market conditions)
+  const marketPrice = {
+    condition: marketSurgeIndex >= 1.3 ? "Peak Market Inflation" : marketSurgeIndex >= 1.15 ? "General Wholesale Surge" : "Normal Stable Market",
+    indexValue: marketSurgeIndex,
+    competitorDiscountAverage: competitorMatch ? 5 : 0
   };
 
   const getDynamicPrice = (base) => {
     let multiplier = 1;
     if (aiEnabled) {
-      multiplier *= weather.scarcityIndex;
+      multiplier *= marketSurgeIndex;
       multiplier += marginOffset / 100;
       if (competitorMatch) multiplier -= 0.05;
       if (demandDensity) multiplier += 0.08;
@@ -64,13 +65,13 @@ export default function AdminPricingEngine() {
     return Math.round(base * multiplier);
   };
 
-  // Generate simulated chart data for price elasticity vs supply scarcity
+  // Generate simulated chart data for price elasticity vs competitor market price
   const chartData = [
-    { index: "Calm Sea", demand: 100, supply: 100, price: 100 },
-    { index: "Light Wind", demand: 95, supply: 90, price: 105 },
-    { index: "Choppy Water", demand: 90, supply: 75, price: 112 },
-    { index: "Heavy Rain", demand: 85, supply: 60, price: 122 },
-    { index: "Severe Storm", demand: 70, supply: 30, price: 145 }
+    { index: "Stable Market", demand: 100, competitorPrice: 100, price: 100 },
+    { index: "Minor Rise", demand: 96, competitorPrice: 102, price: 106 },
+    { index: "Wholesale Surge", demand: 90, competitorPrice: 110, price: 115 },
+    { index: "High Demand", demand: 84, competitorPrice: 118, price: 126 },
+    { index: "Peak Inflation", demand: 72, competitorPrice: 128, price: 140 }
   ];
 
   const handleApplyBulkPrices = async () => {
@@ -81,9 +82,10 @@ export default function AdminPricingEngine() {
         stormOverride,
         marginOffset,
         competitorMatch,
-        demandDensity
+        demandDensity,
+        marketSurgeIndex
       });
-      toast.success(data.message || "AI Weather-Adaptive dynamic prices pushed successfully!", { icon: "🌦️" });
+      toast.success(data.message || "AI Market-Driven dynamic prices pushed successfully!", { icon: "📈" });
       await loadPricingData();
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to push dynamic prices to live catalog.");
@@ -120,44 +122,38 @@ export default function AdminPricingEngine() {
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <FiLoader className="text-[#5BBFB5] animate-spin" size={32} />
-          <span className="text-sm text-stone-400 font-bold">Synchronizing meteorological logs...</span>
+          <span className="text-sm text-stone-400 font-bold">Synchronizing wholesale market prices...</span>
         </div>
       ) : (
         /* Main Section Grid */
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Weather Intelligence Dashboard & Settings */}
+          {/* Market Intelligence Dashboard & Settings */}
           <div className="lg:col-span-1 space-y-6">
             
-            {/* Weather status glass card */}
-            <div className={`p-6 rounded-2xl border transition-all duration-500 ${
-              stormOverride 
-                ? "bg-rose-50/60 border-rose-200 text-rose-950 shadow-[0_8px_30px_rgba(244,63,94,0.08)]" 
-                : "bg-amber-50/60 border-amber-200 text-amber-950 shadow-[0_8px_30px_rgba(245,158,11,0.05)]"
-            }`}>
+            {/* Market status glass card */}
+            <div className={`p-6 rounded-2xl border transition-all duration-500 bg-emerald-50/60 border-emerald-200 text-emerald-950 shadow-[0_8px_30px_rgba(16,185,129,0.05)]`}>
               <div className="flex justify-between items-start">
                 <div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-stone-400">Live Marine Feed</span>
-                  <h3 className="text-lg font-extrabold mt-1 flex items-center gap-2">
-                    <FiCloudRain className={stormOverride ? "text-rose-500 animate-bounce" : "text-amber-500 animate-pulse"} size={22} />
-                    {stormOverride ? "Mogalthur: Severe Storm Warning" : "Mogalthur: Monsoon Chop"}
+                  <span className="text-[10px] font-black uppercase tracking-widest text-stone-400 font-sans">Wholesale Index Feed</span>
+                  <h3 className="text-lg font-extrabold mt-1 flex items-center gap-2 font-sans">
+                    <FiTrendingUp className="text-emerald-600 animate-pulse" size={22} />
+                    {marketPrice.condition}
                   </h3>
                 </div>
-                <span className={`text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full ${
-                  stormOverride ? "bg-rose-200 text-rose-800" : "bg-amber-200 text-amber-800"
-                }`}>
-                  {stormOverride ? "Red Flag" : "Caution"}
+                <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-200 text-emerald-850">
+                  Live Feed
                 </span>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mt-6">
                 <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1"><FiWind /> Wind Speed</p>
-                  <p className="text-xl font-black">{weather.windSpeed} km/h</p>
+                  <p className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1"><FiDollarSign /> Wholesale Surge</p>
+                  <p className="text-xl font-black">+{Math.round((marketSurgeIndex - 1) * 100)}%</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1">🌊 Wave Height</p>
-                  <p className="text-xl font-black">{weather.waveHeight} meters</p>
+                  <p className="text-[10px] font-bold text-stone-500 uppercase flex items-center gap-1">🏷️ Competitor Offset</p>
+                  <p className="text-xl font-black">{marketPrice.competitorDiscountAverage > 0 ? `-${marketPrice.competitorDiscountAverage}%` : "None"}</p>
                 </div>
               </div>
 
@@ -165,26 +161,26 @@ export default function AdminPricingEngine() {
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <p className="text-[10px] font-bold text-stone-500 uppercase">Dynamic Scarcity Offset</p>
-                  <p className="text-sm font-extrabold text-[#5BBFB5]">+{Math.round((weather.scarcityIndex - 1) * 100)}% Supply Multiplier</p>
+                  <p className="text-[10px] font-bold text-stone-500 uppercase">Live Pricing Factor</p>
+                  <p className="text-sm font-extrabold text-[#5BBFB5]">{marketSurgeIndex.toFixed(2)}x Market Multiplier</p>
                 </div>
-                <div className="p-3 bg-white/80 rounded-xl border border-stone-200/40">
-                  <FiTrendingUp className="text-[#5BBFB5]" size={20} />
+                <div className="p-3 bg-white/85 rounded-xl border border-stone-200/40 shadow-sm">
+                  <FiZap className="text-[#5BBFB5]" size={20} />
                 </div>
               </div>
             </div>
 
             {/* Engine Parameters Controller */}
             <div className="p-6 bg-white rounded-2xl border border-stone-200/60 shadow-sm space-y-6">
-              <h3 className="text-base font-extrabold text-stone-900 flex items-center gap-2">
+              <h3 className="text-base font-extrabold text-stone-900 flex items-center gap-2 font-sans">
                 <FiSliders className="text-[#5BBFB5]" /> Engine Control Panel
               </h3>
 
               {/* AI Toggle */}
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-bold text-stone-800 block">AI Automated Scarcity</span>
-                  <span className="text-[10px] text-stone-400 block mt-0.5">Auto-adjust using meteorological feeds</span>
+                  <span className="text-xs font-bold text-stone-800 block">AI Market-Tracking</span>
+                  <span className="text-[10px] text-stone-400 block mt-0.5">Auto-adjust using open market indices</span>
                 </div>
                 <button
                   onClick={() => setAiEnabled(!aiEnabled)}
@@ -201,29 +197,26 @@ export default function AdminPricingEngine() {
                 </button>
               </div>
 
-              {/* Storm Override Toggle */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-bold text-stone-800 block">Forced Storm Mode</span>
-                  <span className="text-[10px] text-stone-400 block mt-0.5">Simulate severe landing blockages</span>
+              {/* Market Index Slider */}
+              <div className="space-y-2 pt-2 border-t border-stone-100">
+                <div className="flex justify-between">
+                  <span className="text-xs font-bold text-stone-800">Wholesale Market Index</span>
+                  <span className="text-xs font-black text-[#5BBFB5]">{marketSurgeIndex.toFixed(2)}x</span>
                 </div>
-                <button
-                  onClick={() => setStormOverride(!stormOverride)}
-                  className={`w-12 h-6.5 rounded-full p-1 transition-all duration-300 relative cursor-pointer ${
-                    stormOverride ? "bg-rose-500" : "bg-stone-200"
-                  }`}
-                >
-                  <motion.div
-                    layout
-                    className="w-4.5 h-4.5 bg-white rounded-full shadow-sm"
-                    animate={{ x: stormOverride ? 20 : 0 }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  />
-                </button>
+                <input
+                  type="range"
+                  min="0.8"
+                  max="1.8"
+                  step="0.05"
+                  value={marketSurgeIndex}
+                  onChange={(e) => setMarketSurgeIndex(Number(e.target.value))}
+                  className="w-full accent-[#5BBFB5] h-1.5 bg-stone-100 rounded-lg cursor-pointer"
+                />
+                <span className="text-[9px] text-stone-400 block">Simulates price surges (1.0x = normal, 1.25x = general rise, 0.9x = deflation).</span>
               </div>
 
               {/* Competitor Price Matching Toggle */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2 border-t border-stone-100">
                 <div>
                   <span className="text-xs font-bold text-stone-800 block">Competitor Price Match</span>
                   <span className="text-[10px] text-stone-400 block mt-0.5">Dynamically match competitor discounts (-5% offset)</span>
@@ -245,7 +238,7 @@ export default function AdminPricingEngine() {
               </div>
 
               {/* Demand Density Toggle */}
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between pt-2 border-t border-stone-100">
                 <div>
                   <span className="text-xs font-bold text-stone-800 block">Demand Density Surge</span>
                   <span className="text-[10px] text-stone-400 block mt-0.5">Surge price in high order density areas (+8% offset)</span>
@@ -267,7 +260,7 @@ export default function AdminPricingEngine() {
               </div>
 
               {/* Target Margin Slider */}
-              <div className="space-y-2">
+              <div className="space-y-2 pt-2 border-t border-stone-100">
                 <div className="flex justify-between">
                   <span className="text-xs font-bold text-stone-800">Target Profit Margin</span>
                   <span className="text-xs font-black text-[#5BBFB5]">+{marginOffset}%</span>
@@ -278,9 +271,9 @@ export default function AdminPricingEngine() {
                   max="50"
                   value={marginOffset}
                   onChange={(e) => setMarginOffset(Number(e.target.value))}
-                  className="w-full accent-[#5BBFB5] h-1.5 bg-stone-150 rounded-lg cursor-pointer"
+                  className="w-full accent-[#5BBFB5] h-1.5 bg-stone-100 rounded-lg cursor-pointer"
                 />
-                <span className="text-[9px] text-stone-400 block">Adds static percentage offset above catch scarcity base.</span>
+                <span className="text-[9px] text-stone-400 block">Adds static percentage offset above base wholesale prices.</span>
               </div>
             </div>
           </div>
@@ -290,8 +283,8 @@ export default function AdminPricingEngine() {
             
             {/* Recharts dynamic elastic dashboard */}
             <div className="p-6 bg-white rounded-2xl border border-stone-200/60 shadow-sm">
-              <h3 className="text-base font-extrabold text-stone-900 mb-4 flex items-center gap-2">
-                <FiTrendingUp className="text-[#5BBFB5]" /> Price Scarcity Elasticity Model
+              <h3 className="text-base font-extrabold text-stone-900 mb-4 flex items-center gap-2 font-sans">
+                <FiTrendingUp className="text-[#5BBFB5]" /> Market Price Elasticity Model
               </h3>
               <div className="h-64 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -310,20 +303,20 @@ export default function AdminPricingEngine() {
                       labelStyle={{ fontWeight: 800, fontSize: 12, color: "#1A2E2C" }}
                     />
                     <Area type="monotone" dataKey="price" name="Pricing Mult (%)" stroke="#5BBFB5" strokeWidth={2} fillOpacity={1} fill="url(#priceColor)" />
-                    <Area type="monotone" dataKey="supply" name="Supply Cap (%)" stroke="#EF4444" strokeWidth={1.5} fillOpacity={0} />
+                    <Area type="monotone" dataKey="competitorPrice" name="Competitor Price (%)" stroke="#F59E0B" strokeWidth={1.5} fillOpacity={0} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
               <div className="flex gap-4 items-center justify-center text-[10px] font-bold text-stone-500 uppercase mt-4">
                 <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-[#5BBFB5]" /> Dynamic Price Curve</span>
-                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500" /> Fisherman Supply Availability</span>
+                <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Competitor Wholesale Price Index</span>
               </div>
             </div>
 
             {/* Pricing Catalog Log */}
             <div className="p-6 bg-white rounded-2xl border border-stone-200/60 shadow-sm">
-              <h3 className="text-base font-extrabold text-stone-900 mb-4 flex items-center gap-2">
-                <FiDollarSign className="text-[#5BBFB5]" /> Dynamic Catalog Output
+              <h3 className="text-base font-extrabold text-stone-900 mb-4 flex items-center gap-2 font-sans">
+                <FiDollarSign className="text-[#5BBFB5]" /> Dynamic Catalog Output & Profit Margins
               </h3>
 
               <div className="overflow-x-auto">
@@ -336,23 +329,28 @@ export default function AdminPricingEngine() {
                     <thead>
                       <tr className="border-b border-stone-100 text-[10px] font-black uppercase text-stone-400 tracking-wider">
                         <th className="py-3">Product Name</th>
-                        <th className="py-3">Category</th>
-                        <th className="py-3 text-right">Standard Base</th>
-                        <th className="py-3 text-right text-stone-800">Dynamic AI Price</th>
-                        <th className="py-3 text-right text-[#5BBFB5]">Delta Margin</th>
+                        <th className="py-3 text-right">Cost (Buy)</th>
+                        <th className="py-3 text-right">Base (MRP)</th>
+                        <th className="py-3 text-right text-stone-800 font-bold">Dynamic AI Price</th>
+                        <th className="py-3 text-right text-emerald-600 font-bold">Net Profit (₹)</th>
+                        <th className="py-3 text-right text-[#5BBFB5] font-bold">Profit Margin</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-stone-50 text-xs">
                       {products.map((prod) => {
+                        const cost = prod.buyingPrice || Math.round(prod.basePrice * 0.7);
                         const dyn = getDynamicPrice(prod.basePrice);
+                        const profit = dyn - cost;
+                        const marginPct = Math.round((profit / dyn) * 100);
                         return (
                           <tr key={prod._id} className="hover:bg-stone-50/50 transition-colors">
                             <td className="py-4.5 font-bold text-stone-900">{prod.name}</td>
-                            <td className="py-4.5 text-stone-500 font-semibold">{prod.category}</td>
-                            <td className="py-4.5 text-right font-medium text-stone-400">₹{prod.basePrice}</td>
-                            <td className="py-4.5 text-right font-extrabold text-stone-900">₹{dyn}</td>
+                            <td className="py-4.5 text-right font-medium text-stone-400 font-semibold">₹{cost}</td>
+                            <td className="py-4.5 text-right font-medium text-stone-400 font-semibold">₹{prod.basePrice}</td>
+                            <td className="py-4.5 text-right font-extrabold text-stone-900 text-sm">₹{dyn}</td>
+                            <td className="py-4.5 text-right font-bold text-emerald-600 font-bold">₹{profit}</td>
                             <td className="py-4.5 text-right font-black text-[#5BBFB5]">
-                              +{Math.round((dyn / prod.basePrice - 1) * 100)}%
+                              {marginPct}%
                             </td>
                           </tr>
                         );

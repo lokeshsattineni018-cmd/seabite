@@ -1330,11 +1330,11 @@ router.get("/insights/search-discovery", adminAuth, async (req, res) => {
   }
 });
 
-// 🟢 10. AI WEATHER-ADAPTIVE DYNAMIC PRICING ENGINE
+// 🟢 10. AI MARKET-DRIVEN DYNAMIC PRICING ENGINE
 router.get("/pricing-engine", adminAuth, async (req, res) => {
   try {
     const settings = await PricingSetting.getSettings();
-    const products = await Product.find({ active: true }).select("name basePrice price category");
+    const products = await Product.find({ active: true }).select("name basePrice price category buyingPrice");
     res.json({ settings, products });
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch pricing settings" });
@@ -1343,7 +1343,7 @@ router.get("/pricing-engine", adminAuth, async (req, res) => {
 
 router.post("/pricing-engine/sync", adminAuth, async (req, res) => {
   try {
-    const { aiEnabled, stormOverride, marginOffset, competitorMatch, demandDensity } = req.body;
+    const { aiEnabled, stormOverride, marginOffset, competitorMatch, demandDensity, marketSurgeIndex } = req.body;
     
     // 1. Save pricing settings
     let settings = await PricingSetting.findOne();
@@ -1355,19 +1355,17 @@ router.post("/pricing-engine/sync", adminAuth, async (req, res) => {
     settings.marginOffset = marginOffset;
     settings.competitorMatch = competitorMatch;
     settings.demandDensity = demandDensity;
+    if (typeof marketSurgeIndex === "number") {
+      settings.marketSurgeIndex = marketSurgeIndex;
+    }
     await settings.save();
 
-    // 2. Perform price recalculations for all active products
-    const weather = {
-      condition: stormOverride ? "Severe Storm" : "Heavy Rain",
-      windSpeed: stormOverride ? 48 : 34,
-      waveHeight: stormOverride ? 4.2 : 2.8,
-      scarcityIndex: stormOverride ? 1.35 : 1.18
-    };
+    // 2. Perform price recalculations for all active products based on wholesale market indices
+    const activeSurge = typeof marketSurgeIndex === "number" ? marketSurgeIndex : (stormOverride ? 1.35 : 1.15);
 
     let multiplier = 1;
     if (aiEnabled) {
-      multiplier *= weather.scarcityIndex;
+      multiplier *= activeSurge;
       multiplier += marginOffset / 100;
       if (competitorMatch) multiplier -= 0.05; // 5% discount to match competitors
       if (demandDensity) multiplier += 0.08; // 8% surge for high density demand
@@ -1383,8 +1381,8 @@ router.post("/pricing-engine/sync", adminAuth, async (req, res) => {
     await ActivityLog.create({
       user: req.user?._id || null,
       action: "SYNC_DYNAMIC_PRICING",
-      details: `Synchronized live catalog using AI Dynamic Pricing (AI: ${aiEnabled}, Storm Mode: ${stormOverride}, Margin: +${marginOffset}%)`,
-      meta: { aiEnabled, stormOverride, marginOffset, weather, productsCount: products.length }
+      details: `Synchronized live catalog using Market-Driven AI Dynamic Pricing (AI: ${aiEnabled}, Market Index: ${activeSurge}x, Margin Offset: +${marginOffset}%)`,
+      meta: { aiEnabled, stormOverride, marginOffset, marketSurgeIndex: activeSurge, competitorMatch, demandDensity, productsCount: products.length }
     });
 
     res.json({ success: true, settings, message: "Live catalog prices synchronized successfully!" });

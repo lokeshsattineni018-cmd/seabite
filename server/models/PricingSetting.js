@@ -5,7 +5,8 @@ const pricingSettingSchema = new mongoose.Schema({
   stormOverride: { type: Boolean, default: false },
   marginOffset: { type: Number, default: 15 },
   competitorMatch: { type: Boolean, default: false },
-  demandDensity: { type: Boolean, default: false }
+  demandDensity: { type: Boolean, default: false },
+  marketSurgeIndex: { type: Number, default: 1.0 }
 }, { timestamps: true });
 
 // Ensure a single setting document helper
@@ -17,7 +18,8 @@ pricingSettingSchema.statics.getSettings = async function() {
       stormOverride: false,
       marginOffset: 15,
       competitorMatch: false,
-      demandDensity: false
+      demandDensity: false,
+      marketSurgeIndex: 1.0
     });
   }
   return settings;
