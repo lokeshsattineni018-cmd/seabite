@@ -4,6 +4,7 @@ import { v2 as cloudinary } from "cloudinary";
 import Product from "../models/Product.js";
 import User from "../models/User.js";
 import adminAuth from "../middleware/adminAuth.js";
+import { cacheClear } from "../utils/cache.js";
 
 const router = express.Router();
 
@@ -221,6 +222,7 @@ router.put("/:id", adminAuth, async (req, res) => {
       });
     }
 
+    cacheClear();
     res.json(updatedProduct);
   } catch (err) {
     res.status(400).json({ message: "Unable to update product: " + err.message });
@@ -241,6 +243,7 @@ router.put("/:id/flash-sale", adminAuth, async (req, res) => {
     };
 
     await product.save();
+    cacheClear();
     res.json({ message: "Flash Sale updated successfully", product });
   } catch (err) {
     res.status(500).json({ message: "Failed to update Flash Sale" });
@@ -266,6 +269,7 @@ router.get("/", adminAuth, async (req, res) => {
 router.delete("/:id", adminAuth, async (req, res) => {
   try {
     await Product.findByIdAndDelete(req.params.id);
+    cacheClear();
     res.json({ message: "Product deleted" });
   } catch (err) {
     res.status(500).json({ message: "Delete failed" });

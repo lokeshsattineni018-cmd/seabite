@@ -1,11 +1,18 @@
 import { lazy } from "react";
 
+// Registry to track chunk loaders for link prefetching
+const chunkRegistry = {};
+
 /**
  * Enhanced lazy import with automatic retry on ChunkLoadError.
- * Useful for handling Vite/Vercel deployments where old chunks are deleted.
+ * Also registers the chunk loader for dynamic prefetching.
  */
-export const lazyWithRetry = (componentImport) =>
-  lazy(async () => {
+export const lazyWithRetry = (componentImport, pageName) => {
+  if (pageName) {
+    chunkRegistry[pageName] = componentImport;
+  }
+  
+  return lazy(async () => {
     const pageHasAlreadyBeenForceRefreshed = JSON.parse(
       window.localStorage.getItem("page_has_been_force_refreshed") || "false"
     );
@@ -25,3 +32,14 @@ export const lazyWithRetry = (componentImport) =>
       throw error;
     }
   });
+};
+
+/**
+ * Prefetch a registered page component's chunk in the background
+ */
+export const prefetchComponent = (pageName) => {
+  const loader = chunkRegistry[pageName];
+  if (loader) {
+    loader().catch(() => {});
+  }
+};

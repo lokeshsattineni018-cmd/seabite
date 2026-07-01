@@ -15,6 +15,7 @@ import { runAbandonedCartWorker } from "../cron/abandonedCartWorker.js";
 import PricingSetting from "../models/PricingSetting.js";
 import ReturnRequest from "../models/ReturnRequest.js";
 import { sendPushNotification, broadcastPushNotification } from "../utils/webPush.js";
+import { cacheClear } from "../utils/cache.js";
 
 const router = express.Router();
 
@@ -1385,6 +1386,7 @@ router.post("/pricing-engine/sync", adminAuth, async (req, res) => {
       meta: { aiEnabled, stormOverride, marginOffset, marketSurgeIndex: activeSurge, competitorMatch, demandDensity, productsCount: products.length }
     });
 
+    cacheClear();
     res.json({ success: true, settings, message: "Live catalog prices synchronized successfully!" });
   } catch (err) {
     console.error("❌ DYNAMIC PRICING SYNC ERROR:", err);

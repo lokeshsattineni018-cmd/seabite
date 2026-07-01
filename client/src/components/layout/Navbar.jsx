@@ -14,6 +14,7 @@ import toast from "react-hot-toast";
 import { slugify } from "../../utils/slugify";
 import { useGoogleLogin } from "@react-oauth/google";
 import { io } from "socket.io-client"; // [Real-time Pulse]
+import { prefetchComponent } from "../../utils/lazyWithRetry";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -924,16 +925,16 @@ export default function Navbar({ announcementActive = false }) {
               justifyContent: "center"
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "32px" }}>
-                <Link to="/products" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <Link to="/products" onMouseEnter={() => prefetchComponent("Products")} className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Daily Deals
                 </Link>
-                <Link to="/products?category=Fish" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <Link to="/products?category=Fish" onMouseEnter={() => prefetchComponent("Products")} className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Fish
                 </Link>
-                <Link to="/products?category=Prawn" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <Link to="/products?category=Prawn" onMouseEnter={() => prefetchComponent("Products")} className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Prawns
                 </Link>
-                <Link to="/products?category=Crab" className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <Link to="/products?category=Crab" onMouseEnter={() => prefetchComponent("Products")} className="bottom-tier-link-cat" style={{ textDecoration: "none", fontSize: "14.5px", fontWeight: "600", color: isTransparent ? "#FFFFFF" : "#1A2E2C", fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Crabs
                 </Link>
                 
