@@ -280,32 +280,33 @@ const EnhancedProductCard = ({
           </div>
 
           <motion.button
-            whileHover={{ scale: 1.05, backgroundColor: "#4AA89F" }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={isOutOfStock ? {} : { scale: 1.05, backgroundColor: "#4AA89F" }}
+            whileTap={isOutOfStock ? {} : { scale: 0.95 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
             aria-label={isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : `Add ${product.name} to cart`)}
             style={{
-              background: isOutOfStock ? "#F1F5F5" : "#5BBFB5",
+              background: isOutOfStock ? "#F3F4F6" : "#5BBFB5",
               color: isOutOfStock ? "#9CA3AF" : "#FFF",
               border: "none",
-              borderRadius: "12px",
-              height: "44px",
-              padding: "0 16px",
+              borderRadius: "50%",
+              width: "38px",
+              height: "38px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: "8px",
-              fontSize: "12.5px",
-              fontWeight: "700",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
-              boxShadow: isOutOfStock ? "none" : "0 4px 14px rgba(91,191,181,0.25)",
+              boxShadow: isOutOfStock ? "none" : "0 4px 12px rgba(91,191,181,0.2)",
               transition: "all 0.3s ease",
-              fontFamily: "inherit"
+              fontFamily: "inherit",
+              flexShrink: 0
             }}
           >
-            {isAdding ? <FiCheck size={15} /> : <FiShoppingCart size={15} />}
-            {isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : "Add")}
+            {isOutOfStock ? (
+              <span style={{ fontSize: "8px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.02em" }}>OUT</span>
+            ) : (
+              isAdding ? <FiCheck size={16} /> : <FiPlus size={16} />
+            )}
           </motion.button>
         </div>
       </div>
