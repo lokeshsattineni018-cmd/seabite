@@ -24,13 +24,13 @@ import GoogleOneTap from "./components/common/GoogleOneTap"; // 🟢 Google One 
 import LiveSocialProof from "./components/common/LiveSocialProof"; // 🛰️ Live Sales Notification
 
 // Lazy Imports for Critical Pages
-const Home = lazy(() => import("./pages/shop/Home"));
-const Products = lazy(() => import("./pages/shop/Products"));
-const ProductDetails = lazy(() => import("./pages/shop/ProductDetails"));
-const Wishlist = lazy(() => import("./pages/shop/Wishlist"));
-const Profile = lazy(() => import("./pages/user/Profile"));
-const Checkout = lazy(() => import("./pages/shop/Checkout"));
-const Login = lazy(() => import("./pages/auth/Login"));
+const Home = lazy(() => import("./pages/shop/Home"), "Home");
+const Products = lazy(() => import("./pages/shop/Products"), "Products");
+const ProductDetails = lazy(() => import("./pages/shop/ProductDetails"), "ProductDetails");
+const Wishlist = lazy(() => import("./pages/shop/Wishlist"), "Wishlist");
+const Profile = lazy(() => import("./pages/user/Profile"), "Profile");
+const Checkout = lazy(() => import("./pages/shop/Checkout"), "Checkout");
+const Login = lazy(() => import("./pages/auth/Login"), "Login");
 const OrderSuccess = lazy(() => import("./pages/shop/OrderSuccess"));
 const Orders = lazy(() => import("./pages/user/Orders"));
 const OrderDetails = lazy(() => import("./pages/user/OrderDetails"));

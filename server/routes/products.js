@@ -2,6 +2,7 @@ import express from "express";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import upload from "../config/multerConfig.js";
+import { cacheGet, cacheSet, cacheClear } from "../utils/cache.js";
 import { protect } from "../middleware/authMiddleware.js";
 import SearchInsight from "../models/SearchInsight.js";
 import { getSettings } from "../models/Settings.js";
@@ -49,6 +50,13 @@ router.get("/top-reviews", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     const { category, search, minPrice, maxPrice, inStock, sort } = req.query;
+
+    const cacheKey = `products:all:${category || 'all'}:${search || 'none'}:${minPrice || '0'}:${maxPrice || '0'}:${inStock || 'all'}:${sort || 'default'}:${req.query.flashSale || 'false'}`;
+    const cachedData = cacheGet(cacheKey);
+    if (cachedData) {
+      return res.json(cachedData);
+    }
+
     let query = { active: true };
 
     // Category Filter
@@ -121,7 +129,10 @@ router.get("/", async (req, res) => {
       // console.error("Failed to fetch settings:", err);
     }
 
-    res.json({ products, globalDiscount });
+    const responsePayload = { products, globalDiscount };
+    cacheSet(cacheKey, responsePayload, 120); // Cache for 120s
+
+    res.json(responsePayload);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -209,6 +220,12 @@ router.get("/search/trending", async (req, res) => {
 // --- GET SINGLE PRODUCT WITH RELATED ITEMS ---
 router.get("/:id", async (req, res) => {
   try {
+    const cacheKey = `product:detail:${req.params.id}`;
+    const cachedData = cacheGet(cacheKey);
+    if (cachedData) {
+      return res.json(cachedData);
+    }
+
     let product;
     if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
       product = await Product.findById(req.params.id).populate('reviews.user', 'name').lean();
@@ -285,7 +302,10 @@ router.get("/:id", async (req, res) => {
       }
     });
 
-    res.json({ ...product, relatedProducts, globalDiscount, salesLast24h });
+    const responsePayload = { ...product, relatedProducts, globalDiscount, salesLast24h };
+    cacheSet(cacheKey, responsePayload, 120); // Cache for 120s
+
+    res.json(responsePayload);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -303,6 +323,7 @@ router.post("/", upload.single('image'), async (req, res) => {
       trending: trending === 'true',
       image: `/uploads/${req.file.filename}`,
     });
+    cacheClear();
     res.status(201).json(product);
   } catch (err) {
     res.status(400).json({ message: err.message });
@@ -373,6 +394,7 @@ router.post("/:id/reviews", protect, upload.array('images', 3), async (req, res)
       product.rating = product.reviews.reduce((acc, item) => item.rating + acc, 0) / product.reviews.length;
 
       await product.save();
+      cacheClear();
       res.status(201).json({ message: "Review Saved Successfully" });
     } else {
       res.status(404).json({ message: "Product not found" });
