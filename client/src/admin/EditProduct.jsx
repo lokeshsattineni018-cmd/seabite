@@ -155,7 +155,10 @@ export default function EditProduct() {
       setForm({ ...form, image: data.file || data.url });
       setModal({ show: true, message: "Main image compressed and uploaded!", type: "success" });
     } catch (err) {
-      setModal({ show: true, message: "Image upload failed.", type: "error" });
+      const msg = err.response?.status === 413 
+        ? "File too large (exceeds serverless payload limit of 4.5MB). Please try uploading smaller images."
+        : (err.response?.data?.message || err.message || "Image upload failed.");
+      setModal({ show: true, message: msg, type: "error" });
     } finally {
       setSubmitting(false);
     }
@@ -186,7 +189,10 @@ export default function EditProduct() {
       setForm(prev => ({ ...prev, images: [...prev.images, ...uploadedUrls] }));
       toast.success("Gallery updated", { id: toastId });
     } catch (err) {
-      toast.error("Upload failed", { id: toastId });
+      const msg = err.response?.status === 413 
+        ? "File too large (exceeds serverless payload limit of 4.5MB)."
+        : (err.response?.data?.message || err.message || "Upload failed");
+      toast.error(msg, { id: toastId });
     } finally {
       setSubmitting(false);
     }

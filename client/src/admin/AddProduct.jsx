@@ -198,7 +198,10 @@ export default function AddProduct() {
       setGalleryImages([]);
       setGalleryPreviews([]);
     } catch (err) {
-      setModal({ show: true, message: "Failed to add product", type: "error" });
+      const msg = err.response?.status === 413 
+        ? "File too large (exceeds serverless payload limit of 4.5MB). Please try uploading smaller or compressed images."
+        : (err.response?.data?.message || err.message || "Failed to add product");
+      setModal({ show: true, message: msg, type: "error" });
     } finally {
       setLoading(false);
     }
