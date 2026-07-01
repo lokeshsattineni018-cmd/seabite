@@ -137,6 +137,8 @@ const EnhancedProductCard = ({
         border: "1.5px solid #F0F4F4",
         boxShadow: "0 10px 40px rgba(26, 46, 44, 0.03)",
         fontFamily: "'Plus Jakarta Sans', sans-serif",
+        contentVisibility: "auto",
+        containIntrinsicSize: "0 380px",
       }}
     >
       {/* 🖼️ Premium Image Container */}

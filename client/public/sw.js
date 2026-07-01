@@ -1,151 +1,105 @@
-const CACHE_NAME = 'seabite-v1.1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/logo.webp',
-  '/favicon.webp',
-  '/roundlogo.webp',
-  '/manifest.json'
+const CACHE_NAME = "seabite-static-v1";
+const API_CACHE_NAME = "seabite-api-v1";
+
+// Cache static assets on install
+const STATIC_ASSETS = [
+  "/",
+  "/index.html",
+  "/logo.webp",
+  "/roundlogo.webp"
 ];
 
-// Install event - caching core assets
-self.addEventListener('install', event => {
-  self.skipWaiting(); // Force the waiting service worker to become the active service worker
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
   );
+  self.skipWaiting();
 });
 
-// Activate event - cleaning up old caches
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
+    caches.keys().then((keys) => {
       return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
+        keys.map((key) => {
+          if (key !== CACHE_NAME && key !== API_CACHE_NAME) {
+            return caches.delete(key);
           }
         })
       );
-    }).then(() => self.clients.claim()) // Become available to all clients immediately
+    })
   );
+  self.clients.claim();
 });
 
-// Fetch event - sophisticated strategy
-self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
+// Intercept requests
+self.addEventListener("fetch", (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
 
-  // 1. Ignore API requests
-  if (url.pathname.startsWith('/api/')) {
-    return;
-  }
-
-  // 2. Ignore non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // 3. Special handling for navigation requests (index.html)
-  // We want a Network-First strategy here to avoid stale asset links
-  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+  // 1. API Cache Strategy: Stale-While-Revalidate
+  if (url.pathname.includes("/api/products") || url.pathname.includes("/api/coupons")) {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Update cache with new index.html
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseClone);
-          });
-          return response;
-        })
-        .catch(() => {
-          // If network fails, try cache
-          return caches.match(event.request);
-        })
+      caches.open(API_CACHE_NAME).then((cache) => {
+        return cache.match(request).then((cachedResponse) => {
+          const fetchPromise = fetch(request)
+            .then((networkResponse) => {
+              if (networkResponse.status === 200) {
+                cache.put(request, networkResponse.clone());
+              }
+              return networkResponse;
+            })
+            .catch(() => {
+              // Network fallback failed, return cached response if available
+              return cachedResponse;
+            });
+
+          return cachedResponse || fetchPromise;
+        });
+      })
     );
     return;
   }
 
-  // 4. Standard assets (JS, CSS, Images)
-  // Use Cache-First with Network-Fallback
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
+  // 2. Static Asset Caching Strategy: Cache-First
+  const isStaticAsset = 
+    request.destination === "style" ||
+    request.destination === "script" ||
+    request.destination === "image" ||
+    url.pathname.endsWith(".webp") ||
+    url.pathname.endsWith(".png") ||
+    url.pathname.endsWith(".jpg") ||
+    url.pathname.endsWith(".svg") ||
+    url.pathname.endsWith(".woff2");
+
+  if (isStaticAsset) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          // Serve from cache, but fetch and update in background if needed
+          fetch(request).then((networkResponse) => {
+            if (networkResponse.status === 200) {
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse));
+            }
+          }).catch(() => {});
+          return cachedResponse;
         }
-        return fetch(event.request).then(networkResponse => {
-          // Don't cache assets from other domains unless needed
-          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-            return networkResponse;
+
+        return fetch(request).then((networkResponse) => {
+          if (networkResponse.status === 200) {
+            return caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, networkResponse.clone());
+              return networkResponse;
+            });
           }
-          
-          const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(cache => {
-            cache.put(event.request, responseToCache);
-          });
-          
           return networkResponse;
         });
       })
-  );
-});
-
-// ==========================================
-// WEB PUSH NOTIFICATION EVENTS
-// ==========================================
-
-// Push event listener - display notification
-self.addEventListener('push', event => {
-  let data = { title: 'SeaBite Update', body: 'New update from SeaBite!' };
-  try {
-    data = event.data ? event.data.json() : data;
-  } catch (e) {
-    // If not json payload, use text
-    data = { title: 'SeaBite Update', body: event.data ? event.data.text() : 'New update from SeaBite!' };
+    );
+    return;
   }
 
-  const options = {
-    body: data.body,
-    icon: '/roundlogo.png',
-    badge: '/roundlogo.png',
-    data: data.data || {},
-    vibrate: [100, 50, 100],
-    actions: [
-      { action: 'open', title: 'Open App' }
-    ]
-  };
-
-  event.waitUntil(
-    self.registration.showNotification(data.title, options)
-  );
+  // 3. Default: Network-First or normal fetch
+  return;
 });
-
-// Notification click event handler
-self.addEventListener('notificationclick', event => {
-  event.notification.close();
-  const urlToOpen = event.notification.data?.url || '/';
-
-  event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
-      // Check if there is already a window open with this url and focus it
-      for (let i = 0; i < windowClients.length; i++) {
-        const client = windowClients[i];
-        if (client.url === urlToOpen && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      // If no window is open, open a new one
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
-  );
-});
-

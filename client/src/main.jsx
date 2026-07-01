@@ -18,6 +18,20 @@ if (import.meta.env.PROD && typeof window !== "undefined") {
   window.console.warn = () => {};
 }
 
+// Register Service Worker for God-Level offline caching
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then((reg) => {
+        // Service Worker Registered
+      })
+      .catch((err) => {
+        console.error("Service Worker registration failed:", err);
+      });
+  });
+}
+
 
 
 const GOOGLE_CLIENT_ID =
