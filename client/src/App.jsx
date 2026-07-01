@@ -18,6 +18,7 @@ import BannerPopup from "./components/layout/BannerPopup";
 import AnnouncementBar from "./components/layout/AnnouncementBar";
 import SeaBiteLoader from "./components/common/SeaBiteLoader"; // 🟢 Added Custom Loader
 import CookieConsent from "./components/common/CookieConsent"; // 🟢 Cookie Consent
+import PageTransition from "./components/common/PageTransition";
 
 import ComparisonDrawer from "./components/common/ComparisonDrawer"; // 📊 Product Comparison Drawer
 import GoogleOneTap from "./components/common/GoogleOneTap"; // 🟢 Google One Tap Login
@@ -293,33 +294,33 @@ function MainLayout() {
               ) : (
                 <AnimatePresence mode="wait" onExitComplete={() => window.scrollTo(0, 0)}>
                   <Routes location={location} key={location.pathname}>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/products" element={<Products />} />
-                    <Route path="/products/:id" element={<ProductDetails />} />
-                    <Route path="/products/:id/:slug" element={<ProductDetails />} />
-                    <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
-                    <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-                    <Route path="/refer-earn" element={<PrivateRoute><ReferEarn /></PrivateRoute>} />
-                    <Route path="/loyalty" element={<PrivateRoute><LoyaltyCenter /></PrivateRoute>} />
-                    <Route path="/track/:orderId" element={<PrivateRoute><DeliveryTracker /></PrivateRoute>} />
+                    <Route path="/" element={<PageTransition><Home /></PageTransition>} />
+                    <Route path="/products" element={<PageTransition><Products /></PageTransition>} />
+                    <Route path="/products/:id" element={<PageTransition><ProductDetails /></PageTransition>} />
+                    <Route path="/products/:id/:slug" element={<PageTransition><ProductDetails /></PageTransition>} />
+                    <Route path="/wishlist" element={<PrivateRoute><PageTransition><Wishlist /></PageTransition></PrivateRoute>} />
+                    <Route path="/profile" element={<PrivateRoute><PageTransition><Profile /></PageTransition></PrivateRoute>} />
+                    <Route path="/refer-earn" element={<PrivateRoute><PageTransition><ReferEarn /></PageTransition></PrivateRoute>} />
+                    <Route path="/loyalty" element={<PrivateRoute><PageTransition><LoyaltyCenter /></PageTransition></PrivateRoute>} />
+                    <Route path="/track/:orderId" element={<PrivateRoute><PageTransition><DeliveryTracker /></PageTransition></PrivateRoute>} />
 
-                    <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
-                    <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
-                    <Route path="/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
-                    <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
-                    <Route path="/orders/:orderId" element={<PrivateRoute><OrderDetails /></PrivateRoute>} />
+                    <Route path="/notifications" element={<PrivateRoute><PageTransition><Notifications /></PageTransition></PrivateRoute>} />
+                    <Route path="/checkout" element={<PrivateRoute><PageTransition><Checkout /></PageTransition></PrivateRoute>} />
+                    <Route path="/success" element={<PrivateRoute><PageTransition><OrderSuccess /></PageTransition></PrivateRoute>} />
+                    <Route path="/orders" element={<PrivateRoute><PageTransition><Orders /></PageTransition></PrivateRoute>} />
+                    <Route path="/orders/:orderId" element={<PrivateRoute><PageTransition><OrderDetails /></PageTransition></PrivateRoute>} />
                     <Route path="/login" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=login" replace />} />
                     <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=signup" replace />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/blog" element={<Blog />} />
-                    <Route path="/blog/:slug" element={<BlogDetail />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/faq" element={<FAQ />} />
-                    <Route path="/terms" element={<Terms />} />
-                    <Route path="/privacy" element={<Privacy />} />
-                    <Route path="/cancellation" element={<Cancellation />} />
-                    <Route path="/maintenance" element={<Maintenance />} />
-                    <Route path="*" element={<NotFound />} />
+                    <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+                    <Route path="/blog" element={<PageTransition><Blog /></PageTransition>} />
+                    <Route path="/blog/:slug" element={<PageTransition><BlogDetail /></PageTransition>} />
+                    <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+                    <Route path="/faq" element={<PageTransition><FAQ /></PageTransition>} />
+                    <Route path="/terms" element={<PageTransition><Terms /></PageTransition>} />
+                    <Route path="/privacy" element={<PageTransition><Privacy /></PageTransition>} />
+                    <Route path="/cancellation" element={<PageTransition><Cancellation /></PageTransition>} />
+                    <Route path="/maintenance" element={<PageTransition><Maintenance /></PageTransition>} />
+                    <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
                   </Routes>
                 </AnimatePresence>
               )}
