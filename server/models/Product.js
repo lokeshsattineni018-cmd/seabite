@@ -25,7 +25,7 @@ const productSchema = new mongoose.Schema(
     price: { type: Number, default: 0 }, // 🟢 Current Selling Price
     buyingPrice: { type: Number, default: 0 }, // 🟢 NEW: Cost Price for Profit Calc
     unit: { type: String, required: true, default: 'kg' },
-    category: String,
+    category: { type: String, index: true },
     desc: String,
     image: String,
     images: [{ type: String }], // Multi-image gallery support
@@ -33,7 +33,7 @@ const productSchema = new mongoose.Schema(
     stock: { type: String, default: "in" },
     countInStock: { type: Number, default: 10, required: true },
     stockThreshold: { type: Number, default: 2 }, // 🟢 NEW: Warning trigger (e.g. 2kg)
-    active: { type: Boolean, default: true },
+    active: { type: Boolean, default: true, index: true },
 
     // 🔪 CHOOSE YOUR CUT
     cuts: [{

@@ -168,7 +168,7 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   try {
     // Only return admin coupons in admin panel
-    const coupons = await Coupon.find({ isSpinCoupon: false }).sort({ createdAt: -1 });
+    const coupons = await Coupon.find({ isSpinCoupon: false }).sort({ createdAt: -1 }).lean();
     res.json(coupons);
   } catch (error) {
     console.error("❌ Fetch coupons error:", error);
@@ -187,7 +187,7 @@ router.get("/public", async (req, res) => {
         { expiresAt: { $gte: new Date() } },
         { expiresAt: null }
       ]
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
 
     res.json(coupons);
   } catch (error) {

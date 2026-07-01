@@ -197,6 +197,10 @@ const orderSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+orderSchema.index({ user: 1 });
+orderSchema.index({ status: 1 });
+orderSchema.index({ createdAt: -1 });
+
 // Auto-increment logic for Order ID
 orderSchema.pre("save", async function () {
   if (this.isNew && !this.orderId) {

@@ -18,19 +18,19 @@ router.get("/briefing", async (req, res) => {
     lastWeekSameDay.setDate(lastWeekSameDay.getDate() - 7);
 
     // Today's stats
-    const todayOrders = await Order.find({ createdAt: { $gte: today } });
+    const todayOrders = await Order.find({ createdAt: { $gte: today } }).lean();
     const todayRevenue = todayOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     const todayCount = todayOrders.length;
 
     // Yesterday's stats
-    const yesterdayOrders = await Order.find({ createdAt: { $gte: yesterday, $lt: today } });
+    const yesterdayOrders = await Order.find({ createdAt: { $gte: yesterday, $lt: today } }).lean();
     const yesterdayRevenue = yesterdayOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
     const yesterdayCount = yesterdayOrders.length;
 
     // Last week same day
     const lastWeekEnd = new Date(lastWeekSameDay);
     lastWeekEnd.setDate(lastWeekEnd.getDate() + 1);
-    const lastWeekOrders = await Order.find({ createdAt: { $gte: lastWeekSameDay, $lt: lastWeekEnd } });
+    const lastWeekOrders = await Order.find({ createdAt: { $gte: lastWeekSameDay, $lt: lastWeekEnd } }).lean();
     const lastWeekRevenue = lastWeekOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0);
 
     // Top selling products today

@@ -82,7 +82,7 @@ router.get("/", async (req, res) => {
     if (sort === "rating") sortOptions = { rating: -1 };
     if (sort === "newest") sortOptions = { createdAt: -1 };
 
-    const products = await Product.find(query).sort(sortOptions);
+    const products = await Product.find(query).sort(sortOptions).lean();
 
     // ✅ Enterprise: Log Search Insight (ZRO: Zero-Result Optimization)
     if (search && search.trim().length > 2) {
@@ -211,14 +211,14 @@ router.get("/:id", async (req, res) => {
   try {
     let product;
     if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
-      product = await Product.findById(req.params.id).populate('reviews.user', 'name');
+      product = await Product.findById(req.params.id).populate('reviews.user', 'name').lean();
     } else {
       // 🚀 Performance: Query directly by slug first (O(1) database read)
-      product = await Product.findOne({ slug: req.params.id, active: true }).populate('reviews.user', 'name');
+      product = await Product.findOne({ slug: req.params.id, active: true }).populate('reviews.user', 'name').lean();
       
       // Fallback: If not found (legacy products without slug field populated), match in memory
       if (!product) {
-        const allProducts = await Product.find({ active: true }).populate('reviews.user', 'name');
+        const allProducts = await Product.find({ active: true }).populate('reviews.user', 'name').lean();
         const slugify = (text) => {
           if (!text) return "";
           return text
@@ -243,7 +243,8 @@ router.get("/:id", async (req, res) => {
       active: true
     })
       .select('name image basePrice stock averageRating')
-      .limit(3);
+      .limit(3)
+      .lean();
 
     // 🟢 FALLBACK: If no related products in category, fetch random active products
     if (relatedProducts.length < 3) {
@@ -252,7 +253,8 @@ router.get("/:id", async (req, res) => {
         active: true
       })
         .select('name image basePrice stock averageRating')
-        .limit(3 - relatedProducts.length);
+        .limit(3 - relatedProducts.length)
+        .lean();
 
       relatedProducts = [...relatedProducts, ...moreProducts];
     }
@@ -270,7 +272,7 @@ router.get("/:id", async (req, res) => {
       createdAt: { $gte: twentyFourHoursAgo },
       "items.productId": product._id,
       status: { $ne: "Cancelled" }
-    });
+    }).lean();
 
     let salesLast24h = 0;
     recentOrdersCount.forEach(order => {
@@ -283,7 +285,7 @@ router.get("/:id", async (req, res) => {
       }
     });
 
-    res.json({ ...product.toObject(), relatedProducts, globalDiscount, salesLast24h });
+    res.json({ ...product, relatedProducts, globalDiscount, salesLast24h });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
