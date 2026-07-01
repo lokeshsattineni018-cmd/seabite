@@ -85,6 +85,10 @@ const AdminDemandForecast = lazy(() => import("./admin/AdminDemandForecast")); /
 const AdminRFM = lazy(() => import("./admin/AdminRFM")); // 👥 BI: RFM Segments
 const AdminInventoryAlerts = lazy(() => import("./admin/AdminInventoryAlerts")); // 📦 BI: Inventory Alerts
 const AdminCommandCenter = lazy(() => import("./admin/AdminCommandCenter")); // 📡 Command Center
+const AdminReturns = lazy(() => import("./admin/AdminReturns")); // 🔄 Returns Queue
+const AdminNotificationOrchestrator = lazy(() => import("./admin/AdminNotificationOrchestrator")); // 📣 Notifications Orchestrator
+const AdminABTesting = lazy(() => import("./admin/AdminABTesting")); // 🔬 A/B Testing
+const AdminHealthScores = lazy(() => import("./admin/AdminHealthScores")); // 👥 Churn Predictor & Health Scores
 
 
 
@@ -289,6 +293,10 @@ function MainLayout() {
                     <Route path="rfm" element={<AdminRFM />} />
                     <Route path="inventory-alerts" element={<AdminInventoryAlerts />} />
                     <Route path="command-center" element={<AdminCommandCenter />} />
+                    <Route path="returns" element={<AdminReturns />} />
+                    <Route path="campaigns" element={<AdminNotificationOrchestrator />} />
+                    <Route path="ab-tests" element={<AdminABTesting />} />
+                    <Route path="health-scores" element={<AdminHealthScores />} />
                   </Route>
                 </Routes>
               ) : (

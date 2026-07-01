@@ -40,6 +40,12 @@ import watchtowerRoutes from "./routes/watchtowerRoutes.js";
 import complaintRoutes from "./routes/complaintRoutes.js"; // [Added]
 import deliveryRoutes from "./routes/deliveryRoutes.js"; // [New: Delivery Management]
 import enterpriseRoutes from "./routes/enterpriseRoutes.js"; // [New: Enterprise Suite]
+import returnRoutes from "./routes/returnRoutes.js";
+import recommendationRoutes from "./routes/recommendationRoutes.js";
+import campaignRoutes from "./routes/campaignRoutes.js";
+import abTestRoutes from "./routes/abTestRoutes.js";
+import auditRoutes from "./routes/auditRoutes.js";
+import healthRoutes from "./routes/healthRoutes.js";
 import checkMaintenance from "./middleware/checkMaintenance.js";
 import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
@@ -462,6 +468,12 @@ app.use("/api/user", userRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/telemetry", telemetryRoutes);
 app.use("/api/enterprise", enterpriseRoutes);
+app.use("/api/returns", returnRoutes);
+app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/admin/campaigns", auditTrail, campaignRoutes);
+app.use("/api/ab-tests", abTestRoutes);
+app.use("/api/admin/audit-logs", auditTrail, auditRoutes);
+app.use("/api/admin/bi/health-scores", auditTrail, healthRoutes);
 
 import pulseRoutes from "./routes/pulseRoutes.js";
 app.use("/api/pulse", pulseRoutes);

@@ -25,9 +25,10 @@ const getFullImageUrl = (imagePath) => {
 };
 
 export default function CartSidebar({ onClose }) {
-  const { cartCount, refreshCartCount, cartItems, subtotal: subtotalStr, storeSettings, isCartOpen, setIsCartOpen } = useContext(CartContext);
+  const { cartCount, refreshCartCount, cartItems, subtotal: subtotalStr, storeSettings, isCartOpen, setIsCartOpen, addToCart } = useContext(CartContext);
   const navigate = useNavigate();
   const [trending, setTrending] = useState([]);
+  const [upsells, setUpsells] = useState([]);
 
   useEffect(() => {
     if (isCartOpen && cartItems.length === 0) {
@@ -36,6 +37,17 @@ export default function CartSidebar({ onClose }) {
         .catch(() => {});
     }
   }, [isCartOpen, cartItems.length]);
+
+  useEffect(() => {
+    if (isCartOpen && cartItems.length > 0) {
+      const ids = cartItems.map(i => i._id || i.productId).filter(Boolean).join(",");
+      axios.get(`${API_URL}/api/recommendations/cart-upsell?ids=${ids}&limit=3`)
+        .then(res => setUpsells(res.data || []))
+        .catch(() => {});
+    } else {
+      setUpsells([]);
+    }
+  }, [isCartOpen, cartItems]);
 
   // Prevent background scrolling to eliminate compositing paint jank while the sidebar is active
   useEffect(() => {
@@ -501,6 +513,43 @@ export default function CartSidebar({ onClose }) {
                       </div>
                     </motion.div>
                   ))}
+                  {upsells.length > 0 && (
+                    <div style={{ marginTop: 24, padding: "0 4px" }}>
+                      <p style={{ fontSize: 11, fontWeight: 800, color: T.textMid, textTransform: "uppercase", letterSpacing: "0.12em", margin: "0 0 12px" }}>
+                        Complete Your Meal 🍱
+                      </p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                        {upsells.map(p => (
+                          <div
+                            key={p._id}
+                            style={{
+                              display: "flex", alignItems: "center", gap: 12, padding: "10px 12px",
+                              borderRadius: 12, background: T.surface, border: `1px solid ${T.border}`,
+                            }}
+                          >
+                            <img src={getFullImageUrl(p.image)} alt={p.name} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover" }} />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <h5 style={{ fontSize: 12, fontWeight: 700, color: T.textDark, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</h5>
+                              <p style={{ fontSize: 11, fontWeight: 800, color: T.primary, margin: 0 }}>₹{p.price || p.basePrice}</p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                addToCart(p);
+                                refreshCartCount();
+                                toast.success(`${p.name} added to cart!`);
+                              }}
+                              style={{
+                                padding: "6px 12px", borderRadius: 8, background: T.primary, color: "#fff",
+                                border: "none", fontSize: 11, fontWeight: 800, cursor: "pointer"
+                              }}
+                            >
+                              Add
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </AnimatePresence>
               )}
             </div>
