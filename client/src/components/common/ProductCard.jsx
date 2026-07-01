@@ -92,7 +92,9 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
         border: `1px solid ${colors.grayscaleBackground}`,
         position: "relative",
         // 🌟 FRESHNESS AURA
-        animation: product.trending ? "aura-pulse 4s infinite ease-in-out" : "none"
+        animation: product.trending ? "aura-pulse 4s infinite ease-in-out" : "none",
+        contentVisibility: "auto",
+        containIntrinsicSize: "0 340px",
       }}
     >
       <style>{`
