@@ -58,7 +58,11 @@ const ROUTE_METADATA = {
   "/admin/pulse": { title: "Storefront Pulse Monitor", subtitle: "Real-time telemetry of user sessions and cart actions", emoji: "💓" },
   "/admin/xray": { title: "System X-Ray Audits", subtitle: "Low-level API logs, query benchmarks, and server telemetry", emoji: "💀" },
   "/admin/pricing-engine": { title: "AI Dynamic Pricing Engine", subtitle: "Weather-adaptive pricing curves linked to landing scarcity", emoji: "🌦️" },
-  "/admin/compliance": { title: "Cold-Chain Compliance Audit Panel", subtitle: "Transit temperature coordinates & proactive quality-recovery logs", emoji: "📋" }
+  "/admin/compliance": { title: "Cold-Chain Compliance Audit Panel", subtitle: "Transit temperature coordinates & proactive quality-recovery logs", emoji: "📋" },
+  "/admin/returns": { title: "Freshness Return Claims Queue", subtitle: "Review, approve or dispute freshness guarantee refund requests", emoji: "🔄" },
+  "/admin/campaigns": { title: "Multi-Channel Notification Orchestrator", subtitle: "Email, Web Push, SMS and WhatsApp marketing manager", emoji: "📣" },
+  "/admin/ab-tests": { title: "Storefront split-testing engine", subtitle: "Deploy and analyze layout, pricing and banner A/B tests", emoji: "🔬" },
+  "/admin/health-scores": { title: "Customer Churn & Health Scores", subtitle: "AI Customer retention scoring metrics dashboard", emoji: "👥" }
 };
 
 const COMMANDS = [

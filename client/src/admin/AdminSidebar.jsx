@@ -29,6 +29,7 @@ const CATEGORIES = [
       { name: "Live Radar", path: "/admin/radar", icon: <FiActivity size={16} /> },
       { name: "Complaints", path: "/admin/complaints", icon: <FiMessageSquare size={16} /> },
       { name: "Compliance Audits", path: "/admin/compliance", icon: <FiThermometer size={16} /> },
+      { name: "Returns & Refunds", path: "/admin/returns", icon: <FiRotateCcw size={16} /> },
     ]
   },
   {
@@ -39,6 +40,8 @@ const CATEGORIES = [
       { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={16} /> },
       { name: "Abandoned Cart", path: "/admin/carts", icon: <FiShoppingCart size={16} /> },
       { name: "AI Pricing Engine", path: "/admin/pricing-engine", icon: <FiTrendingUp size={16} /> },
+      { name: "Notification Composer", path: "/admin/campaigns", icon: <FiSend size={16} /> },
+      { name: "A/B Testing", path: "/admin/ab-tests", icon: <FiActivity size={16} /> },
     ]
   },
   {
@@ -48,6 +51,7 @@ const CATEGORIES = [
       { name: "Messages", path: "/admin/messages", icon: <FiMail size={16} /> },
       { name: "Reviews", path: "/admin/reviews", icon: <FiStar size={16} /> },
       { name: "Search Discovery", path: "/admin/discovery", icon: <FiTarget size={16} /> },
+      { name: "Customer Health", path: "/admin/health-scores", icon: <FiUsers size={16} /> },
     ]
   },
   {

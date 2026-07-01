@@ -45,6 +45,8 @@ export default function Products() {
     maxPrice: "",
     inStock: false,
     sort: "newest",
+    cut: "",
+    catchOfTheDay: "false"
   });
 
   const categories = ["All", "Fish", "Crab", "Prawn"];
@@ -87,6 +89,8 @@ export default function Products() {
         maxPrice: filters.maxPrice || undefined,
         inStock: filters.inStock || undefined,
         sort: filters.sort,
+        cut: filters.cut || undefined,
+        catchOfTheDay: filters.catchOfTheDay === "true" ? "true" : undefined
       };
       const res = await axios.get(`${API_URL}/api/products`, { params });
       const fetchedProducts = res.data.products || res.data || [];
@@ -116,13 +120,13 @@ export default function Products() {
   }, [fetchProducts]);
 
   const clearFilters = () => {
-    setFilters({ category: "All", search: "", minPrice: "", maxPrice: "", inStock: false, sort: "newest" });
+    setFilters({ category: "All", search: "", minPrice: "", maxPrice: "", inStock: false, sort: "newest", cut: "", catchOfTheDay: "false" });
     setLocalSearch("");
     navigate("/products");
   };
 
   const activeFilterCount = [
-    filters.minPrice, filters.maxPrice, filters.inStock,
+    filters.minPrice, filters.maxPrice, filters.inStock, filters.cut, filters.catchOfTheDay === "true" ? "true" : ""
   ].filter(Boolean).length;
 
   const handleRefresh = async () => {

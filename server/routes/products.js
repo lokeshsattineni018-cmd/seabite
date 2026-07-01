@@ -46,6 +46,41 @@ router.get("/top-reviews", async (req, res) => {
   }
 });
 
+// ── GET /api/products/filter-meta ──
+router.get("/filter-meta", async (req, res) => {
+  try {
+    const products = await Product.find({ active: true }).select("basePrice category cuts").lean();
+    
+    let minPrice = Infinity;
+    let maxPrice = -Infinity;
+    const categories = new Set();
+    const cuts = new Set();
+
+    products.forEach(p => {
+      if (p.basePrice < minPrice) minPrice = p.basePrice;
+      if (p.basePrice > maxPrice) maxPrice = p.basePrice;
+      if (p.category) categories.add(p.category);
+      if (p.cuts && p.cuts.length > 0) {
+        p.cuts.forEach(c => {
+          if (c.name) cuts.add(c.name);
+        });
+      }
+    });
+
+    if (minPrice === Infinity) minPrice = 0;
+    if (maxPrice === -Infinity) maxPrice = 2000;
+
+    res.json({
+      minPrice,
+      maxPrice,
+      categories: Array.from(categories),
+      cuts: Array.from(cuts)
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch filter metadata" });
+  }
+});
+
 // --- GET ALL PRODUCTS ---
 router.get("/", async (req, res) => {
   try {
@@ -81,6 +116,16 @@ router.get("/", async (req, res) => {
     if (req.query.flashSale === "true") {
       query["flashSale.isFlashSale"] = true;
       query["flashSale.saleEndDate"] = { $gt: new Date() };
+    }
+
+    // 🟢 CUSTOM CUTS FILTER
+    if (req.query.cut) {
+      query["cuts.name"] = { $regex: `^${req.query.cut}$`, $options: "i" };
+    }
+
+    // 🟢 CATCH OF THE DAY FILTER
+    if (req.query.catchOfTheDay === "true") {
+      query.catchOfTheDay = true;
     }
 
     // Sorting
