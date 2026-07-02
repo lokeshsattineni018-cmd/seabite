@@ -280,8 +280,8 @@ const EnhancedProductCard = ({
           </div>
 
           <motion.button
-            whileHover={isOutOfStock ? {} : { scale: 1.05, backgroundColor: "#4AA89F" }}
-            whileTap={isOutOfStock ? {} : { scale: 0.95 }}
+            whileHover={isOutOfStock ? {} : { scale: 1.03, backgroundColor: "#4AA89F" }}
+            whileTap={isOutOfStock ? {} : { scale: 0.97 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
             aria-label={isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : `Add ${product.name} to cart`)}
@@ -289,24 +289,24 @@ const EnhancedProductCard = ({
               background: isOutOfStock ? "#F3F4F6" : "#5BBFB5",
               color: isOutOfStock ? "#9CA3AF" : "#FFF",
               border: "none",
-              borderRadius: "50%",
-              width: "38px",
-              height: "38px",
+              borderRadius: "10px",
+              height: "32px",
+              padding: "0 10px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
+              gap: "4px",
+              fontSize: "11.5px",
+              fontWeight: "800",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
-              boxShadow: isOutOfStock ? "none" : "0 4px 12px rgba(91,191,181,0.2)",
+              boxShadow: isOutOfStock ? "none" : "0 4px 10px rgba(91,191,181,0.15)",
               transition: "all 0.3s ease",
               fontFamily: "inherit",
               flexShrink: 0
             }}
           >
-            {isOutOfStock ? (
-              <span style={{ fontSize: "8px", fontWeight: "800", textTransform: "uppercase", letterSpacing: "0.02em" }}>OUT</span>
-            ) : (
-              isAdding ? <FiCheck size={16} /> : <FiPlus size={16} />
-            )}
+            {isAdding ? <FiCheck size={12} /> : <FiShoppingCart size={12} />}
+            {isOutOfStock ? "Out" : (isAdding ? "Added" : "Add")}
           </motion.button>
         </div>
       </div>
