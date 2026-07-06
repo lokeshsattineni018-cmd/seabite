@@ -30,12 +30,8 @@ export default function AdminReturns() {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(`${API}/api/orders`, { withCredentials: true });
-      // Filter orders that have returnRequest structure and status is not 'none'
-      const returnOrders = Array.isArray(data)
-        ? data.filter(o => o.returnRequest && o.returnRequest.status !== "none")
-        : [];
-      setOrders(returnOrders);
+      const { data } = await axios.get(`${API}/api/returns?status=all`, { withCredentials: true });
+      setOrders(data.orders || []);
     } catch (err) {
       toast.error("Failed to load return requests");
     } finally {
@@ -50,13 +46,12 @@ export default function AdminReturns() {
   const handleApproveReturn = async (id, refundAmount, refundMethod) => {
     if (!window.confirm("Approve this return request and initiate refund?")) return;
     try {
-      await axios.put(`${API}/api/orders/${id}/status`, {
-        "returnRequest.status": "approved",
-        "returnRequest.refundAmount": refundAmount,
-        "returnRequest.refundMethod": refundMethod,
-        "returnRequest.approvedAt": new Date()
+      await axios.put(`${API}/api/returns/${id}/approve`, {
+        refundAmount,
+        refundMethod,
+        adminNotes: "Approved by Admin"
       }, { withCredentials: true });
-      toast.success("Return request approved!");
+      toast.success("Return request approved and refunded!");
       fetchOrders();
     } catch (err) {
       toast.error("Failed to approve request");
@@ -66,9 +61,8 @@ export default function AdminReturns() {
   const handleRejectReturn = async (id, reason) => {
     if (!window.confirm("Reject this return request?")) return;
     try {
-      await axios.put(`${API}/api/orders/${id}/status`, {
-        "returnRequest.status": "rejected",
-        "returnRequest.adminNotes": reason,
+      await axios.put(`${API}/api/returns/${id}/reject`, {
+        adminNotes: reason,
       }, { withCredentials: true });
       toast.success("Return request rejected");
       fetchOrders();

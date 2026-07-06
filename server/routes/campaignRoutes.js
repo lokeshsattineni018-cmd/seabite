@@ -3,7 +3,7 @@ import Campaign from "../models/Campaign.js";
 import User from "../models/User.js";
 import adminAuth from "../middleware/adminAuth.js";
 import { sendBatchMarketingEmails } from "../utils/emailService.js";
-import { broadcastPushNotification } from "../utils/webPush.js";
+import { broadcastPushNotification, sendPushNotification } from "../utils/webPush.js";
 import { logActivity } from "../utils/activityLogger.js";
 
 const router = express.Router();
@@ -105,11 +105,16 @@ router.post("/:id/send", adminAuth, async (req, res) => {
       if (emailUsers.length > 0) {
         try {
           const result = await sendBatchMarketingEmails(
-            emailUsers.map(u => u.email),
-            emailChannel.subject || campaign.name,
-            emailChannel.body
+            emailUsers,
+            {
+              title: emailChannel.subject || campaign.name,
+              subtitle: campaign.name,
+              description: emailChannel.body,
+              ctaText: "SHOP THE SALE",
+              ctaLink: "https://seabite.co.in/products"
+            }
           );
-          sentCount += result?.sent || emailUsers.length;
+          sentCount += result?.success || emailUsers.length;
         } catch (e) {
           console.error("Email blast error:", e);
         }
@@ -120,16 +125,15 @@ router.post("/:id/send", adminAuth, async (req, res) => {
     if (pushChannel) {
       const pushUsers = users.filter(u => u.pushSubscriptions?.length > 0);
       for (const user of pushUsers) {
-        for (const sub of user.pushSubscriptions) {
-          try {
-            await broadcastPushNotification(
-              { endpoint: sub.endpoint, keys: sub.keys },
-              pushChannel.title || campaign.name,
-              pushChannel.body
-            );
-            sentCount++;
-          } catch (e) { /* skip failed push */ }
-        }
+        try {
+          await sendPushNotification(
+            user._id,
+            pushChannel.title || campaign.name,
+            pushChannel.body,
+            "/products"
+          );
+          sentCount++;
+        } catch (e) { /* skip failed push */ }
       }
     }
 

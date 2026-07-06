@@ -78,7 +78,7 @@ const aestheticWrapper = (content, subtitle) => `
       ${content}
     </div>
     <div class="footer">
-      <p><b>SeaBite HQ</b><br>Mogalthur, AP 534281, West Godavari, Andhra Pradesh</p>
+      <p><b>SeaBite HQ</b><br>Mogalthur, 534281, West Godavari, Andhra Pradesh</p>
       <p>&copy; 2026 SeaBite. All rights reserved.</p>
       <p>
         <a href="https://seabite.co.in/privacy" style="color: #5BBFB5; text-decoration: none;">Privacy</a> | 

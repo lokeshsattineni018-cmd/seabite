@@ -20,6 +20,16 @@ router.post("/", adminAuth, async (req, res) => {
   }
 });
 
+// ── GET /api/ab-tests/active — Fetch active running tests ──
+router.get("/active", async (req, res) => {
+  try {
+    const activeTests = await ABTest.find({ status: "running" }).lean();
+    res.json(activeTests);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch active tests" });
+  }
+});
+
 // ── GET /api/admin/ab-tests — List all tests ──
 router.get("/", adminAuth, async (req, res) => {
   try {

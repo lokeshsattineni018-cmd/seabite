@@ -58,6 +58,18 @@ export default function OrderSuccess() {
           setVisible(true);
           fireConfetti();
         }, 100); 
+
+        // A/B test conversion tracking
+        const activeTestId = sessionStorage.getItem("active_ab_test_id");
+        const variantIndex = sessionStorage.getItem("active_ab_test_variant");
+        if (activeTestId && variantIndex !== null) {
+          axios.post(`${API_URL}/api/ab-tests/${activeTestId}/track`, {
+            variantIndex: parseInt(variantIndex, 10),
+            event: "conversion"
+          }).catch(() => {});
+          sessionStorage.removeItem("active_ab_test_id");
+          sessionStorage.removeItem("active_ab_test_variant");
+        }
       });
   }, [dbId]);
 

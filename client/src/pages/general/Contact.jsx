@@ -241,7 +241,7 @@ export default function Contact() {
                       Visit Us
                     </h3>
                     <p style={{ fontSize: "14px", color: "#4A6572", lineHeight: "1.7", margin: 0 }}>
-                      SeaBite, Mogalthur, AP 534281,<br />
+                      SeaBite, Mogalthur, 534281,<br />
                       West Godavari District,<br />
                       Andhra Pradesh, India
                     </p>

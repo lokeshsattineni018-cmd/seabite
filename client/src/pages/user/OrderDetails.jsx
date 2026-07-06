@@ -561,7 +561,7 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
           : product._id;
 
       await axios.post(
-        `${API_URL}/api/enterprise/returns`,
+        `${API_URL}/api/returns`,
         { 
           orderId: order._id, 
           items: [{ productId: pid, name: product.name || "Fresh Catch", qty: product.qty || 1 }], 

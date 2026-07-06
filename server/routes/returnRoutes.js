@@ -8,9 +8,9 @@ import { logActivity } from "../utils/activityLogger.js";
 const router = express.Router();
 
 // ── POST /api/returns — Customer creates a return request ──
-router.post("/", protect, upload.array("images", 3), async (req, res) => {
+router.post("/", protect, async (req, res) => {
   try {
-    const { orderId, reason, items } = req.body;
+    const { orderId, reason, items, images } = req.body;
     const order = await Order.findById(orderId);
 
     if (!order) return res.status(404).json({ message: "Order not found" });
@@ -31,15 +31,12 @@ router.post("/", protect, upload.array("images", 3), async (req, res) => {
       return res.status(400).json({ message: "Return window has expired (7 days from delivery)" });
     }
 
-    // Process uploaded images
-    const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
-
     // Update the embedded returnRequest on the order
     order.returnRequest = {
       status: "requested",
       reason: reason || "Not satisfied with the product",
       requestedAt: new Date(),
-      images,
+      images: images || [],
       refundAmount: 0,
       refundMethod: null,
       adminNotes: "",

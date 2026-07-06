@@ -147,6 +147,17 @@ const Hero = () => {
   const { scrollY } = useScroll();
   const [isMobile, setIsMobile] = useState(false);
 
+  // A/B Testing state
+  const [bannerHeading, setBannerHeading] = useState(
+    <>
+      Premium Fresh<br />
+      <span style={{ color: "#5BA8A0" }}>Seafood</span><br />
+      Delivered Home.
+    </>
+  );
+  const [bannerDesc, setBannerDesc] = useState("Experience the finest quality seafood sourced daily at 4 AM and delivered fresh by noon. Chemical-free and 100% traceable.");
+  const [ctaText, setCtaText] = useState("Shop Now");
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
@@ -156,12 +167,64 @@ const Hero = () => {
     const timer = setTimeout(() => {
       setVideoSrc("1.mp4");
     }, 2000);
+
+    // Fetch active A/B tests
+    axios.get(`${API_URL}/api/ab-tests/active`)
+      .then(({ data }) => {
+        const runningTest = data.find(t => t.type === "banner" && t.status === "running");
+        if (runningTest) {
+          let variantIndex = sessionStorage.getItem(`ab_test_variant_${runningTest._id}`);
+          if (variantIndex === null) {
+            // Pick a variant randomly
+            variantIndex = Math.random() < 0.5 ? 0 : 1;
+            sessionStorage.setItem(`ab_test_variant_${runningTest._id}`, variantIndex);
+          } else {
+            variantIndex = parseInt(variantIndex, 10);
+          }
+
+          sessionStorage.setItem("active_ab_test_id", runningTest._id);
+          sessionStorage.setItem("active_ab_test_variant", variantIndex);
+
+          const variant = runningTest.variants[variantIndex];
+          if (variant) {
+            if (variant.content) {
+              try {
+                const contentObj = typeof variant.content === "string" ? JSON.parse(variant.content) : variant.content;
+                if (contentObj.heading) setBannerHeading(contentObj.heading);
+                if (contentObj.desc) setBannerDesc(contentObj.desc);
+                if (contentObj.ctaText) setCtaText(contentObj.ctaText);
+              } catch (e) {
+                // If variant content is string but not JSON
+                setBannerHeading(variant.content);
+              }
+            }
+
+            // Track Impression
+            axios.post(`${API_URL}/api/ab-tests/${runningTest._id}/track`, {
+              variantIndex,
+              event: "impression"
+            }).catch(() => {});
+          }
+        }
+      })
+      .catch(() => {});
     
     return () => {
       window.removeEventListener("resize", checkMobile);
       clearTimeout(timer);
     };
   }, []);
+
+  const handleCTAClick = () => {
+    const activeTestId = sessionStorage.getItem("active_ab_test_id");
+    const variantIndex = sessionStorage.getItem("active_ab_test_variant");
+    if (activeTestId && variantIndex !== null) {
+      axios.post(`${API_URL}/api/ab-tests/${activeTestId}/track`, {
+        variantIndex: parseInt(variantIndex, 10),
+        event: "click"
+      }).catch(() => {});
+    }
+  };
 
   const yVal = useTransform(scrollY, [0, 700], [0, 140]);
   const opacityVal = useTransform(scrollY, [0, 500], [1, 0.25]);
@@ -216,17 +279,15 @@ const Hero = () => {
               className="text-4xl md:text-6xl lg:text-[4.5rem] font-bold leading-[1.06] tracking-tight text-white drop-shadow-sm"
               style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
             >
-              Premium Fresh<br />
-              <span style={{ color: "#5BA8A0" }}>Seafood</span><br />
-              Delivered Home.
+              {bannerHeading}
             </h1>
 
             <p className="text-white/75 text-lg leading-relaxed max-w-md">
-              Experience the finest quality seafood sourced daily at 4 AM and delivered fresh by noon. Chemical-free and 100% traceable.
+              {bannerDesc}
             </p>
 
-            <div className="flex flex-wrap gap-3">
-              <CTAButton to="/products" variant="primary">Shop Now <ArrowRight size={15} /></CTAButton>
+            <div className="flex flex-wrap gap-3" onClick={handleCTAClick}>
+              <CTAButton to="/products" variant="primary">{ctaText} <ArrowRight size={15} /></CTAButton>
               <Link to="/products">
                 <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }}
                   className="inline-flex items-center gap-2.5 font-semibold text-sm px-7 py-3.5 rounded-full border border-white/25 text-white/80 hover:border-white/60 hover:text-white bg-white/10 backdrop-blur-sm transition-all duration-300"
