@@ -7,6 +7,7 @@ import {
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
+import { useSocket } from "../context/SocketContext";
 
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
@@ -18,6 +19,7 @@ const fadeUp = {
 };
 
 export default function AdminDelivery() {
+  const { socket } = useSocket();
   const [partners, setPartners] = useState([]);
   const [unassignedOrders, setUnassignedOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +76,16 @@ export default function AdminDelivery() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.on("FLEET_UPDATE", fetchData);
+    socket.on("ORDER_PLACED", fetchData);
+    return () => {
+      socket.off("FLEET_UPDATE", fetchData);
+      socket.off("ORDER_PLACED", fetchData);
+    };
+  }, [socket]);
 
   const handleAddPartner = async (e) => {
     e.preventDefault();
@@ -263,12 +275,19 @@ export default function AdminDelivery() {
                     <div className="space-y-4">
                       <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Active Deliveries</p>
                       <div className="space-y-2">
-                        {p.activeOrders?.length > 0 ? p.activeOrders.map(oid => (
-                          <div key={oid} className="p-3 bg-stone-50 rounded-2xl border border-stone-100 flex items-center justify-between text-xs">
-                             <span className="font-bold text-stone-800">Order #{oid.slice(-6).toUpperCase()}</span>
-                             <span className="text-stone-400 flex items-center gap-1"><FiClock size={12} /> 12m away</span>
-                          </div>
-                        )) : (
+                        {p.activeOrders?.length > 0 ? p.activeOrders.map(order => {
+                          const isObject = typeof order === 'object' && order !== null;
+                          const displayId = isObject ? (order.orderId || order.orderId === 0 ? order.orderId : order._id) : order;
+                          const displayStatus = isObject ? order.status : "In Transit";
+                          return (
+                            <div key={isObject ? order._id : order} className="p-3 bg-stone-50 rounded-2xl border border-stone-100 flex items-center justify-between text-xs">
+                               <span className="font-bold text-stone-800">Order #{displayId}</span>
+                               <span className="text-stone-400 flex items-center gap-1">
+                                 <FiClock size={12} /> {displayStatus}
+                               </span>
+                            </div>
+                          );
+                        }) : (
                           <p className="text-[10px] text-stone-400 italic">No active dispatches</p>
                         )}
                       </div>

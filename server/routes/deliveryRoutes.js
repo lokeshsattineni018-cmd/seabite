@@ -8,7 +8,7 @@ const router = express.Router();
 // 1. GET: All active partners
 router.get("/partners", protect, admin, async (req, res) => {
   try {
-    const partners = await DeliveryPartner.find();
+    const partners = await DeliveryPartner.find().populate("activeOrders", "orderId totalAmount shippingAddress status");
     res.json(partners);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch partners" });
@@ -33,7 +33,7 @@ router.post("/partners", protect, admin, async (req, res) => {
   }
 });
 
-// 2. POST: Assign order to partner
+// 3. POST: Assign order to partner
 router.post("/assign", protect, admin, async (req, res) => {
   try {
     const { orderId, partnerId } = req.body;
@@ -53,7 +53,15 @@ router.post("/assign", protect, admin, async (req, res) => {
 
     // Update Partner
     partner.activeOrders.push(orderId);
+    if (partner.status === "Offline" || partner.status === "Active") {
+      partner.status = "On Delivery";
+    }
     await partner.save();
+
+    // Emit live socket event to all admins
+    if (req.io) {
+      req.io.emit("FLEET_UPDATE");
+    }
 
     res.json({ success: true, message: "Rider assigned and order dispatched!" });
   } catch (err) {
