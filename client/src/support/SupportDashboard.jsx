@@ -8,7 +8,7 @@ import {
   FiSearch, FiInbox, FiActivity, FiClock, FiAlertCircle, FiUser,
   FiCheckCircle, FiSend, FiX, FiPackage, FiMapPin, FiPhone,
   FiMessageSquare, FiRefreshCw, FiDollarSign, FiTruck, FiEye,
-  FiTrendingUp, FiBookOpen, FiShare2, FiEdit2
+  FiTrendingUp, FiBookOpen, FiShare2, FiEdit2, FiStar
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 

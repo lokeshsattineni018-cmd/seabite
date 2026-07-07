@@ -322,28 +322,7 @@ export function SeaBiteError({ error }) {
                         </button>
                     </div>
 
-                    {error && (
-                        <div style={{
-                            margin: "0 auto 28px",
-                            padding: "16px",
-                            background: dark ? "rgba(244,63,94,0.08)" : "rgba(244,63,94,0.04)",
-                            border: "1px dashed rgba(244,63,94,0.3)",
-                            borderRadius: "20px",
-                            textAlign: "left",
-                            maxWidth: "460px",
-                            overflowX: "auto",
-                            maxHeight: "220px",
-                            fontSize: "11px",
-                            fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                            color: dark ? "#fda4af" : "#e11d48",
-                            animation: "fadeUp 0.5s ease 0.55s both",
-                            boxShadow: "0 4px 12px rgba(244,63,94,0.03)"
-                        }}>
-                            <div style={{ fontWeight: 700, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>🐞 Runtime Debug Info:</div>
-                            <div style={{ fontWeight: 600, marginBottom: "6px" }}>{error.message || error.toString()}</div>
-                            <pre style={{ whiteSpace: "pre-wrap", fontSize: "10px", lineHeight: "1.5", opacity: 0.85 }}>{error.stack}</pre>
-                        </div>
-                    )}
+                    {/* Debug block removed to keep screen clean */}
 
                     {/* Refresh status link */}
                     <button
