@@ -242,7 +242,7 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
 /**
  * 🟢 3. STATUS: DYNAMIC GLASS-THEME PROGRESS
  */
-export const sendStatusUpdateEmail = async (email, name, orderId, status, items = []) => {
+export const sendStatusUpdateEmail = async (email, name, orderId, status, items = [], driverInfo = null) => {
   console.log(`🔍 [DEBUG] sendStatusUpdateEmail triggered for: ${email} (Order: ${orderId}, Status: ${status})`);
   if (!resend) return;
 
@@ -274,11 +274,20 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
     </div>
   ` : '';
 
+  const driverPreview = driverInfo ? `
+    <div style="margin: 32px 0; padding: 24px; background: ${T.bg}; border: 1px solid ${T.border}; border-radius: 20px; text-align: center;">
+      <div style="font-size: 11px; font-weight: 800; color: ${T.textLight}; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">Your SeaBite Captain</div>
+      <div style="font-size: 18px; font-weight: 800; color: ${T.primary};">${driverInfo.name}</div>
+      <div style="font-size: 14px; color: ${T.accent}; font-weight: 700; margin-top: 4px;">Phone: ${driverInfo.phone}</div>
+      ${driverInfo.vehicleNumber ? `<div style="font-size: 12px; color: ${T.textLight}; margin-top: 2px;">Vehicle: ${driverInfo.vehicleNumber} (${driverInfo.vehicleType || 'Scooter'})</div>` : ''}
+    </div>
+  ` : '';
+
   const content = `
     <div style="text-align: center; margin-bottom: 40px;">
        <h1 style="color: ${T.primary}; font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.02em;">Order Update</h1>
        <div style="display: inline-block; padding: 8px 24px; background-color: ${statusColor}15; color: ${statusColor}; border-radius: 12px; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">
-         ${status}
+          ${status}
        </div>
     </div>
 
@@ -286,6 +295,7 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
       Hello ${name}, your order <b>#${orderId}</b> status has been updated. We're committed to getting your coastal catch to you as quickly as possible.
     </p>
 
+    ${driverPreview}
     ${itemPreview}
 
     <div style="text-align: center; margin: 40px 0;">

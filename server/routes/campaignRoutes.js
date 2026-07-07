@@ -59,7 +59,7 @@ router.get("/:id", adminAuth, async (req, res) => {
 // ── PUT /api/campaigns/:id — Update draft campaign ──
 router.put("/:id", adminAuth, async (req, res) => {
   try {
-    const campaign = await Campaign.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const campaign = await Campaign.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     if (!campaign) return res.status(404).json({ message: "Campaign not found" });
     res.json(campaign);
   } catch (err) {

@@ -500,6 +500,24 @@ export default function DeliveryDashboard() {
     }
   };
 
+  // Poll chat history if socket is disabled or offline
+  useEffect(() => {
+    if (!chatOpen || !chatTarget) return;
+    const tid = chatTarget._id || chatTarget.id;
+    if (!tid) return;
+
+    const fetchHistory = () => {
+      axios.get(`${API}/api/chat/history/${tid}`, { withCredentials: true })
+        .then((r) => setChatMessages(r.data || []))
+        .catch(() => {});
+    };
+
+    if (!socket) {
+      const interval = setInterval(fetchHistory, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [chatOpen, chatTarget, socket]);
+
   const openChat = (target) => {
     setChatTarget(target);
     setChatOpen(true);
@@ -512,16 +530,26 @@ export default function DeliveryDashboard() {
     }
   };
 
-  const sendMessage = () => {
-    if (!chatInput.trim() || !socket || !chatTarget) return;
-    socket.emit("send-chat-message", {
-      sender: user.id || user._id,
-      recipient: chatTarget._id || chatTarget.id,
-      message: chatInput,
-      senderRole: "driver",
-      recipientRole: chatTarget.role || "support",
-    });
+  const sendMessage = async () => {
+    if (!chatInput.trim() || !chatTarget) return;
+    const textToSend = chatInput.trim();
     setChatInput("");
+
+    try {
+      const { data } = await axios.post(`${API}/api/chat/message`, {
+        recipient: chatTarget._id || chatTarget.id,
+        message: textToSend,
+        senderRole: "driver",
+        recipientRole: chatTarget.role || "support",
+      }, { withCredentials: true });
+
+      // Add locally if socket is disabled (since socket won't bounce it back)
+      if (!socket) {
+        setChatMessages((prev) => [...prev, data]);
+      }
+    } catch {
+      toast.error("Failed to send message");
+    }
   };
 
   const openVoiceNavigation = (order) => {

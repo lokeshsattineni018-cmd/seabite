@@ -160,11 +160,23 @@ router.put("/orders/:id/status", protect, async (req, res) => {
     // Trigger customer notification e-mails & pushes
     try {
       if (populatedOrder.user && populatedOrder.user.email) {
+        let partnerInfo = null;
+        if (populatedOrder.deliveryPartner) {
+          partnerInfo = await DeliveryPartner.findById(populatedOrder.deliveryPartner);
+        }
+
         await sendStatusUpdateEmail(
           populatedOrder.user.email,
           populatedOrder.user.name || "Customer",
           populatedOrder.orderId || populatedOrder._id,
-          status
+          status,
+          populatedOrder.items || [],
+          partnerInfo ? {
+            name: partnerInfo.name,
+            phone: partnerInfo.phone,
+            vehicleNumber: partnerInfo.vehicleNumber,
+            vehicleType: partnerInfo.vehicleType
+          } : null
         );
       }
     } catch (e) {

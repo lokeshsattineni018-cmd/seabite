@@ -77,6 +77,33 @@ router.get("/conversations", protect, async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch conversations" });
   }
+// ── POST /api/chat/message — Send a chat message (REST + Socket hybrid) ──
+router.post("/message", protect, async (req, res) => {
+  try {
+    const { recipient, message, senderRole, recipientRole } = req.body;
+    const sender = req.user._id;
+
+    if (!recipient || !message || !senderRole || !recipientRole) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const chatMsg = await ChatMessage.create({
+      sender,
+      recipient,
+      message,
+      senderRole,
+      recipientRole
+    });
+
+    // If socket is available, emit it to rooms
+    if (req.io) {
+      req.io.to(`chat:${sender}`).to(`chat:${recipient}`).emit("chat-message", chatMsg);
+    }
+
+    res.status(201).json(chatMsg);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to send message" });
+  }
 });
 
 export default router;

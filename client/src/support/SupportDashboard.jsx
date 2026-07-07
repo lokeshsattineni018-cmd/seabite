@@ -355,6 +355,28 @@ export default function SupportDashboard() {
     }
   };
 
+  // Poll chat history if socket is disabled or offline
+  useEffect(() => {
+    if (!chatRecipient || (activeView !== "chat" && activeView !== "xray")) return;
+    const rid = chatRecipient._id || chatRecipient.id;
+    if (!rid) return;
+
+    const fetchHistory = () => {
+      axios.get(`${API}/api/chat/history/${rid}`, { withCredentials: true })
+        .then((r) => {
+          setChatMessages(r.data || []);
+          const lastCustomerMsg = [...(r.data || [])].reverse().find(m => m.senderRole === "user");
+          if (lastCustomerMsg) setSentiment(analyzeSentiment(lastCustomerMsg.message));
+        })
+        .catch(() => {});
+    };
+
+    if (!socket) {
+      const interval = setInterval(fetchHistory, 3000);
+      return () => clearInterval(interval);
+    }
+  }, [chatRecipient, activeView, socket]);
+
   const openChat = (recipient) => {
     setChatRecipient(recipient);
     setChatMessages([]);
@@ -372,17 +394,26 @@ export default function SupportDashboard() {
     }
   };
 
-  const sendMessage = (customText = null) => {
+  const sendMessage = async (customText = null) => {
     const textToSend = customText || chatInput;
-    if (!textToSend.trim() || !socket || !chatRecipient) return;
-    socket.emit("send-chat-message", {
-      sender: user.id || user._id,
-      recipient: chatRecipient._id || chatRecipient.id,
-      message: textToSend,
-      senderRole: "support",
-      recipientRole: chatRecipient.role || "user"
-    });
+    if (!textToSend.trim() || !chatRecipient) return;
     if (!customText) setChatInput("");
+
+    try {
+      const { data } = await axios.post(`${API}/api/chat/message`, {
+        recipient: chatRecipient._id || chatRecipient.id,
+        message: textToSend,
+        senderRole: "support",
+        recipientRole: chatRecipient.role || "user"
+      }, { withCredentials: true });
+
+      // Add locally if socket is disabled (since socket won't bounce it back)
+      if (!socket) {
+        setChatMessages((prev) => [...prev, data]);
+      }
+    } catch {
+      toast.error("Failed to send message");
+    }
   };
 
   const requestScreenShare = () => {

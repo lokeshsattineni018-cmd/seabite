@@ -54,7 +54,7 @@ router.get("/:id", adminAuth, async (req, res) => {
 // ── PUT /api/admin/ab-tests/:id — Update test ──
 router.put("/:id", adminAuth, async (req, res) => {
   try {
-    const test = await ABTest.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    const test = await ABTest.findByIdAndUpdate(req.params.id, req.body, { returnDocument: 'after' });
     res.json(test);
   } catch (err) {
     res.status(500).json({ message: "Failed to update test" });
