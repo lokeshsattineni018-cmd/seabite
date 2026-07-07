@@ -124,7 +124,7 @@ router.get("/my-orders", protect, async (req, res) => {
 // ── PUT /api/delivery/orders/:id/status — Update order status (POD) ──
 router.put("/orders/:id/status", protect, async (req, res) => {
   try {
-    const { status, podUrl } = req.body;
+    const { status, podUrl, signature } = req.body;
     const order = await Order.findById(req.params.id);
 
     if (!order) return res.status(404).json({ message: "Order not found" });
@@ -143,6 +143,11 @@ router.put("/orders/:id/status", protect, async (req, res) => {
       }
     }
 
+    // Guard: Prevent modification of already delivered or cancelled orders
+    if (order.status === "Delivered" || order.status.includes("Cancelled")) {
+      return res.status(400).json({ message: "Cannot change status of already Delivered or Cancelled orders." });
+    }
+
     // Populate user to get customer details
     const populatedOrder = await Order.findById(req.params.id).populate("user");
     if (!populatedOrder) return res.status(404).json({ message: "Order not found" });
@@ -150,9 +155,16 @@ router.put("/orders/:id/status", protect, async (req, res) => {
     populatedOrder.status = status;
     
     if (status === "Delivered") {
+      if (!podUrl || !signature) {
+        return res.status(400).json({ message: "Both Photo POD and Customer Signature are required to mark as Delivered." });
+      }
       populatedOrder.isDelivered = true;
       populatedOrder.deliveredAt = new Date();
-      if (podUrl) populatedOrder.proofOfDelivery = podUrl;
+      populatedOrder.deliveryProof = {
+        photoUrl: podUrl,
+        signature: signature,
+        capturedAt: new Date()
+      };
     }
 
     await populatedOrder.save();

@@ -398,6 +398,17 @@ export default function DeliveryDashboard() {
   };
 
   const updateOrderStatus = async (orderId, status) => {
+    if (status === "Delivered") {
+      if (!capturedPhoto) {
+        toast.error("📸 Please capture a Proof of Delivery Photo first.");
+        return;
+      }
+      if (!signatureData) {
+        toast.error("✍️ Please collect the customer's signature first.");
+        return;
+      }
+    }
+
     try {
       await axios.put(
         `${API}/api/delivery/orders/${orderId}/status`, 

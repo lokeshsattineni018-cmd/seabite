@@ -190,8 +190,13 @@ export default function AdminOrders() {
   };
 
   const updateStatus = async (id, status) => {
-    if (orders.find((o) => o._id === id)?.status.includes("Cancelled")) {
-      return toast.error("Cannot modify cancelled orders");
+    const currentOrder = orders.find((o) => o._id === id);
+    if (!currentOrder) return;
+    if (currentOrder.status === "Delivered") {
+      return toast.error("Cannot modify Delivered orders");
+    }
+    if (currentOrder.status.includes("Cancelled")) {
+      return toast.error("Cannot modify Cancelled orders");
     }
     try {
       await axios.put(`/api/orders/${id}/status`, { status }, { withCredentials: true });
@@ -709,7 +714,7 @@ export default function AdminOrders() {
                               >
                                 <select
                                   value={o.status}
-                                  disabled={o.status.includes("Cancelled")}
+                                  disabled={o.status.includes("Cancelled") || o.status === "Delivered"}
                                   onChange={(e) => {
                                     const val = e.target.value;
                                     if (val === "Cancelled" || val === "Cancelled by User") {
@@ -1000,6 +1005,35 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
               </div>
             </div>
           </div>
+
+          {/* Delivery Proof */}
+          {order.deliveryProof && (order.deliveryProof.photoUrl || order.deliveryProof.signature) && (
+            <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
+              <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">📸 Proof of Delivery & Handoff</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {order.deliveryProof.photoUrl && (
+                  <div>
+                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">POD Photo</span>
+                    <img 
+                      src={order.deliveryProof.photoUrl} 
+                      alt="Proof of Delivery" 
+                      className="max-h-48 rounded-xl object-contain border border-stone-200 bg-white p-1.5 shadow-sm"
+                    />
+                  </div>
+                )}
+                {order.deliveryProof.signature && (
+                  <div>
+                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Customer Signature</span>
+                    <img 
+                      src={order.deliveryProof.signature} 
+                      alt="Customer Signature" 
+                      className="max-h-24 rounded-xl object-contain border border-stone-200 bg-white p-2.5 shadow-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Gift Message Card */}
           {order.giftMessage && (

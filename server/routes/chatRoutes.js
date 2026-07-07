@@ -77,6 +77,8 @@ router.get("/conversations", protect, async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch conversations" });
   }
+});
+
 // ── POST /api/chat/message — Send a chat message (REST + Socket hybrid) ──
 router.post("/message", protect, async (req, res) => {
   try {
