@@ -2,6 +2,8 @@ import express from "express";
 import DeliveryPartner from "../models/DeliveryPartner.js";
 import Order from "../models/Order.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
+import { sendStatusUpdateEmail } from "../utils/emailService.js";
+import { sendPushNotification } from "../utils/webPush.js";
 
 const router = express.Router();
 
@@ -141,16 +143,49 @@ router.put("/orders/:id/status", protect, async (req, res) => {
       }
     }
 
-    order.status = status;
+    // Populate user to get customer details
+    const populatedOrder = await Order.findById(req.params.id).populate("user");
+    if (!populatedOrder) return res.status(404).json({ message: "Order not found" });
+
+    populatedOrder.status = status;
     
     if (status === "Delivered") {
-      order.isDelivered = true;
-      order.deliveredAt = new Date();
-      if (podUrl) order.proofOfDelivery = podUrl;
+      populatedOrder.isDelivered = true;
+      populatedOrder.deliveredAt = new Date();
+      if (podUrl) populatedOrder.proofOfDelivery = podUrl;
     }
 
-    await order.save();
-    res.json({ message: `Order marked as ${status}`, order });
+    await populatedOrder.save();
+
+    // Trigger customer notification e-mails & pushes
+    try {
+      if (populatedOrder.user && populatedOrder.user.email) {
+        await sendStatusUpdateEmail(
+          populatedOrder.user.email,
+          populatedOrder.user.name || "Customer",
+          populatedOrder.orderId || populatedOrder._id,
+          status
+        );
+      }
+    } catch (e) {
+      console.error("Email update notify failed:", e.message);
+    }
+
+    try {
+      if (populatedOrder.user) {
+        const orderIdentifier = populatedOrder.orderId || populatedOrder._id.toString().slice(-6).toUpperCase();
+        await sendPushNotification(
+          populatedOrder.user._id,
+          "🚚 Delivery Status Update",
+          `Your order #${orderIdentifier} is now ${status}.`,
+          "/orders"
+        );
+      }
+    } catch (e) {
+      console.error("Push update notify failed:", e.message);
+    }
+
+    res.json({ message: `Order marked as ${status}`, order: populatedOrder });
   } catch (error) {
     res.status(500).json({ message: "Failed to update order status" });
   }
