@@ -222,6 +222,12 @@ router.get("/my-stats", protect, async (req, res) => {
       fuelBonus: totalDeliveries * 5,     // ₹5 fuel bonus
       totalDeliveries,
       onTimeDeliveryRate: 98
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
+});
+
 // ── PUT /api/delivery/status — Toggle driver duty status (Active/Offline) ──
 router.put("/status", protect, async (req, res) => {
   try {
