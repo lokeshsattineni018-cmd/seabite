@@ -331,7 +331,7 @@ function HorizontalTracker({ currentStepIndex, reduced }) {
 
       {/* Track rail */}
       <div aria-hidden="true" style={{
-        position: "absolute", top: 20, left: 24, right: 24,
+        position: "absolute", top: 20, left: "8.33%", right: "8.33%",
         height: 2, background: T.border, borderRadius: 2, zIndex: 0,
       }} />
 
@@ -339,12 +339,12 @@ function HorizontalTracker({ currentStepIndex, reduced }) {
       <motion.div
         aria-hidden="true"
         initial={{ right: "100%" }}
-        animate={{ right: `calc(${100 - pct}% + 24px)` }}
+        animate={{ right: `calc(${100 - pct}% + 8.33%)` }}
         transition={reduced
           ? { duration: 0.01 }
           : { duration: 0.9, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
         style={{
-          position: "absolute", top: 20, left: 24,
+          position: "absolute", top: 20, left: "8.33%",
           height: 2, background: T.teal, borderRadius: 2, zIndex: 0,
         }}
       />
