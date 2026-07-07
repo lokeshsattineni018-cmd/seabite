@@ -307,15 +307,20 @@ export default function AdminLayout() {
             </div>
             <div className="h-8 w-px bg-stone-200/60" />
             
-            {/* Multi-Tenant Hub Selector */}
+            {/* Dashboard Selector */}
             <div className="relative flex items-center">
               <select
-                value={activeHub}
-                onChange={(e) => switchHub(e.target.value)}
+                value="admin"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "driver") navigate("/driver");
+                  if (val === "support") navigate("/support");
+                }}
                 className="bg-stone-100 border border-stone-200 rounded-xl px-3 py-1.5 text-xs font-bold text-stone-800 focus:outline-none cursor-pointer hover:bg-stone-200/60 transition-colors"
               >
-                <option value="Bhimavaram Hub">🏢 Bhimavaram Hub</option>
-                <option value="Vijayawada Hub">🏢 Vijayawada Hub</option>
+                <option value="admin">🏢 Admin Dashboard</option>
+                <option value="driver">🛵 Driver Dashboard</option>
+                <option value="support">🎧 Support Dashboard</option>
               </select>
             </div>
             

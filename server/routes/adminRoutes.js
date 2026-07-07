@@ -962,6 +962,12 @@ router.put("/users/:id", adminAuth, async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Protect super admin lokeshsattineni018
+    const isSuperAdminUser = user.email && user.email.toLowerCase().includes("lokeshsattineni018");
+    if (isSuperAdminUser) {
+      return res.status(403).json({ message: "Access denied: Super Admin is protected and cannot be modified." });
+    }
+
     // Prevent Admin from banning themselves
     if (user._id.toString() === req.user._id.toString() && isBanned) {
       return res.status(400).json({ message: "You cannot ban yourself." });

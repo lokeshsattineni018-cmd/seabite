@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { 
@@ -10,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const API = import.meta.env.VITE_API_URL || "";
 
 export default function SupportDashboard() {
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [searchId, setSearchId] = useState("");
   const [xrayOrder, setXrayOrder] = useState(null);
@@ -85,11 +87,28 @@ export default function SupportDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white text-stone-900 font-sans p-4 md:p-8">
       {/* Support Dashboard Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
-          🎧 Customer Support Portal
-        </h1>
-        <p className="text-sm text-stone-500 mt-1">Order Resolution, Diagnostics, and Compensation Controls</p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
+            🎧 Customer Support Portal
+          </h1>
+          <p className="text-sm text-stone-500 mt-1">Order Resolution, Diagnostics, and Compensation Controls</p>
+        </div>
+        <div className="relative">
+          <select
+            value="support"
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === "admin") navigate("/admin/dashboard");
+              if (val === "driver") navigate("/driver");
+            }}
+            className="bg-stone-100 border border-stone-200 rounded-xl px-3 py-1.5 text-xs font-bold text-stone-800 focus:outline-none cursor-pointer hover:bg-stone-200/60 transition-colors"
+          >
+            <option value="admin">🏢 Admin Dashboard</option>
+            <option value="driver">🛵 Driver Dashboard</option>
+            <option value="support">🎧 Support Dashboard</option>
+          </select>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

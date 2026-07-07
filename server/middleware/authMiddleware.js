@@ -86,6 +86,11 @@ export const protect = async (req, res, next) => {
 
 export const admin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
+    const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
+    const isSuperAdmin = req.user.email && req.user.email.toLowerCase().includes("lokeshsattineni018");
+    if (isWriteRequest && !isSuperAdmin) {
+      return res.status(403).json({ message: "Access denied: Read-only Admin role" });
+    }
     return next();
   }
   return res.status(403).json({ message: "Access denied: Admin only" });
@@ -93,6 +98,11 @@ export const admin = (req, res, next) => {
 
 export const driverAuth = (req, res, next) => {
   if (req.user && (req.user.role === "driver" || req.user.role === "admin")) {
+    const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
+    const isSuperAdmin = req.user.email && req.user.email.toLowerCase().includes("lokeshsattineni018");
+    if (req.user.role === "admin" && isWriteRequest && !isSuperAdmin) {
+      return res.status(403).json({ message: "Access denied: Read-only Admin role" });
+    }
     return next();
   }
   return res.status(403).json({ message: "Access denied: Drivers only" });
@@ -100,6 +110,11 @@ export const driverAuth = (req, res, next) => {
 
 export const supportAuth = (req, res, next) => {
   if (req.user && (req.user.role === "support" || req.user.role === "admin")) {
+    const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
+    const isSuperAdmin = req.user.email && req.user.email.toLowerCase().includes("lokeshsattineni018");
+    if (req.user.role === "admin" && isWriteRequest && !isSuperAdmin) {
+      return res.status(403).json({ message: "Access denied: Read-only Admin role" });
+    }
     return next();
   }
   return res.status(403).json({ message: "Access denied: Support only" });

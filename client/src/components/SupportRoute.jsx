@@ -4,9 +4,9 @@ import { useAuth } from "../context/AuthContext";
 import SeaBiteLoader from "./common/SeaBiteLoader";
 
 export default function SupportRoute({ children }) {
-  const { user, loading } = useAuth();
+  const { user, status } = useAuth();
 
-  if (loading) {
+  if (status === "loading") {
     return <SeaBiteLoader fullScreen />;
   }
 

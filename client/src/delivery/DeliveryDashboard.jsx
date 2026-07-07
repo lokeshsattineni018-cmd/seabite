@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { 
@@ -10,6 +12,8 @@ import { motion, AnimatePresence } from "framer-motion";
 const API = import.meta.env.VITE_API_URL || "";
 
 export default function DeliveryDashboard() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -107,11 +111,28 @@ export default function DeliveryDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white text-stone-900 font-sans p-4 md:p-8">
       {/* Dashboard Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
-            🛵 Fleet Dashboard
-          </h1>
-          <p className="text-sm text-stone-500 mt-1">Driver Portal & Logistics Control</p>
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
+              🛵 Fleet Dashboard
+            </h1>
+            <p className="text-sm text-stone-500 mt-1">Driver Portal & Logistics Control</p>
+          </div>
+          <div className="relative">
+            <select
+              value="driver"
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === "admin") navigate("/admin/dashboard");
+                if (val === "support") navigate("/support");
+              }}
+              className="bg-stone-100 border border-stone-200 rounded-xl px-3 py-1.5 text-xs font-bold text-stone-800 focus:outline-none cursor-pointer hover:bg-stone-200/60 transition-colors"
+            >
+              <option value="admin">🏢 Admin Dashboard</option>
+              <option value="driver">🛵 Driver Dashboard</option>
+              <option value="support">🎧 Support Dashboard</option>
+            </select>
+          </div>
         </div>
         
         {/* Navigation Tabs */}

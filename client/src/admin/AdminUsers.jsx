@@ -1,4 +1,3 @@
-// AdminUsers.jsx (Upgraded 360° Version)
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +8,7 @@ import {
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
+import { useAuth } from "../context/AuthContext";
 
 // --- Design Constants ---
 const ease = [0.16, 1, 0.3, 1];
@@ -25,6 +25,9 @@ const staggerContainer = {
 };
 
 export default function AdminUsers() {
+  const { user: currentUser } = useAuth();
+  const isSuperAdmin = currentUser?.email?.toLowerCase().includes("lokeshsattineni018");
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -77,11 +80,12 @@ export default function AdminUsers() {
     if (!editingUser) return;
     try {
       await axios.put(`/api/admin/users/${editingUser._id}`, {
-        isBanned: editingUser.isBanned
+        isBanned: editingUser.isBanned,
+        role: editingUser.role
       }, { withCredentials: true });
 
-      toast.success(editingUser.isBanned ? "User banned" : "User unbanned");
-      setUsers(users.map(u => u._id === editingUser._id ? { ...u, isBanned: editingUser.isBanned } : u));
+      toast.success("User updated successfully");
+      setUsers(users.map(u => u._id === editingUser._id ? { ...u, isBanned: editingUser.isBanned, role: editingUser.role } : u));
       setEditingUser(null);
     } catch {
       toast.error("Update failed");
@@ -227,7 +231,7 @@ export default function AdminUsers() {
                         <div className="text-[10px] text-stone-400 font-medium">{u.intelligence?.orderCount || 0} orders</div>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {u.role !== "admin" ? (
+                        {!u.email?.toLowerCase().includes("lokeshsattineni018") ? (
                           <button
                             onClick={() => {
                               setEditingUser(u);
@@ -303,6 +307,22 @@ export default function AdminUsers() {
                       </div>
                     </div>
 
+                    {/* Role Selection Dropdown */}
+                    <div className="p-4 rounded-2xl bg-stone-50 border border-stone-100 w-full text-left">
+                      <div className="text-[10px] uppercase font-bold text-stone-400 tracking-wider mb-2 text-center font-bold">Account Role</div>
+                      <select
+                        value={editingUser.role || "user"}
+                        disabled={!isSuperAdmin}
+                        onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                        className="w-full bg-white border border-stone-200 rounded-xl py-2.5 px-3 text-xs outline-none focus:border-stone-400 transition-all font-bold text-stone-850 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                      >
+                        <option value="user">User</option>
+                        <option value="driver">Driver</option>
+                        <option value="support">Support Agent</option>
+                        <option value="admin">Administrator</option>
+                      </select>
+                    </div>
+
                     <div className="p-4 rounded-2xl bg-stone-50 border border-stone-100 w-full text-left">
                       <div className="text-[10px] uppercase font-bold text-stone-400 tracking-wider mb-2 text-center">Wallet Balance</div>
                       <div className="text-center mb-3">
@@ -313,20 +333,22 @@ export default function AdminUsers() {
                           type="number"
                           placeholder="Amount (e.g. 100 or -50)"
                           value={walletAdjustAmount}
+                          disabled={!isSuperAdmin}
                           onChange={(e) => setWalletAdjustAmount(e.target.value)}
-                          className="w-full bg-white border border-stone-200 rounded-xl py-2 px-3 text-xs outline-none focus:border-stone-400 transition-all font-bold text-stone-800"
+                          className="w-full bg-white border border-stone-200 rounded-xl py-2 px-3 text-xs outline-none focus:border-stone-400 transition-all font-bold text-stone-800 disabled:opacity-60 disabled:cursor-not-allowed"
                         />
                         <input
                           type="text"
                           placeholder="Reason for adjustment..."
                           value={walletAdjustReason}
+                          disabled={!isSuperAdmin}
                           onChange={(e) => setWalletAdjustReason(e.target.value)}
-                          className="w-full bg-white border border-stone-200 rounded-xl py-2 px-3 text-xs outline-none focus:border-stone-400 transition-all text-stone-700"
+                          className="w-full bg-white border border-stone-200 rounded-xl py-2 px-3 text-xs outline-none focus:border-stone-400 transition-all text-stone-700 disabled:opacity-60 disabled:cursor-not-allowed"
                         />
                         <button
                           type="button"
                           onClick={handleAdjustWallet}
-                          disabled={adjustingWallet}
+                          disabled={adjustingWallet || !isSuperAdmin}
                           className="w-full py-2 bg-stone-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-stone-800 transition-all disabled:opacity-50"
                         >
                           {adjustingWallet ? "Adjusting..." : "Adjust Wallet"}
@@ -336,7 +358,8 @@ export default function AdminUsers() {
 
                     <button
                       onClick={() => setEditingUser({ ...editingUser, isBanned: !editingUser.isBanned })}
-                      className={`w-full py-3 rounded-xl font-bold text-[11px] flex items-center justify-center gap-2 transition-all border ${editingUser.isBanned
+                      disabled={!isSuperAdmin}
+                      className={`w-full py-3 rounded-xl font-bold text-[11px] flex items-center justify-center gap-2 transition-all border disabled:opacity-60 disabled:cursor-not-allowed ${editingUser.isBanned
                         ? "bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100"
                         : "bg-white text-stone-600 border-stone-200 hover:border-stone-300"
                         }`}
@@ -350,7 +373,8 @@ export default function AdminUsers() {
 
                     <button
                       onClick={handleUpdate}
-                      className="w-full py-3 rounded-xl bg-stone-900 text-white font-bold text-[11px] hover:bg-stone-800 shadow-lg active:scale-95 transition-all"
+                      disabled={!isSuperAdmin}
+                      className="w-full py-3 rounded-xl bg-stone-900 text-white font-bold text-[11px] hover:bg-stone-800 shadow-lg active:scale-95 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                       Apply Status Changes
                     </button>
