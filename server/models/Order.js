@@ -193,6 +193,22 @@ const orderSchema = new mongoose.Schema(
       images: [{ type: String }], // Customer uploads
       adminNotes: { type: String },
     },
+
+    // 🎧 Support Dashboard Fields
+    internalNotes: [{
+      agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      agentName: { type: String },
+      note: { type: String },
+      createdAt: { type: Date, default: Date.now }
+    }],
+    supportCategory: { 
+      type: String, 
+      enum: ['none', 'late_delivery', 'wrong_item', 'quality_issue', 'payment_problem', 'missing_item', 'other'], 
+      default: 'none' 
+    },
+    escalated: { type: Boolean, default: false },
+    escalatedAt: { type: Date },
+    resolvedAt: { type: Date },
   },
   { timestamps: true }
 );
