@@ -222,9 +222,36 @@ router.get("/my-stats", protect, async (req, res) => {
       fuelBonus: totalDeliveries * 5,     // ₹5 fuel bonus
       totalDeliveries,
       onTimeDeliveryRate: 98
-    });
+// ── PUT /api/delivery/status — Toggle driver duty status (Active/Offline) ──
+router.put("/status", protect, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!["Active", "Offline"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const partner = await DeliveryPartner.findOneAndUpdate(
+      {
+        $or: [
+          { email: req.user.email },
+          { phone: req.user.phone }
+        ]
+      },
+      { $set: { status } },
+      { new: true }
+    );
+
+    if (!partner) {
+      return res.status(404).json({ message: "Delivery partner not found" });
+    }
+
+    if (req.io) {
+      req.io.emit("FLEET_UPDATE");
+    }
+
+    res.json({ message: `Duty status updated to ${status}`, status: partner.status, partner });
   } catch (error) {
-    res.status(500).json({ message: "Failed to fetch stats" });
+    res.status(500).json({ message: "Failed to update duty status" });
   }
 });
 
