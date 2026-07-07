@@ -357,8 +357,9 @@ export default function SupportDashboard() {
 
   // Poll chat history if socket is disabled or offline
   useEffect(() => {
-    if (!chatRecipient || (activeView !== "chat" && activeView !== "xray")) return;
-    const rid = chatRecipient._id || chatRecipient.id;
+    const recipient = chatRecipient || xrayOrder?.user;
+    if (!recipient || (activeView !== "chat" && activeView !== "xray")) return;
+    const rid = recipient._id || recipient.id;
     if (!rid) return;
 
     const fetchHistory = () => {
@@ -375,7 +376,7 @@ export default function SupportDashboard() {
       const interval = setInterval(fetchHistory, 3000);
       return () => clearInterval(interval);
     }
-  }, [chatRecipient, activeView, socket]);
+  }, [chatRecipient, xrayOrder, activeView, socket]);
 
   const openChat = (recipient) => {
     setChatRecipient(recipient);
@@ -396,15 +397,16 @@ export default function SupportDashboard() {
 
   const sendMessage = async (customText = null) => {
     const textToSend = customText || chatInput;
-    if (!textToSend.trim() || !chatRecipient) return;
+    const recipient = chatRecipient || xrayOrder?.user;
+    if (!textToSend.trim() || !recipient) return;
     if (!customText) setChatInput("");
 
     try {
       const { data } = await axios.post(`${API}/api/chat/message`, {
-        recipient: chatRecipient._id || chatRecipient.id,
+        recipient: recipient._id || recipient.id,
         message: textToSend,
         senderRole: "support",
-        recipientRole: chatRecipient.role || "user"
+        recipientRole: recipient.role || "user"
       }, { withCredentials: true });
 
       // Add locally if socket is disabled (since socket won't bounce it back)
