@@ -6,24 +6,27 @@ const router = express.Router();
 // Get live order location tracking simulation
 router.get("/track/:orderId", async (req, res) => {
   try {
-    const order = await Order.findOne({ orderId: req.params.orderId }).lean();
+    const order = await Order.findOne({ orderId: req.params.orderId })
+      .populate("deliveryPartner")
+      .lean();
+      
     if (!order) return res.status(404).json({ error: "Order not found" });
 
-    // Simulated coordinates (e.g. around Bhimavaram/Hyderabad)
-    const baseLat = 17.3850;
-    const baseLng = 78.4867;
-    const randomOffset = (Math.random() - 0.5) * 0.02;
+    // Fallback coordinates (Bhimavaram zone)
+    const baseLat = 16.5449;
+    const baseLng = 81.5212;
+
+    const coordinates = (order.deliveryPartner && order.deliveryPartner.currentLocation && order.deliveryPartner.currentLocation.lat) 
+      ? { lat: order.deliveryPartner.currentLocation.lat, lng: order.deliveryPartner.currentLocation.lng }
+      : { lat: baseLat, lng: baseLng };
 
     res.json({
       status: order.status,
       deliveryStatus: order.deliveryStatus,
       estimatedDeliveryTime: order.estimatedDeliveryTime || new Date(Date.now() + 30 * 60 * 1000),
-      driverName: "Ravi Kumar",
-      driverPhone: "+91 98765 43211",
-      coordinates: {
-        lat: baseLat + randomOffset,
-        lng: baseLng + randomOffset
-      }
+      driverName: order.deliveryPartner ? order.deliveryPartner.name : "Rider Pending",
+      driverPhone: order.deliveryPartner ? order.deliveryPartner.phone : "None",
+      coordinates
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to load tracking data" });

@@ -464,7 +464,7 @@ export default function DeliveryDashboard() {
                               <FiMessageSquare /> Chat
                             </button>
 
-                            {order.status === "Processing" && (
+                            {(order.status === "Processing" || order.status === "Shipped") && (
                               <button 
                                 onClick={() => handleUpdateStatus(order._id, "Out for Delivery")}
                                 className="px-3.5 py-1.5 bg-stone-900 hover:bg-stone-850 text-white text-xs font-bold rounded-xl"
