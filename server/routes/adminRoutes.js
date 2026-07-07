@@ -16,6 +16,7 @@ import PricingSetting from "../models/PricingSetting.js";
 import ReturnRequest from "../models/ReturnRequest.js";
 import { sendPushNotification, broadcastPushNotification } from "../utils/webPush.js";
 import { cacheClear } from "../utils/cache.js";
+import DeliveryPartner from "../models/DeliveryPartner.js";
 
 const router = express.Router();
 
@@ -974,7 +975,6 @@ router.put("/users/:id", adminAuth, async (req, res) => {
     }
 
     // Use findByIdAndUpdate to avoid triggering validation on other fields (like phone/address)
-    // capable of crashing the update if legacy data is invalid.
     const updates = {};
     if (role) updates.role = role;
     if (typeof isBanned !== 'undefined') updates.isBanned = isBanned;
@@ -982,8 +982,34 @@ router.put("/users/:id", adminAuth, async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       req.params.id,
       { $set: updates },
-      { returnDocument: "after", runValidators: false } // Disable validation for partial updates
+      { returnDocument: "after", runValidators: false }
     );
+
+    // Advanced features: Sync with DeliveryPartner if promoted to driver
+    if (role === "driver") {
+      const existingPartner = await DeliveryPartner.findOne({ phone: updatedUser.phone || updatedUser.email });
+      if (!existingPartner) {
+        await DeliveryPartner.create({
+          name: updatedUser.name,
+          phone: updatedUser.phone || `00000${Math.floor(10000 + Math.random() * 90000)}`,
+          email: updatedUser.email || `${updatedUser._id}@seabite.com`,
+          password: "rider123", // default password
+          status: "Offline",
+          vehicleType: "Scooter"
+        });
+      }
+    }
+
+    // Realtime feature: Emit socket event to notify other operators and update panels in real time
+    if (req.io) {
+      req.io.emit("USER_ROLE_UPDATED", {
+        userId: updatedUser._id,
+        role: updatedUser.role,
+        isBanned: updatedUser.isBanned,
+        name: updatedUser.name,
+        email: updatedUser.email
+      });
+    }
 
     res.json({ message: "User updated successfully", user: updatedUser });
   } catch (err) {

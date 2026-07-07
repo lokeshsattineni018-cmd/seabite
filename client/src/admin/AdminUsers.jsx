@@ -9,6 +9,7 @@ import {
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 
 // --- Design Constants ---
 const ease = [0.16, 1, 0.3, 1];
@@ -74,7 +75,53 @@ export default function AdminUsers() {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Listen for realtime socket updates to roles and bans
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleRealtimeRoleUpdate = (data) => {
+      setUsers(prevUsers => prevUsers.map(u => 
+        u._id === data.userId 
+          ? { ...u, role: data.role, isBanned: data.isBanned } 
+          : u
+      ));
+      
+      // Update modal if currently editing this user
+      setEditingUser(prev => {
+        if (prev && prev._id === data.userId) {
+          return { ...prev, role: data.role, isBanned: data.isBanned };
+        }
+        return prev;
+      });
+    };
+
+    socket.on("USER_ROLE_UPDATED", handleRealtimeRoleUpdate);
+    return () => {
+      socket.off("USER_ROLE_UPDATED", handleRealtimeRoleUpdate);
+    };
+  }, [socket]);
+
+  const handleRoleChange = async (newRole) => {
+    if (!editingUser) return;
+    try {
+      await axios.put(`/api/admin/users/${editingUser._id}`, {
+        role: newRole,
+        isBanned: editingUser.isBanned
+      }, { withCredentials: true });
+
+      toast.success(`Account role updated to ${newRole}`);
+      setEditingUser(prev => ({ ...prev, role: newRole }));
+      setUsers(prevUsers => prevUsers.map(u => u._id === editingUser._id ? { ...u, role: newRole } : u));
+    } catch {
+      toast.error("Failed to update role");
+    }
+  };
 
   const handleUpdate = async () => {
     if (!editingUser) return;
@@ -84,7 +131,7 @@ export default function AdminUsers() {
         role: editingUser.role
       }, { withCredentials: true });
 
-      toast.success("User updated successfully");
+      toast.success("User status updated successfully");
       setUsers(users.map(u => u._id === editingUser._id ? { ...u, isBanned: editingUser.isBanned, role: editingUser.role } : u));
       setEditingUser(null);
     } catch {
@@ -313,7 +360,7 @@ export default function AdminUsers() {
                       <select
                         value={editingUser.role || "user"}
                         disabled={!isSuperAdmin}
-                        onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value })}
+                        onChange={(e) => handleRoleChange(e.target.value)}
                         className="w-full bg-white border border-stone-200 rounded-xl py-2.5 px-3 text-xs outline-none focus:border-stone-400 transition-all font-bold text-stone-850 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <option value="user">User</option>
