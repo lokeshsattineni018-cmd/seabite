@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { 
   FiMapPin, FiCamera, FiDollarSign, FiClock, FiCheckCircle, 
-  FiNavigation, FiTrendingUp, FiCheck, FiX, FiAward 
+  FiNavigation, FiTrendingUp, FiCheck, FiX, FiAward, FiMessageSquare,
+  FiAlertTriangle, FiThermometer, FiSend
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,6 +16,8 @@ const API = import.meta.env.VITE_API_URL || "";
 export default function DeliveryDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { socket } = useSocket();
+
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,13 +25,181 @@ export default function DeliveryDashboard() {
   const [cameraActive, setCameraActive] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [activeOrderId, setActiveOrderId] = useState(null);
-  
+
+  // ── Option A & B: Leaflet Map & GPS Tracking ──
+  const [driverLatLng, setDriverLatLng] = useState({ lat: 16.5449, lng: 81.5212 }); // Default: Bhimavaram Hub coords
+  const mapRef = useRef(null);
+  const driverMarkerRef = useRef(null);
+  const routePolylineRef = useRef(null);
+
+  // ── Option C: Dispatch Alert Overlay ──
+  const [incomingDispatch, setIncomingDispatch] = useState(null);
+
+  // ── Option D: Real-Time Chat Drawer ──
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatUser, setChatUser] = useState(null); // recipient support/user details
+  const [chatMessages, setChatMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const [recipientIsTyping, setRecipientIsTyping] = useState(false);
+
+  // ── Option E: Cold Chain IoT Telemetry Monitor ──
+  const [iotTemp, setIotTemp] = useState(2.8);
+  const [iotAlert, setIotAlert] = useState(false);
+
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
+  // 1. Initial Load
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // 2. Leaflet Scripts & CSS Dynamically Injected
+  useEffect(() => {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(link);
+
+    const script = document.createElement("script");
+    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    script.async = true;
+    script.onload = () => {
+      initLeafletMap();
+    };
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(link);
+      document.head.removeChild(script);
+    };
+  }, []);
+
+  // 3. Geolocation Tracker (Option A)
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      toast.error("Browser does not support GPS tracking.");
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        setDriverLatLng(coords);
+
+        // Send to Server in real time via Socket.io
+        if (socket && user) {
+          socket.emit("driver-location", {
+            driverId: user.id || user._id,
+            location: coords
+          });
+        }
+      },
+      (err) => console.log("GPS Track Error:", err.message),
+      { enableHighAccuracy: true, maximumAge: 10000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [socket, user]);
+
+  // 4. Update Map Position in real-time (Option B)
+  useEffect(() => {
+    if (window.L && mapRef.current) {
+      const L = window.L;
+      if (!driverMarkerRef.current) {
+        driverMarkerRef.current = L.marker([driverLatLng.lat, driverLatLng.lng], {
+          icon: L.icon({
+            iconUrl: "https://cdn-icons-png.flaticon.com/512/3180/3180209.png",
+            iconSize: [35, 35]
+          })
+        }).addTo(mapRef.current);
+      } else {
+        driverMarkerRef.current.setLatLng([driverLatLng.lat, driverLatLng.lng]);
+      }
+      mapRef.current.panTo([driverLatLng.lat, driverLatLng.lng]);
+    }
+  }, [driverLatLng]);
+
+  // 5. IoT Temperature Simulator (Option E)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIotTemp((prev) => {
+        // Fluctuate temperature slightly
+        const variance = (Math.random() - 0.5) * 0.4;
+        const nextTemp = Number((prev + variance).toFixed(1));
+        
+        // Trigger alert if above 4 degrees
+        if (nextTemp > 4.0) {
+          setIotAlert(true);
+        } else {
+          setIotAlert(false);
+        }
+        return nextTemp;
+      });
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // 6. Socket Receivers (Option C: Dispatch alert, Option D: Chat messages)
+  useEffect(() => {
+    if (!socket || !user) return;
+
+    // Join room for chat
+    socket.emit("join-chat", { userId: user.id || user._id });
+
+    // Listen for new dispatches
+    const handleNewDispatch = (data) => {
+      if (data.driverId === (user.id || user._id)) {
+        // Play alert sound
+        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav");
+        audio.play().catch(e => console.log("Sound play error:", e));
+        setIncomingDispatch(data.order);
+      }
+    };
+
+    // Chat listeners
+    const handleIncomingMessage = (msg) => {
+      setChatMessages((prev) => [...prev, msg]);
+      // Play ding sound if chat drawer is closed
+      if (!chatOpen) {
+        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/911/911-600.wav");
+        audio.play().catch(e => console.log("Sound play error:", e));
+        toast.success(`Support: ${msg.message}`);
+      }
+    };
+
+    const handleTypingIndicator = (data) => {
+      if (data.sender !== (user.id || user._id)) {
+        setRecipientIsTyping(data.isTyping);
+      }
+    };
+
+    socket.on("ORDER_DISPATCHED", handleNewDispatch);
+    socket.on("chat-message", handleIncomingMessage);
+    socket.on("typing-indicator", handleTypingIndicator);
+
+    return () => {
+      socket.off("ORDER_DISPATCHED", handleNewDispatch);
+      socket.off("chat-message", handleIncomingMessage);
+      socket.off("typing-indicator", handleTypingIndicator);
+    };
+  }, [socket, user, chatOpen]);
+
+  const initLeafletMap = () => {
+    if (!window.L || mapRef.current) return;
+    const L = window.L;
+
+    const map = L.map("delivery-leaflet-map", {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([driverLatLng.lat, driverLatLng.lng], 15);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+
+    mapRef.current = map;
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -58,6 +230,50 @@ export default function DeliveryDashboard() {
       setCapturedPhoto(null);
     } catch (err) {
       toast.error("Failed to update status");
+    }
+  };
+
+  // Open Chat Panel with Support/Customer
+  const openChatWith = (recipientUser) => {
+    setChatUser(recipientUser);
+    setChatOpen(true);
+    setChatMessages([]);
+    
+    // Load historical messages from DB
+    axios.get(`${API}/api/chat/history/${recipientUser._id || recipientUser.id}`, { withCredentials: true })
+      .then(res => {
+        setChatMessages(res.data || []);
+      })
+      .catch(() => toast.error("Failed to load chat history"));
+  };
+
+  const sendChatMessage = () => {
+    if (!newMessage.trim() || !socket || !user || !chatUser) return;
+
+    socket.emit("send-chat-message", {
+      sender: user.id || user._id,
+      recipient: chatUser._id || chatUser.id,
+      message: newMessage,
+      senderRole: "driver",
+      recipientRole: chatUser.role || "support"
+    });
+
+    setNewMessage("");
+    // Notify stop typing
+    socket.emit("typing", { sender: user.id || user._id, recipient: chatUser._id || chatUser.id, isTyping: false });
+    setIsTyping(false);
+  };
+
+  const handleTypingChange = (e) => {
+    setNewMessage(e.target.value);
+    if (!socket || !chatUser || !user) return;
+
+    if (!isTyping && e.target.value.length > 0) {
+      setIsTyping(true);
+      socket.emit("typing", { sender: user.id || user._id, recipient: chatUser._id || chatUser.id, isTyping: true });
+    } else if (isTyping && e.target.value.length === 0) {
+      setIsTyping(false);
+      socket.emit("typing", { sender: user.id || user._id, recipient: chatUser._id || chatUser.id, isTyping: false });
     }
   };
 
@@ -108,7 +324,45 @@ export default function DeliveryDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white text-stone-900 font-sans p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white text-stone-900 font-sans p-4 md:p-8 relative">
+      
+      {/* ── OPTION C: INCOMING DISPATCH OVERLAY ── */}
+      <AnimatePresence>
+        {incomingDispatch && (
+          <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white border border-stone-200 p-8 rounded-3xl max-w-md w-full shadow-2xl text-center"
+            >
+              <span className="text-4xl">🚨</span>
+              <h2 className="text-xl font-extrabold mt-4">New Order Dispatched!</h2>
+              <p className="text-sm text-stone-500 mt-2">
+                Order #{incomingDispatch.orderId} needs delivery dispatch to Bhimavaram zones.
+              </p>
+              <div className="mt-6 flex gap-3">
+                <button 
+                  onClick={() => {
+                    setIncomingDispatch(null);
+                    handleUpdateStatus(incomingDispatch._id, "Out for Delivery");
+                  }}
+                  className="flex-1 py-3 bg-stone-900 hover:bg-stone-850 text-white text-xs font-bold rounded-2xl transition-all shadow-md active:scale-95"
+                >
+                  Accept Dispatch
+                </button>
+                <button 
+                  onClick={() => setIncomingDispatch(null)}
+                  className="flex-1 py-3 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold rounded-2xl transition-all"
+                >
+                  Ignore
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Dashboard Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
@@ -174,47 +428,42 @@ export default function DeliveryDashboard() {
                 <FiNavigation className="text-stone-700 animate-pulse" /> Live Route Optimization
               </h2>
               
-              {/* Interactive Visual Map Placeholder */}
-              <div className="bg-stone-50 border border-stone-200 rounded-2xl h-80 flex flex-col items-center justify-center p-6 relative overflow-hidden">
-                {/* Visual grid / road simulation */}
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#000_1px,transparent_1px)] [background-size:16px_16px]"></div>
-                
-                {/* Decorative map trace lines */}
-                <svg className="absolute inset-0 w-full h-full opacity-20" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M 50 150 Q 200 80 350 220 T 600 120" fill="none" stroke="#2b2b2b" strokeWidth="4" strokeDasharray="10, 5" />
-                  <path d="M 120 300 Q 250 200 400 320" fill="none" stroke="#e11d48" strokeWidth="3" />
-                </svg>
-
-                <div className="z-10 text-center max-w-sm">
-                  <FiMapPin className="mx-auto text-rose-500 mb-3" size={40} />
-                  <p className="text-sm font-semibold">Active Logistics Router Running</p>
-                  <p className="text-xs text-stone-500 mt-1">
-                    Route mapped optimally for {orders.length} deliveries. Traffic and temperature sensors aligned.
-                  </p>
-                </div>
-              </div>
+              {/* ── OPTION B: LEAFLET MAP ELEMENT ── */}
+              <div 
+                id="delivery-leaflet-map" 
+                className="bg-stone-100 border border-stone-200 rounded-2xl h-96 relative overflow-hidden z-10"
+              />
 
               {/* Batched Stops Timeline */}
               <div className="mt-6 space-y-4">
                 <h3 className="text-xs font-bold text-stone-400 uppercase tracking-wider">Stops Timeline</h3>
                 <div className="relative pl-6 border-l-2 border-stone-200 space-y-6">
                   {orders.length === 0 ? (
-                    <p className="text-sm text-stone-500">No active runs dispatchable.</p>
+                    <p className="text-sm text-stone-500">No active runs dispatched.</p>
                   ) : (
                     orders.map((order, i) => (
                       <div key={order._id} className="relative">
-                        {/* Bullet Icon */}
                         <div className="absolute -left-[31px] top-1.5 w-4 h-4 rounded-full bg-white border-2 border-stone-800 flex items-center justify-center font-mono text-[9px] font-bold">
                           {i + 1}
                         </div>
                         <div className="bg-stone-50 border border-stone-150 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                           <div>
                             <h4 className="text-sm font-bold">Order #{order.orderId}</h4>
-                            <p className="text-xs text-stone-500 mt-0.5">{order.shippingAddress?.street}, {order.shippingAddress?.city}</p>
-                            <p className="text-[10px] text-emerald-600 font-semibold mt-1">Status: {order.status}</p>
+                            <p className="text-xs text-stone-500 mt-0.5">{order.shippingAddress?.street || "Custom zone"}, {order.shippingAddress?.city}</p>
+                            <p className="text-[10px] text-emerald-600 font-semibold mt-1 flex items-center gap-2">
+                              <span>Status: {order.status}</span>
+                            </p>
                           </div>
                           
                           <div className="flex gap-2">
+                            {/* Option D: Real-Time Chat Button */}
+                            <button
+                              onClick={() => openChatWith(order.user || { _id: "support-agent", name: "Support Dispatcher", role: "support" })}
+                              className="px-3.5 py-1.5 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-850 text-xs font-bold rounded-xl flex items-center gap-1.5"
+                            >
+                              <FiMessageSquare /> Chat
+                            </button>
+
                             {order.status === "Processing" && (
                               <button 
                                 onClick={() => handleUpdateStatus(order._id, "Out for Delivery")}
@@ -228,7 +477,7 @@ export default function DeliveryDashboard() {
                               <>
                                 <button 
                                   onClick={() => startCamera(order._id)}
-                                  className="px-3.5 py-1.5 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-800 text-xs font-bold rounded-xl flex items-center gap-1.5"
+                                  className="px-3.5 py-1.5 bg-stone-100 hover:bg-stone-200 border border-stone-300 text-stone-850 text-xs font-bold rounded-xl flex items-center gap-1.5"
                                 >
                                   <FiCamera /> Snap POD
                                 </button>
@@ -251,6 +500,28 @@ export default function DeliveryDashboard() {
 
             {/* Sidebar Controls & Camera Module */}
             <div className="lg:col-span-4 space-y-6">
+              
+              {/* ── OPTION E: COLD CHAIN IoT TELEMETRY CARD ── */}
+              <div className={`border rounded-3xl p-6 shadow-sm transition-colors duration-500 ${iotAlert ? "bg-rose-50 border-rose-200" : "bg-white border-stone-200"}`}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className={`text-sm font-bold flex items-center gap-1.5 ${iotAlert ? "text-rose-700" : "text-stone-800"}`}>
+                      <FiThermometer /> IoT Freshness Telemetry
+                    </h3>
+                    <p className="text-[10px] text-stone-500 mt-1">Live sensors inside Box #FD-42</p>
+                  </div>
+                  <span className={`text-xl font-black ${iotAlert ? "text-rose-600 animate-bounce" : "text-emerald-600"}`}>
+                    {iotTemp}°C
+                  </span>
+                </div>
+                
+                {iotAlert && (
+                  <div className="mt-4 p-3 bg-rose-100 border border-rose-200 rounded-xl text-[10px] text-rose-800 font-bold flex items-center gap-1.5">
+                    <FiAlertTriangle className="animate-pulse" /> WARNING: Box temp exceeds 4°C limit! Ice packs alignment required.
+                  </div>
+                )}
+              </div>
+
               {/* HTML5 Camera overlay card */}
               {cameraActive && (
                 <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm text-center">
@@ -311,9 +582,9 @@ export default function DeliveryDashboard() {
                     <span className="text-stone-500">Status</span>
                     <span className="font-semibold text-emerald-600">Online & Tracking</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-stone-500">Telemetry Pings</span>
-                    <span className="font-semibold text-stone-700">Healthy (5s rate)</span>
+                  <div className="flex justify-between border-b pb-2">
+                    <span className="text-stone-500">GPS Coordinates</span>
+                    <span className="font-mono text-[10px] text-stone-700">{driverLatLng.lat.toFixed(4)}, {driverLatLng.lng.toFixed(4)}</span>
                   </div>
                 </div>
               </div>
@@ -449,6 +720,91 @@ export default function DeliveryDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── OPTION D: REAL-TIME SUPPORT CHAT DRAWER ── */}
+      <AnimatePresence>
+        {chatOpen && chatUser && (
+          <div className="fixed inset-0 z-40 overflow-hidden flex justify-end">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setChatOpen(false)}
+              className="absolute inset-0 bg-stone-900/20 backdrop-blur-sm"
+            />
+            
+            <motion.div 
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative w-full max-w-md bg-white h-full shadow-2xl border-l border-stone-200 flex flex-col z-50"
+            >
+              {/* Chat Header */}
+              <div className="p-5 border-b flex justify-between items-center bg-stone-50">
+                <div>
+                  <h3 className="text-sm font-bold flex items-center gap-1.5">
+                    💬 {chatUser.name}
+                  </h3>
+                  <p className="text-[10px] text-stone-500 uppercase tracking-widest">{chatUser.role || "support"}</p>
+                </div>
+                <button 
+                  onClick={() => setChatOpen(false)}
+                  className="p-2 hover:bg-stone-200/60 rounded-full text-stone-500 transition-colors"
+                >
+                  <FiX />
+                </button>
+              </div>
+
+              {/* Chat Message feed */}
+              <div className="flex-1 overflow-y-auto p-5 space-y-3 bg-stone-50/50">
+                {chatMessages.length === 0 ? (
+                  <p className="text-xs text-stone-400 italic text-center py-10">No messages yet. Send a note to establish contact.</p>
+                ) : (
+                  chatMessages.map((msg, i) => {
+                    const isSelf = msg.sender === (user.id || user._id);
+                    return (
+                      <div key={i} className={`flex ${isSelf ? "justify-end" : "justify-start"}`}>
+                        <div className={`p-3 rounded-2xl max-w-[80%] text-xs shadow-sm ${isSelf ? "bg-stone-900 text-white rounded-tr-none" : "bg-white border border-stone-200 rounded-tl-none text-stone-850"}`}>
+                          <p>{msg.message}</p>
+                          <span className="text-[8px] text-stone-400 block text-right mt-1.5">
+                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+                {recipientIsTyping && (
+                  <div className="flex justify-start">
+                    <span className="bg-stone-200/60 text-stone-600 px-3 py-1.5 rounded-full text-[10px] font-medium animate-pulse">Recipient is typing...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Chat Input panel */}
+              <div className="p-4 border-t bg-white flex gap-2">
+                <input 
+                  type="text" 
+                  placeholder="Type message here..."
+                  value={newMessage}
+                  onChange={handleTypingChange}
+                  onKeyDown={e => e.key === "Enter" && sendChatMessage()}
+                  className="flex-grow px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs outline-none focus:bg-white focus:border-stone-800 transition-all"
+                />
+                <button 
+                  onClick={sendChatMessage}
+                  className="p-2.5 bg-stone-900 hover:bg-stone-850 text-white rounded-xl active:scale-95 transition-all shadow-md"
+                >
+                  <FiSend size={16} />
+                </button>
+              </div>
+
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

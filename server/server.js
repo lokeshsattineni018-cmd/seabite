@@ -44,6 +44,7 @@ import returnRoutes from "./routes/returnRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js"; // [New: Support Agent Dashboard]
 import recommendationRoutes from "./routes/recommendationRoutes.js";
 import campaignRoutes from "./routes/campaignRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js"; // [New: Real-time Chat]
 import abTestRoutes from "./routes/abTestRoutes.js";
 import auditRoutes from "./routes/auditRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
@@ -219,6 +220,43 @@ io.on("connection", (socket) => {
     }, 10 * 60 * 1000); // 10 minutes
 
     cartTimers.set(socket.id, timer);
+  });
+
+  // ── 🛵 REAL-TIME DRIVER TRACKING (GPS Geolocation Streams) ──
+  socket.on("driver-location", (data) => {
+    const { driverId, location } = data;
+    // Broadcast the coordinates to all admins and users tracking this driver
+    io.emit("DRIVER_LOCATION_STREAM", { driverId, location });
+  });
+
+  // ── 🎧 REAL-TIME SUPPORT & DRIVER CHAT ROOMS ──
+  socket.on("join-chat", (data) => {
+    const { userId } = data;
+    socket.join(`chat:${userId}`);
+  });
+
+  socket.on("send-chat-message", async (data) => {
+    const { sender, recipient, message, senderRole, recipientRole } = data;
+    try {
+      const ChatMessage = (await import("./models/ChatMessage.js")).default;
+      const chatMsg = await ChatMessage.create({
+        sender,
+        recipient,
+        message,
+        senderRole,
+        recipientRole
+      });
+
+      // Emit to sender and recipient rooms
+      io.to(`chat:${sender}`).to(`chat:${recipient}`).emit("chat-message", chatMsg);
+    } catch (err) {
+      console.error("Failed to save/emit chat message:", err);
+    }
+  });
+
+  socket.on("typing", (data) => {
+    const { sender, recipient, isTyping } = data;
+    io.to(`chat:${recipient}`).emit("typing-indicator", { sender, isTyping });
   });
 
   socket.on("disconnect", () => {
@@ -460,6 +498,7 @@ app.use("/api/admin/watchtower", auditTrail, watchtowerRoutes);
 app.use("/api/admin/complaints", auditTrail, complaintRoutes); 
 app.use("/api/delivery", deliveryRoutes); 
 app.use("/api/support", supportRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/notifications", pushRoutes);
 app.use("/api/payment", paymentRoutes);

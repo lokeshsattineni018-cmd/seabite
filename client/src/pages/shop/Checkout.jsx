@@ -186,6 +186,7 @@ function CouponDrawer({ isOpen, onClose, coupons, appliedCoupon, onApply, onClea
 export default function Checkout() {
   const { cartItems, subtotal, storeSettings, refreshCartCount, clearCart, updateQuantity, removeFromCart, cartLoaded } = useContext(CartContext);
   const { user, refreshMe } = useContext(AuthContext);
+  const clickTimes = useRef([]);
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const [paymentMethod, setPaymentMethod] = useState("COD");
@@ -428,6 +429,18 @@ export default function Checkout() {
   };
 
   const placeOrder = async () => {
+    // Option H: Rage-click tracking
+    const now = Date.now();
+    clickTimes.current = clickTimes.current.filter(t => now - t < 2000);
+    clickTimes.current.push(now);
+    if (clickTimes.current.length >= 3 && socket && user) {
+      socket.emit("FRUSTRATION_EVENT", {
+        userId: user.id || user._id,
+        msg: `Alert: ${user.name} is rage-clicking checkout. Possible lag detected.`
+      });
+      clickTimes.current = [];
+    }
+
     if (!deliveryAddress.name || !deliveryAddress.phone || !deliveryAddress.street || !deliveryAddress.houseNo || !deliveryAddress.city || !deliveryAddress.postalCode) {
       setModal({ show: true, message: "Please complete all delivery address fields.", type: "error" });
       return;
@@ -529,6 +542,12 @@ export default function Checkout() {
         throw new Error("Razorpay SDK failed to load. Please check your connection.");
       }
     } catch (err) {
+      if (socket && user) {
+        socket.emit("FRUSTRATION_EVENT", {
+          userId: user.id || user._id,
+          msg: `Checkout failed for ${user.name || "Customer"}: ${err.response?.data?.message || err.message}`
+        });
+      }
       setModal({ show: true, message: err.response?.data?.message || err.message || "Order initiation failed.", type: "error" });
     } finally {
       if (!isOrderSuccess.current) setLoading(false);
