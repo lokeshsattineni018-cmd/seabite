@@ -58,9 +58,23 @@ router.post("/assign", protect, admin, async (req, res) => {
     }
     await partner.save();
 
-    // Emit live socket event to all admins
+    // Find corresponding User for this DeliveryPartner to emit direct socket alert
+    const User = (await import("../models/User.js")).default;
+    const driverUser = await User.findOne({
+      $or: [
+        { email: partner.email },
+        { phone: partner.phone }
+      ]
+    });
+
     if (req.io) {
       req.io.emit("FLEET_UPDATE");
+      if (driverUser) {
+        req.io.emit("ORDER_DISPATCHED", {
+          driverId: driverUser._id.toString(),
+          order: order
+        });
+      }
     }
 
     res.json({ success: true, message: "Rider assigned and order dispatched!" });
@@ -72,8 +86,28 @@ router.post("/assign", protect, admin, async (req, res) => {
 // ── GET /api/delivery/my-orders — Fetch assigned orders for logged-in driver ──
 router.get("/my-orders", protect, async (req, res) => {
   try {
-    // If admin is viewing, return all active orders. If driver, return theirs.
-    let filter = { status: { $in: ["Processing", "Shipped", "Out for Delivery"] } };
+    let filter = {};
+
+    if (req.user.role === "admin") {
+      filter = { status: { $in: ["Processing", "Shipped", "Out for Delivery"] } };
+    } else {
+      // Find the corresponding DeliveryPartner document for this logged-in user
+      const partner = await DeliveryPartner.findOne({
+        $or: [
+          { email: req.user.email },
+          { phone: req.user.phone }
+        ]
+      });
+
+      if (!partner) {
+        return res.json([]);
+      }
+
+      filter = {
+        deliveryPartner: partner._id,
+        status: { $in: ["Processing", "Shipped", "Out for Delivery"] }
+      };
+    }
     
     const orders = await Order.find(filter)
       .populate("user", "name phone email")
@@ -93,12 +127,26 @@ router.put("/orders/:id/status", protect, async (req, res) => {
 
     if (!order) return res.status(404).json({ message: "Order not found" });
 
+    // Guard: Verify order is assigned to this driver (if they are not an admin)
+    if (req.user.role !== "admin") {
+      const partner = await DeliveryPartner.findOne({
+        $or: [
+          { email: req.user.email },
+          { phone: req.user.phone }
+        ]
+      });
+
+      if (!partner || order.deliveryPartner.toString() !== partner._id.toString()) {
+        return res.status(403).json({ message: "Access denied: Order is not assigned to you." });
+      }
+    }
+
     order.status = status;
     
     if (status === "Delivered") {
       order.isDelivered = true;
       order.deliveredAt = new Date();
-      if (podUrl) order.proofOfDelivery = podUrl; // Assuming schema accepts or ignores unknown fields
+      if (podUrl) order.proofOfDelivery = podUrl;
     }
 
     await order.save();
@@ -111,12 +159,34 @@ router.put("/orders/:id/status", protect, async (req, res) => {
 // ── GET /api/delivery/my-stats — Fetch driver stats ──
 router.get("/my-stats", protect, async (req, res) => {
   try {
+    const partner = await DeliveryPartner.findOne({
+      $or: [
+        { email: req.user.email },
+        { phone: req.user.phone }
+      ]
+    });
+
+    if (!partner) {
+      return res.json({
+        dailyEarnings: 0,
+        tips: 0,
+        fuelBonus: 0,
+        totalDeliveries: 0,
+        onTimeDeliveryRate: 100
+      });
+    }
+
+    const totalDeliveries = await Order.countDocuments({
+      deliveryPartner: partner._id,
+      status: "Delivered"
+    });
+
     res.json({
-      dailyEarnings: 125,
-      tips: 30,
-      fuelBonus: 15,
-      totalDeliveries: 12,
-      onTimeDeliveryRate: 99
+      dailyEarnings: totalDeliveries * 45, // ₹45 per delivery
+      tips: totalDeliveries * 10,         // ₹10 tip average
+      fuelBonus: totalDeliveries * 5,     // ₹5 fuel bonus
+      totalDeliveries,
+      onTimeDeliveryRate: 98
     });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch stats" });
