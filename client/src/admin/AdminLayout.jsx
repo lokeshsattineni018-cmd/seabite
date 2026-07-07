@@ -159,6 +159,46 @@ export default function AdminLayout() {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
+  const isSuperAdmin = user?.email?.toLowerCase().includes("lokeshsattineni018");
+
+  useEffect(() => {
+    if (user && !isSuperAdmin) {
+      const handleGlobalClick = (e) => {
+        // Target elements that can cause mutations
+        const target = e.target.closest("button, input, select, textarea, [role='checkbox'], [role='button']");
+        if (!target) return;
+
+        // Allow list:
+        const isSearch = target.tagName === "INPUT" && (target.type === "search" || target.placeholder?.toLowerCase().includes("search") || target.className?.toLowerCase().includes("search"));
+        const isDashboardSelector = target.tagName === "SELECT" && (target.className?.includes("dashboard-selector") || target.innerHTML?.includes("Dashboard"));
+        const isCloseButton = target.tagName === "BUTTON" && (target.className?.includes("close") || target.innerHTML?.includes("FiX") || target.closest("button")?.innerHTML?.includes("FiX"));
+        const isNavigation = target.tagName === "BUTTON" && (target.className?.includes("sidebar-link") || target.className?.includes("nav") || target.textContent?.toLowerCase().includes("prev") || target.textContent?.toLowerCase().includes("next") || target.textContent?.toLowerCase().includes("page"));
+
+        if (isSearch || isDashboardSelector || isCloseButton || isNavigation) {
+          return; // Let it proceed
+        }
+
+        // Detect if it's a mutation element
+        const isInputMutation = (target.tagName === "INPUT" && target.type !== "search") || target.tagName === "TEXTAREA" || target.tagName === "SELECT";
+        const isMutationButton = target.tagName === "BUTTON" && (
+          target.type === "submit" ||
+          /save|delete|add|update|apply|create|deploy|adjust|restrict|lift|sync|send|run|restart|approve|reject|refund|toggle|ban|action|submit/i.test(target.textContent || "") ||
+          /save|delete|add|update|apply|create|deploy|adjust|restrict|lift|sync|send|run|restart|approve|reject|refund|toggle|ban|action|submit/i.test(target.className || "")
+        );
+        const isToggleClick = target.className?.toLowerCase().includes("toggle") || target.closest("[class*='toggle']") || target.closest("[class*='switch']");
+
+        if (isInputMutation || isMutationButton || isToggleClick) {
+          e.stopPropagation();
+          e.preventDefault();
+          toast.error("Read-Only Mode: You do not have permission to make changes.");
+        }
+      };
+      
+      document.addEventListener("click", handleGlobalClick, true);
+      return () => document.removeEventListener("click", handleGlobalClick, true);
+    }
+  }, [user, isSuperAdmin]);
+
   const markAllAsRead = async () => {
     try {
       await axios.put(`${API_URL}/api/admin/notifications/read-all`, {}, { withCredentials: true });
@@ -259,7 +299,18 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="admin-root flex h-screen w-full bg-[#fafaf9] font-sans text-stone-900 overflow-hidden selection:bg-stone-200 selection:text-stone-900">
+    <div className={`admin-root flex h-screen w-full bg-[#fafaf9] font-sans text-stone-900 overflow-hidden selection:bg-stone-200 selection:text-stone-900 ${!isSuperAdmin ? "read-only-admin-mode" : ""}`}>
+      {!isSuperAdmin && (
+        <style dangerouslySetInnerHTML={{__html: `
+          .read-only-admin-mode button:not(.sidebar-link):not(.nav-button):not(.search-btn):not([class*='view']):not([class*='View']):not([class*='detail']):not([class*='Detail']):not([class*='close']):not([class*='Close']):not([class*='nav-select']),
+          .read-only-admin-mode input:not([type="search"]),
+          .read-only-admin-mode select:not(.nav-select):not([class*='selector']),
+          .read-only-admin-mode textarea {
+            cursor: not-allowed !important;
+            opacity: 0.65 !important;
+          }
+        `}} />
+      )}
 
       {/* 🟢 Mobile Header */}
       <header 
@@ -288,6 +339,11 @@ export default function AdminLayout() {
       <main 
         className="flex-1 relative overflow-y-auto overflow-x-hidden pt-16 md:pt-0 scroll-smooth bg-[#fafaf9] h-full"
       >
+        {!isSuperAdmin && (
+          <div className="bg-amber-500/10 border-b border-amber-500/25 px-8 py-2.5 text-xs text-amber-700 font-bold flex items-center gap-2 select-none sticky top-0 z-30 backdrop-blur-md">
+            <FiLock className="animate-pulse flex-shrink-0" /> <span>Read-Only Admin Mode — You have access to view all reports and telemetry, but are restricted from modifying settings or products.</span>
+          </div>
+        )}
         {/* Top Navigation Bar (Desktop) - Unified Dashboard Header */}
         <div className="hidden md:flex items-center justify-between px-8 py-3 sticky top-0 bg-[#fafaf9]/95 backdrop-blur-md z-20 border-b border-stone-200/40">
           <div className="flex items-center gap-6">
