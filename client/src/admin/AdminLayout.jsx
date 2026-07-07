@@ -168,6 +168,11 @@ export default function AdminLayout() {
         const target = e.target.closest("button, input, select, textarea, [role='checkbox'], [role='button']");
         if (!target) return;
 
+        // Allow all sidebar clicks (expanding/collapsing categories, navigation)
+        if (target.closest("aside")) {
+          return;
+        }
+
         // Allow list:
         const isSearch = target.tagName === "INPUT" && (target.type === "search" || target.placeholder?.toLowerCase().includes("search") || target.className?.toLowerCase().includes("search"));
         const isDashboardSelector = target.tagName === "SELECT" && (target.className?.includes("dashboard-selector") || target.innerHTML?.includes("Dashboard"));
@@ -190,7 +195,7 @@ export default function AdminLayout() {
         if (isInputMutation || isMutationButton || isToggleClick) {
           e.stopPropagation();
           e.preventDefault();
-          toast.error("Read-Only Mode: You do not have permission to make changes.");
+          // Silently block - no toast message popup
         }
       };
       
