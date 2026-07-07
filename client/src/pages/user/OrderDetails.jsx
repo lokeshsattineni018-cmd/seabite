@@ -338,8 +338,8 @@ function HorizontalTracker({ currentStepIndex, reduced }) {
       {/* Progress fill */}
       <motion.div
         aria-hidden="true"
-        initial={{ width: "0%" }}
-        animate={{ width: `${pct}%` }}
+        initial={{ right: "100%" }}
+        animate={{ right: `calc(${100 - pct}% + 24px)` }}
         transition={reduced
           ? { duration: 0.01 }
           : { duration: 0.9, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
