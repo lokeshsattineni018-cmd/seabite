@@ -1,39 +1,50 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { 
-  FiSearch, FiInbox, FiActivity, FiDollarSign, FiClock, 
-  FiAlertCircle, FiUser, FiInfo, FiCheckCircle, FiSend, FiX, FiSmile
+  FiSearch, FiInbox, FiActivity, FiClock, FiAlertCircle, FiUser,
+  FiCheckCircle, FiSend, FiX, FiPackage, FiMapPin, FiPhone,
+  FiMessageSquare, FiRefreshCw, FiDollarSign, FiTruck, FiEye
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
 const API = import.meta.env.VITE_API_URL || "";
 
-// Sentiment Analysis Helper (Advanced Option I)
-const evaluateSentiment = (text) => {
-  if (!text) return { label: "Neutral ⚖️", color: "text-stone-500 bg-stone-100 border-stone-200" };
-  const words = text.toLowerCase().split(" ");
-  
-  const negativeWords = ["angry", "bad", "late", "delay", "slow", "terrible", "waste", "worst", "spill", "cold", "refund", "ruined", "hate"];
-  const positiveWords = ["happy", "great", "thanks", "thank", "awesome", "perfect", "good", "fast", "love", "fresh", "sweet", "nice"];
-  
-  let negCount = 0;
-  let posCount = 0;
-  
-  words.forEach(word => {
-    if (negativeWords.includes(word)) negCount++;
-    if (positiveWords.includes(word)) posCount++;
-  });
+/* ─── Theme ─── */
+const T = {
+  bg: "#FFFFFF",
+  surface: "#F8F9FA",
+  card: "#FFFFFF",
+  border: "#E8EAED",
+  ink: "#1A1A2E",
+  inkMid: "#5F6368",
+  inkLight: "#9AA0A6",
+  accent: "#4285F4",
+  accentLight: "#E8F0FE",
+  green: "#34A853",
+  greenLight: "#E6F4EA",
+  red: "#EA4335",
+  redLight: "#FCE8E6",
+  orange: "#FF6B35",
+  orangeLight: "#FFF3ED",
+  purple: "#A855F7",
+  purpleLight: "#F3E8FF",
+};
 
-  if (negCount > posCount) {
-    return { label: "Angry 🔴", color: "text-rose-700 bg-rose-50 border-rose-200" };
-  } else if (posCount > negCount) {
-    return { label: "Satisfied 🟢", color: "text-emerald-700 bg-emerald-50 border-emerald-200" };
-  }
-  return { label: "Neutral ⚖️", color: "text-stone-500 bg-stone-100 border-stone-200" };
+/* ─── Sentiment Analyzer ─── */
+const analyzeSentiment = (text) => {
+  if (!text) return { label: "Neutral", emoji: "⚖️", color: T.inkMid, bg: T.surface };
+  const w = text.toLowerCase();
+  const neg = ["angry", "bad", "late", "delay", "slow", "terrible", "waste", "worst", "spill", "cold", "refund", "ruined", "hate", "frustrated", "disgusting"];
+  const pos = ["happy", "great", "thanks", "thank", "awesome", "perfect", "good", "fast", "love", "fresh", "sweet", "nice", "wonderful"];
+  let n = 0, p = 0;
+  w.split(/\s+/).forEach(word => { if (neg.includes(word)) n++; if (pos.includes(word)) p++; });
+  if (n > p) return { label: "Angry", emoji: "🔴", color: T.red, bg: T.redLight };
+  if (p > n) return { label: "Happy", emoji: "🟢", color: T.green, bg: T.greenLight };
+  return { label: "Neutral", emoji: "⚖️", color: T.inkMid, bg: T.surface };
 };
 
 export default function SupportDashboard() {
@@ -41,492 +52,637 @@ export default function SupportDashboard() {
   const { user } = useAuth();
   const { socket } = useSocket();
 
+  /* ── Core State ── */
   const [tickets, setTickets] = useState([]);
-  const [searchId, setSearchId] = useState("");
-  const [xrayOrder, setXrayOrder] = useState(null);
+  const [conversations, setConversations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refunding, setRefunding] = useState(false);
-  const [refundAmount, setRefundAmount] = useState("");
+  const [activeView, setActiveView] = useState("queue"); // queue, xray, chat
+  const [searchId, setSearchId] = useState("");
+
+  /* ── Order X-Ray ── */
+  const [xrayOrder, setXrayOrder] = useState(null);
   const [selectedTicketId, setSelectedTicketId] = useState(null);
 
-  // ── Option H: Frustration Ticker ──
+  /* ── Refund ── */
+  const [refundAmount, setRefundAmount] = useState("");
+  const [refunding, setRefunding] = useState(false);
+
+  /* ── Frustration Alerts ── */
   const [frustrations, setFrustrations] = useState([]);
 
-  // ── Option I: Live Support Chat ──
-  const [activeChatRecipient, setActiveChatRecipient] = useState(null);
+  /* ── Chat ── */
+  const [chatRecipient, setChatRecipient] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [recipientIsTyping, setRecipientIsTyping] = useState(false);
-  const [customerSentiment, setCustomerSentiment] = useState({ label: "Neutral ⚖️", color: "text-stone-500 bg-stone-100" });
+  const [chatInput, setChatInput] = useState("");
+  const [recipientTyping, setRecipientTyping] = useState(false);
+  const [sentiment, setSentiment] = useState({ label: "Neutral", emoji: "⚖️", color: T.inkMid, bg: T.surface });
+  const chatEndRef = useRef(null);
 
-  // ── Option B: Live Leaflet Driver Tracker Map ──
+  /* ── Map ── */
   const mapRef = useRef(null);
-  const driverMarkerRef = useRef(null);
-  const [driverLatLng, setDriverLatLng] = useState(null);
+  const markerRef = useRef(null);
+  const [driverCoords, setDriverCoords] = useState(null);
 
-  useEffect(() => {
-    fetchTickets();
+  /* ── Data Fetching ── */
+  const fetchTickets = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${API}/api/support/tickets`, { withCredentials: true });
+      setTickets(data || []);
+    } catch (err) {
+      console.error("Failed to fetch tickets:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Inject Leaflet Scripts
+  const fetchConversations = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${API}/api/chat/conversations`, { withCredentials: true });
+      setConversations(data || []);
+    } catch (err) {
+      console.error("Failed to fetch conversations:", err);
+    }
+  }, []);
+
+  useEffect(() => { fetchTickets(); fetchConversations(); }, [fetchTickets, fetchConversations]);
+
+  /* ── Auto-refresh ── */
+  useEffect(() => {
+    const interval = setInterval(() => { fetchTickets(); fetchConversations(); }, 30000);
+    return () => clearInterval(interval);
+  }, [fetchTickets, fetchConversations]);
+
+  /* ── Leaflet ── */
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
     document.head.appendChild(link);
-
     const script = document.createElement("script");
     script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
     script.async = true;
     document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(link);
-      document.head.removeChild(script);
-    };
+    return () => { try { document.head.removeChild(link); document.head.removeChild(script); } catch(e) {} };
   }, []);
 
-  // Socket Connections (Frustrations, Locations, Chat)
-  useEffect(() => {
-    if (!socket || !user) return;
-
-    socket.emit("join-chat", { userId: user.id || user._id });
-
-    // Option H: Rage-click/Frustration telemetry
-    const handleFrustration = (data) => {
-      // Add frustration alert to list
-      setFrustrations(prev => [data, ...prev].slice(0, 10)); // Keep last 10
-      toast.error(`⚠️ Alert: customer experiencing issues!`, { duration: 5000 });
-      // Play warning sound
-      const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2568/2568-600.wav");
-      audio.play().catch(e => console.log("Sound error:", e));
-    };
-
-    // Option A: Live coordinate stream from driver
-    const handleLocationStream = (data) => {
-      const { driverId, location } = data;
-      // If we are currently diagnosing an order with this driver
-      if (xrayOrder && xrayOrder.deliveryPartner === driverId) {
-        setDriverLatLng(location);
-        updateDriverMarkerOnMap(location);
-      }
-    };
-
-    // Option I: Chat receiver
-    const handleIncomingMessage = (msg) => {
-      if (activeChatRecipient && (msg.sender === activeChatRecipient._id || msg.sender === activeChatRecipient.id)) {
-        setChatMessages(prev => [...prev, msg]);
-        
-        // Dynamic sentiment calculation in real-time
-        setCustomerSentiment(evaluateSentiment(msg.message));
-      } else {
-        toast.success(`New support message: ${msg.message}`);
-      }
-    };
-
-    const handleTypingIndicator = (data) => {
-      if (activeChatRecipient && data.sender === (activeChatRecipient._id || activeChatRecipient.id)) {
-        setRecipientIsTyping(data.isTyping);
-      }
-    };
-
-    socket.on("FRUSTRATION_EVENT", handleFrustration);
-    socket.on("DRIVER_LOCATION_STREAM", handleLocationStream);
-    socket.on("chat-message", handleIncomingMessage);
-    socket.on("typing-indicator", handleTypingIndicator);
-
-    return () => {
-      socket.off("FRUSTRATION_EVENT", handleFrustration);
-      socket.off("DRIVER_LOCATION_STREAM", handleLocationStream);
-      socket.off("chat-message", handleIncomingMessage);
-      socket.off("typing-indicator", handleTypingIndicator);
-    };
-  }, [socket, user, xrayOrder, activeChatRecipient]);
-
-  // Leaflet Map Init/Update
-  const initLeafletMap = (lat, lng) => {
+  const initMap = (lat, lng) => {
     if (!window.L || mapRef.current) return;
-    const L = window.L;
-
-    const map = L.map("support-driver-map", {
-      zoomControl: false,
-      attributionControl: false
-    }).setView([lat, lng], 14);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+    const map = window.L.map("cs-map", { zoomControl: false, attributionControl: false }).setView([lat, lng], 14);
+    window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
     mapRef.current = map;
   };
 
-  const updateDriverMarkerOnMap = (coords) => {
+  const updateMapMarker = (coords) => {
     if (!window.L || !mapRef.current) return;
     const L = window.L;
-
-    if (!driverMarkerRef.current) {
-      driverMarkerRef.current = L.marker([coords.lat, coords.lng], {
-        icon: L.icon({
-          iconUrl: "https://cdn-icons-png.flaticon.com/512/3180/3180209.png",
-          iconSize: [35, 35]
+    if (!markerRef.current) {
+      markerRef.current = L.marker([coords.lat, coords.lng], {
+        icon: L.divIcon({
+          className: "",
+          html: `<div style="width:28px;height:28px;border-radius:50%;background:${T.accent};display:flex;align-items:center;justify-content:center;color:white;font-size:14px;box-shadow:0 2px 8px rgba(66,133,244,0.4)">🛵</div>`,
+          iconSize: [28, 28], iconAnchor: [14, 14]
         })
       }).addTo(mapRef.current);
     } else {
-      driverMarkerRef.current.setLatLng([coords.lat, coords.lng]);
+      markerRef.current.setLatLng([coords.lat, coords.lng]);
     }
     mapRef.current.panTo([coords.lat, coords.lng]);
   };
 
-  const fetchTickets = async () => {
-    setLoading(true);
-    try {
-      const { data } = await axios.get(`${API}/api/support/tickets`, { withCredentials: true });
-      setTickets(data || []);
-    } catch (err) {
-      toast.error("Failed to load tickets queue");
-    } finally {
-      setLoading(false);
-    }
-  };
+  /* ── Socket Events ── */
+  useEffect(() => {
+    if (!socket || !user) return;
+    socket.emit("join-chat", { userId: user.id || user._id });
 
-  const handleOrderLookup = async (id = searchId) => {
+    const handleFrustration = (data) => {
+      setFrustrations(prev => [{ ...data, time: new Date() }, ...prev].slice(0, 15));
+      try { new Audio("https://assets.mixkit.co/active_storage/sfx/2568/2568-600.wav").play(); } catch(e) {}
+      toast.error("⚠️ Customer frustration detected!", { duration: 4000 });
+    };
+
+    const handleLocation = (data) => {
+      if (xrayOrder && xrayOrder.deliveryPartner === data.driverId) {
+        setDriverCoords(data.location);
+        updateMapMarker(data.location);
+      }
+    };
+
+    const handleChat = (msg) => {
+      setChatMessages(prev => [...prev, msg]);
+      setSentiment(analyzeSentiment(msg.message));
+      if (!chatRecipient) {
+        toast.success(`New message from customer`, { duration: 3000 });
+      }
+    };
+
+    const handleTyping = (data) => {
+      if (chatRecipient && data.sender === (chatRecipient._id || chatRecipient.id)) {
+        setRecipientTyping(data.isTyping);
+      }
+    };
+
+    const handleOrderPlaced = () => { fetchTickets(); };
+
+    socket.on("FRUSTRATION_EVENT", handleFrustration);
+    socket.on("DRIVER_LOCATION_STREAM", handleLocation);
+    socket.on("chat-message", handleChat);
+    socket.on("typing-indicator", handleTyping);
+    socket.on("ORDER_PLACED", handleOrderPlaced);
+
+    return () => {
+      socket.off("FRUSTRATION_EVENT", handleFrustration);
+      socket.off("DRIVER_LOCATION_STREAM", handleLocation);
+      socket.off("chat-message", handleChat);
+      socket.off("typing-indicator", handleTyping);
+      socket.off("ORDER_PLACED", handleOrderPlaced);
+    };
+  }, [socket, user, xrayOrder, chatRecipient]);
+
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
+  /* ── Actions ── */
+  const lookupOrder = async (id = searchId) => {
     if (!id) return;
-    setLoading(true);
     try {
       const { data } = await axios.get(`${API}/api/support/order/${id}`, { withCredentials: true });
       setXrayOrder(data);
-      
-      // Initialize map with default center if driver is not online yet
-      setDriverLatLng(null);
-      setTimeout(() => {
-        initLeafletMap(16.5449, 81.5212);
-      }, 500);
-
+      setSelectedTicketId(data._id);
+      setActiveView("xray");
+      setDriverCoords(null);
+      mapRef.current = null;
+      markerRef.current = null;
+      setTimeout(() => initMap(16.5449, 81.5212), 500);
     } catch (err) {
-      toast.error("Order lookup failed. Verify ID.");
-      setXrayOrder(null);
-    } finally {
-      setLoading(false);
+      toast.error("Order not found. Check the ID.");
     }
   };
 
-  const handleProcessRefund = async () => {
-    if (!xrayOrder) return;
-    if (!refundAmount || isNaN(refundAmount) || Number(refundAmount) <= 0) {
-      toast.error("Enter a valid refund amount");
-      return;
+  const processRefund = async () => {
+    if (!xrayOrder || !refundAmount || Number(refundAmount) <= 0) {
+      toast.error("Enter a valid refund amount"); return;
     }
-
     setRefunding(true);
     try {
       const { data } = await axios.post(`${API}/api/support/refund`, {
         orderId: xrayOrder._id,
         amount: Number(refundAmount)
       }, { withCredentials: true });
-
-      toast.success(data.message || "Refund issued successfully!");
+      toast.success(data.message);
       setRefundAmount("");
-      handleOrderLookup(xrayOrder._id);
+      lookupOrder(xrayOrder._id);
     } catch (err) {
-      const msg = err.response?.data?.message || "Failed to process refund";
-      toast.error(msg);
+      toast.error(err.response?.data?.message || "Refund failed");
     } finally {
       setRefunding(false);
     }
   };
 
-  // Open Chat Room Workspace
-  const openChatWith = (recipient) => {
-    setActiveChatRecipient(recipient);
+  const openChat = (recipient) => {
+    setChatRecipient(recipient);
     setChatMessages([]);
-    setCustomerSentiment({ label: "Neutral ⚖️", color: "text-stone-500 bg-stone-100 border-stone-200" });
-
-    // Load Chat logs
-    axios.get(`${API}/api/chat/history/${recipient._id || recipient.id}`, { withCredentials: true })
-      .then(res => {
-        setChatMessages(res.data || []);
-      })
-      .catch(() => toast.error("Failed to load chat history"));
-  };
-
-  const sendChatMessage = () => {
-    if (!newMessage.trim() || !socket || !user || !activeChatRecipient) return;
-
-    socket.emit("send-chat-message", {
-      sender: user.id || user._id,
-      recipient: activeChatRecipient._id || activeChatRecipient.id,
-      message: newMessage,
-      senderRole: "support",
-      recipientRole: activeChatRecipient.role || "user"
-    });
-
-    setNewMessage("");
-    socket.emit("typing", { sender: user.id || user._id, recipient: activeChatRecipient._id || activeChatRecipient.id, isTyping: false });
-    setIsTyping(false);
-  };
-
-  const handleTypingChange = (e) => {
-    setNewMessage(e.target.value);
-    if (!socket || !activeChatRecipient || !user) return;
-
-    if (!isTyping && e.target.value.length > 0) {
-      setIsTyping(true);
-      socket.emit("typing", { sender: user.id || user._id, recipient: activeChatRecipient._id || activeChatRecipient.id, isTyping: true });
-    } else if (isTyping && e.target.value.length === 0) {
-      setIsTyping(false);
-      socket.emit("typing", { sender: user.id || user._id, recipient: activeChatRecipient._id || activeChatRecipient.id, isTyping: false });
+    setSentiment({ label: "Neutral", emoji: "⚖️", color: T.inkMid, bg: T.surface });
+    setActiveView("chat");
+    const rid = recipient?._id || recipient?.id;
+    if (rid) {
+      axios.get(`${API}/api/chat/history/${rid}`, { withCredentials: true })
+        .then(r => {
+          setChatMessages(r.data || []);
+          // Compute sentiment from last customer message
+          const lastCustomerMsg = [...(r.data || [])].reverse().find(m => m.senderRole === "user");
+          if (lastCustomerMsg) setSentiment(analyzeSentiment(lastCustomerMsg.message));
+        })
+        .catch(() => {});
     }
   };
 
+  const sendMessage = () => {
+    if (!chatInput.trim() || !socket || !chatRecipient) return;
+    socket.emit("send-chat-message", {
+      sender: user.id || user._id,
+      recipient: chatRecipient._id || chatRecipient.id,
+      message: chatInput,
+      senderRole: "support",
+      recipientRole: chatRecipient.role || "user"
+    });
+    setChatInput("");
+  };
+
+  /* ── Helpers ── */
+  const formatTime = (d) => d ? new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "--";
+  const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "--";
+  const formatAddress = (a) => a ? [a.houseNo, a.street, a.city, a.state, a.zip].filter(Boolean).join(", ") : "No address";
+
+  const statusColor = (s) => {
+    if (["Delivered"].includes(s)) return { bg: T.greenLight, color: T.green };
+    if (["Cancelled"].includes(s)) return { bg: T.redLight, color: T.red };
+    if (["Out for Delivery", "Shipped"].includes(s)) return { bg: T.accentLight, color: T.accent };
+    return { bg: T.orangeLight, color: T.orange };
+  };
+
+  /* ── Stats from tickets ── */
+  const totalOrders = tickets.length;
+  const pendingCount = tickets.filter(t => ["Pending", "Processing"].includes(t.status)).length;
+  const deliveredCount = tickets.filter(t => t.status === "Delivered").length;
+  const issueCount = frustrations.length;
+
+  /* ── Loading ── */
   if (loading && tickets.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-stone-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-stone-800"></div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: T.bg }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 40, height: 40, border: `3px solid ${T.border}`, borderTopColor: T.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
+          <p style={{ marginTop: 16, color: T.inkMid, fontSize: 13 }}>Loading support console...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-stone-50 to-white text-stone-900 font-sans p-4 md:p-8">
-      {/* Support Dashboard Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-2">
-            🎧 Customer Support Portal
-          </h1>
-          <p className="text-sm text-stone-500 mt-1">Order Resolution, Diagnostics, and Compensation Controls</p>
-        </div>
-        <div className="relative">
-          <select
-            value="support"
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === "admin") navigate("/admin/dashboard");
-              if (val === "driver") navigate("/driver");
-            }}
-            className="bg-stone-100 border border-stone-200 rounded-xl px-3 py-1.5 text-xs font-bold text-stone-800 focus:outline-none cursor-pointer hover:bg-stone-200/60 transition-colors"
-          >
-            <option value="admin">🏢 Admin Dashboard</option>
-            <option value="driver">🛵 Driver Dashboard</option>
-            <option value="support">🎧 Support Dashboard</option>
-          </select>
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'Inter', 'DM Sans', -apple-system, sans-serif" }}>
+      
+      {/* ═══ HEADER ═══ */}
+      <div style={{ background: T.card, borderBottom: `1px solid ${T.border}`, padding: "16px 24px", position: "sticky", top: 0, zIndex: 40 }}>
+        <div style={{ maxWidth: 1400, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: T.ink, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 22 }}>🎧</span> Support Console
+            </h1>
+            <p style={{ fontSize: 11, color: T.inkLight, margin: "2px 0 0", fontWeight: 500 }}>
+              {user?.name || "Agent"} • Resolution & Diagnostics
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={() => { fetchTickets(); fetchConversations(); }} style={{ padding: 8, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, cursor: "pointer", color: T.inkMid, display: "flex" }}>
+              <FiRefreshCw size={16} />
+            </button>
+            <select value="support" onChange={e => { if (e.target.value === "admin") navigate("/admin/dashboard"); if (e.target.value === "driver") navigate("/driver"); }}
+              style={{ padding: "8px 12px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, fontSize: 12, fontWeight: 600, color: T.inkMid, cursor: "pointer" }}>
+              <option value="admin">🏢 Admin</option>
+              <option value="driver">🛵 Driver</option>
+              <option value="support">🎧 Support</option>
+            </select>
+            {/* Frustration Badge */}
+            {frustrations.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", background: T.redLight, borderRadius: 10, color: T.red, fontSize: 11, fontWeight: 700 }}>
+                <FiAlertCircle size={14} className="animate-pulse" /> {frustrations.length} Alert{frustrations.length > 1 ? "s" : ""}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div style={{ maxWidth: 1400, margin: "0 auto", padding: 24 }}>
         
-        {/* Left Column: Tickets Queue & Frustration Ticker (4 cols) */}
-        <div className="lg:col-span-4 space-y-6">
-          
-          {/* ── OPTION H: CUSTOMER FRUSTRATION TICKER ── */}
-          <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm">
-            <h2 className="text-sm font-bold mb-3 flex items-center gap-1.5 text-rose-600">
-              <FiActivity className="animate-pulse" /> Live Frustration Ticker
-            </h2>
-            <div className="space-y-2.5 max-h-36 overflow-y-auto pr-1">
-              {frustrations.length === 0 ? (
-                <p className="text-[10px] text-stone-400 italic">No checkout or navigation issues detected.</p>
-              ) : (
-                frustrations.map((f, i) => (
-                  <div key={i} className="p-2.5 rounded-xl bg-rose-50 border border-rose-100 flex items-start gap-2 text-[10px]">
-                    <FiAlertCircle className="text-rose-500 mt-0.5" />
-                    <div>
-                      <p className="font-bold text-rose-800">{f.msg}</p>
-                      <p className="text-stone-400 mt-0.5">User ID: {f.userId || "Guest"}</p>
-                    </div>
-                  </div>
-                ))
-              )}
+        {/* ═══ STATS ROW ═══ */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16, marginBottom: 24 }}>
+          {[
+            { label: "Total Orders", value: totalOrders, icon: <FiPackage />, color: T.accent, bg: T.accentLight },
+            { label: "Pending Review", value: pendingCount, icon: <FiClock />, color: T.orange, bg: T.orangeLight },
+            { label: "Resolved", value: deliveredCount, icon: <FiCheckCircle />, color: T.green, bg: T.greenLight },
+            { label: "Frustration Alerts", value: issueCount, icon: <FiAlertCircle />, color: T.red, bg: T.redLight },
+            { label: "Active Chats", value: conversations.length, icon: <FiMessageSquare />, color: T.purple, bg: T.purpleLight }
+          ].map((s, i) => (
+            <div key={i} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 20, display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: s.bg, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                {s.icon}
+              </div>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: T.ink }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: T.inkLight, fontWeight: 500 }}>{s.label}</div>
+              </div>
             </div>
-          </div>
-
-          <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm flex flex-col">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <FiInbox className="text-stone-700" /> Active Resolution Queue
-            </h2>
-
-            <div className="space-y-3 overflow-y-auto max-h-[360px] pr-1">
-              {tickets.length === 0 ? (
-                <div className="text-center py-12 text-stone-400">
-                  <FiInfo className="mx-auto mb-2" size={24} />
-                  <p className="text-xs">No active tickets requiring resolution.</p>
-                </div>
-              ) : (
-                tickets.map(ticket => (
-                  <div 
-                    key={ticket._id}
-                    onClick={() => {
-                      setSelectedTicketId(ticket._id);
-                      setXrayOrder(ticket);
-                      openChatWith(ticket.user || { _id: "guest-user", name: "Guest User", role: "user" });
-                    }}
-                    className={`p-4 rounded-2xl border text-left cursor-pointer transition-all ${selectedTicketId === ticket._id ? "bg-stone-50 border-stone-800 shadow-sm" : "bg-white border-stone-150 hover:bg-stone-50"}`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold font-mono text-stone-600">#{ticket.orderId}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold uppercase">
-                        {ticket.status}
-                      </span>
-                    </div>
-                    <h4 className="text-xs font-bold mt-2 flex items-center gap-1.5">
-                      <FiUser size={12} /> {ticket.user?.name || "Guest User"}
-                    </h4>
-                    <p className="text-[10px] text-stone-500 mt-1">Total Order Value: ₹{ticket.totalAmount}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Right Column: Order X-Ray diagnostics & Live Chat (8 cols) */}
-        <div className="lg:col-span-8 space-y-6">
+        {/* ═══ SEARCH BAR ═══ */}
+        <div style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <FiSearch size={16} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: T.inkLight }} />
+            <input type="text" placeholder="Search by Order ID or MongoDB ID..." value={searchId}
+              onChange={e => setSearchId(e.target.value)} onKeyDown={e => e.key === "Enter" && lookupOrder()}
+              style={{ width: "100%", paddingLeft: 42, paddingRight: 14, padding: "12px 14px 12px 42px", border: `1px solid ${T.border}`, borderRadius: 14, fontSize: 13, outline: "none", background: T.card }} />
+          </div>
+          <button onClick={() => lookupOrder()}
+            style={{ padding: "12px 24px", background: T.accent, color: "white", border: "none", borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+            <FiEye size={14} style={{ marginRight: 6, verticalAlign: "middle" }} /> X-Ray Scan
+          </button>
+        </div>
+
+        {/* ═══ MAIN CONTENT ═══ */}
+        <div style={{ display: "grid", gridTemplateColumns: "360px 1fr", gap: 24 }}>
           
-          {/* Diagnostic Search Input */}
-          <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <FiActivity className="text-rose-500 animate-pulse" /> Order X-Ray diagnostics
-            </h2>
-            <div className="flex gap-3">
-              <div className="relative flex-grow">
-                <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Paste order MongoDB ID or Order ID here..."
-                  value={searchId}
-                  onChange={e => setSearchId(e.target.value)}
-                  className="w-full pl-11 pr-4 py-3 bg-stone-50 border border-stone-200 rounded-2xl text-xs outline-none focus:bg-white focus:border-stone-800 transition-all"
-                />
+          {/* ── LEFT SIDEBAR ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            
+            {/* Frustration Alerts */}
+            {frustrations.length > 0 && (
+              <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 16 }}>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: T.red, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+                  <FiAlertCircle size={14} /> Live Frustration Alerts
+                </h3>
+                <div style={{ maxHeight: 160, overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {frustrations.map((f, i) => (
+                    <div key={i} style={{ padding: 10, background: T.redLight, borderRadius: 10, fontSize: 11 }}>
+                      <div style={{ fontWeight: 700, color: T.red }}>{f.msg || "Checkout rage-click detected"}</div>
+                      <div style={{ color: T.inkLight, marginTop: 2, fontSize: 10 }}>
+                        {f.userId || "Anonymous"} • {f.time ? formatTime(f.time) : "Just now"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <button 
-                onClick={() => handleOrderLookup()}
-                className="px-6 py-3 bg-stone-900 hover:bg-stone-850 text-white font-bold text-xs rounded-2xl transition-all shadow-sm"
-              >
-                Scan Order
-              </button>
+            )}
+
+            {/* Tabs */}
+            <div style={{ display: "flex", gap: 4, background: T.surface, padding: 4, borderRadius: 12 }}>
+              {[
+                { key: "orders", label: "Orders Queue" },
+                { key: "chats", label: "Live Chats" }
+              ].map(t => (
+                <button key={t.key} onClick={() => {}} style={{ flex: 1, padding: "8px 0", border: "none", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                  background: T.card, color: T.ink, boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>
+                  {t.label}
+                </button>
+              ))}
             </div>
+
+            {/* Orders Queue */}
+            <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, overflow: "hidden" }}>
+              <div style={{ padding: "14px 16px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3 style={{ fontSize: 13, fontWeight: 700, color: T.ink, margin: 0 }}>Recent Orders</h3>
+                <span style={{ fontSize: 11, color: T.inkLight }}>{tickets.length} total</span>
+              </div>
+              <div style={{ maxHeight: 500, overflowY: "auto" }}>
+                {tickets.map(ticket => {
+                  const sc = statusColor(ticket.status);
+                  const isActive = selectedTicketId === ticket._id;
+                  return (
+                    <div key={ticket._id} onClick={() => {
+                      setSelectedTicketId(ticket._id);
+                      setXrayOrder(ticket);
+                      setActiveView("xray");
+                      setDriverCoords(null);
+                      mapRef.current = null; markerRef.current = null;
+                      setTimeout(() => initMap(16.5449, 81.5212), 500);
+                    }}
+                      style={{ padding: "14px 16px", borderBottom: `1px solid ${T.border}`, cursor: "pointer", transition: "all 0.15s",
+                        background: isActive ? T.accentLight : "transparent" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>#{ticket.orderId}</span>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: sc.bg, color: sc.color }}>
+                          {ticket.status}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                          <FiUser size={12} style={{ color: T.inkLight }} />
+                          <span style={{ fontSize: 12, color: T.inkMid }}>{ticket.user?.name || "Guest"}</span>
+                        </div>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: T.ink }}>₹{ticket.totalAmount}</span>
+                      </div>
+                      <div style={{ fontSize: 10, color: T.inkLight, marginTop: 4 }}>{formatDate(ticket.createdAt)}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Active Conversations */}
+            {conversations.length > 0 && (
+              <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, overflow: "hidden" }}>
+                <div style={{ padding: "14px 16px", borderBottom: `1px solid ${T.border}` }}>
+                  <h3 style={{ fontSize: 13, fontWeight: 700, color: T.ink, margin: 0 }}>Active Conversations</h3>
+                </div>
+                {conversations.slice(0, 8).map((conv, i) => (
+                  <div key={i} onClick={() => openChat(conv.user)}
+                    style={{ padding: "12px 16px", borderBottom: `1px solid ${T.border}`, cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: T.accentLight, color: T.accent, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, flexShrink: 0 }}>
+                      {conv.user?.name?.[0]?.toUpperCase() || "U"}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: T.ink }}>{conv.user?.name || "User"}</div>
+                      <div style={{ fontSize: 11, color: T.inkLight, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{conv.lastMessage}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Diagnostic details */}
-          <AnimatePresence mode="wait">
-            {xrayOrder ? (
-              <motion.div 
-                key="diagnostics"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="grid grid-cols-1 md:grid-cols-2 gap-6"
-              >
-                {/* Stepper timeline & Map details */}
-                <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm space-y-6">
-                  <div className="flex justify-between items-start border-b pb-4">
-                    <div>
-                      <h3 className="text-base font-extrabold">Order #{xrayOrder.orderId}</h3>
-                      <p className="text-[10px] text-stone-400 mt-0.5">Database ID: {xrayOrder._id}</p>
+          {/* ── RIGHT PANEL ── */}
+          <div>
+            <AnimatePresence mode="wait">
+              
+              {/* X-Ray View */}
+              {activeView === "xray" && xrayOrder ? (
+                <motion.div key="xray" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  
+                  {/* Order Details */}
+                  <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 24 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, paddingBottom: 16, borderBottom: `1px solid ${T.border}` }}>
+                      <div>
+                        <h3 style={{ fontSize: 18, fontWeight: 800, color: T.ink, margin: 0 }}>Order #{xrayOrder.orderId}</h3>
+                        <p style={{ fontSize: 11, color: T.inkLight, marginTop: 2 }}>ID: {xrayOrder._id}</p>
+                      </div>
+                      <span style={{ fontSize: 18, fontWeight: 800, color: T.accent }}>₹{xrayOrder.totalAmount}</span>
                     </div>
-                    <div className="text-right">
-                      <span className="text-sm font-black text-rose-500">₹{xrayOrder.totalAmount}</span>
+
+                    {/* Customer */}
+                    <div style={{ background: T.surface, borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                      <h4 style={{ fontSize: 11, fontWeight: 700, color: T.inkLight, textTransform: "uppercase", marginBottom: 8 }}>Customer</h4>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: T.ink }}>{xrayOrder.user?.name || "Guest"}</div>
+                      <div style={{ fontSize: 12, color: T.inkMid, marginTop: 2 }}>{xrayOrder.user?.email}</div>
+                      <div style={{ fontSize: 12, color: T.inkMid }}>{xrayOrder.user?.phone}</div>
                     </div>
-                  </div>
 
-                  {/* ── OPTION B: LIVE GEOLOCATION MAP ── */}
-                  <div>
-                    <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Rider Live Navigation</h4>
-                    <div 
-                      id="support-driver-map" 
-                      className="bg-stone-50 border border-stone-200 rounded-2xl h-48 relative overflow-hidden z-10"
-                    />
-                    {driverLatLng ? (
-                      <p className="text-[9px] text-emerald-600 font-bold mt-1.5">📡 Rider streaming coordinates: {driverLatLng.lat.toFixed(4)}, {driverLatLng.lng.toFixed(4)}</p>
-                    ) : (
-                      <p className="text-[9px] text-stone-400 italic mt-1.5">Waiting for rider GPS to begin streaming...</p>
-                    )}
-                  </div>
+                    {/* Delivery Address */}
+                    <div style={{ background: T.surface, borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                      <h4 style={{ fontSize: 11, fontWeight: 700, color: T.inkLight, textTransform: "uppercase", marginBottom: 8 }}>Delivery Address</h4>
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 6 }}>
+                        <FiMapPin size={13} style={{ color: T.accent, marginTop: 2, flexShrink: 0 }} />
+                        <span style={{ fontSize: 13, color: T.ink, lineHeight: "1.5" }}>{formatAddress(xrayOrder.shippingAddress)}</span>
+                      </div>
+                    </div>
 
-                  {/* Compensation controls */}
-                  <div className="border-t pt-4">
-                    <h4 className="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Support Compensations</h4>
-                    <div className="flex gap-2">
-                      <input 
-                        type="number" 
-                        placeholder="Amount" 
-                        value={refundAmount}
-                        onChange={e => setRefundAmount(e.target.value)}
-                        className="w-full max-w-[120px] px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs outline-none focus:border-stone-850"
-                      />
-                      <button 
-                        onClick={handleProcessRefund}
-                        disabled={refunding}
-                        className="flex-grow py-2 bg-stone-900 hover:bg-stone-850 text-white text-xs font-bold rounded-xl disabled:opacity-50"
-                      >
-                        {refunding ? "Processing..." : "Refund Apology"}
+                    {/* Items */}
+                    <div style={{ marginBottom: 16 }}>
+                      <h4 style={{ fontSize: 11, fontWeight: 700, color: T.inkLight, textTransform: "uppercase", marginBottom: 8 }}>Items</h4>
+                      {xrayOrder.items?.map((item, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: `1px solid ${T.border}` }}>
+                          <span style={{ fontSize: 13, color: T.ink }}>{item.name} × {item.qty}</span>
+                          <span style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>₹{item.price * item.qty}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Status Timeline */}
+                    <div style={{ marginBottom: 16 }}>
+                      <h4 style={{ fontSize: 11, fontWeight: 700, color: T.inkLight, textTransform: "uppercase", marginBottom: 10 }}>Status History</h4>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {(xrayOrder.statusHistory?.length > 0 ? xrayOrder.statusHistory : [{ status: xrayOrder.status, timestamp: xrayOrder.updatedAt || xrayOrder.createdAt }]).map((h, i) => (
+                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: T.green, flexShrink: 0 }} />
+                            <span style={{ fontSize: 12, fontWeight: 600, color: T.ink }}>{h.status}</span>
+                            <span style={{ fontSize: 10, color: T.inkLight, marginLeft: "auto" }}>{formatTime(h.timestamp)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Refund / Compensation */}
+                    <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: 16 }}>
+                      <h4 style={{ fontSize: 11, fontWeight: 700, color: T.inkLight, textTransform: "uppercase", marginBottom: 10 }}>Compensation</h4>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <input type="number" placeholder="₹ Amount" value={refundAmount} onChange={e => setRefundAmount(e.target.value)}
+                          style={{ width: 120, padding: "10px 12px", border: `1px solid ${T.border}`, borderRadius: 10, fontSize: 13, outline: "none" }} />
+                        <button onClick={processRefund} disabled={refunding}
+                          style={{ flex: 1, padding: "10px 0", background: T.accent, color: "white", border: "none", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", opacity: refunding ? 0.5 : 1 }}>
+                          {refunding ? "Processing..." : "Issue Refund"}
+                        </button>
+                      </div>
+                      <p style={{ fontSize: 10, color: T.inkLight, marginTop: 6 }}>Max ₹500 per action for support agents.</p>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                      <a href={`tel:${xrayOrder.user?.phone}`}
+                        style={{ flex: 1, padding: 10, background: T.greenLight, color: T.green, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, textAlign: "center", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                        <FiPhone size={13} /> Call
+                      </a>
+                      <button onClick={() => openChat(xrayOrder.user || { _id: "guest", name: "Guest", role: "user" })}
+                        style={{ flex: 1, padding: 10, background: T.accentLight, color: T.accent, border: "none", borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                        <FiMessageSquare size={13} /> Chat
                       </button>
                     </div>
                   </div>
-                </div>
 
-                {/* ── OPTION I: LIVE CHAT CENTER WITH SENTIMENT ANALYSIS ── */}
-                <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm flex flex-col h-[400px]">
-                  <div className="flex justify-between items-center border-b pb-3 mb-3">
-                    <h4 className="text-xs font-extrabold flex items-center gap-1.5">
-                      💬 Customer Chat
-                    </h4>
-                    {/* Real-time Sentiment analysis display */}
-                    <span className={`px-2.5 py-0.5 rounded-full text-[9px] border font-bold uppercase tracking-wider ${customerSentiment.color}`}>
-                      {customerSentiment.label}
-                    </span>
-                  </div>
+                  {/* Map + Chat Panel */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                    {/* Map */}
+                    <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 16 }}>
+                      <h4 style={{ fontSize: 12, fontWeight: 700, color: T.ink, marginBottom: 10 }}>Live Rider Location</h4>
+                      <div id="cs-map" style={{ height: 220, borderRadius: 12, background: T.surface, overflow: "hidden" }} />
+                      {driverCoords ? (
+                        <p style={{ fontSize: 10, color: T.green, fontWeight: 600, marginTop: 8 }}>📡 Streaming: {driverCoords.lat.toFixed(4)}, {driverCoords.lng.toFixed(4)}</p>
+                      ) : (
+                        <p style={{ fontSize: 10, color: T.inkLight, marginTop: 8 }}>Waiting for rider GPS stream...</p>
+                      )}
+                    </div>
 
-                  {/* Messages Feed */}
-                  <div className="flex-grow overflow-y-auto space-y-2 pr-1 bg-stone-50/50 p-3 rounded-xl border border-stone-100">
-                    {chatMessages.length === 0 ? (
-                      <p className="text-[10px] text-stone-400 italic text-center py-10">No messages. Support session initialized.</p>
-                    ) : (
-                      chatMessages.map((msg, i) => {
-                        const isSelf = msg.sender === (user.id || user._id);
-                        return (
-                          <div key={i} className={`flex ${isSelf ? "justify-end" : "justify-start"}`}>
-                            <div className={`p-2.5 rounded-2xl max-w-[85%] text-[11px] shadow-sm ${isSelf ? "bg-stone-900 text-white rounded-tr-none" : "bg-white border border-stone-150 rounded-tl-none text-stone-800"}`}>
-                              <p>{msg.message}</p>
+                    {/* Quick Chat */}
+                    <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 16, flex: 1, display: "flex", flexDirection: "column", minHeight: 280 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <h4 style={{ fontSize: 12, fontWeight: 700, color: T.ink, margin: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                          <FiMessageSquare size={14} /> Customer Chat
+                        </h4>
+                        <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: sentiment.bg, color: sentiment.color }}>
+                          {sentiment.emoji} {sentiment.label}
+                        </span>
+                      </div>
+                      <div style={{ flex: 1, overflowY: "auto", padding: 10, background: T.surface, borderRadius: 10, display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                        {chatMessages.length === 0 && (
+                          <p style={{ textAlign: "center", color: T.inkLight, fontSize: 11, marginTop: 30 }}>
+                            {xrayOrder.user ? `Start chat with ${xrayOrder.user.name}` : "Select a customer to start chatting"}
+                          </p>
+                        )}
+                        {chatMessages.map((msg, i) => {
+                          const self = msg.sender === (user.id || user._id);
+                          return (
+                            <div key={i} style={{ display: "flex", justifyContent: self ? "flex-end" : "flex-start" }}>
+                              <div style={{ maxWidth: "80%", padding: "8px 12px", borderRadius: 12, fontSize: 12, lineHeight: "1.4",
+                                background: self ? T.accent : T.card, color: self ? "white" : T.ink, border: self ? "none" : `1px solid ${T.border}`,
+                                borderBottomRightRadius: self ? 4 : 12, borderBottomLeftRadius: self ? 12 : 4 }}>
+                                {msg.message}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })
-                    )}
-                    {recipientIsTyping && (
-                      <span className="text-[9px] text-stone-400 italic block mt-1 animate-pulse">Customer typing...</span>
-                    )}
+                          );
+                        })}
+                        {recipientTyping && <span style={{ fontSize: 10, color: T.inkLight, fontStyle: "italic" }}>typing...</span>}
+                        <div ref={chatEndRef} />
+                      </div>
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()}
+                          placeholder="Type a response..." style={{ flex: 1, padding: "10px 14px", border: `1px solid ${T.border}`, borderRadius: 10, fontSize: 12, outline: "none" }} />
+                        <button onClick={sendMessage}
+                          style={{ padding: "10px 14px", background: T.accent, color: "white", border: "none", borderRadius: 10, cursor: "pointer" }}>
+                          <FiSend size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              ) : activeView === "chat" && chatRecipient ? (
+                <motion.div key="chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                  style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, display: "flex", flexDirection: "column", height: 600 }}>
+                  
+                  {/* Chat Header */}
+                  <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accentLight, color: T.accent, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700 }}>
+                        {chatRecipient.name?.[0]?.toUpperCase() || "U"}
+                      </div>
+                      <div>
+                        <h3 style={{ fontSize: 14, fontWeight: 700, color: T.ink, margin: 0 }}>{chatRecipient.name}</h3>
+                        <span style={{ fontSize: 11, color: T.inkLight }}>{chatRecipient.email || chatRecipient.role}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: sentiment.bg, color: sentiment.color }}>
+                        {sentiment.emoji} {sentiment.label}
+                      </span>
+                      <button onClick={() => { setActiveView("queue"); setChatRecipient(null); }}
+                        style={{ background: T.surface, border: "none", borderRadius: 8, padding: 6, cursor: "pointer", color: T.inkMid }}><FiX size={16} /></button>
+                    </div>
                   </div>
 
-                  {/* Input controls */}
-                  <div className="mt-3 flex gap-2 pt-2 border-t">
-                    <input 
-                      type="text" 
-                      placeholder="Type apology note or instructions..."
-                      value={newMessage}
-                      onChange={handleTypingChange}
-                      onKeyDown={e => e.key === "Enter" && sendChatMessage()}
-                      className="flex-grow px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs outline-none focus:border-stone-850 transition-all"
-                    />
-                    <button 
-                      onClick={sendChatMessage}
-                      className="px-3 bg-stone-900 hover:bg-stone-855 text-white rounded-xl active:scale-95 transition-all"
-                    >
-                      Send
+                  {/* Messages */}
+                  <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 8 }}>
+                    {chatMessages.length === 0 && <p style={{ textAlign: "center", color: T.inkLight, fontSize: 12, marginTop: 50 }}>No messages yet</p>}
+                    {chatMessages.map((msg, i) => {
+                      const self = msg.sender === (user.id || user._id);
+                      return (
+                        <div key={i} style={{ display: "flex", justifyContent: self ? "flex-end" : "flex-start" }}>
+                          <div style={{ maxWidth: "70%", padding: "10px 14px", borderRadius: 14, fontSize: 13, lineHeight: "1.4",
+                            background: self ? T.accent : T.surface, color: self ? "white" : T.ink,
+                            borderBottomRightRadius: self ? 4 : 14, borderBottomLeftRadius: self ? 14 : 4 }}>
+                            {msg.message}
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {recipientTyping && <span style={{ fontSize: 11, color: T.inkLight, fontStyle: "italic" }}>typing...</span>}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  {/* Input */}
+                  <div style={{ padding: "12px 20px", borderTop: `1px solid ${T.border}`, display: "flex", gap: 8 }}>
+                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()}
+                      placeholder="Type a support response..."
+                      style={{ flex: 1, padding: "12px 16px", border: `1px solid ${T.border}`, borderRadius: 12, fontSize: 13, outline: "none" }} />
+                    <button onClick={sendMessage}
+                      style={{ padding: "12px 16px", background: T.accent, color: "white", border: "none", borderRadius: 12, cursor: "pointer" }}>
+                      <FiSend size={16} />
                     </button>
                   </div>
-                </div>
-
-              </motion.div>
-            ) : (
-              <div className="bg-white border border-stone-200 rounded-3xl p-12 text-center text-stone-400 shadow-sm">
-                <FiActivity className="mx-auto mb-3" size={32} />
-                <p className="text-sm font-semibold">Ready for Diagnostic Scan</p>
-                <p className="text-xs mt-1">Select an order from the queue or search directly to display full diagnostics.</p>
-              </div>
-            )}
-          </AnimatePresence>
-
+                </motion.div>
+              ) : (
+                <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 60, textAlign: "center" }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>🔍</div>
+                  <h3 style={{ fontSize: 18, fontWeight: 700, color: T.ink, margin: 0 }}>Ready for Diagnostics</h3>
+                  <p style={{ fontSize: 13, color: T.inkLight, marginTop: 8, maxWidth: 400, margin: "8px auto 0" }}>
+                    Select an order from the queue, search by Order ID, or open an active conversation to begin resolving issues.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
-
       </div>
     </div>
   );

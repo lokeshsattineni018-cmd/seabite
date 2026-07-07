@@ -1,66 +1,102 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { 
-  FiMapPin, FiCamera, FiDollarSign, FiClock, FiCheckCircle, 
-  FiNavigation, FiTrendingUp, FiCheck, FiX, FiAward, FiMessageSquare,
-  FiAlertTriangle, FiThermometer, FiSend, FiPhone, FiStar, FiPower
+  FiMapPin, FiCamera, FiClock, FiCheckCircle, FiNavigation, 
+  FiCheck, FiX, FiMessageSquare, FiSend, FiPhone, FiStar, 
+  FiPower, FiPackage, FiTruck, FiDollarSign, FiTarget, FiAward,
+  FiChevronRight, FiRefreshCw
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 
 const API = import.meta.env.VITE_API_URL || "";
+
+/* ─── Theme ─── */
+const T = {
+  bg: "#FFFFFF",
+  surface: "#F8F9FA",
+  card: "#FFFFFF",
+  border: "#E8EAED",
+  ink: "#1A1A2E",
+  inkMid: "#5F6368",
+  inkLight: "#9AA0A6",
+  accent: "#FF6B35",
+  accentLight: "#FFF3ED",
+  green: "#34A853",
+  greenLight: "#E6F4EA",
+  red: "#EA4335",
+  redLight: "#FCE8E6",
+  blue: "#4285F4",
+  blueLight: "#E8F0FE",
+  purple: "#A855F7",
+  purpleLight: "#F3E8FF",
+};
 
 export default function DeliveryDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { socket } = useSocket();
 
+  /* ── Core State ── */
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("routes"); // routes, earnings, performance
-  
-  // Swiggy duty status
   const [isOnline, setIsOnline] = useState(false);
+  const [activeTab, setActiveTab] = useState("active");
 
-  // Active delivery stepper state (1: Go to Store, 2: Pick Up catch, 3: Go to Customer)
-  const [stepperStep, setStepperStep] = useState(1); 
+  /* ── Active Delivery Stepper ── */
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  /* ── Camera / POD ── */
   const [cameraActive, setCameraActive] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
-  const [activeOrderId, setActiveOrderId] = useState(null);
-
-  // Leaflet map
-  const [driverLatLng, setDriverLatLng] = useState({ lat: 16.5449, lng: 81.5212 }); // default Bhimavaram Hub coords
-  const mapRef = useRef(null);
-  const driverMarkerRef = useRef(null);
-  const surgeZonesRef = useRef([]);
-
-  // Dispatch overlay
-  const [incomingDispatch, setIncomingDispatch] = useState(null);
-
-  // Chat panel
-  const [chatOpen, setChatOpen] = useState(false);
-  const [chatUser, setChatUser] = useState(null);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [recipientIsTyping, setRecipientIsTyping] = useState(false);
-
-  // IoT box temp
-  const [iotTemp, setIotTemp] = useState(2.8);
-  const [iotAlert, setIotAlert] = useState(false);
-
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
-  useEffect(() => {
-    fetchDashboardData();
+  /* ── Dispatch Overlay ── */
+  const [incomingDispatch, setIncomingDispatch] = useState(null);
+
+  /* ── Chat ── */
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatTarget, setChatTarget] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState("");
+  const [recipientTyping, setRecipientTyping] = useState(false);
+
+  /* ── Map ── */
+  const [driverLatLng, setDriverLatLng] = useState({ lat: 16.5449, lng: 81.5212 });
+  const mapRef = useRef(null);
+  const markerRef = useRef(null);
+  const mapContainerRef = useRef(null);
+
+  /* ── Data Fetching ── */
+  const fetchData = useCallback(async () => {
+    try {
+      const [oRes, sRes] = await Promise.all([
+        axios.get(`${API}/api/delivery/my-orders`, { withCredentials: true }),
+        axios.get(`${API}/api/delivery/my-stats`, { withCredentials: true })
+      ]);
+      setOrders(oRes.data || []);
+      setStats(sRes.data || {});
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Dynamically load Leaflet resources
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  /* ── Auto-refresh every 30s ── */
+  useEffect(() => {
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  /* ── Leaflet Map Init ── */
   useEffect(() => {
     const link = document.createElement("link");
     link.rel = "stylesheet";
@@ -71,312 +107,221 @@ export default function DeliveryDashboard() {
     script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
     script.async = true;
     script.onload = () => {
-      initLeafletMap();
+      if (window.L && !mapRef.current && document.getElementById("driver-map")) {
+        const map = window.L.map("driver-map", { zoomControl: false, attributionControl: false })
+          .setView([driverLatLng.lat, driverLatLng.lng], 14);
+        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+        mapRef.current = map;
+      }
     };
     document.head.appendChild(script);
-
     return () => {
-      document.head.removeChild(link);
-      document.head.removeChild(script);
+      try { document.head.removeChild(link); document.head.removeChild(script); } catch(e) {}
     };
   }, []);
 
-  // Sync driver coordinates and push via socket
+  /* ── GPS Tracking (only when online) ── */
   useEffect(() => {
     if (!navigator.geolocation || !isOnline) return;
-
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setDriverLatLng(coords);
-
         if (socket && user) {
-          socket.emit("driver-location", {
-            driverId: user.id || user._id,
-            location: coords
-          });
+          socket.emit("driver-location", { driverId: user.id || user._id, location: coords });
         }
       },
-      (err) => console.log("GPS Track Error:", err.message),
+      () => {},
       { enableHighAccuracy: true, maximumAge: 10000 }
     );
-
     return () => navigator.geolocation.clearWatch(watchId);
   }, [socket, user, isOnline]);
 
-  // Redraw driver location & surge circles on map
+  /* ── Update Map Marker ── */
   useEffect(() => {
-    if (window.L && mapRef.current) {
-      const L = window.L;
-      
-      // Update Driver Marker
-      if (!driverMarkerRef.current) {
-        driverMarkerRef.current = L.marker([driverLatLng.lat, driverLatLng.lng], {
-          icon: L.icon({
-            iconUrl: "https://cdn-icons-png.flaticon.com/512/3180/3180209.png",
-            iconSize: [35, 35]
-          })
-        }).addTo(mapRef.current);
-      } else {
-        driverMarkerRef.current.setLatLng([driverLatLng.lat, driverLatLng.lng]);
-      }
-      mapRef.current.panTo([driverLatLng.lat, driverLatLng.lng]);
-
-      // Draw Swiggy Surge Heatmap circles
-      if (surgeZonesRef.current.length === 0) {
-        // Zone 1: Bhimavaram Center
-        const circle1 = L.circle([16.5449, 81.5212], {
-          color: "#f97316",
-          fillColor: "#ffedd5",
-          fillOpacity: 0.35,
-          radius: 600
-        }).addTo(mapRef.current).bindPopup("🔥 High Surge Zone (+₹25 Payout)");
-
-        // Zone 2: Town Hall Zone
-        const circle2 = L.circle([16.5410, 81.5300], {
-          color: "#ef4444",
-          fillColor: "#fee2e2",
-          fillOpacity: 0.35,
-          radius: 500
-        }).addTo(mapRef.current).bindPopup("🚨 Extreme Demand Zone (+₹40 Payout)");
-
-        surgeZonesRef.current = [circle1, circle2];
-      }
+    if (!window.L || !mapRef.current) return;
+    const L = window.L;
+    if (!markerRef.current) {
+      markerRef.current = L.marker([driverLatLng.lat, driverLatLng.lng], {
+        icon: L.divIcon({
+          className: "",
+          html: `<div style="width:32px;height:32px;border-radius:50%;background:${T.accent};display:flex;align-items:center;justify-content:center;color:white;font-size:16px;box-shadow:0 2px 8px rgba(255,107,53,0.4)">🛵</div>`,
+          iconSize: [32, 32], iconAnchor: [16, 16]
+        })
+      }).addTo(mapRef.current);
+    } else {
+      markerRef.current.setLatLng([driverLatLng.lat, driverLatLng.lng]);
     }
+    mapRef.current.panTo([driverLatLng.lat, driverLatLng.lng]);
   }, [driverLatLng]);
 
-  // Box temperature sensor
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setIotTemp((prev) => {
-        const variance = (Math.random() - 0.5) * 0.4;
-        const nextTemp = Number((prev + variance).toFixed(1));
-        setIotAlert(nextTemp > 4.0);
-        return nextTemp;
-      });
-    }, 4000);
-    return () => clearInterval(interval);
-  }, []);
-
-  // Socket receivers
+  /* ── Socket Events ── */
   useEffect(() => {
     if (!socket || !user) return;
-
     socket.emit("join-chat", { userId: user.id || user._id });
 
-    const handleNewDispatch = (data) => {
+    const handleDispatch = (data) => {
       if (data.driverId === (user.id || user._id)) {
-        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav");
-        audio.play().catch(e => {});
+        try { new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-600.wav").play(); } catch(e) {}
         setIncomingDispatch(data.order);
+        fetchData();
       }
     };
 
-    const handleIncomingMessage = (msg) => {
-      setChatMessages((prev) => [...prev, msg]);
-      if (!chatOpen) {
-        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/911/911-600.wav");
-        audio.play().catch(e => {});
-        toast.success(`Support: ${msg.message}`);
-      }
+    const handleChat = (msg) => {
+      setChatMessages(prev => [...prev, msg]);
     };
 
-    const handleTypingIndicator = (data) => {
-      if (data.sender !== (user.id || user._id)) {
-        setRecipientIsTyping(data.isTyping);
-      }
+    const handleTyping = (data) => {
+      if (data.sender !== (user.id || user._id)) setRecipientTyping(data.isTyping);
     };
 
-    socket.on("ORDER_DISPATCHED", handleNewDispatch);
-    socket.on("chat-message", handleIncomingMessage);
-    socket.on("typing-indicator", handleTypingIndicator);
+    const handleFleetUpdate = () => fetchData();
+
+    socket.on("ORDER_DISPATCHED", handleDispatch);
+    socket.on("chat-message", handleChat);
+    socket.on("typing-indicator", handleTyping);
+    socket.on("FLEET_UPDATE", handleFleetUpdate);
 
     return () => {
-      socket.off("ORDER_DISPATCHED", handleNewDispatch);
-      socket.off("chat-message", handleIncomingMessage);
-      socket.off("typing-indicator", handleTypingIndicator);
+      socket.off("ORDER_DISPATCHED", handleDispatch);
+      socket.off("chat-message", handleChat);
+      socket.off("typing-indicator", handleTyping);
+      socket.off("FLEET_UPDATE", handleFleetUpdate);
     };
-  }, [socket, user, chatOpen]);
+  }, [socket, user]);
 
-  const initLeafletMap = () => {
-    if (!window.L || mapRef.current) return;
-    const L = window.L;
-    const map = L.map("delivery-leaflet-map", {
-      zoomControl: false,
-      attributionControl: false
-    }).setView([driverLatLng.lat, driverLatLng.lng], 14);
-
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
-    mapRef.current = map;
-  };
-
-  const fetchDashboardData = async () => {
-    setLoading(true);
+  /* ── Actions ── */
+  const toggleDuty = async () => {
+    const next = !isOnline;
     try {
-      const [ordersRes, statsRes] = await Promise.all([
-        axios.get(`${API}/api/delivery/my-orders`, { withCredentials: true }),
-        axios.get(`${API}/api/delivery/my-stats`, { withCredentials: true })
-      ]);
-      setOrders(ordersRes.data || []);
-      setStats(statsRes.data || null);
-
-      // Determine active order and stepper position based on current order status
-      const active = ordersRes.data?.[0];
-      if (active) {
-        if (active.status === "Shipped" || active.status === "Processing") setStepperStep(1);
-        else if (active.status === "Reached Store") setStepperStep(2);
-        else if (active.status === "Out for Delivery") setStepperStep(3);
-      }
-    } catch (err) {
-      toast.error("Failed to load dashboard data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Toggle Swiggy Duty Online/Offline Status
-  const toggleDutyStatus = async () => {
-    const nextOnlineState = !isOnline;
-    const newStatus = nextOnlineState ? "Active" : "Offline";
-    
-    // Play swiggy status chime
-    const toneUrl = nextOnlineState 
-      ? "https://assets.mixkit.co/active_storage/sfx/1086/1086-600.wav" 
-      : "https://assets.mixkit.co/active_storage/sfx/2568/2568-600.wav";
-    
-    new Audio(toneUrl).play().catch(e => {});
-
-    try {
-      await axios.put(`${API}/api/delivery/status`, { status: newStatus }, { withCredentials: true });
-      setIsOnline(nextOnlineState);
-      toast.success(nextOnlineState ? "You are now ONLINE 🟢" : "You are now OFFLINE 🔴");
+      await axios.put(`${API}/api/delivery/status`, { status: next ? "Active" : "Offline" }, { withCredentials: true });
+      setIsOnline(next);
+      try { new Audio(next ? "https://assets.mixkit.co/active_storage/sfx/1086/1086-600.wav" : "https://assets.mixkit.co/active_storage/sfx/2568/2568-600.wav").play(); } catch(e) {}
+      toast.success(next ? "You're online! Ready for orders." : "You're offline.");
     } catch (err) {
       toast.error("Failed to update status");
     }
   };
 
-  const handleUpdateStatus = async (orderId, status, podUrl = null) => {
+  const updateOrderStatus = async (orderId, status) => {
     try {
-      await axios.put(`${API}/api/delivery/orders/${orderId}/status`, {
-        status,
-        podUrl
-      }, { withCredentials: true });
-      
-      toast.success(`Order marked as ${status}`);
-      fetchDashboardData();
-      setActiveOrderId(null);
+      await axios.put(`${API}/api/delivery/orders/${orderId}/status`, { status, podUrl: capturedPhoto || null }, { withCredentials: true });
+      toast.success(`Order → ${status}`);
       setCapturedPhoto(null);
+      setSelectedOrder(null);
+      fetchData();
     } catch (err) {
-      toast.error("Failed to update status");
+      toast.error(err.response?.data?.message || "Update failed");
     }
   };
 
-  // Stepper Transition Control (Swiggy Stepper)
-  const handleStepperAdvance = (orderId, step) => {
-    if (step === 1) {
-      handleUpdateStatus(orderId, "Reached Store");
-      setStepperStep(2);
-    } else if (step === 2) {
-      handleUpdateStatus(orderId, "Out for Delivery");
-      setStepperStep(3);
-    }
-  };
-
-  const openChatWith = (recipientUser) => {
-    setChatUser(recipientUser);
-    setChatOpen(true);
-    setChatMessages([]);
-    axios.get(`${API}/api/chat/history/${recipientUser._id || recipientUser.id}`, { withCredentials: true })
-      .then(res => setChatMessages(res.data || []))
-      .catch(() => toast.error("Failed to load chat"));
-  };
-
-  const sendChatMessage = () => {
-    if (!newMessage.trim() || !socket || !user || !chatUser) return;
-    socket.emit("send-chat-message", {
-      sender: user.id || user._id,
-      recipient: chatUser._id || chatUser.id,
-      message: newMessage,
-      senderRole: "driver",
-      recipientRole: chatUser.role || "support"
-    });
-    setNewMessage("");
-    socket.emit("typing", { sender: user.id || user._id, recipient: chatUser._id || chatUser.id, isTyping: false });
-    setIsTyping(false);
-  };
-
-  const startCamera = async (orderId) => {
-    setActiveOrderId(orderId);
+  const startCamera = async () => {
     setCameraActive(true);
     setCapturedPhoto(null);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
       if (videoRef.current) videoRef.current.srcObject = stream;
-    } catch (err) {
-      toast.error("Camera access failed.");
-      setCameraActive(false);
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      videoRef.current.srcObject.getTracks().forEach(track => track.stop());
-    }
-    setCameraActive(false);
+    } catch { setCameraActive(false); toast.error("Camera access denied"); }
   };
 
   const capturePhoto = () => {
     if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
-      setCapturedPhoto(canvas.toDataURL("image/jpeg"));
-      stopCamera();
+      const v = videoRef.current, c = canvasRef.current;
+      c.width = v.videoWidth; c.height = v.videoHeight;
+      c.getContext("2d").drawImage(v, 0, 0);
+      setCapturedPhoto(c.toDataURL("image/jpeg"));
+      v.srcObject?.getTracks().forEach(t => t.stop());
+      setCameraActive(false);
     }
   };
 
+  const openChat = (target) => {
+    setChatTarget(target);
+    setChatOpen(true);
+    setChatMessages([]);
+    const tid = target?._id || target?.id;
+    if (tid) {
+      axios.get(`${API}/api/chat/history/${tid}`, { withCredentials: true })
+        .then(r => setChatMessages(r.data || [])).catch(() => {});
+    }
+  };
+
+  const sendMessage = () => {
+    if (!chatInput.trim() || !socket || !chatTarget) return;
+    socket.emit("send-chat-message", {
+      sender: user.id || user._id,
+      recipient: chatTarget._id || chatTarget.id,
+      message: chatInput,
+      senderRole: "driver",
+      recipientRole: chatTarget.role || "support"
+    });
+    setChatInput("");
+  };
+
+  /* ── Helpers ── */
+  const getStepperState = (order) => {
+    if (!order) return 0;
+    const s = order.status;
+    if (s === "Shipped" || s === "Processing") return 1;
+    if (s === "Out for Delivery") return 2;
+    if (s === "Delivered") return 3;
+    return 1;
+  };
+
+  const formatTime = (d) => {
+    if (!d) return "--";
+    return new Date(d).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatAddress = (addr) => {
+    if (!addr) return "No address";
+    return [addr.houseNo, addr.street, addr.city].filter(Boolean).join(", ");
+  };
+
+  /* ── Loading ── */
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-stone-950">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: T.bg }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ width: 40, height: 40, border: `3px solid ${T.border}`, borderTopColor: T.accent, borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto" }} />
+          <p style={{ marginTop: 16, color: T.inkMid, fontSize: 13, fontWeight: 500 }}>Loading your dashboard...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        </div>
       </div>
     );
   }
 
-  const activeOrder = orders?.[0];
+  const activeOrders = orders.filter(o => ["Processing", "Shipped", "Out for Delivery"].includes(o.status));
+  const dailyMilestoneTarget = 5;
+  const totalDone = stats?.totalDeliveries || 0;
+  const milestoneProgress = Math.min(100, (totalDone / dailyMilestoneTarget) * 100);
 
   return (
-    <div className="min-h-screen bg-stone-950 text-white font-sans p-4 md:p-6 pb-24 relative select-none">
+    <div style={{ minHeight: "100vh", background: T.bg, fontFamily: "'Inter', 'DM Sans', -apple-system, sans-serif" }}>
       
-      {/* ── OPTION C: DISPATCH OVERLAY ── */}
+      {/* ═══ DISPATCH OVERLAY ═══ */}
       <AnimatePresence>
         {incomingDispatch && (
-          <div className="fixed inset-0 bg-stone-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-stone-900 border border-stone-850 p-6 rounded-3xl max-w-sm w-full shadow-2xl text-center"
-            >
-              <span className="text-4xl">🚨</span>
-              <h2 className="text-lg font-black mt-4">Order Assigned!</h2>
-              <p className="text-xs text-stone-400 mt-2">
-                Order #{incomingDispatch.orderId} is ready for pick up. Payout surge active.
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+              style={{ background: T.card, borderRadius: 24, padding: 32, maxWidth: 400, width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.15)", textAlign: "center" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: T.accentLight, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 28 }}>🚨</div>
+              <h2 style={{ fontSize: 20, fontWeight: 800, color: T.ink, margin: 0 }}>New Order Assigned!</h2>
+              <p style={{ fontSize: 13, color: T.inkMid, marginTop: 8 }}>
+                Order #{incomingDispatch.orderId} • ₹{incomingDispatch.totalAmount}
               </p>
-              <div className="mt-6 flex gap-3">
-                <button 
-                  onClick={() => {
-                    setIncomingDispatch(null);
-                    handleUpdateStatus(incomingDispatch._id, "Shipped");
-                  }}
-                  className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold rounded-2xl transition-all shadow-md active:scale-95"
-                >
-                  Accept Delivery
+              <p style={{ fontSize: 12, color: T.inkLight, marginTop: 4 }}>
+                {formatAddress(incomingDispatch.shippingAddress)}
+              </p>
+              <div style={{ display: "flex", gap: 12, marginTop: 24 }}>
+                <button onClick={() => { setIncomingDispatch(null); fetchData(); }}
+                  style={{ flex: 1, padding: "14px 0", background: T.accent, color: "white", border: "none", borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                  Accept & Start
                 </button>
-                <button onClick={() => setIncomingDispatch(null)} className="flex-1 py-3 bg-stone-800 text-stone-300 text-xs font-bold rounded-2xl">
-                  Ignore
+                <button onClick={() => setIncomingDispatch(null)}
+                  style={{ flex: 1, padding: "14px 0", background: T.surface, color: T.inkMid, border: `1px solid ${T.border}`, borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                  Dismiss
                 </button>
               </div>
             </motion.div>
@@ -384,464 +329,407 @@ export default function DeliveryDashboard() {
         )}
       </AnimatePresence>
 
-      {/* Header Panel with Swiggy Duty Status Toggle */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-stone-800 pb-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
-            🛵 SeaBite Captain
-          </h1>
-          <p className="text-[10px] text-stone-400 uppercase tracking-widest font-bold">Logistics & Delivery Portal</p>
-        </div>
-
-        <div className="flex items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-          {/* Dashboard Selector */}
-          <select
-            value="driver"
-            onChange={(e) => {
-              const val = e.target.value;
-              if (val === "admin") navigate("/admin/dashboard");
-              if (val === "support") navigate("/support");
-            }}
-            className="bg-stone-900 border border-stone-800 rounded-xl px-3 py-2 text-xs font-bold text-stone-300 focus:outline-none cursor-pointer"
-          >
-            <option value="admin">🏢 Admin Dashboard</option>
-            <option value="driver">🛵 Driver Dashboard</option>
-            <option value="support">🎧 Support Dashboard</option>
-          </select>
-
-          {/* Swiggy Duty Toggle (Online/Offline) */}
-          <button 
-            onClick={toggleDutyStatus}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-black uppercase tracking-wider transition-all duration-300 border ${
-              isOnline 
-                ? "bg-emerald-500/10 border-emerald-500 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.15)]" 
-                : "bg-stone-900 border-stone-800 text-stone-400"
-            }`}
-          >
-            <FiPower size={14} className={isOnline ? "animate-pulse" : ""} />
-            {isOnline ? "Duty: Online" : "Duty: Offline"}
-          </button>
+      {/* ═══ HEADER ═══ */}
+      <div style={{ background: T.card, borderBottom: `1px solid ${T.border}`, padding: "16px 24px", position: "sticky", top: 0, zIndex: 40 }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div>
+            <h1 style={{ fontSize: 20, fontWeight: 800, color: T.ink, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ fontSize: 22 }}>🛵</span> SeaBite Captain
+            </h1>
+            <p style={{ fontSize: 11, color: T.inkLight, margin: "2px 0 0", fontWeight: 500 }}>
+              {user?.name || "Driver"} • {isOnline ? "Online" : "Offline"}
+            </p>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button onClick={fetchData} style={{ padding: 8, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, cursor: "pointer", color: T.inkMid, display: "flex" }}>
+              <FiRefreshCw size={16} />
+            </button>
+            <select value="driver" onChange={e => { if (e.target.value === "admin") navigate("/admin/dashboard"); if (e.target.value === "support") navigate("/support"); }}
+              style={{ padding: "8px 12px", background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, fontSize: 12, fontWeight: 600, color: T.inkMid, cursor: "pointer" }}>
+              <option value="admin">🏢 Admin</option>
+              <option value="driver">🛵 Driver</option>
+              <option value="support">🎧 Support</option>
+            </select>
+            {/* Duty Toggle */}
+            <button onClick={toggleDuty}
+              style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 20px", borderRadius: 14, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 12, letterSpacing: "0.03em", transition: "all 0.3s",
+                background: isOnline ? T.greenLight : T.surface, color: isOnline ? T.green : T.inkMid, boxShadow: isOnline ? `0 0 0 2px ${T.green}40` : `0 0 0 1px ${T.border}` }}>
+              <FiPower size={14} />
+              {isOnline ? "ONLINE" : "OFFLINE"}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Navigation tabs */}
-      <div className="flex bg-stone-900 p-1 rounded-2xl border border-stone-800 mb-6 max-w-md">
-        {["routes", "earnings", "performance"].map(tab => (
-          <button 
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 text-center text-xs font-bold rounded-xl transition-all uppercase tracking-wider ${
-              activeTab === tab ? "bg-orange-500 text-white shadow" : "text-stone-400 hover:text-stone-200"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 24px 100px" }}>
         
-        {/* ROUTES / ACTIVE JOBS TAB */}
-        {activeTab === "routes" && (
-          <motion.div key="routes" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* ═══ STATS ROW ═══ */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16, marginBottom: 24 }}>
+          {[
+            { label: "Active Orders", value: activeOrders.length, icon: <FiPackage />, color: T.accent, bg: T.accentLight },
+            { label: "Today's Earnings", value: `₹${stats?.dailyEarnings || 0}`, icon: <FiDollarSign />, color: T.green, bg: T.greenLight },
+            { label: "Tips", value: `₹${stats?.tips || 0}`, icon: <FiStar />, color: "#F59E0B", bg: "#FEF3C7" },
+            { label: "Completed", value: totalDone, icon: <FiCheckCircle />, color: T.blue, bg: T.blueLight },
+            { label: "On-Time Rate", value: `${stats?.onTimeDeliveryRate || 98}%`, icon: <FiTarget />, color: T.purple, bg: T.purpleLight }
+          ].map((s, i) => (
+            <div key={i} style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 20, display: "flex", alignItems: "center", gap: 14 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: s.bg, color: s.color, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>
+                {s.icon}
+              </div>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: T.ink }}>{s.value}</div>
+                <div style={{ fontSize: 11, color: T.inkLight, fontWeight: 500 }}>{s.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* ═══ MILESTONE PROGRESS ═══ */}
+        <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 20, marginBottom: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <div>
+              <span style={{ fontSize: 13, fontWeight: 700, color: T.ink }}>Daily Milestone</span>
+              <span style={{ fontSize: 11, color: T.inkLight, marginLeft: 8 }}>{totalDone}/{dailyMilestoneTarget} deliveries</span>
+            </div>
+            <span style={{ fontSize: 12, fontWeight: 700, color: totalDone >= dailyMilestoneTarget ? T.green : T.accent }}>
+              {totalDone >= dailyMilestoneTarget ? "✅ Bonus Unlocked!" : `₹150 bonus at ${dailyMilestoneTarget}`}
+            </span>
+          </div>
+          <div style={{ width: "100%", height: 8, background: T.surface, borderRadius: 4, overflow: "hidden" }}>
+            <div style={{ width: `${milestoneProgress}%`, height: "100%", background: `linear-gradient(90deg, ${T.accent}, ${T.green})`, borderRadius: 4, transition: "width 0.5s ease" }} />
+          </div>
+        </div>
+
+        {/* ═══ TABS ═══ */}
+        <div style={{ display: "flex", gap: 4, background: T.surface, padding: 4, borderRadius: 14, marginBottom: 24, maxWidth: 400 }}>
+          {[
+            { key: "active", label: "Active Routes" },
+            { key: "map", label: "Live Map" },
+            { key: "history", label: "Earnings" }
+          ].map(t => (
+            <button key={t.key} onClick={() => setActiveTab(t.key)}
+              style={{ flex: 1, padding: "10px 0", border: "none", borderRadius: 10, fontSize: 12, fontWeight: 700, cursor: "pointer", transition: "all 0.2s",
+                background: activeTab === t.key ? T.card : "transparent", color: activeTab === t.key ? T.ink : T.inkLight,
+                boxShadow: activeTab === t.key ? "0 1px 3px rgba(0,0,0,0.08)" : "none" }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ═══ ACTIVE ROUTES TAB ═══ */}
+        {activeTab === "active" && (
+          <div style={{ display: "grid", gridTemplateColumns: selectedOrder ? "1fr 1fr" : "1fr", gap: 24 }}>
             
-            {/* Map / Directions */}
-            <div className="lg:col-span-8 bg-stone-900 border border-stone-850 rounded-3xl p-5 shadow-lg flex flex-col gap-4">
-              <h2 className="text-sm font-black flex items-center gap-2 uppercase tracking-wider text-orange-500">
-                <FiNavigation /> Surge Heatmap & Navigation
-              </h2>
-
-              <div id="delivery-leaflet-map" className="bg-stone-950 border border-stone-800 rounded-2xl h-80 z-10" />
-
-              {/* Swiggy Stepper Action Card (Only shows if an order is active) */}
-              {isOnline && activeOrder ? (
-                <div className="bg-stone-950 border border-stone-800 rounded-2xl p-5 mt-2 space-y-4">
-                  <div className="flex justify-between items-center border-b border-stone-850 pb-3">
-                    <div>
-                      <h3 className="text-sm font-extrabold text-orange-500">Current Task: Order #{activeOrder.orderId}</h3>
-                      <p className="text-[10px] text-stone-500 mt-0.5">{activeOrder.shippingAddress?.street}, {activeOrder.shippingAddress?.city}</p>
-                    </div>
-                    {/* Sticky Chat Button */}
-                    <button 
-                      onClick={() => openChatWith(activeOrder.user || { _id: "support-agent", name: "Support Dispatcher", role: "support" })}
-                      className="p-2 bg-stone-900 border border-stone-800 rounded-xl hover:bg-stone-800 flex items-center gap-1.5 text-xs text-orange-400 font-bold"
-                    >
-                      <FiMessageSquare /> Chat Support
-                    </button>
-                  </div>
-
-                  {/* Swiggy 3-Step Stepper Component */}
-                  <div className="grid grid-cols-3 gap-2 text-center text-[10px] uppercase font-black tracking-wider py-2">
-                    {[
-                      { step: 1, label: "1. Go to Hub" },
-                      { step: 2, label: "2. Verify Catch" },
-                      { step: 3, label: "3. Deliver" }
-                    ].map(s => (
-                      <div key={s.step} className={`py-2 rounded-xl border ${
-                        stepperStep === s.step 
-                          ? "bg-orange-500/10 border-orange-500 text-orange-400" 
-                          : stepperStep > s.step 
-                            ? "bg-emerald-500/10 border-emerald-500 text-emerald-400" 
-                            : "bg-stone-900/40 border-stone-850 text-stone-500"
-                      }`}>
-                        {s.label}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Stepper active step controls */}
-                  <div className="pt-2">
-                    {stepperStep === 1 && (
-                      <button 
-                        onClick={() => handleStepperAdvance(activeOrder._id, 1)}
-                        className="w-full py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow active:scale-98 transition-all"
-                      >
-                        Arrived at Bhimavaram Hub (Check-In)
-                      </button>
-                    )}
-
-                    {stepperStep === 2 && (
-                      <div className="space-y-3">
-                        <p className="text-[10px] text-amber-500 font-bold">⚠️ VERIFY SEAFOOD COLD ICE PACKS BEFORE DEPARTURE</p>
-                        <div className="flex gap-2">
-                          <button 
-                            onClick={() => startCamera(activeOrder._id)}
-                            className="flex-1 py-3 bg-stone-800 hover:bg-stone-750 text-stone-200 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5"
-                          >
-                            <FiCamera /> Snap Hub Bill
-                          </button>
-                          <button 
-                            onClick={() => handleStepperAdvance(activeOrder._id, 2)}
-                            className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl"
-                          >
-                            Ready to Depart (Start Route)
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {stepperStep === 3 && (
-                      <div className="space-y-3">
-                        <div className="flex gap-2">
-                          {/* Call Client Floating action */}
-                          <a 
-                            href={`tel:${activeOrder.shippingAddress?.phone || "9866635566"}`}
-                            className="p-3 bg-stone-900 border border-stone-800 rounded-xl flex items-center justify-center text-orange-400 hover:bg-stone-800"
-                          >
-                            <FiPhone size={16} />
-                          </a>
-                          <button 
-                            onClick={() => handleUpdateStatus(activeOrder._id, "Delivered")}
-                            className="flex-grow py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl"
-                          >
-                            Confirm Handover (Mark Delivered)
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+            {/* Orders List */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {activeOrders.length === 0 ? (
+                <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 48, textAlign: "center" }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>{isOnline ? "🔍" : "😴"}</div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: T.ink, margin: 0 }}>
+                    {isOnline ? "Waiting for dispatches..." : "You're offline"}
+                  </h3>
+                  <p style={{ fontSize: 13, color: T.inkLight, marginTop: 8 }}>
+                    {isOnline ? "Stay online. New orders will appear here instantly." : "Toggle your duty status to start receiving orders."}
+                  </p>
                 </div>
               ) : (
-                <div className="bg-stone-950 border border-stone-800 rounded-2xl p-8 text-center text-stone-500">
-                  {!isOnline ? "🔴 You are offline. Toggle duty status above to search dispatches." : "🟢 Searching for nearby orders..."}
-                </div>
+                activeOrders.map(order => {
+                  const step = getStepperState(order);
+                  const isSelected = selectedOrder?._id === order._id;
+                  return (
+                    <div key={order._id} onClick={() => setSelectedOrder(order)}
+                      style={{ background: T.card, border: `2px solid ${isSelected ? T.accent : T.border}`, borderRadius: 16, padding: 20, cursor: "pointer", transition: "all 0.2s" }}>
+                      
+                      {/* Order header */}
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                        <div>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: T.ink }}>#{order.orderId}</span>
+                          <span style={{ fontSize: 11, color: T.inkLight, marginLeft: 8 }}>{formatTime(order.createdAt)}</span>
+                        </div>
+                        <span style={{ fontSize: 11, fontWeight: 700, padding: "4px 10px", borderRadius: 8, 
+                          background: step === 1 ? T.blueLight : step === 2 ? T.accentLight : T.greenLight,
+                          color: step === 1 ? T.blue : step === 2 ? T.accent : T.green }}>
+                          {order.status}
+                        </span>
+                      </div>
+
+                      {/* Customer info */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <div style={{ width: 28, height: 28, borderRadius: "50%", background: T.surface, display: "flex", alignItems: "center", justifyContent: "center", color: T.inkMid, fontSize: 12 }}>
+                          {order.user?.name?.[0]?.toUpperCase() || "C"}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{order.user?.name || "Customer"}</div>
+                          <div style={{ fontSize: 11, color: T.inkLight }}>{order.user?.phone || ""}</div>
+                        </div>
+                      </div>
+
+                      {/* Address */}
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 12 }}>
+                        <FiMapPin size={13} style={{ color: T.accent, marginTop: 2, flexShrink: 0 }} />
+                        <span style={{ fontSize: 12, color: T.inkMid, lineHeight: "1.4" }}>{formatAddress(order.shippingAddress)}</span>
+                      </div>
+
+                      {/* Items summary */}
+                      <div style={{ fontSize: 12, color: T.inkMid, marginBottom: 12 }}>
+                        {order.items?.length || 0} item{(order.items?.length || 0) !== 1 ? "s" : ""} • ₹{order.totalAmount}
+                      </div>
+
+                      {/* Stepper */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        {["Hub Pickup", "In Transit", "Delivered"].map((label, i) => (
+                          <React.Fragment key={i}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <div style={{ width: 20, height: 20, borderRadius: "50%", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center",
+                                background: i + 1 <= step ? T.green : T.surface, color: i + 1 <= step ? "white" : T.inkLight, border: `1.5px solid ${i + 1 <= step ? T.green : T.border}` }}>
+                                {i + 1 <= step ? "✓" : i + 1}
+                              </div>
+                              <span style={{ fontSize: 10, color: i + 1 <= step ? T.ink : T.inkLight, fontWeight: i + 1 === step ? 700 : 500 }}>{label}</span>
+                            </div>
+                            {i < 2 && <div style={{ flex: 1, height: 2, background: i + 1 < step ? T.green : T.border, borderRadius: 1 }} />}
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
 
-            {/* Sidebar telemetry */}
-            <div className="lg:col-span-4 space-y-6">
-              
-              {/* Box IoT Telemetry */}
-              <div className={`border rounded-3xl p-5 shadow transition-colors duration-500 ${
-                iotAlert ? "bg-rose-950/20 border-rose-500 text-rose-300" : "bg-stone-900 border-stone-800"
-              }`}>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="text-xs font-bold flex items-center gap-1.5 uppercase tracking-wider">
-                      <FiThermometer /> IoT Box Temperature
-                    </h3>
-                    <p className="text-[9px] text-stone-500 mt-0.5">Live sensors inside Box #FD-42</p>
-                  </div>
-                  <span className={`text-xl font-black ${iotAlert ? "text-rose-500 animate-bounce" : "text-emerald-400"}`}>
-                    {iotTemp}°C
-                  </span>
+            {/* ═══ SELECTED ORDER DETAIL PANEL ═══ */}
+            {selectedOrder && (
+              <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 24, position: "sticky", top: 100, alignSelf: "start" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 800, color: T.ink, margin: 0 }}>Order #{selectedOrder.orderId}</h3>
+                  <button onClick={() => setSelectedOrder(null)} style={{ background: T.surface, border: "none", borderRadius: 8, padding: 6, cursor: "pointer", color: T.inkMid }}>
+                    <FiX size={16} />
+                  </button>
                 </div>
-                {iotAlert && (
-                  <div className="mt-3 p-2 bg-rose-500/10 border border-rose-500/20 rounded-lg text-[9px] text-rose-400 font-bold flex items-center gap-1.5">
-                    <FiAlertTriangle className="animate-pulse" /> Warning: temperature exceeds ice packs limit!
+
+                {/* Customer Card */}
+                <div style={{ background: T.surface, borderRadius: 12, padding: 14, marginBottom: 16 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: T.ink }}>{selectedOrder.user?.name || "Customer"}</div>
+                  <div style={{ fontSize: 12, color: T.inkMid, marginTop: 4 }}>{selectedOrder.user?.phone}</div>
+                  <div style={{ fontSize: 12, color: T.inkMid, marginTop: 2 }}>{formatAddress(selectedOrder.shippingAddress)}</div>
+                </div>
+
+                {/* Items */}
+                <div style={{ marginBottom: 16 }}>
+                  <h4 style={{ fontSize: 12, fontWeight: 700, color: T.inkLight, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>Items to Deliver</h4>
+                  {selectedOrder.items?.map((item, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: i < selectedOrder.items.length - 1 ? `1px solid ${T.border}` : "none" }}>
+                      <span style={{ fontSize: 13, color: T.ink }}>{item.name} × {item.qty}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>₹{item.price * item.qty}</span>
+                    </div>
+                  ))}
+                  <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 10, marginTop: 4, borderTop: `2px solid ${T.border}` }}>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: T.ink }}>Total</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: T.accent }}>₹{selectedOrder.totalAmount}</span>
+                  </div>
+                </div>
+
+                {/* Camera / POD */}
+                {cameraActive && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ background: "#000", borderRadius: 12, overflow: "hidden", aspectRatio: "16/9", position: "relative", marginBottom: 8 }}>
+                      <video ref={videoRef} autoPlay playsInline style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      <canvas ref={canvasRef} style={{ display: "none" }} />
+                    </div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={capturePhoto} style={{ flex: 1, padding: 10, background: T.green, color: "white", border: "none", borderRadius: 10, fontWeight: 700, fontSize: 12, cursor: "pointer" }}>📸 Capture</button>
+                      <button onClick={() => { videoRef.current?.srcObject?.getTracks().forEach(t => t.stop()); setCameraActive(false); }}
+                        style={{ padding: 10, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10, fontWeight: 600, fontSize: 12, cursor: "pointer", color: T.inkMid }}>Cancel</button>
+                    </div>
                   </div>
                 )}
-              </div>
 
-              {/* Camera Preview */}
-              {cameraActive && (
-                <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5 text-center">
-                  <h3 className="text-xs font-bold mb-3 uppercase tracking-wider text-stone-300">Hub Document Verification</h3>
-                  <div className="bg-black rounded-2xl overflow-hidden aspect-video relative mb-3">
-                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
-                    <canvas ref={canvasRef} className="hidden" />
+                {capturedPhoto && (
+                  <div style={{ marginBottom: 16, textAlign: "center" }}>
+                    <img src={capturedPhoto} alt="POD" style={{ width: "100%", maxHeight: 140, objectFit: "cover", borderRadius: 12, border: `1px solid ${T.border}` }} />
+                    <button onClick={() => setCapturedPhoto(null)} style={{ marginTop: 8, fontSize: 11, color: T.accent, background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>Re-take</button>
                   </div>
-                  <div className="flex gap-2">
-                    <button onClick={capturePhoto} className="flex-grow py-2 bg-emerald-600 hover:bg-emerald-700 font-bold text-xs rounded-xl">Capture</button>
-                    <button onClick={stopCamera} className="px-4 py-2 bg-stone-800 font-bold text-xs rounded-xl">Cancel</button>
-                  </div>
-                </div>
-              )}
+                )}
 
-              {capturedPhoto && (
-                <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5 text-center">
-                  <h3 className="text-xs font-bold mb-3 text-emerald-400 flex items-center justify-center gap-1.5 uppercase">
-                    <FiCheckCircle /> Invoice Scanned
-                  </h3>
-                  <img src={capturedPhoto} alt="Hub Bill" className="w-full rounded-2xl mb-3 max-h-36 object-cover border border-stone-800" />
-                  <button onClick={() => setCapturedPhoto(null)} className="w-full py-2 bg-stone-800 text-stone-300 font-bold text-xs rounded-xl">Re-Take Scan</button>
-                </div>
-              )}
+                {/* Action Buttons (depends on stepper state) */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {getStepperState(selectedOrder) <= 1 && (
+                    <button onClick={() => updateOrderStatus(selectedOrder._id, "Out for Delivery")}
+                      style={{ width: "100%", padding: 14, background: T.accent, color: "white", border: "none", borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                      <FiTruck size={16} /> Picked Up — Start Delivery
+                    </button>
+                  )}
 
-              {/* Scorecard Widget (Option 6) */}
-              <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5">
-                <h3 className="text-xs font-black uppercase tracking-widest text-stone-400 mb-4 border-b border-stone-850 pb-2">Fleet Rating Board</h3>
-                <div className="grid grid-cols-3 gap-2 text-center">
-                  <div className="bg-stone-950/40 p-2.5 rounded-xl border border-stone-850">
-                    <FiStar className="mx-auto text-amber-500 mb-1" size={14} />
-                    <span className="text-sm font-black block">4.9★</span>
-                    <span className="text-[8px] text-stone-500 font-bold uppercase block mt-1">Rating</span>
-                  </div>
-                  <div className="bg-stone-950/40 p-2.5 rounded-xl border border-stone-850">
-                    <FiCheckCircle className="mx-auto text-emerald-500 mb-1" size={14} />
-                    <span className="text-sm font-black block">98%</span>
-                    <span className="text-[8px] text-stone-500 font-bold uppercase block mt-1">Accept</span>
-                  </div>
-                  <div className="bg-stone-950/40 p-2.5 rounded-xl border border-stone-850">
-                    <FiClock className="mx-auto text-purple-500 mb-1" size={14} />
-                    <span className="text-sm font-black block">99%</span>
-                    <span className="text-[8px] text-stone-500 font-bold uppercase block mt-1">On-Time</span>
+                  {getStepperState(selectedOrder) === 2 && (
+                    <>
+                      <button onClick={startCamera}
+                        style={{ width: "100%", padding: 14, background: T.surface, border: `1px solid ${T.border}`, borderRadius: 14, fontSize: 13, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, color: T.ink }}>
+                        <FiCamera size={16} /> Take Proof of Delivery Photo
+                      </button>
+                      <button onClick={() => updateOrderStatus(selectedOrder._id, "Delivered")}
+                        style={{ width: "100%", padding: 14, background: T.green, color: "white", border: "none", borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                        <FiCheckCircle size={16} /> Mark as Delivered
+                      </button>
+                    </>
+                  )}
+
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <a href={`tel:${selectedOrder.user?.phone || selectedOrder.shippingAddress?.phone}`}
+                      style={{ flex: 1, padding: 12, background: T.blueLight, color: T.blue, border: "none", borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: "pointer", textAlign: "center", textDecoration: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                      <FiPhone size={14} /> Call Customer
+                    </a>
+                    <button onClick={() => openChat(selectedOrder.user || { _id: "support", name: "Support", role: "support" })}
+                      style={{ flex: 1, padding: 12, background: T.surface, color: T.inkMid, border: `1px solid ${T.border}`, borderRadius: 12, fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                      <FiMessageSquare size={14} /> Chat
+                    </button>
                   </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
+            )}
+          </div>
         )}
 
-        {/* EARNINGS TAB (Option 3) */}
-        {activeTab === "earnings" && (
-          <motion.div key="earnings" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-            
-            {/* Earnings stats dashboard */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {/* ═══ MAP TAB ═══ */}
+        {activeTab === "map" && (
+          <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, overflow: "hidden" }}>
+            <div id="driver-map" style={{ height: 500, width: "100%" }} />
+          </div>
+        )}
+
+        {/* ═══ EARNINGS TAB ═══ */}
+        {activeTab === "history" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 }}>
+            {/* Breakdown */}
+            <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 24 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 16 }}>Earnings Breakdown</h3>
               {[
-                { title: "Today's Payout", value: `₹${stats?.dailyEarnings || 0}`, desc: "Orders base payout", color: "border-orange-500/20 text-orange-400" },
-                { title: "Surge & Rain Incentives", value: `₹${(stats?.totalDeliveries || 0) * 25}`, desc: "Peak demand zones", color: "border-red-500/20 text-red-400" },
-                { title: "Tips Collected", value: `₹${stats?.tips || 0}`, desc: "Direct from customers", color: "border-cyan-500/20 text-cyan-400" },
-                { title: "Weekly Milestone Payout", value: `₹${stats?.fuelBonus || 0}`, desc: "Weekly active bonus", color: "border-amber-500/20 text-amber-400" }
-              ].map((item, i) => (
-                <div key={i} className="bg-stone-900 border border-stone-850 rounded-3xl p-5 shadow flex flex-col justify-between h-28">
-                  <span className="text-[9px] font-black uppercase text-stone-400 tracking-wider">{item.title}</span>
+                { label: "Base Delivery Pay", value: `₹${(stats?.totalDeliveries || 0) * 45}`, desc: `${stats?.totalDeliveries || 0} × ₹45` },
+                { label: "Distance Bonus", value: `₹${(stats?.totalDeliveries || 0) * 12}`, desc: "Avg 2.4 km × ₹5/km" },
+                { label: "Surge Incentives", value: `₹${(stats?.totalDeliveries || 0) * 25}`, desc: "Peak demand zones" },
+                { label: "Customer Tips", value: `₹${stats?.tips || 0}`, desc: "Direct tips" },
+                { label: "Fuel Allowance", value: `₹${stats?.fuelBonus || 0}`, desc: "₹5 per trip" }
+              ].map((row, i) => (
+                <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: `1px solid ${T.border}` }}>
                   <div>
-                    <span className={`text-xl font-black ${item.color}`}>{item.value}</span>
-                    <span className="text-[8px] text-stone-500 block mt-0.5">{item.desc}</span>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{row.label}</div>
+                    <div style={{ fontSize: 11, color: T.inkLight }}>{row.desc}</div>
                   </div>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: T.green }}>{row.value}</span>
                 </div>
               ))}
-            </div>
-
-            {/* Daily Milestone Incentive Meter */}
-            <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5">
-              <h3 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-3">Daily Payout Milestones</h3>
-              <div className="flex justify-between items-center text-[10px] text-stone-400 font-bold mb-2">
-                <span>Completed: {stats?.totalDeliveries || 0} / 5 Deliveries</span>
-                <span className="text-orange-400">Bonus: +₹150</span>
-              </div>
-              {/* Progress gauge */}
-              <div className="w-full bg-stone-950 h-3 rounded-full overflow-hidden border border-stone-850">
-                <div 
-                  className="bg-orange-500 h-full transition-all duration-500" 
-                  style={{ width: `${Math.min(100, ((stats?.totalDeliveries || 0) / 5) * 100)}%` }}
-                />
-              </div>
-              <p className="text-[9.5px] text-stone-500 mt-2 font-medium">
-                {(stats?.totalDeliveries || 0) >= 5 
-                  ? "🎉 Milestone achieved! Payout bonus applied." 
-                  : `Deliver ${5 - (stats?.totalDeliveries || 0)} more orders to unlock the ₹150 daily cash incentive.`}
-              </p>
-            </div>
-            
-            {/* Ledger ledger */}
-            <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5">
-              <h2 className="text-sm font-black uppercase tracking-wider text-orange-500 mb-4">Payout Ledger</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs text-left">
-                  <thead>
-                    <tr className="border-b border-stone-800 text-stone-500 text-[10px] uppercase font-bold">
-                      <th className="py-2.5">Date</th>
-                      <th className="py-2.5">Trip Pay</th>
-                      <th className="py-2.5">Surge</th>
-                      <th className="py-2.5">Tips</th>
-                      <th className="py-2.5">Total Payout</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-stone-850 text-stone-300">
-                      <td className="py-3 font-semibold">Today, 02:40 PM</td>
-                      <td className="py-3">₹45.00</td>
-                      <td className="py-3">₹25.00</td>
-                      <td className="py-3">₹30.00</td>
-                      <td className="py-3 font-bold text-emerald-400">₹100.00</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div style={{ display: "flex", justifyContent: "space-between", paddingTop: 16, marginTop: 4 }}>
+                <span style={{ fontSize: 16, fontWeight: 800, color: T.ink }}>Total Earned</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: T.accent }}>₹{(stats?.dailyEarnings || 0) + (stats?.tips || 0) + (stats?.fuelBonus || 0) + (stats?.totalDeliveries || 0) * 37}</span>
               </div>
             </div>
 
-          </motion.div>
-        )}
-
-        {/* PERFORMANCE TAB */}
-        {activeTab === "performance" && (
-          <motion.div key="performance" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* SLA Gauge */}
-            <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5 flex flex-col justify-between h-72">
-              <div>
-                <h2 className="text-xs font-black uppercase tracking-wider text-stone-400 mb-1">On-Time SLA Reliability</h2>
-                <p className="text-[10px] text-stone-500">Your reliability metric over the last 30 days</p>
-              </div>
-
-              <div className="text-center">
-                <div className="inline-flex items-center justify-center relative w-24 h-24">
-                  <svg className="w-full h-full transform -rotate-90">
-                    <circle cx="48" cy="48" r="38" stroke="#1c1917" strokeWidth="8" fill="transparent" />
-                    <circle cx="48" cy="48" r="38" stroke="#f97316" strokeWidth="8" fill="transparent" strokeDasharray="238.6" strokeDashoffset={238.6 - (238.6 * (stats?.onTimeDeliveryRate || 98)) / 100} />
-                  </svg>
-                  <span className="absolute text-xl font-black text-orange-500">{stats?.onTimeDeliveryRate || 98}%</span>
-                </div>
-              </div>
-
-              <div className="bg-stone-950/45 p-3 rounded-2xl border border-stone-850 text-[10px] text-stone-400 leading-relaxed">
-                🚀 <strong>Top Captain Standing!</strong> You are qualified for the weekend incentive multipliers.
-              </div>
-            </div>
-
-            {/* Badges milestones */}
-            <div className="bg-stone-900 border border-stone-800 rounded-3xl p-5 space-y-4">
-              <h2 className="text-xs font-black uppercase tracking-wider text-stone-400">Milestone Badges</h2>
-              <div className="grid grid-cols-2 gap-3">
+            {/* Scorecard */}
+            <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 24 }}>
+              <h3 style={{ fontSize: 14, fontWeight: 700, color: T.ink, marginBottom: 16 }}>Performance Scorecard</h3>
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 {[
-                  { title: "Perfect Run", desc: "No spill complaints in 30 days", badge: "🏆", unlocked: true },
-                  { title: "Night Owl", desc: "10 deliveries after 8 PM", badge: "🌙", unlocked: true },
-                  { title: "Storm Rider", desc: "Deliver in heavy rain", badge: "⛈️", unlocked: false },
-                  { title: "Speedster", desc: "Fastest route run in slot", badge: "⚡", unlocked: true }
-                ].map((b, i) => (
-                  <div key={i} className={`p-3 rounded-2xl border flex flex-col justify-between h-24 ${
-                    b.unlocked ? "bg-stone-950/40 border-stone-850" : "bg-stone-950/10 border-stone-900 opacity-40"
-                  }`}>
-                    <span className="text-xl">{b.badge}</span>
-                    <div>
-                      <h4 className="text-[10px] font-bold text-stone-200">{b.title}</h4>
-                      <p className="text-[8px] text-stone-500 mt-0.5">{b.desc}</p>
+                  { label: "Customer Rating", value: "4.9", suffix: "★", pct: 98, color: "#F59E0B" },
+                  { label: "Acceptance Rate", value: "98", suffix: "%", pct: 98, color: T.green },
+                  { label: "On-Time Delivery", value: `${stats?.onTimeDeliveryRate || 98}`, suffix: "%", pct: stats?.onTimeDeliveryRate || 98, color: T.blue }
+                ].map((m, i) => (
+                  <div key={i}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: T.ink }}>{m.label}</span>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: m.color }}>{m.value}{m.suffix}</span>
+                    </div>
+                    <div style={{ height: 6, background: T.surface, borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{ width: `${m.pct}%`, height: "100%", background: m.color, borderRadius: 3, transition: "width 0.5s" }} />
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
 
-          </motion.div>
-        )}
-
-      </AnimatePresence>
-
-      {/* ── OPTION D: CHAT PANEL DRAWER ── */}
-      <AnimatePresence>
-        {chatOpen && chatUser && (
-          <div className="fixed inset-0 z-40 overflow-hidden flex justify-end">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setChatOpen(false)} className="absolute inset-0 bg-black/40 backdrop-blur-xs" />
-            <motion.div 
-              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="relative w-full max-w-sm bg-stone-900 h-full shadow-2xl border-l border-stone-850 flex flex-col z-50"
-            >
-              {/* Header */}
-              <div className="p-4 border-b border-stone-850 flex justify-between items-center bg-stone-950">
-                <div>
-                  <h3 className="text-xs font-black uppercase text-stone-300">💬 {chatUser.name}</h3>
-                  <p className="text-[8px] text-orange-400 uppercase tracking-widest font-black mt-0.5">{chatUser.role || "support"}</p>
-                </div>
-                <button onClick={() => setChatOpen(false)} className="p-2 text-stone-500 hover:text-stone-300"><FiX /></button>
-              </div>
-
-              {/* Message Feed */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-stone-950/40">
-                {chatMessages.length === 0 ? (
-                  <p className="text-[10px] text-stone-600 italic text-center py-10">Send a note to initialize live chat.</p>
-                ) : (
-                  chatMessages.map((msg, i) => {
-                    const isSelf = msg.sender === (user.id || user._id);
-                    return (
-                      <div key={i} className={`flex ${isSelf ? "justify-end" : "justify-start"}`}>
-                        <div className={`p-2.5 rounded-2xl max-w-[80%] text-[11px] shadow-sm ${
-                          isSelf ? "bg-orange-500 text-white rounded-tr-none" : "bg-stone-800 text-stone-200 rounded-tl-none border border-stone-750"
-                        }`}>
-                          <p>{msg.message}</p>
-                          <span className="text-[7.5px] text-stone-500 block text-right mt-1">
-                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
+              <div style={{ marginTop: 24 }}>
+                <h4 style={{ fontSize: 12, fontWeight: 700, color: T.inkLight, textTransform: "uppercase", marginBottom: 12 }}>Badges Earned</h4>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                  {[
+                    { icon: "🏆", title: "Zero Spills", desc: "30 day streak" },
+                    { icon: "⚡", title: "Speed Captain", desc: "Fastest route" },
+                    { icon: "🌙", title: "Night Owl", desc: "10 late rides" },
+                    { icon: "💎", title: "Top Rated", desc: "4.9+ rating" }
+                  ].map((b, i) => (
+                    <div key={i} style={{ background: T.surface, borderRadius: 12, padding: 12, display: "flex", alignItems: "center", gap: 10 }}>
+                      <span style={{ fontSize: 20 }}>{b.icon}</span>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: T.ink }}>{b.title}</div>
+                        <div style={{ fontSize: 10, color: T.inkLight }}>{b.desc}</div>
                       </div>
-                    );
-                  })
-                )}
-                {recipientIsTyping && (
-                  <span className="text-[8px] text-stone-500 italic block animate-pulse">Recipient is typing...</span>
-                )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ═══ FLOATING ACTION BAR ═══ */}
+      {isOnline && activeOrders.length > 0 && (
+        <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", background: T.card, border: `1px solid ${T.border}`, borderRadius: 20, padding: "10px 24px", display: "flex", alignItems: "center", gap: 20, boxShadow: "0 4px 20px rgba(0,0,0,0.1)", zIndex: 30 }}>
+          <a href="tel:9866635566" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, textDecoration: "none" }}>
+            <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.accentLight, display: "flex", alignItems: "center", justifyContent: "center", color: T.accent }}><FiPhone size={14} /></div>
+            <span style={{ fontSize: 9, color: T.inkLight, fontWeight: 600 }}>Support</span>
+          </a>
+          <button onClick={() => openChat({ _id: "support", name: "Support", role: "support" })} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, border: "none", background: "none", cursor: "pointer" }}>
+            <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.blueLight, display: "flex", alignItems: "center", justifyContent: "center", color: T.blue }}><FiMessageSquare size={14} /></div>
+            <span style={{ fontSize: 9, color: T.inkLight, fontWeight: 600 }}>Chat</span>
+          </button>
+          {selectedOrder && (
+            <a href={`tel:${selectedOrder.user?.phone || selectedOrder.shippingAddress?.phone}`} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2, textDecoration: "none" }}>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: T.greenLight, display: "flex", alignItems: "center", justifyContent: "center", color: T.green }}><FiPhone size={14} /></div>
+              <span style={{ fontSize: 9, color: T.inkLight, fontWeight: 600 }}>Customer</span>
+            </a>
+          )}
+        </div>
+      )}
+
+      {/* ═══ CHAT DRAWER ═══ */}
+      <AnimatePresence>
+        {chatOpen && chatTarget && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", justifyContent: "flex-end" }}>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setChatOpen(false)}
+              style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)" }} />
+            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              style={{ position: "relative", width: "100%", maxWidth: 380, background: T.card, height: "100%", display: "flex", flexDirection: "column", boxShadow: "-4px 0 20px rgba(0,0,0,0.1)", zIndex: 51 }}>
+              
+              <div style={{ padding: "16px 20px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: T.ink, margin: 0 }}>{chatTarget.name || "Chat"}</h3>
+                  <span style={{ fontSize: 11, color: T.inkLight }}>{chatTarget.role}</span>
+                </div>
+                <button onClick={() => setChatOpen(false)} style={{ background: T.surface, border: "none", borderRadius: 8, padding: 6, cursor: "pointer", color: T.inkMid }}><FiX size={16} /></button>
               </div>
 
-              {/* Input */}
-              <div className="p-3 border-t border-stone-850 bg-stone-900 flex gap-2">
-                <input 
-                  type="text" placeholder="Type message..." value={newMessage} onChange={handleTypingChange}
-                  onKeyDown={e => e.key === "Enter" && sendChatMessage()}
-                  className="flex-grow px-3 py-2 bg-stone-950 border border-stone-800 rounded-xl text-xs text-white outline-none focus:border-orange-500 transition-all"
-                />
-                <button onClick={sendChatMessage} className="p-2.5 bg-orange-500 hover:bg-orange-600 text-white rounded-xl shadow">
-                  <FiSend size={14} />
-                </button>
+              <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                {chatMessages.length === 0 && <p style={{ textAlign: "center", color: T.inkLight, fontSize: 12, marginTop: 40 }}>Start a conversation</p>}
+                {chatMessages.map((msg, i) => {
+                  const self = msg.sender === (user.id || user._id);
+                  return (
+                    <div key={i} style={{ display: "flex", justifyContent: self ? "flex-end" : "flex-start" }}>
+                      <div style={{ maxWidth: "75%", padding: "10px 14px", borderRadius: 14, fontSize: 13, lineHeight: "1.4",
+                        background: self ? T.accent : T.surface, color: self ? "white" : T.ink,
+                        borderBottomRightRadius: self ? 4 : 14, borderBottomLeftRadius: self ? 14 : 4 }}>
+                        {msg.message}
+                      </div>
+                    </div>
+                  );
+                })}
+                {recipientTyping && <span style={{ fontSize: 11, color: T.inkLight, fontStyle: "italic" }}>typing...</span>}
               </div>
 
+              <div style={{ padding: 12, borderTop: `1px solid ${T.border}`, display: "flex", gap: 8 }}>
+                <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()}
+                  placeholder="Type a message..." style={{ flex: 1, padding: "10px 14px", border: `1px solid ${T.border}`, borderRadius: 12, fontSize: 13, outline: "none" }} />
+                <button onClick={sendMessage} style={{ padding: "10px 14px", background: T.accent, color: "white", border: "none", borderRadius: 12, cursor: "pointer" }}><FiSend size={16} /></button>
+              </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-
-      {/* ── OPTION 5: STICKY FLOATING SHORTCUT PANEL ── */}
-      {isOnline && activeOrder && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-stone-900/90 backdrop-blur border border-stone-800 px-6 py-2.5 rounded-full shadow-2xl flex items-center gap-6 z-30">
-          <a href="tel:9866635566" className="flex flex-col items-center gap-1 text-[8px] font-bold text-stone-400 hover:text-white transition-colors">
-            <div className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-orange-400">
-              <FiPhone size={14} />
-            </div>
-            <span>Support</span>
-          </a>
-          <button 
-            onClick={() => openChatWith({ _id: "support-agent", name: "Support Dispatcher", role: "support" })}
-            className="flex flex-col items-center gap-1 text-[8px] font-bold text-stone-400 hover:text-white transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-stone-800 flex items-center justify-center text-orange-400">
-              <FiMessageSquare size={14} />
-            </div>
-            <span>Chat Ops</span>
-          </button>
-          <a 
-            href={`tel:${activeOrder.shippingAddress?.phone || "9866635566"}`}
-            className="flex flex-col items-center gap-1 text-[8px] font-bold text-stone-400 hover:text-white transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <FiPhone size={14} />
-            </div>
-            <span>Customer</span>
-          </a>
-        </div>
-      )}
-
     </div>
   );
 }
