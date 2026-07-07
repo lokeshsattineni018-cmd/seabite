@@ -13,6 +13,8 @@ import CartSidebar from "./components/layout/CartSidebar";
 import ScrollToTop from "./components/layout/ScrollToTop";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
+import DriverRoute from "./components/DriverRoute";
+import SupportRoute from "./components/SupportRoute";
 import SupportWidget from "./components/common/SupportWidget";
 import BannerPopup from "./components/layout/BannerPopup";
 import AnnouncementBar from "./components/layout/AnnouncementBar";
@@ -90,6 +92,9 @@ const AdminNotificationOrchestrator = lazy(() => import("./admin/AdminNotificati
 const AdminABTesting = lazy(() => import("./admin/AdminABTesting")); // 🔬 A/B Testing
 const AdminHealthScores = lazy(() => import("./admin/AdminHealthScores")); // 👥 Churn Predictor & Health Scores
 
+const DeliveryDashboard = lazy(() => import("./delivery/DeliveryDashboard"));
+const SupportDashboard = lazy(() => import("./support/SupportDashboard"));
+
 
 
 import { CartProvider } from "./context/CartContext";
@@ -119,6 +124,7 @@ function MainLayout() {
   const { user } = useAuth();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const isDashboardRoute = isAdminRoute || location.pathname.startsWith("/driver") || location.pathname.startsWith("/support");
   const [maintenance, setMaintenance] = useState({ active: false, message: "" });
   const [announcement, setAnnouncement] = useState(() => {
     try {
@@ -225,7 +231,7 @@ function MainLayout() {
       />
 
       {/* 🟢 Global Announcement (Rolling Ticker) */}
-      {!isAdminRoute && <AnnouncementBar settings={announcement} />}
+      {!isDashboardRoute && <AnnouncementBar settings={announcement} />}
 
       {/* 🟢 Global Popup Banner */}
       <BannerPopup bannerSettings={maintenance.banner} />
@@ -238,12 +244,12 @@ function MainLayout() {
 
       {/* 📱 Mobile Navigation Removed */}
 
-      {maintenance.active && !isAdminRoute && location.pathname !== "/login" ? (
+      {maintenance.active && !isDashboardRoute && location.pathname !== "/login" ? (
         <Maintenance message={maintenance.message} />
       ) : (
         <>
-          {!isAdminRoute && <Navbar announcementActive={!!announcement?.active} />}
-          {!isAdminRoute && (
+          {!isDashboardRoute && <Navbar announcementActive={!!announcement?.active} />}
+          {!isDashboardRoute && (
             <>
               <CartSidebar />
               <Suspense fallback={null}>
@@ -253,7 +259,7 @@ function MainLayout() {
           )}
 
           <div className={`flex-grow ${
-            (!isAdminRoute && location.pathname !== "/" && location.pathname !== "/login" && location.pathname !== "/signup")
+            (!isDashboardRoute && location.pathname !== "/" && location.pathname !== "/login" && location.pathname !== "/signup")
               ? (announcement?.active ? "page-content-container announcement-active" : "page-content-container")
               : ""
           }`}>
@@ -317,6 +323,11 @@ function MainLayout() {
                     <Route path="/success" element={<PrivateRoute><PageTransition><OrderSuccess /></PageTransition></PrivateRoute>} />
                     <Route path="/orders" element={<PrivateRoute><PageTransition><Orders /></PageTransition></PrivateRoute>} />
                     <Route path="/orders/:orderId" element={<PrivateRoute><PageTransition><OrderDetails /></PageTransition></PrivateRoute>} />
+                    
+                    {/* Dashboards */}
+                    <Route path="/driver" element={<DriverRoute><PageTransition><DeliveryDashboard /></PageTransition></DriverRoute>} />
+                    <Route path="/support" element={<SupportRoute><PageTransition><SupportDashboard /></PageTransition></SupportRoute>} />
+
                     <Route path="/login" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=login" replace />} />
                     <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=signup" replace />} />
                     <Route path="/about" element={<PageTransition><About /></PageTransition>} />
@@ -332,13 +343,12 @@ function MainLayout() {
                   </Routes>
                 </AnimatePresence>
               )}
-              {!isAdminRoute && location.pathname !== "/success" && <Footer />}
+              {!isDashboardRoute && location.pathname !== "/success" && <Footer />}
             </Suspense>
           </div>
-          {!isAdminRoute && <SupportWidget />}
-
-          {!isAdminRoute && <ComparisonDrawer />}
-          {!isAdminRoute && <LiveSocialProof />}
+          {!isDashboardRoute && <SupportWidget />}
+          {!isDashboardRoute && <ComparisonDrawer />}
+          {!isDashboardRoute && <LiveSocialProof />}
         </>
       )
       }

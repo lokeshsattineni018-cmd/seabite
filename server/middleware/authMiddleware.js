@@ -90,3 +90,17 @@ export const admin = (req, res, next) => {
   }
   return res.status(403).json({ message: "Access denied: Admin only" });
 };
+
+export const driverAuth = (req, res, next) => {
+  if (req.user && (req.user.role === "driver" || req.user.role === "admin")) {
+    return next();
+  }
+  return res.status(403).json({ message: "Access denied: Drivers only" });
+};
+
+export const supportAuth = (req, res, next) => {
+  if (req.user && (req.user.role === "support" || req.user.role === "admin")) {
+    return next();
+  }
+  return res.status(403).json({ message: "Access denied: Support only" });
+};

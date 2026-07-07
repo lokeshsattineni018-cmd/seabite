@@ -20,8 +20,7 @@ const productViewSchema = new mongoose.Schema({
   userAgent: String,
   viewedAt: {
     type: Date,
-    default: Date.now,
-    index: true
+    default: Date.now
   }
 });
 

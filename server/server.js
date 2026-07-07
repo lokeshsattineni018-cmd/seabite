@@ -41,6 +41,7 @@ import complaintRoutes from "./routes/complaintRoutes.js"; // [Added]
 import deliveryRoutes from "./routes/deliveryRoutes.js"; // [New: Delivery Management]
 import enterpriseRoutes from "./routes/enterpriseRoutes.js"; // [New: Enterprise Suite]
 import returnRoutes from "./routes/returnRoutes.js";
+import supportRoutes from "./routes/supportRoutes.js"; // [New: Support Agent Dashboard]
 import recommendationRoutes from "./routes/recommendationRoutes.js";
 import campaignRoutes from "./routes/campaignRoutes.js";
 import abTestRoutes from "./routes/abTestRoutes.js";
@@ -458,6 +459,7 @@ app.use("/api/admin/products", auditTrail, adminProductRoutes);
 app.use("/api/admin/watchtower", auditTrail, watchtowerRoutes);
 app.use("/api/admin/complaints", auditTrail, complaintRoutes); 
 app.use("/api/delivery", deliveryRoutes); 
+app.use("/api/support", supportRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/notifications", pushRoutes);
 app.use("/api/payment", paymentRoutes);

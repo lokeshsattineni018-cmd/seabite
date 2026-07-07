@@ -121,14 +121,14 @@ export default function AdminNotificationOrchestrator() {
   };
 
   return (
-    <div className="p-6 min-h-screen bg-[#0a1625] text-slate-100 font-sans">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-white via-stone-50 to-white text-stone-900 font-sans">
       
       {/* Upper Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Campaign Composer Form (Left 2 cols) */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#0f2137] border border-slate-800 rounded-3xl p-6 shadow-2xl">
+          <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-2xl">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
               <FiSend className="text-[#5BBFB5]" /> Launch Dynamic Campaign
             </h2>
@@ -136,21 +136,21 @@ export default function AdminNotificationOrchestrator() {
             <form onSubmit={handleLaunchCampaign} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">CAMPAIGN NAME</label>
+                  <label className="block text-xs font-semibold text-stone-500 mb-1">CAMPAIGN NAME</label>
                   <input
                     type="text"
                     placeholder="e.g. Weekend Vanjaram Feast Alert"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                    className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">AUDIENCE TARGET SEGMENT</label>
+                  <label className="block text-xs font-semibold text-stone-500 mb-1">AUDIENCE TARGET SEGMENT</label>
                   <select
                     value={audienceType}
                     onChange={e => setAudienceType(e.target.value)}
-                    className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                    className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                   >
                     <option value="all">All Registered Customers ({audienceCount} active)</option>
                     <option value="segment">At-Risk Segment (RFM Alert)</option>
@@ -160,19 +160,19 @@ export default function AdminNotificationOrchestrator() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1">DESCRIPTION</label>
+                <label className="block text-xs font-semibold text-stone-500 mb-1">DESCRIPTION</label>
                 <input
                   type="text"
                   placeholder="Internal notes/goal for this message blast..."
                   value={description}
                   onChange={e => setDescription(e.target.value)}
-                  className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                  className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                 />
               </div>
 
               {/* Channel Selector Tabbed Area */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-2">DISPATCH CHANNEL</label>
+                <label className="block text-xs font-semibold text-stone-500 mb-2">DISPATCH CHANNEL</label>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -180,7 +180,7 @@ export default function AdminNotificationOrchestrator() {
                     className={`flex-1 py-3 rounded-xl border flex items-center justify-center gap-2 font-semibold text-sm transition-all ${
                       selectedChannel === "email"
                         ? "border-[#5BBFB5] bg-[#5BBFB5]/10 text-[#5BBFB5]"
-                        : "border-slate-800 bg-[#0a1625] text-slate-400 hover:border-slate-700"
+                        : "border-stone-200 bg-gradient-to-br from-white via-stone-50 to-white text-stone-500 hover:border-stone-200"
                     }`}
                   >
                     <FiMail size={16} /> Email Blast
@@ -191,7 +191,7 @@ export default function AdminNotificationOrchestrator() {
                     className={`flex-1 py-3 rounded-xl border flex items-center justify-center gap-2 font-semibold text-sm transition-all ${
                       selectedChannel === "push"
                         ? "border-[#5BBFB5] bg-[#5BBFB5]/10 text-[#5BBFB5]"
-                        : "border-slate-800 bg-[#0a1625] text-slate-400 hover:border-slate-700"
+                        : "border-stone-200 bg-gradient-to-br from-white via-stone-50 to-white text-stone-500 hover:border-stone-200"
                     }`}
                   >
                     <FiSmartphone size={16} /> Web Push Notification
@@ -210,26 +210,26 @@ export default function AdminNotificationOrchestrator() {
                     className="space-y-4 pt-2"
                   >
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1">EMAIL SUBJECT</label>
+                      <label className="block text-xs font-semibold text-stone-500 mb-1">EMAIL SUBJECT</label>
                       <input
                         type="text"
                         placeholder="Subject Line... Use {{customer_name}} to personalize"
                         value={emailSubject}
                         onChange={e => setEmailSubject(e.target.value)}
-                        className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                        className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                       />
                     </div>
                     <div>
                       <div className="flex justify-between items-center mb-1">
-                        <label className="block text-xs font-semibold text-slate-400">EMAIL BODY HTML</label>
-                        <span className="text-[10px] text-slate-500">Insert tag: <code>{"{{customer_name}}"}</code></span>
+                        <label className="block text-xs font-semibold text-stone-500">EMAIL BODY HTML</label>
+                        <span className="text-[10px] text-stone-400">Insert tag: <code>{"{{customer_name}}"}</code></span>
                       </div>
                       <textarea
                         rows={6}
                         placeholder="<h1>Hi {{customer_name}}</h1><p>Fresh catch is here! Shop now...</p>"
                         value={emailBody}
                         onChange={e => setEmailBody(e.target.value)}
-                        className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-[#5BBFB5]"
+                        className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:border-[#5BBFB5]"
                       />
                     </div>
                   </motion.div>
@@ -242,23 +242,23 @@ export default function AdminNotificationOrchestrator() {
                     className="space-y-4 pt-2"
                   >
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1">PUSH TITLE</label>
+                      <label className="block text-xs font-semibold text-stone-500 mb-1">PUSH TITLE</label>
                       <input
                         type="text"
                         placeholder="e.g. Fresh catch warning!"
                         value={pushTitle}
                         onChange={e => setPushTitle(e.target.value)}
-                        className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                        className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-400 mb-1">PUSH BODY MESSAGE</label>
+                      <label className="block text-xs font-semibold text-stone-500 mb-1">PUSH BODY MESSAGE</label>
                       <textarea
                         rows={3}
                         placeholder="Short click-worthy banner text alert..."
                         value={pushBody}
                         onChange={e => setPushBody(e.target.value)}
-                        className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                        className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                       />
                     </div>
                   </motion.div>
@@ -278,23 +278,23 @@ export default function AdminNotificationOrchestrator() {
 
         {/* Dynamic Analytics Panel (Right 1 col) */}
         <div className="space-y-6">
-          <div className="bg-[#0f2137] border border-slate-800 rounded-3xl p-6 shadow-2xl">
+          <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-2xl">
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
               <FiTrendingUp className="text-[#5BBFB5]" /> Delivery Metrics
             </h3>
             <div className="space-y-4">
-              <div className="p-4 bg-[#0a1625] border border-slate-800 rounded-2xl flex justify-between items-center">
+              <div className="p-4 bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-2xl flex justify-between items-center">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">TOTAL BROADCASTS</p>
+                  <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">TOTAL BROADCASTS</p>
                   <p className="text-2xl font-black mt-1 text-[#5BBFB5]">{campaigns.length}</p>
                 </div>
                 <div className="w-10 h-10 rounded-xl bg-[#5BBFB5]/10 flex items-center justify-center text-[#5BBFB5]">
                   <FiLayers size={18} />
                 </div>
               </div>
-              <div className="p-4 bg-[#0a1625] border border-slate-800 rounded-2xl flex justify-between items-center">
+              <div className="p-4 bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-2xl flex justify-between items-center">
                 <div>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">DELIVERED REACH</p>
+                  <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">DELIVERED REACH</p>
                   <p className="text-2xl font-black mt-1 text-[#89C2D9]">
                     {campaigns.reduce((sum, c) => sum + (c.metrics?.totalSent || 0), 0)}
                   </p>
@@ -309,18 +309,18 @@ export default function AdminNotificationOrchestrator() {
       </div>
 
       {/* Campaigns list table */}
-      <div className="mt-8 bg-[#0f2137] border border-slate-800 rounded-3xl p-6 shadow-2xl">
+      <div className="mt-8 bg-white border border-stone-200 rounded-3xl p-6 shadow-2xl">
         <h3 className="text-lg font-bold mb-4">Historical Campaigns</h3>
         
         {loading ? (
-          <div className="text-center py-8 text-slate-400 text-sm">Loading campaign archives...</div>
+          <div className="text-center py-8 text-stone-500 text-sm">Loading campaign archives...</div>
         ) : campaigns.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-sm">No campaigns sent yet. Ready for your first dispatch!</div>
+          <div className="text-center py-8 text-stone-500 text-sm">No campaigns sent yet. Ready for your first dispatch!</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-850 text-slate-400 font-semibold text-xs">
+                <tr className="border-b border-stone-200 text-stone-500 font-semibold text-xs">
                   <th className="py-3 px-4">CAMPAIGN</th>
                   <th className="py-3 px-4">CHANNEL</th>
                   <th className="py-3 px-4">TARGET AUDIENCE</th>
@@ -333,8 +333,8 @@ export default function AdminNotificationOrchestrator() {
                 {campaigns.map((c) => (
                   <tr key={c._id} className="hover:bg-slate-900/40 transition-colors">
                     <td className="py-3 px-4">
-                      <p className="font-bold text-slate-200">{c.name}</p>
-                      {c.description && <p className="text-xs text-slate-400">{c.description}</p>}
+                      <p className="font-bold text-stone-800">{c.name}</p>
+                      {c.description && <p className="text-xs text-stone-500">{c.description}</p>}
                     </td>
                     <td className="py-3 px-4">
                       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
@@ -344,9 +344,9 @@ export default function AdminNotificationOrchestrator() {
                         {c.type.toUpperCase()}
                       </span>
                     </td>
-                    <td className="py-3 px-4 capitalize text-slate-300 font-medium">{c.audienceType}</td>
+                    <td className="py-3 px-4 capitalize text-stone-700 font-medium">{c.audienceType}</td>
                     <td className="py-3 px-4 text-[#5BBFB5] font-extrabold">{c.metrics?.totalSent || 0}</td>
-                    <td className="py-3 px-4 text-xs text-slate-400">
+                    <td className="py-3 px-4 text-xs text-stone-500">
                       {new Date(c.createdAt).toLocaleDateString("en-IN", {
                         day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit"
                       })}
@@ -354,7 +354,7 @@ export default function AdminNotificationOrchestrator() {
                     <td className="py-3 px-4 text-center">
                       <button
                         onClick={() => deleteCampaign(c._id)}
-                        className="p-1.5 hover:bg-rose-500/10 hover:text-rose-400 rounded-lg text-slate-500 transition-all"
+                        className="p-1.5 hover:bg-rose-500/10 hover:text-rose-400 rounded-lg text-stone-400 transition-all"
                       >
                         <FiTrash2 size={15} />
                       </button>

@@ -62,14 +62,14 @@ export default function AdminHealthScores() {
   };
 
   return (
-    <div className="p-6 min-h-screen bg-[#0a1625] text-slate-100 font-sans">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-white via-stone-50 to-white text-stone-900 font-sans">
       
       {/* Dynamic Summary Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         
-        <div className="bg-[#0f2137] border border-slate-800 rounded-3xl p-5 shadow-lg flex justify-between items-center">
+        <div className="bg-white border border-stone-200 rounded-3xl p-5 shadow-lg flex justify-between items-center">
           <div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">AVERAGE HEALTH SCORE</p>
+            <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">AVERAGE HEALTH SCORE</p>
             <p className="text-3xl font-black mt-1 text-[#5BBFB5]">{avgScore}/100</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-[#5BBFB5]/10 flex items-center justify-center text-[#5BBFB5]">
@@ -77,9 +77,9 @@ export default function AdminHealthScores() {
           </div>
         </div>
 
-        <div className="bg-[#0f2137] border border-slate-800 rounded-3xl p-5 shadow-lg flex justify-between items-center">
+        <div className="bg-white border border-stone-200 rounded-3xl p-5 shadow-lg flex justify-between items-center">
           <div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">HIGH CHURN RISK (RED)</p>
+            <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">HIGH CHURN RISK (RED)</p>
             <p className="text-3xl font-black mt-1 text-rose-400">{redCount}</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-400">
@@ -87,9 +87,9 @@ export default function AdminHealthScores() {
           </div>
         </div>
 
-        <div className="bg-[#0f2137] border border-slate-800 rounded-3xl p-5 shadow-lg flex justify-between items-center">
+        <div className="bg-white border border-stone-200 rounded-3xl p-5 shadow-lg flex justify-between items-center">
           <div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">MODERATE RISK (YELLOW)</p>
+            <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">MODERATE RISK (YELLOW)</p>
             <p className="text-3xl font-black mt-1 text-amber-400">{yellowCount}</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400">
@@ -97,9 +97,9 @@ export default function AdminHealthScores() {
           </div>
         </div>
 
-        <div className="bg-[#0f2137] border border-slate-800 rounded-3xl p-5 shadow-lg flex justify-between items-center">
+        <div className="bg-white border border-stone-200 rounded-3xl p-5 shadow-lg flex justify-between items-center">
           <div>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">LOYAL / ACTIVE (GREEN)</p>
+            <p className="text-[10px] text-stone-500 font-bold uppercase tracking-wider">LOYAL / ACTIVE (GREEN)</p>
             <p className="text-3xl font-black mt-1 text-emerald-400">{greenCount}</p>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
@@ -110,7 +110,7 @@ export default function AdminHealthScores() {
       </div>
 
       {/* Main Table section */}
-      <div className="bg-[#0f2137] border border-slate-800 rounded-3xl p-6 shadow-2xl">
+      <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-2xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <h3 className="text-lg font-bold">Churn Predictor & Customer Segments</h3>
           
@@ -123,7 +123,7 @@ export default function AdminHealthScores() {
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold border capitalize transition-all ${
                   filterRisk === risk
                     ? "bg-[#5BBFB5] text-[#0a1625] border-[#5BBFB5]"
-                    : "bg-[#0a1625] text-slate-400 border-slate-800 hover:border-slate-700"
+                    : "bg-gradient-to-br from-white via-stone-50 to-white text-stone-500 border-stone-200 hover:border-stone-200"
                 }`}
               >
                 {risk} Risk
@@ -135,20 +135,20 @@ export default function AdminHealthScores() {
               placeholder="Search customers..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="bg-[#0a1625] border border-slate-800 rounded-xl px-4 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-[#5BBFB5]"
+              className="bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-1.5 text-xs text-stone-700 focus:outline-none focus:border-[#5BBFB5]"
             />
           </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-8 text-slate-400 text-sm">Analyzing user databases & ordering frequencies...</div>
+          <div className="text-center py-8 text-stone-500 text-sm">Analyzing user databases & ordering frequencies...</div>
         ) : filteredData.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-sm">No customers match the current filter selection.</div>
+          <div className="text-center py-8 text-stone-500 text-sm">No customers match the current filter selection.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
-                <tr className="border-b border-slate-850 text-slate-400 font-semibold text-xs">
+                <tr className="border-b border-stone-200 text-stone-500 font-semibold text-xs">
                   <th className="py-3 px-4">CUSTOMER DETAILS</th>
                   <th className="py-3 px-4 text-center">HEALTH SCORE</th>
                   <th className="py-3 px-4">RISK STATUS</th>
@@ -163,8 +163,8 @@ export default function AdminHealthScores() {
                 {filteredData.map(u => (
                   <tr key={u._id} className="hover:bg-slate-900/40 transition-colors">
                     <td className="py-3 px-4">
-                      <p className="font-bold text-slate-200">{u.name}</p>
-                      <p className="text-xs text-slate-400">{u.email} • {u.phone}</p>
+                      <p className="font-bold text-stone-800">{u.name}</p>
+                      <p className="text-xs text-stone-500">{u.email} • {u.phone}</p>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <span className={`text-base font-black ${
@@ -186,7 +186,7 @@ export default function AdminHealthScores() {
                     <td className="py-3 px-4 text-slate-350 text-xs font-semibold">{u.recencyDays}</td>
                     <td className="py-3 px-4 text-slate-350 font-bold">{u.totalOrders}</td>
                     <td className="py-3 px-4 text-[#5BBFB5] font-black">₹{u.ltv}</td>
-                    <td className="py-3 px-4 text-slate-300 font-semibold text-xs">{u.estimatedNextOrder}</td>
+                    <td className="py-3 px-4 text-stone-700 font-semibold text-xs">{u.estimatedNextOrder}</td>
                     <td className="py-3 px-4 text-center">
                       <button
                         onClick={() => triggerRetentionOffer(u)}

@@ -107,13 +107,13 @@ export default function AdminABTesting() {
   };
 
   return (
-    <div className="p-6 min-h-screen bg-[#0a1625] text-slate-100 font-sans">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-white via-stone-50 to-white text-stone-900 font-sans">
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Left Column: Form (2 cols) */}
         <div className="lg:col-span-2 space-y-6">
-          <div className="bg-[#0f2137] border border-slate-800 rounded-3xl p-6 shadow-2xl">
+          <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-2xl">
             <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
               <FiActivity className="text-[#5BBFB5]" /> Create Split Test (A/B)
             </h2>
@@ -121,21 +121,21 @@ export default function AdminABTesting() {
             <form onSubmit={handleCreateTest} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">EXPERIMENT NAME</label>
+                  <label className="block text-xs font-semibold text-stone-500 mb-1">EXPERIMENT NAME</label>
                   <input
                     type="text"
                     placeholder="e.g. Free Delivery Threshold CTA"
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                    className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">EXPERIMENT TYPE</label>
+                  <label className="block text-xs font-semibold text-stone-500 mb-1">EXPERIMENT TYPE</label>
                   <select
                     value={type}
                     onChange={e => setType(e.target.value)}
-                    className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                    className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                   >
                     <option value="banner">Homepage Banner Content</option>
                     <option value="product_card">Product Listing Layout Variant</option>
@@ -147,11 +147,11 @@ export default function AdminABTesting() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">GOAL SUCCESS METRIC</label>
+                  <label className="block text-xs font-semibold text-stone-500 mb-1">GOAL SUCCESS METRIC</label>
                   <select
                     value={winnerMetric}
                     onChange={e => setWinnerMetric(e.target.value)}
-                    className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                    className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                   >
                     <option value="click_rate">Click-Through Ratio (CTR)</option>
                     <option value="conversion_rate">Fulfillment Conversion Rate</option>
@@ -159,13 +159,13 @@ export default function AdminABTesting() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 mb-1">DESCRIPTION / THESIS</label>
+                  <label className="block text-xs font-semibold text-stone-500 mb-1">DESCRIPTION / THESIS</label>
                   <input
                     type="text"
                     placeholder="e.g. Red CTA raises conversions by 10%..."
                     value={description}
                     onChange={e => setDescription(e.target.value)}
-                    className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
+                    className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#5BBFB5]"
                   />
                 </div>
               </div>
@@ -173,8 +173,8 @@ export default function AdminABTesting() {
               {/* Variants Configuration Panels */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                 {/* Variant A */}
-                <div className="p-4 bg-[#0a1625]/50 border border-slate-800 rounded-2xl">
-                  <h4 className="text-sm font-bold mb-3 text-slate-300 flex items-center gap-1.5">
+                <div className="p-4 bg-gradient-to-br from-white via-stone-50 to-white/50 border border-stone-200 rounded-2xl">
+                  <h4 className="text-sm font-bold mb-3 text-stone-700 flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-cyan-400" /> Control Group (A)
                   </h4>
                   <div className="space-y-3">
@@ -183,21 +183,21 @@ export default function AdminABTesting() {
                       placeholder="Variant A label name"
                       value={variantAName}
                       onChange={e => setVariantAName(e.target.value)}
-                      className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#5BBFB5]"
+                      className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#5BBFB5]"
                     />
                     <textarea
                       rows={3}
                       placeholder="Payload config values, text, or styling class names..."
                       value={variantAContent}
                       onChange={e => setVariantAContent(e.target.value)}
-                      className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-3.5 py-2 text-xs font-mono focus:outline-none focus:border-[#5BBFB5]"
+                      className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono focus:outline-none focus:border-[#5BBFB5]"
                     />
                   </div>
                 </div>
 
                 {/* Variant B */}
-                <div className="p-4 bg-[#0a1625]/50 border border-slate-800 rounded-2xl">
-                  <h4 className="text-sm font-bold mb-3 text-slate-300 flex items-center gap-1.5">
+                <div className="p-4 bg-gradient-to-br from-white via-stone-50 to-white/50 border border-stone-200 rounded-2xl">
+                  <h4 className="text-sm font-bold mb-3 text-stone-700 flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-[#5BBFB5]" /> Challenger Group (B)
                   </h4>
                   <div className="space-y-3">
@@ -206,14 +206,14 @@ export default function AdminABTesting() {
                       placeholder="Variant B label name"
                       value={variantBName}
                       onChange={e => setVariantBName(e.target.value)}
-                      className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#5BBFB5]"
+                      className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:border-[#5BBFB5]"
                     />
                     <textarea
                       rows={3}
                       placeholder="Payload config values, text, or styling class names..."
                       value={variantBContent}
                       onChange={e => setVariantBContent(e.target.value)}
-                      className="w-full bg-[#0a1625] border border-slate-700 rounded-xl px-3.5 py-2 text-xs font-mono focus:outline-none focus:border-[#5BBFB5]"
+                      className="w-full bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-xl px-3.5 py-2 text-xs font-mono focus:outline-none focus:border-[#5BBFB5]"
                     />
                   </div>
                 </div>
@@ -232,17 +232,17 @@ export default function AdminABTesting() {
 
         {/* Right Column: Concept Explanation (1 col) */}
         <div className="space-y-6">
-          <div className="bg-[#0f2137] border border-slate-800 rounded-3xl p-6 shadow-2xl">
+          <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-2xl">
             <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
               <FiPieChart className="text-[#5BBFB5]" /> Traffic Splitting
             </h3>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4">
+            <p className="text-sm text-stone-500 leading-relaxed mb-4">
               Your users are automatically distributed into equal traffic ratios (50% Variant A / 50% Variant B). 
               The storefront hook tracks clicks and conversions dynamically, and measures stats confidence.
             </p>
-            <div className="p-4 bg-[#0a1625] border border-slate-850 rounded-2xl flex items-center gap-3">
+            <div className="p-4 bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-2xl flex items-center gap-3">
               <FiAlertCircle size={22} className="text-[#5BBFB5] flex-shrink-0" />
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-stone-500">
                 A confidence level above <strong>95%</strong> guarantees statistical significance before declaring a winner.
               </p>
             </div>
@@ -252,29 +252,29 @@ export default function AdminABTesting() {
       </div>
 
       {/* Historical/Active Experiments List */}
-      <div className="mt-8 bg-[#0f2137] border border-slate-800 rounded-3xl p-6 shadow-2xl">
+      <div className="mt-8 bg-white border border-stone-200 rounded-3xl p-6 shadow-2xl">
         <h3 className="text-lg font-bold mb-4">Split Testing Log</h3>
 
         {loading ? (
-          <div className="text-center py-8 text-slate-400 text-sm">Loading split testing dashboard...</div>
+          <div className="text-center py-8 text-stone-500 text-sm">Loading split testing dashboard...</div>
         ) : tests.length === 0 ? (
-          <div className="text-center py-8 text-slate-400 text-sm">No split tests defined yet. Get started above!</div>
+          <div className="text-center py-8 text-stone-500 text-sm">No split tests defined yet. Get started above!</div>
         ) : (
           <div className="space-y-6">
             {tests.map(test => (
-              <div key={test._id} className="p-5 bg-[#0a1625] border border-slate-800 rounded-2xl">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-850 pb-4 mb-4">
+              <div key={test._id} className="p-5 bg-gradient-to-br from-white via-stone-50 to-white border border-stone-200 rounded-2xl">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-stone-200 pb-4 mb-4">
                   <div>
                     <div className="flex items-center gap-2.5">
-                      <h4 className="text-base font-bold text-slate-200">{test.name}</h4>
+                      <h4 className="text-base font-bold text-stone-800">{test.name}</h4>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         test.status === "running" ? "bg-emerald-900/30 text-emerald-400 border border-emerald-500/20" :
-                        test.status === "completed" ? "bg-slate-800 text-slate-400" : "bg-amber-900/20 text-amber-500"
+                        test.status === "completed" ? "bg-slate-800 text-stone-500" : "bg-amber-900/20 text-amber-500"
                       }`}>
                         {test.status.toUpperCase()}
                       </span>
                     </div>
-                    {test.description && <p className="text-xs text-slate-400 mt-1">{test.description}</p>}
+                    {test.description && <p className="text-xs text-stone-500 mt-1">{test.description}</p>}
                   </div>
                   <div className="flex gap-2">
                     {test.status === "draft" && (
@@ -295,7 +295,7 @@ export default function AdminABTesting() {
                     )}
                     <button
                       onClick={() => handleDeleteTest(test._id)}
-                      className="p-2 hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 rounded-lg transition-all"
+                      className="p-2 hover:bg-rose-500/10 text-stone-500 hover:text-rose-400 rounded-lg transition-all"
                     >
                       <FiTrash2 size={14} />
                     </button>
@@ -308,23 +308,23 @@ export default function AdminABTesting() {
                     const ctr = v.metrics?.impressions > 0 ? ((v.metrics.clicks / v.metrics.impressions) * 100).toFixed(1) : 0;
                     return (
                       <div key={idx} className={`p-4 rounded-xl border ${
-                        v.isWinner ? "border-[#5BBFB5] bg-[#5BBFB5]/5" : "border-slate-850 bg-slate-900/30"
+                        v.isWinner ? "border-[#5BBFB5] bg-[#5BBFB5]/5" : "border-stone-200 bg-white border border-stone-200 shadow-sm"
                       }`}>
                         <div className="flex justify-between items-center mb-3">
                           <span className="text-sm font-bold text-slate-350">{v.name}</span>
                           {v.isWinner && <span className="text-xs font-extrabold text-[#5BBFB5] flex items-center gap-0.5"><FiAward /> WINNER</span>}
                         </div>
                         <div className="grid grid-cols-3 gap-2 text-center">
-                          <div className="p-2 bg-[#0a1625] rounded-lg">
-                            <p className="text-[9px] text-slate-500 font-bold uppercase">VIEWS</p>
-                            <p className="text-sm font-bold text-slate-300 mt-0.5">{v.metrics?.impressions || 0}</p>
+                          <div className="p-2 bg-gradient-to-br from-white via-stone-50 to-white rounded-lg">
+                            <p className="text-[9px] text-stone-400 font-bold uppercase">VIEWS</p>
+                            <p className="text-sm font-bold text-stone-700 mt-0.5">{v.metrics?.impressions || 0}</p>
                           </div>
-                          <div className="p-2 bg-[#0a1625] rounded-lg">
-                            <p className="text-[9px] text-slate-500 font-bold uppercase">CLICKS</p>
-                            <p className="text-sm font-bold text-slate-300 mt-0.5">{v.metrics?.clicks || 0}</p>
+                          <div className="p-2 bg-gradient-to-br from-white via-stone-50 to-white rounded-lg">
+                            <p className="text-[9px] text-stone-400 font-bold uppercase">CLICKS</p>
+                            <p className="text-sm font-bold text-stone-700 mt-0.5">{v.metrics?.clicks || 0}</p>
                           </div>
-                          <div className="p-2 bg-[#0a1625] rounded-lg">
-                            <p className="text-[9px] text-slate-500 font-bold uppercase">CTR</p>
+                          <div className="p-2 bg-gradient-to-br from-white via-stone-50 to-white rounded-lg">
+                            <p className="text-[9px] text-stone-400 font-bold uppercase">CTR</p>
                             <p className="text-sm font-bold text-[#5BBFB5] mt-0.5">{ctr}%</p>
                           </div>
                         </div>
