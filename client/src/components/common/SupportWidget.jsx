@@ -21,57 +21,78 @@ export default function SupportWidget() {
   const phoneNumber = "9866635566"; 
   const whatsappMessage = "Hi SeaBite! I have a question about my order. 🦞";
 
-  // Socket chat sync
+  // Socket chat sync & HTTP polling fallback
   useEffect(() => {
-    if (!socket || !user || activeTab !== "livechat") return;
+    if (!user || activeTab !== "livechat") return;
 
-    socket.emit("join-chat", { userId: user.id || user._id });
+    if (socket) {
+      socket.emit("join-chat", { userId: user.id || user._id });
+    }
 
-    // Fetch conversation logs from DB
-    axios.get(`${API}/api/chat/history/support-agent`, { withCredentials: true })
-      .then(res => {
-        setMessages(res.data || []);
-      })
-      .catch(() => {});
-
-    const handleIncomingMessage = (msg) => {
-      // If message is from support agent
-      if (msg.senderRole === "support" || msg.senderRole === "admin") {
-        setMessages(prev => [...prev, msg]);
-        const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/911/911-600.wav");
-        audio.play().catch(e => {});
-      }
+    const fetchHistory = () => {
+      axios.get(`${API}/api/chat/history/support-agent`, { withCredentials: true })
+        .then(res => {
+          setMessages(res.data || []);
+        })
+        .catch(() => {});
     };
 
-    const handleTypingIndicator = (data) => {
-      if (data.senderRole === "support" || data.senderRole === "admin") {
-        setAgentIsTyping(data.isTyping);
-      }
-    };
+    fetchHistory();
 
-    socket.on("chat-message", handleIncomingMessage);
-    socket.on("typing-indicator", handleTypingIndicator);
+    if (socket) {
+      const handleIncomingMessage = (msg) => {
+        if (msg.senderRole === "support" || msg.senderRole === "admin") {
+          setMessages(prev => {
+            if (prev.some(m => m._id === msg._id)) return prev;
+            return [...prev, msg];
+          });
+          try { new Audio("https://assets.mixkit.co/active_storage/sfx/911/911-600.wav").play(); } catch(e) {}
+        }
+      };
 
-    return () => {
-      socket.off("chat-message", handleIncomingMessage);
-      socket.off("typing-indicator", handleTypingIndicator);
-    };
+      const handleTypingIndicator = (data) => {
+        if (data.senderRole === "support" || data.senderRole === "admin") {
+          setAgentIsTyping(data.isTyping);
+        }
+      };
+
+      socket.on("chat-message", handleIncomingMessage);
+      socket.on("typing-indicator", handleTypingIndicator);
+
+      return () => {
+        socket.off("chat-message", handleIncomingMessage);
+        socket.off("typing-indicator", handleTypingIndicator);
+      };
+    } else {
+      const interval = setInterval(fetchHistory, 3000);
+      return () => clearInterval(interval);
+    }
   }, [socket, user, activeTab]);
 
-  const sendChatMessage = () => {
-    if (!newMessage.trim() || !socket || !user) return;
-
-    socket.emit("send-chat-message", {
-      sender: user.id || user._id,
-      recipient: "support-agent", // Default recipient for customer support
-      message: newMessage,
-      senderRole: "user",
-      recipientRole: "support"
-    });
-
+  const sendChatMessage = async () => {
+    if (!newMessage.trim() || !user) return;
+    const msgText = newMessage.trim();
     setNewMessage("");
-    socket.emit("typing", { sender: user.id || user._id, recipient: "support-agent", isTyping: false });
-    setTyping(false);
+
+    try {
+      const { data } = await axios.post(`${API}/api/chat/message`, {
+        recipient: "support-agent",
+        message: msgText,
+        senderRole: "user",
+        recipientRole: "support"
+      }, { withCredentials: true });
+
+      if (!socket) {
+        setMessages(prev => [...prev, data]);
+      }
+      
+      if (socket) {
+        socket.emit("typing", { sender: user.id || user._id, recipient: "support-agent", isTyping: false });
+      }
+      setTyping(false);
+    } catch {
+      toast.error("Failed to send message");
+    }
   };
 
   const handleTypingChange = (e) => {

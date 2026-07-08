@@ -10,12 +10,38 @@ router.get("/history/:participantId", protect, async (req, res) => {
     const userId = req.user._id;
     const { participantId } = req.params;
 
-    const messages = await ChatMessage.find({
-      $or: [
-        { sender: userId, recipient: participantId },
-        { sender: participantId, recipient: userId }
-      ]
-    })
+    let query;
+    if (participantId === "support-agent" || participantId === "support") {
+      // Customer fetching their own chat with support
+      query = {
+        $or: [
+          { sender: userId, recipientRole: "support" },
+          { recipient: userId, senderRole: "support" },
+          { recipient: userId, senderRole: "admin" }
+        ]
+      };
+    } else if (req.user.role === "support" || req.user.role === "admin") {
+      // Support agent fetching chat with a specific customer
+      query = {
+        $or: [
+          { sender: participantId, recipientRole: "support" },
+          { recipient: participantId, senderRole: "support" },
+          { recipient: participantId, senderRole: "admin" },
+          { sender: userId, recipient: participantId },
+          { sender: participantId, recipient: userId }
+        ]
+      };
+    } else {
+      // Fallback/direct user-to-user (e.g. driver-to-customer or driver-to-support)
+      query = {
+        $or: [
+          { sender: userId, recipient: participantId },
+          { sender: participantId, recipient: userId }
+        ]
+      };
+    }
+
+    const messages = await ChatMessage.find(query)
       .sort({ createdAt: 1 })
       .limit(100);
 
