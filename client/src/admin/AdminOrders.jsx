@@ -1007,21 +1007,21 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
           </div>
 
           {/* Delivery Proof */}
-          {order.deliveryProof && (order.deliveryProof.photoUrl || order.deliveryProof.signature) && (
+          {((order.deliveryProof && (order.deliveryProof.photoUrl || order.deliveryProof.signature)) || order.proofOfDelivery) ? (
             <div className="bg-stone-50 p-6 rounded-2xl border border-stone-100">
               <h4 className="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-4">📸 Proof of Delivery & Handoff</h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {order.deliveryProof.photoUrl && (
+                {(order.deliveryProof?.photoUrl || order.proofOfDelivery) && (
                   <div>
                     <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">POD Photo</span>
                     <img 
-                      src={order.deliveryProof.photoUrl} 
+                      src={order.deliveryProof?.photoUrl || order.proofOfDelivery} 
                       alt="Proof of Delivery" 
                       className="max-h-48 rounded-xl object-contain border border-stone-200 bg-white p-1.5 shadow-sm"
                     />
                   </div>
                 )}
-                {order.deliveryProof.signature && (
+                {order.deliveryProof?.signature && (
                   <div>
                     <span className="text-[10px] font-bold text-stone-400 uppercase tracking-widest block mb-2">Customer Signature</span>
                     <img 
@@ -1033,6 +1033,13 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
                 )}
               </div>
             </div>
+          ) : (
+            order.status === "Delivered" && (
+              <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-amber-800 text-xs font-bold flex items-center gap-2">
+                <span>⚠️</span>
+                <span>No digital signature or photo proof was captured during handoff (Old Order / Manual dispatch).</span>
+              </div>
+            )
           )}
 
           {/* Gift Message Card */}
