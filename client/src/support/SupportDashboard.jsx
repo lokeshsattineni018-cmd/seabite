@@ -127,6 +127,7 @@ export default function SupportDashboard() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState("");
   const [recipientTyping, setRecipientTyping] = useState(false);
+  const [agentTyping, setAgentTyping] = useState(false);
   const [sentiment, setSentiment] = useState({ label: "Neutral", emoji: "⚖️", color: T.inkMid, bg: T.bg });
   const [showCannedModal, setShowCannedModal] = useState(false);
   const chatEndRef = useRef(null);
@@ -215,7 +216,13 @@ export default function SupportDashboard() {
   /* ── Socket Listeners ── */
   useEffect(() => {
     if (!socket || !user) return;
+    
+    // Join personal agent room and shared support rooms
     socket.emit("join-chat", { userId: user.id || user._id });
+    if (user.role === "support" || user.role === "admin") {
+      socket.emit("join-chat", { userId: "support-agent" });
+      socket.emit("join-chat", { userId: "support" });
+    }
 
     const handleFrustration = (data) => {
       setFrustrations(prev => [{ ...data, time: new Date() }, ...prev].slice(0, 15));
@@ -231,16 +238,33 @@ export default function SupportDashboard() {
     };
 
     const handleChat = (msg) => {
-      setChatMessages(prev => [...prev, msg]);
-      setSentiment(analyzeSentiment(msg.message));
-      if (!chatRecipient) {
-        toast.success(`New Support Chat Incoming`, { duration: 3000 });
-        fetchAllData();
+      const rid = chatRecipient ? (chatRecipient._id || chatRecipient.id) : null;
+      const uid = user ? (user._id || user.id) : null;
+
+      const isFromActiveRecipient = rid && msg.sender === rid;
+      const isToActiveRecipient = rid && msg.recipient === rid;
+      const isFromSelf = uid && msg.sender === uid;
+
+      if (isFromActiveRecipient || (isFromSelf && isToActiveRecipient)) {
+        setChatMessages(prev => {
+          if (prev.some(m => m._id === msg._id)) return prev;
+          return [...prev, msg];
+        });
+        setSentiment(analyzeSentiment(msg.message));
+      }
+
+      // Always update conversation list
+      fetchAllData();
+
+      if (msg.senderRole === "user" && msg.sender !== rid) {
+        toast.success(`New message from customer: ${msg.message.substring(0, 30)}...`, { duration: 4000 });
+        try { new Audio("https://assets.mixkit.co/active_storage/sfx/911/911-600.wav").play(); } catch(e) {}
       }
     };
 
     const handleTyping = (data) => {
-      if (chatRecipient && data.sender === (chatRecipient._id || chatRecipient.id)) {
+      const rid = chatRecipient ? (chatRecipient._id || chatRecipient.id) : null;
+      if (rid && data.sender === rid && data.senderRole === "user") {
         setRecipientTyping(data.isTyping);
       }
     };
@@ -395,6 +419,22 @@ export default function SupportDashboard() {
     }
   };
 
+  const handleAgentTypingChange = (e) => {
+    setChatInput(e.target.value);
+    const recipient = chatRecipient || xrayOrder?.user;
+    if (!socket || !user || !recipient) return;
+
+    const rid = recipient._id || recipient.id;
+
+    if (!agentTyping && e.target.value.length > 0) {
+      setAgentTyping(true);
+      socket.emit("typing", { sender: user.id || user._id, recipient: rid, isTyping: true, senderRole: "support" });
+    } else if (agentTyping && e.target.value.length === 0) {
+      setAgentTyping(false);
+      socket.emit("typing", { sender: user.id || user._id, recipient: rid, isTyping: false, senderRole: "support" });
+    }
+  };
+
   const sendMessage = async (customText = null) => {
     const textToSend = customText || chatInput;
     const recipient = chatRecipient || xrayOrder?.user;
@@ -413,6 +453,12 @@ export default function SupportDashboard() {
       if (!socket) {
         setChatMessages((prev) => [...prev, data]);
       }
+
+      if (socket) {
+        const rid = recipient._id || recipient.id;
+        socket.emit("typing", { sender: user.id || user._id, recipient: rid, isTyping: false, senderRole: "support" });
+      }
+      setAgentTyping(false);
     } catch {
       toast.error("Failed to send message");
     }
@@ -799,7 +845,7 @@ export default function SupportDashboard() {
                         <div style={{ display: "flex", gap: 6 }}>
                           <button onClick={() => setShowCannedModal(true)} style={{ padding: 10, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, cursor: "pointer" }} title="Canned library"><FiBookOpen size={14} /></button>
                           <button onClick={requestScreenShare} style={{ padding: 10, background: T.bg, border: `1px solid ${T.border}`, borderRadius: 10, cursor: "pointer" }} title="Request Screen Share"><FiShare2 size={14} /></button>
-                          <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} placeholder="Response chat..."
+                          <input value={chatInput} onChange={handleAgentTypingChange} onKeyDown={e => e.key === "Enter" && sendMessage()} placeholder="Response chat..."
                             style={{ flex: 1, padding: "10px 12px", border: `1px solid ${T.border}`, borderRadius: 10, fontSize: 12, outline: "none" }} />
                           <button onClick={() => sendMessage()} style={{ padding: "10px 14px", background: T.accent, color: "white", border: "none", borderRadius: 10, cursor: "pointer" }}><FiSend size={14} /></button>
                         </div>
@@ -848,7 +894,7 @@ export default function SupportDashboard() {
                     <div ref={chatEndRef} />
                   </div>
                   <div style={{ padding: "12px 20px", borderTop: `1px solid ${T.border}`, display: "flex", gap: 8 }}>
-                    <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMessage()} placeholder="Type message..."
+                    <input value={chatInput} onChange={handleAgentTypingChange} onKeyDown={e => e.key === "Enter" && sendMessage()} placeholder="Type message..."
                       style={{ flex: 1, padding: "12px 16px", border: `1px solid ${T.border}`, borderRadius: 12, fontSize: 13, outline: "none" }} />
                     <button onClick={() => sendMessage()} style={{ padding: "12px 16px", background: T.accent, color: "white", border: "none", borderRadius: 12, cursor: "pointer" }}><FiSend size={16} /></button>
                   </div>

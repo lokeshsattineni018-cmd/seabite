@@ -73,7 +73,7 @@ self.addEventListener("fetch", (event) => {
     url.pathname.endsWith(".svg") ||
     url.pathname.endsWith(".woff2");
 
-  if (isStaticAsset) {
+  if (isStaticAsset && url.origin === self.location.origin) {
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
         if (cachedResponse) {

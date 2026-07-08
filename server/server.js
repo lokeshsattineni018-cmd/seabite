@@ -263,8 +263,8 @@ io.on("connection", (socket) => {
   });
 
   socket.on("typing", (data) => {
-    const { sender, recipient, isTyping } = data;
-    io.to(`chat:${recipient}`).emit("typing-indicator", { sender, isTyping });
+    const { sender, recipient, isTyping, senderRole } = data;
+    io.to(`chat:${recipient}`).emit("typing-indicator", { sender, isTyping, senderRole });
   });
 
   socket.on("disconnect", () => {

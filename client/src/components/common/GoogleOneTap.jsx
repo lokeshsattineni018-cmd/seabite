@@ -65,6 +65,9 @@ const GoogleOneTap = () => {
         // Small delay to ensure internal Google objects are initialized
         setTimeout(initializeOneTap, 100);
       };
+      script.onerror = () => {
+        console.warn("⚠️ Google Sign-In script failed to load. This may be due to certificate validation (ERR_CERT_AUTHORITY_INVALID) or network/ad blocker restrictions.");
+      };
       document.head.appendChild(script);
     }
   }, [user, setUser]);

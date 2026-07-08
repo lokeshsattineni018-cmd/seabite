@@ -116,6 +116,7 @@ export default function DeliveryDashboard() {
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [isSigning, setIsSigning] = useState(false);
   const [signatureData, setSignatureData] = useState(null);
+  const [driverPaymentMethod, setDriverPaymentMethod] = useState("Cash");
   const signatureCanvasRef = useRef(null);
   const isDrawingRef = useRef(false);
 
@@ -412,7 +413,12 @@ export default function DeliveryDashboard() {
     try {
       await axios.put(
         `${API}/api/delivery/orders/${orderId}/status`, 
-        { status, podUrl: capturedPhoto || null, signature: signatureData || null }, 
+        { 
+          status, 
+          podUrl: capturedPhoto || null, 
+          signature: signatureData || null,
+          paymentMethod: status === "Delivered" ? driverPaymentMethod : null
+        }, 
         { withCredentials: true }
       );
       toast.success(`Status updated: ${status}`);
@@ -427,7 +433,7 @@ export default function DeliveryDashboard() {
 
   const triggerSOS = async () => {
     try {
-      const { data } = await axios.post(`${API}/api/sos`, {
+      const { data } = await axios.post(`${API}/api/delivery/sos`, {
         lat: driverLatLng.lat,
         lng: driverLatLng.lng,
       }, { withCredentials: true });
@@ -970,6 +976,47 @@ export default function DeliveryDashboard() {
                           ✍️ E-Sign
                         </button>
                       </div>
+                      {selectedOrder.paymentMethod !== "Prepaid" && selectedOrder.paymentMethod !== "Wallet" && (
+                        <div style={{ margin: "12px 0 4px", padding: 12, background: T.accentLight, borderRadius: 12, border: `1px solid ${T.border}` }}>
+                          <span style={{ fontSize: 10, color: T.accent, fontWeight: 800, display: "block", marginBottom: 6, textTransform: "uppercase" }}>💰 Collect Payment (COD Order)</span>
+                          <div style={{ display: "flex", gap: 6 }}>
+                            <button 
+                              onClick={() => setDriverPaymentMethod("Cash")}
+                              style={{ 
+                                flex: 1, 
+                                padding: "8px 10px", 
+                                background: driverPaymentMethod === "Cash" ? T.accent : T.surface, 
+                                color: driverPaymentMethod === "Cash" ? "white" : T.ink, 
+                                border: `1px solid ${driverPaymentMethod === "Cash" ? T.accent : T.border}`, 
+                                borderRadius: 10, 
+                                fontSize: 11, 
+                                fontWeight: 700, 
+                                cursor: "pointer",
+                                transition: "all 0.15s"
+                              }}
+                            >
+                              💵 Cash
+                            </button>
+                            <button 
+                              onClick={() => setDriverPaymentMethod("UPI")}
+                              style={{ 
+                                flex: 1, 
+                                padding: "8px 10px", 
+                                background: driverPaymentMethod === "UPI" ? T.accent : T.surface, 
+                                color: driverPaymentMethod === "UPI" ? "white" : T.ink, 
+                                border: `1px solid ${driverPaymentMethod === "UPI" ? T.accent : T.border}`, 
+                                borderRadius: 10, 
+                                fontSize: 11, 
+                                fontWeight: 700, 
+                                cursor: "pointer",
+                                transition: "all 0.15s"
+                              }}
+                            >
+                              📱 UPI / Scan
+                            </button>
+                          </div>
+                        </div>
+                      )}
                       <button onClick={() => updateOrderStatus(selectedOrder._id, "Delivered")}
                         style={{ width: "100%", padding: 14, background: T.green, color: "white", border: "none", borderRadius: 14, fontSize: 13, fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                         <FiCheckCircle size={16} /> Mark as Delivered

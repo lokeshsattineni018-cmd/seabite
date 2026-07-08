@@ -41,12 +41,17 @@ export default function SupportWidget() {
 
     if (socket) {
       const handleIncomingMessage = (msg) => {
-        if (msg.senderRole === "support" || msg.senderRole === "admin") {
+        const isFromSupport = msg.senderRole === "support" || msg.senderRole === "admin";
+        const isFromSelf = msg.sender === (user.id || user._id);
+
+        if (isFromSupport || isFromSelf) {
           setMessages(prev => {
             if (prev.some(m => m._id === msg._id)) return prev;
             return [...prev, msg];
           });
-          try { new Audio("https://assets.mixkit.co/active_storage/sfx/911/911-600.wav").play(); } catch(e) {}
+          if (isFromSupport) {
+            try { new Audio("https://assets.mixkit.co/active_storage/sfx/911/911-600.wav").play(); } catch(e) {}
+          }
         }
       };
 
@@ -87,7 +92,7 @@ export default function SupportWidget() {
       }
       
       if (socket) {
-        socket.emit("typing", { sender: user.id || user._id, recipient: "support-agent", isTyping: false });
+        socket.emit("typing", { sender: user.id || user._id, recipient: "support-agent", isTyping: false, senderRole: "user" });
       }
       setTyping(false);
     } catch {
@@ -101,10 +106,10 @@ export default function SupportWidget() {
 
     if (!typing && e.target.value.length > 0) {
       setTyping(true);
-      socket.emit("typing", { sender: user.id || user._id, recipient: "support-agent", isTyping: true });
+      socket.emit("typing", { sender: user.id || user._id, recipient: "support-agent", isTyping: true, senderRole: "user" });
     } else if (typing && e.target.value.length === 0) {
       setTyping(false);
-      socket.emit("typing", { sender: user.id || user._id, recipient: "support-agent", isTyping: false });
+      socket.emit("typing", { sender: user.id || user._id, recipient: "support-agent", isTyping: false, senderRole: "user" });
     }
   };
 

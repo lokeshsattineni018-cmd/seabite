@@ -124,7 +124,7 @@ router.get("/my-orders", protect, async (req, res) => {
 // ── PUT /api/delivery/orders/:id/status — Update order status (POD) ──
 router.put("/orders/:id/status", protect, async (req, res) => {
   try {
-    const { status, podUrl, signature } = req.body;
+    const { status, podUrl, signature, paymentMethod } = req.body;
     const order = await Order.findById(req.params.id);
 
     if (!order) return res.status(404).json({ message: "Order not found" });
@@ -165,6 +165,15 @@ router.put("/orders/:id/status", protect, async (req, res) => {
         signature: signature,
         capturedAt: new Date()
       };
+
+      // Update payment details if order is Cash on Delivery
+      if (populatedOrder.paymentMethod !== "Prepaid" && populatedOrder.paymentMethod !== "Wallet") {
+        populatedOrder.isPaid = true;
+        populatedOrder.paidAt = new Date();
+        if (paymentMethod) {
+          populatedOrder.paymentMethod = paymentMethod;
+        }
+      }
     }
 
     await populatedOrder.save();
