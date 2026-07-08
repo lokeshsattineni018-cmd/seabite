@@ -1,5 +1,5 @@
-const CACHE_NAME = "seabite-static-v1";
-const API_CACHE_NAME = "seabite-api-v1";
+const CACHE_NAME = "seabite-static-v2";
+const API_CACHE_NAME = "seabite-api-v2";
 
 // Cache static assets on install
 const STATIC_ASSETS = [
@@ -37,6 +37,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  // Skip any cross-origin requests entirely to prevent caching issues or fetch rejections
+  if (url.origin !== self.location.origin) {
+    return;
+  }
 
   // 1. API Cache Strategy: Stale-While-Revalidate
   if (url.pathname.includes("/api/products") || url.pathname.includes("/api/coupons")) {
