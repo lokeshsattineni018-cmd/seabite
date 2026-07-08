@@ -987,7 +987,14 @@ router.put("/users/:id", adminAuth, async (req, res) => {
 
     // Advanced features: Sync with DeliveryPartner if promoted to driver
     if (role === "driver") {
-      const existingPartner = await DeliveryPartner.findOne({ phone: updatedUser.phone || updatedUser.email });
+      const conditions = [];
+      if (updatedUser.phone) conditions.push({ phone: updatedUser.phone });
+      if (updatedUser.email) conditions.push({ email: updatedUser.email });
+
+      const existingPartner = conditions.length > 0
+        ? await DeliveryPartner.findOne({ $or: conditions })
+        : null;
+
       if (!existingPartner) {
         await DeliveryPartner.create({
           name: updatedUser.name,

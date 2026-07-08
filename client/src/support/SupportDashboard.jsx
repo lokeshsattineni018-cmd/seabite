@@ -130,6 +130,8 @@ export default function SupportDashboard() {
   const [agentTyping, setAgentTyping] = useState(false);
   const [sentiment, setSentiment] = useState({ label: "Neutral", emoji: "⚖️", color: T.inkMid, bg: T.bg });
   const [showCannedModal, setShowCannedModal] = useState(false);
+  const [lastRecipientId, setLastRecipientId] = useState(null);
+  const chatMessagesRef = useRef(null);
   const chatEndRef = useRef(null);
 
   /* ── Map ── */
@@ -286,10 +288,36 @@ export default function SupportDashboard() {
     };
   }, [socket, user, xrayOrder, chatRecipient, fetchAllData]);
 
-  // Auto-scroll chat
+  // Auto-scroll chat internally without page shifts
+  const scrollToBottom = (force = false) => {
+    const container = chatMessagesRef.current;
+    if (!container) return;
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+    if (force || isNearBottom) {
+      setTimeout(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: "smooth"
+        });
+      }, 50);
+    }
+  };
+
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [chatMessages]);
+    if (chatMessages.length === 0) return;
+    const recipient = chatRecipient || xrayOrder?.user;
+    const rid = recipient ? (recipient._id || recipient.id) : null;
+    
+    const force = rid !== lastRecipientId;
+    if (force) {
+      setLastRecipientId(rid);
+    }
+    
+    const lastMsg = chatMessages[chatMessages.length - 1];
+    const isSelf = lastMsg && lastMsg.sender === (user?.id || user?._id);
+    
+    scrollToBottom(force || isSelf);
+  }, [chatMessages, chatRecipient, xrayOrder, lastRecipientId, user]);
 
   /* ── Escalation Alert check ── */
   const checkEscalatedStatus = (order) => {
@@ -379,7 +407,7 @@ export default function SupportDashboard() {
     }
   };
 
-  // Poll chat history if socket is disabled or offline
+  // Poll chat history fallback loop
   useEffect(() => {
     const recipient = chatRecipient || xrayOrder?.user;
     if (!recipient || (activeView !== "chat" && activeView !== "xray")) return;
@@ -396,11 +424,11 @@ export default function SupportDashboard() {
         .catch(() => {});
     };
 
-    if (!socket) {
-      const interval = setInterval(fetchHistory, 3000);
-      return () => clearInterval(interval);
-    }
-  }, [chatRecipient, xrayOrder, activeView, socket]);
+    fetchHistory();
+
+    const interval = setInterval(fetchHistory, 3000);
+    return () => clearInterval(interval);
+  }, [chatRecipient, xrayOrder, activeView]);
 
   const openChat = (recipient) => {
     setChatRecipient(recipient);
@@ -449,10 +477,10 @@ export default function SupportDashboard() {
         recipientRole: recipient.role || "user"
       }, { withCredentials: true });
 
-      // Add locally if socket is disabled (since socket won't bounce it back)
-      if (!socket) {
-        setChatMessages((prev) => [...prev, data]);
-      }
+      setChatMessages((prev) => {
+        if (prev.some(m => m._id === data._id)) return prev;
+        return [...prev, data];
+      });
 
       if (socket) {
         const rid = recipient._id || recipient.id;
@@ -803,7 +831,7 @@ export default function SupportDashboard() {
 
                     {/* Live chat with auto templates suggestions */}
                     {xrayOrder.user && (
-                      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", minHeight: 300 }}>
+                      <div style={{ background: T.card, border: `1px solid ${T.border}`, borderRadius: 16, padding: 16, display: "flex", flexDirection: "column", height: 420 }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                           <h4 style={{ fontSize: 12, fontWeight: 800, color: T.ink, margin: 0 }}>💬 Live Chat</h4>
                           <span style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: sentiment.bg, color: sentiment.color }}>
@@ -825,7 +853,7 @@ export default function SupportDashboard() {
                         </div>
 
                         {/* Messages Area */}
-                        <div style={{ flex: 1, overflowY: "auto", padding: 10, background: T.bg, borderRadius: 10, display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                        <div ref={chatMessagesRef} style={{ flex: 1, overflowY: "auto", padding: 10, background: T.bg, borderRadius: 10, display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
                           {chatMessages.length === 0 && <span style={{ fontSize: 11, color: T.inkLight, textAlign: "center", marginTop: 20 }}>Send a greeting to start resolving.</span>}
                           {chatMessages.map((msg, i) => {
                             const self = msg.sender === (user.id || user._id);
@@ -880,7 +908,7 @@ export default function SupportDashboard() {
                     </div>
                     <button onClick={() => { setActiveView("queue"); setChatRecipient(null); }} style={{ background: T.bg, border: "none", borderRadius: 8, padding: 6, cursor: "pointer" }}><FiX size={16} /></button>
                   </div>
-                  <div style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div ref={chatMessagesRef} style={{ flex: 1, overflowY: "auto", padding: 20, display: "flex", flexDirection: "column", gap: 8 }}>
                     {chatMessages.map((msg, i) => {
                       const self = msg.sender === (user.id || user._id);
                       return (

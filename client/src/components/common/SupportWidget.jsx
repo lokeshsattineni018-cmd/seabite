@@ -39,6 +39,8 @@ export default function SupportWidget() {
 
     fetchHistory();
 
+    const interval = setInterval(fetchHistory, 3000);
+
     if (socket) {
       const handleIncomingMessage = (msg) => {
         const isFromSupport = msg.senderRole === "support" || msg.senderRole === "admin";
@@ -65,11 +67,11 @@ export default function SupportWidget() {
       socket.on("typing-indicator", handleTypingIndicator);
 
       return () => {
+        clearInterval(interval);
         socket.off("chat-message", handleIncomingMessage);
         socket.off("typing-indicator", handleTypingIndicator);
       };
     } else {
-      const interval = setInterval(fetchHistory, 3000);
       return () => clearInterval(interval);
     }
   }, [socket, user, activeTab]);
@@ -87,9 +89,10 @@ export default function SupportWidget() {
         recipientRole: "support"
       }, { withCredentials: true });
 
-      if (!socket) {
-        setMessages(prev => [...prev, data]);
-      }
+      setMessages(prev => {
+        if (prev.some(m => m._id === data._id)) return prev;
+        return [...prev, data];
+      });
       
       if (socket) {
         socket.emit("typing", { sender: user.id || user._id, recipient: "support-agent", isTyping: false, senderRole: "user" });

@@ -86,14 +86,18 @@ router.post("/cart", protect, async (req, res) => {
         // Simple overwrite sync
         user.cart = cart.map(item => {
             if (!item) return null;
+            const productId = item.product?._id || item.product || item._id;
+            if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+                return null;
+            }
             return {
-                product: item.product?._id || item.product || item._id, // Handle full object or ID
+                product: productId,
                 qty: item.qty || 1,
                 selectedCut: item.selectedCut || "",
                 cutPriceAdjustmentPct: Number(item.cutPriceAdjustmentPct || 0),
                 orderedWeightGrams: Number(item.orderedWeightGrams || 0),
             };
-        }).filter(item => item && item.product != null); // remove any null products
+        }).filter(item => item !== null); // remove any null products
 
         user.cartUpdatedAt = new Date();
         user.abandonedCartEmailSent = false;
