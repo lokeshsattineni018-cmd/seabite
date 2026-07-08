@@ -134,8 +134,8 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(express.json({ limit: "10kb" })); // 🛡️ Limit body size to prevent attacks
-app.use(express.urlencoded({ extended: true, limit: "10kb" }));
+app.use(express.json({ limit: "10mb" })); // 🛡️ Limit body size to prevent attacks (increased to 10mb for POD uploads)
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 /* --- SOCKET.IO SETUP --- */
 const io = new Server(httpServer, {
