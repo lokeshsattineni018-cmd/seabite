@@ -150,6 +150,9 @@ const io = new Server(httpServer, {
 // Track connected users
 let connectedUsers = 0;
 
+// Memory cache for driver GPS throttling
+const driverLastUpdate = new Map();
+
 io.on("connection", (socket) => {
   connectedUsers++;
   io.emit("USER_COUNT_UPDATE", connectedUsers);
@@ -225,16 +228,24 @@ io.on("connection", (socket) => {
   // ── 🛵 REAL-TIME DRIVER TRACKING (GPS Geolocation Streams) ──
   socket.on("driver-location", async (data) => {
     const { driverId, location } = data;
-    try {
-      const DeliveryPartner = (await import("./models/DeliveryPartner.js")).default;
-      await DeliveryPartner.findByIdAndUpdate(driverId, {
-        currentLocation: { lat: location.lat, lng: location.lng }
-      });
-    } catch (err) {
-      console.error("GPS tracking DB sync failed:", err);
-    }
-    // Broadcast the coordinates to all admins and users tracking this driver
+    
+    // Broadcast coordinates immediately to tracking users for zero lag
     io.emit("DRIVER_LOCATION_STREAM", { driverId, location });
+
+    // Throttle database writes to once every 15 seconds per driver
+    const now = Date.now();
+    const lastUpdate = driverLastUpdate.get(driverId) || 0;
+    if (now - lastUpdate > 15000) {
+      driverLastUpdate.set(driverId, now);
+      try {
+        const DeliveryPartner = (await import("./models/DeliveryPartner.js")).default;
+        await DeliveryPartner.findByIdAndUpdate(driverId, {
+          currentLocation: { lat: location.lat, lng: location.lng }
+        });
+      } catch (err) {
+        console.error("GPS tracking DB sync failed:", err);
+      }
+    }
   });
 
   // ── 🎧 REAL-TIME SUPPORT & DRIVER CHAT ROOMS ──

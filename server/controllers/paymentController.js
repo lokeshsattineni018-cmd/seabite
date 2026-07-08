@@ -102,7 +102,6 @@ export const checkout = async (req, res) => {
         return res.status(400).json({ success: false, message: "Insufficient wallet balance" });
       }
       userDoc.walletBalance -= walletAppliedAmount;
-      await userDoc.save();
     }
 
     let loyaltyDiscount = 0;
@@ -117,18 +116,18 @@ export const checkout = async (req, res) => {
       pointsUsed = Math.min(requestedPoints, Math.ceil(loyaltyDiscount / 0.5));
 
       userDoc.loyaltyPoints = Math.max(0, userDoc.loyaltyPoints - pointsUsed);
-      await userDoc.save();
     }
 
     // Apply Gift Card Code if provided
     let giftCardDiscount = 0;
+    let giftCardDocToSave = null;
     if (giftCardCode) {
       const GiftCard = (await import("../models/GiftCard.js")).default;
       const card = await GiftCard.findOne({ code: giftCardCode.trim().toUpperCase(), active: true });
       if (card) {
         if (new Date() > card.expiryDate) {
           card.active = false;
-          await card.save();
+          giftCardDocToSave = card;
         } else {
           const calculatedSubtotal = Number(itemsPrice || 0) - Number(discount || 0) - loyaltyDiscount;
           const calculatedTax = Math.round(calculatedSubtotal * 0.05);
@@ -139,7 +138,7 @@ export const checkout = async (req, res) => {
           if (card.currentBalance <= 0) {
             card.active = false;
           }
-          await card.save();
+          giftCardDocToSave = card;
         }
       }
     }
@@ -185,7 +184,7 @@ export const checkout = async (req, res) => {
 
     const savedOrder = await newOrder.save();
 
-    // Log the wallet transaction
+    // Log the wallet transaction and save userDoc updates (wallet, loyalty, cart clearing)
     if (useWallet && walletAppliedAmount > 0) {
       if (!userDoc.walletTransactions) {
         userDoc.walletTransactions = [];
@@ -196,10 +195,17 @@ export const checkout = async (req, res) => {
         description: `Applied to Order #${savedOrder.orderId || savedOrder._id.toString().substring(18)}`,
         date: new Date()
       });
-      await userDoc.save();
     }
 
-    // 🟢 STOCK DEDUCTION & CART CLEARING
+    userDoc.cart = [];
+    await userDoc.save();
+
+    // Save gift card updates if applicable
+    if (giftCardDocToSave) {
+      await giftCardDocToSave.save();
+    }
+
+    // 🟢 STOCK DEDUCTION
     for (const item of items) {
       const product = await Product.findById(item.productId);
       if (product) {
@@ -210,9 +216,6 @@ export const checkout = async (req, res) => {
         await product.save();
       }
     }
-
-    userDoc.cart = [];
-    await userDoc.save();
 
     // ✅ TRIGGER EMAIL & WHATSAPP: ONLY for COD or Wallet orders here
     if (paymentMethod === "COD" || paymentMethod === "Wallet") {

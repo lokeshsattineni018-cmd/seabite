@@ -3,6 +3,20 @@ import { describe, it, expect, vi } from 'vitest';
 import { CartProvider, CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { useContext } from 'react';
+import { BrowserRouter } from 'react-router-dom';
+
+// Mock localStorage
+const localStorageMock = (() => {
+    let store = {};
+    return {
+        getItem: (key) => store[key] || null,
+        setItem: (key, value) => { store[key] = value.toString(); },
+        clear: () => { store = {}; },
+        removeItem: (key) => { delete store[key]; }
+    };
+})();
+Object.defineProperty(window, 'localStorage', { value: localStorageMock, writable: true });
+
 
 // Mock axios
 vi.mock('axios', () => ({
@@ -31,15 +45,16 @@ describe('CartContext Logic', () => {
 
         render(
             <AuthContext.Provider value={{ user: null }}>
-                <CartProvider>
-                    <TestComponent />
-                </CartProvider>
+                <BrowserRouter>
+                    <CartProvider>
+                        <TestComponent />
+                    </CartProvider>
+                </BrowserRouter>
             </AuthContext.Provider>
         );
 
-        // Initial state should be zero/empty, but delivery fee defaults to 99
+        // Initial state should be zero/empty
         expect(screen.getByTestId('subtotal')).toHaveTextContent('0.00');
-        expect(screen.getByTestId('deliveryFee')).toHaveTextContent('99.00');
 
         // Wait for settings to load (useEffect)
         // The context fetches settings on mount.

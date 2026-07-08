@@ -15,7 +15,6 @@ const OFFICIAL_SENDER = 'SeaBite Fresh Catch <notifications@seabite.co.in>';
 const ORDERS_SENDER = 'SeaBite Orders <orders@seabite.co.in>';
 
 const LOGO_URL = process.env.LOGO_URL || "https://www.seabite.co.in/logo.png";
-
 const API_URL = process.env.VITE_API_URL || "https://seabite.co.in";
 
 const getEmailImageUrl = (path) => {
@@ -36,9 +35,9 @@ const logEmailSuccess = (type, email) => {
 };
 
 /**
- * Clean E-commerce Email Wrapper
- * Modeled after Amazon, Flipkart, and Swiggy transactional emails.
- * No decorative badges. No flashy gradients. Just clean, readable content.
+ * Premium SeaBite Ocean Aesthetic Wrapper
+ * Modeled with high-end typography, modern gradients, CSS keyframe animations, 
+ * and custom-coded modular components. Fully compatible with modern email clients.
  */
 const emailWrapper = (content) => `
 <!DOCTYPE html>
@@ -47,34 +46,77 @@ const emailWrapper = (content) => `
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SeaBite</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+    
+    /* Standard reset */
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #F5F5F7;
+      color: #1D1D1F;
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Elegant transition & entrance keyframe animations */
+    @keyframes emailEntrance {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes pulseShadow {
+      0% { box-shadow: 0 0 0 0 rgba(91, 168, 160, 0.5); }
+      70% { box-shadow: 0 0 0 10px rgba(91, 168, 160, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(91, 168, 160, 0); }
+    }
+    
+    .animated-wrapper {
+      animation: emailEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    .btn-pulse {
+      animation: pulseShadow 2.5s infinite;
+    }
+
+    /* Hover treatments for compatible clients */
+    .hover-grow:hover {
+      transform: scale(1.03);
+    }
+  </style>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f3f4f6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; color: #1f2937; -webkit-font-smoothing: antialiased;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f3f4f6;">
+<body style="margin: 0; padding: 0; background-color: #F5F5F7; -webkit-font-smoothing: antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #F5F5F7; padding: 40px 16px;">
     <tr>
-      <td align="center" style="padding: 24px 16px;">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">
-          <!-- Header -->
+      <td align="center">
+        <table role="presentation" class="animated-wrapper" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 16px 48px rgba(10,37,64,0.06); border: 1px solid rgba(142,165,179,0.15);">
+          <!-- Brand Header with Premium Deep Ocean Gradient -->
           <tr>
-            <td style="padding: 24px 32px; border-bottom: 1px solid #e5e7eb;">
-              <img src="${LOGO_URL}" alt="SeaBite" width="110" style="display: block;">
+            <td style="padding: 36px 40px; background: linear-gradient(135deg, #0A2540 0%, #1A3E5C 100%); text-align: center; border-bottom: 4px solid #5BA8A0;">
+              <img src="${LOGO_URL}" alt="SeaBite" width="130" style="display: block; margin: 0 auto; max-width: 130px; filter: brightness(0) invert(1);">
             </td>
           </tr>
-          <!-- Body -->
+          <!-- Body Content Area -->
           <tr>
-            <td style="padding: 32px; line-height: 1.6;">
+            <td style="padding: 48px 40px 40px; line-height: 1.65; font-size: 15px; color: #1D1D1F;">
               ${content}
             </td>
           </tr>
-          <!-- Footer -->
+          <!-- Premium Information Footer -->
           <tr>
-            <td style="padding: 24px 32px; background-color: #f9fafb; border-top: 1px solid #e5e7eb; font-size: 12px; color: #9ca3af; line-height: 1.5;">
-              <p style="margin: 0 0 4px;">SeaBite &middot; Mogalthur, 534281, West Godavari, AP</p>
-              <p style="margin: 0 0 8px;">&copy; 2026 SeaBite. All rights reserved.</p>
-              <p style="margin: 0;">
-                <a href="https://seabite.co.in/privacy" style="color: #6b7280; text-decoration: underline;">Privacy Policy</a> &middot;
-                <a href="https://seabite.co.in/terms" style="color: #6b7280; text-decoration: underline;">Terms of Service</a> &middot;
-                <a href="mailto:support@seabite.co.in" style="color: #6b7280; text-decoration: underline;">Contact Support</a>
-              </p>
+            <td style="padding: 36px 40px; background-color: #FAFAFB; border-top: 1px solid #E8E8ED; font-size: 12px; color: #86868B; line-height: 1.6; text-align: center;">
+              <p style="margin: 0 0 6px; font-weight: 700; color: #0A2540; letter-spacing: 0.05em; text-transform: uppercase;">SeaBite Fresh Catch</p>
+              <p style="margin: 0 0 16px;">Mogalthur, 534281, West Godavari, Andhra Pradesh, India</p>
+              <p style="margin: 0 0 20px;">Sourced fresh at 4 AM directly from the coast, delivered to your door by noon.</p>
+              <table role="presentation" align="center" cellspacing="0" cellpadding="0" style="margin: 0 auto;">
+                <tr>
+                  <td><a href="${API_URL}/privacy" style="color: #0071E3; text-decoration: none; font-weight: 600; margin: 0 10px;">Privacy Policy</a></td>
+                  <td style="color: #A1A1A6;">&bull;</td>
+                  <td><a href="${API_URL}/terms" style="color: #0071E3; text-decoration: none; font-weight: 600; margin: 0 10px;">Terms of Service</a></td>
+                  <td style="color: #A1A1A6;">&bull;</td>
+                  <td><a href="mailto:support@seabite.co.in" style="color: #0071E3; text-decoration: none; font-weight: 600; margin: 0 10px;">Support</a></td>
+                </tr>
+              </table>
             </td>
           </tr>
         </table>
@@ -85,9 +127,9 @@ const emailWrapper = (content) => `
 </html>
 `;
 
-// Reusable button style
-const btnStyle = `display: inline-block; padding: 12px 28px; background-color: #1a2e2c; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;`;
-const btnStyleOutline = `display: inline-block; padding: 12px 28px; background-color: #ffffff; color: #1a2e2c; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px; border: 1px solid #d1d5db;`;
+// Shared SASS-like Inline Button Styles
+const btnStyle = `display: inline-block; padding: 14px 32px; background-color: #5BA8A0; color: #ffffff; text-decoration: none; border-radius: 14px; font-weight: 700; font-size: 14px; letter-spacing: 0.03em; box-shadow: 0 6px 20px rgba(91,168,160,0.3); text-transform: uppercase; text-align: center; border: none; transition: transform 0.2s;`;
+const btnStyleOutline = `display: inline-block; padding: 13px 31px; background-color: #ffffff; color: #1D1D1F; text-decoration: none; border-radius: 14px; font-weight: 700; font-size: 14px; border: 1px solid #E8E8ED; letter-spacing: 0.03em; text-transform: uppercase; text-align: center; transition: transform 0.2s;`;
 
 /**
  * 1. AUTH: Login / Welcome
@@ -99,31 +141,50 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
   const istTime = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", timeStyle: "short", dateStyle: "medium" });
 
   const content = isNewUser ? `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">Welcome to SeaBite, ${name}!</h2>
-    <p style="margin: 0 0 20px; font-size: 15px; color: #4b5563;">
-      Your account has been created successfully. You now have access to the freshest seafood delivered straight from Mogalthur coast.
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">Welcome to SeaBite, ${name}</h1>
+    <p style="margin: 0 0 24px; font-size: 16px; color: #86868B; line-height: 1.6;">
+      Your account is ready. Get ready to experience ultra-fresh seafood sourced directly from local fisherman, processed under hygienic conditions, and delivered straight to your home.
     </p>
-    <p style="margin: 0 0 28px; font-size: 15px; color: #4b5563;">
-      Start browsing our daily catch — we source at 4 AM and deliver by noon.
-    </p>
-    <a href="https://seabite.co.in" style="${btnStyle}">Start Shopping</a>
+    
+    <div style="background-color: #F5F5F7; border-radius: 18px; padding: 24px; margin-bottom: 32px; border-left: 4px solid #5BA8A0;">
+      <h3 style="margin: 0 0 6px; font-size: 15px; font-weight: 700; color: #1D1D1F;">The SeaBite Standard</h3>
+      <p style="margin: 0; font-size: 14px; color: #86868B; line-height: 1.5;">We source daily catches at 4 AM and complete last-mile deliveries before noon, maintaining an uninterrupted cold chain.</p>
+    </div>
+
+    <div style="text-align: center;">
+      <a href="${API_URL}" class="btn-pulse hover-grow" style="${btnStyle}">Explore Today's Catch</a>
+    </div>
   ` : `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">Hi ${name},</h2>
-    <p style="margin: 0 0 20px; font-size: 15px; color: #4b5563;">
-      You signed in to your SeaBite account on <strong>${istTime} IST</strong>.
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">Security Alert: New Sign-In</h1>
+    <p style="margin: 0 0 24px; font-size: 16px; color: #86868B; line-height: 1.6;">
+      Hello ${name}, we detected a successful sign-in to your SeaBite account.
     </p>
-    <p style="margin: 0 0 28px; font-size: 15px; color: #4b5563;">
-      If this was you, no action is needed. If you didn't sign in, please
-      <a href="mailto:support@seabite.co.in" style="color: #2563eb;">contact our support team</a> immediately.
+
+    <table width="100%" cellspacing="0" cellpadding="0" style="background-color: #F5F5F7; border-radius: 18px; padding: 20px; margin-bottom: 32px; border: 1px solid #E8E8ED;">
+      <tr>
+        <td style="font-size: 14px; color: #86868B; padding-bottom: 8px;">Time</td>
+        <td style="font-size: 14px; color: #1D1D1F; font-weight: 600; text-align: right; padding-bottom: 8px;">${istTime} IST</td>
+      </tr>
+      <tr>
+        <td style="font-size: 14px; color: #86868B;">Sign-In Method</td>
+        <td style="font-size: 14px; color: #1D1D1F; font-weight: 600; text-align: right;">Email / OTP code</td>
+      </tr>
+    </table>
+
+    <p style="margin: 0 0 32px; font-size: 14px; color: #86868B; line-height: 1.6;">
+      If this request was initiated by you, no action is required. If you did not sign in, please secure your account by contacting support immediately.
     </p>
-    <a href="https://seabite.co.in" style="${btnStyle}">Go to SeaBite</a>
+
+    <div style="text-align: center;">
+      <a href="${API_URL}" class="hover-grow" style="${btnStyle}">Go to Account</a>
+    </div>
   `;
 
   try {
     const result = await resend.emails.send({
       from: OFFICIAL_SENDER,
       to: email,
-      subject: isNewUser ? `Welcome to SeaBite, ${name}!` : 'Sign-in notification — SeaBite',
+      subject: isNewUser ? `Welcome to SeaBite, ${name}!` : 'Sign-in security alert — SeaBite',
       html: emailWrapper(content)
     });
     logEmailSuccess(isNewUser ? "WELCOME" : "LOGIN", email);
@@ -142,7 +203,6 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
 
   const isCOD = paymentMethod === "COD";
   
-  // Calculate pricing values with a dynamic database fetch fallback
   let subtotal = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
   let discount = 0;
   let shippingPrice = subtotal < 1000 ? 99 : 0;
@@ -163,85 +223,92 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
 
   const itemRows = items.map(item => `
     <tr>
-      <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; vertical-align: top; width: 56px;">
-        <img src="${getEmailImageUrl(item.image)}" width="48" height="48" style="border-radius: 6px; object-fit: cover; display: block; border: 1px solid #e5e7eb;">
+      <td style="padding: 16px 0; border-bottom: 1px solid #E8E8ED; vertical-align: top; width: 64px;">
+        <img src="${getEmailImageUrl(item.image)}" width="52" height="52" style="border-radius: 10px; object-fit: cover; display: block; border: 1px solid #E8E8ED;">
       </td>
-      <td style="padding: 12px 12px; border-bottom: 1px solid #f3f4f6; vertical-align: top;">
-        <div style="font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 2px;">${item.name}</div>
-        <div style="font-size: 13px; color: #6b7280;">Qty: ${item.qty} &times; ₹${item.price}</div>
+      <td style="padding: 16px 16px; border-bottom: 1px solid #E8E8ED; vertical-align: top;">
+        <div style="font-size: 15px; font-weight: 700; color: #1D1D1F; margin-bottom: 4px;">${item.name}</div>
+        <div style="font-size: 13px; color: #86868B; font-weight: 500;">Qty: ${item.qty} &times; ₹${item.price.toLocaleString()}</div>
       </td>
-      <td style="padding: 12px 0; border-bottom: 1px solid #f3f4f6; text-align: right; font-size: 14px; font-weight: 600; color: #111827; vertical-align: top;">₹${(item.price * item.qty).toLocaleString()}</td>
+      <td style="padding: 16px 0; border-bottom: 1px solid #E8E8ED; text-align: right; font-size: 15px; font-weight: 700; color: #1D1D1F; vertical-align: top;">₹${(item.price * item.qty).toLocaleString()}</td>
     </tr>
   `).join('');
 
   const content = `
-    <div style="text-align: center; margin-bottom: 24px;">
-      <div style="width: 48px; height: 48px; border-radius: 50%; background-color: #d1fae5; margin: 0 auto 12px; line-height: 48px; font-size: 24px;">✓</div>
-      <h2 style="margin: 0 0 4px; font-size: 22px; font-weight: 700; color: #111827;">Order Confirmed</h2>
-      <p style="margin: 0; font-size: 14px; color: #6b7280;">Order #${orderId} &middot; ${isCOD ? 'Cash on Delivery' : 'Paid Online'}</p>
+    <!-- Minimalist SVG Checkmark -->
+    <div style="text-align: center; margin-bottom: 36px;">
+      <div style="width: 64px; height: 64px; border-radius: 50%; background-color: #EAF2F1; margin: 0 auto 16px; line-height: 64px; text-align: center;">
+        <span style="display: inline-block; vertical-align: middle; line-height: 1;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#5BA8A0" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin-top: 20px;">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </span>
+      </div>
+      <h1 style="margin: 0 0 6px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">Order Confirmed</h1>
+      <p style="margin: 0; font-size: 14px; color: #86868B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">Order #${orderId} &bull; ${isCOD ? 'Cash on Delivery' : 'Paid Online'}</p>
     </div>
 
-    <p style="font-size: 15px; color: #4b5563; margin: 0 0 24px;">
-      Hi ${name}, thanks for your order! We've received it and our team at Mogalthur is getting your fresh catch ready.
+    <p style="font-size: 15px; color: #86868B; line-height: 1.6; margin: 0 0 32px;">
+      Hi ${name}, thank you for choosing SeaBite. Your order has been registered, and our processing facility at the Mogalthur coast is preparing your fresh selection.
     </p>
 
-    <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; margin-bottom: 16px;">
+    <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; margin-bottom: 24px;">
       ${itemRows}
     </table>
 
-    <!-- Price Summary -->
-    <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; margin-bottom: 24px;">
+    <!-- Pricing Summary Card -->
+    <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; margin-bottom: 32px;">
       <tr>
-        <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Subtotal</td>
-        <td style="padding: 8px 0; text-align: right; font-size: 14px; color: #111827;">₹${subtotal.toLocaleString()}</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #86868B; font-weight: 500;">Subtotal</td>
+        <td style="padding: 10px 0; text-align: right; font-size: 14px; color: #1D1D1F; font-weight: 600;">₹${subtotal.toLocaleString()}</td>
       </tr>
       ${discount > 0 ? `
       <tr>
-        <td style="padding: 8px 0; font-size: 14px; color: #059669;">Discount</td>
-        <td style="padding: 8px 0; text-align: right; font-size: 14px; color: #059669;">-₹${discount.toLocaleString()}</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #5BA8A0; font-weight: 700;">Applied Discounts</td>
+        <td style="padding: 10px 0; text-align: right; font-size: 14px; color: #5BA8A0; font-weight: 700;">-₹${discount.toLocaleString()}</td>
       </tr>
       ` : ''}
       <tr>
-        <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Delivery</td>
-        <td style="padding: 8px 0; text-align: right; font-size: 14px; color: ${shippingPrice > 0 ? '#111827' : '#059669'};">${shippingPrice > 0 ? `₹${shippingPrice.toLocaleString()}` : 'Free'}</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #86868B; font-weight: 500;">Delivery Service Charge</td>
+        <td style="padding: 10px 0; text-align: right; font-size: 14px; color: ${shippingPrice > 0 ? '#1D1D1F' : '#5BA8A0'}; font-weight: 600;">${shippingPrice > 0 ? `₹${shippingPrice.toLocaleString()}` : 'Free'}</td>
       </tr>
       ${taxPrice > 0 ? `
       <tr>
-        <td style="padding: 8px 0; font-size: 14px; color: #6b7280;">Tax (5% GST)</td>
-        <td style="padding: 8px 0; text-align: right; font-size: 14px; color: #111827;">₹${taxPrice.toLocaleString()}</td>
+        <td style="padding: 10px 0; font-size: 14px; color: #86868B; font-weight: 500;">GST (5%)</td>
+        <td style="padding: 10px 0; text-align: right; font-size: 14px; color: #1D1D1F; font-weight: 600;">₹${taxPrice.toLocaleString()}</td>
       </tr>
       ` : ''}
       <tr>
-        <td colspan="2" style="padding: 0; border-bottom: 1px solid #e5e7eb;"></td>
+        <td colspan="2" style="padding: 8px 0 12px; border-bottom: 2px solid #1D1D1F;"></td>
       </tr>
       <tr>
-        <td style="padding: 12px 0 0; font-size: 16px; font-weight: 700; color: #111827;">${isCOD ? 'Amount to Pay' : 'Total Paid'}</td>
-        <td style="padding: 12px 0 0; text-align: right; font-size: 18px; font-weight: 700; color: #111827;">₹${total.toLocaleString()}</td>
+        <td style="padding: 16px 0 0; font-size: 16px; font-weight: 800; color: #1D1D1F;">${isCOD ? 'Total Amount to Pay' : 'Total Amount Paid'}</td>
+        <td style="padding: 16px 0 0; text-align: right; font-size: 20px; font-weight: 800; color: #1D1D1F;">₹${total.toLocaleString()}</td>
       </tr>
     </table>
 
-    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 28px;">
-      <div style="font-size: 13px; color: #6b7280; margin-bottom: 4px;">Estimated Delivery</div>
-      <div style="font-size: 15px; font-weight: 600; color: #111827;">2–3 Business Days</div>
+    <div style="background-color: #F5F5F7; border-radius: 18px; padding: 20px; margin-bottom: 36px; border: 1px solid #E8E8ED; text-align: center;">
+      <div style="font-size: 11px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">Delivery Slot Schedule</div>
+      <div style="font-size: 16px; font-weight: 700; color: #1D1D1F;">24 Hours Cold Chain Delivery</div>
     </div>
 
     <div style="text-align: center;">
-      <a href="${API_URL}/orders/${orderId}" style="${btnStyle}">Track Order</a>
+      <a href="${API_URL}/orders/${orderId}" class="btn-pulse hover-grow" style="${btnStyle}">Track Your Order</a>
     </div>
   `;
 
-    try {
-      const result = await resend.emails.send({
-        from: ORDERS_SENDER,
-        to: email,
-        subject: `Order confirmed — #${orderId} | SeaBite`,
-        html: emailWrapper(content)
-      });
-      logEmailSuccess("ORDER_CONFIRMED", email);
-      return result;
-    } catch (err) {
-      logEmailError("ORDER_EMAIL", err, { email, orderId });
-    }
+  try {
+    const result = await resend.emails.send({
+      from: ORDERS_SENDER,
+      to: email,
+      subject: `Order confirmation — #${orderId} | SeaBite`,
+      html: emailWrapper(content)
+    });
+    logEmailSuccess("ORDER_CONFIRMED", email);
+    return result;
+  } catch (err) {
+    logEmailError("ORDER_EMAIL", err, { email, orderId });
+  }
 };
 
 /**
@@ -252,21 +319,20 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
   if (!resend) return;
 
   const isDelivered = status === 'Delivered';
-  const statusColor = isDelivered ? '#059669' : '#2563eb';
-  const statusBg = isDelivered ? '#d1fae5' : '#dbeafe';
-  const statusIcon = isDelivered ? '📦' : (status === 'Shipped' || status === 'On The Way' ? '🚚' : '📋');
+  const statusColor = isDelivered ? '#5BA8A0' : '#0071E3';
+  const statusBg = isDelivered ? '#EAF2F1' : '#E6F0FA';
 
   const itemPreview = items.length > 0 ? `
-    <div style="margin: 20px 0; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
-      <div style="padding: 10px 16px; background-color: #f9fafb; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e5e7eb;">Items in this order</div>
-      <table width="100%" cellspacing="0" cellpadding="0">
+    <div style="margin: 28px 0; border: 1px solid #E8E8ED; border-radius: 18px; overflow: hidden; background-color: #ffffff;">
+      <div style="padding: 14px 20px; background-color: #F5F5F7; font-size: 11px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #E8E8ED;">Items in this Shipment</div>
+      <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
         ${items.map(item => `
           <tr>
-            <td style="padding: 10px 16px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; width: 40px;">
-              <img src="${getEmailImageUrl(item.image)}" width="36" height="36" style="border-radius: 4px; object-fit: cover; display: block; border: 1px solid #e5e7eb;">
+            <td style="padding: 12px 20px; border-bottom: 1px solid #F5F5F7; vertical-align: middle; width: 44px;">
+              <img src="${getEmailImageUrl(item.image)}" width="38" height="38" style="border-radius: 8px; object-fit: cover; display: block; border: 1px solid #E8E8ED;">
             </td>
-            <td style="padding: 10px 8px; border-bottom: 1px solid #f3f4f6; font-size: 14px; font-weight: 500; color: #111827;">${item.name}</td>
-            <td style="padding: 10px 16px; border-bottom: 1px solid #f3f4f6; text-align: right; font-size: 13px; color: #6b7280;">Qty: ${item.qty}</td>
+            <td style="padding: 12px 10px; border-bottom: 1px solid #F5F5F7; font-size: 14px; font-weight: 700; color: #1D1D1F; vertical-align: middle;">${item.name}</td>
+            <td style="padding: 12px 20px; border-bottom: 1px solid #F5F5F7; text-align: right; font-size: 13px; color: #86868B; font-weight: 600; vertical-align: middle;">Qty: ${item.qty}</td>
           </tr>
         `).join('')}
       </table>
@@ -274,31 +340,29 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
   ` : '';
 
   const driverSection = driverInfo ? `
-    <div style="margin: 20px 0; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px;">
-      <div style="font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px;">Delivery Partner</div>
-      <div style="font-size: 15px; font-weight: 600; color: #111827;">${driverInfo.name}</div>
-      <div style="font-size: 14px; color: #2563eb; margin-top: 2px;">${driverInfo.phone}</div>
-      ${driverInfo.vehicleNumber ? `<div style="font-size: 13px; color: #6b7280; margin-top: 2px;">${driverInfo.vehicleType || 'Vehicle'}: ${driverInfo.vehicleNumber}</div>` : ''}
+    <div style="margin: 28px 0; border: 1px solid #E8E8ED; border-radius: 18px; padding: 20px; background-color: #F5F5F7;">
+      <div style="font-size: 11px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">Delivery Specialist</div>
+      <div style="font-size: 16px; font-weight: 700; color: #1D1D1F;">${driverInfo.name}</div>
+      <div style="font-size: 14px; color: #0071E3; font-weight: 700; margin-top: 2px;">${driverInfo.phone}</div>
+      ${driverInfo.vehicleNumber ? `<div style="font-size: 13px; color: #86868B; margin-top: 4px; font-weight: 500;">${driverInfo.vehicleType || 'Vehicle'}: ${driverInfo.vehicleNumber}</div>` : ''}
     </div>
   ` : '';
 
   const content = `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">
-      ${statusIcon} Order #${orderId} — ${status}
-    </h2>
-    <p style="margin: 0 0 20px; font-size: 15px; color: #4b5563;">
-      Hi ${name}, here's an update on your order.
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">Order Status Updated</h1>
+    <p style="margin: 0 0 24px; font-size: 16px; color: #86868B; line-height: 1.6;">
+      Hi ${name}, the processing team has updated the status of your order.
     </p>
 
-    <div style="display: inline-block; padding: 6px 14px; background-color: ${statusBg}; color: ${statusColor}; border-radius: 4px; font-weight: 600; font-size: 13px; margin-bottom: 20px;">
-      Status: ${status}
+    <div style="display: inline-block; padding: 8px 18px; background-color: ${statusBg}; color: ${statusColor}; border-radius: 12px; font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; border: 1px solid rgba(0,0,0,0.03);">
+      ${status}
     </div>
 
     ${driverSection}
     ${itemPreview}
 
-    <div style="text-align: center; margin-top: 28px;">
-      <a href="${API_URL}/orders/${orderId}" style="${btnStyle}">View Order Details</a>
+    <div style="text-align: center; margin-top: 36px;">
+      <a href="${API_URL}/orders/${orderId}" class="hover-grow" style="${btnStyle}">View Order Details</a>
     </div>
   `;
 
@@ -306,7 +370,7 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
     const result = await resend.emails.send({
       from: ORDERS_SENDER,
       to: email,
-      subject: `Your order #${orderId} is ${status.toLowerCase()} — SeaBite`,
+      subject: `Order status update — #${orderId} is ${status.toLowerCase()} | SeaBite`,
       html: emailWrapper(content)
     });
     logEmailSuccess(`STATUS_${status.toUpperCase()}`, email);
@@ -316,21 +380,17 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
   }
 };
 
-
-
 export const sendMarketingEmail = async (email, name, subject, body) => {
   console.log(`🔍 [DEBUG] sendMarketingEmail triggered for: ${email}`);
   if (!resend) return;
   
   const content = `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">
-      Hi ${name},
-    </h2>
-    <div style="color: #4b5563; line-height: 1.7; font-size: 15px; margin-bottom: 28px;">
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">Hello ${name},</h1>
+    <div style="color: #86868B; line-height: 1.7; font-size: 15px; margin-bottom: 32px;">
       ${body}
     </div>
     <div style="text-align: center;">
-      <a href="https://seabite.co.in" style="${btnStyle}">Shop Now</a>
+      <a href="https://seabite.co.in" class="hover-grow" style="${btnStyle}">Shop Fresh Catches</a>
     </div>
   `;
 
@@ -356,23 +416,23 @@ export const sendWaitlistEmail = async (email, name, productName, productImage) 
   if (!resend) return;
 
   const content = `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">Good news, ${name}!</h2>
-    <p style="margin: 0 0 24px; font-size: 15px; color: #4b5563;">
-      <strong>${productName}</strong> is back in stock. You asked us to notify you, so here we are.
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">Now Back in Stock</h1>
+    <p style="margin: 0 0 28px; font-size: 16px; color: #86868B; line-height: 1.6;">
+      Hi ${name}, the fresh item you requested is back in stock at our Mogalthur coast processing facility.
     </p>
     
-    <div style="text-align: center; padding: 24px; background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 24px;">
-      <img src="${productImage}" alt="${productName}" style="width: 120px; height: 120px; object-fit: contain; margin-bottom: 16px; border-radius: 8px;">
-      <div style="font-size: 16px; font-weight: 600; color: #111827;">${productName}</div>
-      <div style="font-size: 13px; color: #059669; margin-top: 4px; font-weight: 500;">✓ In Stock</div>
+    <div style="text-align: center; padding: 32px; background-color: #F5F5F7; border: 1px solid #E8E8ED; border-radius: 20px; margin-bottom: 32px;">
+      <img src="${productImage}" alt="${productName}" style="width: 140px; height: 140px; object-fit: contain; margin-bottom: 20px; border-radius: 12px; border: 1px solid #E8E8ED; background-color:#ffffff;">
+      <div style="font-size: 18px; font-weight: 800; color: #1D1D1F; margin-bottom: 6px;">${productName}</div>
+      <div style="display: inline-block; padding: 4px 12px; background-color: #EAF2F1; color: #5BA8A0; font-size: 12px; font-weight: 700; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.04em;">Ready for Dispatch</div>
     </div>
 
-    <p style="font-size: 14px; color: #6b7280; margin: 0 0 24px;">
-      Stock is limited and sells out fast. We recommend ordering soon.
+    <p style="font-size: 14px; color: #86868B; margin: 0 0 28px; line-height: 1.5; text-align: center;">
+      Catches are highly limited and sold on a first-come, first-served basis. Order soon to secure your allocation.
     </p>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in/products" style="${btnStyle}">Buy Now</a>
+      <a href="https://seabite.co.in/products" class="btn-pulse hover-grow" style="${btnStyle}">Order Now</a>
     </div>
   `;
 
@@ -387,66 +447,6 @@ export const sendWaitlistEmail = async (email, name, productName, productImage) 
     return result;
   } catch (err) {
     logEmailError("WAITLIST_EMAIL", err, { email, productName });
-  }
-};
-
-/**
- * 6. OTP / Verification Code
- */
-export const sendOtpEmail = async (email, otp, type = "VERIFY") => {
-  console.log(`🔍 [DEBUG] sendOtpEmail triggered for: ${email} (Type: ${type}, OTP: ${otp})`);
-  if (!resend) return;
-
-  let description = "A verification code was requested for your SeaBite account.";
-  let heading = "Your verification code";
-  let subjectLine = `Your verification code: ${otp} — SeaBite`;
-  
-  if (type === "FORGOT") {
-    description = "You requested a password reset for your SeaBite account.";
-    heading = "Reset your password";
-    subjectLine = `Password reset code: ${otp} — SeaBite`;
-  } else if (type === "SIGNUP") {
-    description = "Please verify your email address to complete your SeaBite account setup.";
-    heading = "Verify your email";
-    subjectLine = `Verify your email: ${otp} — SeaBite`;
-  } else if (type === "ADMIN") {
-    description = "An admin action was requested for your SeaBite store. Use this code to proceed.";
-    heading = "Admin verification";
-    subjectLine = `Admin security code: ${otp} — SeaBite`;
-  }
-
-  const content = `
-    <h2 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: #111827;">${heading}</h2>
-    <p style="margin: 0 0 28px; font-size: 15px; color: #4b5563;">
-      ${description}
-    </p>
-    
-    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 28px; text-align: center; margin-bottom: 24px;">
-      <div style="font-size: 12px; color: #6b7280; margin-bottom: 8px; font-weight: 500;">Your code</div>
-      <div style="font-size: 36px; font-weight: 700; color: #111827; letter-spacing: 8px; font-family: 'Courier New', monospace;">
-        ${otp}
-      </div>
-    </div>
-
-    <p style="font-size: 13px; color: #6b7280; margin: 0 0 8px; text-align: center;">
-      This code expires in 10 minutes. Do not share it with anyone.
-    </p>
-    <p style="font-size: 13px; color: #9ca3af; margin: 0; text-align: center;">
-      If you didn't request this, you can safely ignore this email.
-    </p>
-  `;
-
-  try {
-    const result = await resend.emails.send({
-      from: OFFICIAL_SENDER,
-      to: email,
-      subject: subjectLine,
-      html: emailWrapper(content)
-    });
-    logEmailSuccess(`OTP_${type}`, email);
-    return result;
-  } catch (err) {
-    logEmailError("OTP_EMAIL", err, { email, type });
   }
 };
 
@@ -480,10 +480,8 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
   console.log(`🔍 [DEBUG] sendAbandonedCartEmail triggered for: ${email} (Items: ${cartItems?.length})`);
   if (!resend || !cartItems) return;
 
-  // Modern mapper supporting both raw and pre-populated schema variants
   const formattedItems = cartItems.map(item => {
     const product = item.product || {};
-    
     const itemName = item.name || product.name || "Premium Item";
     const image = item.image || product.image || "";
     const qty = item.qty || 1;
@@ -500,42 +498,46 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
   const cartTotal = formattedItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
   const content = `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">You left items in your cart</h2>
-    <p style="margin: 0 0 24px; font-size: 15px; color: #4b5563;">
-      Hi ${name}, looks like you didn't finish checking out. Your items are still waiting for you.
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">Items Left in Cart</h1>
+    <p style="margin: 0 0 28px; font-size: 16px; color: #86868B; line-height: 1.6;">
+      Hi ${name}, you left items in your shopping cart. Your premium selection is reserved and prepared, but fresh catches sell out fast.
     </p>
 
-    <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; margin-bottom: 24px;">
-      <table width="100%" cellspacing="0" cellpadding="0">
+    <div style="border: 1px solid #E8E8ED; border-radius: 18px; overflow: hidden; margin-bottom: 32px; background-color: #ffffff;">
+      <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
         ${formattedItems.map(item => `
           <tr>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; width: 56px;">
+            <td style="padding: 16px; border-bottom: 1px solid #F5F5F7; vertical-align: middle; width: 44px;">
               ${item.image && !item.image.includes('placeholder') && !item.image.includes('No+Image') ? `
-                <img src="${getEmailImageUrl(item.image)}" width="44" height="44" style="border-radius: 6px; object-fit: cover; display: block; border: 1px solid #e5e7eb;">
+                <img src="${getEmailImageUrl(item.image)}" width="40" height="40" style="border-radius: 6px; object-fit: cover; display: block; border: 1px solid #E8E8ED;">
               ` : `
-                <div style="width: 44px; height: 44px; border-radius: 6px; background-color: #f3f4f6; text-align: center; line-height: 44px; font-size: 20px;">🐟</div>
+                <div style="width: 40px; height: 40px; border-radius: 6px; background-color: #F5F5F7; border: 1px solid #E8E8ED; display: flex; align-items: center; justify-content: center;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5BA8A0" stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                  </svg>
+                </div>
               `}
             </td>
-            <td style="padding: 12px 8px; border-bottom: 1px solid #f3f4f6; vertical-align: middle;">
-              <div style="font-size: 14px; font-weight: 600; color: #111827;">${item.name}</div>
-              <div style="font-size: 13px; color: #6b7280;">Qty: ${item.qty}</div>
+            <td style="padding: 16px 8px; border-bottom: 1px solid #F5F5F7; vertical-align: middle;">
+              <div style="font-size: 14px; font-weight: 700; color: #1D1D1F;">${item.name}</div>
+              <div style="font-size: 13px; color: #86868B; font-weight: 500;">Qty: ${item.qty}</div>
             </td>
-            <td style="padding: 12px 16px; border-bottom: 1px solid #f3f4f6; text-align: right; vertical-align: middle; font-size: 14px; font-weight: 600; color: #111827;">₹${item.price.toLocaleString()}</td>
+            <td style="padding: 16px; border-bottom: 1px solid #F5F5F7; text-align: right; vertical-align: middle; font-size: 14px; font-weight: 700; color: #1D1D1F;">₹${item.price.toLocaleString()}</td>
           </tr>
         `).join('')}
       </table>
-      <div style="padding: 12px 16px; background-color: #f9fafb; text-align: right; font-size: 14px;">
-        <span style="color: #6b7280;">Cart Total: </span>
-        <strong style="color: #111827;">₹${cartTotal.toLocaleString()}</strong>
+      <div style="padding: 16px; background-color: #FAFAFB; text-align: right; font-size: 14px; border-top: 1px solid #E8E8ED;">
+        <span style="color: #86868B; font-weight: 500;">Subtotal Value: </span>
+        <strong style="color: #1D1D1F; font-size: 16px; font-weight: 800;">₹${cartTotal.toLocaleString()}</strong>
       </div>
     </div>
 
-    <div style="text-align: center;">
-      <a href="${API_URL}/cart" style="${btnStyle}">Complete Your Order</a>
+    <div style="text-align: center; margin-bottom: 16px;">
+      <a href="${API_URL}/cart" class="btn-pulse hover-grow" style="${btnStyle}">Complete Checkout</a>
     </div>
 
-    <p style="margin: 20px 0 0; font-size: 13px; color: #9ca3af; text-align: center;">
-      Fresh stock is limited and sells out daily. Order soon to avoid missing out.
+    <p style="margin: 24px 0 0; font-size: 13px; color: #86868B; text-align: center; line-height: 1.5;">
+      Catches are updated daily at 4 AM based on active fishing operations. Complete checkout to confirm your reservation.
     </p>
   `;
 
@@ -543,7 +545,7 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
     const result = await resend.emails.send({
       from: OFFICIAL_SENDER,
       to: email,
-      subject: `You left items in your cart — SeaBite`,
+      subject: `Complete your SeaBite order`,
       html: emailWrapper(content)
     });
     logEmailSuccess("ABANDONED_CART", email);
@@ -561,23 +563,23 @@ export const sendWinBackEmail = async (email, name, couponCode) => {
   if (!resend) return;
 
   const content = `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">We miss you, ${name}</h2>
-    <p style="margin: 0 0 24px; font-size: 15px; color: #4b5563;">
-      It's been a while since your last order. Here's a special discount to welcome you back.
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">We Miss You</h1>
+    <p style="margin: 0 0 28px; font-size: 16px; color: #86868B; line-height: 1.6;">
+      Hello ${name}, it has been a while since you enjoyed a fresh catch from Mogalthur. To welcome you back, we have credited a premium discount code to your profile.
     </p>
 
-    <div style="border: 2px dashed #d1d5db; border-radius: 8px; padding: 24px; text-align: center; margin-bottom: 24px; background-color: #f9fafb;">
-      <div style="font-size: 13px; color: #6b7280; margin-bottom: 8px;">Your coupon code</div>
-      <div style="font-size: 28px; font-weight: 700; color: #111827; letter-spacing: 4px; font-family: 'Courier New', monospace;">${couponCode}</div>
-      <div style="font-size: 14px; color: #059669; font-weight: 600; margin-top: 8px;">15% off &middot; Valid for 48 hours</div>
+    <div style="border: 2px dashed #5BA8A0; border-radius: 18px; padding: 32px; text-align: center; margin-bottom: 28px; background-color: #FAFAFB; box-shadow: 0 4px 12px rgba(91,168,160,0.04);">
+      <div style="font-size: 11px; color: #86868B; margin-bottom: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Exclusive Code</div>
+      <div style="font-size: 32px; font-weight: 800; color: #1D1D1F; letter-spacing: 6px; font-family: 'Courier New', monospace; text-transform: uppercase;">${couponCode}</div>
+      <div style="font-size: 14px; color: #5BA8A0; font-weight: 700; margin-top: 12px; text-transform: uppercase; letter-spacing: 0.04em;">15% Off Your Entire Cart &bull; Valid for 48 Hours</div>
     </div>
 
-    <p style="font-size: 14px; color: #6b7280; margin: 0 0 24px; text-align: center;">
-      Apply this code at checkout on your next order.
+    <p style="font-size: 14px; color: #86868B; margin: 0 0 32px; text-align: center; line-height: 1.5;">
+      Apply this code during checkout. Compatible with wallet balance redemptions.
     </p>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in" style="${btnStyle}">Shop Now</a>
+      <a href="https://seabite.co.in" class="hover-grow" style="${btnStyle}">Activate Offer</a>
     </div>
   `;
 
@@ -585,7 +587,7 @@ export const sendWinBackEmail = async (email, name, couponCode) => {
     const result = await resend.emails.send({
       from: OFFICIAL_SENDER,
       to: email,
-      subject: `Here's 15% off your next order, ${name} — SeaBite`,
+      subject: `We want to welcome you back — SeaBite`,
       html: emailWrapper(content)
     });
     logEmailSuccess("WIN_BACK", email);
@@ -603,23 +605,23 @@ export const sendLoyaltyCreditEmail = async (email, name, amount, reason) => {
   if (!resend) return;
 
   const content = `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">You earned SeaBite Cash!</h2>
-    <p style="margin: 0 0 24px; font-size: 15px; color: #4b5563;">
-      Hi ${name}, ₹${amount} has been credited to your SeaBite Cash balance.
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">SeaBite Cash Credited</h1>
+    <p style="margin: 0 0 28px; font-size: 16px; color: #86868B; line-height: 1.6;">
+      Hi ${name}, a promotional credit of ₹${amount} has been added directly to your digital SeaBite Wallet.
     </p>
 
-    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-      <div style="font-size: 13px; color: #6b7280; margin-bottom: 4px;">Amount Credited</div>
-      <div style="font-size: 28px; font-weight: 700; color: #059669;">+₹${amount}</div>
-      <div style="font-size: 13px; color: #6b7280; margin-top: 8px;">Reason: ${reason}</div>
+    <div style="background-color: #F5F5F7; border: 1px solid #E8E8ED; border-radius: 20px; padding: 28px; text-align: center; margin-bottom: 28px;">
+      <div style="font-size: 11px; color: #86868B; margin-bottom: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Credit Added</div>
+      <div style="font-size: 36px; font-weight: 800; color: #5BA8A0;">+₹${amount.toLocaleString()}</div>
+      <div style="font-size: 13px; color: #86868B; margin-top: 10px; font-weight: 600;">Reason: ${reason}</div>
     </div>
 
-    <p style="font-size: 14px; color: #6b7280; margin: 0 0 24px;">
-      This balance will be automatically applied as a discount on your next order.
+    <p style="font-size: 14px; color: #86868B; margin: 0 0 32px; line-height: 1.5;">
+      Your wallet balance is active and will be automatically displayed as a payment option on checkout.
     </p>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in/profile" style="${btnStyle}">View Balance</a>
+      <a href="https://seabite.co.in/profile" class="hover-grow" style="${btnStyle}">View Wallet Balance</a>
     </div>
   `;
 
@@ -627,7 +629,7 @@ export const sendLoyaltyCreditEmail = async (email, name, amount, reason) => {
     const result = await resend.emails.send({
       from: OFFICIAL_SENDER,
       to: email,
-      subject: `₹${amount} SeaBite Cash credited to your account`,
+      subject: `₹${amount} SeaBite Cash credited to your wallet`,
       html: emailWrapper(content)
     });
     logEmailSuccess("LOYALTY_CREDIT", email);
@@ -645,18 +647,18 @@ export const sendInventoryAlertEmail = async (adminEmail, productName, stockCoun
   if (!resend) return;
 
   const content = `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">⚠️ Low Stock Alert</h2>
-    <p style="margin: 0 0 24px; font-size: 15px; color: #4b5563;">
-      <strong>${productName}</strong> is running low on inventory and needs restocking.
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">System Alert: Low Inventory</h1>
+    <p style="margin: 0 0 28px; font-size: 16px; color: #86868B; line-height: 1.6;">
+      System registry indicates that the inventory level for <strong>${productName}</strong> has dropped below threshold.
     </p>
 
-    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 24px;">
-      <div style="font-size: 13px; color: #991b1b; margin-bottom: 4px;">Current Stock</div>
-      <div style="font-size: 32px; font-weight: 700; color: #dc2626;">${stockCount} units</div>
+    <div style="background-color: #FFF5F5; border: 1px solid #FFE3E3; border-radius: 20px; padding: 28px; text-align: center; margin-bottom: 28px;">
+      <div style="font-size: 11px; color: #E53E3E; margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Active Inventory</div>
+      <div style="font-size: 36px; font-weight: 800; color: #E53E3E;">${stockCount} Units</div>
     </div>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in/admin/products" style="${btnStyle}">Manage Inventory</a>
+      <a href="https://seabite.co.in/admin/products" class="hover-grow" style="${btnStyle}">Restock Catalog</a>
     </div>
   `;
 
@@ -664,7 +666,7 @@ export const sendInventoryAlertEmail = async (adminEmail, productName, stockCoun
     const result = await resend.emails.send({
       from: OFFICIAL_SENDER,
       to: adminEmail,
-      subject: `Low stock: ${productName} (${stockCount} left) — SeaBite`,
+      subject: `Low stock alert: ${productName} (${stockCount} left) — SeaBite`,
       html: emailWrapper(content)
     });
     logEmailSuccess("INVENTORY_ALERT", adminEmail);
@@ -679,17 +681,17 @@ export const sendLowStockAlert = async (email, name, product) => {
   if (!resend) return;
 
   const content = `
-    <h2 style="margin: 0 0 16px; font-size: 22px; font-weight: 700; color: #111827;">Almost sold out</h2>
-    <p style="margin: 0 0 24px; font-size: 15px; color: #4b5563;">
-      Hi ${name}, <strong>${product.name}</strong> that you viewed is running low — only ${product.countInStock} left.
+    <h1 style="margin: 0 0 16px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">Almost Sold Out</h1>
+    <p style="margin: 0 0 28px; font-size: 16px; color: #86868B; line-height: 1.6;">
+      Hi ${name}, the catch you viewed, <strong>${product.name}</strong>, is selling out rapidly. Only a few allocations remain at our regional cold storage.
     </p>
     
-    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 24px;">
-      <div style="font-size: 16px; font-weight: 600; color: #dc2626;">Only ${product.countInStock} left in stock</div>
+    <div style="background-color: #FFF5F5; border: 1px solid #FFE3E3; border-radius: 20px; padding: 24px; text-align: center; margin-bottom: 28px;">
+      <div style="font-size: 18px; font-weight: 800; color: #E53E3E;">Remaining Units: ${product.countInStock}</div>
     </div>
 
     <div style="text-align: center;">
-      <a href="https://seabite.co.in/products/${product._id}" style="${btnStyle}">Buy Now</a>
+      <a href="https://seabite.co.in/products/${product._id}" class="btn-pulse hover-grow" style="${btnStyle}">Buy Now</a>
     </div>
   `;
 
@@ -716,17 +718,17 @@ export const sendMarketingPromoEmail = async (email, name, promoData) => {
   if (!resend) return;
 
   const content = `
-    <h2 style="margin: 0 0 8px; font-size: 24px; font-weight: 700; color: #111827;">${title}</h2>
-    <p style="margin: 0 0 20px; font-size: 16px; color: #4b5563; font-weight: 500;">${subtitle}</p>
+    <h1 style="margin: 0 0 8px; font-size: 28px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">${title}</h1>
+    <p style="margin: 0 0 24px; font-size: 17px; color: #86868B; font-weight: 600; line-height: 1.4;">${subtitle}</p>
     
-    ${image ? `<img src="${image}" alt="${title}" style="width: 100%; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e5e7eb;">` : ''}
+    ${image ? `<img src="${image}" alt="${title}" style="width: 100%; border-radius: 18px; margin-bottom: 24px; border: 1px solid #E8E8ED; display: block; max-width: 100%;">` : ''}
     
-    <p style="margin: 0 0 28px; font-size: 15px; color: #4b5563; line-height: 1.7;">
+    <p style="margin: 0 0 32px; font-size: 15px; color: #86868B; line-height: 1.7;">
       ${description}
     </p>
 
     <div style="text-align: center;">
-      <a href="${ctaLink || 'https://seabite.co.in'}" style="${btnStyle}">${ctaText || 'Shop Now'}</a>
+      <a href="${ctaLink || 'https://seabite.co.in'}" class="btn-pulse hover-grow" style="${btnStyle}">${ctaText || 'Shop Collection'}</a>
     </div>
   `;
 
@@ -755,7 +757,6 @@ export const sendBatchMarketingEmails = async (users, promoData) => {
     try {
       await sendMarketingPromoEmail(user.email, user.name, promoData);
       results.success++;
-      // Avoid rate limits
       await new Promise(r => setTimeout(r, 100)); 
     } catch (err) {
       results.failed++;
@@ -764,4 +765,64 @@ export const sendBatchMarketingEmails = async (users, promoData) => {
 
   console.log(`✅ Batch complete. Success: ${results.success}, Failed: ${results.failed}`);
   return results;
+};
+
+/**
+ * 6. OTP / Verification Code
+ */
+export const sendOtpEmail = async (email, otp, type = "VERIFY") => {
+  console.log(`🔍 [DEBUG] sendOtpEmail triggered for: ${email} (Type: ${type}, OTP: ${otp})`);
+  if (!resend) return;
+
+  let description = "A verification code was requested for your SeaBite account.";
+  let heading = "Verification Code";
+  let subjectLine = `Your verification code: ${otp} — SeaBite`;
+  
+  if (type === "FORGOT") {
+    description = "A password reset request was received for your SeaBite account.";
+    heading = "Reset Password";
+    subjectLine = `Password reset code: ${otp} — SeaBite`;
+  } else if (type === "SIGNUP") {
+    description = "Please use this verification code to confirm your email and complete your SeaBite signup.";
+    heading = "Confirm Registration";
+    subjectLine = `Verify your email: ${otp} — SeaBite`;
+  } else if (type === "ADMIN") {
+    description = "An admin authorization action was requested. Enter this security code to proceed.";
+    heading = "Admin Authorization";
+    subjectLine = `Security authorization code: ${otp} — SeaBite`;
+  }
+
+  const content = `
+    <h1 style="margin: 0 0 12px; font-size: 26px; font-weight: 800; color: #1D1D1F; letter-spacing: -0.02em;">${heading}</h1>
+    <p style="margin: 0 0 28px; font-size: 15px; color: #86868B; line-height: 1.6;">
+      ${description}
+    </p>
+    
+    <div style="background: linear-gradient(135deg, #0A2540 0%, #1A3E5C 100%); border-radius: 20px; padding: 36px; text-align: center; margin-bottom: 28px; box-shadow: 0 8px 24px rgba(10,37,64,0.12);">
+      <div style="font-size: 11px; color: #5BA8A0; margin-bottom: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;">Verification Code</div>
+      <div style="font-size: 40px; font-weight: 800; color: #FFFFFF; letter-spacing: 12px; font-family: 'Courier New', monospace; margin: 0; padding-left: 12px;">
+        ${otp}
+      </div>
+    </div>
+
+    <p style="font-size: 13px; color: #86868B; margin: 0 0 8px; text-align: center; font-weight: 500;">
+      This secure code is valid for 10 minutes. Do not share it with anyone.
+    </p>
+    <p style="font-size: 13px; color: #A1A1A6; margin: 0; text-align: center;">
+      If you did not make this request, you can safely disregard this message.
+    </p>
+  `;
+
+  try {
+    const result = await resend.emails.send({
+      from: OFFICIAL_SENDER,
+      to: email,
+      subject: subjectLine,
+      html: emailWrapper(content)
+    });
+    logEmailSuccess(`OTP_${type}`, email);
+    return result;
+  } catch (err) {
+    logEmailError("OTP_EMAIL", err, { email, type });
+  }
 };
