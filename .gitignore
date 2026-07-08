@@ -1,6 +1,9 @@
 .env
 node_modules
-.DS_Store
+**/.DS_Store
 dist/
 build/
 scratch/
+package.json
+package-lock.json
+server/uploads/
