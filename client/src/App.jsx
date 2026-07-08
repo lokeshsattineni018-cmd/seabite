@@ -91,6 +91,8 @@ const AdminReturns = lazy(() => import("./admin/AdminReturns")); // 🔄 Returns
 const AdminNotificationOrchestrator = lazy(() => import("./admin/AdminNotificationOrchestrator")); // 📣 Notifications Orchestrator
 const AdminABTesting = lazy(() => import("./admin/AdminABTesting")); // 🔬 A/B Testing
 const AdminHealthScores = lazy(() => import("./admin/AdminHealthScores")); // 👥 Churn Predictor & Health Scores
+const AdminFleetConsole = lazy(() => import("./admin/AdminFleetConsole")); // 🛵 Fleet Console
+const AdminSupportConsole = lazy(() => import("./admin/AdminSupportConsole")); // 🎧 Support Console
 
 const DeliveryDashboard = lazy(() => import("./delivery/DeliveryDashboard"));
 const SupportDashboard = lazy(() => import("./support/SupportDashboard"));
@@ -303,6 +305,8 @@ function MainLayout() {
                     <Route path="campaigns" element={<AdminNotificationOrchestrator />} />
                     <Route path="ab-tests" element={<AdminABTesting />} />
                     <Route path="health-scores" element={<AdminHealthScores />} />
+                    <Route path="fleet-console" element={<AdminFleetConsole />} />
+                    <Route path="support-console" element={<AdminSupportConsole />} />
                   </Route>
                 </Routes>
               ) : (

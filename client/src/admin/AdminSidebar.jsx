@@ -30,6 +30,7 @@ const CATEGORIES = [
       { name: "Complaints", path: "/admin/complaints", icon: <FiMessageSquare size={16} /> },
       { name: "Compliance Audits", path: "/admin/compliance", icon: <FiThermometer size={16} /> },
       { name: "Returns & Refunds", path: "/admin/returns", icon: <FiRotateCcw size={16} /> },
+      { name: "Fleet Console", path: "/admin/fleet-console", icon: <FiActivity size={16} /> },
     ]
   },
   {
@@ -52,6 +53,7 @@ const CATEGORIES = [
       { name: "Reviews", path: "/admin/reviews", icon: <FiStar size={16} /> },
       { name: "Search Discovery", path: "/admin/discovery", icon: <FiTarget size={16} /> },
       { name: "Customer Health", path: "/admin/health-scores", icon: <FiUsers size={16} /> },
+      { name: "Support Console", path: "/admin/support-console", icon: <FiMessageSquare size={16} /> },
     ]
   },
   {
