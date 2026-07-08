@@ -48,6 +48,14 @@ export default function OrderSuccess() {
       navigate("/orders", { replace: true });
       return;
     }
+    if (dbId) {
+      const viewedKey = `viewed_success_${dbId}`;
+      if (sessionStorage.getItem(viewedKey)) {
+        navigate("/orders", { replace: true });
+        return;
+      }
+      sessionStorage.setItem(viewedKey, "true");
+    }
     if (!dbId) { setLoading(false); return; }
     axios.get(`${API_URL}/api/orders/${dbId}`, { withCredentials: true })
       .then(({ data }) => setOrder(data))
