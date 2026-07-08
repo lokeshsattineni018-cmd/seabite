@@ -12,19 +12,19 @@ import { generateInvoicePDF } from "../../utils/pdfGenerator";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// Clean, Premium Light & Minimalist Theme Palette (Matching SeaBite Storefront)
+// Clean, Premium Apple-style Theme Palette
 const T = {
-  bgGradient: "linear-gradient(135deg, #F4F9F8 0%, #FFFFFF 100%)",
+  bgGradient: "linear-gradient(180deg, #F5F5F7 0%, #FFFFFF 100%)",
   surface: "#FFFFFF",
-  border: "#E2EEEC",
-  primary: "#5BBFB5", // SeaBite brand teal
+  border: "#E8E8ED",
+  primary: "#0071E3", // Apple classic blue
   sky: "#89C2D9",
-  accent: "#FFB703", // Subtle gold
-  textDark: "#1A2E2C", // Dark charcoal/slate
-  textMid: "#4A6572",  // Medium steel gray
-  textLite: "#7FA3B7",
-  cardBg: "#FAFCFC",
-  shadow: "0 20px 50px rgba(91, 191, 181, 0.08)",
+  accent: "#FFB703",
+  textDark: "#1D1D1F", // Apple primary black
+  textMid: "#86868B",  // Apple secondary grey
+  textLite: "#A1A1A6",
+  cardBg: "#F5F5F7",   // Apple light background
+  shadow: "none",
 };
 
 const fmt = (n) =>
@@ -73,50 +73,63 @@ export default function OrderSuccess() {
       });
   }, [dbId]);
 
-  // 🎊 High-Fidelity Confetti Rain
+  // 🎊 High-Fidelity Fullscreen Confetti Explosion
   const fireConfetti = () => {
-    const duration = 4 * 1000;
-    const animationEnd = Date.now() + duration;
-    const defaults = { startVelocity: 35, spread: 360, ticks: 120, zIndex: 99999 };
+    // 1. Initial central blast
+    confetti({
+      particleCount: 200,
+      spread: 130,
+      origin: { y: 0.6 },
+      colors: ['#0071E3', '#10B981', '#FFB703', '#ffffff'],
+      scalar: 1.2,
+      zIndex: 99999
+    });
 
-    const randomInRange = (min, max) => Math.random() * (max - min) + min;
+    // 2. Left side blast
+    confetti({
+      particleCount: 120,
+      angle: 60,
+      spread: 90,
+      origin: { x: 0, y: 0.75 },
+      colors: ['#0071E3', '#10B981', '#FFB703', '#ffffff'],
+      zIndex: 99999
+    });
 
-    const interval = setInterval(function() {
-      const timeLeft = animationEnd - Date.now();
+    // 3. Right side blast
+    confetti({
+      particleCount: 120,
+      angle: 120,
+      spread: 90,
+      origin: { x: 1, y: 0.75 },
+      colors: ['#0071E3', '#10B981', '#FFB703', '#ffffff'],
+      zIndex: 99999
+    });
 
-      if (timeLeft <= 0) return clearInterval(interval);
+    // 4. Repeated fireworks shower
+    const duration = 4.5 * 1000;
+    const end = Date.now() + duration;
 
-      const particleCount = 70 * (timeLeft / duration);
-      
-      confetti({ 
-        ...defaults, 
-        particleCount, 
-        origin: { x: randomInRange(0.15, 0.35), y: Math.random() - 0.2 },
-        colors: ['#5BBFB5', '#89C2D9', '#ffffff', '#FFB703'],
-        shapes: ['circle', 'square'],
-        scalar: randomInRange(0.5, 1.0)
-      });
-      
-      confetti({ 
-        ...defaults, 
-        particleCount, 
-        origin: { x: randomInRange(0.65, 0.85), y: Math.random() - 0.2 },
-        colors: ['#5BBFB5', '#89C2D9', '#ffffff', '#FFB703'],
-        shapes: ['circle', 'square'],
-        scalar: randomInRange(0.5, 1.0)
-      });
-    }, 200);
-
-    // Dynamic central fireworks
-    setTimeout(() => {
+    const frame = () => {
       confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.5 },
-        colors: ['#5BBFB5', '#FFB703', '#ffffff'],
-        scalar: 1.2
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: ['#0071E3', '#FFB703']
       });
-    }, 450);
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: ['#0071E3', '#FFB703']
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+    frame();
   };
 
   useEffect(() => {
@@ -145,6 +158,17 @@ export default function OrderSuccess() {
   const totalDisc = order?.discount ?? discount;
   const total = order?.totalAmount ?? order?.totalPrice ?? 0;
 
+  // COD vs. Paid Logic
+  const isPaid = order?.isPaid || (order && order.paymentMethod !== "COD" && order.paymentMethod !== "Cash" && order.paymentMethod !== "UPI" && order.isPaid !== false);
+  const isCOD = order?.paymentMethod === "COD" || order?.paymentMethod === "Cash" || order?.paymentMethod === "UPI";
+  
+  const paymentStatusText = isPaid ? "Paid Successfully" : (isCOD ? "Cash on Delivery" : "Pending Payment");
+  const paymentStatusColor = isPaid ? "#10B981" : (isCOD ? "#F59E0B" : "#EF4444");
+  const paymentStatusBg = isPaid ? "rgba(16,185,129,0.08)" : (isCOD ? "rgba(245,158,11,0.08)" : "rgba(239,68,68,0.08)");
+  const paymentStatusBorder = isPaid ? "rgba(16,185,129,0.18)" : (isCOD ? "rgba(245,158,11,0.18)" : "rgba(239,68,68,0.18)");
+  
+  const totalAmountLabel = isPaid ? "Total Amount Paid" : "Total Amount to Pay";
+
   return (
     <div style={{
       minHeight: "85vh",
@@ -168,11 +192,11 @@ export default function OrderSuccess() {
           border-radius: 100px;
         }
         .items-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(91, 191, 181, 0.25);
+          background: rgba(0, 113, 227, 0.25);
           border-radius: 100px;
         }
         .items-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(91, 191, 181, 0.4);
+          background: rgba(0, 113, 227, 0.4);
         }
 
         .success-grid {
@@ -202,21 +226,17 @@ export default function OrderSuccess() {
         }
       `}</style>
 
-      {/* ── MAIN MINIMALIST CARD ── */}
+      {/* ── MAIN APPLE-LIKE CONTAINER ── */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.98, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         style={{
           position: "relative",
           zIndex: 1,
           width: "100%",
-          maxWidth: 1100,
-          background: T.surface,
-          border: `1.5px solid ${T.border}`,
-          borderRadius: "28px",
-          padding: "40px",
-          boxShadow: T.shadow,
+          maxWidth: 1040,
+          padding: "40px 20px",
         }}
       >
         <div className="success-grid">
@@ -272,12 +292,12 @@ export default function OrderSuccess() {
                 transition={{ delay: 0.3 }}
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 6,
-                  background: "rgba(91,191,181,0.08)", border: "1.5px solid rgba(91,191,181,0.18)",
+                  background: "rgba(0,113,227,0.08)", border: "1.5px solid rgba(0,113,227,0.18)",
                   borderRadius: 30, padding: "4px 14px 4px 8px", marginBottom: 12,
                 }}
               >
                 <span style={{ fontSize: 13 }}>🎉</span>
-                <span style={{ fontSize: 10, fontWeight: 800, color: "#429B90", letterSpacing: "0.08em" }}>ORDER CONFIRMED</span>
+                <span style={{ fontSize: 10, fontWeight: 800, color: T.primary, letterSpacing: "0.08em" }}>ORDER CONFIRMED</span>
               </motion.div>
 
               {/* Headline */}
@@ -285,7 +305,7 @@ export default function OrderSuccess() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
-                style={{ fontSize: 28, fontWeight: 800, color: T.textDark, margin: "0 0 6px", letterSpacing: "-0.03em", lineHeight: 1.2 }}
+                style={{ fontSize: 32, fontWeight: 800, color: T.textDark, margin: "0 0 8px", letterSpacing: "-0.03em", lineHeight: 1.2 }}
               >
                 Catch Secured!{" "}
                 <span style={{ color: T.primary }}>
@@ -297,7 +317,7 @@ export default function OrderSuccess() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                style={{ fontSize: 13, color: T.textMid, margin: 0, fontWeight: 500, lineHeight: 1.5 }}
+                style={{ fontSize: 14, color: T.textMid, margin: 0, fontWeight: 500, lineHeight: 1.5 }}
               >
                 Harbor dispatch team is packaging your order with direct ice-compliance.
               </motion.p>
@@ -310,19 +330,18 @@ export default function OrderSuccess() {
               transition={{ delay: 0.55 }}
               style={{
                 background: T.cardBg,
-                border: `1.5px solid ${T.border}`,
                 borderRadius: "20px",
-                padding: "20px",
+                padding: "24px",
               }}
             >
               {/* ID Details Row */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
                 <div>
                   <p style={{ fontSize: 9, fontWeight: 800, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 3px" }}>Order ID</p>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: 15, color: T.textDark }}>#{displayId}</span>
+                    <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: 16, color: T.textDark }}>#{displayId}</span>
                     <button onClick={copyId} style={{
-                      background: copied ? "rgba(91,191,181,0.12)" : "#FFFFFF",
+                      background: copied ? "rgba(0,113,227,0.12)" : "#FFFFFF",
                       border: `1.5px solid ${copied ? T.primary : T.border}`,
                       borderRadius: 8, padding: "4px 10px", cursor: "pointer",
                       display: "flex", alignItems: "center", gap: 4,
@@ -338,11 +357,11 @@ export default function OrderSuccess() {
                   <span style={{ fontSize: 9, fontWeight: 800, color: T.textLite, textTransform: "uppercase", letterSpacing: "0.1em", margin: "0 0 3px" }}>Payment Status</span>
                   <div style={{
                     display: "inline-flex", alignItems: "center", gap: 5,
-                    background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.18)",
+                    background: paymentStatusBg, border: `1px solid ${paymentStatusBorder}`,
                     borderRadius: 20, padding: "4px 12px",
                   }}>
-                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981" }} />
-                    <span style={{ fontSize: 10, fontWeight: 700, color: "#10b981" }}>Paid Successfully</span>
+                    <div style={{ width: 6, height: 6, borderRadius: "50%", background: paymentStatusColor }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, color: paymentStatusColor }}>{paymentStatusText}</span>
                   </div>
                 </div>
               </div>
@@ -351,8 +370,8 @@ export default function OrderSuccess() {
               {order?.shippingAddress && (
                 <div style={{
                   display: "flex", gap: 10,
-                  padding: "12px 14px", borderRadius: "14px", background: "#FFFFFF", border: `1.5px solid ${T.border}`,
-                  marginBottom: 16,
+                  padding: "14px", borderRadius: "14px", background: "#FFFFFF",
+                  marginBottom: 20,
                 }}>
                   <FiMapPin size={16} style={{ color: T.primary, flexShrink: 0, marginTop: 2 }} />
                   <div style={{ fontSize: 11, color: T.textMid, lineHeight: 1.4 }}>
@@ -383,7 +402,7 @@ export default function OrderSuccess() {
                     <div style={{
                       width: 26, height: 26, borderRadius: "50%",
                       background: T.primary, display: "flex", alignItems: "center", justifyItems: "center", justifyContent: "center",
-                      boxShadow: "0 0 10px rgba(91,191,181,0.2)"
+                      boxShadow: "0 0 10px rgba(0,113,227,0.2)"
                     }}>
                       <FiCheck size={14} color="#ffffff" strokeWidth={3} />
                     </div>
@@ -421,29 +440,28 @@ export default function OrderSuccess() {
               style={{ display: "flex", gap: 12, marginTop: 10 }}
             >
               <motion.button
-                whileHover={{ scale: 1.02, boxShadow: "0 8px 25px rgba(91,191,181,0.2)" }}
+                whileHover={{ scale: 1.02, background: "#000000" }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate(`/orders/${dbId}`)}
                 style={{
-                  flex: 1, padding: "14px 20px", borderRadius: "100px", border: "none", cursor: "pointer",
-                  background: `linear-gradient(135deg, ${T.primary} 0%, #46a198 100%)`,
-                  color: "#ffffff", fontSize: 13, fontWeight: 800,
+                  flex: 1, padding: "14px 20px", borderRadius: "980px", border: "none", cursor: "pointer",
+                  background: "#1D1D1F",
+                  color: "#ffffff", fontSize: 13, fontWeight: 700,
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                  boxShadow: "0 4px 15px rgba(91,191,181,0.15)",
                 }}
               >
                 <FiTruck size={16} /> Track Shipment
               </motion.button>
 
               <motion.button
-                whileHover={{ scale: 1.02, background: "rgba(0,0,0,0.01)", borderColor: T.primary }}
+                whileHover={{ scale: 1.02, background: "#E8E8ED" }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => order && generateInvoicePDF(order)}
                 style={{
-                  flex: 1, padding: "14px 20px", borderRadius: "100px",
-                  border: `1.5px solid ${T.border}`, cursor: "pointer",
-                  background: "#FFFFFF", color: T.textDark,
+                  flex: 1, padding: "14px 20px", borderRadius: "980px",
+                  border: "none", cursor: "pointer",
+                  background: "#F5F5F7", color: T.textDark,
                   fontSize: 13, fontWeight: 700,
                   fontFamily: "'Plus Jakarta Sans', sans-serif",
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
@@ -476,7 +494,7 @@ export default function OrderSuccess() {
                       key={idx}
                       style={{
                         display: "flex", alignItems: "center", gap: 12,
-                        background: "#FFFFFF", border: `1.5px solid ${T.border}`,
+                        background: "#FFFFFF", border: `1px solid ${T.border}`,
                         borderRadius: "16px", padding: "10px 14px"
                       }}
                     >
@@ -503,7 +521,7 @@ export default function OrderSuccess() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.65 }}
               style={{
-                background: T.cardBg, border: `1.5px solid ${T.border}`,
+                background: T.cardBg,
                 borderRadius: "20px", padding: "16px",
               }}
             >
@@ -530,7 +548,7 @@ export default function OrderSuccess() {
               )}
               <div style={{ height: 1.5, background: T.border, margin: "10px 0" }} />
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <span style={{ fontSize: 14, fontWeight: 800, color: T.textDark }}>Total Amount Paid</span>
+                <span style={{ fontSize: 14, fontWeight: 800, color: T.textDark }}>{totalAmountLabel}</span>
                 <span style={{ fontSize: 22, fontWeight: 800, color: T.primary, letterSpacing: "-0.03em" }}>{fmt(total)}</span>
               </div>
             </motion.div>
