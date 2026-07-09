@@ -521,7 +521,23 @@ router.post("/orders/:id/confirm-weight", adminAuth, async (req, res) => {
       }
     }
 
-    if (totalRefund > 0 && !order.weightVarianceRefundIssued) {
+    if (totalRefund > 0) {
+      const updatedOrder = await Order.findOneAndUpdate(
+        { _id: req.params.id, weightVarianceRefundIssued: { $ne: true } },
+        {
+          $set: {
+            weightVarianceRefundIssued: true,
+            weightVarianceRefundAmount: totalRefund,
+            items: order.items,
+          }
+        },
+        { new: true }
+      );
+
+      if (!updatedOrder) {
+        return res.status(400).json({ message: "Weight variance refund has already been issued/processed." });
+      }
+
       await User.findByIdAndUpdate(order.user._id, {
         $inc: { walletBalance: totalRefund },
         $push: {
@@ -533,11 +549,10 @@ router.post("/orders/:id/confirm-weight", adminAuth, async (req, res) => {
           }
         }
       });
-      order.weightVarianceRefundIssued = true;
-      order.weightVarianceRefundAmount = totalRefund;
+    } else {
+      await order.save();
     }
 
-    await order.save();
     res.json({
       message: `Weights confirmed. ${totalRefund > 0 ? `₹${totalRefund} credited to customer wallet.` : "No variance refund needed."}`,
       refundAmount: totalRefund,

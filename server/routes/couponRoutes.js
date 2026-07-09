@@ -7,9 +7,10 @@ import { protect, admin } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 import { validate, couponValidateSchema } from "../middleware/validationMiddleware.js";
+import { couponLimiter } from "../middleware/rateLimiter.js";
 
 // ✅ Validate ADMIN Coupons Only (not spin coupons)
-router.post("/validate", validate(couponValidateSchema), async (req, res) => {
+router.post("/validate", couponLimiter, validate(couponValidateSchema), async (req, res) => {
   try {
     const { code, cartTotal, email } = req.body;
 

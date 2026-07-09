@@ -8,6 +8,8 @@ import SearchInsight from "../models/SearchInsight.js";
 import { getSettings } from "../models/Settings.js";
 import { logActivity } from "../utils/activityLogger.js"; // 🟢 Added import
 
+import { searchLimiter } from "../middleware/rateLimiter.js";
+
 const router = express.Router();
 
 // 🟢 NEW: GET TOP RECENT REVIEWS FOR HOME PAGE
@@ -205,7 +207,7 @@ const levenshtein = (a, b) => {
 };
 
 // 🟢 SMART SEARCH AUTOSUGGEST
-router.get("/search/suggest", async (req, res) => {
+router.get("/search/suggest", searchLimiter, async (req, res) => {
   try {
     const { q } = req.query;
     if (!q) return res.json({ suggestions: [], globalDiscount: 0 });

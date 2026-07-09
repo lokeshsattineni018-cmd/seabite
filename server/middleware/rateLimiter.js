@@ -32,3 +32,29 @@ export const apiLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+/**
+ * Coupon Validation Limiter (Abuse Prevention)
+ */
+export const couponLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 10, // Limit each IP to 10 validation checks per 5 minutes
+  message: {
+    message: "Too many coupon validation attempts. Please try again later.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+/**
+ * Search Query Limiter (DoS Prevention)
+ */
+export const searchLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // Limit each IP to 30 search queries per minute
+  message: {
+    message: "Too many search requests. Please slow down.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
