@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { FiX, FiFilter, FiCheck, FiSliders, FiSun } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -199,76 +200,74 @@ export default function FilterSidebar({ isOpen, onClose, filters, setFilters, cl
     setFilters(prev => ({ ...prev, minPrice: localPrice.min, maxPrice: localPrice.max }));
   };
 
-  return (
-    <>
-      {/* Drawer Overlay (Available on all devices) */}
-      <AnimatePresence>
-        {isOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={onClose}
-              style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.45)", backdropFilter: "blur(8px)", zIndex: 9998 }}
-            />
+  return createPortal(
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.45)", backdropFilter: "blur(8px)", zIndex: 9998 }}
+          />
 
-            {/* Panel */}
-            <motion.div
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
-              transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
-              style={{
-                position: "fixed", top: 0, right: 0, bottom: 0,
-                width: "min(85vw, 350px)",
-                background: "#fff",
-                zIndex: 9999,
-                display: "flex", flexDirection: "column",
-                boxShadow: "-10px 0 40px rgba(26, 46, 44, 0.08)",
-              }}
-            >
-              {/* Header */}
-              <div style={{ padding: "18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #EEF5F4", flexShrink: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <FiFilter color={BRAND} size={15} />
-                  <h2 style={{ fontSize: "15px", fontWeight: 800, color: BRAND_DARK, margin: 0 }}>Filter & Sort</h2>
-                </div>
-                <button
-                  onClick={onClose}
-                  style={{ background: "#F4F9F8", border: "none", borderRadius: "50%", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6B8F8A" }}
-                >
-                  <FiX size={16} />
-                </button>
+          {/* Panel */}
+          <motion.div
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
+            style={{
+              position: "fixed", top: 0, right: 0, bottom: 0,
+              width: "min(85vw, 350px)",
+              background: "#fff",
+              zIndex: 9999,
+              display: "flex", flexDirection: "column",
+              boxShadow: "-10px 0 40px rgba(26, 46, 44, 0.08)",
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: "18px", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #EEF5F4", flexShrink: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <FiFilter color={BRAND} size={15} />
+                <h2 style={{ fontSize: "15px", fontWeight: 800, color: BRAND_DARK, margin: 0 }}>Filter & Sort</h2>
               </div>
+              <button
+                onClick={onClose}
+                style={{ background: "#F4F9F8", border: "none", borderRadius: "50%", width: "30px", height: "30px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#6B8F8A" }}
+              >
+                <FiX size={16} />
+              </button>
+            </div>
 
-              {/* Body */}
-              <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
-                <FilterContent
-                  filters={filters}
-                  setFilters={setFilters}
-                  clearFilters={clearFilters}
-                  localPrice={localPrice}
-                  handlePriceChange={handlePriceChange}
-                  applyPrice={applyPrice}
-                  metaData={metaData}
-                />
-              </div>
+            {/* Body */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "20px" }}>
+              <FilterContent
+                filters={filters}
+                setFilters={setFilters}
+                clearFilters={clearFilters}
+                localPrice={localPrice}
+                handlePriceChange={handlePriceChange}
+                applyPrice={applyPrice}
+                metaData={metaData}
+              />
+            </div>
 
-              {/* Footer */}
-              <div style={{ padding: "14px 18px", borderTop: "1px solid #EEF5F4", flexShrink: 0 }}>
-                <button
-                  onClick={onClose}
-                  style={{ width: "100%", padding: "12px", borderRadius: "10px", background: BRAND_DARK, color: "#fff", border: "none", fontSize: "13px", fontWeight: 800, cursor: "pointer" }}
-                >
-                  Done
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+            {/* Footer */}
+            <div style={{ padding: "14px 18px", borderTop: "1px solid #EEF5F4", flexShrink: 0 }}>
+              <button
+                onClick={onClose}
+                style={{ width: "100%", padding: "12px", borderRadius: "10px", background: BRAND_DARK, color: "#fff", border: "none", fontSize: "13px", fontWeight: 800, cursor: "pointer" }}
+              >
+                Done
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }
