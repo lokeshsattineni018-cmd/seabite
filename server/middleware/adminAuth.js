@@ -14,7 +14,12 @@ const adminAuth = async (req, res, next) => {
           req.sessionStore.get(sessionId, async (err, session) => {
             if (!err && session && session.user && session.user.role === "admin") {
               console.log("✅ [Admin] Header session recovered for:", session.user.email);
-              req.user = await User.findById(session.user.id);
+              const user = await User.findById(session.user.id);
+              if (!user || user.role !== "admin") {
+                console.warn(`🚨 [INTRUSION DETECTED] Recovered user is not an Admin or not found in DB`);
+                return resolve(res.status(401).json({ message: "Access denied: Unauthorized session." }));
+              }
+              req.user = user;
               return resolve(next());
             }
             console.warn(`🚨 [INTRUSION DETECTED] Unauthorized Admin Access Attempt (Header Fallback Failed)`);

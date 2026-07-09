@@ -26,7 +26,8 @@ router.get("/", async (req, res) => {
             closingTime: settings.closingTime,
             isClosed: settings.isClosed,
             globalDiscount: settings.globalDiscount,
-            spinWheelEnabled: settings.spinWheelEnabled
+            spinWheelEnabled: settings.spinWheelEnabled,
+            csrfToken: req.session?.csrfToken
         };
 
         res.json(publicSettings);

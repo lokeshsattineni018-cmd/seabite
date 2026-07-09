@@ -27,6 +27,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: false },
 
     role: { type: String, default: "user" },
+    isSuperAdmin: { type: Boolean, default: false },
     isBanned: { type: Boolean, default: false },
     pushSubscriptions: [
       {
@@ -171,20 +172,33 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Hash password before saving
+// Unified pre-save operations
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) {
-    return;
+  // 1. Hash password if modified
+  if (this.isModified("password") && this.password) {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
   }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
 
-userSchema.pre("save", async function () {
+  // 2. Generate referral code for new users
   if (this.isNew && !this.referralCode) {
     const base = this.name ? this.name.substring(0, 3).replace(/[^a-zA-Z]/g, '').toUpperCase() : "SB";
     const random = Math.random().toString(36).substring(2, 6).toUpperCase();
     this.referralCode = `${base}${random}`;
+  }
+
+  // 3. Cap unbounded arrays
+  if (this.browsingHistory && this.browsingHistory.length > 50) {
+    this.browsingHistory = this.browsingHistory.slice(-50);
+  }
+  if (this.walletTransactions && this.walletTransactions.length > 50) {
+    this.walletTransactions = this.walletTransactions.slice(-50);
+  }
+  if (this.activeSessions && this.activeSessions.length > 10) {
+    this.activeSessions = this.activeSessions.slice(-10);
+  }
+  if (this.pushSubscriptions && this.pushSubscriptions.length > 5) {
+    this.pushSubscriptions = this.pushSubscriptions.slice(-5);
   }
 });
 

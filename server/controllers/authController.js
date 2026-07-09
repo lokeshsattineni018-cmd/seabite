@@ -144,7 +144,7 @@ export const googleLogin = async (req, res) => {
 
       res.status(200).json({
         user: req.session.user,
-        sessionId: req.sessionID
+        csrfToken: req.session.csrfToken
       });
     });
   } catch (error) {
@@ -182,7 +182,8 @@ export const getLoggedUser = async (req, res) => {
       isGoogleUser: !!dbUser.googleId,
       totalOrders: totalOrders,
       walletBalance: dbUser.walletBalance || 0,
-      walletTransactions: dbUser.walletTransactions || []
+      walletTransactions: dbUser.walletTransactions || [],
+      csrfToken: req.session?.csrfToken
     });
   } catch (err) {
     logger.error("getLoggedUser DB failure", { traceId: req.traceId, error: err.message });
@@ -202,9 +203,22 @@ export const updateUserProfile = async (req, res) => {
       return res.status(401).json({ message: "User identity not found" });
     }
 
+    // 🔐 SECURITY: Whitelist allowed fields to prevent mass assignment / privilege escalation
+    const allowedFields = ['name', 'phone', 'birthday', 'anniversary'];
+    const sanitizedUpdate = {};
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        sanitizedUpdate[field] = req.body[field];
+      }
+    });
+
+    if (Object.keys(sanitizedUpdate).length === 0) {
+      return res.status(400).json({ message: "No valid fields to update" });
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { $set: req.body },
+      { $set: sanitizedUpdate },
       { returnDocument: "after", runValidators: true, select: "-password" }
     );
 

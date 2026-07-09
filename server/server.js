@@ -1,13 +1,24 @@
 /* --- 1. LOAD ENV VARIABLES FIRST --- */
 import "dotenv/config";
 
-// Suppress non-error logs in server logs in production (Vercel)
-if (process.env.NODE_ENV === "production") {
-  console.log = () => {};
-  console.info = () => {};
-  console.debug = () => {};
-  console.warn = () => {};
+if (!process.env.SESSION_SECRET) {
+  throw new Error("FATAL: SESSION_SECRET is not configured in environment variables.");
 }
+if (!process.env.MONGO_URI) {
+  throw new Error("FATAL: MONGO_URI is not configured in environment variables.");
+}
+
+import * as Sentry from "@sentry/node";
+
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    environment: process.env.NODE_ENV || "development",
+  });
+}
+
+
 
 import express from "express";
 // 🛰️ System Pulse: Force-triggering server deployment sync (Deploy Hook Triggered)
@@ -24,12 +35,12 @@ import Order from "./models/Order.js"; // [Operational Intelligence]
 
 /* --- ROUTE IMPORTS --- */
 import authRoutes from "./routes/authRoutes.js";
-import adminProductRoutes from "./routes/adminProducts.js";
+import adminProductRoutes from "./routes/adminProductRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import notificationRoutes from "./routes/notificationRoutes.js";
 import pushRoutes from "./routes/pushRoutes.js";
-import products from "./routes/products.js";
+import products from "./routes/productRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import contactRoutes from "./routes/contactRoutes.js";
 import couponRoutes from "./routes/couponRoutes.js";
@@ -54,6 +65,8 @@ import traceMiddleware from "./middleware/traceMiddleware.js";
 import telemetryRoutes from "./routes/telemetryRoutes.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
+import { protect } from "./middleware/authMiddleware.js";
+import { csrfProtection } from "./middleware/csrfMiddleware.js";
 
 import logger from "./utils/logger.js";
 import os from "os";
@@ -61,7 +74,7 @@ import osUtils from "os-utils";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
-import xss from "xss-clean";
+import { xss } from "express-xss-sanitizer";
 import hpp from "hpp";
 import compression from "compression";
 
@@ -153,6 +166,16 @@ let connectedUsers = 0;
 // Memory cache for driver GPS throttling
 const driverLastUpdate = new Map();
 
+// 🔐 SECURITY: Authenticate Socket.IO connections
+io.use((socket, next) => {
+  const req = socket.request;
+  if (req.session && req.session.user) {
+    socket.user = req.session.user;
+    return next();
+  }
+  return next(new Error("Authentication failed: No active session"));
+});
+
 io.on("connection", (socket) => {
   connectedUsers++;
   io.emit("USER_COUNT_UPDATE", connectedUsers);
@@ -171,15 +194,23 @@ io.on("connection", (socket) => {
     io.to(`product:${productId}`).emit("PRODUCT_VIEWER_COUNT", { productId, count: roomSize });
   });
 
-  // 🔍 X-Ray: Frustration Events
+  // 🔍 X-Ray: Frustration Events (Authorized Admins Only)
   socket.on("join-admin", () => {
+    if (!socket.user || socket.user.role !== "admin") {
+      console.warn(`🚨 [INTRUSION] Unauthorized Socket Attempted to Join Admin Room: ${socket.id}`);
+      return;
+    }
     socket.join("admins");
   });
 
   socket.on("FRUSTRATION_EVENT", (data) => {
+    // Only logged-in users can send frustration signals (prevents anonymous bot floods)
+    if (!socket.user) return;
+    
     // Broadcast to all admins
     io.to("admins").emit("FRUSTRATION_EVENT", {
       ...data,
+      userId: socket.user.id,
       timestamp: new Date()
     });
   });
@@ -189,6 +220,11 @@ io.on("connection", (socket) => {
 
   socket.on("CART_ACTIVITY", (data) => {
     const { userId, cartItems } = data;
+    
+    // Prevent spoofing CART_ACTIVITY userId
+    if (!socket.user || socket.user.id !== userId) {
+      return;
+    }
     
     // Broadcast to admins
     if (cartItems && cartItems.length > 0) {
@@ -229,6 +265,11 @@ io.on("connection", (socket) => {
   socket.on("driver-location", async (data) => {
     const { driverId, location } = data;
     
+    // 🔐 SECURITY: Prevent driver-location spoofing. Ensure user is authenticated, and either is the driver or is an admin.
+    if (!socket.user || (socket.user.id !== driverId && socket.user.role !== "admin")) {
+      return;
+    }
+    
     // Broadcast coordinates immediately to tracking users for zero lag
     io.emit("DRIVER_LOCATION_STREAM", { driverId, location });
 
@@ -251,11 +292,22 @@ io.on("connection", (socket) => {
   // ── 🎧 REAL-TIME SUPPORT & DRIVER CHAT ROOMS ──
   socket.on("join-chat", (data) => {
     const { userId } = data;
+    
+    // 🔐 SECURITY: Prevent eavesdropping. Only allow joining own chat room unless user is admin or support.
+    if (!socket.user || (socket.user.id !== userId && !["admin", "support", "driver"].includes(socket.user.role))) {
+      return;
+    }
     socket.join(`chat:${userId}`);
   });
 
   socket.on("send-chat-message", async (data) => {
     const { sender, recipient, message, senderRole, recipientRole } = data;
+    
+    // 🔐 SECURITY: Prevent chat message impersonation. Sender must match logged in user id.
+    if (!socket.user || socket.user.id !== sender) {
+      return;
+    }
+    
     try {
       const ChatMessage = (await import("./models/ChatMessage.js")).default;
       const chatMsg = await ChatMessage.create({
@@ -275,6 +327,11 @@ io.on("connection", (socket) => {
 
   socket.on("typing", (data) => {
     const { sender, recipient, isTyping, senderRole } = data;
+    
+    // 🔐 SECURITY: Prevent typing spoofing. Sender must match logged in user id.
+    if (!socket.user || socket.user.id !== sender) {
+      return;
+    }
     io.to(`chat:${recipient}`).emit("typing-indicator", { sender, isTyping, senderRole });
   });
 
@@ -330,7 +387,7 @@ const limiter = rateLimit({
   max: 500, // Increased to avoid blocking legitimate UI polling
   message: "Too many requests from this IP, please try again later."
 });
-app.use("/api", limiter);
+app.use("/api/v1", limiter);
 
 // 3. Stricter Auth Rate Limiting
 const authLimiter = rateLimit({
@@ -338,8 +395,8 @@ const authLimiter = rateLimit({
   max: 5, // Limit login attempts to 5 per 15 minutes
   message: "Too many login attempts, please try again later."
 });
-app.use("/api/auth/login", authLimiter);
-app.use("/api/auth/register", authLimiter);
+app.use("/api/v1/auth/login", authLimiter);
+app.use("/api/v1/auth/register", authLimiter);
 
 // 4. 🛡️ ADMIN FORTRESS: Strict Admin Rate Limiting (Phase 26)
 const adminLimiter = rateLimit({
@@ -347,7 +404,7 @@ const adminLimiter = rateLimit({
   max: 50, // Limit admin actions to 50 per hour per IP
   message: "⛔ Admin Rate Limit Exceeded: Action blocked for security."
 });
-app.use("/api/admin", adminLimiter);
+app.use("/api/v1/admin", adminLimiter);
 
 // 5. Data Sanitization against NoSQL Query Injection
 app.use(mongoSanitize());
@@ -463,17 +520,19 @@ const connectDB = async () => {
 mongoose.connection.on('disconnected', () => logger.warn('MongoDB disconnected'));
 mongoose.connection.on('reconnected', () => logger.info('MongoDB reconnected'));
 
+const sessionStore = MongoStore.create({
+  client: mongoose.connection.getClient(),
+  collectionName: "sessions",
+  ttl: 60 * 60, // 1 hour session TTL in MongoDB
+  autoRemove: 'native',
+});
+
 // ✅ Session Setup (Optimized: Reuses Mongoose Connection)
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET || "seabite_default_secret",
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
-  store: MongoStore.create({
-    client: mongoose.connection.getClient(),
-    collectionName: "sessions",
-    ttl: 60 * 60, // 1 hour session TTL in MongoDB
-    autoRemove: 'native',
-  }),
+  store: sessionStore,
   name: "seabite.sid",
   proxy: true,
   cookie: {
@@ -486,6 +545,8 @@ const sessionMiddleware = session({
 });
 
 app.use(sessionMiddleware);
+io.engine.use(sessionMiddleware);
+app.use(csrfProtection);
 
 // ✅ Session save error handler
 app.use((req, res, next) => {
@@ -500,7 +561,7 @@ app.use((req, res, next) => {
 });
 
 // ✅ AUDIT TRAIL: Global Admin Observer (Senior Level)
-app.use("/api/admin", auditTrail);
+app.use("/api/v1/admin", auditTrail);
 
 /* --- 5. ROUTES --- */
 app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
@@ -508,50 +569,55 @@ app.get("/", (req, res) => res.send("SeaBite Server Running 🚀"));
 // ✅ Enterprise: Maintenance Mode
 app.use(checkMaintenance);
 
-app.use("/api/auth", authRoutes);
-app.use("/api/products", products);
-app.use("/api/orders", orderRoutes);
-app.use("/api/admin", auditTrail, adminRoutes);
-app.use("/api/admin/products", auditTrail, adminProductRoutes);
-app.use("/api/admin/watchtower", auditTrail, watchtowerRoutes);
-app.use("/api/admin/complaints", auditTrail, complaintRoutes); 
-app.use("/api/delivery", deliveryRoutes); 
-app.use("/api/support", supportRoutes);
-app.use("/api/chat", chatRoutes);
-app.use("/api/notifications", notificationRoutes);
-app.use("/api/notifications", pushRoutes);
-app.use("/api/payment", paymentRoutes);
-app.use("/api/contact", contactRoutes);
-app.use("/api/coupons", couponRoutes);
-app.use("/api/spin", spinRoutes);
-app.use("/api/user", userRoutes);
-app.use("/api/settings", settingsRoutes);
-app.use("/api/telemetry", telemetryRoutes);
-app.use("/api/enterprise", enterpriseRoutes);
-app.use("/api/returns", returnRoutes);
-app.use("/api/recommendations", recommendationRoutes);
-app.use("/api/admin/campaigns", auditTrail, campaignRoutes);
-app.use("/api/ab-tests", abTestRoutes);
-app.use("/api/admin/audit-logs", auditTrail, auditRoutes);
-app.use("/api/admin/bi/health-scores", auditTrail, healthRoutes);
+// ✅ Versioned Router Setup
+const apiRouter = express.Router();
+
+apiRouter.use("/auth", authRoutes);
+apiRouter.use("/products", products);
+apiRouter.use("/orders", orderRoutes);
+apiRouter.use("/admin/products", auditTrail, adminProductRoutes);
+apiRouter.use("/admin/watchtower", auditTrail, watchtowerRoutes);
+apiRouter.use("/admin/complaints", auditTrail, complaintRoutes); 
+apiRouter.use("/admin", auditTrail, adminRoutes);
+apiRouter.use("/delivery", deliveryRoutes); 
+apiRouter.use("/support", supportRoutes);
+apiRouter.use("/chat", chatRoutes);
+apiRouter.use("/notifications", notificationRoutes);
+apiRouter.use("/notifications", pushRoutes);
+apiRouter.use("/payment", paymentRoutes);
+apiRouter.use("/contact", contactRoutes);
+apiRouter.use("/coupons", couponRoutes);
+apiRouter.use("/spin", spinRoutes);
+apiRouter.use("/user", userRoutes);
+apiRouter.use("/settings", settingsRoutes);
+apiRouter.use("/telemetry", telemetryRoutes);
+apiRouter.use("/enterprise", enterpriseRoutes);
+apiRouter.use("/returns", returnRoutes);
+apiRouter.use("/recommendations", recommendationRoutes);
+apiRouter.use("/admin/campaigns", auditTrail, campaignRoutes);
+apiRouter.use("/ab-tests", abTestRoutes);
+apiRouter.use("/admin/audit-logs", auditTrail, auditRoutes);
+apiRouter.use("/admin/bi/health-scores", auditTrail, healthRoutes);
 
 import pulseRoutes from "./routes/pulseRoutes.js";
-app.use("/api/pulse", pulseRoutes);
+apiRouter.use("/pulse", pulseRoutes);
 
 import dashboardRoutes from "./routes/dashboardRoutes.js";
-app.use("/api/admin/dashboard", auditTrail, dashboardRoutes);
+apiRouter.use("/admin/dashboard", auditTrail, dashboardRoutes);
 
 import aiRoutes from "./routes/aiRoutes.js";
-app.use("/api/admin/ai", auditTrail, aiRoutes);
+apiRouter.use("/admin/ai", auditTrail, aiRoutes);
 
 import personalizationRoutes from "./routes/personalizationRoutes.js";
-app.use("/api/personalization", personalizationRoutes);
+apiRouter.use("/personalization", personalizationRoutes);
 
 import loyaltyRoutes from "./routes/loyaltyRoutes.js";
-app.use("/api/loyalty", loyaltyRoutes);
+apiRouter.use("/loyalty", loyaltyRoutes);
 
 import deliveryTrackingRoutes from "./routes/deliveryTrackingRoutes.js";
-app.use("/api/delivery-tracking", deliveryTrackingRoutes);
+apiRouter.use("/delivery-tracking", deliveryTrackingRoutes);
+
+app.use("/api/v1", apiRouter);
 
 // Configure Cloudinary for direct uploads
 cloudinary.config({
@@ -562,10 +628,16 @@ cloudinary.config({
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // Allow up to 10MB (resizing done client-side)
+  limits: { fileSize: 10 * 1024 * 1024 }, // Allow up to 10MB
+  fileFilter: (req, file, cb) => {
+    if (file && file.mimetype && !file.mimetype.startsWith("image/")) {
+      return cb(new Error("Only image files are allowed!"), false);
+    }
+    cb(null, true);
+  }
 });
 
-app.post("/api/upload", upload.single("image"), async (req, res) => {
+app.post("/api/upload", protect, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });
@@ -613,7 +685,7 @@ app.get("/health", async (req, res) => {
   });
 });
 
-app.use((req, res) => res.status(404).json({ error: "Route not found" }));
+app.use((req, res) => res.status(404).json({ success: false, message: "Route not found" }));
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
@@ -622,10 +694,13 @@ app.use((err, req, res, next) => {
   console.error(`❌ [ERROR HANDLER] ${req.method} ${req.path} | Status: ${statusCode} | Error:`, err.message);
   if (!isProduction && err.stack) console.error(err.stack);
 
+  if (process.env.SENTRY_DSN) {
+    Sentry.captureException(err);
+  }
+
   res.status(statusCode).json({
     success: false,
-    message: isProduction ? "Internal server error" : err.message,
-    ...(isProduction ? {} : { stack: err.stack }),
+    message: isProduction && statusCode === 500 ? "Internal server error" : err.message,
   });
 });
 
@@ -670,31 +745,7 @@ const server = httpServer.listen(PORT, () => {
     });
   }, 5000);
 
-  // Emit Database query telemetry every 3 seconds to admins
-  setInterval(() => {
-    try {
-      const pipelines = [
-        { name: "Aggregate Orders by Category", collection: "orders" },
-        { name: "Lookup Customer Lifetime Value (CLV)", collection: "users" },
-        { name: "Unwind Product Freshness and Catalog Gaps", collection: "products" },
-        { name: "Match Competitor Pricing Matrix", collection: "pricingsettings" },
-        { name: "Calculate Active Delivery Driver Distance Density", collection: "deliveries" },
-        { name: "Timeline Grouping of Complaints & Cold Chain Audits", collection: "complaints" }
-      ];
-      const randomPipeline = pipelines[Math.floor(Math.random() * pipelines.length)];
-      
-      const isBreached = Math.random() > 0.85;
-      const duration = isBreached ? Math.floor(Math.random() * 80) + 105 : Math.floor(Math.random() * 50) + 15;
-      
-      io.to("admins").emit("DB_TELEMETRY", {
-        pipeline: randomPipeline.name,
-        collection: randomPipeline.collection,
-        duration,
-        hasIndex: !isBreached,
-        timestamp: new Date()
-      });
-    } catch (e) {}
-  }, 3000);
+
 });
 
 // 🛡️ GRACEFUL SHUTDOWN (Phase 27)

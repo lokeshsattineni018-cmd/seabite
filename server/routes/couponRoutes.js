@@ -2,11 +2,14 @@ import express from "express";
 import Coupon from "../models/Coupon.js";
 import Order from "../models/Order.js";
 import User from "../models/User.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
+import { validate, couponValidateSchema } from "../middleware/validationMiddleware.js";
+
 // ✅ Validate ADMIN Coupons Only (not spin coupons)
-router.post("/validate", async (req, res) => {
+router.post("/validate", validate(couponValidateSchema), async (req, res) => {
   try {
     const { code, cartTotal, email } = req.body;
 
@@ -16,11 +19,14 @@ router.post("/validate", async (req, res) => {
 
     const safeEmail = (email || "").toLowerCase();
 
-    // ✅ Find ADMIN coupon only (not spin coupons)
+    // ✅ Find coupon: standard coupon OR spin coupon matching safeEmail
     const coupon = await Coupon.findOne({
       code: code.toUpperCase(),
       isActive: true,
-      isSpinCoupon: false, // ✅ Only admin coupons
+      $or: [
+        { isSpinCoupon: false },
+        { isSpinCoupon: true, userEmail: safeEmail }
+      ]
     });
 
     if (!coupon) {
@@ -97,7 +103,7 @@ router.post("/validate", async (req, res) => {
 });
 
 // ✅ Admin: Create Coupon (FIXED WITH PROPER ERROR HANDLING)
-router.post("/", async (req, res) => {
+router.post("/", protect, admin, async (req, res) => {
   try {
     console.log("📥 Received coupon creation request:", req.body);
 
@@ -154,18 +160,16 @@ router.post("/", async (req, res) => {
     }
     console.error("   Full error:", error);
 
-    // ✅ Send detailed error response
+    // ✅ Send sanitized error response
     res.status(500).json({
       message: "Error creating coupon",
-      error: error.message,
-      errorType: error.name,
-      details: error.errors ? Object.keys(error.errors).join(", ") : null
+      error: process.env.NODE_ENV === "production" ? "Internal server error" : error.message
     });
   }
 });
 
 // ✅ Admin: Get ALL admin coupons (for admin panel)
-router.get("/", async (req, res) => {
+router.get("/", protect, admin, async (req, res) => {
   try {
     // Only return admin coupons in admin panel
     const coupons = await Coupon.find({ isSpinCoupon: false }).sort({ createdAt: -1 }).lean();
@@ -197,7 +201,7 @@ router.get("/public", async (req, res) => {
 });
 
 // Admin: Update coupon
-router.put("/:id", async (req, res) => {
+router.put("/:id", protect, admin, async (req, res) => {
   try {
     const updated = await Coupon.findByIdAndUpdate(
       req.params.id,
@@ -217,7 +221,7 @@ router.put("/:id", async (req, res) => {
 });
 
 // Admin: Delete coupon
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", protect, admin, async (req, res) => {
   try {
     const deleted = await Coupon.findByIdAndDelete(req.params.id);
 

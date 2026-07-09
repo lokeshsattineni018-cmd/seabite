@@ -4,6 +4,4 @@ node_modules
 dist/
 build/
 scratch/
-package.json
-package-lock.json
 server/uploads/

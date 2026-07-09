@@ -527,7 +527,7 @@ export default function ProductDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { refreshCartCount } = useContext(CartContext);
-  const { token, user, refreshMe } = useContext(AuthContext);
+  const { user, refreshMe } = useContext(AuthContext);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1619,7 +1619,6 @@ export default function ProductDetails() {
         isOpen={isReviewOpen}
         onClose={() => setIsReviewOpen(false)}
         product={product}
-        token={token}
         API_URL={API_URL}
         onSuccess={fetchProduct}
       />

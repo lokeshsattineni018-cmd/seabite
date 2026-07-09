@@ -5,9 +5,11 @@ import { protect, admin } from "../middleware/authMiddleware.js";
 import { purchaseVelocityCheck, promoFingerprintCheck } from "../middleware/fraudProtection.js";
 import { refundToWallet } from "../controllers/walletController.js";
 
+import { validate, checkoutSchema } from "../middleware/validationMiddleware.js";
+
 // Routes for Razorpay Payment flow
 // 🟢 FIXED: Added 'protect' middleware here to populate req.user
-router.post("/checkout", protect, purchaseVelocityCheck, promoFingerprintCheck, checkout);
+router.post("/checkout", protect, validate(checkoutSchema), purchaseVelocityCheck, promoFingerprintCheck, checkout);
 
 // Wallet Refund
 router.post("/refund-wallet", protect, admin, refundToWallet);

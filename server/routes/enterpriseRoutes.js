@@ -15,7 +15,7 @@ import {
   getLoyaltyBalance,
   uploadReturnImages
 } from "../controllers/enterpriseController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 import upload from "../config/multerConfig.js";
 
 const router = express.Router();
@@ -23,14 +23,14 @@ const router = express.Router();
 
 
 // Gift Cards
-router.post("/giftcards/purchase", purchaseGiftCard);
+router.post("/giftcards/purchase", protect, purchaseGiftCard);
 router.post("/giftcards/apply", applyGiftCard);
 
 // Recommendations
 router.get("/recommendations", getRecommendations);
 
 // Blogs
-router.post("/blogs", createBlogPost);
+router.post("/blogs", protect, admin, createBlogPost);
 router.get("/blogs", getBlogPosts);
 router.get("/blogs/:slug", getBlogPostBySlug);
 
@@ -43,7 +43,7 @@ router.post("/group-cart/:code/join", joinGroupCart);
 router.post("/returns", protect, createReturnRequest);
 router.post("/returns/upload", protect, upload.array("images", 5), uploadReturnImages);
 router.get("/returns", protect, getReturnRequests);
-router.put("/returns/:id", protect, updateReturnStatus);
+router.put("/returns/:id", protect, admin, updateReturnStatus);
 
 // Loyalty Points
 router.get("/loyalty", getLoyaltyBalance);

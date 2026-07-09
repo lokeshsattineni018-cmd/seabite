@@ -1,5 +1,5 @@
 // src/components/Navbar.jsx
-import { useState, useContext, useEffect, useRef, Suspense } from "react";
+import { useState, useContext, useEffect, useRef, Suspense, lazy } from "react";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -9,7 +9,7 @@ import {
 import { CartContext } from "../../context/CartContext";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
-import Spin from "../../pages/general/Spin";
+const Spin = lazy(() => import("../../pages/general/Spin"));
 import toast from "react-hot-toast";
 import { slugify } from "../../utils/slugify";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -302,7 +302,6 @@ export default function Navbar({ announcementActive = false }) {
   const handleLogout = async () => {
     try { 
       await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true }); 
-      localStorage.removeItem("seabite_session_id");
       localStorage.removeItem("userInfo");
       setUser(null); 
       setIsLoginOpen(false);
@@ -322,7 +321,6 @@ export default function Navbar({ announcementActive = false }) {
     setAuthLoading(true);
     try {
       const res = await axios.post(`${API_URL}/api/auth/login`, { email: authEmail, password: authPassword }, { withCredentials: true });
-      if (res.data.sessionId) localStorage.setItem("seabite_session_id", res.data.sessionId);
       setUser(res.data.user);
       toast.success("Welcome back!");
       setIsLoginOpen(false);
@@ -355,7 +353,6 @@ export default function Navbar({ announcementActive = false }) {
       const res = await axios.post(`${API_URL}/api/auth/verify-otp-signup`, {
         name: authName, email: authEmail, phone: authPhone, password: authPassword, otp: authOtp, referralCode: authReferral
       });
-      if (res.data.sessionId) localStorage.setItem("seabite_session_id", res.data.sessionId);
       setUser(res.data.user);
       toast.success("Account created successfully!");
       setIsLoginOpen(false);
@@ -411,7 +408,6 @@ export default function Navbar({ announcementActive = false }) {
     onSuccess: async (tokenResponse) => {
       try {
         const res = await axios.post(`${API_URL}/api/auth/google`, { token: tokenResponse.access_token }, { withCredentials: true });
-        if (res.data.sessionId) localStorage.setItem("seabite_session_id", res.data.sessionId);
         setUser(res.data.user);
         toast.success("Success!");
         setIsLoginOpen(false);

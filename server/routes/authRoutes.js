@@ -8,15 +8,15 @@ import {
 } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import { sendOtpEmail, sendAuthEmail } from "../utils/emailService.js";
-import generateToken from "../utils/generateToken.js";
 import { authLimiter } from "../middleware/rateLimiter.js";
+import { validate, loginSchema, signupSchema, resetPasswordSchema } from "../middleware/validationMiddleware.js";
 
 import OTP from "../models/OTP.js";
 
 const router = express.Router();
 
 // ================= LOGIN =================
-router.post("/login", authLimiter, async (req, res) => {
+router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
@@ -32,9 +32,7 @@ router.post("/login", authLimiter, async (req, res) => {
     if (await user.matchPassword(password)) {
       req.session.userId = user._id;
       req.session.role = user.role;
-      generateToken(res, user._id);
       res.json({
-        sessionId: req.sessionID,
         user: {
           _id: user._id,
           name: user.name,
@@ -45,6 +43,7 @@ router.post("/login", authLimiter, async (req, res) => {
           walletBalance: user.walletBalance,
           referralCode: user.referralCode,
         },
+        csrfToken: req.session.csrfToken
       });
 
       // 📧 Send login notification email (Non-blocking)
@@ -119,7 +118,7 @@ router.post("/send-otp", authLimiter, async (req, res) => {
   }
 });
 
-router.post("/verify-otp-signup", authLimiter, async (req, res) => {
+router.post("/verify-otp-signup", authLimiter, validate(signupSchema), async (req, res) => {
   try {
     const { name, email, phone, password, otp, referralCode } = req.body;
     
@@ -130,8 +129,13 @@ router.post("/verify-otp-signup", authLimiter, async (req, res) => {
     if (!email || !password || !otp) {
       return res.status(400).json({ message: "Email, password, and OTP are required" });
     }
-    if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
+    if (password.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters long" });
+    }
+    const hasLetter = /[a-zA-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    if (!hasLetter || !hasNumber) {
+      return res.status(400).json({ message: "Password must contain at least one letter and one number" });
     }
     if (!phone || phone.length < 10) {
         return res.status(400).json({ message: "Phone number must be at least 10 digits" });
@@ -179,8 +183,6 @@ router.post("/verify-otp-signup", authLimiter, async (req, res) => {
       req.session.userId = user._id;
       req.session.role = user.role;
       
-      generateToken(res, user._id);
-      
       // 📧 Send Welcome Email
       try {
         await sendAuthEmail(user.email, user.name, true);
@@ -190,14 +192,14 @@ router.post("/verify-otp-signup", authLimiter, async (req, res) => {
 
       res.status(201).json({
         message: "Registration successful",
-        sessionId: req.sessionID,
         user: {
           _id: user._id,
           name: user.name,
           email: user.email,
           role: user.role,
           phone: user.phone,
-        }
+        },
+        csrfToken: req.session.csrfToken
       });
     } catch (err) {
       console.error("❌ SIGNUP VERIFICATION ERROR:", err);
@@ -242,7 +244,7 @@ router.post("/forgot-password-otp", authLimiter, async (req, res) => {
   }
 });
 
-router.post("/reset-password", authLimiter, async (req, res) => {
+router.post("/reset-password", authLimiter, validate(resetPasswordSchema), async (req, res) => {
   const { email, otp, newPassword } = req.body;
   
   const storedOtpData = await OTP.findOne({ email, otp, type: "FORGOT" });
@@ -253,6 +255,15 @@ router.post("/reset-password", authLimiter, async (req, res) => {
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters long" });
+    }
+    const hasLetter = /[a-zA-Z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    if (!hasLetter || !hasNumber) {
+      return res.status(400).json({ message: "Password must contain both letters and numbers" });
+    }
 
     user.password = newPassword;
     await user.save();
@@ -276,6 +287,15 @@ router.put("/change-password", protect, async (req, res) => {
     const isMatch = await user.matchPassword(oldPassword);
     if (!isMatch) {
       return res.status(401).json({ message: "Incorrect current password" });
+    }
+
+    if (!newPassword || newPassword.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters long" });
+    }
+    const hasLetter = /[a-zA-Z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    if (!hasLetter || !hasNumber) {
+      return res.status(400).json({ message: "Password must contain both letters and numbers" });
     }
 
     user.password = newPassword;

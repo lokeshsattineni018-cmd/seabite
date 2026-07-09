@@ -3,7 +3,7 @@ import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import upload from "../config/multerConfig.js";
 import { cacheGet, cacheSet, cacheClear } from "../utils/cache.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, admin } from "../middleware/authMiddleware.js";
 import SearchInsight from "../models/SearchInsight.js";
 import { getSettings } from "../models/Settings.js";
 import { logActivity } from "../utils/activityLogger.js"; // 🟢 Added import
@@ -278,22 +278,13 @@ router.get("/:id", async (req, res) => {
       // 🚀 Performance: Query directly by slug first (O(1) database read)
       product = await Product.findOne({ slug: req.params.id, active: true }).populate('reviews.user', 'name').lean();
       
-      // Fallback: If not found (legacy products without slug field populated), match in memory
+      // Fallback: If not found (legacy products without slug field populated), query name directly with fuzzy regex
       if (!product) {
-        const allProducts = await Product.find({ active: true }).populate('reviews.user', 'name').lean();
-        const slugify = (text) => {
-          if (!text) return "";
-          return text
-            .toString()
-            .toLowerCase()
-            .trim()
-            .replace(/\s+/g, "-")
-            .replace(/[^\w\-]+/g, "")
-            .replace(/\-\-+/g, "-")
-            .replace(/^-+/, "")
-            .replace(/-+$/, "");
-        };
-        product = allProducts.find(p => slugify(p.name) === req.params.id);
+        const nameQuery = req.params.id.split("-").join(" ");
+        product = await Product.findOne({
+          name: { $regex: new RegExp("^" + nameQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") },
+          active: true
+        }).populate('reviews.user', 'name').lean();
       }
     }
     if (!product) return res.status(404).json({ message: "Product not found" });
@@ -357,7 +348,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // --- CREATE PRODUCT (ADMIN) ---
-router.post("/", upload.single('image'), async (req, res) => {
+router.post("/", protect, admin, upload.single('image'), async (req, res) => {
   const { name, category, desc, trending, stock, basePrice, unit } = req.body;
   if (!req.file) return res.status(400).json({ message: "Image required" });
 

@@ -51,6 +51,9 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
     - name: Deploy to Vercel/Production
-      run: echo "🚀 Triggering production deployment via webhook/CLI..."
-      # You can integrate Vercel CLI or other deployment triggers here
+      run: |
+        npm install --global vercel
+        vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --yes

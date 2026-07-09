@@ -1,5 +1,7 @@
 import express from "express";
 import User from "../models/User.js";
+import Coupon from "../models/Coupon.js";
+import crypto from "crypto";
 import { getSettings } from "../models/Settings.js";
 
 const router = express.Router();
@@ -85,8 +87,27 @@ router.post("/spin", async (req, res) => {
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
 
+    // Generate secure random coupon code for this spin
+    const randomSuffix = crypto.randomBytes(4).toString("hex").toUpperCase();
+    const couponCode = `SPIN_${outcome.value}_${randomSuffix}`;
+
+    const newCoupon = await Coupon.create({
+      code: couponCode,
+      discountType: "percent",
+      value: outcome.value,
+      maxDiscount: 0,
+      minOrderAmount: 0,
+      isActive: true,
+      isSpinCoupon: true,
+      userEmail: user.email.toLowerCase(),
+      expiresAt: expiresAt,
+      maxUses: 1,
+      usedCount: 0
+    });
+
     return res.json({
       result: "COUPON",
+      code: newCoupon.code,
       discountValue: outcome.value,
       expiresAt: expiresAt,
     });

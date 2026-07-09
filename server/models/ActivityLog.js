@@ -14,6 +14,8 @@ const activityLogSchema = new mongoose.Schema({
 
 // Index for rapid time-based queries
 activityLogSchema.index({ timestamp: -1 });
+activityLogSchema.index({ user: 1, action: 1, timestamp: -1 });
+activityLogSchema.index({ user: 1, timestamp: -1 });
 
 // Cryptographic Sequential SHA-256 Blockhashing pre-save hook
 activityLogSchema.pre("save", async function () {

@@ -8,7 +8,7 @@ import Order from "../models/Order.js";
 export const refundToWallet = async (req, res) => {
   try {
     const { orderId } = req.body;
-    const order = await Order.findById(orderId).populate('user');
+    const order = await Order.findById(orderId);
     
     if (!order) return res.status(404).json({ message: "Order not found" });
     if (order.status === "Cancelled") return res.status(400).json({ message: "Already cancelled" });
@@ -16,13 +16,28 @@ export const refundToWallet = async (req, res) => {
       return res.status(400).json({ message: "Refund already processed for this order." });
     }
 
-    // 1. Update Order Status
-    order.status = "Cancelled";
-    order.refundStatus = "Refunded to Wallet";
-    await order.save();
+    // 1. Update Order Status atomically
+    const updatedOrder = await Order.findOneAndUpdate(
+      {
+        _id: orderId,
+        refundStatus: { $nin: ["Refunded to Wallet", "Success", "Processing"] },
+        status: { $ne: "Cancelled" }
+      },
+      {
+        $set: {
+          status: "Cancelled",
+          refundStatus: "Refunded to Wallet"
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(400).json({ message: "Refund already processed or order cancelled by another transaction." });
+    }
 
     // 2. Add to User Wallet
-    const userId = order.user?._id || order.user;
+    const userId = updatedOrder.user?._id || updatedOrder.user;
     if (!userId) {
       return res.status(400).json({ message: "No customer associated with this order." });
     }

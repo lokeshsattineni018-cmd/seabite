@@ -97,41 +97,57 @@ router.put("/:id/approve", adminAuth, async (req, res) => {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    order.returnRequest.status = "approved";
-    order.returnRequest.approvedBy = req.session?.user?.id || req.user?._id;
-    order.returnRequest.approvedAt = new Date();
-    order.returnRequest.refundAmount = refundAmount || order.totalAmount;
-    order.returnRequest.refundMethod = refundMethod || "wallet";
-    order.returnRequest.adminNotes = adminNotes || "";
-    order.refundStatus = "Approved";
+    if (!order.returnRequest || order.returnRequest.status !== "requested") {
+      return res.status(400).json({ message: "Return request is not in 'requested' state or has already been processed" });
+    }
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      { _id: req.params.id, "returnRequest.status": "requested" },
+      {
+        $set: {
+          "returnRequest.status": "approved",
+          "returnRequest.approvedBy": req.session?.user?.id || req.user?._id,
+          "returnRequest.approvedAt": new Date(),
+          "returnRequest.refundAmount": refundAmount || order.totalAmount,
+          "returnRequest.refundMethod": refundMethod || "wallet",
+          "returnRequest.adminNotes": adminNotes || "",
+          refundStatus: "Approved"
+        }
+      },
+      { new: true }
+    );
+
+    if (!updatedOrder) {
+      return res.status(400).json({ message: "Return request was already approved/processed by another transaction" });
+    }
 
     // If refund method is wallet, credit the user's wallet
     if (refundMethod === "wallet" || !refundMethod) {
       const User = (await import("../models/User.js")).default;
-      const user = await User.findById(order.user);
+      const user = await User.findById(updatedOrder.user);
       if (user) {
-        const amt = refundAmount || order.totalAmount;
+        const amt = refundAmount || updatedOrder.totalAmount;
         user.walletBalance = (user.walletBalance || 0) + amt;
         user.walletTransactions.push({
           amount: amt,
           type: "Credit",
-          description: `Refund for Order #${order.orderId} (Return Approved)`,
+          description: `Refund for Order #${updatedOrder.orderId} (Return Approved)`,
+          date: new Date()
         });
         await user.save();
-        order.returnRequest.refundedAt = new Date();
-        order.returnRequest.status = "refunded";
-        order.refundStatus = "Refunded";
+        updatedOrder.returnRequest.refundedAt = new Date();
+        updatedOrder.returnRequest.status = "refunded";
+        updatedOrder.refundStatus = "Refunded";
+        await updatedOrder.save();
       }
     }
 
-    await order.save();
-
-    logActivity("RETURN_APPROVED", `Return approved for Order #${order.orderId} — ₹${order.returnRequest.refundAmount} via ${order.returnRequest.refundMethod}`, req, {
-      orderId: order._id,
-      refundAmount: order.returnRequest.refundAmount,
+    logActivity("RETURN_APPROVED", `Return approved for Order #${updatedOrder.orderId} — ₹${updatedOrder.returnRequest.refundAmount} via ${updatedOrder.returnRequest.refundMethod}`, req, {
+      orderId: updatedOrder._id,
+      refundAmount: updatedOrder.returnRequest.refundAmount,
     });
 
-    res.json({ message: "Return approved and refund processed", order });
+    res.json({ message: "Return approved and refund processed", order: updatedOrder });
   } catch (err) {
     console.error("Approve return error:", err);
     res.status(500).json({ message: "Failed to approve return" });

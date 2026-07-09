@@ -889,7 +889,6 @@ export default function Order() {
         onClose={() => setIsReviewOpen(false)}
         product={selectedProduct}
         existingReview={selectedReview}
-        token={null}
         API_URL={API_URL}
         onSuccess={() => {
           setModalConfig({ show: true, message: "Review saved!", type: "success" });

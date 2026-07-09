@@ -978,7 +978,6 @@ export default function OrderDetails() {
   const location = useLocation();
   const navigate = useNavigate();
   const { addToCart, setIsCartOpen } = useContext(CartContext);
-  const token = localStorage.getItem("seabite_session_id") || "";
   const reduced = useReducedMotion();
 
   const [order, setOrder] = useState(null);
@@ -1260,7 +1259,6 @@ export default function OrderDetails() {
         onClose={() => setReviewOpen(false)}
         product={reviewProduct}
         existingReview={null}
-        token={token}
         API_URL={API_URL}
         onSuccess={() => {
           toast.success("Review saved!");

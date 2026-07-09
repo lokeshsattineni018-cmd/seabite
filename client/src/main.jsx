@@ -10,6 +10,15 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import * as Sentry from "@sentry/react";
 import { SocketProvider } from "./context/SocketContext";
 
+const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
+if (SENTRY_DSN) {
+  Sentry.init({
+    dsn: SENTRY_DSN,
+    tracesSampleRate: 1.0,
+    environment: import.meta.env.MODE || "development",
+  });
+}
+
 // Suppress non-error logs in browser console in production
 if (import.meta.env.PROD && typeof window !== "undefined") {
   window.console.log = () => {};

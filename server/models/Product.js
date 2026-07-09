@@ -136,6 +136,6 @@ productSchema.pre(["findOneAndUpdate", "update", "updateOne"], function() {
   }
 });
 
-productSchema.index({ name: "text", description: "text", category: "text" });
+productSchema.index({ name: "text", desc: "text", category: "text" });
 
 export default mongoose.models.Product || mongoose.model("Product", productSchema);

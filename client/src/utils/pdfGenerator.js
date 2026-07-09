@@ -1,6 +1,3 @@
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
-
 /**
  * Advanced Base64 Image Fetcher
  */
@@ -28,6 +25,8 @@ const getBase64ImageFromURL = (url) => {
  * Premium PDF Generator
  */
 export const generateInvoicePDF = async (order) => {
+    const { jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
     const doc = new jsPDF();
     const primaryColor = [91, 168, 160]; // #5BA8A0
     const darkColor = [26, 43, 53];    // #1A2B35

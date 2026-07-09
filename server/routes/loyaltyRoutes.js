@@ -1,29 +1,14 @@
 import express from "express";
 import Loyalty from "../models/Loyalty.js";
 import User from "../models/User.js";
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Middleware to check authentication
-const checkAuth = (req, res, next) => {
-  if (!req.session?.userId && !req.headers.authorization) {
-    return res.status(401).json({ error: "Authentication required" });
-  }
-  next();
-};
-
-const getUserId = (req) => {
-  if (req.session?.userId) return req.session.userId;
-  if (req.headers.authorization) {
-    return req.headers.authorization.split(" ")[1];
-  }
-  return null;
-};
-
 // Get user loyalty status
-router.get("/status", checkAuth, async (req, res) => {
+router.get("/status", protect, async (req, res) => {
   try {
-    const userId = getUserId(req);
+    const userId = req.user._id;
     let loyalty = await Loyalty.findOne({ user: userId });
     
     if (!loyalty) {
@@ -37,9 +22,9 @@ router.get("/status", checkAuth, async (req, res) => {
 });
 
 // Daily Check-in
-router.post("/checkin", checkAuth, async (req, res) => {
+router.post("/checkin", protect, async (req, res) => {
   try {
-    const userId = getUserId(req);
+    const userId = req.user._id;
     let loyalty = await Loyalty.findOne({ user: userId });
     
     if (!loyalty) {

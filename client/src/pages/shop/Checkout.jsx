@@ -474,7 +474,7 @@ export default function Checkout() {
 
       useWallet,
       walletAppliedAmount,
-      couponCode: appliedCoupon?.code || undefined
+      couponCode: appliedCoupon?.code || spinDiscount?.code || undefined
     };
     try {
       const { data } = await axios.post(`${API_URL}/api/payment/checkout`, orderDetails, { withCredentials: true });
@@ -492,8 +492,15 @@ export default function Checkout() {
         return;
       }
 
+      const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY_ID;
+      if (!razorpayKey) {
+        toast.error("Razorpay Payment Gateway is not configured properly. Please contact support.");
+        setLoading(false);
+        return;
+      }
+
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_RudgOJMh7819Qs",
+        key: razorpayKey,
         amount: data.order.amount, currency: "INR",
         name: "SeaBite", description: "Fresh Coastal Catch Payment", order_id: data.order.id,
         handler: async (response) => {

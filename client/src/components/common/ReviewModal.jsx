@@ -65,7 +65,6 @@ const ReviewModal = ({ isOpen, onClose, product, existingReview, token, API_URL,
         formData,
         {
           headers: { 
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
           },
           withCredentials: true,

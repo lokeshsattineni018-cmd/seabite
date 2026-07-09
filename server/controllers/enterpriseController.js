@@ -16,8 +16,22 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 export const purchaseGiftCard = async (req, res) => {
   try {
     const { amount, senderName, recipientEmail, message } = req.body;
-    if (!amount || !senderName || !recipientEmail) {
-      return res.status(400).json({ success: false, message: "Missing gift card details" });
+    if (!amount || !senderName || !recipientEmail || Number(amount) <= 0) {
+      return res.status(400).json({ success: false, message: "Missing or invalid gift card details" });
+    }
+
+    const senderId = req.user?._id || req.session?.userId;
+    if (!senderId) {
+      return res.status(401).json({ success: false, message: "Unauthorized. Please log in." });
+    }
+
+    const user = await User.findById(senderId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found." });
+    }
+
+    if (user.walletBalance < Number(amount)) {
+      return res.status(400).json({ success: false, message: "Insufficient wallet balance to purchase gift card." });
     }
 
     // Generate random 12 character code e.g. SB-XXXX-XXXX
@@ -34,9 +48,22 @@ export const purchaseGiftCard = async (req, res) => {
       senderName,
       recipientEmail,
       message,
-      senderId: req.session.userId || req.user?._id || null,
+      senderId,
       expiryDate
     });
+
+    // Deduct from sender's wallet
+    user.walletBalance -= Number(amount);
+    if (!user.walletTransactions) {
+      user.walletTransactions = [];
+    }
+    user.walletTransactions.push({
+      amount: Number(amount),
+      type: "Debit",
+      description: `Gift Card Purchase (${code})`,
+      date: new Date()
+    });
+    await user.save();
 
     res.status(201).json({
       success: true,

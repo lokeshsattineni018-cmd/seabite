@@ -83,7 +83,6 @@ export default function Profile() {
       console.error("Logout failed", err);
     } finally {
       localStorage.removeItem("userInfo");
-      localStorage.removeItem("seabite_session_id");
       window.location.href = "/?auth=login";
     }
   };

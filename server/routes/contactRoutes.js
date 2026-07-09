@@ -34,7 +34,7 @@ router.post("/", async (req, res) => {
 });
 
 // 2. GET: Admin fetches all messages
-router.get("/", async (req, res) => {
+router.get("/", protect, admin, async (req, res) => {
   try {
     // Fetch all contacts and sort by newest first (-1)
     const messages = await Contact.find().sort({ createdAt: -1 });

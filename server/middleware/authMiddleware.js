@@ -87,7 +87,7 @@ export const protect = async (req, res, next) => {
 export const admin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
-    const isSuperAdmin = req.user.email && req.user.email.toLowerCase().includes("lokeshsattineni018");
+    const isSuperAdmin = !!req.user.isSuperAdmin;
     if (isWriteRequest && !isSuperAdmin) {
       return res.status(403).json({ message: "Access denied: Read-only Admin role" });
     }
@@ -99,7 +99,7 @@ export const admin = (req, res, next) => {
 export const driverAuth = (req, res, next) => {
   if (req.user && (req.user.role === "driver" || req.user.role === "admin")) {
     const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
-    const isSuperAdmin = req.user.email && req.user.email.toLowerCase().includes("lokeshsattineni018");
+    const isSuperAdmin = !!req.user.isSuperAdmin;
     if (req.user.role === "admin" && isWriteRequest && !isSuperAdmin) {
       return res.status(403).json({ message: "Access denied: Read-only Admin role" });
     }
@@ -111,7 +111,7 @@ export const driverAuth = (req, res, next) => {
 export const supportAuth = (req, res, next) => {
   if (req.user && (req.user.role === "support" || req.user.role === "admin")) {
     const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
-    const isSuperAdmin = req.user.email && req.user.email.toLowerCase().includes("lokeshsattineni018");
+    const isSuperAdmin = !!req.user.isSuperAdmin;
     if (req.user.role === "admin" && isWriteRequest && !isSuperAdmin) {
       return res.status(403).json({ message: "Access denied: Read-only Admin role" });
     }

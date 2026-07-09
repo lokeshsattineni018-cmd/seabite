@@ -1,12 +1,20 @@
 import express from "express";
 import geoip from "geoip-lite";
+import rateLimit from "express-rate-limit";
 import VisitorLog from "../models/VisitorLog.js";
 import adminAuth from "../middleware/adminAuth.js";
 
 const router = express.Router();
 
+// Rate limiter for telemetry to prevent spam / DB floods
+const telemetryLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 100, // Limit each IP to 100 requests per 5 minutes
+  message: { message: "Too many telemetry pings." }
+});
+
 // 🟢 PUBLIC POST: /api/telemetry/ping
-router.post("/ping", async (req, res) => {
+router.post("/ping", telemetryLimiter, async (req, res) => {
   try {
     const { visitorId, userId, currentPath } = req.body;
     

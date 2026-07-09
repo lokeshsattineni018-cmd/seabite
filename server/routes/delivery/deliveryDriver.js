@@ -1,0 +1,431 @@
+import express from "express";
+import DeliveryPartner from "../../models/DeliveryPartner.js";
+import Order from "../../models/Order.js";
+import { protect, driverAuth } from "../../middleware/authMiddleware.js";
+import { sendStatusUpdateEmail } from "../../utils/emailService.js";
+import { sendPushNotification } from "../../utils/webPush.js";
+
+const router = express.Router();
+
+// ── GET /api/delivery/my-orders — Fetch assigned orders for logged-in driver ──
+router.get("/my-orders", protect, driverAuth, async (req, res) => {
+  try {
+    let filter = {};
+
+    if (req.user.role === "admin") {
+      filter = { status: { $in: ["Processing", "Shipped", "Out for Delivery"] } };
+    } else {
+      const partner = await DeliveryPartner.findOne({
+        $or: [
+          { email: req.user.email },
+          { phone: req.user.phone }
+        ]
+      });
+
+      if (!partner) {
+        return res.json([]);
+      }
+
+      filter = {
+        deliveryPartner: partner._id,
+        status: { $in: ["Processing", "Shipped", "Out for Delivery"] }
+      };
+    }
+    
+    const orders = await Order.find(filter)
+      .populate("user", "name phone email")
+      .sort({ createdAt: -1 });
+
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch driver orders" });
+  }
+});
+
+// ── PUT /api/delivery/orders/:id/status — Update order status (POD) ──
+router.put("/orders/:id/status", protect, driverAuth, async (req, res) => {
+  try {
+    const { status, podUrl, signature, paymentMethod } = req.body;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (req.user.role !== "admin") {
+      const partner = await DeliveryPartner.findOne({
+        $or: [
+          { email: req.user.email },
+          { phone: req.user.phone }
+        ]
+      });
+
+      if (!partner || order.deliveryPartner.toString() !== partner._id.toString()) {
+        return res.status(403).json({ message: "Access denied: Order is not assigned to you." });
+      }
+    }
+
+    if (order.status === "Delivered" || order.status.includes("Cancelled")) {
+      return res.status(400).json({ message: "Cannot change status of already Delivered or Cancelled orders." });
+    }
+
+    const populatedOrder = await Order.findById(req.params.id).populate("user");
+    if (!populatedOrder) return res.status(404).json({ message: "Order not found" });
+
+    populatedOrder.status = status;
+    
+    if (status === "Delivered") {
+      if (!podUrl || !signature) {
+        return res.status(400).json({ message: "Both Photo POD and Customer Signature are required to mark as Delivered." });
+      }
+      populatedOrder.isDelivered = true;
+      populatedOrder.deliveredAt = new Date();
+      populatedOrder.deliveryProof = {
+        photoUrl: podUrl,
+        signature: signature,
+        capturedAt: new Date()
+      };
+
+      if (populatedOrder.paymentMethod !== "Prepaid" && populatedOrder.paymentMethod !== "Wallet") {
+        populatedOrder.isPaid = true;
+        populatedOrder.paidAt = new Date();
+        if (paymentMethod) {
+          populatedOrder.paymentMethod = paymentMethod;
+        }
+      }
+    }
+
+    await populatedOrder.save();
+
+    try {
+      if (populatedOrder.user && populatedOrder.user.email) {
+        let partnerInfo = null;
+        if (populatedOrder.deliveryPartner) {
+          partnerInfo = await DeliveryPartner.findById(populatedOrder.deliveryPartner);
+        }
+
+        await sendStatusUpdateEmail(
+          populatedOrder.user.email,
+          populatedOrder.user.name || "Customer",
+          populatedOrder.orderId || populatedOrder._id,
+          status,
+          populatedOrder.items || [],
+          partnerInfo ? {
+            name: partnerInfo.name,
+            phone: partnerInfo.phone,
+            vehicleNumber: partnerInfo.vehicleNumber,
+            vehicleType: partnerInfo.vehicleType
+          } : null
+        );
+      }
+    } catch (e) {
+      console.error("Email update notify failed:", e.message);
+    }
+
+    try {
+      if (populatedOrder.user) {
+        const orderIdentifier = populatedOrder.orderId || populatedOrder._id.toString().slice(-6).toUpperCase();
+        await sendPushNotification(
+          populatedOrder.user._id,
+          "🚚 Delivery Status Update",
+          `Your order #${orderIdentifier} is now ${status}.`,
+          "/orders"
+        );
+      }
+    } catch (e) {
+      console.error("Push update notify failed:", e.message);
+    }
+
+    res.json({ message: `Order marked as ${status}`, order: populatedOrder });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update order status" });
+  }
+});
+
+// ── GET /api/delivery/my-stats — Fetch driver stats ──
+router.get("/my-stats", protect, driverAuth, async (req, res) => {
+  try {
+    const partner = await DeliveryPartner.findOne({
+      $or: [
+        { email: req.user.email },
+        { phone: req.user.phone }
+      ]
+    });
+
+    if (!partner) {
+      return res.json({
+        dailyEarnings: 0,
+        tips: 0,
+        fuelBonus: 0,
+        totalDeliveries: 0,
+        onTimeDeliveryRate: 100
+      });
+    }
+
+    const totalDeliveries = await Order.countDocuments({
+      deliveryPartner: partner._id,
+      status: "Delivered"
+    });
+
+    res.json({
+      dailyEarnings: totalDeliveries * 45,
+      tips: totalDeliveries * 10,
+      fuelBonus: totalDeliveries * 5,
+      totalDeliveries,
+      onTimeDeliveryRate: 98
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
+});
+
+// ── PUT /api/delivery/status — Toggle driver duty with fatigue + inspection gating ──
+router.put("/status", protect, driverAuth, async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!["Active", "Offline"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const partner = await DeliveryPartner.findOne({
+      $or: [{ email: req.user.email }, { phone: req.user.phone }]
+    });
+
+    if (!partner) return res.status(404).json({ message: "Delivery partner not found" });
+
+    if (status === "Active") {
+      if (partner.totalOnlineMinutesToday >= 600) {
+        return res.status(403).json({ message: "FATIGUE_LIMIT", detail: "You've been online 10+ hours today. Take a break!" });
+      }
+
+      const today = new Date().toISOString().slice(0, 10);
+      const inspectedToday = partner.inspectionLog?.some(i => 
+        i.date && new Date(i.date).toISOString().slice(0, 10) === today && i.passed
+      );
+      if (!inspectedToday) {
+        return res.status(403).json({ message: "INSPECTION_REQUIRED", detail: "Complete your vehicle inspection before going online." });
+      }
+
+      partner.onlineStartedAt = new Date();
+    }
+
+    if (status === "Offline" && partner.onlineStartedAt) {
+      const mins = Math.round((Date.now() - new Date(partner.onlineStartedAt).getTime()) / 60000);
+      partner.totalOnlineMinutesToday = (partner.totalOnlineMinutesToday || 0) + mins;
+      partner.onlineStartedAt = null;
+    }
+
+    partner.status = status;
+    await partner.save();
+
+    if (req.io) req.io.emit("FLEET_UPDATE");
+
+    res.json({ message: `Duty status updated to ${status}`, status: partner.status, partner });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to update duty status" });
+  }
+});
+
+// ── POST /api/delivery/inspection — Submit daily vehicle inspection ──
+router.post("/inspection", protect, driverAuth, async (req, res) => {
+  try {
+    const { items } = req.body;
+    const allPassed = items && items.tires && items.lights && items.iceBox && items.documents;
+
+    const partner = await DeliveryPartner.findOne({
+      $or: [{ email: req.user.email }, { phone: req.user.phone }]
+    });
+    if (!partner) return res.status(404).json({ message: "Partner not found" });
+
+    partner.inspectionLog.push({ date: new Date(), items, passed: allPassed });
+    partner.totalOnlineMinutesToday = 0;
+    await partner.save();
+
+    res.json({ passed: allPassed, message: allPassed ? "Inspection passed! You can go online." : "Inspection incomplete. Please fix flagged items." });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to save inspection" });
+  }
+});
+
+// ── GET /api/delivery/inspection/today — Check if today's inspection is done ──
+router.get("/inspection/today", protect, driverAuth, async (req, res) => {
+  try {
+    const partner = await DeliveryPartner.findOne({
+      $or: [{ email: req.user.email }, { phone: req.user.phone }]
+    });
+    if (!partner) return res.json({ done: false });
+
+    const today = new Date().toISOString().slice(0, 10);
+    const entry = partner.inspectionLog?.find(i => 
+      i.date && new Date(i.date).toISOString().slice(0, 10) === today && i.passed
+    );
+
+    res.json({ done: !!entry, inspection: entry || null });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to check inspection" });
+  }
+});
+
+// ── GET /api/delivery/leaderboard — Top drivers ranked by performance ──
+router.get("/leaderboard", protect, driverAuth, async (req, res) => {
+  try {
+    const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    const pipeline = [
+      { $match: { status: "Delivered", deliveryPartner: { $exists: true, $ne: null }, deliveredAt: { $gte: weekAgo } } },
+      { $group: {
+        _id: "$deliveryPartner",
+        weeklyDeliveries: { $sum: 1 },
+        totalRevenue: { $sum: "$totalAmount" }
+      }},
+      { $sort: { weeklyDeliveries: -1 } },
+      { $limit: 15 }
+    ];
+
+    const results = await Order.aggregate(pipeline);
+
+    const populated = await Promise.all(results.map(async (r) => {
+      const p = await DeliveryPartner.findById(r._id).select("name phone rating streak onTimeDeliveries lateDeliveries totalDeliveries");
+      if (!p) return null;
+      const total = (p.onTimeDeliveries || 0) + (p.lateDeliveries || 0);
+      const onTimePct = total > 0 ? Math.round((p.onTimeDeliveries / total) * 100) : 100;
+      return {
+        partnerId: r._id,
+        name: p.name,
+        rating: p.rating || 5,
+        weeklyDeliveries: r.weeklyDeliveries,
+        totalDeliveries: p.totalDeliveries || 0,
+        streak: p.streak || 0,
+        onTimePct,
+        totalRevenue: r.totalRevenue
+      };
+    }));
+
+    res.json(populated.filter(Boolean));
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch leaderboard" });
+  }
+});
+
+// ── GET /api/delivery/streak — Get current driver's streak and achievements ──
+router.get("/streak", protect, driverAuth, async (req, res) => {
+  try {
+    const partner = await DeliveryPartner.findOne({
+      $or: [{ email: req.user.email }, { phone: req.user.phone }]
+    });
+    if (!partner) return res.json({ streak: 0, achievements: [] });
+
+    let computedStreak = partner.streak || 0;
+    if (partner.lastDeliveryDate) {
+      const last = new Date(partner.lastDeliveryDate).toISOString().slice(0, 10);
+      const today = new Date().toISOString().slice(0, 10);
+      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+      if (last !== today && last !== yesterday) {
+        computedStreak = 0;
+        partner.streak = 0;
+        await partner.save();
+      }
+    }
+
+    res.json({ 
+      streak: computedStreak, 
+      achievements: partner.achievements || [],
+      totalDeliveries: partner.totalDeliveries || 0,
+      lastDeliveryDate: partner.lastDeliveryDate
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch streak" });
+  }
+});
+
+// ── GET /api/delivery/payout-calendar — Monthly daily earnings breakdown ──
+router.get("/payout-calendar", protect, driverAuth, async (req, res) => {
+  try {
+    const partner = await DeliveryPartner.findOne({
+      $or: [{ email: req.user.email }, { phone: req.user.phone }]
+    });
+    if (!partner) return res.json([]);
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const dailyData = await Order.aggregate([
+      { $match: { 
+        deliveryPartner: partner._id, 
+        status: "Delivered",
+        deliveredAt: { $gte: startOfMonth }
+      }},
+      { $group: {
+        _id: { $dateToString: { format: "%Y-%m-%d", date: "$deliveredAt" } },
+        deliveries: { $sum: 1 },
+        revenue: { $sum: "$totalAmount" }
+      }},
+      { $sort: { _id: 1 } }
+    ]);
+
+    const calendar = dailyData.map(d => ({
+      date: d._id,
+      deliveries: d.deliveries,
+      base: d.deliveries * 45,
+      tips: d.deliveries * 10,
+      fuel: d.deliveries * 5,
+      total: d.deliveries * 60
+    }));
+
+    res.json(calendar);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch payout calendar" });
+  }
+});
+
+// ── POST /api/delivery/sos — Emergency SOS button ──
+router.post("/sos", protect, driverAuth, async (req, res) => {
+  try {
+    const { lat, lng } = req.body;
+
+    const partner = await DeliveryPartner.findOne({
+      $or: [{ email: req.user.email }, { phone: req.user.phone }]
+    });
+    if (!partner) return res.status(404).json({ message: "Partner not found" });
+
+    partner.sosHistory.push({ lat, lng, triggeredAt: new Date(), resolved: false });
+    await partner.save();
+
+    if (req.io) {
+      req.io.emit("SOS_ALERT", {
+        driverId: partner._id,
+        driverName: partner.name,
+        driverPhone: partner.phone,
+        lat, lng,
+        time: new Date()
+      });
+    }
+
+    res.json({ message: "🆘 SOS sent! Help is being dispatched." });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to send SOS" });
+  }
+});
+
+// ── GET /api/delivery/fatigue — Get current session fatigue data ──
+router.get("/fatigue", protect, driverAuth, async (req, res) => {
+  try {
+    const partner = await DeliveryPartner.findOne({
+      $or: [{ email: req.user.email }, { phone: req.user.phone }]
+    });
+    if (!partner) return res.json({ totalMinutes: 0, sessionStart: null });
+
+    let currentSessionMin = 0;
+    if (partner.onlineStartedAt && partner.status === "Active") {
+      currentSessionMin = Math.round((Date.now() - new Date(partner.onlineStartedAt).getTime()) / 60000);
+    }
+
+    res.json({ 
+      totalMinutesToday: (partner.totalOnlineMinutesToday || 0) + currentSessionMin,
+      sessionStart: partner.onlineStartedAt,
+      limit: 600
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch fatigue data" });
+  }
+});
+
+export default router;

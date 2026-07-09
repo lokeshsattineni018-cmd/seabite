@@ -78,6 +78,11 @@ router.get("/:orderId", protect, async (req, res) => {
     if (!order) {
         return res.status(404).json({ message: "Order not found" });
     }
+
+    // 🔐 SECURITY: Prevent IDOR. Allow access only to the user who placed the order OR an admin user.
+    if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied: You are not authorized to view this order." });
+    }
     
     // Safety check for items
     if (!order.items || !Array.isArray(order.items)) {

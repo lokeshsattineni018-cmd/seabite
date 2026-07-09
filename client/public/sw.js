@@ -44,7 +44,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // 1. API Cache Strategy: Stale-While-Revalidate
-  if (url.pathname.includes("/api/products") || url.pathname.includes("/api/coupons")) {
+  if (url.pathname.includes("/api/v1/products") || url.pathname.includes("/api/v1/coupons") || url.pathname.includes("/api/products") || url.pathname.includes("/api/coupons")) {
     event.respondWith(
       caches.open(API_CACHE_NAME).then((cache) => {
         return cache.match(request).then((cachedResponse) => {

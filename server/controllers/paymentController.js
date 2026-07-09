@@ -1,9 +1,12 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import Order from '../models/Order.js';
-import Notification from '../models/notification.js';
+import Notification from '../models/Notification.js';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
+import Coupon from '../models/Coupon.js';
+import { getSettings } from '../models/Settings.js';
 import { sendOrderPlacedEmail } from "../utils/emailService.js";
 import logger from "../utils/logger.js";
 
@@ -77,48 +80,105 @@ export const checkout = async (req, res) => {
       }
     }
 
-    // 🟢 STOCK VALIDATION
-    // Check if all items are in stock
-    for (const item of items) {
-      const product = await Product.findById(item.productId); // Use Product model
-      if (!product) {
-        return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
-      }
-      if (product.countInStock < item.qty) {
-        return res.status(400).json({ success: false, message: `Out of stock: ${item.name}` });
-      }
-    }
-
     const userDoc = await User.findById(req.user._id);
     if (!userDoc) {
       return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    // Apply Wallet Balance if requested
-    const useWallet = !!req.body.useWallet;
-    const walletAppliedAmount = req.body.walletAppliedAmount ? Number(req.body.walletAppliedAmount) : 0;
-    if (useWallet && walletAppliedAmount > 0) {
-      if (userDoc.walletBalance < walletAppliedAmount) {
-        return res.status(400).json({ success: false, message: "Insufficient wallet balance" });
+    // 🟢 SERVER-SIDE PRICE RECALCULATION
+    let recalculatedItemsPrice = 0;
+    const verifiedItems = [];
+
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
       }
-      userDoc.walletBalance -= walletAppliedAmount;
+
+      // True unit price calculated with cutPriceAdjustmentPct
+      const adjustment = item.cutPriceAdjustmentPct ? Number(item.cutPriceAdjustmentPct) : 0;
+      const basePrice = product.basePrice;
+      const itemUnitPrice = Math.round(basePrice * (1 + adjustment / 100));
+
+      recalculatedItemsPrice += itemUnitPrice * item.qty;
+
+      verifiedItems.push({
+        productId: item.productId,
+        name: product.name,
+        price: itemUnitPrice,
+        qty: item.qty,
+        image: product.image || item.image,
+        selectedCut: item.selectedCut || "",
+        cutPriceAdjustmentPct: adjustment,
+        orderedWeightGrams: item.orderedWeightGrams || 0,
+      });
     }
 
+    // 🟢 COUPON RECALCULATION
+    let calculatedCouponDiscount = 0;
+    let couponDoc = null;
+    if (reqCouponCode) {
+      couponDoc = await Coupon.findOne({
+        code: reqCouponCode.toUpperCase().trim(),
+        isActive: true,
+        $or: [
+          { isSpinCoupon: false },
+          { isSpinCoupon: true, userEmail: userDoc.email.toLowerCase() }
+        ]
+      });
+
+      if (!couponDoc) {
+        return res.status(400).json({ success: false, message: "Invalid or expired coupon code" });
+      }
+
+      // Expiry Check
+      if (couponDoc.expiresAt && couponDoc.expiresAt < new Date()) {
+        return res.status(400).json({ success: false, message: "Coupon has expired." });
+      }
+
+      // Min order check
+      if (couponDoc.minOrderAmount > 0 && recalculatedItemsPrice < couponDoc.minOrderAmount) {
+        return res.status(400).json({ success: false, message: `Minimum order amount ₹${couponDoc.minOrderAmount} required.` });
+      }
+
+      // Usage limits check
+      if (couponDoc.maxUses > 0 && couponDoc.usedCount >= couponDoc.maxUses) {
+        return res.status(400).json({ success: false, message: "Coupon usage limit reached." });
+      }
+
+      // First-time only check
+      if (couponDoc.firstTimeOnly) {
+        const orderCount = await Order.countDocuments({ user: userDoc._id, status: { $ne: "Cancelled" } });
+        if (orderCount > 0) {
+          return res.status(400).json({ success: false, message: "This coupon is valid for first-time users only." });
+        }
+      }
+
+      if (couponDoc.discountType === "percent") {
+        calculatedCouponDiscount = (recalculatedItemsPrice * couponDoc.value) / 100;
+        if (couponDoc.maxDiscount > 0 && calculatedCouponDiscount > couponDoc.maxDiscount) {
+          calculatedCouponDiscount = couponDoc.maxDiscount;
+        }
+      } else {
+        calculatedCouponDiscount = couponDoc.value;
+      }
+      calculatedCouponDiscount = Math.min(Math.floor(calculatedCouponDiscount), recalculatedItemsPrice);
+    }
+
+    // 🟢 LOYALTY RECALCULATION
     let loyaltyDiscount = 0;
     let pointsUsed = 0;
     if (useLoyalty && userDoc.loyaltyPoints > 0) {
       const requestedPoints = loyaltyPointsToRedeem !== undefined ? Math.min(Number(loyaltyPointsToRedeem), userDoc.loyaltyPoints) : userDoc.loyaltyPoints;
-      const calculatedSubtotal = Number(itemsPrice || 0) - Number(discount || 0);
+      const calculatedSubtotal = recalculatedItemsPrice - calculatedCouponDiscount;
       const calculatedTax = Math.round(calculatedSubtotal * 0.05);
       const maxDiscountable = calculatedSubtotal + Number(shippingPrice || 0) + calculatedTax;
 
       loyaltyDiscount = Math.min(requestedPoints * 0.5, maxDiscountable);
       pointsUsed = Math.min(requestedPoints, Math.ceil(loyaltyDiscount / 0.5));
-
-      userDoc.loyaltyPoints = Math.max(0, userDoc.loyaltyPoints - pointsUsed);
     }
 
-    // Apply Gift Card Code if provided
+    // 🟢 GIFT CARD RECALCULATION
     let giftCardDiscount = 0;
     let giftCardDocToSave = null;
     if (giftCardCode) {
@@ -129,7 +189,7 @@ export const checkout = async (req, res) => {
           card.active = false;
           giftCardDocToSave = card;
         } else {
-          const calculatedSubtotal = Number(itemsPrice || 0) - Number(discount || 0) - loyaltyDiscount;
+          const calculatedSubtotal = recalculatedItemsPrice - calculatedCouponDiscount - loyaltyDiscount;
           const calculatedTax = Math.round(calculatedSubtotal * 0.05);
           const currentTotal = Math.max(0, calculatedSubtotal + Number(shippingPrice || 0) + calculatedTax);
 
@@ -143,79 +203,172 @@ export const checkout = async (req, res) => {
       }
     }
 
-    let razorpayOrder = null;
+    // 🟢 SHIPPING RECALCULATION (Dynamic from Store Settings)
+    let freeThreshold = 1000;
+    let deliveryFee = 99;
+    try {
+      const settings = await getSettings();
+      if (settings) {
+        freeThreshold = settings.freeDeliveryThreshold || 1000;
+        deliveryFee = settings.deliveryFee !== undefined ? settings.deliveryFee : 99;
+      }
+    } catch (err) {}
 
-    if (paymentMethod === "Prepaid" && Number(amount) > 0) {
-      razorpayOrder = await instance.orders.create({
-        amount: Math.round(Number(amount) * 100),
-        currency: "INR",
-        receipt: `receipt_${Date.now()}`
-      });
-    }
+    const isShippingCoupon = couponDoc && couponDoc.discountType === "shipping";
+    const calculatedShippingPrice = (recalculatedItemsPrice >= freeThreshold || isShippingCoupon) ? 0 : deliveryFee;
 
-    const orderData = {
-      user: req.user._id,
-      items,
-      shippingAddress,
-      itemsPrice,
-      taxPrice,
-      shippingPrice,
-      discount: Number(discount || 0) + loyaltyDiscount + giftCardDiscount + walletAppliedAmount,
-      couponCode: reqCouponCode || undefined,
-      couponDiscount: Number(discount || 0),
-      walletAppliedAmount: walletAppliedAmount || 0,
-      totalAmount: amount,
-      paymentMethod: paymentMethod || "COD",
-      razorpay_order_id: razorpayOrder ? razorpayOrder.id : null,
-      status: paymentMethod === "Wallet" ? "Processing" : "Pending",
-      isPaid: paymentMethod === "Wallet" ? true : false,
-      paidAt: paymentMethod === "Wallet" ? new Date() : undefined,
-      deliverySlot,
-      deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined,
-      isGift: !!isGift,
-      giftMessage: giftMessage || "",
-    };
+    // Recalculate Subtotal, Tax, and Grand Total
+    const finalSubtotal = Math.max(0, recalculatedItemsPrice - calculatedCouponDiscount - loyaltyDiscount - giftCardDiscount);
+    const calculatedTaxPrice = Math.round(finalSubtotal * 0.05);
+    const totalBeforeWallet = finalSubtotal + calculatedShippingPrice + calculatedTaxPrice;
 
-    if (idempotencyKey) {
-      orderData.idempotencyKey = idempotencyKey;
-    }
-
-    const newOrder = new Order(orderData);
-
-    const savedOrder = await newOrder.save();
-
-    // Log the wallet transaction and save userDoc updates (wallet, loyalty, cart clearing)
+    // Apply Wallet Balance if requested
+    const useWallet = !!req.body.useWallet;
+    const walletAppliedAmount = req.body.walletAppliedAmount ? Number(req.body.walletAppliedAmount) : 0;
+    let calculatedWalletAppliedAmount = 0;
     if (useWallet && walletAppliedAmount > 0) {
-      if (!userDoc.walletTransactions) {
-        userDoc.walletTransactions = [];
-      }
-      userDoc.walletTransactions.push({
-        amount: walletAppliedAmount,
-        type: "Debit",
-        description: `Applied to Order #${savedOrder.orderId || savedOrder._id.toString().substring(18)}`,
-        date: new Date()
+      calculatedWalletAppliedAmount = Math.min(userDoc.walletBalance, totalBeforeWallet, walletAppliedAmount);
+    }
+
+    const calculatedTotalAmount = Math.max(0, totalBeforeWallet - calculatedWalletAppliedAmount);
+
+    // 🟢 ASSERT AMOUNT MATCH
+    if (Math.round(amount) !== Math.round(calculatedTotalAmount)) {
+      return res.status(400).json({
+        success: false,
+        message: `Security validation: Price calculation mismatch. Expected: ₹${calculatedTotalAmount}, Received: ₹${amount}.`
       });
     }
 
-    userDoc.cart = [];
-    await userDoc.save();
-
-    // Save gift card updates if applicable
-    if (giftCardDocToSave) {
-      await giftCardDocToSave.save();
+    // Apply database updates to userDoc (deduct balances only now)
+    if (useWallet && calculatedWalletAppliedAmount > 0) {
+      userDoc.walletBalance -= calculatedWalletAppliedAmount;
+    }
+    if (pointsUsed > 0) {
+      userDoc.loyaltyPoints = Math.max(0, userDoc.loyaltyPoints - pointsUsed);
     }
 
-    // 🟢 STOCK DEDUCTION
-    for (const item of items) {
-      const product = await Product.findById(item.productId);
-      if (product) {
-        product.countInStock = Math.max(0, product.countInStock - item.qty);
-        if (product.countInStock <= 0) {
-          product.stock = "out";
+    const session = await mongoose.startSession();
+    let transactionActive = false;
+    try {
+      await session.startTransaction();
+      transactionActive = true;
+    } catch (sessionError) {
+      logger.info("MongoDB session/transaction could not be started, falling back to non-transactional flow.", { traceId });
+    }
+
+    const deductedProducts = [];
+    let savedOrder;
+
+    try {
+      // 🟢 THREAD-SAFE ATOMIC INVENTORY VALIDATION & LOCK LOOP (TOCTOU Proof)
+      for (const item of verifiedItems) {
+        const product = await Product.findOneAndUpdate(
+          { _id: item.productId, countInStock: { $gte: item.qty } },
+          { $inc: { countInStock: -item.qty } },
+          { session: transactionActive ? session : undefined, new: true }
+        );
+        if (!product) {
+          throw new Error(`Out of stock: ${item.name}`);
         }
-        await product.save();
+        if (product.countInStock <= 0) {
+          await Product.findByIdAndUpdate(
+            item.productId,
+            { stock: "out" },
+            { session: transactionActive ? session : undefined }
+          );
+        }
+        deductedProducts.push({ productId: item.productId, qty: item.qty });
       }
+
+      let razorpayOrder = null;
+
+      if (paymentMethod === "Prepaid" && Number(amount) > 0) {
+        // External APIs are called outside transaction locks as they shouldn't block DB
+        razorpayOrder = await instance.orders.create({
+          amount: Math.round(Number(amount) * 100),
+          currency: "INR",
+          receipt: `receipt_${Date.now()}`
+        });
+      }
+
+      const orderData = {
+        user: req.user._id,
+        items: verifiedItems,
+        shippingAddress,
+        itemsPrice: recalculatedItemsPrice,
+        taxPrice: calculatedTaxPrice,
+        shippingPrice: calculatedShippingPrice,
+        discount: calculatedCouponDiscount + loyaltyDiscount + giftCardDiscount + calculatedWalletAppliedAmount,
+        couponCode: reqCouponCode || undefined,
+        couponDiscount: calculatedCouponDiscount,
+        walletAppliedAmount: calculatedWalletAppliedAmount,
+        totalAmount: amount,
+        paymentMethod: paymentMethod || "COD",
+        razorpay_order_id: razorpayOrder ? razorpayOrder.id : null,
+        status: paymentMethod === "Wallet" ? "Processing" : "Pending",
+        isPaid: paymentMethod === "Wallet" ? true : false,
+        paidAt: paymentMethod === "Wallet" ? new Date() : undefined,
+        deliverySlot,
+        deliveryDate: deliveryDate ? new Date(deliveryDate) : undefined,
+        isGift: !!isGift,
+        giftMessage: giftMessage || "",
+        fraudFingerprint: req.fraudFingerprint || undefined,
+      };
+
+      if (idempotencyKey) {
+        orderData.idempotencyKey = idempotencyKey;
+      }
+
+      const newOrder = new Order(orderData);
+      savedOrder = await newOrder.save({ session: transactionActive ? session : undefined });
+
+      // Log the wallet transaction
+      if (useWallet && calculatedWalletAppliedAmount > 0) {
+        if (!userDoc.walletTransactions) {
+          userDoc.walletTransactions = [];
+        }
+        userDoc.walletTransactions.push({
+          amount: calculatedWalletAppliedAmount,
+          type: "Debit",
+          description: `Applied to Order #${savedOrder.orderId || savedOrder._id.toString().substring(18)}`,
+          date: new Date()
+        });
+      }
+
+      // Increment coupon used count if applicable
+      if (couponDoc) {
+        couponDoc.usedCount = (couponDoc.usedCount || 0) + 1;
+        await couponDoc.save({ session: transactionActive ? session : undefined });
+      }
+
+      userDoc.cart = [];
+      await userDoc.save({ session: transactionActive ? session : undefined });
+
+      // Save gift card updates if applicable
+      if (giftCardDocToSave) {
+        await giftCardDocToSave.save({ session: transactionActive ? session : undefined });
+      }
+
+      if (transactionActive) {
+        await session.commitTransaction();
+      }
+    } catch (checkoutError) {
+      if (transactionActive) {
+        await session.abortTransaction();
+      } else {
+        // Rollback any successfully locked products in this execution loop manually
+        for (const rolledBack of deductedProducts) {
+          await Product.findByIdAndUpdate(rolledBack.productId, {
+            $inc: { countInStock: rolledBack.qty },
+            $set: { stock: "in" }
+          });
+        }
+      }
+      session.endSession();
+      return res.status(400).json({ success: false, message: checkoutError.message });
     }
+    session.endSession();
 
     // ✅ TRIGGER EMAIL & WHATSAPP: ONLY for COD or Wallet orders here
     if (paymentMethod === "COD" || paymentMethod === "Wallet") {

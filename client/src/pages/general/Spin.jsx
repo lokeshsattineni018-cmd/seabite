@@ -105,6 +105,7 @@ const Spin = ({ isOpen, onClose }) => {
 
         if (backendResult.result === "COUPON") {
           const discountData = {
+            code: backendResult.code,
             percentage: backendResult.discountValue,
             expiresAt: backendResult.expiresAt,
             spunAt: new Date().toISOString()

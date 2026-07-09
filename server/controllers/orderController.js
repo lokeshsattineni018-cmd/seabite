@@ -8,7 +8,7 @@ import logger from "../utils/logger.js";
 import Order from "../models/Order.js";
 import Product from "../models/Product.js";
 import ActivityLog from "../models/ActivityLog.js";
-import Notification from "../models/notification.js";
+import Notification from "../models/Notification.js";
 import Complaint from "../models/Complaint.js"; // 🟢 Added
 import mongoose from "mongoose";
 

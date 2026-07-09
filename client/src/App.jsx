@@ -103,27 +103,42 @@ import { CartProvider } from "./context/CartContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { CompareProvider } from "./context/CompareContext";
+import { useSocket } from "./context/SocketContext";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import { useTelemetry } from "./hooks/useTelemetry"; // 🟢 Telemetry Tracker
 
+// Central API Config
 axios.defaults.withCredentials = true;
 const API_URL = import.meta.env.VITE_API_URL || "";
 axios.defaults.baseURL = API_URL;
 
-// ✅ Header-based Session Fallback (Mobile stability)
+// 🟢 Automatically prefix outgoing API calls with versioned endpoint
 axios.interceptors.request.use((config) => {
-  const sessionId = localStorage.getItem("seabite_session_id");
-  if (sessionId) {
-    config.headers.Authorization = `Bearer ${sessionId}`;
+  if (config.url && config.url.includes("/api/")) {
+    config.url = config.url.replace("/api/", "/api/v1/");
   }
   return config;
 });
+
+// 🟢 Automatically capture and sync CSRF tokens from backend responses
+axios.interceptors.response.use(
+  (response) => {
+    if (response.data && response.data.csrfToken) {
+      axios.defaults.headers.common["X-CSRF-Token"] = response.data.csrfToken;
+    }
+    return response;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 
 
 function MainLayout() {
   useTelemetry(); // 🟢 Trigger Telemetry
   const { user } = useAuth();
+  const { socket } = useSocket();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const isDashboardRoute = isAdminRoute || location.pathname.startsWith("/driver") || location.pathname.startsWith("/support");
@@ -175,9 +190,31 @@ function MainLayout() {
       }
     };
     fetchSettings();
-    const interval = setInterval(fetchSettings, 30000); // Check every 30 seconds
-    return () => clearInterval(interval);
-  }, [location.pathname]);
+    
+    // Listen to socket for settings updates
+    if (socket) {
+      socket.on("SETTINGS_UPDATE", (data) => {
+        if (data) {
+          setMaintenance({
+            active: data.isMaintenanceMode,
+            message: data.maintenanceMessage,
+            banner: data.banner
+          });
+          if (data.announcement) {
+            setAnnouncement(data.announcement);
+            localStorage.setItem("seabite_announcement", JSON.stringify(data.announcement));
+          }
+          setSpinWheelEnabled(data.spinWheelEnabled);
+        }
+      });
+    }
+
+    const interval = setInterval(fetchSettings, 300000); // Check every 5 minutes as fallback
+    return () => {
+      clearInterval(interval);
+      if (socket) socket.off("SETTINGS_UPDATE");
+    };
+  }, [socket]);
 
   // 🎡 Spin Wheel Trigger Logic
   useEffect(() => {
