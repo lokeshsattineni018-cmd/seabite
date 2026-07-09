@@ -86,6 +86,21 @@ export const checkout = async (req, res) => {
     }
 
     // 🟢 SERVER-SIDE PRICE RECALCULATION
+    // Load store settings dynamically
+    let freeThreshold = 1000;
+    let deliveryFee = 99;
+    let taxRate = 5;
+    try {
+      const settings = await getSettings();
+      if (settings) {
+        freeThreshold = settings.freeDeliveryThreshold !== undefined ? settings.freeDeliveryThreshold : 1000;
+        deliveryFee = settings.deliveryFee !== undefined ? settings.deliveryFee : 99;
+        taxRate = settings.taxRate !== undefined ? settings.taxRate : 5;
+      }
+    } catch (err) {
+      logger.error("Failed to load store settings in checkout", { error: err.message });
+    }
+
     let recalculatedItemsPrice = 0;
     const verifiedItems = [];
 
@@ -165,14 +180,18 @@ export const checkout = async (req, res) => {
       calculatedCouponDiscount = Math.min(Math.floor(calculatedCouponDiscount), recalculatedItemsPrice);
     }
 
+    // 🟢 SHIPPING RECALCULATION (Calculated early for discount limit formulas)
+    const isShippingCoupon = couponDoc && couponDoc.discountType === "shipping";
+    const calculatedShippingPrice = (recalculatedItemsPrice >= freeThreshold || isShippingCoupon) ? 0 : deliveryFee;
+
     // 🟢 LOYALTY RECALCULATION
     let loyaltyDiscount = 0;
     let pointsUsed = 0;
     if (useLoyalty && userDoc.loyaltyPoints > 0) {
       const requestedPoints = loyaltyPointsToRedeem !== undefined ? Math.min(Number(loyaltyPointsToRedeem), userDoc.loyaltyPoints) : userDoc.loyaltyPoints;
       const calculatedSubtotal = recalculatedItemsPrice - calculatedCouponDiscount;
-      const calculatedTax = Math.round(calculatedSubtotal * 0.05);
-      const maxDiscountable = calculatedSubtotal + Number(shippingPrice || 0) + calculatedTax;
+      const calculatedTax = Math.round(calculatedSubtotal * (taxRate / 100));
+      const maxDiscountable = calculatedSubtotal + calculatedShippingPrice + calculatedTax;
 
       loyaltyDiscount = Math.min(requestedPoints * 0.5, maxDiscountable);
       pointsUsed = Math.min(requestedPoints, Math.ceil(loyaltyDiscount / 0.5));
@@ -190,8 +209,8 @@ export const checkout = async (req, res) => {
           giftCardDocToSave = card;
         } else {
           const calculatedSubtotal = recalculatedItemsPrice - calculatedCouponDiscount - loyaltyDiscount;
-          const calculatedTax = Math.round(calculatedSubtotal * 0.05);
-          const currentTotal = Math.max(0, calculatedSubtotal + Number(shippingPrice || 0) + calculatedTax);
+          const calculatedTax = Math.round(calculatedSubtotal * (taxRate / 100));
+          const currentTotal = Math.max(0, calculatedSubtotal + calculatedShippingPrice + calculatedTax);
 
           giftCardDiscount = Math.min(card.currentBalance, currentTotal);
           card.currentBalance = Math.max(0, card.currentBalance - giftCardDiscount);
@@ -203,23 +222,9 @@ export const checkout = async (req, res) => {
       }
     }
 
-    // 🟢 SHIPPING RECALCULATION (Dynamic from Store Settings)
-    let freeThreshold = 1000;
-    let deliveryFee = 99;
-    try {
-      const settings = await getSettings();
-      if (settings) {
-        freeThreshold = settings.freeDeliveryThreshold || 1000;
-        deliveryFee = settings.deliveryFee !== undefined ? settings.deliveryFee : 99;
-      }
-    } catch (err) {}
-
-    const isShippingCoupon = couponDoc && couponDoc.discountType === "shipping";
-    const calculatedShippingPrice = (recalculatedItemsPrice >= freeThreshold || isShippingCoupon) ? 0 : deliveryFee;
-
     // Recalculate Subtotal, Tax, and Grand Total
     const finalSubtotal = Math.max(0, recalculatedItemsPrice - calculatedCouponDiscount - loyaltyDiscount - giftCardDiscount);
-    const calculatedTaxPrice = Math.round(finalSubtotal * 0.05);
+    const calculatedTaxPrice = Math.round(finalSubtotal * (taxRate / 100));
     const totalBeforeWallet = finalSubtotal + calculatedShippingPrice + calculatedTaxPrice;
 
     // Apply Wallet Balance if requested
