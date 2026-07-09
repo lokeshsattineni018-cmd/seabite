@@ -406,6 +406,19 @@ const adminLimiter = rateLimit({
 });
 app.use("/api/v1/admin", adminLimiter);
 
+// Enable mutability on req.query for Express 5 compatibility with mongoSanitize
+app.use((req, res, next) => {
+  if (req.query) {
+    Object.defineProperty(req, "query", {
+      value: { ...req.query },
+      writable: true,
+      configurable: true,
+      enumerable: true,
+    });
+  }
+  next();
+});
+
 // 5. Data Sanitization against NoSQL Query Injection
 app.use(mongoSanitize());
 
