@@ -201,24 +201,7 @@ export default function FilterSidebar({ isOpen, onClose, filters, setFilters, cl
 
   return (
     <>
-      {/* Desktop Sidebar (Sticky Layout) */}
-      <div className="hidden lg:block w-60 shrink-0 sticky" style={{ top: "120px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-          <FiSliders color={BRAND} size={15} />
-          <h2 style={{ fontSize: "15px", fontWeight: 700, color: BRAND_DARK, margin: 0 }}>Filters</h2>
-        </div>
-        <FilterContent
-          filters={filters}
-          setFilters={setFilters}
-          clearFilters={clearFilters}
-          localPrice={localPrice}
-          handlePriceChange={handlePriceChange}
-          applyPrice={applyPrice}
-          metaData={metaData}
-        />
-      </div>
-
-      {/* Mobile Drawer Overlay */}
+      {/* Drawer Overlay (Available on all devices) */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -228,7 +211,7 @@ export default function FilterSidebar({ isOpen, onClose, filters, setFilters, cl
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={onClose}
-              style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", zIndex: 9997 }}
+              style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.45)", backdropFilter: "blur(8px)", zIndex: 9998 }}
             />
 
             {/* Panel */}
@@ -239,10 +222,11 @@ export default function FilterSidebar({ isOpen, onClose, filters, setFilters, cl
               transition={{ type: "tween", duration: 0.3, ease: "easeOut" }}
               style={{
                 position: "fixed", top: 0, right: 0, bottom: 0,
-                width: "min(85vw, 300px)",
+                width: "min(85vw, 350px)",
                 background: "#fff",
-                zIndex: 9998,
+                zIndex: 9999,
                 display: "flex", flexDirection: "column",
+                boxShadow: "-10px 0 40px rgba(26, 46, 44, 0.08)",
               }}
             >
               {/* Header */}

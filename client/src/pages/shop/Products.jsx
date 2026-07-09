@@ -33,6 +33,7 @@ export default function Products() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   const [localSearch, setLocalSearch] = useState("");
   const searchDebounceRef = useRef(null);
@@ -51,6 +52,14 @@ export default function Products() {
 
   const categories = ["All", "Fish", "Crab", "Prawn"];
   const meta = CATEGORY_META[filters.category] || CATEGORY_META.All;
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -181,19 +190,33 @@ export default function Products() {
         }
         .sticky-filter-bar {
           position: sticky;
-          top: 74px;
+          top: 114px;
           z-index: 100;
-          background: rgba(244, 249, 248, 0.85);
-          backdrop-filter: blur(20px) saturate(1.8);
-          WebkitBackdropFilter: blur(20px) saturate(1.8);
+          background: transparent;
           margin-bottom: 20px;
           padding: 10px 0;
           margin-left: -24px;
           margin-right: -24px;
           padding-left: 16px;
           padding-right: 16px;
-          border-bottom: 1px solid rgba(91, 191, 181, 0.08);
+          border-bottom: 1px solid transparent;
           transition: all 0.3s ease;
+        }
+        .sticky-filter-bar.sticky-scrolled {
+          background: rgba(244, 249, 248, 0.85) !important;
+          backdrop-filter: blur(20px) saturate(1.8) !important;
+          -webkit-backdrop-filter: blur(20px) saturate(1.8) !important;
+          border-bottom: 1px solid rgba(91, 191, 181, 0.12) !important;
+          box-shadow: 0 10px 30px rgba(26, 46, 44, 0.04) !important;
+        }
+        @media (max-width: 768px) {
+          .sticky-filter-bar {
+            top: 64px;
+            margin-left: -16px;
+            margin-right: -16px;
+            padding-left: 16px;
+            padding-right: 16px;
+          }
         }
         @media (max-width: 480px) {
           .sticky-filter-bar {
@@ -202,15 +225,6 @@ export default function Products() {
             margin-right: -12px;
             padding-left: 12px;
             padding-right: 12px;
-          }
-        }
-        @media (min-width: 481px) and (max-width: 768px) {
-          .sticky-filter-bar {
-            top: 64px;
-            margin-left: -16px;
-            margin-right: -16px;
-            padding-left: 16px;
-            padding-right: 16px;
           }
         }
         
@@ -273,7 +287,7 @@ export default function Products() {
           </motion.div>
 
           {/* ── STICKY FILTER BAR ── */}
-          <div className="sticky-filter-bar">
+          <div className={`sticky-filter-bar ${scrolled ? "sticky-scrolled" : ""}`}>
             {/* Single row: Filters + Search + Pills */}
             <div style={{ display: "flex", gap: "8px", alignItems: "center", overflowX: "auto" }} className="no-scrollbar">
               <button
@@ -394,7 +408,7 @@ export default function Products() {
                     style={{ 
                       paddingBottom: window.innerWidth < 768 ? "112px" : "64px"
                     }}
-                    className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4 product-grid"
+                    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 product-grid"
                   >
                     {products.map((p, i) => (
                       <motion.div key={p._id} layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}>
