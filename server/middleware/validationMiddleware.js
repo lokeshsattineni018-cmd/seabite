@@ -102,7 +102,7 @@ export const checkoutSchema = z.object({
       zip: z
         .string({ required_error: "ZIP code is required" })
         .min(5, { message: "ZIP code must be at least 5 digits" }),
-      country: z.string({ required_error: "Country is required" }),
+      country: z.string().optional().default("India"),
     }),
     isGift: z.boolean().optional(),
     giftMessage: z.string().optional(),
