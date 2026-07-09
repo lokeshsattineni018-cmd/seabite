@@ -418,7 +418,13 @@ app.use(hpp());
 
 // ✅ Handle static uploads
 const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  logger.warn("Could not create uploads directory (expected in read-only / serverless environment):", { error: err.message });
+}
 app.use("/uploads", express.static(uploadDir, {
   maxAge: "7d",
   etag: true,
