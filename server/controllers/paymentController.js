@@ -264,6 +264,7 @@ export const checkout = async (req, res) => {
 
     const deductedProducts = [];
     let savedOrder;
+    let razorpayOrder = null;
 
     try {
       // 🟢 THREAD-SAFE ATOMIC INVENTORY VALIDATION & LOCK LOOP (TOCTOU Proof)
@@ -285,8 +286,6 @@ export const checkout = async (req, res) => {
         }
         deductedProducts.push({ productId: item.productId, qty: item.qty });
       }
-
-      let razorpayOrder = null;
 
       if (paymentMethod === "Prepaid" && Number(amount) > 0) {
         // External APIs are called outside transaction locks as they shouldn't block DB
