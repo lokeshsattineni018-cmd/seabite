@@ -5,3 +5,11 @@ dist/
 build/
 scratch/
 server/uploads/
+
+# Local Dev/Test Scratch Files
+server/deleteUser.js
+server/testUser.js
+server/test_email.js
+server/scripts/test_*
+server/scripts/verify_data.js
+
