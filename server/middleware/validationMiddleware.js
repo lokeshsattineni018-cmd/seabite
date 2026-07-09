@@ -69,11 +69,11 @@ export const checkoutSchema = z.object({
     taxPrice: z.number({ required_error: "Tax price is required" }),
     shippingPrice: z.number({ required_error: "Shipping price is required" }),
     discount: z.number({ required_error: "Discount is required" }),
-    paymentMethod: z.enum(["Cash", "Razorpay", "Wallet", "GiftCard"], {
+    paymentMethod: z.enum(["Cash", "COD", "Razorpay", "Wallet", "GiftCard"], {
       required_error: "Payment method is required",
     }),
-    deliverySlot: z.string({ required_error: "Delivery slot is required" }),
-    deliveryDate: z.string({ required_error: "Delivery date is required" }),
+    deliverySlot: z.string().optional(),
+    deliveryDate: z.string().optional(),
     items: z
       .array(
         z.object({
@@ -84,7 +84,9 @@ export const checkoutSchema = z.object({
           name: z.string().optional(),
           image: z.string().optional(),
           price: z.number().optional(),
+          selectedCut: z.string().optional(),
           cutPriceAdjustmentPct: z.number().optional(),
+          orderedWeightGrams: z.number().optional(),
         })
       )
       .min(1, { message: "Cart must contain at least one item" }),
@@ -94,7 +96,8 @@ export const checkoutSchema = z.object({
         .min(2, { message: "Full name must be at least 2 characters long" }),
       phone: z
         .string({ required_error: "Phone number is required" })
-        .regex(/^\d{10}$/, { message: "Phone number must be exactly 10 digits" }),
+        .min(10, { message: "Phone number must be at least 10 digits" })
+        .max(15, { message: "Phone number must be at most 15 digits" }),
       houseNo: z.string({ required_error: "House/Flat number is required" }),
       street: z.string({ required_error: "Street details are required" }),
       city: z.string({ required_error: "City is required" }),
