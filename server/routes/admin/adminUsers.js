@@ -525,7 +525,7 @@ router.post("/bi/rfm/send-promo", adminAuth, async (req, res) => {
 // BULK EMAIL MARKETING
 router.post("/marketing/email-blast", adminAuth, async (req, res) => {
   try {
-    const { subject, message, recipients } = req.body;
+    const { subject, message, imageUrl, recipients } = req.body;
 
     const unescapedMessage = message
       ? message
@@ -558,10 +558,19 @@ router.post("/marketing/email-blast", adminAuth, async (req, res) => {
     let successCount = 0;
     let failureCount = 0;
 
+    const promoData = {
+      title: subject,
+      subtitle: "SeaBite Fresh Coastal Catch",
+      description: unescapedMessage,
+      image: imageUrl || undefined,
+      ctaText: "Shop Fresh Catch",
+      ctaLink: "https://seabite.co.in/products"
+    };
+
     for (const chunk of userChunks) {
       try {
         const mappedRecipients = chunk.map(u => ({ email: u.email, name: u.name }));
-        const response = await sendBatchMarketingEmails(mappedRecipients, subject, unescapedMessage);
+        const response = await sendBatchMarketingEmails(mappedRecipients, promoData);
 
         if (response?.error) {
           console.error("❌ Batch Error:", response.error);

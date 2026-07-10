@@ -1394,12 +1394,54 @@ export const sendLowStockAlert = async (email, name, product) => {
   }
 };
 
+const formatEmailMessage = (text) => {
+  if (!text) return "";
+  
+  // Split by double newlines to get paragraphs
+  const paragraphs = text.split(/\n\n+/);
+  
+  return paragraphs.map(p => {
+    const trimmed = p.trim();
+    if (!trimmed) return "";
+    
+    // Check if it's a coupon code line
+    if (trimmed.toLowerCase().includes("code:") || trimmed.toLowerCase().includes("coupon:")) {
+      const codeMatch = trimmed.match(/(?:code|coupon):\s*([a-z0-9_-]+)/i);
+      const code = codeMatch ? codeMatch[1].toUpperCase() : "PROMO";
+      return `
+        <div style="margin: 20px 0; padding: 20px; background-color: #F4F9F8; border: 2px dashed #5BA8A0; border-radius: 14px; text-align: center;">
+          <p style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: #5BA8A0; font-weight: 800;">Use Coupon Code At Checkout</p>
+          <span style="font-family: 'Plus Jakarta Sans', monospace; font-size: 22px; font-weight: 800; color: #12312E; background-color: #ffffff; padding: 8px 20px; border-radius: 8px; border: 1px solid #E2EEEC; display: inline-block; letter-spacing: 1px;">${code}</span>
+        </div>
+      `;
+    }
+    
+    // Check if it's a list (lines starting with - or * or •)
+    if (trimmed.startsWith("-") || trimmed.startsWith("•") || trimmed.startsWith("*")) {
+      const items = trimmed.split(/\n/);
+      const listItems = items.map(item => {
+        const cleanItem = item.replace(/^[-•*]\s*/, "");
+        return `<li style="margin-bottom: 10px; color: #3D4744; font-size: 14px; line-height: 22px; font-family: 'Plus Jakarta Sans', sans-serif;">${cleanItem}</li>`;
+      }).join("");
+      return `<ul style="margin: 16px 0; padding-left: 20px; color: #3D4744; font-family: 'Plus Jakarta Sans', sans-serif;">${listItems}</ul>`;
+    }
+    
+    // Standard paragraph with linebreaks replaced by <br/>
+    const formattedText = trimmed.replace(/\n/g, "<br/>");
+    // If it's a greeting line, style it slightly larger
+    const isGreeting = trimmed.startsWith("Ahoy") || trimmed.startsWith("Dear") || trimmed.startsWith("Hey");
+    return `<p style="margin: 0 0 16px 0; font-size: ${isGreeting ? '16px' : '14px'}; font-weight: ${isGreeting ? '700' : 'normal'}; line-height: 22px; color: #3D4744; font-family: 'Plus Jakarta Sans', sans-serif;">${formattedText}</p>`;
+  }).join("");
+};
+
 // 13. PROMOTIONS: Marketing Promotional Campaigns
 export const sendMarketingPromoEmail = async (email, name, promoData) => {
   const safePromo = typeof promoData === 'object' && promoData !== null ? promoData : {};
   const { title, subtitle, image, ctaText, ctaLink, description } = safePromo;
   console.log(`🔍 [DEBUG] sendMarketingPromoEmail triggered for: ${email}`);
   if (!resend) return;
+
+  const formattedDescription = formatEmailMessage(description);
 
   const content = `
     <!-- Icon -->
@@ -1416,12 +1458,12 @@ export const sendMarketingPromoEmail = async (email, name, promoData) => {
     </tr>
     <tr>
       <td style="padding:18px 40px 4px 40px;" align="center">
-        <h1 style="margin:0; font-size:26px; font-weight:700; color:#12312E; letter-spacing:-0.3px;">${title}</h1>
+        <h1 style="margin:0; font-size:24px; font-weight:700; color:#12312E; letter-spacing:-0.3px; font-family: 'Plus Jakarta Sans', sans-serif;">${title}</h1>
       </td>
     </tr>
     <tr>
-      <td style="padding:8px 40px 28px 40px;" align="center">
-        <p style="margin:0; font-size:14px; color:#7A8785;">${subtitle}</p>
+      <td style="padding:8px 40px 24px 40px;" align="center">
+        <p style="margin:0; font-size:13px; color:#7A8785; font-family: 'Plus Jakarta Sans', sans-serif;">${subtitle}</p>
       </td>
     </tr>
 
@@ -1442,9 +1484,9 @@ export const sendMarketingPromoEmail = async (email, name, promoData) => {
     <!-- Description -->
     <tr>
       <td style="padding:16px 40px 24px 40px;">
-        <p style="margin:0; font-size:15px; line-height:24px; color:#3D4744;">
-          ${description}
-        </p>
+        <div style="margin:0; font-family: 'Plus Jakarta Sans', sans-serif;">
+          ${formattedDescription}
+        </div>
       </td>
     </tr>
 
