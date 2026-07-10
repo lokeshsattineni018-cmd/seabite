@@ -34,21 +34,36 @@ const logEmailSuccess = (type, email) => {
   console.log(`📧 [EMAIL SENT] Type: ${type} | Recipient: ${email}`);
 };
 
-const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-const lockIcon = (color = "#E53E3E") => `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
-const welcomeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`;
-const clockIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
-const keyIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>`;
-const truckIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`;
-const alertIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E53E3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
-const megaphoneIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
-const chatIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
-const cartIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A8785" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>`;
-const giftIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>`;
-const rupeeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M6 4h12M6 8h12M9 4c6 0 6 10 0 10M9 14l9 8"></path></svg>`;
-const waveIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M2 6c.6 0 1.2-.2 1.6-.6L6 3l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L14 3l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L22 3"></path><path d="M2 12c.6 0 1.2-.2 1.6-.6L6 9l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L14 9l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L22 9"></path><path d="M2 18c.6 0 1.2-.2 1.6-.6L6 15l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L14 15l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L22 15"></path></svg>`;
-const starIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
-const flameIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C53030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>`;
+const getEmailAssetUrl = (filename) => {
+  if (LOGO_URL.endsWith('/logo.png')) {
+    return LOGO_URL.replace('/logo.png', `/${filename}`);
+  }
+  try {
+    const url = new URL(LOGO_URL);
+    return `${url.origin}/${filename}`;
+  } catch (e) {
+    return `https://www.seabite.co.in/${filename}`;
+  }
+};
+
+const checkIcon = `<img src="${getEmailAssetUrl('email-icon-check.png')}" width="52" height="52" alt="✓" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const lockIcon = (color = "#E53E3E") => {
+  const iconName = color === "#E53E3E" ? 'email-icon-lock-red.png' : 'email-icon-lock-teal.png';
+  return `<img src="${getEmailAssetUrl(iconName)}" width="52" height="52" alt="🔒" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+};
+const welcomeIcon = `<img src="${getEmailAssetUrl('email-icon-welcome.png')}" width="52" height="52" alt="👋" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const clockIcon = `<img src="${getEmailAssetUrl('email-icon-clock.png')}" width="48" height="48" alt="🕒" style="display:block; width:48px; height:48px; border:none; outline:none; text-decoration:none;">`;
+const keyIcon = `<img src="${getEmailAssetUrl('email-icon-key.png')}" width="48" height="48" alt="🔑" style="display:block; width:48px; height:48px; border:none; outline:none; text-decoration:none;">`;
+const truckIcon = `<img src="${getEmailAssetUrl('email-icon-truck.png')}" width="52" height="52" alt="🚚" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const alertIcon = `<img src="${getEmailAssetUrl('email-icon-alert.png')}" width="52" height="52" alt="⚠️" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const megaphoneIcon = `<img src="${getEmailAssetUrl('email-icon-megaphone.png')}" width="52" height="52" alt="📢" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const chatIcon = `<img src="${getEmailAssetUrl('email-icon-chat.png')}" width="52" height="52" alt="💬" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const cartIcon = `<img src="${getEmailAssetUrl('email-icon-cart.png')}" width="52" height="52" alt="🛒" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const giftIcon = `<img src="${getEmailAssetUrl('email-icon-gift.png')}" width="52" height="52" alt="🎁" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const rupeeIcon = `<img src="${getEmailAssetUrl('email-icon-rupee.png')}" width="52" height="52" alt="₹" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const waveIcon = `<img src="${getEmailAssetUrl('email-icon-wave.png')}" width="52" height="52" alt="🌊" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const starIcon = `<img src="${getEmailAssetUrl('email-icon-star.png')}" width="52" height="52" alt="✨" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
+const flameIcon = `<img src="${getEmailAssetUrl('email-icon-flame.png')}" width="52" height="52" alt="🔥" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
 
 /**
  * Base email template wrapper matching the new SeaBite branded design system.
@@ -84,10 +99,8 @@ const emailWrapper = (content, preheader = "Your catch is confirmed — fresh fr
                 </td>
               </tr>
             </table>
-            <!-- wave svg divider -->
-            <svg viewBox="0 0 600 24" width="100%" height="24" preserveAspectRatio="none" style="display:block;">
-              <path d="M0,12 C100,24 200,0 300,12 C400,24 500,0 600,12 L600,24 L0,24 Z" fill="#FFFFFF"></path>
-            </svg>
+            <!-- wave png divider -->
+            <img src="${getEmailAssetUrl('wave-divider.png')}" width="600" height="24" alt="" style="display:block; width:100%; height:auto; border:none; outline:none; text-decoration:none;">
           </td>
         </tr>
 
