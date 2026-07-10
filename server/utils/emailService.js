@@ -62,9 +62,9 @@ const emailWrapper = (content, preheader = "Your catch is confirmed — fresh fr
           <td style="background:linear-gradient(135deg, #0F4C4F 0%, #146B6E 100%); padding:0;">
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
               <tr>
-                <td style="padding:36px 40px 28px 40px;" align="center">
-                  <p style="margin:0 0 6px 0; font-size:13px; letter-spacing:3px; color:#9FD8CE; text-transform:uppercase; font-weight:600;">SeaBite</p>
-                  <p style="margin:0; font-size:12px; letter-spacing:1px; color:rgba(255,255,255,0.55); text-transform:uppercase;">Fresh Coastal Catch</p>
+                <td style="padding:32px 40px 24px 40px;" align="center">
+                  <img src="${LOGO_URL}" width="150" alt="SeaBite" style="display:block; width:150px; height:auto; margin:0 auto; border:none; outline:none; text-decoration:none;">
+                  <p style="margin:8px 0 0 0; font-size:11px; letter-spacing:1.5px; color:#9FD8CE; text-transform:uppercase; font-weight:600;">Fresh Coastal Catch</p>
                 </td>
               </tr>
             </table>
@@ -175,7 +175,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#FDF2F2; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#E53E3E;">🚨</span>
+              <span style="font-size:22px; line-height:52px; color:#E53E3E;">&#128274;</span>
             </td>
           </tr>
         </table>
@@ -207,14 +207,36 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
     <!-- Login Details Table -->
     <tr>
       <td style="padding:12px 40px 24px 40px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FAF8F3; border-radius:12px; border:1px solid #EFEBE2; font-size:13.5px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="padding:12px 16px; color:#7A8785;">Time</td>
-            <td align="right" style="padding:12px 16px; color:#12312E; font-weight:600;">${istTime} IST</td>
+            <td style="padding:14px 0; border-bottom:1px solid #F1EDE4;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="56" style="vertical-align:top;">
+                    <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; text-align:center; line-height:48px; font-size:20px; color:#0F4C4F;">🕒</div>
+                  </td>
+                  <td style="vertical-align:top; padding-left:12px;">
+                    <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">Sign-in Time</p>
+                    <p style="margin:2px 0 0 0; font-size:12.5px; color:#8B9591;">${istTime} IST</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
           </tr>
           <tr>
-            <td style="padding:12px 16px; color:#7A8785; border-top:1px solid #EFEBE2;">Verification Method</td>
-            <td align="right" style="padding:12px 16px; color:#12312E; font-weight:600; border-top:1px solid #EFEBE2;">One-Time Passcode</td>
+            <td style="padding:14px 0; border-bottom:1px solid #F1EDE4;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="56" style="vertical-align:top;">
+                    <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; text-align:center; line-height:48px; font-size:20px; color:#0F4C4F;">🔑</div>
+                  </td>
+                  <td style="vertical-align:top; padding-left:12px;">
+                    <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">Verification Method</p>
+                    <p style="margin:2px 0 0 0; font-size:12.5px; color:#8B9591;">One-Time Passcode (OTP)</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
           </tr>
         </table>
       </td>
@@ -1077,7 +1099,7 @@ export const sendLoyaltyCreditEmail = async (email, name, amount, reason) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#E8F5E9; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#2E7D32;">👛</span>
+              <span style="font-size:24px; line-height:52px; color:#2E7D32; font-weight:700;">&#8377;</span>
             </td>
           </tr>
         </table>
