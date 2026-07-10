@@ -46,6 +46,24 @@ const getEmailAssetUrl = (filename) => {
   }
 };
 
+const parseProductName = (rawName) => {
+  if (!rawName) return { title: "", subtitle: "" };
+  let name = rawName.trim();
+  const parenMatch = name.match(/^(.*?)\s*\(([^)]+)\)\s*$/);
+  if (parenMatch) {
+    const title = parenMatch[1].trim();
+    const subtitle = parenMatch[2].trim();
+    return { title, subtitle };
+  }
+  const hyphenMatch = name.match(/^(.*?)\s*[\-\–\—]\s*([^)]+)$/);
+  if (hyphenMatch) {
+    const title = hyphenMatch[1].trim();
+    const subtitle = hyphenMatch[2].trim();
+    return { title, subtitle };
+  }
+  return { title: name, subtitle: "" };
+};
+
 const checkIcon = `<img src="${getEmailAssetUrl('email-icon-check.png')}" width="52" height="52" alt="✓" style="display:block; width:52px; height:52px; border:none; outline:none; text-decoration:none;">`;
 const lockIcon = (color = "#E53E3E") => {
   const iconName = color === "#E53E3E" ? 'email-icon-lock-red.png' : 'email-icon-lock-teal.png';
@@ -141,7 +159,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${welcomeIcon}
             </td>
           </tr>
@@ -203,7 +221,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#FDF2F2; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${lockIcon("#E53E3E")}
             </td>
           </tr>
@@ -311,7 +329,6 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
 // 2. ORDERS: Order Confirmation Receipt
 export const sendOrderPlacedEmail = async (email, name, orderId, total, items, paymentMethod) => {
   console.log(`🔍 [DEBUG] sendOrderPlacedEmail triggered for: ${email} (Order: ${orderId})`);
-  if (!resend) return;
 
   const isCOD = paymentMethod === "COD";
   
@@ -330,35 +347,40 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
       shippingPrice = typeof orderData.shippingPrice === 'number' ? orderData.shippingPrice : shippingPrice;
       taxPrice = typeof orderData.taxPrice === 'number' ? orderData.taxPrice : taxPrice;
       if (orderData.taxPrice !== undefined && orderData.itemsPrice > 0) {
-        taxRate = Math.round((orderData.taxPrice / (orderData.itemsPrice - orderData.discount)) * 100);
+        taxRate = Math.round((orderData.taxPrice / (orderData.itemsPrice - orderData.discount + (orderData.walletAppliedAmount || 0))) * 100);
       }
     }
   } catch (err) {
     console.log("Could not load order details from DB for email:", err.message);
   }
 
-  const itemRows = items.map(item => `
-    <tr>
-      <td style="padding:14px 0; border-bottom:1px solid #F1EDE4;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td width="56" style="vertical-align:top;">
-              <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; overflow:hidden; border:1px solid #E2EEEC;">
-                <img src="${getEmailImageUrl(item.image)}" width="48" height="48" style="object-fit:cover; display:block;">
-              </div>
-            </td>
-            <td style="vertical-align:top; padding-left:12px;">
-              <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">${item.name}</p>
-              <p style="margin:2px 0 0 0; font-size:12.5px; color:#8B9591;">Qty ${item.qty} &middot; &#8377;${item.price.toLocaleString()}</p>
-            </td>
-            <td align="right" style="vertical-align:top; white-space:nowrap;">
-              <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">&#8377;${(item.price * item.qty).toLocaleString()}</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  `).join('');
+  const itemRows = items.map(item => {
+    const parsed = parseProductName(item.name);
+    return `
+      <tr>
+        <td style="padding:14px 0; border-bottom:1px solid #F1EDE4;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="56" style="vertical-align:top;">
+                <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; overflow:hidden; border:1px solid #E2EEEC;">
+                  <img src="${getEmailImageUrl(item.image)}" width="48" height="48" style="object-fit:cover; display:block;">
+                </div>
+              </td>
+              <td style="vertical-align:top; padding-left:12px;">
+                <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">${parsed.title}</p>
+                <p style="margin:2px 0 0 0; font-size:12.5px; color:#8B9591;">
+                  ${parsed.subtitle ? `${parsed.subtitle} &middot; ` : ''}Qty ${item.qty} &middot; &#8377;${item.price.toLocaleString()}
+                </p>
+              </td>
+              <td align="right" style="vertical-align:top; white-space:nowrap;">
+                <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">&#8377;${(item.price * item.qty).toLocaleString()}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   const content = `
     <!-- Confirmation headline -->
@@ -366,7 +388,7 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#E6F4E9; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${checkIcon}
             </td>
           </tr>
@@ -462,6 +484,21 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
     </tr>
   `;
 
+  // Write preview HTML file
+  try {
+    const fs = await import('fs');
+    const previewHtml = emailWrapper(content, `Your SeaBite order #${orderId} of ₹${total} is confirmed!`);
+    fs.writeFileSync('/Users/sattinenilokesh/.gemini/antigravity-ide/brain/c7fdd5c5-3d33-405b-8cf2-5b2bacc01585/scratch/rendered_email.html', previewHtml);
+    console.log("📝 [DEBUG] Wrote rendered_email.html preview successfully!");
+  } catch (writeErr) {
+    console.error("Failed to write preview html:", writeErr.message);
+  }
+
+  if (!resend) {
+    console.log("⚠️ [EMAIL SERVICE] Skipping actual email sending: RESEND_API_KEY not configured.");
+    return;
+  }
+
   try {
     const result = await resend.emails.send({
       from: ORDERS_SENDER,
@@ -539,7 +576,7 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${truckIcon}
             </td>
           </tr>
@@ -627,7 +664,7 @@ export const sendMarketingEmail = async (email, name, subject, body) => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${megaphoneIcon}
             </td>
           </tr>
@@ -691,7 +728,7 @@ export const sendWaitlistEmail = async (email, name, productName, productImage) 
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#E8F5E9; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${starIcon}
             </td>
           </tr>
@@ -796,7 +833,7 @@ export const sendOtpEmail = async (email, otp, type = "VERIFY") => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${lockIcon("#0F4C4F")}
             </td>
           </tr>
@@ -869,7 +906,7 @@ export const sendEmail = async (to, subject, contentText) => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${chatIcon}
             </td>
           </tr>
@@ -931,28 +968,33 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
 
   const cartTotal = formattedItems.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-  const itemRows = formattedItems.map(item => `
-    <tr>
-      <td style="padding:12px 0; border-bottom:1px solid #F1EDE4;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td width="44" style="vertical-align:middle;">
-              <div style="width:36px; height:36px; border-radius:8px; overflow:hidden; border:1px solid #E2EEEC;">
-                <img src="${getEmailImageUrl(item.image)}" width="36" height="36" style="object-fit:cover; display:block;">
-              </div>
-            </td>
-            <td style="vertical-align:middle; padding-left:12px;">
-              <p style="margin:0; font-size:14px; font-weight:600; color:#12312E;">${item.name}</p>
-              <p style="margin:2px 0 0 0; font-size:12px; color:#8B9591;">Qty ${item.qty}</p>
-            </td>
-            <td align="right" style="vertical-align:middle; white-space:nowrap;">
-              <p style="margin:0; font-size:14px; font-weight:600; color:#12312E;">&#8377;${item.price.toLocaleString()}</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  `).join('');
+  const itemRows = formattedItems.map(item => {
+    const parsed = parseProductName(item.name);
+    return `
+      <tr>
+        <td style="padding:12px 0; border-bottom:1px solid #F1EDE4;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="44" style="vertical-align:middle;">
+                <div style="width:36px; height:36px; border-radius:8px; overflow:hidden; border:1px solid #E2EEEC;">
+                  <img src="${getEmailImageUrl(item.image)}" width="36" height="36" style="object-fit:cover; display:block;">
+                </div>
+              </td>
+              <td style="vertical-align:middle; padding-left:12px;">
+                <p style="margin:0; font-size:14px; font-weight:600; color:#12312E;">${parsed.title}</p>
+                <p style="margin:2px 0 0 0; font-size:12px; color:#8B9591;">
+                  ${parsed.subtitle ? `${parsed.subtitle} &middot; ` : ''}Qty ${item.qty}
+                </p>
+              </td>
+              <td align="right" style="vertical-align:middle; white-space:nowrap;">
+                <p style="margin:0; font-size:14px; font-weight:600; color:#12312E;">&#8377;${item.price.toLocaleString()}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   const content = `
     <!-- Icon -->
@@ -960,7 +1002,7 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#FAF8F3; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${cartIcon}
             </td>
           </tr>
@@ -1043,7 +1085,7 @@ export const sendWinBackEmail = async (email, name, couponCode) => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${giftIcon}
             </td>
           </tr>
@@ -1127,7 +1169,7 @@ export const sendLoyaltyCreditEmail = async (email, name, amount, reason) => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#E8F5E9; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${rupeeIcon}
             </td>
           </tr>
@@ -1220,7 +1262,7 @@ export const sendInventoryAlertEmail = async (adminEmail, productName, stockCoun
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#FFF5F5; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${alertIcon}
             </td>
           </tr>
@@ -1296,7 +1338,7 @@ export const sendLowStockAlert = async (email, name, product) => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#FFF5F5; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${flameIcon}
             </td>
           </tr>
@@ -1377,7 +1419,7 @@ export const sendMarketingPromoEmail = async (email, name, promoData) => {
       <td style="padding:32px 40px 0 40px;" align="center">
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
+            <td style="width:52px; height:52px; text-align:center; vertical-align:middle;">
               ${waveIcon}
             </td>
           </tr>
