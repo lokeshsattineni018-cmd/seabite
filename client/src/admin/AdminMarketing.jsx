@@ -15,6 +15,29 @@ const fadeInUp = {
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
 };
 
+const PREDEFINED_TEMPLATES = [
+    {
+        name: "Welcome Promo",
+        subject: "🌊 Welcome to SeaBite! Your 15% discount code inside",
+        message: "Ahoy there!\n\nWelcome to SeaBite - your destination for the freshest coastal catch. To celebrate your arrival, we have generated a special 15% discount coupon for your first order!\n\nUse Code: WELCOME15 at checkout.\n\nBrowse our fresh selection of Pomfrets, Crabs, and Premium Tiger Prawns at https://seabite.co.in/products\n\nBest Catch,\nThe SeaBite Captain"
+    },
+    {
+        name: "Abandoned Cart Offer",
+        subject: "⚓ Your fresh catch is still waiting! Get 5% extra off now",
+        message: "Ahoy!\n\nWe noticed you left some of the finest premium coastal seafood in your cart. Our docks are running busy, and these catches won't wait forever!\n\nComplete your checkout in the next 15 minutes and use Code: SEABITE5 to unlock an extra 5% discount.\n\nFinish your order at: https://seabite.co.in/checkout\n\nFair winds,\nSeaBite Crew"
+    },
+    {
+        name: "Weekend Docks Special",
+        subject: "🚢 Fresh Weekend Catch: Order by Friday night for Saturday Morning delivery!",
+        message: "Ahoy SeaBite Member!\n\nOur boats have just returned to the docks with a premium catch of crabs, pomfret, and whole-cleaned prawns. \n\nPlace your order by Friday 10 PM IST to guarantee premium same-day delivery on Saturday morning.\n\nOrder fresh now at: https://seabite.co.in/products\n\nSeaBite Docks Team"
+    },
+    {
+        name: "SeaBite Prime Nudge",
+        subject: "💎 Unlock Unlimited Free Deliveries with SeaBite Prime!",
+        message: "Ahoy!\n\nWant to skip the delivery fees entirely? Upgrade your account to SeaBite Prime today and enjoy unlimited free deliveries, priority slots on early morning catches, and exclusive member-only discounts!\n\nActivate SeaBite Prime under your Account Profile now.\n\nKeep it fresh,\nSeaBite Prime Team"
+    }
+];
+
 export default function AdminMarketing() {
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
@@ -197,6 +220,35 @@ export default function AdminMarketing() {
 
                     {/* Tips & Autopilot */}
                     <div className="lg:col-span-4 space-y-6">
+
+                        {/* Predefined Templates */}
+                        <div className="bg-white rounded-3xl p-8 border border-stone-200/50 shadow-sm hover:shadow-md transition-all">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="p-2 bg-stone-100 rounded-xl">
+                                    <FiLayout className="text-stone-700" size={20} />
+                                </div>
+                                <h3 className="text-lg font-semibold tracking-tight text-stone-900">Quick Templates</h3>
+                            </div>
+                            <p className="text-stone-500 text-xs leading-relaxed mb-6">
+                                Select one of our pre-designed SeaBite templates to auto-populate the email composer.
+                            </p>
+                            <div className="flex flex-col gap-3">
+                                {PREDEFINED_TEMPLATES.map((tmpl) => (
+                                    <button
+                                        key={tmpl.name}
+                                        onClick={() => {
+                                            setSubject(tmpl.subject);
+                                            setMessage(tmpl.message);
+                                            toast.success(`Applied ${tmpl.name} template!`);
+                                        }}
+                                        className="w-full text-left px-4 py-3 bg-stone-50 hover:bg-stone-100 text-stone-700 rounded-xl text-xs font-semibold border border-stone-200/40 transition-colors flex items-center justify-between group"
+                                    >
+                                        <span>{tmpl.name}</span>
+                                        <span className="text-[10px] text-stone-400 group-hover:text-stone-600 transition-colors uppercase tracking-wider font-bold">Apply &rarr;</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
 
                         {/* Win-Back Autopilot */}
                         <div className="bg-gradient-to-br from-stone-900 to-stone-800 rounded-3xl p-8 border border-stone-800 text-white shadow-xl relative overflow-hidden group">
