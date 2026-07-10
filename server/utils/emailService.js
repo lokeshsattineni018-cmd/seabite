@@ -86,7 +86,7 @@ const flameIcon = `<img src="${getEmailAssetUrl('email-icon-flame.png')}" width=
 /**
  * Base email template wrapper matching the new SeaBite branded design system.
  */
-const emailWrapper = (content, preheader = "Your catch is confirmed — fresh from the coast to your door.") => `
+const emailWrapper = (content, preheader = "Your catch is confirmed — fresh from the coast to your door.", customFooter = null) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -126,12 +126,14 @@ const emailWrapper = (content, preheader = "Your catch is confirmed — fresh fr
         ${content}
 
         <!-- Footer -->
+        ${customFooter ? customFooter : `
         <tr>
           <td style="padding:24px 40px 36px 40px; background-color:#FAF8F3;" align="center">
             <p style="margin:0 0 4px 0; font-size:12px; color:#A3ACA9;">Caught fresh. Delivered cold. Every single time.</p>
             <p style="margin:0; font-size:11.5px; color:#C2CAC7;">SeaBite &middot; Bhimavaram &middot; <a href="${API_URL}/faq" style="color:#7A8785; text-decoration:underline;">Help &amp; FAQs</a></p>
           </td>
         </tr>
+        `}
 
       </table>
     </td>
@@ -242,46 +244,9 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
     <tr>
       <td style="padding:28px 40px 12px 40px;">
         <p style="margin:0; font-size:15px; line-height:24px; color:#3D4744;">
-          Hey <strong style="color:#12312E;">${firstName}</strong>, we noticed a new sign-in to your SeaBite account. If this was you, no action is needed.
+          Hi <strong style="color:#12312E;">${name}</strong>,<br>
+          You signed in to your SeaBite account on ${istTime} IST.
         </p>
-      </td>
-    </tr>
-
-    <!-- Login Details Table -->
-    <tr>
-      <td style="padding:12px 40px 24px 40px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td style="padding:14px 0; border-bottom:1px solid #F1EDE4;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td width="56" style="vertical-align:top;">
-                    <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; text-align:center; line-height:48px; display:flex; align-items:center; justify-content:center; color:#0F4C4F;">${clockIcon}</div>
-                  </td>
-                  <td style="vertical-align:top; padding-left:12px;">
-                    <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">Sign-in Time</p>
-                    <p style="margin:2px 0 0 0; font-size:12.5px; color:#8B9591;">${istTime} IST</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:14px 0; border-bottom:1px solid #F1EDE4;">
-              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td width="56" style="vertical-align:top;">
-                    <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; text-align:center; line-height:48px; display:flex; align-items:center; justify-content:center; color:#0F4C4F;">${keyIcon}</div>
-                  </td>
-                  <td style="vertical-align:top; padding-left:12px;">
-                    <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">Verification Method</p>
-                    <p style="margin:2px 0 0 0; font-size:12.5px; color:#8B9591;">One-Time Passcode (OTP)</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
       </td>
     </tr>
 
@@ -291,8 +256,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF9F6; border-radius:12px; border:1px solid #FFEBE3;">
           <tr>
             <td style="padding:16px 20px;">
-              <span style="font-size:13.5px; color:#D9381E; line-height:20px; font-weight:600; display:block; margin-bottom:4px;">Wasn't you?</span>
-              <span style="font-size:13px; color:#6B4B3E; line-height:1.5;">Secure your account immediately — change your password and review recent activity.</span>
+              <span style="font-size:13px; color:#6B4B3E; line-height:1.5;">If this was you, no action is needed. If you didn't sign in, please contact our support team immediately.</span>
             </td>
           </tr>
         </table>
@@ -305,7 +269,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center" style="${btnWrapperStyle}">
-              <a href="${API_URL}/profile" style="${btnStyle}">Secure My Account &rarr;</a>
+              <a href="${API_URL}" style="${btnStyle}">Go to SeaBite &rarr;</a>
             </td>
           </tr>
         </table>
@@ -313,12 +277,26 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
     </tr>
   `;
 
+  const customFooter = isNewUser ? null : `
+        <tr>
+          <td style="padding:24px 40px 36px 40px; background-color:#FAF8F3;" align="center">
+            <p style="margin:0 0 6px 0; font-size:12px; color:#8B9591; font-weight:600;">SeaBite &middot; Mogalthur, 534281, West Godavari, AP</p>
+            <p style="margin:0 0 12px 0; font-size:11.5px; color:#9AA6A3;">&copy; 2026 SeaBite. All rights reserved.</p>
+            <p style="margin:0; font-size:11.5px; color:#9AA6A3;">
+              <a href="${API_URL}/privacy" style="color:#7A8785; text-decoration:none;">Privacy Policy</a> &nbsp;&middot;&nbsp; 
+              <a href="${API_URL}/terms" style="color:#7A8785; text-decoration:none;">Terms of Service</a> &nbsp;&middot;&nbsp; 
+              <a href="${API_URL}/support" style="color:#7A8785; text-decoration:none;">Contact Support</a>
+            </p>
+          </td>
+        </tr>
+  `;
+
   try {
     const result = await resend.emails.send({
       from: OFFICIAL_SENDER,
       to: email,
       subject: isNewUser ? `Welcome to SeaBite, ${name}!` : 'Sign-in verification — SeaBite',
-      html: emailWrapper(content, isNewUser ? "Welcome to SeaBite! Fresh Coastal Catches." : "New sign-in detected for your account.")
+      html: emailWrapper(content, isNewUser ? "Welcome to SeaBite! Fresh Coastal Catches." : "New sign-in detected for your account.", customFooter)
     });
     logEmailSuccess(isNewUser ? "WELCOME" : "LOGIN", email);
     return result;
