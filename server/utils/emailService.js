@@ -1396,7 +1396,8 @@ export const sendLowStockAlert = async (email, name, product) => {
 
 // 13. PROMOTIONS: Marketing Promotional Campaigns
 export const sendMarketingPromoEmail = async (email, name, promoData) => {
-  const { title, subtitle, image, ctaText, ctaLink, description } = promoData;
+  const safePromo = typeof promoData === 'object' && promoData !== null ? promoData : {};
+  const { title, subtitle, image, ctaText, ctaLink, description } = safePromo;
   console.log(`🔍 [DEBUG] sendMarketingPromoEmail triggered for: ${email}`);
   if (!resend) return;
 
@@ -1476,9 +1477,19 @@ export const sendMarketingPromoEmail = async (email, name, promoData) => {
 };
 
 // 14. BATCH MARKETING: Send Promotional Campaign to Multi-Users
-export const sendBatchMarketingEmails = async (users, promoData) => {
+export const sendBatchMarketingEmails = async (users, subjectOrPromoData, message) => {
   console.log(`🚀 Starting batch marketing to ${users.length} users...`);
   const results = { success: 0, failed: 0 };
+
+  const promoData = (subjectOrPromoData && typeof subjectOrPromoData === "object")
+    ? subjectOrPromoData
+    : {
+        title: subjectOrPromoData || "SeaBite Fresh Coastal Catch",
+        subtitle: "SeaBite Fresh Coastal Catch",
+        description: message || "",
+        ctaText: "Shop Fresh Catch",
+        ctaLink: "https://seabite.co.in/products"
+      };
 
   for (const user of users) {
     try {
