@@ -287,7 +287,7 @@ export const checkout = async (req, res) => {
         deductedProducts.push({ productId: item.productId, qty: item.qty });
       }
 
-      if (paymentMethod === "Prepaid" && Number(amount) > 0) {
+      if (paymentMethod === "Razorpay" && Number(amount) > 0) {
         // External APIs are called outside transaction locks as they shouldn't block DB
         razorpayOrder = await instance.orders.create({
           amount: Math.round(Number(amount) * 100),

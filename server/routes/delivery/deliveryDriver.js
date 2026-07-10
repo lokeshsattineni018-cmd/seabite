@@ -84,7 +84,7 @@ router.put("/orders/:id/status", protect, driverAuth, async (req, res) => {
         capturedAt: new Date()
       };
 
-      if (populatedOrder.paymentMethod !== "Prepaid" && populatedOrder.paymentMethod !== "Wallet") {
+      if (populatedOrder.paymentMethod !== "Prepaid" && populatedOrder.paymentMethod !== "Razorpay" && populatedOrder.paymentMethod !== "Wallet") {
         populatedOrder.isPaid = true;
         populatedOrder.paidAt = new Date();
         if (paymentMethod) {

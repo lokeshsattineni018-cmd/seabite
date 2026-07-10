@@ -5,7 +5,12 @@ import User from "../models/User.js";
 import Product from "../models/Product.js";
 import { RevenueGoal } from "../models/Financial.js";
 
+import adminAuth from "../middleware/adminAuth.js";
+
 const router = express.Router();
+
+// Apply admin protection to all dashboard routes
+router.use(adminAuth);
 
 // ─── AI Daily Briefing (via Gemini) ───
 router.get("/briefing", async (req, res) => {
