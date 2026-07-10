@@ -483,11 +483,6 @@ export default function Checkout() {
 
       if (finalPaymentMethod === "COD" || finalPaymentMethod === "Wallet") {
         isOrderSuccess.current = true; // Prevent "Cart Empty" redirect
-        clearCart();
-        refreshCartCount();
-        if (refreshMe) {
-          await refreshMe();
-        }
         navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`, { replace: true, state: { fromCheckout: true } });
         return;
       }
@@ -508,11 +503,6 @@ export default function Checkout() {
             const verifyRes = await axios.post(`${API_URL}/api/payment/verify`, response, { withCredentials: true });
             if (verifyRes.data.success) {
               isOrderSuccess.current = true; // Prevent "Cart Empty" redirect
-              clearCart();
-              refreshCartCount();
-              if (refreshMe) {
-                await refreshMe();
-              }
               navigate(`/success?dbId=${internalDbId}&discount=${discountAmount}&total=${grandTotal}`, { replace: true, state: { fromCheckout: true } });
             }
           } catch { setModal({ show: true, message: "Payment Verification Failed", type: "error" }); }

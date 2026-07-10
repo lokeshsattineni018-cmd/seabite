@@ -1,7 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import {
   FiCheck, FiShoppingBag, FiCopy, FiTruck,
@@ -9,6 +9,8 @@ import {
 } from "react-icons/fi";
 import confetti from "canvas-confetti";
 import { generateInvoicePDF } from "../../utils/pdfGenerator";
+import { CartContext } from "../../context/CartContext";
+import { AuthContext } from "../../context/AuthContext";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
@@ -37,6 +39,9 @@ export default function OrderSuccess() {
   const dbId = params.get("dbId");
   const discount = Number(params.get("discount") || 0);
 
+  const { clearCart, refreshCartCount } = useContext(CartContext);
+  const { refreshMe } = useContext(AuthContext);
+
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -48,6 +53,14 @@ export default function OrderSuccess() {
       navigate("/orders", { replace: true });
       return;
     }
+
+    // Clear cart immediately on successful mount of OrderSuccess page
+    clearCart();
+    refreshCartCount();
+    if (refreshMe) {
+      refreshMe();
+    }
+
     if (dbId) {
       const viewedKey = `viewed_success_${dbId}`;
       if (sessionStorage.getItem(viewedKey)) {
