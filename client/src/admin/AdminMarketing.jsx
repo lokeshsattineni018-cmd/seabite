@@ -35,6 +35,26 @@ const PREDEFINED_TEMPLATES = [
         name: "SeaBite Prime Nudge",
         subject: "💎 Unlock Unlimited Free Deliveries with SeaBite Prime!",
         message: "Ahoy!\n\nWant to skip the delivery fees entirely? Upgrade your account to SeaBite Prime today and enjoy unlimited free deliveries, priority slots on early morning catches, and exclusive member-only discounts!\n\nActivate SeaBite Prime under your Account Profile now.\n\nKeep it fresh,\nSeaBite Prime Team"
+    },
+    {
+        name: "Holiday Feast Special",
+        subject: "🦐 Host the Perfect Feast: Pre-order Tiger Prawns & Mud Crabs for Holidays!",
+        message: "Dear SeaBite Customer,\n\nThe holidays are around the corner, and nothing brings family together like a premium coastal feast! \n\nAvoid the last-minute market rush. Pre-order our extra-large Tiger Prawns, Jumbo Mud Crabs, and fresh Sea Seabass today to lock in delivery for your festive weekend.\n\nPre-order your holiday feast now: https://seabite.co.in/products\n\nSeason's Greetings,\nSeaBite Docks Team"
+    },
+    {
+        name: "Pomfret Flash Sale",
+        subject: "⚡ Flash Sale: 20% Off Fresh White Pomfret (Next 3 Hours Only!)",
+        message: "Ahoy!\n\nWe have a surplus catch of premium White Pomfret fresh off the boats this afternoon! For the next 3 hours only, enjoy an exclusive 20% discount on Pomfret.\n\nUse Code: FLASH20 at checkout.\n\nOrder before stock runs out: https://seabite.co.in/products\n\nHappy cooking,\nSeaBite Crew"
+    },
+    {
+        name: "Loyalty Points Reminder",
+        subject: "🌟 You have unused SeaBite Loyalty Points waiting to be redeemed!",
+        message: "Ahoy!\n\nDid you know you have accrued Loyalty Points from your previous orders? These points can be applied directly at checkout to save money on your next fresh catch!\n\nEvery point gives you discount credits on your order. Redeem them before they expire on your next check-out.\n\nCheck your points balance & shop now: https://seabite.co.in/products\n\nFair winds,\nSeaBite Loyalty Team"
+    },
+    {
+        name: "Review Reward Request",
+        subject: "🐟 How was your recent catch? Let us know and get ₹100 Wallet Credit!",
+        message: "Ahoy!\n\nWe hope you enjoyed your recent SeaBite delivery! As a community-focused platform, your honest review means the world to us and our local fishermen.\n\nSubmit a review for your recent purchase, and we will credit ₹100 directly to your SeaBite Wallet to use on your next order!\n\nWrite a review now: https://seabite.co.in/products\n\nThank you for support,\nSeaBite Docks Team"
     }
 ];
 
