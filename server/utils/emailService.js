@@ -152,6 +152,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
   if (!resend) return console.log("⚠️ Email skipped: Missing RESEND_API_KEY");
 
   const istTime = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata", timeStyle: "short", dateStyle: "medium" });
+  const firstName = name ? name.split(' ')[0] : 'there';
 
   const content = isNewUser ? `
     <!-- Icon -->
@@ -229,13 +230,8 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
       </td>
     </tr>
     <tr>
-      <td style="padding:18px 40px 4px 40px;" align="center">
+      <td style="padding:18px 40px 24px 40px;" align="center">
         <h1 style="margin:0; font-size:26px; font-weight:700; color:#12312E; letter-spacing:-0.3px;">New sign-in detected</h1>
-      </td>
-    </tr>
-    <tr>
-      <td style="padding:8px 40px 28px 40px;" align="center">
-        <p style="margin:0; font-size:14px; color:#7A8785;">Security sign-in verification alert</p>
       </td>
     </tr>
 
@@ -246,7 +242,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
     <tr>
       <td style="padding:28px 40px 12px 40px;">
         <p style="margin:0; font-size:15px; line-height:24px; color:#3D4744;">
-          Hi <strong style="color:#12312E;">${name}</strong>, a new sign-in was completed for your SeaBite account.
+          Hey <strong style="color:#12312E;">${firstName}</strong>, we noticed a new sign-in to your SeaBite account. If this was you, no action is needed.
         </p>
       </td>
     </tr>
@@ -289,12 +285,17 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
       </td>
     </tr>
 
-    <!-- Warning -->
+    <!-- Warning / Callout -->
     <tr>
       <td style="padding:0 40px 28px 40px;">
-        <p style="margin:0; font-size:13px; line-height:20px; color:#8B9591;">
-          If you did not make this request, please contact our support desk immediately to secure your profile.
-        </p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF9F6; border-radius:12px; border:1px solid #FFEBE3;">
+          <tr>
+            <td style="padding:16px 20px;">
+              <span style="font-size:13.5px; color:#D9381E; line-height:20px; font-weight:600; display:block; margin-bottom:4px;">Wasn't you?</span>
+              <span style="font-size:13px; color:#6B4B3E; line-height:1.5;">Secure your account immediately — change your password and review recent activity.</span>
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
 
@@ -304,7 +305,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
           <tr>
             <td align="center" style="${btnWrapperStyle}">
-              <a href="${API_URL}" style="${btnStyle}">Go to Dashboard &rarr;</a>
+              <a href="${API_URL}/profile" style="${btnStyle}">Secure My Account &rarr;</a>
             </td>
           </tr>
         </table>
@@ -522,27 +523,31 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
   const statusColor = isDelivered ? '#1E7E34' : '#0F4C81';
   const statusBg = isDelivered ? '#EAF2EC' : '#E6F0FA';
 
-  const itemRows = items.map(item => `
-    <tr>
-      <td style="padding:12px 0; border-bottom:1px solid #F1EDE4;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-          <tr>
-            <td width="44" style="vertical-align:middle;">
-              <div style="width:36px; height:36px; border-radius:8px; overflow:hidden; border:1px solid #E2EEEC;">
-                <img src="${getEmailImageUrl(item.image)}" width="36" height="36" style="object-fit:cover; display:block;">
-              </div>
-            </td>
-            <td style="vertical-align:middle; padding-left:12px;">
-              <p style="margin:0; font-size:14px; font-weight:600; color:#12312E;">${item.name}</p>
-            </td>
-            <td align="right" style="vertical-align:middle; white-space:nowrap;">
-              <p style="margin:0; font-size:13px; color:#8B9591;">Qty ${item.qty}</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  `).join('');
+  const itemRows = items.map(item => {
+    const parsed = parseProductName(item.name);
+    return `
+      <tr>
+        <td style="padding:12px 0; border-bottom:1px solid #F1EDE4;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="44" style="vertical-align:middle;">
+                <div style="width:36px; height:36px; border-radius:8px; overflow:hidden; border:1px solid #E2EEEC;">
+                  <img src="${getEmailImageUrl(item.image)}" width="36" height="36" style="object-fit:cover; display:block;">
+                </div>
+              </td>
+              <td style="vertical-align:middle; padding-left:12px;">
+                <p style="margin:0; font-size:14px; font-weight:600; color:#12312E;">${parsed.title}</p>
+                ${parsed.subtitle ? `<p style="margin:2px 0 0 0; font-size:12px; color:#8B9591;">${parsed.subtitle}</p>` : ''}
+              </td>
+              <td align="right" style="vertical-align:middle; white-space:nowrap;">
+                <p style="margin:0; font-size:13px; color:#8B9591;">Qty ${item.qty}</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `;
+  }).join('');
 
   const driverSection = driverInfo ? `
     <tr>
@@ -601,7 +606,11 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
     <tr>
       <td style="padding:28px 40px 8px 40px;">
         <p style="margin:0; font-size:15px; line-height:24px; color:#3D4744;">
-          Hi <strong style="color:#12312E;">${name}</strong>, the tracking registry indicates that your shipment status has changed.
+          ${status === 'Out for Delivery' 
+            ? `Hi <strong style="color:#12312E;">${name}</strong>, your SeaBite order has been packed and is now out for delivery with our courier!` 
+            : status === 'Delivered' 
+              ? `Hi <strong style="color:#12312E;">${name}</strong>, your SeaBite order has been successfully delivered to your doorstep. Enjoy your fresh catch!` 
+              : `Hi <strong style="color:#12312E;">${name}</strong>, your SeaBite order status has been updated to: <strong>${status}</strong>.`}
         </p>
       </td>
     </tr>
