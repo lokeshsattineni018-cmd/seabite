@@ -95,6 +95,7 @@ export default function Navbar({ announcementActive = false }) {
   const [authReferral, setAuthReferral] = useState("");
   const [authConfirmPassword, setAuthConfirmPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [authImgIdx, setAuthImgIdx] = useState(0);
   const authImages = ["/auth-prawn.webp", "/auth-fish.webp", "/auth-crab.webp"];
@@ -300,8 +301,12 @@ export default function Navbar({ announcementActive = false }) {
   };
 
   const handleLogout = async () => {
+    setLogoutLoading(true);
     try { 
       await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true }); 
+    } catch (err) {
+      console.error("Logout request failed", err);
+    } finally {
       localStorage.removeItem("userInfo");
       setUser(null); 
       setIsLoginOpen(false);
@@ -311,9 +316,10 @@ export default function Navbar({ announcementActive = false }) {
       setAuthEmail("");
       setAuthPassword("");
       setAuthOtp("");
+      setLogoutLoading(false);
       navigate("/"); 
       toast.success("Logged out successfully");
-    } catch { }
+    }
   };
 
   const handleLoginSubmit = async (e) => {
@@ -406,6 +412,7 @@ export default function Navbar({ announcementActive = false }) {
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      setAuthLoading(true);
       try {
         const res = await axios.post(`${API_URL}/api/auth/google`, { token: tokenResponse.access_token }, { withCredentials: true });
         setUser(res.data.user);
@@ -414,6 +421,8 @@ export default function Navbar({ announcementActive = false }) {
         await refreshMe?.();
       } catch (err) {
         toast.error(err.response?.data?.message || "Google login failed");
+      } finally {
+        setAuthLoading(false);
       }
     }
   });
@@ -828,7 +837,19 @@ export default function Navbar({ announcementActive = false }) {
                               )}
                             </div>
                             <div style={{ borderTop: "1px solid #FEE2E2", padding: "8px" }}>
-                              <button onClick={handleLogout} className="prof-item" style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: "pointer", color: "#DC2626", fontSize: "14px", fontWeight: "600", textAlign: "left" }}><FiLogOut size={16}/> Logout</button>
+                              <button 
+                                onClick={handleLogout} 
+                                disabled={logoutLoading} 
+                                className="prof-item" 
+                                style={{ display: "flex", alignItems: "center", gap: "12px", width: "100%", padding: "10px 14px", border: "none", background: "none", borderRadius: "10px", cursor: logoutLoading ? "not-allowed" : "pointer", color: "#DC2626", fontSize: "14px", fontWeight: "600", textAlign: "left" }}
+                              >
+                                {logoutLoading ? (
+                                  <div className="loading-spinner" style={{ width: "16px", height: "16px", border: "2px solid #DC2626", borderTopColor: "transparent" }} />
+                                ) : (
+                                  <FiLogOut size={16}/>
+                                )}
+                                <span>{logoutLoading ? "Logging out..." : "Logout"}</span>
+                              </button>
                             </div>
                           </div>
                         </motion.div>
@@ -1317,9 +1338,11 @@ export default function Navbar({ announcementActive = false }) {
                 <div style={{ padding: "16px 20px", borderTop: "1px solid #f0f0f0", flexShrink: 0 }}>
                   <button
                     onClick={handleLogout}
-                    style={{ width: "100%", padding: "13px", borderRadius: "10px", background: "#1A2E2C", color: "#fff", border: "none", fontWeight: "700", fontSize: "14px", cursor: "pointer" }}
+                    disabled={logoutLoading}
+                    style={{ width: "100%", padding: "13px", borderRadius: "10px", background: "#1A2E2C", color: "#fff", border: "none", fontWeight: "700", fontSize: "14px", cursor: logoutLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}
                   >
-                    Sign Out
+                    {logoutLoading && <div className="loading-spinner" style={{ width: "16px", height: "16px", border: "2px solid #fff", borderTopColor: "transparent" }} />}
+                    <span>{logoutLoading ? "Signing Out..." : "Sign Out"}</span>
                   </button>
                 </div>
               )}
@@ -1444,11 +1467,18 @@ export default function Navbar({ announcementActive = false }) {
                           variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
                           type="button" 
                           onClick={() => googleLogin()} 
+                          disabled={authLoading}
                           whileHover={{ background: "#F9FAFB", scale: 1.01 }} 
                           whileTap={{ scale: 0.99 }}
-                          style={{ width: "100%", height: "48px", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "all 0.2s" }}
+                          style={{ width: "100%", height: "48px", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: authLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "all 0.2s" }}
                         >
-                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Continue with Google
+                          {authLoading ? (
+                            <div className="loading-spinner" style={{ width: "20px", height: "20px", border: "2.5px solid rgba(17, 24, 39, 0.15)", borderTopColor: "#111827" }} />
+                          ) : (
+                            <>
+                              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Continue with Google
+                            </>
+                          )}
                         </motion.button>
                         
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ display: "flex", justifyContent: "space-between", marginTop: "16px" }}>
@@ -1503,11 +1533,18 @@ export default function Navbar({ announcementActive = false }) {
                           variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
                           type="button" 
                           onClick={() => googleLogin()} 
+                          disabled={authLoading}
                           whileHover={{ background: "#F9FAFB", scale: 1.01 }} 
                           whileTap={{ scale: 0.99 }}
-                          style={{ width: "100%", height: "48px", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "all 0.2s" }}
+                          style={{ width: "100%", height: "48px", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: authLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "all 0.2s" }}
                         >
-                          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Sign up with Google
+                          {authLoading ? (
+                            <div className="loading-spinner" style={{ width: "20px", height: "20px", border: "2.5px solid rgba(17, 24, 39, 0.15)", borderTopColor: "#111827" }} />
+                          ) : (
+                            <>
+                              <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G" style={{ width: "18px" }} /> Sign up with Google
+                            </>
+                          )}
                         </motion.button>
                         
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>

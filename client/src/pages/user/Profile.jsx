@@ -26,6 +26,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
   const [showPassModal, setShowPassModal] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   // Password States
   const [oldPass, setOldPass] = useState("");
@@ -77,12 +78,14 @@ export default function Profile() {
   }, [fetchUserAndOrders, authLoading]);
 
   const handleLogout = async () => {
+    setLogoutLoading(true);
     try {
       await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
     } catch (err) {
       console.error("Logout failed", err);
     } finally {
       localStorage.removeItem("userInfo");
+      setLogoutLoading(false);
       window.location.href = "/?auth=login";
     }
   };
@@ -159,9 +162,15 @@ export default function Profile() {
 
               <button
                 onClick={handleLogout}
-                className="mt-8 w-full py-3 rounded-2xl bg-red-50 text-red-500 text-xs font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2"
+                disabled={logoutLoading}
+                className="mt-8 w-full py-3 rounded-2xl bg-red-50 text-red-500 text-xs font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <FiLogOut size={14} /> Sign Out
+                {logoutLoading ? (
+                  <div className="loading-spinner" style={{ width: "14px", height: "14px", border: "2px solid #EF4444", borderTopColor: "transparent" }} />
+                ) : (
+                  <FiLogOut size={14} />
+                )}
+                <span>{logoutLoading ? "Signing Out..." : "Sign Out"}</span>
               </button>
             </div>
 

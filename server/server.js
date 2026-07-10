@@ -466,7 +466,7 @@ const connectDB = async () => {
       minPoolSize: 0,
       retryWrites: true,
       retryReads: true,
-      ssl: true,
+      ssl: process.env.MONGO_URI.includes("mongodb+srv") || process.env.MONGO_URI.includes("ssl=true") || false,
     };
 
     // 🛡️ Debugging: Verify URI presence (Sanitized)

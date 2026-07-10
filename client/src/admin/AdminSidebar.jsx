@@ -81,6 +81,7 @@ const CATEGORIES = [
 export default function AdminSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [logoutLoading, setLogoutLoading] = useState(false);
   
   // Keep Core Commerce and Operations open by default to minimize length, others collapsed
   const [expandedCategories, setExpandedCategories] = useState({
@@ -100,11 +101,13 @@ export default function AdminSidebar() {
   };
 
   const handleLogout = async () => {
+    setLogoutLoading(true);
     try {
       await axios.post("/api/auth/logout", {}, { withCredentials: true });
     } catch (err) { }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    setLogoutLoading(false);
     navigate("/login");
   };
 
@@ -210,10 +213,15 @@ export default function AdminSidebar() {
         </Link>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-bold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all group cursor-pointer"
+          disabled={logoutLoading}
+          className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-bold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <FiLogOut size={14} className="text-stone-400 group-hover:text-rose-500 transition-colors" />
-          <span>Sign Out</span>
+          {logoutLoading ? (
+            <div className="loading-spinner" style={{ width: "14px", height: "14px", border: "2px solid #E11D48", borderTopColor: "transparent" }} />
+          ) : (
+            <FiLogOut size={14} className="text-stone-400 group-hover:text-rose-500 transition-colors" />
+          )}
+          <span>{logoutLoading ? "Signing Out..." : "Sign Out"}</span>
         </button>
       </div>
     </div>
