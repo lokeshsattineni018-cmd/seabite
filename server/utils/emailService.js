@@ -34,6 +34,22 @@ const logEmailSuccess = (type, email) => {
   console.log(`📧 [EMAIL SENT] Type: ${type} | Recipient: ${email}`);
 };
 
+const checkIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+const lockIcon = (color = "#E53E3E") => `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
+const welcomeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`;
+const clockIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+const keyIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>`;
+const truckIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`;
+const alertIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E53E3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
+const megaphoneIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`;
+const chatIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>`;
+const cartIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A8785" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>`;
+const giftIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polyline points="20 12 20 22 4 22 4 12"></polyline><rect x="2" y="7" width="20" height="5"></rect><line x1="12" y1="22" x2="12" y2="7"></line><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg>`;
+const rupeeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M6 4h12M6 8h12M9 4c6 0 6 10 0 10M9 14l9 8"></path></svg>`;
+const waveIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0F4C4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M2 6c.6 0 1.2-.2 1.6-.6L6 3l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L14 3l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L22 3"></path><path d="M2 12c.6 0 1.2-.2 1.6-.6L6 9l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L14 9l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L22 9"></path><path d="M2 18c.6 0 1.2-.2 1.6-.6L6 15l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L14 15l2.4 2.4c.4.4 1 .6 1.6.6s1.2-.2 1.6-.6L22 15"></path></svg>`;
+const starIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2E7D32" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+const flameIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C53030" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>`;
+
 /**
  * Base email template wrapper matching the new SeaBite branded design system.
  */
@@ -113,7 +129,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#0F4C4F;">👋</span>
+              ${welcomeIcon}
             </td>
           </tr>
         </table>
@@ -175,7 +191,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#FDF2F2; text-align:center; vertical-align:middle;">
-              <span style="font-size:22px; line-height:52px; color:#E53E3E;">&#128274;</span>
+              ${lockIcon("#E53E3E")}
             </td>
           </tr>
         </table>
@@ -213,7 +229,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td width="56" style="vertical-align:top;">
-                    <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; text-align:center; line-height:48px; font-size:20px; color:#0F4C4F;">🕒</div>
+                    <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; text-align:center; line-height:48px; display:flex; align-items:center; justify-content:center; color:#0F4C4F;">${clockIcon}</div>
                   </td>
                   <td style="vertical-align:top; padding-left:12px;">
                     <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">Sign-in Time</p>
@@ -228,7 +244,7 @@ export const sendAuthEmail = async (email, name, isNewUser = false) => {
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td width="56" style="vertical-align:top;">
-                    <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; text-align:center; line-height:48px; font-size:20px; color:#0F4C4F;">🔑</div>
+                    <div style="width:48px; height:48px; border-radius:12px; background-color:#EAF3F1; text-align:center; line-height:48px; display:flex; align-items:center; justify-content:center; color:#0F4C4F;">${keyIcon}</div>
                   </td>
                   <td style="vertical-align:top; padding-left:12px;">
                     <p style="margin:0; font-size:14.5px; font-weight:600; color:#12312E;">Verification Method</p>
@@ -338,7 +354,7 @@ export const sendOrderPlacedEmail = async (email, name, orderId, total, items, p
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#E6F4E9; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#2E7D32;">&#10003;</span>
+              ${checkIcon}
             </td>
           </tr>
         </table>
@@ -511,7 +527,7 @@ export const sendStatusUpdateEmail = async (email, name, orderId, status, items 
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#0F4C4F;">🚚</span>
+              ${truckIcon}
             </td>
           </tr>
         </table>
@@ -599,7 +615,7 @@ export const sendMarketingEmail = async (email, name, subject, body) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#0F4C4F;">📢</span>
+              ${megaphoneIcon}
             </td>
           </tr>
         </table>
@@ -663,7 +679,7 @@ export const sendWaitlistEmail = async (email, name, productName, productImage) 
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#E8F5E9; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#2E7D32;">✨</span>
+              ${starIcon}
             </td>
           </tr>
         </table>
@@ -768,7 +784,7 @@ export const sendOtpEmail = async (email, otp, type = "VERIFY") => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#0F4C4F;">&#128274;</span>
+              ${lockIcon("#0F4C4F")}
             </td>
           </tr>
         </table>
@@ -841,7 +857,7 @@ export const sendEmail = async (to, subject, contentText) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#0F4C4F;">💬</span>
+              ${chatIcon}
             </td>
           </tr>
         </table>
@@ -932,7 +948,7 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#FAF8F3; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#7A8785;">🛒</span>
+              ${cartIcon}
             </td>
           </tr>
         </table>
@@ -1015,7 +1031,7 @@ export const sendWinBackEmail = async (email, name, couponCode) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#0F4C4F;">🎁</span>
+              ${giftIcon}
             </td>
           </tr>
         </table>
@@ -1099,7 +1115,7 @@ export const sendLoyaltyCreditEmail = async (email, name, amount, reason) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#E8F5E9; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#2E7D32; font-weight:700;">&#8377;</span>
+              ${rupeeIcon}
             </td>
           </tr>
         </table>
@@ -1192,7 +1208,7 @@ export const sendInventoryAlertEmail = async (adminEmail, productName, stockCoun
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#FFF5F5; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#E53E3E;">⚠️</span>
+              ${alertIcon}
             </td>
           </tr>
         </table>
@@ -1268,7 +1284,7 @@ export const sendLowStockAlert = async (email, name, product) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#FFF5F5; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#C53030;">🔥</span>
+              ${flameIcon}
             </td>
           </tr>
         </table>
@@ -1349,7 +1365,7 @@ export const sendMarketingPromoEmail = async (email, name, promoData) => {
         <table role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td style="width:52px; height:52px; border-radius:50%; background-color:#EAF3F1; text-align:center; vertical-align:middle;">
-              <span style="font-size:24px; line-height:52px; color:#0F4C4F;">🌊</span>
+              ${waveIcon}
             </td>
           </tr>
         </table>
