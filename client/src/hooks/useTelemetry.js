@@ -43,6 +43,7 @@ export const useTelemetry = () => {
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        console.log("📍 Telemetry captured GPS coordinates:", coords);
         if (socket) {
           socket.emit("visitor-location", {
             visitorId: guestId,

@@ -293,6 +293,7 @@ io.on("connection", (socket) => {
   socket.on("visitor-location", async (data) => {
     const { visitorId, userId, location } = data;
     if (!visitorId || !location) return;
+    console.log(`🔌 [SOCKET] Received visitor-location from ${visitorId}:`, location);
 
     // Broadcast immediately to listening admin radar
     io.to("admins").emit("VISITOR_LOCATION_STREAM", { visitorId, userId, location, locationSource: "gps" });
