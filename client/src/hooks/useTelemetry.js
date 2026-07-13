@@ -35,7 +35,7 @@ export const useTelemetry = () => {
 
   // ── LIVE LOCATION STREAMING ──
   useEffect(() => {
-    if (!navigator.geolocation || !socket) return;
+    if (!navigator.geolocation) return;
 
     let guestId = localStorage.getItem("seabite_guest_id");
     if (!guestId) return;
@@ -43,11 +43,13 @@ export const useTelemetry = () => {
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        socket.emit("visitor-location", {
-          visitorId: guestId,
-          userId: user?._id || user?.id || null,
-          location: coords
-        });
+        if (socket) {
+          socket.emit("visitor-location", {
+            visitorId: guestId,
+            userId: user?._id || user?.id || null,
+            location: coords
+          });
+        }
       },
       (err) => {
         console.log("Telemetry location access status:", err.message);

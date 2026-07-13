@@ -17,7 +17,7 @@ export const SocketProvider = ({ children }) => {
         // console.log("🔌 Initializing Socket Connection to:", socketUrl);
 
         // Force polling on Vercel due to Serverless limitations on WebSockets
-        const isVercel = socketUrl.includes('vercel.app') || window.location.hostname.includes('seabite.co.in');
+        const isVercel = socketUrl.includes('vercel.app');
 
         // ⚠️ DISABLE SOCKET ON VERCEL: Vercel serverless functions don't support persistent socket connections.
         if (isVercel) {
