@@ -59,7 +59,7 @@ router.post("/ping", telemetryLimiter, async (req, res) => {
         currentPath,
         city,
         lastActive: new Date(),
-        ...(shouldUpdateCoords && lat && lng ? { lat, lng } : {})
+        ...(shouldUpdateCoords && lat && lng ? { lat, lng, locationSource: "geoip" } : {})
       },
       { returnDocument: 'after', upsert: true }
     );

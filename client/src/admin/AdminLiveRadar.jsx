@@ -157,13 +157,14 @@ export default function AdminLiveRadar() {
         setVisitors(prev => {
           const match = prev.find(v => v.visitorId === visitorId);
           if (match) {
-            return prev.map(v => v.visitorId === visitorId ? { ...v, lat: location.lat, lng: location.lng, lastActive: new Date() } : v);
+            return prev.map(v => v.visitorId === visitorId ? { ...v, lat: location.lat, lng: location.lng, locationSource: "gps", lastActive: new Date() } : v);
           } else {
             return [{
               visitorId,
               userId,
               lat: location.lat,
               lng: location.lng,
+              locationSource: "gps",
               ipAddress: "Live Stream",
               city: "Detected Live",
               currentPath: "Home",
@@ -375,8 +376,11 @@ export default function AdminLiveRadar() {
                             <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
                               <FiMapPin className="text-gray-400" />
                               {visitor.city}
-                              {visitor.lat && (
-                                <span className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-500 px-2 py-0.5 rounded-md font-mono">GPS</span>
+                              {visitor.locationSource === "gps" && (
+                                <span className="text-[10px] bg-emerald-50 dark:bg-[#064e3b]/30 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md font-mono font-bold">GPS (Accurate)</span>
+                              )}
+                              {visitor.locationSource === "geoip" && (
+                                <span className="text-[10px] bg-amber-50 dark:bg-[#78350f]/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-md font-mono font-bold">IP (Estimated)</span>
                               )}
                             </div>
                             <span className="text-[11px] font-mono text-gray-400 dark:text-gray-500 ml-6">

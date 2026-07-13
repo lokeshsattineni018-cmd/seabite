@@ -295,14 +295,14 @@ io.on("connection", (socket) => {
     if (!visitorId || !location) return;
 
     // Broadcast immediately to listening admin radar
-    io.to("admins").emit("VISITOR_LOCATION_STREAM", { visitorId, userId, location });
+    io.to("admins").emit("VISITOR_LOCATION_STREAM", { visitorId, userId, location, locationSource: "gps" });
 
     // Update in-memory visitor logs or VisitorLog DB model (throttled to avoid DB flood)
     try {
       const VisitorLog = (await import("./models/VisitorLog.js")).default;
       await VisitorLog.findOneAndUpdate(
         { visitorId },
-        { lat: location.lat, lng: location.lng, userId: userId || null },
+        { lat: location.lat, lng: location.lng, userId: userId || null, locationSource: "gps" },
         { upsert: false }
       );
     } catch (err) {
