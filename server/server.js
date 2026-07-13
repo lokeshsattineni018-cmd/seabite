@@ -310,6 +310,22 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("visitor-location-error", async (data) => {
+    const { visitorId, code } = data;
+    if (!visitorId) return;
+
+    try {
+      const VisitorLog = (await import("./models/VisitorLog.js")).default;
+      await VisitorLog.findOneAndUpdate(
+        { visitorId },
+        { locationError: code },
+        { upsert: false }
+      );
+    } catch (err) {
+      console.error("Failed to update visitor GPS error in DB:", err);
+    }
+  });
+
   // ── 🎧 REAL-TIME SUPPORT & DRIVER CHAT ROOMS ──
   socket.on("join-chat", (data) => {
     const { userId } = data;

@@ -9,7 +9,8 @@ const visitorLogSchema = new mongoose.Schema({
   lastActive: { type: Date, default: Date.now },
   lat: { type: Number },
   lng: { type: Number },
-  locationSource: { type: String, enum: ["geoip", "gps", null], default: null }
+  locationSource: { type: String, enum: ["geoip", "gps", null], default: null },
+  locationError: { type: Number, default: null }
 });
 
 // Update the lastActive timestamp automatically before saving

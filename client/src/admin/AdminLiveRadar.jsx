@@ -382,6 +382,15 @@ export default function AdminLiveRadar() {
                               {visitor.locationSource === "geoip" && (
                                 <span className="text-[10px] bg-amber-50 dark:bg-[#78350f]/30 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-md font-mono font-bold">IP (Estimated)</span>
                               )}
+                              {visitor.locationError === 1 && (
+                                <span className="text-[10px] bg-rose-50 dark:bg-[#881337]/30 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-md font-mono font-bold">GPS Blocked</span>
+                              )}
+                              {visitor.locationError === 2 && (
+                                <span className="text-[10px] bg-rose-50 dark:bg-[#881337]/30 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-md font-mono font-bold">GPS Unavailable</span>
+                              )}
+                              {visitor.locationError === 3 && (
+                                <span className="text-[10px] bg-rose-50 dark:bg-[#881337]/30 text-rose-600 dark:text-rose-400 px-2 py-0.5 rounded-md font-mono font-bold">GPS Timeout</span>
+                              )}
                             </div>
                             <span className="text-[11px] font-mono text-gray-400 dark:text-gray-500 ml-6">
                               {visitor.ipAddress}

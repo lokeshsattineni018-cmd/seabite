@@ -52,9 +52,15 @@ export const useTelemetry = () => {
         }
       },
       (err) => {
-        console.log("Telemetry location access status:", err.message);
+        console.error("Telemetry location access status:", err.message);
+        if (socket) {
+          socket.emit("visitor-location-error", {
+            visitorId: guestId,
+            code: err.code
+          });
+        }
       },
-      { enableHighAccuracy: true, maximumAge: 30000, timeout: 20000 }
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 25000 }
     );
 
     return () => navigator.geolocation.clearWatch(watchId);
