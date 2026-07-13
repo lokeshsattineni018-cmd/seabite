@@ -3,6 +3,7 @@ import axios from "axios";
 import { FiActivity, FiMapPin, FiClock, FiUser, FiGlobe } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
+import toast from "react-hot-toast";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -193,6 +194,24 @@ export default function AdminLiveRadar() {
     return `${diffMins} min ago`;
   };
 
+  const focusOnLocation = (lat, lng, visitorId) => {
+    if (mapInstance.current && lat && lng) {
+      mapInstance.current.setView([lat, lng], 16);
+      if (visitorMarkersRef.current[visitorId]) {
+        visitorMarkersRef.current[visitorId].openPopup();
+      } else {
+        updateVisitorMarker(visitorId, null, { lat, lng });
+        setTimeout(() => {
+          if (visitorMarkersRef.current[visitorId]) {
+            visitorMarkersRef.current[visitorId].openPopup();
+          }
+        }, 100);
+      }
+    } else {
+      toast.error("No coordinates available for this user");
+    }
+  };
+
   return (
     <div className="p-6 md:p-8 bg-[#f8fafc] dark:bg-[#0a1625] min-h-screen text-[#1A2E2C] dark:text-[#E2EEEC] font-sans">
       <style>{`
@@ -333,7 +352,8 @@ export default function AdminLiveRadar() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.98 }}
-                        className="hover:bg-gray-50/50 dark:hover:bg-[#162940] transition-colors group"
+                        className="hover:bg-gray-50/50 dark:hover:bg-[#162940] transition-colors group cursor-pointer"
+                        onClick={() => focusOnLocation(visitor.lat, visitor.lng, visitor.visitorId)}
                       >
                         <td className="px-6 py-5">
                           <div className="flex items-center gap-3">
