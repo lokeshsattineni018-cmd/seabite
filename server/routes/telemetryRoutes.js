@@ -46,6 +46,10 @@ router.post("/ping", telemetryLimiter, async (req, res) => {
       }
     }
 
+    // Find the existing log first to preserve high-accuracy coords if present
+    const existingLog = await VisitorLog.findOne({ visitorId });
+    const shouldUpdateCoords = !existingLog || !existingLog.lat;
+
     // Upsert Visitor Log
     const visitor = await VisitorLog.findOneAndUpdate(
       { visitorId },
@@ -55,7 +59,7 @@ router.post("/ping", telemetryLimiter, async (req, res) => {
         currentPath,
         city,
         lastActive: new Date(),
-        ...(lat && lng ? { lat, lng } : {})
+        ...(shouldUpdateCoords && lat && lng ? { lat, lng } : {})
       },
       { returnDocument: 'after', upsert: true }
     );
