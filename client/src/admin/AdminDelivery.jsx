@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -8,6 +8,8 @@ import {
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
 import { useSocket } from "../context/SocketContext";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
@@ -28,6 +30,100 @@ export default function AdminDelivery() {
   const [view, setView] = useState("Board"); // 🟢 Board or Map view
   const [smartDispatchOrder, setSmartDispatchOrder] = useState(null);
   const [scoredPartners, setScoredPartners] = useState([]);
+
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const driverMarkersRef = useRef({});
+  const orderMarkersRef = useRef({});
+
+  const updateDriverMarkerOnMap = (driverId, name, location) => {
+    if (!mapInstance.current) return;
+    if (driverMarkersRef.current[driverId]) {
+      driverMarkersRef.current[driverId].remove();
+    }
+    const icon = L.divIcon({
+      className: "",
+      html: `<div style="width:34px;height:34px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;box-shadow:0 0 10px rgba(16,185,129,0.6);border:2px solid white;">🛵</div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
+    });
+    driverMarkersRef.current[driverId] = L.marker([location.lat, location.lng], { icon })
+      .addTo(mapInstance.current)
+      .bindPopup(`<strong>Rider: ${name}</strong>`);
+  };
+
+  const updateOrderMarkerOnMap = (orderIdStr, numericId, address) => {
+    if (!mapInstance.current) return;
+    if (orderMarkersRef.current[orderIdStr]) {
+      orderMarkersRef.current[orderIdStr].remove();
+    }
+    const icon = L.divIcon({
+      className: "",
+      html: `<div style="width:30px;height:30px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;box-shadow:0 0 10px rgba(239,68,68,0.6);border:2px solid white;">🏠</div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    });
+    orderMarkersRef.current[orderIdStr] = L.marker([address.lat, address.lng], { icon })
+      .addTo(mapInstance.current)
+      .bindPopup(`<strong>Order #${numericId}</strong><br/>Deliver to: ${address.fullName}<br/>${address.street}`);
+  };
+
+  useEffect(() => {
+    if (view !== "Map" || !mapRef.current) return;
+    
+    // Fix default icon path issues in Vite
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    });
+
+    mapInstance.current = L.map(mapRef.current).setView([16.5449, 81.5212], 13);
+    
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(mapInstance.current);
+
+    // Initial plot of drivers
+    partners.forEach(p => {
+      if (p.currentLocation && p.currentLocation.lat) {
+        updateDriverMarkerOnMap(p._id, p.name, p.currentLocation);
+      }
+    });
+
+    // Initial plot of unassigned orders (customer locations)
+    unassignedOrders.forEach(o => {
+      if (o.shippingAddress && o.shippingAddress.lat) {
+        updateOrderMarkerOnMap(o._id, o.orderId, o.shippingAddress);
+      }
+    });
+
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+      driverMarkersRef.current = {};
+      orderMarkersRef.current = {};
+    };
+  }, [view, partners, unassignedOrders]);
+
+  useEffect(() => {
+    if (!socket || view !== "Map") return;
+    
+    socket.on("DRIVER_LOCATION_STREAM", (data) => {
+      const { driverId, location } = data;
+      if (location && location.lat) {
+        const partner = partners.find(p => p._id === driverId);
+        updateDriverMarkerOnMap(driverId, partner ? partner.name : "Active Rider", location);
+      }
+    });
+
+    return () => {
+      socket.off("DRIVER_LOCATION_STREAM");
+    };
+  }, [socket, view, partners]);
 
   const handleSmartDispatch = (order) => {
     // Distance (50%), Acceptance (30%), Speed (20%) weighted ranker
@@ -303,34 +399,9 @@ export default function AdminDelivery() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="h-[700px] bg-white rounded-[2.5rem] border border-stone-200 shadow-sm relative overflow-hidden flex flex-col items-center justify-center"
+            className="h-[700px] bg-white rounded-[2.5rem] border border-stone-200 shadow-sm relative overflow-hidden z-0"
           >
-             <FiMapPin size={48} className="text-stone-100 mb-4" />
-             <p className="text-sm font-bold text-stone-400 uppercase tracking-widest">Live GPS tracking active</p>
-             <p className="text-[10px] text-stone-500 mt-2">Connecting to Rider Satellite Uplink...</p>
-             
-             {/* Mock Map Background */}
-             <div className="absolute inset-0 -z-10 opacity-10 grayscale hover:grayscale-0 transition-all duration-1000">
-                <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=2000" className="w-full h-full object-cover" />
-             </div>
-
-             {/* Mock Rider Indicators */}
-             {partners.filter(p => p.status === 'Active').map((p, i) => (
-                <motion.div 
-                  key={p._id}
-                  animate={{ 
-                    x: [Math.random() * 200, Math.random() * -200, Math.random() * 200],
-                    y: [Math.random() * 200, Math.random() * -200, Math.random() * 200]
-                  }}
-                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                  className="absolute p-2 bg-stone-900 text-white rounded-full shadow-2xl border-2 border-white cursor-pointer group"
-                >
-                  <FiTruck size={14} />
-                  <div className="absolute left-full ml-2 bg-stone-900 px-3 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                    <p className="text-[10px] font-bold">{p.name}</p>
-                  </div>
-                </motion.div>
-             ))}
+             <div ref={mapRef} className="w-full h-full" />
           </motion.div>
         )}
       </AnimatePresence>

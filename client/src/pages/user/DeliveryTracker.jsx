@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
@@ -12,6 +12,9 @@ import {
   ArrowLeft
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSocket } from "../../context/SocketContext";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const API = import.meta.env.VITE_API_URL || "";
 
@@ -20,6 +23,13 @@ export default function DeliveryTracker() {
   const navigate = useNavigate();
   const [tracking, setTracking] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const { socket } = useSocket();
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  const driverMarkerRef = useRef(null);
+  const customerMarkerRef = useRef(null);
+  const routeLineRef = useRef(null);
 
   const fetchTracking = async () => {
     try {
@@ -37,6 +47,85 @@ export default function DeliveryTracker() {
     const interval = setInterval(fetchTracking, 15000); // Poll location every 15s
     return () => clearInterval(interval);
   }, [orderId]);
+
+  useEffect(() => {
+    if (!mapRef.current || mapInstance.current || !tracking) return;
+    
+    // Fix default icon path issues in Vite
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    });
+
+    const driverCoords = tracking.coordinates || { lat: 16.5449, lng: 81.5212 };
+    const custCoords = tracking.customerCoordinates || { lat: 16.5449, lng: 81.5212 };
+
+    mapInstance.current = L.map(mapRef.current).setView([driverCoords.lat, driverCoords.lng], 14);
+    
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(mapInstance.current);
+
+    // Draw customer marker
+    const customerIcon = L.divIcon({
+      className: "",
+      html: `<div style="width:30px;height:30px;border-radius:50%;background:#ef4444;display:flex;align-items:center;justify-content:center;color:white;font-size:14px;box-shadow:0 0 10px rgba(239,68,68,0.6);border:2px solid white;">🏠</div>`,
+      iconSize: [30, 30],
+      iconAnchor: [15, 15]
+    });
+    customerMarkerRef.current = L.marker([custCoords.lat, custCoords.lng], { icon: customerIcon })
+      .addTo(mapInstance.current)
+      .bindPopup("Delivery Address");
+
+    // Draw driver marker
+    const driverIcon = L.divIcon({
+      className: "",
+      html: `<div style="width:34px;height:34px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;box-shadow:0 0 10px rgba(16,185,129,0.6);border:2px solid white;">🛵</div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
+    });
+    driverMarkerRef.current = L.marker([driverCoords.lat, driverCoords.lng], { icon: driverIcon })
+      .addTo(mapInstance.current)
+      .bindPopup("Delivery Partner");
+
+    // Draw dashed connection line
+    routeLineRef.current = L.polyline([[driverCoords.lat, driverCoords.lng], [custCoords.lat, custCoords.lng]], {
+      color: "#3b82f6",
+      weight: 3,
+      opacity: 0.7,
+      dashArray: "6, 8"
+    }).addTo(mapInstance.current);
+
+    return () => {
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
+  }, [tracking]);
+
+  useEffect(() => {
+    if (!socket || !tracking) return;
+
+    socket.on("DRIVER_LOCATION_STREAM", (data) => {
+      const { driverId, location } = data;
+      if (location && location.lat && driverMarkerRef.current && mapInstance.current) {
+        driverMarkerRef.current.setLatLng([location.lat, location.lng]);
+        if (routeLineRef.current && tracking.customerCoordinates) {
+          routeLineRef.current.setLatLngs([
+            [location.lat, location.lng],
+            [tracking.customerCoordinates.lat, tracking.customerCoordinates.lng]
+          ]);
+        }
+      }
+    });
+
+    return () => {
+      socket.off("DRIVER_LOCATION_STREAM");
+    };
+  }, [socket, tracking]);
 
   if (loading) {
     return (
@@ -63,23 +152,9 @@ export default function DeliveryTracker() {
       </div>
 
       <div className="space-y-6">
-        {/* Map Placeholder or Leaflet simulation */}
-        <div className="h-[250px] bg-slate-900 border border-white/5 rounded-3xl overflow-hidden relative flex items-center justify-center">
-          <div className="absolute inset-0 opacity-25"
-            style={{
-              backgroundImage: "radial-gradient(circle, #64748b 1px, transparent 1px)",
-              backgroundSize: "20px 20px"
-            }}
-          />
-          <div className="relative text-center space-y-2 z-10 p-6">
-            <MapPin size={32} className="text-sky-400 mx-auto animate-bounce" />
-            <p className="text-xs font-bold text-white">Simulated Map Location</p>
-            {tracking.coordinates && (
-              <p className="text-[10px] text-slate-400 font-mono">
-                Lat: {tracking.coordinates.lat?.toFixed(4)} • Lng: {tracking.coordinates.lng?.toFixed(4)}
-              </p>
-            )}
-          </div>
+        {/* Live Leaflet Map Container */}
+        <div className="h-[250px] bg-slate-900 border border-white/5 rounded-3xl overflow-hidden relative z-0">
+          <div ref={mapRef} className="w-full h-full" />
         </div>
 
         {/* ETA & Driver info */}

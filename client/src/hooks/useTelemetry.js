@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useSocket } from "../context/SocketContext";
 import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
@@ -8,6 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || "";
 export const useTelemetry = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const { socket } = useSocket();
 
   useEffect(() => {
     let guestId = localStorage.getItem("seabite_guest_id");
@@ -30,4 +32,29 @@ export const useTelemetry = () => {
 
     pingTelemetry();
   }, [location.pathname, location.search, user]);
+
+  // ── LIVE LOCATION STREAMING ──
+  useEffect(() => {
+    if (!navigator.geolocation || !socket) return;
+
+    let guestId = localStorage.getItem("seabite_guest_id");
+    if (!guestId) return;
+
+    const watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        socket.emit("visitor-location", {
+          visitorId: guestId,
+          userId: user?._id || user?.id || null,
+          location: coords
+        });
+      },
+      (err) => {
+        console.log("Telemetry location access status:", err.message);
+      },
+      { enableHighAccuracy: true, maximumAge: 30000, timeout: 20000 }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [socket, user]);
 };

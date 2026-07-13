@@ -6,7 +6,9 @@ const visitorLogSchema = new mongoose.Schema({
   ipAddress: { type: String, required: true },
   currentPath: { type: String, required: true },
   city: { type: String, default: "Unknown" },
-  lastActive: { type: Date, default: Date.now }
+  lastActive: { type: Date, default: Date.now },
+  lat: { type: Number },
+  lng: { type: Number }
 });
 
 // Update the lastActive timestamp automatically before saving

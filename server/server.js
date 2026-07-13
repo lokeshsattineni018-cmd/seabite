@@ -289,6 +289,27 @@ io.on("connection", (socket) => {
     }
   });
 
+  // ── 👤 REAL-TIME VISITOR/CUSTOMER TRACKING ──
+  socket.on("visitor-location", async (data) => {
+    const { visitorId, userId, location } = data;
+    if (!visitorId || !location) return;
+
+    // Broadcast immediately to listening admin radar
+    io.to("admins").emit("VISITOR_LOCATION_STREAM", { visitorId, userId, location });
+
+    // Update in-memory visitor logs or VisitorLog DB model (throttled to avoid DB flood)
+    try {
+      const VisitorLog = (await import("./models/VisitorLog.js")).default;
+      await VisitorLog.findOneAndUpdate(
+        { visitorId },
+        { lat: location.lat, lng: location.lng, userId: userId || null },
+        { upsert: false }
+      );
+    } catch (err) {
+      console.error("Failed to update visitor GPS coordinate in DB:", err);
+    }
+  });
+
   // ── 🎧 REAL-TIME SUPPORT & DRIVER CHAT ROOMS ──
   socket.on("join-chat", (data) => {
     const { userId } = data;

@@ -1,24 +1,51 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { FiActivity, FiMapPin, FiClock, FiUser, FiGlobe } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { useSocket } from "../context/SocketContext";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const zonesData = [
-  { id: "center", name: "Bhimavaram Center Hub", path: "M 160 140 m -60, 0 a 60,60 0 1,0 120,0 a 60,60 0 1,0 -120,0", fill: "rgba(16, 185, 129, 0.12)", stroke: "#10b981", density: 8, load: "Clear (Low Latency)", colorClass: "text-emerald-500", rawFill: "rgba(16, 185, 129, 0.25)" },
-  { id: "north", name: "North Outskirts Corridor", path: "M 60 20 L 260 20 L 220 90 L 100 90 Z", fill: "rgba(239, 68, 68, 0.12)", stroke: "#ef4444", density: 1, load: "Rider Bottleneck (High Latency)", colorClass: "text-rose-500", rawFill: "rgba(239, 68, 68, 0.25)" },
-  { id: "east", name: "East Aquaculture Zone", path: "M 220 90 L 290 120 L 290 230 L 220 200 Z", fill: "rgba(245, 158, 11, 0.12)", stroke: "#f59e0b", density: 3, load: "Moderate Load", colorClass: "text-amber-500", rawFill: "rgba(245, 158, 11, 0.25)" },
-  { id: "west", name: "West Farm Gate Sector", path: "M 10 120 L 100 90 L 100 200 L 10 230 Z", fill: "rgba(16, 185, 129, 0.12)", stroke: "#10b981", density: 5, load: "Clear", colorClass: "text-emerald-500", rawFill: "rgba(16, 185, 129, 0.25)" }
+  { id: "center", name: "Bhimavaram Center Hub", fill: "rgba(16, 185, 129, 0.12)", stroke: "#10b981", density: 8, load: "Clear (Low Latency)", colorClass: "text-emerald-500" },
+  { id: "north", name: "North Outskirts Corridor", fill: "rgba(239, 68, 68, 0.12)", stroke: "#ef4444", density: 1, load: "Rider Bottleneck (High Latency)", colorClass: "text-rose-500" },
+  { id: "east", name: "East Aquaculture Zone", fill: "rgba(245, 158, 11, 0.12)", stroke: "#f59e0b", density: 3, load: "Moderate Load", colorClass: "text-amber-500" },
+  { id: "west", name: "West Farm Gate Sector", fill: "rgba(16, 185, 129, 0.12)", stroke: "#10b981", density: 5, load: "Clear", colorClass: "text-emerald-500" }
 ];
 
 export default function AdminLiveRadar() {
+  const { socket } = useSocket();
   const [visitors, setVisitors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [hoveredZone, setHoveredZone] = useState(null);
+  
+  const mapRef = useRef(null);
+  const mapInstance = useRef(null);
+  
+  const visitorMarkersRef = useRef({});
+  const driverMarkersRef = useRef({});
+
+  // Fix leaflet default icon path issue in Vite
+  useEffect(() => {
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    });
+  }, []);
 
   const fetchActiveVisitors = async () => {
     try {
       const { data } = await axios.get("/api/admin/telemetry/active");
       setVisitors(data);
+      
+      // Plot existing active visitors on the map if they have coordinates
+      data.forEach(v => {
+        if (v.lat && v.lng) {
+          updateVisitorMarker(v.visitorId, v.userId, { lat: v.lat, lng: v.lng }, v.currentPath);
+        }
+      });
     } catch (err) {
       console.error("Failed to fetch live radar data");
     } finally {
@@ -26,11 +53,135 @@ export default function AdminLiveRadar() {
     }
   };
 
+  const updateVisitorMarker = (visitorId, userId, coords, path = "/") => {
+    if (!mapInstance.current) return;
+    
+    // Clear old marker if exists
+    if (visitorMarkersRef.current[visitorId]) {
+      visitorMarkersRef.current[visitorId].remove();
+    }
+    
+    const icon = L.divIcon({
+      className: "",
+      html: `<div style="width:28px;height:28px;border-radius:50%;background:#3b82f6;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;box-shadow:0 0 10px rgba(59,130,246,0.6);border:2px solid white;animation: pulse-blue 2s infinite;">👤</div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14]
+    });
+    
+    const marker = L.marker([coords.lat, coords.lng], { icon })
+      .addTo(mapInstance.current)
+      .bindPopup(`<strong>${userId ? "User" : "Visitor"}: ${visitorId}</strong><br/>Viewing: ${path}`);
+      
+    visitorMarkersRef.current[visitorId] = marker;
+  };
+
+  const updateDriverMarker = (driverId, name, coords) => {
+    if (!mapInstance.current) return;
+    
+    if (driverMarkersRef.current[driverId]) {
+      driverMarkersRef.current[driverId].remove();
+    }
+    
+    const icon = L.divIcon({
+      className: "",
+      html: `<div style="width:34px;height:34px;border-radius:50%;background:#10b981;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;box-shadow:0 0 10px rgba(16,185,129,0.6);border:2px solid white;">🛵</div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
+    });
+    
+    const marker = L.marker([coords.lat, coords.lng], { icon })
+      .addTo(mapInstance.current)
+      .bindPopup(`<strong>Rider: ${name || driverId}</strong>`);
+      
+    driverMarkersRef.current[driverId] = marker;
+  };
+
+  // Map Initialization
   useEffect(() => {
+    if (!mapRef.current || mapInstance.current) return;
+    
+    mapInstance.current = L.map(mapRef.current).setView([16.5449, 81.5212], 13);
+    
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "© OpenStreetMap contributors"
+    }).addTo(mapInstance.current);
+
+    // Draw Bhimavaram Hub Zones
+    L.circle([16.5449, 81.5212], { radius: 1000, color: '#10b981', fillColor: 'rgba(16, 185, 129, 0.08)', weight: 2 })
+      .addTo(mapInstance.current)
+      .on('mouseover', () => setHoveredZone(zonesData[0]))
+      .on('mouseout', () => setHoveredZone(null));
+      
+    L.circle([16.565, 81.5212], { radius: 1000, color: '#ef4444', fillColor: 'rgba(239, 68, 68, 0.08)', weight: 2 })
+      .addTo(mapInstance.current)
+      .on('mouseover', () => setHoveredZone(zonesData[1]))
+      .on('mouseout', () => setHoveredZone(null));
+
+    L.circle([16.5449, 81.545], { radius: 1000, color: '#f59e0b', fillColor: 'rgba(245, 158, 11, 0.08)', weight: 2 })
+      .addTo(mapInstance.current)
+      .on('mouseover', () => setHoveredZone(zonesData[2]))
+      .on('mouseout', () => setHoveredZone(null));
+
+    L.circle([16.5449, 81.498], { radius: 1000, color: '#10b981', fillColor: 'rgba(16, 185, 129, 0.08)', weight: 2 })
+      .addTo(mapInstance.current)
+      .on('mouseover', () => setHoveredZone(zonesData[3]))
+      .on('mouseout', () => setHoveredZone(null));
+
     fetchActiveVisitors();
+    
     const interval = setInterval(fetchActiveVisitors, 10000);
-    return () => clearInterval(interval);
+    
+    return () => {
+      clearInterval(interval);
+      if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+      }
+    };
   }, []);
+
+  // Socket.io Real-Time Stream Listeners
+  useEffect(() => {
+    if (!socket) return;
+    
+    socket.on("VISITOR_LOCATION_STREAM", (data) => {
+      const { visitorId, userId, location } = data;
+      if (location && location.lat && location.lng) {
+        updateVisitorMarker(visitorId, userId, location);
+        
+        // Update visitors list status if they match
+        setVisitors(prev => {
+          const match = prev.find(v => v.visitorId === visitorId);
+          if (match) {
+            return prev.map(v => v.visitorId === visitorId ? { ...v, lat: location.lat, lng: location.lng, lastActive: new Date() } : v);
+          } else {
+            return [{
+              visitorId,
+              userId,
+              lat: location.lat,
+              lng: location.lng,
+              ipAddress: "Live Stream",
+              city: "Detected Live",
+              currentPath: "Home",
+              lastActive: new Date()
+            }, ...prev];
+          }
+        });
+      }
+    });
+
+    socket.on("DRIVER_LOCATION_STREAM", (data) => {
+      const { driverId, location } = data;
+      if (location && location.lat && location.lng) {
+        updateDriverMarker(driverId, `Driver ${driverId.substring(0, 5)}`, location);
+      }
+    });
+
+    return () => {
+      socket.off("VISITOR_LOCATION_STREAM");
+      socket.off("DRIVER_LOCATION_STREAM");
+    };
+  }, [socket]);
 
   const formatTime = (dateString) => {
     const diffMs = Date.now() - new Date(dateString).getTime();
@@ -41,6 +192,13 @@ export default function AdminLiveRadar() {
 
   return (
     <div className="p-6 md:p-8 bg-[#f8fafc] dark:bg-[#0a1625] min-h-screen text-[#1A2E2C] dark:text-[#E2EEEC] font-sans">
+      <style>{`
+        @keyframes pulse-blue {
+          0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
+          70% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+      `}</style>
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
@@ -66,8 +224,8 @@ export default function AdminLiveRadar() {
 
         {/* Geofenced Delivery Density Radar */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
-          {/* Interactive SVG Geofence Map */}
-          <div className="lg:col-span-2 bg-white dark:bg-[#122134] border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between">
+          {/* Interactive Leaflet Map */}
+          <div className="lg:col-span-2 bg-white dark:bg-[#122134] border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4">
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
                 📍 Interactive Geofence Delivery Density
@@ -75,30 +233,14 @@ export default function AdminLiveRadar() {
               <p className="text-xs text-gray-500 mt-1">Live coverage map of Bhimavaram Hub zones. Hover on zones to view active logistics metrics.</p>
             </div>
             
-            <div className="flex items-center justify-center py-6 relative">
-              <svg viewBox="0 0 320 260" className="w-full max-w-[360px] drop-shadow-xl select-none">
-                {zonesData.map(zone => (
-                  <motion.path
-                    key={zone.id}
-                    d={zone.path}
-                    fill={hoveredZone?.id === zone.id ? zone.rawFill : zone.fill}
-                    stroke={zone.stroke}
-                    strokeWidth={hoveredZone?.id === zone.id ? 3 : 1.5}
-                    className="cursor-pointer transition-all duration-300"
-                    onMouseEnter={() => setHoveredZone(zone)}
-                    onMouseLeave={() => setHoveredZone(null)}
-                    whileHover={{ scale: 1.02 }}
-                  />
-                ))}
-                {/* Hub Center Pin */}
-                <circle cx="160" cy="140" r="6" fill="#1e293b" stroke="#ffffff" strokeWidth="2" />
-              </svg>
+            <div className="h-[450px] relative w-full rounded-2xl overflow-hidden z-0">
+              <div ref={mapRef} className="h-full w-full" />
             </div>
 
             <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-widest border-t border-gray-50 dark:border-gray-800 pt-4">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> Green = Clear</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" /> Orange = Moderate</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" /> Red = Bottleneck</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Green = Clear</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Orange = Moderate</span>
+              <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" /> Red = Bottleneck</span>
             </div>
           </div>
 
@@ -210,6 +352,9 @@ export default function AdminLiveRadar() {
                             <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
                               <FiMapPin className="text-gray-400" />
                               {visitor.city}
+                              {visitor.lat && (
+                                <span className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-500 px-2 py-0.5 rounded-md font-mono">GPS</span>
+                              )}
                             </div>
                             <span className="text-[11px] font-mono text-gray-400 dark:text-gray-500 ml-6">
                               {visitor.ipAddress}

@@ -465,7 +465,17 @@ export default function Checkout() {
         cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
         orderedWeightGrams: item.orderedWeightGrams || 0,
       })),
-      shippingAddress: { fullName: deliveryAddress.name, phone: deliveryAddress.phone, houseNo: deliveryAddress.houseNo, street: deliveryAddress.street, city: deliveryAddress.city, state: deliveryAddress.state, zip: deliveryAddress.postalCode },
+      shippingAddress: { 
+        fullName: deliveryAddress.name, 
+        phone: deliveryAddress.phone, 
+        houseNo: deliveryAddress.houseNo, 
+        street: deliveryAddress.street, 
+        city: deliveryAddress.city, 
+        state: deliveryAddress.state, 
+        zip: deliveryAddress.postalCode,
+        lat: deliveryAddress.lat || null,
+        lng: deliveryAddress.lng || null
+      },
       itemsPrice: itemTotal, taxPrice: gst, shippingPrice: deliveryCharge, discount: discountAmount, paymentMethod: finalPaymentMethod,
       deliverySlot,
       deliveryDate,

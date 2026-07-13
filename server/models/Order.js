@@ -8,6 +8,8 @@ const shippingAddressSchema = new mongoose.Schema({
   city: { type: String, required: true },
   state: { type: String, required: true },
   zip: { type: String, required: true },
+  lat: { type: Number },
+  lng: { type: Number },
 });
 
 const counterSchema = new mongoose.Schema({

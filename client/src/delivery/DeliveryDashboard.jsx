@@ -300,6 +300,43 @@ export default function DeliveryDashboard() {
     return () => navigator.geolocation.clearWatch(watchId);
   }, [socket, user, isOnline]);
 
+  /* ── PERSISTENT SCREEN WAKE LOCK API ── */
+  useEffect(() => {
+    let wakeLockInstance = null;
+
+    const requestWakeLock = async () => {
+      if (!('wakeLock' in navigator)) return;
+      try {
+        wakeLockInstance = await navigator.wakeLock.request('screen');
+        console.log('🔒 Screen Wake Lock acquired!');
+      } catch (err) {
+        console.warn('Failed to acquire screen wake lock:', err.message);
+      }
+    };
+
+    const releaseWakeLock = async () => {
+      if (wakeLockInstance) {
+        try {
+          await wakeLockInstance.release();
+          console.log('🔓 Screen Wake Lock released!');
+        } catch (err) {
+          console.error(err);
+        }
+        wakeLockInstance = null;
+      }
+    };
+
+    if (isOnline) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    return () => {
+      releaseWakeLock();
+    };
+  }, [isOnline]);
+
   /* ── Update Driver Marker On Map ── */
   useEffect(() => {
     if (!window.L || !mapRef.current) return;

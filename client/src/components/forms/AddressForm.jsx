@@ -49,6 +49,8 @@ export default function AddressForm({ onSave, onCancel, initialData }) {
         state: data.state || "Andhra Pradesh",
         postalCode: data.postalCode || "",
         isDefault: data.isDefault || false,
+        lat: data.lat || null,
+        lng: data.lng || null,
     });
 
 
@@ -88,6 +90,8 @@ export default function AddressForm({ onSave, onCancel, initialData }) {
                 city: city || prev.city,
                 state: ALLOWED_STATES.includes(state) ? state : "Andhra Pradesh",
                 postalCode: pincode || prev.postalCode,
+                lat: place.geometry?.location?.lat() || prev.lat,
+                lng: place.geometry?.location?.lng() || prev.lng,
             }));
         });
 
@@ -116,6 +120,8 @@ export default function AddressForm({ onSave, onCancel, initialData }) {
                             city: addr.city || addr.town || addr.village || addr.county || "",
                             state,
                             postalCode: addr.postcode || "",
+                            lat: latitude,
+                            lng: longitude
                         }));
                         toast.success("Location detected!");
                     }

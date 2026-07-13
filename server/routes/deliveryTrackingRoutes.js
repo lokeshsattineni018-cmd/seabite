@@ -20,13 +20,18 @@ router.get("/track/:orderId", async (req, res) => {
       ? { lat: order.deliveryPartner.currentLocation.lat, lng: order.deliveryPartner.currentLocation.lng }
       : { lat: baseLat, lng: baseLng };
 
+    const customerCoordinates = (order.shippingAddress && order.shippingAddress.lat)
+      ? { lat: order.shippingAddress.lat, lng: order.shippingAddress.lng }
+      : { lat: baseLat, lng: baseLng };
+
     res.json({
       status: order.status,
       deliveryStatus: order.deliveryStatus,
       estimatedDeliveryTime: order.estimatedDeliveryTime || new Date(Date.now() + 30 * 60 * 1000),
       driverName: order.deliveryPartner ? order.deliveryPartner.name : "Rider Pending",
       driverPhone: order.deliveryPartner ? order.deliveryPartner.phone : "None",
-      coordinates
+      coordinates,
+      customerCoordinates
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to load tracking data" });
