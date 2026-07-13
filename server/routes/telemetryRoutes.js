@@ -33,11 +33,17 @@ router.post("/ping", telemetryLimiter, async (req, res) => {
       ipAddress = "8.8.8.8";
     }
 
-    // Resolve City using geoip-lite
+    // Resolve City and Coordinates using geoip-lite
     let city = "Unknown";
+    let lat = null;
+    let lng = null;
     const geo = geoip.lookup(ipAddress);
-    if (geo && geo.city) {
-      city = `${geo.city}, ${geo.country}`;
+    if (geo) {
+      if (geo.city) city = `${geo.city}, ${geo.country}`;
+      if (geo.ll && Array.isArray(geo.ll)) {
+        lat = geo.ll[0];
+        lng = geo.ll[1];
+      }
     }
 
     // Upsert Visitor Log
@@ -48,7 +54,8 @@ router.post("/ping", telemetryLimiter, async (req, res) => {
         ipAddress,
         currentPath,
         city,
-        lastActive: new Date()
+        lastActive: new Date(),
+        ...(lat && lng ? { lat, lng } : {})
       },
       { returnDocument: 'after', upsert: true }
     );

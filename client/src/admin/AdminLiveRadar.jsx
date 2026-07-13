@@ -144,6 +144,9 @@ export default function AdminLiveRadar() {
   useEffect(() => {
     if (!socket) return;
     
+    // Join the admins room to receive VISITOR_LOCATION_STREAM events
+    socket.emit("join-admin");
+    
     socket.on("VISITOR_LOCATION_STREAM", (data) => {
       const { visitorId, userId, location } = data;
       if (location && location.lat && location.lng) {
