@@ -13,6 +13,22 @@ export const useTelemetry = () => {
   const lastRestUpdate = useRef(0);
   const [promoOffer, setPromoOffer] = useState(null);
 
+  const processVisitorResponse = (visitor) => {
+    if (visitor && visitor.pendingPromo) {
+      const promo = visitor.pendingPromo;
+      try {
+        const shownPromos = JSON.parse(localStorage.getItem("seabite_shown_promos") || "[]");
+        if (!shownPromos.includes(promo.promoCode)) {
+          setPromoOffer(promo);
+          shownPromos.push(promo.promoCode);
+          localStorage.setItem("seabite_shown_promos", JSON.stringify(shownPromos));
+        }
+      } catch (e) {
+        setPromoOffer(promo);
+      }
+    }
+  };
+
   useEffect(() => {
     let guestId = localStorage.getItem("seabite_guest_id");
     if (!guestId) {
@@ -22,11 +38,14 @@ export const useTelemetry = () => {
 
     const pingTelemetry = async () => {
       try {
-        await axios.post(`${API_URL}/api/telemetry/ping`, {
+        const res = await axios.post(`${API_URL}/api/telemetry/ping`, {
           visitorId: guestId,
           userId: user?._id || null,
           currentPath: location.pathname + location.search,
         });
+        if (res.data && res.data.visitor) {
+          processVisitorResponse(res.data.visitor);
+        }
       } catch (err) {
         // Silently fail for telemetry to avoid polluting console for users
       }
@@ -47,42 +66,30 @@ export const useTelemetry = () => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         console.log("📍 Telemetry captured GPS coordinates:", coords);
         
-        let resolvedCity = "Unknown";
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&addressdetails=1`
-          );
-          const addrData = await res.json();
-          if (addrData && addrData.address) {
-            const addr = addrData.address;
-            resolvedCity = addr.city || addr.town || addr.village || addr.county || "Unknown";
-            if (addr.state) resolvedCity += `, ${addr.state}`;
-          }
-        } catch (e) {
-          console.error("Reverse geocoding failed", e);
-        }
-
-        // 1. WebSocket stream (real-time instant)
+        // 1. WebSocket stream (real-time instant - best effort)
         if (socket) {
           socket.emit("visitor-location", {
             visitorId: guestId,
             userId: user?._id || user?.id || null,
-            location: coords,
-            city: resolvedCity
+            location: coords
           });
         }
 
-        // 2. Throttled REST API update fallback (once every 10 seconds)
+        // 2. Throttled REST API update fallback (once every 10 seconds - server resolves geocoding)
         const now = Date.now();
         if (now - lastRestUpdate.current > 10000) {
           lastRestUpdate.current = now;
-          axios.post(`${API_URL}/api/telemetry/location-update`, {
-            visitorId: guestId,
-            userId: user?._id || user?.id || null,
-            lat: coords.lat,
-            lng: coords.lng,
-            city: resolvedCity
-          }).catch(() => {});
+          try {
+            const res = await axios.post(`${API_URL}/api/telemetry/location-update`, {
+              visitorId: guestId,
+              userId: user?._id || user?.id || null,
+              lat: coords.lat,
+              lng: coords.lng
+            });
+            if (res.data && res.data.visitor) {
+              processVisitorResponse(res.data.visitor);
+            }
+          } catch (err) {}
         }
       },
       (err) => {
@@ -101,6 +108,10 @@ export const useTelemetry = () => {
           axios.post(`${API_URL}/api/telemetry/location-update`, {
             visitorId: guestId,
             locationError: err.code
+          }).then((res) => {
+            if (res.data && res.data.visitor) {
+              processVisitorResponse(res.data.visitor);
+            }
           }).catch(() => {});
         }
       },

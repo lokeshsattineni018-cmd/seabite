@@ -37,22 +37,25 @@ export default function AdminLiveRadar() {
     setSelectedVisitorForPromo(visitorId);
   };
 
-  const handleSendPromo = () => {
-    if (!socket || !selectedVisitorForPromo) return;
+  const handleSendPromo = async () => {
+    if (!selectedVisitorForPromo) return;
     setIsSendingPromo(true);
     
-    socket.emit("send-promo-offer", {
-      visitorId: selectedVisitorForPromo,
-      promoCode,
-      discountPercent,
-      message: promoMessage
-    });
-    
-    setTimeout(() => {
+    try {
+      await axios.post("/api/telemetry/push-promo", {
+        visitorId: selectedVisitorForPromo,
+        promoCode,
+        discountPercent,
+        message: promoMessage
+      });
+      toast.success("Promo offer pushed directly to visitor screen!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to push promo offer.");
+    } finally {
       setIsSendingPromo(false);
       setSelectedVisitorForPromo(null);
-      toast.success("Promo offer pushed directly to visitor screen!");
-    }, 800);
+    }
   };
 
   const mapRef = useRef(null);

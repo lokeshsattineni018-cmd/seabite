@@ -102,6 +102,27 @@ router.post("/location-update", async (req, res) => {
       updateFields.lng = lng;
       updateFields.locationSource = "gps";
       updateFields.locationError = null; // Clear previous errors if we got coords
+
+      // Server-Side Reverse Geocoding to bypass browser CORS constraints
+      try {
+        const fetchRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+          {
+            headers: {
+              "User-Agent": "SeaBite-Server-Telemetry/1.0"
+            }
+          }
+        );
+        const addrData = await fetchRes.json();
+        if (addrData && addrData.address) {
+          const addr = addrData.address;
+          let city = addr.city || addr.town || addr.village || addr.county || "Unknown";
+          if (addr.state) city += `, ${addr.state}`;
+          updateFields.city = city;
+        }
+      } catch (geocodeErr) {
+        console.error("Server-side geocoding failed:", geocodeErr.message);
+      }
     }
     if (locationError !== undefined) {
       updateFields.locationError = locationError;
@@ -119,13 +140,45 @@ router.post("/location-update", async (req, res) => {
         visitorId,
         userId: userId || null,
         location: { lat, lng },
-        locationSource: "gps"
+        locationSource: "gps",
+        city: updateFields.city || visitor.city
       });
     }
 
     res.status(200).json({ success: true, visitor });
   } catch (error) {
     console.error("Telemetry Location Update Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// 🟢 POST: /api/telemetry/push-promo
+router.post("/push-promo", adminAuth, async (req, res) => {
+  try {
+    const { visitorId, promoCode, discountPercent, message } = req.body;
+    
+    if (!visitorId || !promoCode) {
+      return res.status(400).json({ message: "visitorId and promoCode are required" });
+    }
+
+    const visitor = await VisitorLog.findOneAndUpdate(
+      { visitorId },
+      {
+        $set: {
+          pendingPromo: {
+            promoCode,
+            discountPercent: parseInt(discountPercent, 10) || 15,
+            message: message || "We noticed you looking at our fresh seafood collection! Here is a special treat just for you.",
+            pushedAt: new Date()
+          }
+        }
+      },
+      { new: true }
+    );
+
+    res.status(200).json({ success: true, visitor });
+  } catch (error) {
+    console.error("Push Promo Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });
