@@ -83,4 +83,51 @@ router.post("/ping", telemetryLimiter, async (req, res) => {
   }
 });
 
+// 🟢 PUBLIC POST: /api/telemetry/location-update
+router.post("/location-update", async (req, res) => {
+  try {
+    const { visitorId, userId, lat, lng, locationError } = req.body;
+    
+    if (!visitorId) {
+      return res.status(400).json({ message: "visitorId is required" });
+    }
+
+    const updateFields = {
+      lastActive: new Date()
+    };
+
+    if (userId) updateFields.userId = userId;
+    if (lat && lng) {
+      updateFields.lat = lat;
+      updateFields.lng = lng;
+      updateFields.locationSource = "gps";
+      updateFields.locationError = null; // Clear previous errors if we got coords
+    }
+    if (locationError !== undefined) {
+      updateFields.locationError = locationError;
+    }
+
+    const visitor = await VisitorLog.findOneAndUpdate(
+      { visitorId },
+      { $set: updateFields },
+      { new: true, upsert: true }
+    );
+
+    // Emit live pulse through socket if running
+    if (req.io && lat && lng) {
+      req.io.to("admins").emit("VISITOR_LOCATION_STREAM", {
+        visitorId,
+        userId: userId || null,
+        location: { lat, lng },
+        locationSource: "gps"
+      });
+    }
+
+    res.status(200).json({ success: true, visitor });
+  } catch (error) {
+    console.error("Telemetry Location Update Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
 export default router;

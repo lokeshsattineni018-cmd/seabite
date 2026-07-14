@@ -57,8 +57,12 @@ export default function AdminLiveRadar() {
   const updateVisitorMarker = (visitorId, userId, coords, path = "/") => {
     if (!mapInstance.current) return;
     
-    // Clear old marker if exists
+    // Avoid redrawing and closing popup if coordinates are exactly identical
     if (visitorMarkersRef.current[visitorId]) {
+      const currentLatLng = visitorMarkersRef.current[visitorId].getLatLng();
+      if (currentLatLng.lat === coords.lat && currentLatLng.lng === coords.lng) {
+        return;
+      }
       visitorMarkersRef.current[visitorId].remove();
     }
     

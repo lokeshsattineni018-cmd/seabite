@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
@@ -10,6 +10,7 @@ export const useTelemetry = () => {
   const location = useLocation();
   const { user } = useAuth();
   const { socket } = useSocket();
+  const lastRestUpdate = useRef(0);
 
   useEffect(() => {
     let guestId = localStorage.getItem("seabite_guest_id");
@@ -44,12 +45,26 @@ export const useTelemetry = () => {
       (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         console.log("📍 Telemetry captured GPS coordinates:", coords);
+        
+        // 1. WebSocket stream (real-time instant)
         if (socket) {
           socket.emit("visitor-location", {
             visitorId: guestId,
             userId: user?._id || user?.id || null,
             location: coords
           });
+        }
+
+        // 2. Throttled REST API update fallback (once every 10 seconds)
+        const now = Date.now();
+        if (now - lastRestUpdate.current > 10000) {
+          lastRestUpdate.current = now;
+          axios.post(`${API_URL}/api/telemetry/location-update`, {
+            visitorId: guestId,
+            userId: user?._id || user?.id || null,
+            lat: coords.lat,
+            lng: coords.lng
+          }).catch(() => {});
         }
       },
       (err) => {
@@ -59,6 +74,16 @@ export const useTelemetry = () => {
             visitorId: guestId,
             code: err.code
           });
+        }
+
+        // Fallback REST error logging (once every 15 seconds)
+        const now = Date.now();
+        if (now - lastRestUpdate.current > 15000) {
+          lastRestUpdate.current = now;
+          axios.post(`${API_URL}/api/telemetry/location-update`, {
+            visitorId: guestId,
+            locationError: err.code
+          }).catch(() => {});
         }
       },
       { enableHighAccuracy: true, maximumAge: 30000, timeout: 25000 }
