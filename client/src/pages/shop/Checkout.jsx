@@ -185,53 +185,51 @@ function CouponDrawer({ isOpen, onClose, coupons, appliedCoupon, onApply, onClea
 
 const SeaBiteButtonLoader = () => {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", width: "100%", height: "100%", overflow: "hidden", position: "relative" }}>
-      <div style={{ display: "flex", gap: "12px", position: "relative", alignItems: "center" }}>
-        {/* Fish: swims forward with a wave wiggle */}
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", width: "100%", height: "100%" }}>
+      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+        {/* Fish: Swims / wiggles in place */}
         <motion.span
           animate={{
-            x: [-30, 80],
-            y: [0, -3, 3, -3, 0],
-            rotate: [0, -5, 5, -5, 0],
+            y: [0, -3, 0, 3, 0],
+            rotate: [-8, 8, -8]
           }}
           transition={{
-            x: { repeat: Infinity, duration: 2.0, ease: "linear" },
-            y: { repeat: Infinity, duration: 0.5, ease: "easeInOut" },
-            rotate: { repeat: Infinity, duration: 0.5, ease: "easeInOut" }
+            repeat: Infinity,
+            duration: 1.0,
+            ease: "easeInOut"
           }}
           style={{ fontSize: "16px", display: "inline-block" }}
         >
           🐟
         </motion.span>
         
-        {/* Prawn: swims forward, wiggling backward-forward */}
+        {/* Prawn: Bounces / jumps in place */}
         <motion.span
           animate={{
-            x: [-45, 65],
-            y: [3, -3, 3],
-            rotate: [-10, 10, -10],
+            y: [0, -6, 0],
+            scaleY: [1, 0.85, 1.1, 1]
           }}
           transition={{
-            x: { repeat: Infinity, duration: 2.0, ease: "linear", delay: 0.35 },
-            y: { repeat: Infinity, duration: 0.4, ease: "easeInOut" },
-            rotate: { repeat: Infinity, duration: 0.4, ease: "easeInOut" }
+            repeat: Infinity,
+            duration: 0.8,
+            ease: "easeInOut",
+            delay: 0.2
           }}
           style={{ fontSize: "16px", display: "inline-block" }}
         >
           🦐
         </motion.span>
 
-        {/* Crab: crawls side-to-side sideways */}
+        {/* Crab: Scuttles / wiggles side-to-side in place */}
         <motion.span
           animate={{
-            x: [-60, 50],
-            y: [2, -2, 2],
+            x: [-3, 3, -3],
             rotate: [-12, 12, -12]
           }}
           transition={{
-            x: { repeat: Infinity, duration: 2.0, ease: "linear", delay: 0.7 },
-            y: { repeat: Infinity, duration: 0.3, ease: "easeInOut" },
-            rotate: { repeat: Infinity, duration: 0.3, ease: "easeInOut" }
+            repeat: Infinity,
+            duration: 0.6,
+            ease: "easeInOut"
           }}
           style={{ fontSize: "16px", display: "inline-block" }}
         >
