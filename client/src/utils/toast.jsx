@@ -12,36 +12,36 @@ const showToast = {
         <div
           className={`${
             t.visible ? "animate-enter" : "animate-leave"
-          } max-w-md w-full bg-[#5BBFB5] shadow-lg rounded-xl pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+          } shadow-lg rounded-xl flex ring-1 ring-black ring-opacity-5`}
           style={{
             ...options.style,
             background: "#5BBFB5",
             color: "#fff",
-            padding: "12px 16px",
+            padding: "10px 14px",
             display: "flex",
             alignItems: "center",
-            gap: "12px",
-            fontSize: "13px",
+            gap: "10px",
+            fontSize: "12.5px",
             fontWeight: "600",
             fontFamily: "'Manrope', sans-serif",
             pointerEvents: "auto",
+            width: "320px",
+            maxWidth: "320px",
           }}
         >
-          <div className="flex-1 flex items-center gap-3">
-             <span style={{ fontSize: "18px" }}>{options.icon || "🛒"}</span>
-             <p>{message}</p>
+          <div className="flex-1 flex items-center gap-2">
+             <span style={{ fontSize: "16px", flexShrink: 0 }}>{options.icon || "🛒"}</span>
+             <p style={{ margin: 0, lineHeight: "1.4" }}>{message}</p>
           </div>
-          <div className="flex border-l border-white/20 pl-3" style={{ pointerEvents: "auto" }}>
+          <div className="flex border-l border-white/20 pl-2" style={{ pointerEvents: "auto", flexShrink: 0 }}>
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+              onClick={() => {
                 toast.dismiss(t.id);
               }}
               className="border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none cursor-pointer"
-              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "32px", height: "32px" }}
+              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "24px", height: "24px", background: "none" }}
             >
-              <FiX size={16} style={{ pointerEvents: "none" }} />
+              <FiX size={14} />
             </button>
           </div>
         </div>
@@ -60,36 +60,36 @@ const showToast = {
         <div
           className={`${
             t.visible ? "animate-enter" : "animate-leave"
-          } max-w-md w-full bg-[#F07468] shadow-lg rounded-xl pointer-events-auto flex ring-1 ring-black ring-opacity-5`}
+          } shadow-lg rounded-xl flex ring-1 ring-black ring-opacity-5`}
           style={{
             ...options.style,
             background: "#F07468",
             color: "#fff",
-            padding: "12px 16px",
+            padding: "10px 14px",
             display: "flex",
             alignItems: "center",
-            gap: "12px",
-            fontSize: "13px",
+            gap: "10px",
+            fontSize: "12.5px",
             fontWeight: "600",
             fontFamily: "'Manrope', sans-serif",
             pointerEvents: "auto",
+            width: "320px",
+            maxWidth: "320px",
           }}
         >
-          <div className="flex-1 flex items-center gap-3">
-             <span style={{ fontSize: "18px" }}>{options.icon || "❌"}</span>
-             <p>{message}</p>
+          <div className="flex-1 flex items-center gap-2">
+             <span style={{ fontSize: "16px", flexShrink: 0 }}>{options.icon || "❌"}</span>
+             <p style={{ margin: 0, lineHeight: "1.4" }}>{message}</p>
           </div>
-          <div className="flex border-l border-white/20 pl-3" style={{ pointerEvents: "auto" }}>
+          <div className="flex border-l border-white/20 pl-2" style={{ pointerEvents: "auto", flexShrink: 0 }}>
             <button
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
+              onClick={() => {
                 toast.dismiss(t.id);
               }}
               className="border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none cursor-pointer"
-              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "32px", height: "32px" }}
+              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "24px", height: "24px", background: "none" }}
             >
-              <FiX size={16} style={{ pointerEvents: "none" }} />
+              <FiX size={14} />
             </button>
           </div>
         </div>
