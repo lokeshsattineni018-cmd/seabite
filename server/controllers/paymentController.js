@@ -91,12 +91,14 @@ export const checkout = async (req, res) => {
     let freeThreshold = 1000;
     let deliveryFee = 99;
     let taxRate = 5;
+    let globalDiscount = 0;
     try {
       const settings = await getSettings();
       if (settings) {
         freeThreshold = settings.freeDeliveryThreshold !== undefined ? settings.freeDeliveryThreshold : 1000;
         deliveryFee = settings.deliveryFee !== undefined ? settings.deliveryFee : 99;
         taxRate = settings.taxRate !== undefined ? settings.taxRate : 5;
+        globalDiscount = settings.globalDiscount !== undefined ? settings.globalDiscount : 0;
       }
     } catch (err) {
       logger.error("Failed to load store settings in checkout", { error: err.message });
@@ -111,9 +113,18 @@ export const checkout = async (req, res) => {
         return res.status(404).json({ success: false, message: `Product not found: ${item.name}` });
       }
 
+      // Check if product is in flash sale
+      const isActiveFlashSale = product.flashSale && product.flashSale.isFlashSale && product.flashSale.discountPrice > 0 && (!product.flashSale.saleEndDate || new Date(product.flashSale.saleEndDate) > new Date());
+      
+      let basePrice = product.basePrice;
+      if (isActiveFlashSale) {
+        basePrice = product.flashSale.discountPrice;
+      } else if (globalDiscount > 0) {
+        basePrice = Math.round(basePrice * (1 - globalDiscount / 100));
+      }
+
       // True unit price calculated with cutPriceAdjustmentPct
       const adjustment = item.cutPriceAdjustmentPct ? Number(item.cutPriceAdjustmentPct) : 0;
-      const basePrice = product.basePrice;
       const itemUnitPrice = Math.round(basePrice * (1 + adjustment / 100));
 
       recalculatedItemsPrice += itemUnitPrice * item.qty;
