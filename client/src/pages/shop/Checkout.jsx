@@ -183,6 +183,72 @@ function CouponDrawer({ isOpen, onClose, coupons, appliedCoupon, onApply, onClea
   );
 }
 
+const SeaBiteButtonLoader = () => {
+  return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", width: "100%", height: "100%", overflow: "hidden", position: "relative" }}>
+      <div style={{ display: "flex", gap: "12px", position: "relative", alignItems: "center" }}>
+        {/* Fish: swims forward with a wave wiggle */}
+        <motion.span
+          animate={{
+            x: [-30, 80],
+            y: [0, -3, 3, -3, 0],
+            rotate: [0, -5, 5, -5, 0],
+          }}
+          transition={{
+            x: { repeat: Infinity, duration: 2.0, ease: "linear" },
+            y: { repeat: Infinity, duration: 0.5, ease: "easeInOut" },
+            rotate: { repeat: Infinity, duration: 0.5, ease: "easeInOut" }
+          }}
+          style={{ fontSize: "16px", display: "inline-block" }}
+        >
+          🐟
+        </motion.span>
+        
+        {/* Prawn: swims forward, wiggling backward-forward */}
+        <motion.span
+          animate={{
+            x: [-45, 65],
+            y: [3, -3, 3],
+            rotate: [-10, 10, -10],
+          }}
+          transition={{
+            x: { repeat: Infinity, duration: 2.0, ease: "linear", delay: 0.35 },
+            y: { repeat: Infinity, duration: 0.4, ease: "easeInOut" },
+            rotate: { repeat: Infinity, duration: 0.4, ease: "easeInOut" }
+          }}
+          style={{ fontSize: "16px", display: "inline-block" }}
+        >
+          🦐
+        </motion.span>
+
+        {/* Crab: crawls side-to-side sideways */}
+        <motion.span
+          animate={{
+            x: [-60, 50],
+            y: [2, -2, 2],
+            rotate: [-12, 12, -12]
+          }}
+          transition={{
+            x: { repeat: Infinity, duration: 2.0, ease: "linear", delay: 0.7 },
+            y: { repeat: Infinity, duration: 0.3, ease: "easeInOut" },
+            rotate: { repeat: Infinity, duration: 0.3, ease: "easeInOut" }
+          }}
+          style={{ fontSize: "16px", display: "inline-block" }}
+        >
+          🦀
+        </motion.span>
+      </div>
+      <motion.span 
+        animate={{ opacity: [0.6, 1, 0.6] }}
+        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+        style={{ fontSize: "12px", fontWeight: "800", letterSpacing: "0.03em", color: "#fff", textTransform: "uppercase" }}
+      >
+        Securing your catch...
+      </motion.span>
+    </div>
+  );
+};
+
 export default function Checkout() {
   const { cartItems, subtotal, storeSettings, refreshCartCount, clearCart, updateQuantity, removeFromCart, cartLoaded } = useContext(CartContext);
   const { user, refreshMe } = useContext(AuthContext);
@@ -1161,8 +1227,12 @@ export default function Checkout() {
                       transition: "all 0.3s ease"
                     }}
                   >
-                    {loading ? <FiLoader size={18} style={{ animation: "spin 1s linear infinite" }} /> : <FiShoppingBag size={18} />}
-                    {loading ? "Processing..." : `Place Order · ₹${grandTotal.toFixed(2)}`}
+                    {loading ? <SeaBiteButtonLoader /> : (
+                      <>
+                        <FiShoppingBag size={18} />
+                        Place Order · ₹{grandTotal.toFixed(2)}
+                      </>
+                    )}
                   </motion.button>
                 </div>
 
@@ -1214,8 +1284,12 @@ export default function Checkout() {
             display: "flex", alignItems: "center", gap: 8, boxShadow: `0 8px 20px rgba(91,168,160,0.25)`
           }}
         >
-          {loading ? <FiLoader size={16} style={{ animation: "spin 1s linear infinite" }} /> : "Place Order"}
-          {!loading && <FiChevronRight size={16} />}
+          {loading ? <SeaBiteButtonLoader /> : (
+            <>
+              Place Order
+              <FiChevronRight size={16} />
+            </>
+          )}
         </motion.button>
       </div>
 
