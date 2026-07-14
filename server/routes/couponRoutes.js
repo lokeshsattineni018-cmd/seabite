@@ -98,6 +98,7 @@ router.post("/validate", couponLimiter, validate(couponValidateSchema), async (r
       code: coupon.code,
       discountType: coupon.discountType,
       value: coupon.value,
+      maxDiscount: coupon.maxDiscount || 0,
       minOrderAmount: coupon.minOrderAmount,
       message: `${coupon.value}${coupon.discountType === 'percent' ? '%' : '₹'} discount applied!`,
     });

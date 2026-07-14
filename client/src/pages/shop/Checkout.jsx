@@ -327,9 +327,17 @@ export default function Checkout() {
     if (spinDiscount) return Math.min((itemTotal * (spinDiscount.percentage || 0)) / 100, itemTotal);
     if (!appliedCoupon) return 0;
     const val = parseFloat(appliedCoupon.discountValue || appliedCoupon.value || 0);
-    if (appliedCoupon.discountType === "percent") return Math.min((itemTotal * val) / 100, itemTotal);
-    if (appliedCoupon.discountType === "flat") return Math.min(val, itemTotal);
-    return 0; // shipping coupons show in their own row
+    const maxD = parseFloat(appliedCoupon.maxDiscount || 0);
+    let calculated = 0;
+    if (appliedCoupon.discountType === "percent") {
+      calculated = (itemTotal * val) / 100;
+      if (maxD > 0 && calculated > maxD) {
+        calculated = maxD;
+      }
+    } else if (appliedCoupon.discountType === "flat") {
+      calculated = val;
+    }
+    return Math.min(calculated, itemTotal);
   }, [itemTotal, spinDiscount, appliedCoupon]);
 
   const taxableAmount = Math.max(0, itemTotal - discountAmount);
@@ -375,15 +383,16 @@ export default function Checkout() {
         }, { withCredentials: true });
         if (res.data.success) {
           setAppliedCoupon({
-          code: res.data.code || code.trim().toUpperCase(),
-          discountType: res.data.discountType || "percent",
-          value: res.data.value || 0,
-          minOrderAmount: res.data.minOrderAmount || 0,
-          description: res.data.message
-        });
-        setCouponCode(res.data.code || code.trim().toUpperCase());
-        setCouponMessage({ type: "success", text: res.data.message });
-      }
+            code: res.data.code || code.trim().toUpperCase(),
+            discountType: res.data.discountType || "percent",
+            value: res.data.value || 0,
+            maxDiscount: res.data.maxDiscount || 0,
+            minOrderAmount: res.data.minOrderAmount || 0,
+            description: res.data.message
+          });
+          setCouponCode(res.data.code || code.trim().toUpperCase());
+          setCouponMessage({ type: "success", text: res.data.message });
+        }
     } catch (err) {
       const msg = err.response?.data?.message || "Invalid Coupon Code";
       setCouponMessage({ type: "error", text: msg });
