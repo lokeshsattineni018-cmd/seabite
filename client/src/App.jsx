@@ -106,6 +106,7 @@ import { CompareProvider } from "./context/CompareContext";
 import { useSocket } from "./context/SocketContext";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import { useTelemetry } from "./hooks/useTelemetry"; // 🟢 Telemetry Tracker
+import { PromoModal } from "./components/common/PromoModal"; // 🎁 Promo Modal Push
 
 // Central API Config
 axios.defaults.withCredentials = true;
@@ -136,7 +137,7 @@ axios.interceptors.response.use(
 
 
 function MainLayout() {
-  useTelemetry(); // 🟢 Trigger Telemetry
+  const { promoOffer, clearPromoOffer } = useTelemetry(); // 🟢 Trigger Telemetry & Promo push listener
   const { user } = useAuth();
   const { socket } = useSocket();
   const location = useLocation();
@@ -390,6 +391,9 @@ function MainLayout() {
           {!isDashboardRoute && <SupportWidget />}
           {!isDashboardRoute && <ComparisonDrawer />}
           {!isDashboardRoute && <LiveSocialProof />}
+          {promoOffer && (
+            <PromoModal offer={promoOffer} onClose={clearPromoOffer} />
+          )}
         </>
       )
       }

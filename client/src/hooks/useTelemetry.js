@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
@@ -11,6 +11,7 @@ export const useTelemetry = () => {
   const { user } = useAuth();
   const { socket } = useSocket();
   const lastRestUpdate = useRef(0);
+  const [promoOffer, setPromoOffer] = useState(null);
 
   useEffect(() => {
     let guestId = localStorage.getItem("seabite_guest_id");
@@ -131,4 +132,29 @@ export const useTelemetry = () => {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, [user]);
+
+  // ── REGISTER SOCKET & LISTEN FOR PROMO OFFERS ──
+  useEffect(() => {
+    if (!socket) return;
+    let guestId = localStorage.getItem("seabite_guest_id");
+    if (!guestId) return;
+
+    // Register visitor on connect
+    socket.emit("register-visitor", { visitorId: guestId });
+
+    // Listen for promo pushes
+    socket.on("RECEIVE_PROMO_OFFER", (offer) => {
+      console.log("🎁 Received real-time promo offer from admin:", offer);
+      setPromoOffer(offer);
+    });
+
+    return () => {
+      socket.off("RECEIVE_PROMO_OFFER");
+    };
+  }, [socket]);
+
+  return {
+    promoOffer,
+    clearPromoOffer: () => setPromoOffer(null)
+  };
 };

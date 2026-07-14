@@ -20,6 +20,41 @@ export default function AdminLiveRadar() {
   const [loading, setLoading] = useState(true);
   const [hoveredZone, setHoveredZone] = useState(null);
   
+  // Promo Push State
+  const [selectedVisitorForPromo, setSelectedVisitorForPromo] = useState(null);
+  const [promoCode, setPromoCode] = useState("FRESH15");
+  const [discountPercent, setDiscountPercent] = useState(15);
+  const [promoMessage, setPromoMessage] = useState("We noticed you looking at our fresh seafood collection! Here is a special treat just for you.");
+  const [isSendingPromo, setIsSendingPromo] = useState(false);
+
+  const handleInitiateOffer = (visitorId) => {
+    const codes = ["FRESH10", "FRESH15", "RADAR20", "SEABITE25"];
+    const randomCode = codes[Math.floor(Math.random() * codes.length)];
+    setPromoCode(randomCode);
+    const percent = parseInt(randomCode.replace(/\D/g, ""), 10) || 15;
+    setDiscountPercent(percent);
+    setPromoMessage(`Special Treat! We noticed you looking at our fresh seafood collection. Take ${percent}% off your checkout!`);
+    setSelectedVisitorForPromo(visitorId);
+  };
+
+  const handleSendPromo = () => {
+    if (!socket || !selectedVisitorForPromo) return;
+    setIsSendingPromo(true);
+    
+    socket.emit("send-promo-offer", {
+      visitorId: selectedVisitorForPromo,
+      promoCode,
+      discountPercent,
+      message: promoMessage
+    });
+    
+    setTimeout(() => {
+      setIsSendingPromo(false);
+      setSelectedVisitorForPromo(null);
+      toast.success("Promo offer pushed directly to visitor screen!");
+    }, 800);
+  };
+
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   
@@ -334,19 +369,20 @@ export default function AdminLiveRadar() {
                   <th className="px-6 py-4">Currently Viewing</th>
                   <th className="px-6 py-4">Time Active</th>
                   <th className="px-6 py-4 text-center">Status</th>
+                  <th className="px-6 py-4 text-center">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 dark:divide-gray-800/50">
                 <AnimatePresence>
                   {loading && visitors.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-12 text-center text-sm font-semibold text-gray-400">
+                      <td colSpan="6" className="px-6 py-12 text-center text-sm font-semibold text-gray-400">
                         Initializing radar sweep...
                       </td>
                     </tr>
                   ) : visitors.length === 0 ? (
                     <tr>
-                      <td colSpan="5" className="px-6 py-12 text-center text-sm font-semibold text-gray-400">
+                      <td colSpan="6" className="px-6 py-12 text-center text-sm font-semibold text-gray-400">
                         No active visitors detected in the last 15 minutes.
                       </td>
                     </tr>
@@ -420,6 +456,14 @@ export default function AdminLiveRadar() {
                             </div>
                           </div>
                         </td>
+                        <td className="px-6 py-5 text-center" onClick={(e) => e.stopPropagation()}>
+                          <button 
+                            onClick={() => handleInitiateOffer(visitor.visitorId)}
+                            className="px-3.5 py-1.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg text-xs font-black shadow-sm shadow-blue-500/10 hover:shadow-md transition-all"
+                          >
+                            Offer Promo
+                          </button>
+                        </td>
                       </motion.tr>
                     ))
                   )}
@@ -429,6 +473,99 @@ export default function AdminLiveRadar() {
           </div>
         </div>
       </div>
+
+      {/* Promo Push Setup Modal */}
+      {selectedVisitorForPromo && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="bg-white dark:bg-[#122134] border border-gray-100 dark:border-gray-800 rounded-3xl w-full max-w-md p-6 shadow-2xl">
+            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">
+              Push Real-Time Promo Offer
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">
+                  Target Visitor
+                </label>
+                <input 
+                  type="text" 
+                  value={selectedVisitorForPromo} 
+                  disabled 
+                  className="w-full bg-gray-50 dark:bg-[#0d1826] border border-gray-100 dark:border-gray-800 rounded-xl px-3 py-2 text-xs font-mono font-bold text-gray-500" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">
+                  Discount Code
+                </label>
+                <input 
+                  type="text" 
+                  value={promoCode} 
+                  onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                  className="w-full bg-white dark:bg-[#0d1826] border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2 text-sm font-mono font-black text-gray-900 dark:text-white focus:outline-none focus:border-blue-500" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">
+                  Discount Percentage
+                </label>
+                <div className="flex items-center gap-2">
+                  {[10, 15, 20, 25].map((pct) => (
+                    <button
+                      key={pct}
+                      type="button"
+                      onClick={() => {
+                        setDiscountPercent(pct);
+                        const baseCode = promoCode.replace(/\d+/g, "");
+                        setPromoCode(`${baseCode}${pct}`);
+                      }}
+                      className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${
+                        discountPercent === pct 
+                          ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                          : "bg-white dark:bg-[#0d1826] border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pct}%
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mb-1.5">
+                  Promo Message
+                </label>
+                <textarea 
+                  rows="3"
+                  value={promoMessage} 
+                  onChange={(e) => setPromoMessage(e.target.value)}
+                  className="w-full bg-white dark:bg-[#0d1826] border border-gray-200 dark:border-gray-800 rounded-xl px-3 py-2 text-xs font-semibold text-gray-850 dark:text-gray-300 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setSelectedVisitorForPromo(null)}
+                className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-750 text-gray-700 dark:text-gray-300 rounded-xl text-xs font-bold transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSendPromo}
+                disabled={isSendingPromo}
+                className="flex-1 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-black shadow-md shadow-blue-500/10 transition-all disabled:opacity-50"
+              >
+                {isSendingPromo ? "Pushing offer..." : "Push Offer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

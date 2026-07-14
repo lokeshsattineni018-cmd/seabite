@@ -333,6 +333,29 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("register-visitor", (data) => {
+    const { visitorId } = data;
+    if (visitorId) {
+      socket.visitorId = visitorId;
+      socket.join(`visitor-${visitorId}`);
+      console.log(`🔌 [SOCKET] Visitor registered: ${visitorId} joined room visitor-${visitorId}`);
+    }
+  });
+
+  socket.on("send-promo-offer", (data) => {
+    const { visitorId, promoCode, discountPercent, message } = data;
+    if (!visitorId || !promoCode) return;
+
+    console.log(`🎁 [PROMO] Sending promo ${promoCode} (${discountPercent}%) to visitor ${visitorId}`);
+
+    // Route event specifically to that visitor's target room
+    io.to(`visitor-${visitorId}`).emit("RECEIVE_PROMO_OFFER", {
+      promoCode,
+      discountPercent,
+      message
+    });
+  });
+
   // ── 🎧 REAL-TIME SUPPORT & DRIVER CHAT ROOMS ──
   socket.on("join-chat", (data) => {
     const { userId } = data;
