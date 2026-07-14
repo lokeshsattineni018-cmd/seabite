@@ -43,6 +43,11 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Only apply cache strategies to GET requests. POST, PUT, DELETE, PATCH are unsupported by Cache API.
+  if (request.method !== 'GET') {
+    return;
+  }
+
   // 1. API Cache Strategy: Stale-While-Revalidate
   if (url.pathname.includes("/api/v1/products") || url.pathname.includes("/api/v1/coupons") || url.pathname.includes("/api/products") || url.pathname.includes("/api/coupons")) {
     event.respondWith(
@@ -55,9 +60,12 @@ self.addEventListener("fetch", (event) => {
               }
               return networkResponse;
             })
-            .catch(() => {
-              // Network fallback failed, return cached response if available
-              return cachedResponse;
+            .catch((err) => {
+              // Network fallback failed, return cached response if available, else propagate error
+              if (cachedResponse) {
+                return cachedResponse;
+              }
+              throw err;
             });
 
           return cachedResponse || fetchPromise;
