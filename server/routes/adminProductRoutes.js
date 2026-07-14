@@ -5,6 +5,7 @@ import Product from "../models/Product.js";
 import User from "../models/User.js";
 import adminAuth from "../middleware/adminAuth.js";
 import { cacheClear } from "../utils/cache.js";
+import { validateFileSignatures } from "../middleware/validateFileSignatures.js";
 
 const router = express.Router();
 
@@ -42,6 +43,7 @@ router.post(
   "/",
   adminAuth,
   upload.fields([{ name: "image", maxCount: 1 }, { name: "images", maxCount: 5 }]),
+  validateFileSignatures,
   async (req, res) => {
 
     const { name, category, desc, trending, stock, basePrice, unit, countInStock } = req.body;

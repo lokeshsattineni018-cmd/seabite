@@ -59,7 +59,7 @@ router.post("/wishlist/:id", protect, async (req, res) => {
 // 🟢 GET WISHLIST
 router.get("/wishlist", protect, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).populate("wishlist");
+        const user = await User.findById(req.user._id).populate({ path: "wishlist", select: "-buyingPrice -waitlist" });
         res.json(user.wishlist);
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
@@ -121,7 +121,7 @@ router.post("/cart", protect, async (req, res) => {
 
 router.get("/cart", protect, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id).populate("cart.product");
+        const user = await User.findById(req.user._id).populate({ path: "cart.product", select: "-buyingPrice -waitlist" });
         if (!user) return res.status(404).json({ message: "User not found" });
         
         // Filter out null products (if deleted)

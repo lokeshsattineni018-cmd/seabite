@@ -54,6 +54,10 @@ router.get("/history/:participantId", protect, async (req, res) => {
 // ── GET /api/chat/conversations — Get list of active support dialogs for agent ──
 router.get("/conversations", protect, async (req, res) => {
   try {
+    if (req.user.role !== "admin" && req.user.role !== "support") {
+      return res.status(403).json({ message: "Access denied: Unauthorized role." });
+    }
+
     // Return all distinct user chats with drivers or support
     const userId = req.user._id;
     const recentMessages = await ChatMessage.aggregate([

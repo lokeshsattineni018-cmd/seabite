@@ -4,6 +4,7 @@ import Order from "../models/Order.js";
 import upload from "../config/multerConfig.js";
 import { cacheGet, cacheSet, cacheClear } from "../utils/cache.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
+import { validateFileSignatures } from "../middleware/validateFileSignatures.js";
 import SearchInsight from "../models/SearchInsight.js";
 import { getSettings } from "../models/Settings.js";
 import { logActivity } from "../utils/activityLogger.js"; // 🟢 Added import
@@ -137,7 +138,7 @@ router.get("/", async (req, res) => {
     if (sort === "rating") sortOptions = { rating: -1 };
     if (sort === "newest") sortOptions = { createdAt: -1 };
 
-    const products = await Product.find(query).sort(sortOptions).lean();
+    const products = await Product.find(query).select("-buyingPrice -waitlist").sort(sortOptions).lean();
 
     // ✅ Enterprise: Log Search Insight (ZRO: Zero-Result Optimization)
     if (search && search.trim().length > 2) {
@@ -275,10 +276,10 @@ router.get("/:id", async (req, res) => {
 
     let product;
     if (req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
-      product = await Product.findById(req.params.id).populate('reviews.user', 'name').lean();
+      product = await Product.findById(req.params.id).select("-buyingPrice -waitlist").populate('reviews.user', 'name').lean();
     } else {
       // 🚀 Performance: Query directly by slug first (O(1) database read)
-      product = await Product.findOne({ slug: req.params.id, active: true }).populate('reviews.user', 'name').lean();
+      product = await Product.findOne({ slug: req.params.id, active: true }).select("-buyingPrice -waitlist").populate('reviews.user', 'name').lean();
       
       // Fallback: If not found (legacy products without slug field populated), query name directly with fuzzy regex
       if (!product) {
@@ -286,7 +287,7 @@ router.get("/:id", async (req, res) => {
         product = await Product.findOne({
           name: { $regex: new RegExp("^" + nameQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + "$", "i") },
           active: true
-        }).populate('reviews.user', 'name').lean();
+        }).select("-buyingPrice -waitlist").populate('reviews.user', 'name').lean();
       }
     }
     if (!product) return res.status(404).json({ message: "Product not found" });
@@ -350,7 +351,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // --- CREATE PRODUCT (ADMIN) ---
-router.post("/", protect, admin, upload.single('image'), async (req, res) => {
+router.post("/", protect, admin, upload.single('image'), validateFileSignatures, async (req, res) => {
   const { name, category, desc, trending, stock, basePrice, unit } = req.body;
   if (!req.file) return res.status(400).json({ message: "Image required" });
 
@@ -369,7 +370,7 @@ router.post("/", protect, admin, upload.single('image'), async (req, res) => {
 });
 
 // 🟢 ADD OR UPDATE REVIEW ROUTE (Restricted to Valid Buyers) - With Photos (Cloudinary Optimized)
-router.post("/:id/reviews", protect, upload.array('images', 3), async (req, res) => {
+router.post("/:id/reviews", protect, upload.array('images', 3), validateFileSignatures, async (req, res) => {
   const { rating, comment } = req.body;
 
   try {

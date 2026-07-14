@@ -37,12 +37,12 @@ router.get("/co-occurrence/:productId", async (req, res) => {
         _id: { $ne: targetId },
         active: true,
         category: sourceProduct?.category,
-      }).sort({ numReviews: -1 }).limit(limit).lean();
+      }).select("-buyingPrice -waitlist").sort({ numReviews: -1 }).limit(limit).lean();
       return res.json(fallback);
     }
 
     const productIds = coProducts.map(p => p._id);
-    const products = await Product.find({ _id: { $in: productIds }, active: true }).lean();
+    const products = await Product.find({ _id: { $in: productIds }, active: true }).select("-buyingPrice -waitlist").lean();
 
     // Maintain the sorted order
     const sorted = productIds
@@ -68,7 +68,7 @@ router.get("/cart-upsell", async (req, res) => {
       .map(id => new mongoose.Types.ObjectId(id));
 
     if (validCartIds.length === 0) {
-      const trending = await Product.find({ active: true }).sort({ numReviews: -1 }).limit(limit).lean();
+      const trending = await Product.find({ active: true }).select("-buyingPrice -waitlist").sort({ numReviews: -1 }).limit(limit).lean();
       return res.json(trending);
     }
 
@@ -86,12 +86,12 @@ router.get("/cart-upsell", async (req, res) => {
 
     if (coProducts.length === 0) {
       const fallback = await Product.find({ _id: { $nin: validCartIds }, active: true })
-        .sort({ numReviews: -1 }).limit(limit).lean();
+        .select("-buyingPrice -waitlist").sort({ numReviews: -1 }).limit(limit).lean();
       return res.json(fallback);
     }
 
     const productIds = coProducts.map(p => p._id);
-    const products = await Product.find({ _id: { $in: productIds }, active: true }).lean();
+    const products = await Product.find({ _id: { $in: productIds }, active: true }).select("-buyingPrice -waitlist").lean();
     res.json(products);
   } catch (err) {
     console.error("Cart upsell error:", err);

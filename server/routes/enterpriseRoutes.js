@@ -17,6 +17,7 @@ import {
 } from "../controllers/enterpriseController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 import upload from "../config/multerConfig.js";
+import { validateFileSignatures } from "../middleware/validateFileSignatures.js";
 
 const router = express.Router();
 
@@ -41,7 +42,7 @@ router.post("/group-cart/:code/join", joinGroupCart);
 
 // Returns
 router.post("/returns", protect, createReturnRequest);
-router.post("/returns/upload", protect, upload.array("images", 5), uploadReturnImages);
+router.post("/returns/upload", protect, upload.array("images", 5), validateFileSignatures, uploadReturnImages);
 router.get("/returns", protect, getReturnRequests);
 router.put("/returns/:id", protect, admin, updateReturnStatus);
 

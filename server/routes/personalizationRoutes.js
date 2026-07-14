@@ -6,7 +6,7 @@ const router = express.Router();
 // ─── AI "For You" Feed ───
 router.get("/for-you", async (req, res) => {
   try {
-    const products = await Product.find({ active: true }).limit(8).lean();
+    const products = await Product.find({ active: true }).select("-buyingPrice -waitlist").limit(8).lean();
     res.json(products);
   } catch (err) {
     res.status(500).json({ error: "Failed to generate For You feed" });
@@ -32,11 +32,11 @@ router.get("/weather-picks", async (req, res) => {
         { category },
         { tags: { $in: [weather] } }
       ]
-    }).limit(4).lean();
+    }).select("-buyingPrice -waitlist").limit(4).lean();
 
     // Fallback if none found
     if (products.length === 0) {
-      const fallback = await Product.find({ active: true }).limit(4).lean();
+      const fallback = await Product.find({ active: true }).select("-buyingPrice -waitlist").limit(4).lean();
       return res.json({ weather, products: fallback, message: "Standard fresh picks for today" });
     }
 

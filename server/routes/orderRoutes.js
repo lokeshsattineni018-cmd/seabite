@@ -44,7 +44,15 @@ router.get("/myorders", protect, async (req, res) => {
     const orders = await Order.find({ user: req.user._id })
       .populate("items.productId", "name image reviews")
       .sort({ createdAt: -1 });
-    res.status(200).json(orders);
+    const sanitizedOrders = orders.map(order => {
+      const orderObj = order.toObject();
+      orderObj.items = (orderObj.items || []).map(item => {
+        const { buyingPrice, ...rest } = item;
+        return rest;
+      });
+      return orderObj;
+    });
+    res.status(200).json(sanitizedOrders);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch history" });
   }
@@ -99,6 +107,13 @@ router.get("/:orderId", protect, async (req, res) => {
       orderObj.itemsPrice = orderObj.items.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
       orderObj.shippingPrice = orderObj.itemsPrice < 1000 ? 99 : 0;
       orderObj.taxPrice = Math.round((orderObj.itemsPrice - (orderObj.discount || 0)) * 0.05);
+    }
+
+    if (req.user.role !== "admin") {
+      orderObj.items = (orderObj.items || []).map(item => {
+        const { buyingPrice, ...rest } = item;
+        return rest;
+      });
     }
 
     res.status(200).json(orderObj);
