@@ -185,65 +185,220 @@ function CouponDrawer({ isOpen, onClose, coupons, appliedCoupon, onApply, onClea
 
 const SeaBiteButtonLoader = () => {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "14px", width: "100%", height: "100%" }}>
-      <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-        {/* Fish: Swims / wiggles in place */}
-        <motion.span
-          animate={{
-            y: [0, -3, 0, 3, 0],
-            rotate: [-8, 8, -8]
-          }}
-          transition={{
-            repeat: Infinity,
-            duration: 1.0,
-            ease: "easeInOut"
-          }}
-          style={{ fontSize: "16px", display: "inline-block" }}
-        >
-          🐟
-        </motion.span>
-        
-        {/* Prawn: Bounces / jumps in place */}
-        <motion.span
-          animate={{
-            y: [0, -6, 0],
-            scaleY: [1, 0.85, 1.1, 1]
-          }}
-          transition={{
-            repeat: Infinity,
-            duration: 0.8,
-            ease: "easeInOut",
-            delay: 0.2
-          }}
-          style={{ fontSize: "16px", display: "inline-block" }}
-        >
-          🦐
-        </motion.span>
-
-        {/* Crab: Scuttles / wiggles side-to-side in place */}
-        <motion.span
-          animate={{
-            x: [-3, 3, -3],
-            rotate: [-12, 12, -12]
-          }}
-          transition={{
-            repeat: Infinity,
-            duration: 0.6,
-            ease: "easeInOut"
-          }}
-          style={{ fontSize: "16px", display: "inline-block" }}
-        >
-          🦀
-        </motion.span>
-      </div>
-      <motion.span 
-        animate={{ opacity: [0.6, 1, 0.6] }}
-        transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
-        style={{ fontSize: "12px", fontWeight: "800", letterSpacing: "0.03em", color: "#fff", textTransform: "uppercase" }}
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", width: "100%", height: "100%" }}>
+      <svg
+        style={{
+          animation: "spin 1s linear infinite",
+          width: "16px",
+          height: "16px",
+          color: "#fff"
+        }}
+        fill="none"
+        viewBox="0 0 24 24"
       >
-        Securing your catch...
-      </motion.span>
+        <circle
+          style={{ opacity: 0.25 }}
+          cx="12"
+          cy="12"
+          r="10"
+          stroke="currentColor"
+          strokeWidth="3"
+        />
+        <path
+          style={{ opacity: 0.75 }}
+          fill="currentColor"
+          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+        />
+      </svg>
+      <span style={{ fontSize: "13px", fontWeight: "600", letterSpacing: "0.03em" }}>
+        Processing...
+      </span>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
+  );
+};
+
+const CheckoutProcessingOverlay = ({ show }) => {
+  const [step, setStep] = useState(0);
+  const steps = [
+    { label: "Verifying basket freshness", sub: "Checking real-time stock levels..." },
+    { label: "Securing gateway connection", sub: "Initializing 256-bit encryption..." },
+    { label: "Reserving your ocean catch", sub: "Securing inventory slots..." },
+    { label: "Finalizing secure checkout", sub: "Creating your unique invoice..." }
+  ];
+
+  useEffect(() => {
+    if (!show) {
+      setStep(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setStep((prev) => (prev < steps.length - 1 ? prev + 1 : prev));
+    }, 1200);
+    return () => clearInterval(interval);
+  }, [show]);
+
+  if (!show) return null;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(10, 22, 37, 0.75)",
+          backdropFilter: "blur(16px) saturate(180%)",
+          WebkitBackdropFilter: "blur(16px) saturate(180%)",
+          zIndex: 999999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif"
+        }}
+      >
+        <motion.div
+          initial={{ scale: 0.93, y: 15 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.93, y: 15 }}
+          transition={{ type: "spring", damping: 25, stiffness: 180 }}
+          style={{
+            background: "linear-gradient(135deg, rgba(26, 43, 53, 0.95) 0%, rgba(13, 27, 36, 0.98) 100%)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 25px 60px -15px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255,255,255,0.1)",
+            borderRadius: "24px",
+            width: "400px",
+            maxWidth: "90%",
+            padding: "36px 32px",
+            textAlign: "center",
+            color: "#fff",
+            position: "relative",
+            overflow: "hidden"
+          }}
+        >
+          {/* Subtle top ambient glow */}
+          <div style={{
+            position: "absolute",
+            top: "-50px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "150px",
+            height: "100px",
+            background: "rgba(91, 191, 181, 0.25)",
+            filter: "blur(40px)",
+            borderRadius: "50%",
+            pointerEvents: "none"
+          }} />
+
+          {/* Premium Loader Ring */}
+          <div style={{ position: "relative", width: "80px", height: "80px", margin: "0 auto 28px" }}>
+            <svg width="80" height="80" viewBox="0 0 80 80">
+              {/* Background Ring */}
+              <circle
+                cx="40"
+                cy="40"
+                r="36"
+                fill="none"
+                stroke="rgba(255, 255, 255, 0.05)"
+                strokeWidth="4"
+              />
+              {/* Animated Progress Ring */}
+              <motion.circle
+                cx="40"
+                cy="40"
+                r="36"
+                fill="none"
+                stroke="url(#seabiteGlowGradient)"
+                strokeWidth="4"
+                strokeLinecap="round"
+                strokeDasharray="226"
+                animate={{
+                  strokeDashoffset: [226, 0],
+                  rotate: [0, 360]
+                }}
+                transition={{
+                  strokeDashoffset: { duration: 2, repeat: Infinity, ease: "linear" },
+                  rotate: { duration: 1.5, repeat: Infinity, ease: "linear" }
+                }}
+                style={{ transformOrigin: "center" }}
+              />
+              <defs>
+                <linearGradient id="seabiteGlowGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#5BBFB5" />
+                  <stop offset="100%" stopColor="#2D8C81" />
+                </linearGradient>
+              </defs>
+            </svg>
+            
+            {/* Center Lock / Shield Icon */}
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "24px"
+            }}>
+              <motion.span
+                animate={{ scale: [0.95, 1.05, 0.95] }}
+                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+              >
+                🔒
+              </motion.span>
+            </div>
+          </div>
+
+          {/* Progress Percentage & Step Indicator */}
+          <div style={{ fontSize: "11px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.15em", color: "#5BBFB5", marginBottom: "8px" }}>
+            SECURE FLOW • STEP {step + 1} OF {steps.length}
+          </div>
+
+          {/* Dynamic Status Text */}
+          <div style={{ height: "70px", position: "relative" }}>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+                style={{ position: "absolute", left: 0, right: 0 }}
+              >
+                <h4 style={{ fontSize: "18px", fontWeight: "700", color: "#ffffff", margin: "0 0 6px 0", letterSpacing: "-0.01em" }}>
+                  {steps[step].label}
+                </h4>
+                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.6)", margin: 0 }}>
+                  {steps[step].sub}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Progress Bar Indicator */}
+          <div style={{ width: "100%", height: "4px", background: "rgba(255, 255, 255, 0.05)", borderRadius: "10px", overflow: "hidden", marginTop: "16px", marginBottom: "8px" }}>
+            <motion.div
+              initial={{ width: "0%" }}
+              animate={{ width: `${((step + 1) / steps.length) * 100}%` }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              style={{ height: "100%", background: "linear-gradient(90deg, #5BBFB5, #2D8C81)", borderRadius: "10px" }}
+            />
+          </div>
+
+          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", marginTop: "16px" }}>
+            <span>SSL Secured Checkout</span>
+            <span>•</span>
+            <span>SeaBite Freshness Guarantee</span>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 };
 
@@ -650,6 +805,7 @@ export default function Checkout() {
 
   return (
     <div style={{ minHeight: "100vh", background: T.bg, fontFamily: font, padding: "16px 20px 60px", overflowX: "hidden" }}>
+      <CheckoutProcessingOverlay show={loading} />
       <CouponDrawer 
         isOpen={showCouponDrawer} 
         onClose={() => setShowCouponDrawer(false)}
