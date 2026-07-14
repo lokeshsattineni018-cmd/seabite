@@ -34,7 +34,7 @@ router.post("/validate", couponLimiter, validate(couponValidateSchema), async (r
     if (coupon.isSpinCoupon && coupon.userEmail && safeEmail !== coupon.userEmail.toLowerCase()) {
       return res.status(400).json({
         success: false,
-        message: "This coupon is not valid for your account.",
+        message: "Invalid coupon code.",
       });
     }
 
@@ -42,7 +42,7 @@ router.post("/validate", couponLimiter, validate(couponValidateSchema), async (r
     if (coupon.isPromoPush && coupon.visitorId && visitorId !== coupon.visitorId) {
       return res.status(400).json({
         success: false,
-        message: "This exclusive discount is restricted to another customer session.",
+        message: "Invalid coupon code.",
       });
     }
 

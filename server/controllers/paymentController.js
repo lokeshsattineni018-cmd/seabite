@@ -145,12 +145,12 @@ export const checkout = async (req, res) => {
 
       // Check if user-specific (spin wheel)
       if (couponDoc.isSpinCoupon && couponDoc.userEmail && userDoc.email.toLowerCase() !== couponDoc.userEmail.toLowerCase()) {
-        return res.status(400).json({ success: false, message: "This coupon is not valid for your account." });
+        return res.status(400).json({ success: false, message: "Invalid or expired coupon code" });
       }
 
       // Check if restricted to specific visitor session
       if (couponDoc.isPromoPush && couponDoc.visitorId && visitorId !== couponDoc.visitorId) {
-        return res.status(400).json({ success: false, message: "This exclusive coupon is restricted to another user session." });
+        return res.status(400).json({ success: false, message: "Invalid or expired coupon code" });
       }
 
       // Expiry Check

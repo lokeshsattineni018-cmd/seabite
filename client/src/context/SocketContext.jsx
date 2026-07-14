@@ -16,12 +16,10 @@ export const SocketProvider = ({ children }) => {
 
         // console.log("🔌 Initializing Socket Connection to:", socketUrl);
 
-        // Force polling on Vercel due to Serverless limitations on WebSockets
-        const isVercel = socketUrl.includes('vercel.app');
+        const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
 
-        // ⚠️ DISABLE SOCKET ON VERCEL: Vercel serverless functions don't support persistent socket connections.
-        if (isVercel) {
-            // console.warn("🔌 Socket.io disabled on Vercel/Production to prevent 404 spam.");
+        if (isProduction) {
+            // Disable socket in production since Vercel Serverless doesn't host stateful websockets.
             return;
         }
 
