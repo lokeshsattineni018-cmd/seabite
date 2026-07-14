@@ -57,6 +57,10 @@ export default function Profile() {
         axios.get(`${API_URL}/api/auth/me`, { withCredentials: true }),
         axios.get(`${API_URL}/api/orders/myorders`, { withCredentials: true })
       ]);
+      if (userRes.data && userRes.data.success === false) {
+        navigate("/login");
+        return;
+      }
       setUser(userRes.data);
       setOrders(ordersRes.data);
     } catch (err) {

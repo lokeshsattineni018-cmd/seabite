@@ -15,8 +15,13 @@ export function AuthProvider({ children }) {
         withCredentials: true,
       });
 
-      setUser(res.data);
-      setStatus("authenticated");
+      if (res.data && res.data.success === false) {
+        setUser(null);
+        setStatus("unauthenticated");
+      } else {
+        setUser(res.data);
+        setStatus("authenticated");
+      }
     } catch (err) {
       setUser(null);
       setStatus("unauthenticated");

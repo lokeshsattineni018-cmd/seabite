@@ -9,8 +9,11 @@ export const protect = async (req, res, next) => {
   }
   
   try {
+    const isMeRequest = req.originalUrl && req.originalUrl.includes("/auth/me");
+
     if (!req.session) {
       console.log("❌ No session object");
+      if (isMeRequest) return res.status(200).json({ success: false, user: null });
       return res.status(401).json({ message: "Session not available" });
     }
 
@@ -39,6 +42,7 @@ export const protect = async (req, res, next) => {
       
       if (!user) {
         if (isDevMode) console.log("❌ User not found in DB");
+        if (isMeRequest) return res.status(200).json({ success: false, user: null });
         return res.status(401).json({ message: "User not found" });
       }
 
@@ -60,6 +64,7 @@ export const protect = async (req, res, next) => {
         req.sessionStore.get(sessionId, async (err, session) => {
           if (err || !session || !session.user) {
             console.log("❌ Header session recovery failed:", err?.message || "No session found");
+            if (isMeRequest) return resolve(res.status(200).json({ success: false, user: null }));
             return resolve(res.status(401).json({ message: "Invalid or expired session token" }));
           }
 
@@ -77,9 +82,13 @@ export const protect = async (req, res, next) => {
     }
 
     console.log("❌ Protect: No active session found");
+    if (isMeRequest) return res.status(200).json({ success: false, user: null });
     return res.status(401).json({ message: "Not authenticated" });
   } catch (err) {
     console.error("❌ Auth Middleware Error:", err.message);
+    if (req.originalUrl && req.originalUrl.includes("/auth/me")) {
+      return res.status(200).json({ success: false, user: null });
+    }
     return res.status(401).json({ message: "Authentication failed" });
   }
 };

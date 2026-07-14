@@ -194,8 +194,8 @@ export default function Navbar({ announcementActive = false }) {
   }, [user]);
 
   useEffect(() => {
-    // Initial fetch
-    axios.get(`${API_URL}/api/admin/enterprise/settings`).then(res => {
+    // Initial fetch of public settings
+    axios.get(`${API_URL}/api/settings`).then(res => {
       if (res.data.globalDiscount > 0) setIsHappyHour(true);
     }).catch(() => {});
 
