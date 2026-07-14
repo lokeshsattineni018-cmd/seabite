@@ -119,8 +119,16 @@ export const checkout = async (req, res) => {
       let basePrice = product.basePrice;
       if (isActiveFlashSale) {
         basePrice = product.flashSale.discountPrice;
-      } else if (globalDiscount > 0) {
-        basePrice = Math.round(basePrice * (1 - globalDiscount / 100));
+      } else {
+        // If weight-based pricing is active, scale by grams
+        if (product.pricePerKg > 0 && item.orderedWeightGrams > 0) {
+          basePrice = Math.round((product.pricePerKg / 1000) * item.orderedWeightGrams);
+        }
+        
+        // Apply global discount if active
+        if (globalDiscount > 0) {
+          basePrice = Math.round(basePrice * (1 - globalDiscount / 100));
+        }
       }
 
       // True unit price calculated with cutPriceAdjustmentPct
