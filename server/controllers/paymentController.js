@@ -120,8 +120,9 @@ export const checkout = async (req, res) => {
       if (isActiveFlashSale) {
         basePrice = product.flashSale.discountPrice;
       } else {
-        // If weight-based pricing is active, scale by grams
-        if (product.pricePerKg > 0 && item.orderedWeightGrams > 0) {
+        // If weight-based pricing is active, scale by grams (only for weight-based units)
+        const isWeightUnit = product.unit && (product.unit.toLowerCase() === "kg" || product.unit.toLowerCase() === "g");
+        if (product.pricePerKg > 0 && isWeightUnit && item.orderedWeightGrams > 0) {
           basePrice = Math.round((product.pricePerKg / 1000) * item.orderedWeightGrams);
         }
         

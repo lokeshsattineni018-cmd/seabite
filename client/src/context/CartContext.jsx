@@ -20,7 +20,8 @@ const calculateTotals = (cart, globalDiscount = 0, settings = {}) => {
         let basePrice = parseFloat(item.basePrice);
         if (isNaN(basePrice)) basePrice = parseFloat(item.price) || 0;
 
-        if (item.pricePerKg > 0 && item.orderedWeightGrams > 0) {
+        const isWeightUnit = item.unit && (item.unit.toLowerCase() === "kg" || item.unit.toLowerCase() === "g");
+        if (item.pricePerKg > 0 && isWeightUnit && item.orderedWeightGrams > 0) {
             basePrice = Math.round((parseFloat(item.pricePerKg) / 1000) * item.orderedWeightGrams);
             if (item.selectedCut && item.cutPriceAdjustmentPct > 0) {
                 basePrice = Math.round(basePrice * (1 + parseFloat(item.cutPriceAdjustmentPct) / 100));

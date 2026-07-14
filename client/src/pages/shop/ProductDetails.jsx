@@ -590,8 +590,9 @@ export default function ProductDetails() {
   if (isGlobalDiscount) unitPrice = Math.round(basePrice * (1 - globalDiscount / 100));
 
   // ⚖️ Weight pricing
+  const isWeightUnit = product?.unit && (product.unit.toLowerCase() === "kg" || product.unit.toLowerCase() === "g");
   const effectiveWeightGrams = selectedWeightGrams || (product?.minOrderWeight || 0);
-  const weightPrice = product?.pricePerKg > 0 && effectiveWeightGrams > 0
+  const weightPrice = product?.pricePerKg > 0 && isWeightUnit && effectiveWeightGrams > 0
     ? Math.round((product.pricePerKg / 1000) * effectiveWeightGrams)
     : unitPrice;
   // 🔪 Apply Cut Price Adjustment (applies to either weight price or standard unitPrice)
@@ -1292,7 +1293,7 @@ export default function ProductDetails() {
               )}
 
               {/* ⚖️ WEIGHT SELECTOR */}
-              {product.pricePerKg > 0 && product.minOrderWeight > 0 && (
+              {product.pricePerKg > 0 && isWeightUnit && product.minOrderWeight > 0 && (
                 <div style={{ marginBottom: "20px" }}>
                   <h3 style={{ fontSize: "13px", fontWeight: "700", color: "#1A2E2C", marginBottom: "10px" }}>
                     ⚖️ Select Weight
