@@ -291,19 +291,25 @@ io.on("connection", (socket) => {
 
   // ── 👤 REAL-TIME VISITOR/CUSTOMER TRACKING ──
   socket.on("visitor-location", async (data) => {
-    const { visitorId, userId, location } = data;
+    const { visitorId, userId, location, city } = data;
     if (!visitorId || !location) return;
     console.log(`🔌 [SOCKET] Received visitor-location from ${visitorId}:`, location);
 
     // Broadcast immediately to listening admin radar
-    io.to("admins").emit("VISITOR_LOCATION_STREAM", { visitorId, userId, location, locationSource: "gps" });
+    io.to("admins").emit("VISITOR_LOCATION_STREAM", { visitorId, userId, location, locationSource: "gps", city });
 
     // Update in-memory visitor logs or VisitorLog DB model (throttled to avoid DB flood)
     try {
       const VisitorLog = (await import("./models/VisitorLog.js")).default;
       await VisitorLog.findOneAndUpdate(
         { visitorId },
-        { lat: location.lat, lng: location.lng, userId: userId || null, locationSource: "gps" },
+        { 
+          lat: location.lat, 
+          lng: location.lng, 
+          userId: userId || null, 
+          locationSource: "gps",
+          ...(city ? { city } : {})
+        },
         { upsert: false }
       );
     } catch (err) {

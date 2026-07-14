@@ -153,7 +153,7 @@ export default function AdminLiveRadar() {
     socket.emit("join-admin");
     
     socket.on("VISITOR_LOCATION_STREAM", (data) => {
-      const { visitorId, userId, location } = data;
+      const { visitorId, userId, location, city } = data;
       if (location && location.lat && location.lng) {
         updateVisitorMarker(visitorId, userId, location);
         
@@ -161,7 +161,7 @@ export default function AdminLiveRadar() {
         setVisitors(prev => {
           const match = prev.find(v => v.visitorId === visitorId);
           if (match) {
-            return prev.map(v => v.visitorId === visitorId ? { ...v, lat: location.lat, lng: location.lng, locationSource: "gps", lastActive: new Date() } : v);
+            return prev.map(v => v.visitorId === visitorId ? { ...v, lat: location.lat, lng: location.lng, locationSource: "gps", lastActive: new Date(), ...(city ? { city } : {}) } : v);
           } else {
             return [{
               visitorId,
@@ -170,7 +170,7 @@ export default function AdminLiveRadar() {
               lng: location.lng,
               locationSource: "gps",
               ipAddress: "Live Stream",
-              city: "Detected Live",
+              city: city || "Detected Live",
               currentPath: "Home",
               lastActive: new Date()
             }, ...prev];

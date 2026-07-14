@@ -42,16 +42,32 @@ export const useTelemetry = () => {
     if (!guestId) return;
 
     const watchId = navigator.geolocation.watchPosition(
-      (pos) => {
+      async (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         console.log("📍 Telemetry captured GPS coordinates:", coords);
         
+        let resolvedCity = "Unknown";
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${coords.lat}&lon=${coords.lng}&addressdetails=1`
+          );
+          const addrData = await res.json();
+          if (addrData && addrData.address) {
+            const addr = addrData.address;
+            resolvedCity = addr.city || addr.town || addr.village || addr.county || "Unknown";
+            if (addr.state) resolvedCity += `, ${addr.state}`;
+          }
+        } catch (e) {
+          console.error("Reverse geocoding failed", e);
+        }
+
         // 1. WebSocket stream (real-time instant)
         if (socket) {
           socket.emit("visitor-location", {
             visitorId: guestId,
             userId: user?._id || user?.id || null,
-            location: coords
+            location: coords,
+            city: resolvedCity
           });
         }
 
@@ -63,7 +79,8 @@ export const useTelemetry = () => {
             visitorId: guestId,
             userId: user?._id || user?.id || null,
             lat: coords.lat,
-            lng: coords.lng
+            lng: coords.lng,
+            city: resolvedCity
           }).catch(() => {});
         }
       },
@@ -91,4 +108,27 @@ export const useTelemetry = () => {
 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [socket, user]);
+
+  // ── SCROLL TELEMETRY KEEP-ALIVE ──
+  useEffect(() => {
+    let guestId = localStorage.getItem("seabite_guest_id");
+    if (!guestId) return;
+
+    let lastScrollTime = 0;
+
+    const handleScroll = () => {
+      const now = Date.now();
+      if (now - lastScrollTime > 45000) { // Throttle keep-alive scroll ping to once every 45s
+        lastScrollTime = now;
+        axios.post(`${API_URL}/api/telemetry/ping`, {
+          visitorId: guestId,
+          userId: user?._id || null,
+          currentPath: window.location.pathname + window.location.search,
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [user]);
 };
