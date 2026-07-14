@@ -45,6 +45,14 @@ const couponSchema = new mongoose.Schema({
     type: Boolean, 
     default: false 
   },
+  isPromoPush: {
+    type: Boolean,
+    default: false
+  },
+  visitorId: {
+    type: String,
+    default: null
+  },
   userEmail: { 
     type: String, 
     default: null, 

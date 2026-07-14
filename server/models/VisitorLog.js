@@ -16,6 +16,11 @@ const visitorLogSchema = new mongoose.Schema({
     discountPercent: { type: Number },
     message: { type: String },
     pushedAt: { type: Date }
+  },
+  promoStatus: { 
+    type: String, 
+    enum: ["none", "sent", "copied", "used"], 
+    default: "none" 
   }
 });
 

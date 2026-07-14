@@ -364,11 +364,17 @@ export default function Checkout() {
       setCouponMessage({ type: "success", text: local.description || "Coupon applied!" });
       setVerifyingCoupon(false); return;
     }
-    const currentEmail = user?.email?.toLowerCase();
-    try {
-      const res = await axios.post(`${API_URL}/api/coupons/validate`, { code: code.trim().toUpperCase(), cartTotal: itemTotal, email: currentEmail || undefined }, { withCredentials: true });
-      if (res.data.success) {
-        setAppliedCoupon({
+      const currentEmail = user?.email?.toLowerCase();
+      const guestId = localStorage.getItem("seabite_guest_id");
+      try {
+        const res = await axios.post(`${API_URL}/api/coupons/validate`, { 
+          code: code.trim().toUpperCase(), 
+          cartTotal: itemTotal, 
+          email: currentEmail || undefined,
+          visitorId: guestId || undefined
+        }, { withCredentials: true });
+        if (res.data.success) {
+          setAppliedCoupon({
           code: res.data.code || code.trim().toUpperCase(),
           discountType: res.data.discountType || "percent",
           value: res.data.value || 0,
@@ -484,7 +490,8 @@ export default function Checkout() {
 
       useWallet,
       walletAppliedAmount,
-      couponCode: appliedCoupon?.code || spinDiscount?.code || undefined
+      couponCode: appliedCoupon?.code || spinDiscount?.code || undefined,
+      visitorId: localStorage.getItem("seabite_guest_id") || undefined
     };
     try {
       const { data } = await axios.post(`${API_URL}/api/payment/checkout`, orderDetails, { withCredentials: true });

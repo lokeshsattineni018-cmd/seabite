@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FiGift, FiCopy, FiCheck, FiX } from "react-icons/fi";
+import { FiGift, FiCopy, FiCheck, FiX, FiAward } from "react-icons/fi";
 import confetti from "canvas-confetti";
 
 export const PromoModal = ({ offer, onClose }) => {
@@ -7,12 +7,30 @@ export const PromoModal = ({ offer, onClose }) => {
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes default in seconds
 
   useEffect(() => {
-    // Fire confetti on mount
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
+    // Fire elegant multi-color confetti
+    const end = Date.now() + (1 * 1000);
+    const colors = ['#10b981', '#06b6d4', '#f59e0b', '#3b82f6'];
+
+    (function frame() {
+      confetti({
+        particleCount: 2,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0 },
+        colors: colors
+      });
+      confetti({
+        particleCount: 2,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1 },
+        colors: colors
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    }());
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -32,10 +50,22 @@ export const PromoModal = ({ offer, onClose }) => {
     navigator.clipboard.writeText(offer.promoCode);
     setCopied(true);
     confetti({
-      particleCount: 30,
-      spread: 50,
-      origin: { y: 0.6 }
+      particleCount: 45,
+      spread: 65,
+      origin: { y: 0.7 }
     });
+
+    const guestId = localStorage.getItem("seabite_guest_id");
+    if (guestId) {
+      const API_URL = import.meta.env.VITE_API_URL || "";
+      import("axios").then((axiosModule) => {
+        axiosModule.default.post(`${API_URL}/api/telemetry/promo-copied`, {
+          visitorId: guestId,
+          promoCode: offer.promoCode
+        }).catch(() => {});
+      });
+    }
+
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -46,80 +76,86 @@ export const PromoModal = ({ offer, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-      <div className="relative w-full max-w-md bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-slate-800/40 rounded-3xl shadow-2xl p-8 overflow-hidden text-center transform transition-all duration-300 scale-100">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-stone-900/60 backdrop-blur-md p-4 animate-fade-in">
+      <div className="relative w-full max-w-md bg-white dark:bg-stone-900 border border-stone-200/50 dark:border-stone-800 rounded-3xl shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] p-8 overflow-hidden text-center transform transition-all duration-300 scale-100">
         
-        {/* Decorative background glow */}
-        <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        {/* Glow Effects */}
+        <div className="absolute -top-32 -left-32 w-64 h-64 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 w-64 h-64 bg-cyan-500/10 dark:bg-cyan-500/5 rounded-full blur-[80px] pointer-events-none" />
 
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-slate-800/50"
+          className="absolute top-5 right-5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors p-2 rounded-full hover:bg-stone-100 dark:hover:bg-stone-805"
         >
-          <FiX size={20} />
+          <FiX size={18} />
         </button>
 
-        {/* Dynamic Gift Icon container */}
-        <div className="mx-auto w-20 h-20 bg-gradient-to-tr from-blue-50 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 mb-6 animate-bounce">
-          <FiGift size={40} className="stroke-[1.5]" />
+        {/* Floating Gift Box Badge */}
+        <div className="mx-auto w-20 h-20 bg-gradient-to-tr from-emerald-400 to-teal-500 dark:from-emerald-500 dark:to-teal-600 rounded-3xl flex items-center justify-center text-white shadow-xl shadow-emerald-500/20 mb-6">
+          <FiGift size={38} className="stroke-[1.5]" />
         </div>
 
-        {/* Promo Title */}
-        <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-tight mb-2 tracking-tight">
-          Admin Special Treat!
+        {/* Ribbon Header */}
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 rounded-full mb-4">
+          <FiAward className="text-emerald-600 dark:text-emerald-400" size={14} />
+          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">LUCKY VISITOR SURPRISE</span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-2xl font-black text-stone-900 dark:text-white leading-tight mb-2 tracking-tight">
+          Special Deal Unlocked!
         </h3>
         
-        {/* Promo Message */}
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6 px-2">
+        {/* Subtitle */}
+        <p className="text-xs text-stone-500 dark:text-stone-400 mb-6 px-4 font-medium leading-relaxed">
           {offer.message || "We noticed you looking at our fresh seafood collection! Here is a special treat just for you."}
         </p>
 
-        {/* Discount Tag */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-100/50 dark:border-blue-900/20 rounded-2xl py-4 px-6 mb-6">
-          <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-widest block mb-1">
-            Exclusive Discount
+        {/* Discount Box */}
+        <div className="bg-gradient-to-br from-stone-50 to-stone-100/50 dark:from-stone-950/60 dark:to-stone-900/60 border border-stone-200/40 dark:border-stone-850/50 rounded-2xl py-5 px-6 mb-6">
+          <span className="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest block mb-1">
+            EXCLUSIVE SAVINGS
           </span>
-          <span className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400">
+          <span className="text-4xl font-extrabold text-stone-900 dark:text-white">
             {offer.discountPercent}% OFF
           </span>
         </div>
 
-        {/* Expiry Alert */}
-        <div className="text-xs text-amber-600 dark:text-amber-400 font-semibold mb-6 flex items-center justify-center gap-1.5 bg-amber-50 dark:bg-amber-950/20 py-1.5 px-3 rounded-full w-fit mx-auto">
-          <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-          Offer expires in: <span className="font-mono font-bold">{formatTime(timeLeft)}</span>
-        </div>
-
-        {/* Promo Code Box */}
-        <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-950/40 border border-gray-100 dark:border-slate-800/40 p-2.5 rounded-2xl mb-4">
-          <span className="flex-1 font-mono font-extrabold text-lg tracking-wider text-gray-800 dark:text-gray-200 select-all pl-3 text-left">
+        {/* Code copied input field */}
+        <div className="relative flex items-center bg-stone-50 dark:bg-stone-950/80 border border-stone-200/60 dark:border-stone-850/80 p-2 rounded-2xl mb-5">
+          <span className="flex-1 font-mono font-extrabold text-lg tracking-wider text-stone-850 dark:text-stone-200 select-all pl-4 text-left">
             {offer.promoCode}
           </span>
           <button
             onClick={handleCopy}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
               copied
-                ? "bg-emerald-500 text-white"
-                : "bg-gray-900 hover:bg-gray-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white"
+                ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
+                : "bg-stone-900 hover:bg-stone-850 dark:bg-stone-800 dark:hover:bg-stone-700 text-white"
             }`}
           >
             {copied ? (
               <>
-                <FiCheck size={14} /> Copied!
+                <FiCheck size={14} /> Copied
               </>
             ) : (
               <>
-                <FiCopy size={14} /> Copy
+                <FiCopy size={14} /> Copy Code
               </>
             )}
           </button>
         </div>
 
+        {/* Expire tag */}
+        <div className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mb-6 flex items-center justify-center gap-1.5 bg-amber-500/10 border border-amber-500/20 py-1.5 px-4 rounded-full w-fit mx-auto animate-pulse">
+          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+          Hurry! Expires in: <span className="font-mono font-bold text-xs">{formatTime(timeLeft)}</span>
+        </div>
+
         <button
           onClick={onClose}
-          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-lg shadow-blue-500/20 hover:shadow-xl transition-all duration-200"
+          className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-lg shadow-emerald-500/20 hover:shadow-xl transition-all duration-200 cursor-pointer active:scale-95 text-xs uppercase tracking-wider"
         >
           Claim Offer & Start Shopping
         </button>

@@ -60,7 +60,8 @@ export const checkout = async (req, res) => {
       useLoyalty,
       loyaltyPointsToRedeem,
       giftCardCode,
-      couponCode: reqCouponCode
+      couponCode: reqCouponCode,
+      visitorId
     } = req.body;
 
     if (!req.user || !req.user._id) return res.status(401).json({ success: false, message: "Auth failed" });
@@ -135,15 +136,21 @@ export const checkout = async (req, res) => {
     if (reqCouponCode) {
       couponDoc = await Coupon.findOne({
         code: reqCouponCode.toUpperCase().trim(),
-        isActive: true,
-        $or: [
-          { isSpinCoupon: false },
-          { isSpinCoupon: true, userEmail: userDoc.email.toLowerCase() }
-        ]
+        isActive: true
       });
 
       if (!couponDoc) {
         return res.status(400).json({ success: false, message: "Invalid or expired coupon code" });
+      }
+
+      // Check if user-specific (spin wheel)
+      if (couponDoc.isSpinCoupon && couponDoc.userEmail && userDoc.email.toLowerCase() !== couponDoc.userEmail.toLowerCase()) {
+        return res.status(400).json({ success: false, message: "This coupon is not valid for your account." });
+      }
+
+      // Check if restricted to specific visitor session
+      if (couponDoc.isPromoPush && couponDoc.visitorId && visitorId !== couponDoc.visitorId) {
+        return res.status(400).json({ success: false, message: "This exclusive coupon is restricted to another user session." });
       }
 
       // Expiry Check
@@ -344,6 +351,18 @@ export const checkout = async (req, res) => {
       if (couponDoc) {
         couponDoc.usedCount = (couponDoc.usedCount || 0) + 1;
         await couponDoc.save({ session: transactionActive ? session : undefined });
+
+        if (couponDoc.isPromoPush && couponDoc.visitorId) {
+          try {
+            const VisitorLog = (await import("../models/VisitorLog.js")).default;
+            await VisitorLog.findOneAndUpdate(
+              { visitorId: couponDoc.visitorId },
+              { $set: { promoStatus: "used" } }
+            );
+          } catch (vErr) {
+            console.error("Failed to update VisitorLog promoStatus to used:", vErr.message);
+          }
+        }
       }
 
       userDoc.cart = [];

@@ -161,6 +161,23 @@ router.post("/push-promo", adminAuth, async (req, res) => {
       return res.status(400).json({ message: "visitorId and promoCode are required" });
     }
 
+    // 1. Dynamically register Coupon in database restricted to this visitorId
+    const Coupon = (await import("../models/Coupon.js")).default;
+    await Coupon.findOneAndDelete({ code: promoCode.toUpperCase() });
+
+    const newCoupon = new Coupon({
+      code: promoCode.toUpperCase(),
+      discountType: "percent",
+      value: parseInt(discountPercent, 10) || 15,
+      isActive: true,
+      maxUses: 1,
+      isPromoPush: true,
+      visitorId,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes expiry
+    });
+    await newCoupon.save();
+
+    // 2. Save promo offer and set status to "sent" in VisitorLog
     const visitor = await VisitorLog.findOneAndUpdate(
       { visitorId },
       {
@@ -170,7 +187,8 @@ router.post("/push-promo", adminAuth, async (req, res) => {
             discountPercent: parseInt(discountPercent, 10) || 15,
             message: message || "We noticed you looking at our fresh seafood collection! Here is a special treat just for you.",
             pushedAt: new Date()
-          }
+          },
+          promoStatus: "sent"
         }
       },
       { new: true }
@@ -179,6 +197,27 @@ router.post("/push-promo", adminAuth, async (req, res) => {
     res.status(200).json({ success: true, visitor });
   } catch (error) {
     console.error("Push Promo Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+});
+
+// 🟢 PUBLIC POST: /api/telemetry/promo-copied
+router.post("/promo-copied", async (req, res) => {
+  try {
+    const { visitorId, promoCode } = req.body;
+    if (!visitorId) {
+      return res.status(400).json({ message: "visitorId is required" });
+    }
+
+    const visitor = await VisitorLog.findOneAndUpdate(
+      { visitorId, "pendingPromo.promoCode": promoCode },
+      { $set: { promoStatus: "copied" } },
+      { new: true }
+    );
+
+    res.status(200).json({ success: true, visitor });
+  } catch (error) {
+    console.error("Promo Copied Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 });

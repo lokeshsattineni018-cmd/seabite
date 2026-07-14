@@ -28,10 +28,13 @@ export default function AdminLiveRadar() {
   const [isSendingPromo, setIsSendingPromo] = useState(false);
 
   const handleInitiateOffer = (visitorId) => {
-    const codes = ["FRESH10", "FRESH15", "RADAR20", "SEABITE25"];
-    const randomCode = codes[Math.floor(Math.random() * codes.length)];
+    const prefixes = ["DELISH", "OCEAN", "FRESHCATCH", "SEAFOOD", "SHRIMP", "CRAB", "SQUID", "BITE"];
+    const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    const randomHex = Math.random().toString(36).substring(2, 6).toUpperCase();
+    const percent = [10, 15, 20, 25][Math.floor(Math.random() * 4)];
+    const randomCode = `${prefix}-${randomHex}-${percent}`;
+
     setPromoCode(randomCode);
-    const percent = parseInt(randomCode.replace(/\D/g, ""), 10) || 15;
     setDiscountPercent(percent);
     setPromoMessage(`Special Treat! We noticed you looking at our fresh seafood collection. Take ${percent}% off your checkout!`);
     setSelectedVisitorForPromo(visitorId);
@@ -48,6 +51,8 @@ export default function AdminLiveRadar() {
         discountPercent,
         message: promoMessage
       });
+      // Update local state instantly to provide immediate feedback to admin
+      setVisitors(prev => prev.map(v => v.visitorId === selectedVisitorForPromo ? { ...v, promoStatus: "sent" } : v));
       toast.success("Promo offer pushed directly to visitor screen!");
     } catch (err) {
       console.error(err);
@@ -452,11 +457,25 @@ export default function AdminLiveRadar() {
                           </div>
                         </td>
                         <td className="px-6 py-5 text-center">
-                          <div className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/20 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/40 transition-colors">
-                            <div className="relative flex h-2.5 w-2.5">
+                          <div className="flex flex-col items-center justify-center gap-1.5">
+                            {/* Pulse Dot */}
+                            <div className="relative flex h-2 w-2">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                             </div>
+                            
+                            {/* Promo Status Badge */}
+                            {visitor.promoStatus && visitor.promoStatus !== "none" && (
+                              <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md mt-1 border ${
+                                visitor.promoStatus === "sent" 
+                                  ? "bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 border-blue-200/40 dark:border-blue-900/30"
+                                  : visitor.promoStatus === "copied"
+                                  ? "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200/40 dark:border-amber-900/30"
+                                  : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200/40 dark:border-emerald-900/30 font-extrabold"
+                              }`}>
+                                {visitor.promoStatus === "used" ? "Used 🎉" : visitor.promoStatus}
+                              </span>
+                            )}
                           </div>
                         </td>
                         <td className="px-6 py-5 text-center" onClick={(e) => e.stopPropagation()}>
@@ -521,8 +540,14 @@ export default function AdminLiveRadar() {
                       type="button"
                       onClick={() => {
                         setDiscountPercent(pct);
-                        const baseCode = promoCode.replace(/\d+/g, "");
-                        setPromoCode(`${baseCode}${pct}`);
+                        const parts = promoCode.split("-");
+                        if (parts.length === 3) {
+                          parts[2] = pct.toString();
+                          setPromoCode(parts.join("-"));
+                        } else {
+                          const baseCode = promoCode.replace(/\d+/g, "");
+                          setPromoCode(`${baseCode}${pct}`);
+                        }
                       }}
                       className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all border ${
                         discountPercent === pct 

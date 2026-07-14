@@ -12,7 +12,7 @@ import { couponLimiter } from "../middleware/rateLimiter.js";
 // ✅ Validate ADMIN Coupons Only (not spin coupons)
 router.post("/validate", couponLimiter, validate(couponValidateSchema), async (req, res) => {
   try {
-    const { code, cartTotal, email } = req.body;
+    const { code, cartTotal, email, visitorId } = req.body;
 
     if (!code) {
       return res.status(404).json({ success: false, message: "No coupon code provided." });
@@ -20,25 +20,29 @@ router.post("/validate", couponLimiter, validate(couponValidateSchema), async (r
 
     const safeEmail = (email || "").toLowerCase();
 
-    // ✅ Find coupon: standard coupon OR spin coupon matching safeEmail
+    // Find coupon matching code
     const coupon = await Coupon.findOne({
       code: code.toUpperCase(),
-      isActive: true,
-      $or: [
-        { isSpinCoupon: false },
-        { isSpinCoupon: true, userEmail: safeEmail }
-      ]
+      isActive: true
     });
 
     if (!coupon) {
       return res.status(404).json({ success: false, message: "Invalid coupon code." });
     }
 
-    // Check if user-specific
-    if (coupon.userEmail && safeEmail !== coupon.userEmail.toLowerCase()) {
+    // Check if user-specific (spin wheel)
+    if (coupon.isSpinCoupon && coupon.userEmail && safeEmail !== coupon.userEmail.toLowerCase()) {
       return res.status(400).json({
         success: false,
         message: "This coupon is not valid for your account.",
+      });
+    }
+
+    // Check if restricted to a specific telemetry visitor session
+    if (coupon.isPromoPush && coupon.visitorId && visitorId !== coupon.visitorId) {
+      return res.status(400).json({
+        success: false,
+        message: "This exclusive discount is restricted to another customer session.",
       });
     }
 
