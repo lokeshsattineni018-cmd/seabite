@@ -19,7 +19,7 @@ const router = express.Router();
 router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
@@ -253,7 +253,7 @@ router.post("/reset-password", authLimiter, validate(resetPasswordSchema), async
   }
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+password");
     if (!user) return res.status(404).json({ message: "User not found" });
 
     if (!newPassword || newPassword.length < 8) {
@@ -279,7 +279,7 @@ router.post("/reset-password", authLimiter, validate(resetPasswordSchema), async
 router.put("/change-password", protect, async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   try {
-    const user = await User.findById(req.user.id || req.user._id);
+    const user = await User.findById(req.user.id || req.user._id).select("+password");
     if (!user || !user.password) {
       return res.status(400).json({ message: "Action not allowed for this account type" });
     }

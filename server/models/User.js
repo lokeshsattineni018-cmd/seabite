@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     email: { type: String, unique: true, sparse: true, required: false },
 
     // Password optional (for Google login)
-    password: { type: String, required: false },
+    password: { type: String, required: false, select: false },
 
     role: { type: String, default: "user" },
     isSuperAdmin: { type: Boolean, default: false },

@@ -13,7 +13,7 @@ import * as Sentry from "@sentry/node";
 if (process.env.SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
-    tracesSampleRate: 1.0,
+    tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
     environment: process.env.NODE_ENV || "development",
   });
 }
@@ -129,7 +129,7 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
   
   // DEBUG LOG
-  if (req.path.startsWith("/api")) {
+  if (process.env.NODE_ENV !== "production" && req.path.startsWith("/api")) {
     console.log(`📡 [API DEBUG] ${req.method} ${req.path} | Origin: ${origin || "NONE"}`);
   }
 
@@ -723,7 +723,7 @@ const upload = multer({
   }
 });
 
-app.post("/api/upload", protect, upload.single("image"), async (req, res) => {
+app.post("/api/upload", protect, admin, upload.single("image"), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: "No file uploaded" });

@@ -149,7 +149,7 @@ const EnhancedProductCard = ({
     let unitDisplay = (product.unit || "").trim();
     const unitLower = unitDisplay.toLowerCase();
     
-    // Format raw generic units to look polished
+    // Normalize unitDisplay
     if (unitLower === "pc" || unitLower === "piece" || unitLower === "1pc" || unitLower === "1 pc") {
       unitDisplay = "1 pc";
     } else if (unitLower === "kg" || unitLower === "1kg" || unitLower === "1 kg") {
@@ -157,26 +157,54 @@ const EnhancedProductCard = ({
     } else if (unitLower === "g" || unitLower === "1g" || unitLower === "1 g") {
       unitDisplay = "1 g";
     }
-    
-    if (unitDisplay) {
-      parts.push(unitDisplay);
-    }
+
+    // Prepare pieces
+    let piecesDisplay = "";
     if (product.pieces) {
       let p = product.pieces.trim();
-      if (/^\d+(-\d+)?$/.test(p)) {
-        p = `${p} Pieces`;
+      if (p) {
+        if (/^\d+(-\d+)?$/.test(p)) {
+          piecesDisplay = `${p} Pieces`;
+        } else {
+          piecesDisplay = p;
+        }
       }
-      parts.push(p);
     }
+
+    // Prepare serves
+    let servesDisplay = "";
     if (product.serves) {
       let s = product.serves.trim();
-      if (/^\d+(-\d+)?$/.test(s)) {
-        s = `Serves ${s}`;
-      } else if (!s.toLowerCase().startsWith("serves")) {
-        s = `Serves ${s}`;
+      // Ensure servesDisplay is not generated if it's just the word "serves" or empty/whitespace
+      if (s && s.toLowerCase() !== "serves") {
+        if (/^\d+(-\d+)?$/.test(s)) {
+          servesDisplay = `Serves ${s}`;
+        } else if (!s.toLowerCase().startsWith("serves")) {
+          servesDisplay = `Serves ${s}`;
+        } else {
+          servesDisplay = s;
+        }
       }
-      parts.push(s);
     }
+
+    // Deduplicate logic:
+    // If unit is "1 pc" (or "1 piece") and pieces is "1 Pieces" (or "1 pc"), they are redundant.
+    const isSingleUnit = unitDisplay.toLowerCase() === "1 pc" || unitDisplay.toLowerCase() === "1 piece";
+    const isSinglePiece = piecesDisplay.toLowerCase() === "1 pieces" || piecesDisplay.toLowerCase() === "1 piece" || piecesDisplay.toLowerCase() === "1 pc";
+    
+    if (isSingleUnit && isSinglePiece) {
+      piecesDisplay = "";
+    }
+
+    // If unitDisplay and piecesDisplay are identical or represent the exact same thing, deduplicate.
+    if (unitDisplay.toLowerCase() === piecesDisplay.toLowerCase()) {
+      piecesDisplay = "";
+    }
+
+    if (unitDisplay) parts.push(unitDisplay);
+    if (piecesDisplay) parts.push(piecesDisplay);
+    if (servesDisplay) parts.push(servesDisplay);
+
     return parts.join(" | ");
   };
 
