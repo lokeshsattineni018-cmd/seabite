@@ -120,11 +120,31 @@ const EnhancedProductCard = ({
     }, 1000);
   };
 
+  const getUnitPriceString = () => {
+    const unitStr = (product.unit || "").toLowerCase().trim();
+    const price = parseFloat(displayPrice);
+    
+    if (unitStr.includes("kg")) {
+      return `₹${Math.round(price)}/kg`;
+    }
+    
+    const gramMatch = unitStr.match(/(\d+)\s*(g|gms|gram)/);
+    if (gramMatch) {
+      const grams = parseInt(gramMatch[1], 10);
+      if (grams > 0) {
+        const pricePerKg = Math.round((price / grams) * 1000);
+        return `₹${pricePerKg}/kg`;
+      }
+    }
+    
+    return `₹${Math.round(price)}/pc`;
+  };
+
   const isOutOfStock = product.stock === "out" || product.countInStock <= 0;
 
   return (
     <motion.div
-      whileHover={{ y: -8 }}
+      whileHover={isOutOfStock ? {} : { y: -8, boxShadow: "0 20px 40px rgba(26, 46, 44, 0.08)", borderColor: "#5BBFB588" }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
       style={{
         background: "#FFFFFF",
@@ -139,6 +159,8 @@ const EnhancedProductCard = ({
         fontFamily: "'Plus Jakarta Sans', sans-serif",
         contentVisibility: "auto",
         containIntrinsicSize: "0 380px",
+        opacity: isOutOfStock ? 0.7 : 1,
+        transition: "opacity 0.3s ease, border-color 0.3s ease",
       }}
     >
       {/* 🖼️ Premium Image Container */}
@@ -150,15 +172,19 @@ const EnhancedProductCard = ({
             width={400}
             height={400}
             initial={{ opacity: 0, scale: 1.1 }}
-            animate={{ opacity: imageLoaded ? 1 : 0, scale: imageLoaded ? 1 : 1.1 }}
+            animate={{ 
+              opacity: imageLoaded ? (isOutOfStock ? 0.5 : 1) : 0, 
+              scale: imageLoaded ? 1 : 1.1,
+              filter: isOutOfStock ? "grayscale(40%) blur(1px)" : "none"
+            }}
             transition={{ duration: 0.6 }}
             onLoad={() => setImageLoaded(true)}
             loading="lazy"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
           {isOutOfStock && (
-            <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ background: "#1A2E2C", color: "#FFF", fontSize: "11px", fontWeight: "800", padding: "8px 16px", borderRadius: "100px", letterSpacing: "0.05em" }}>SOLD OUT</span>
+            <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.45)", backdropFilter: "blur(2px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ background: "#1A2E2C", color: "#FFF", fontSize: "11px", fontWeight: "800", padding: "8px 16px", borderRadius: "100px", letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>SOLD OUT</span>
             </div>
           )}
         </Link>
@@ -236,15 +262,14 @@ const EnhancedProductCard = ({
                 initial={{ opacity: 0, y: -4 }}
                 animate={{ opacity: 1, y: 0 }}
                 style={{
-                  background: "rgba(255, 255, 255, 0.9)",
-                  backdropFilter: "blur(12px)",
-                  color: "#1A2E2C",
-                  padding: "5px 10px", 
+                  background: "linear-gradient(135deg, #FF6F61 0%, #FF5A4F 100%)", // Vibrant brand coral gradient callout
+                  color: "#FFF",
+                  padding: "5px 12px", 
                   borderRadius: "100px",
                   fontSize: "10px", 
-                  fontWeight: 700,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-                  border: "1px solid rgba(0,0,0,0.03)",
+                  fontWeight: 800,
+                  boxShadow: "0 4px 12px rgba(255, 90, 79, 0.25)",
+                  border: "1px solid rgba(255, 90, 79, 0.1)",
                   display: "flex", 
                   alignItems: "center", 
                   gap: "5px",
@@ -252,8 +277,7 @@ const EnhancedProductCard = ({
                   textTransform: "uppercase"
                 }}
               >
-                <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#5BBFB5" }} />
-                {discountPct}% OFF
+                <span>{discountPct}% OFF</span>
               </motion.div>
             )
           )}
@@ -287,13 +311,13 @@ const EnhancedProductCard = ({
       {/* ✍️ Content Section */}
       <div style={{ padding: "20px", display: "flex", flexDirection: "column", flex: 1 }}>
         <div style={{ marginBottom: "12px" }}>
-          <span style={{ fontSize: "11px", fontWeight: "700", color: "#6B8F8A", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+          <span style={{ fontSize: "10.5px", fontWeight: "800", color: "#6B8F8A", textTransform: "uppercase", letterSpacing: "0.08em" }}>
             {product.category || "Fresh Catch"}
           </span>
           <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: "none" }}>
             <h3 style={{ 
               fontSize: "17px", 
-              fontWeight: "700", 
+              fontWeight: "800", // Boldest element in font hierarchy
               color: "#1A2E2C", 
               marginTop: "4px",
               lineHeight: 1.3,
@@ -316,24 +340,29 @@ const EnhancedProductCard = ({
                 <span style={{ fontSize: "13px", color: "#6B8F8A", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
               )}
             </div>
-            <p style={{ fontSize: "11px", color: "#6B8F8A", fontWeight: "600", marginTop: "2px" }}>
-              Net Wt: <span style={{ color: "#1A2E2C" }}>{product.unit || "500g"}</span>
+            {/* Unit Price Visibility & Clean hierarchy */}
+            <p style={{ fontSize: "11px", color: "#8CAEAA", fontWeight: "600", marginTop: "2px", display: "flex", gap: "4px", alignItems: "center" }}>
+              <span>Net Wt:</span>
+              <span style={{ color: "#4A6E6A", fontWeight: "700" }}>{product.unit || "500g"}</span>
+              <span style={{ color: "#B8CFCC" }}>•</span>
+              <span style={{ color: "#FF6F61", fontWeight: "700" }}>{getUnitPriceString()}</span>
             </p>
           </div>
 
           <motion.button
-            whileHover={isOutOfStock ? {} : { scale: 1.03, backgroundColor: "#4AA89F" }}
+            whileHover={isOutOfStock ? {} : { scale: 1.03 }}
             whileTap={isOutOfStock ? {} : { scale: 0.97 }}
+            animate={isAdding ? { scale: [1, 1.12, 1] } : {}}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
             aria-label={isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : `Add ${product.name} to cart`)}
             style={{
-              background: isOutOfStock ? "#F3F4F6" : "#5BBFB5",
+              background: isOutOfStock ? "#F3F4F6" : (isAdding ? "#10B981" : "#5BBFB5"), // Emerald green on successful add
               color: isOutOfStock ? "#9CA3AF" : "#FFF",
               border: "none",
               borderRadius: "10px",
               height: "32px",
-              padding: "0 10px",
+              padding: "0 12px",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -341,13 +370,13 @@ const EnhancedProductCard = ({
               fontSize: "11.5px",
               fontWeight: "800",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
-              boxShadow: isOutOfStock ? "none" : "0 4px 10px rgba(91,191,181,0.15)",
-              transition: "all 0.3s ease",
+              boxShadow: isOutOfStock ? "none" : (isAdding ? "0 4px 10px rgba(16, 185, 129, 0.2)" : "0 4px 10px rgba(91,191,181,0.15)"),
+              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
               fontFamily: "inherit",
               flexShrink: 0
             }}
           >
-            {isAdding ? <FiCheck size={12} /> : <FiShoppingCart size={12} />}
+            {isAdding ? <FiCheck size={12} strokeWidth={3} /> : <FiPlus size={12} strokeWidth={3} />}
             {isOutOfStock ? "Out" : (isAdding ? "Added" : "Add")}
           </motion.button>
         </div>

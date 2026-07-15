@@ -589,8 +589,8 @@ const connectDB = async () => {
             .replace(/-+$/, "");
         };
         for (const prod of productsWithoutSlugs) {
-          prod.slug = slugify(prod.name);
-          await prod.save();
+          const generatedSlug = slugify(prod.name);
+          await Product.updateOne({ _id: prod._id }, { $set: { slug: generatedSlug } });
         }
         console.log("[Migration] Slug migration completed successfully.");
       }
