@@ -144,6 +144,18 @@ const EnhancedProductCard = ({
     return `₹${Math.round(price)}/pc`;
   };
 
+  const formatUnit = (unit) => {
+    if (!unit) return "";
+    const lower = unit.toLowerCase().trim();
+    if (lower === "pc" || lower === "piece" || lower === "1pc") {
+      return "1 Premium Piece";
+    }
+    if (lower.includes("pc") || lower.includes("piece")) {
+      return `${unit} Pack`;
+    }
+    return `Net Wt: ${unit}`;
+  };
+
   const isOutOfStock = product.stock === "out" || product.countInStock <= 0;
 
   return (
@@ -236,16 +248,16 @@ const EnhancedProductCard = ({
         </motion.button>
       </div>
 
-      {/* ✍️ Compact Content Section */}
-      <div style={{ padding: "14px 16px 16px 16px", display: "flex", flexDirection: "column", flex: 1 }}>
+      {/* ✍️ Premium Padded Content Section */}
+      <div style={{ padding: "16px 20px 20px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
         {/* Title */}
         <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: "none" }}>
           <h3 style={{ 
             fontSize: "14.5px", 
             fontWeight: "700", 
             color: "#2B2B2B", 
-            lineHeight: 1.3,
-            height: "2.6em",
+            lineHeight: 1.35,
+            height: "2.7em",
             overflow: "hidden",
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -256,27 +268,22 @@ const EnhancedProductCard = ({
           </h3>
         </Link>
 
-        {/* 🛵 Subtle 30 mins delivery line right under title */}
-        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10.5px", color: "#9CA3AF", marginTop: "4px", fontWeight: "600", letterSpacing: "0.02em" }}>
-          <span>🛵 30 mins delivery</span>
-        </div>
-
-        {/* Weight / Unit Metadata directly from backend (No static serves/pieces) */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "11px", color: "#7E7E7E", fontWeight: "600", marginTop: "10px", marginBottom: "14px" }}>
-          <span>{product.unit || "500g"}</span>
+        {/* Weight / Unit Metadata directly from backend formatted elegantly */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "11.5px", color: "#6B8F8A", fontWeight: "700", marginTop: "12px", marginBottom: "24px" }}>
+          <span>{formatUnit(product.unit)}</span>
         </div>
 
         {/* Bottom Price + Add Button Row */}
         <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
           <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-              <span style={{ fontSize: "17px", fontWeight: "800", color: "#2B2B2B" }}>₹{displayPrice}</span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
+              <span style={{ fontSize: "20px", fontWeight: "800", color: "#2B2B2B", letterSpacing: "-0.01em" }}>₹{displayPrice}</span>
               {product.basePrice > displayPrice && (
-                <span style={{ fontSize: "12px", color: "#9E9E9E", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
+                <span style={{ fontSize: "14px", color: "#9E9E9E", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
               )}
             </div>
             {product.basePrice > displayPrice && (
-              <span style={{ fontSize: "11px", color: "#00B259", fontWeight: "700", display: "block", marginTop: "1px" }}>
+              <span style={{ fontSize: "12px", color: "#00B259", fontWeight: "700", display: "block", marginTop: "2px" }}>
                 {discountPct}% off
               </span>
             )}
@@ -292,9 +299,9 @@ const EnhancedProductCard = ({
               color: isOutOfStock ? "#9CA3AF" : (isAdding ? "#FFF" : "#5BBFB5"),
               border: isOutOfStock ? "none" : "1px solid #5BBFB5",
               borderRadius: "8px",
-              height: "32px", // Slightly bigger height
-              padding: "0 18px", // Slightly more padding
-              fontSize: "12px", // Slightly bigger text
+              height: "32px", 
+              padding: "0 18px", 
+              fontSize: "12px", 
               fontWeight: "800",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
               display: "flex",
