@@ -165,6 +165,74 @@ const EnhancedProductCard = ({
 
         {/* 🏷️ Glassmorphic Badges */}
         <div style={{ position: "absolute", top: "16px", left: "16px", display: "flex", flexDirection: "column", gap: "8px", pointerEvents: "none" }}>
+          {/* Catch of the Day Badge with Green Glow Pulse */}
+          {product.catchOfTheDay && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                boxShadow: [
+                  "0 0 0 0px rgba(16, 185, 129, 0.4)",
+                  "0 0 0 6px rgba(16, 185, 129, 0)",
+                  "0 0 0 0px rgba(16, 185, 129, 0.4)"
+                ]
+              }}
+              transition={{ 
+                boxShadow: {
+                  repeat: Infinity,
+                  duration: 1.8,
+                  ease: "easeInOut"
+                },
+                default: { duration: 0.3 }
+              }}
+              style={{
+                background: "rgba(16, 185, 129, 0.95)",
+                backdropFilter: "blur(12px)",
+                color: "#FFF",
+                padding: "6px 12px",
+                borderRadius: "100px",
+                fontSize: "10px",
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                border: "1px solid rgba(16, 185, 129, 0.2)"
+              }}
+            >
+              <span style={{ display: "inline-block", width: "5px", height: "5px", borderRadius: "50%", background: "#FFF" }} />
+              <span>Catch of the Day</span>
+            </motion.div>
+          )}
+
+          {/* Low Stock Badge */}
+          {product.countInStock > 0 && product.countInStock <= 5 && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              style={{
+                background: "rgba(217, 119, 6, 0.9)",
+                backdropFilter: "blur(12px)",
+                color: "#FFF",
+                padding: "6px 12px",
+                borderRadius: "100px",
+                fontSize: "10px",
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                border: "1px solid rgba(217, 119, 6, 0.2)",
+                boxShadow: "0 4px 12px rgba(217, 119, 6, 0.15)"
+              }}
+            >
+              <span>⚠️ Only {product.countInStock} Left</span>
+            </motion.div>
+          )}
+
           {isActiveFlashSale ? (
             <motion.div 
               initial={{ opacity: 0, y: -4 }}

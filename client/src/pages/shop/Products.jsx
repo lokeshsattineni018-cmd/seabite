@@ -99,7 +99,8 @@ export default function Products() {
         inStock: filters.inStock || undefined,
         sort: filters.sort,
         cut: filters.cut || undefined,
-        catchOfTheDay: filters.catchOfTheDay === "true" ? "true" : undefined
+        catchOfTheDay: filters.catchOfTheDay === "true" ? "true" : undefined,
+        visitorId: localStorage.getItem("seabite_guest_id") || undefined
       };
       const res = await axios.get(`${API_URL}/api/products`, { params });
       const fetchedProducts = res.data.products || res.data || [];

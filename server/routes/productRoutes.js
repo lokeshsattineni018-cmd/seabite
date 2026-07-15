@@ -87,9 +87,13 @@ router.get("/filter-meta", async (req, res) => {
 // --- GET ALL PRODUCTS ---
 router.get("/", async (req, res) => {
   try {
-    const { category, search, minPrice, maxPrice, inStock, sort } = req.query;
+    const { category, search, minPrice, maxPrice, inStock, sort, visitorId: queryVisitorId } = req.query;
 
-    const cacheKey = `products:all:${category || 'all'}:${search || 'none'}:${minPrice || '0'}:${maxPrice || '0'}:${inStock || 'all'}:${sort || 'default'}:${req.query.flashSale || 'false'}`;
+    const visitorId = queryVisitorId || req.headers["x-visitor-id"] || null;
+    const userId = req.session?.user?.id || req.session?.userId || null;
+
+    // Use a visitor/user-specific cache key to prevent cross-profile cache pollution
+    const cacheKey = `products:all:${category || 'all'}:${search || 'none'}:${minPrice || '0'}:${maxPrice || '0'}:${inStock || 'all'}:${sort || 'default'}:${req.query.flashSale || 'false'}:${userId || visitorId || 'guest'}`;
     const cachedData = cacheGet(cacheKey);
     if (cachedData) {
       return res.json(cachedData);
@@ -140,6 +144,96 @@ router.get("/", async (req, res) => {
 
     const products = await Product.find(query).select("-buyingPrice -waitlist").sort(sortOptions).lean();
 
+    // 🧬 DYNAMIC CATEGORY AFFINITY ORDERING (Fingerprinting)
+    let orderedProducts = products;
+    if (!category || category === "all" || category.toLowerCase() === "all") {
+      try {
+        const scores = { Fish: 0, Prawn: 0, Crab: 0 };
+        
+        // 1. Order History Score (Weight: 3)
+        if (userId) {
+          const recentOrders = await Order.find({ user: userId }).select("items").limit(5).lean();
+          recentOrders.forEach(order => {
+            order.items.forEach(item => {
+              const name = (item.name || "").toLowerCase();
+              if (name.includes("fish")) scores.Fish += 3 * (item.qty || 1);
+              else if (name.includes("prawn") || name.includes("shrimp")) scores.Prawn += 3 * (item.qty || 1);
+              else if (name.includes("crab")) scores.Crab += 3 * (item.qty || 1);
+            });
+          });
+        }
+        
+        // 2. Wishlist & User Profile Score (Weight: 2)
+        if (userId) {
+          const User = (await import("../models/User.js")).default;
+          const userDoc = await User.findById(userId).populate("wishlist", "category name").lean();
+          if (userDoc && userDoc.wishlist) {
+            userDoc.wishlist.forEach(item => {
+              const cat = item.category;
+              if (cat && scores[cat] !== undefined) {
+                scores[cat] += 2;
+              }
+            });
+          }
+        }
+        
+        // 3. Recent Activity Log Score (Weight: 1)
+        const ActivityLog = (await import("../models/ActivityLog.js")).default;
+        const recentLogs = await ActivityLog.find({
+          $or: [
+            ...(userId ? [{ user: userId }] : []),
+            ...(visitorId ? [{ guestId: visitorId }] : [])
+          ],
+          action: { $in: ["SEARCH", "WISHLIST_ADD", "CART_UPDATE"] }
+        }).select("details").limit(15).lean();
+        
+        recentLogs.forEach(log => {
+          const details = (log.details || "").toLowerCase();
+          if (details.includes("fish")) scores.Fish += 1;
+          if (details.includes("prawn") || details.includes("shrimp")) scores.Prawn += 1;
+          if (details.includes("crab")) scores.Crab += 1;
+        });
+
+        // 4. Sort categories by affinity score, fallback to default order (Fish -> Prawn -> Crab)
+        const defaultOrder = ["Fish", "Prawn", "Crab"];
+        const hasAffinities = Object.values(scores).some(s => s > 0);
+        
+        let priorityOrder = defaultOrder;
+        if (hasAffinities) {
+          priorityOrder = Object.keys(scores).sort((a, b) => {
+            if (scores[b] !== scores[a]) return scores[b] - scores[a];
+            return defaultOrder.indexOf(a) - defaultOrder.indexOf(b); // Keep relative default order on ties
+          });
+        }
+
+        // Group products by category
+        const groups = {
+          Fish: [],
+          Prawn: [],
+          Crab: [],
+          Others: []
+        };
+
+        products.forEach(p => {
+          const cat = p.category || "Others";
+          if (groups[cat]) {
+            groups[cat].push(p);
+          } else {
+            groups["Others"].push(p);
+          }
+        });
+
+        // Reassemble products list based on priority order
+        orderedProducts = [];
+        priorityOrder.forEach(cat => {
+          orderedProducts.push(...groups[cat]);
+        });
+        orderedProducts.push(...groups["Others"]);
+      } catch (fingerprintErr) {
+        console.error("Failed to compute category affinity:", fingerprintErr);
+      }
+    }
+
     // ✅ Enterprise: Log Search Insight (ZRO: Zero-Result Optimization)
     if (search && search.trim().length > 2) {
       const sanitizedSearch = search.toLowerCase().trim();
@@ -152,7 +246,7 @@ router.get("/", async (req, res) => {
             {
               $inc: { count: 1 },
               $set: {
-                found: products.length > 0,
+                found: orderedProducts.length > 0,
                 lastSearched: Date.now()
               }
             },
@@ -160,7 +254,7 @@ router.get("/", async (req, res) => {
           );
 
           // 🟢 WATCHTOWER LOGGING
-          logActivity("SEARCH", `Searched for "${sanitizedSearch}"`, req, { results: products.length });
+          logActivity("SEARCH", `Searched for "${sanitizedSearch}"`, req, { results: orderedProducts.length });
 
         } catch (err) {
           console.error("Search Insight Error:", err);
@@ -177,7 +271,7 @@ router.get("/", async (req, res) => {
       // console.error("Failed to fetch settings:", err);
     }
 
-    const responsePayload = { products, globalDiscount };
+    const responsePayload = { products: orderedProducts, globalDiscount };
     cacheSet(cacheKey, responsePayload, 120); // Cache for 120s
 
     res.json(responsePayload);
