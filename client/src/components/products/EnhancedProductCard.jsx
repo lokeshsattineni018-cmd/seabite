@@ -226,7 +226,7 @@ const EnhancedProductCard = ({
             border: "1px solid rgba(0,0,0,0.06)",
             borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: isWishlisted ? "#5BBFB5" : "#4A4A4A", // SeaBite brand teal when active
+            color: isWishlisted ? "#FF3B30" : "#4A4A4A", // Red when wishlisted
             boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             cursor: "pointer",
             zIndex: 5
@@ -236,16 +236,16 @@ const EnhancedProductCard = ({
         </motion.button>
       </div>
 
-      {/* ✍️ Content Section */}
-      <div style={{ padding: "16px", display: "flex", flexDirection: "column", flex: 1 }}>
+      {/* ✍️ Compact Content Section */}
+      <div style={{ padding: "14px 16px 16px 16px", display: "flex", flexDirection: "column", flex: 1 }}>
         {/* Title */}
         <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: "none" }}>
           <h3 style={{ 
-            fontSize: "15px", 
+            fontSize: "14.5px", 
             fontWeight: "700", 
             color: "#2B2B2B", 
-            lineHeight: 1.35,
-            height: "2.7em",
+            lineHeight: 1.3,
+            height: "2.6em",
             overflow: "hidden",
             display: "-webkit-box",
             WebkitLineClamp: 2,
@@ -257,76 +257,58 @@ const EnhancedProductCard = ({
         </Link>
 
         {/* 🛵 Subtle 30 mins delivery line right under title */}
-        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11px", color: "#9CA3AF", marginTop: "4px", fontWeight: "600", letterSpacing: "0.02em" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "10.5px", color: "#9CA3AF", marginTop: "4px", fontWeight: "600", letterSpacing: "0.02em" }}>
           <span>🛵 30 mins delivery</span>
         </div>
 
-        {/* Tagline / Sub-desc */}
-        <p style={{ 
-          fontSize: "11.5px", 
-          color: "#7E7E7E", 
-          marginTop: "6px", 
-          marginBottom: "8px", 
-          overflow: "hidden", 
-          textOverflow: "ellipsis", 
-          whiteSpace: "nowrap",
-          margin: "6px 0 8px 0"
-        }}>
-          {product.desc || `Freshly caught ${product.category?.toLowerCase() || 'seafood'} cut.`}
-        </p>
-
-        {/* Weight | Pieces | Serves Metadata */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "11px", color: "#7E7E7E", fontWeight: "600", marginBottom: "16px" }}>
+        {/* Weight / Unit Metadata directly from backend (No static serves/pieces) */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "11px", color: "#7E7E7E", fontWeight: "600", marginTop: "10px", marginBottom: "14px" }}>
           <span>{product.unit || "500g"}</span>
-          <span style={{ color: "#E0E0E0" }}>|</span>
-          <span>{product.category === "Prawn" ? "20-30 Pcs" : product.category === "Crab" ? "3-4 Pcs" : "4-6 Pcs"}</span>
-          <span style={{ color: "#E0E0E0" }}>|</span>
-          <span>Serves {product.category === "Crab" ? "2" : "2-3"}</span>
         </div>
 
-        {/* Price Row with Inline Discount */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
-          <span style={{ fontSize: "18px", fontWeight: "800", color: "#2B2B2B" }}>₹{displayPrice}</span>
-          {product.basePrice > displayPrice && (
-            <>
-              <span style={{ fontSize: "13px", color: "#9E9E9E", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
-              <span style={{ fontSize: "11.5px", color: "#00B259", fontWeight: "700" }}>{discountPct}% off</span>
-            </>
-          )}
-        </div>
+        {/* Bottom Price + Add Button Row */}
+        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
+              <span style={{ fontSize: "17px", fontWeight: "800", color: "#2B2B2B" }}>₹{displayPrice}</span>
+              {product.basePrice > displayPrice && (
+                <span style={{ fontSize: "12px", color: "#9E9E9E", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
+              )}
+            </div>
+            {product.basePrice > displayPrice && (
+              <span style={{ fontSize: "11px", color: "#00B259", fontWeight: "700", display: "block", marginTop: "1px" }}>
+                {discountPct}% off
+              </span>
+            )}
+          </div>
 
+          <motion.button
+            whileHover={isOutOfStock ? {} : { scale: 1.04, backgroundColor: isAdding ? "#10B981" : "#5BBFB5", color: "#FFF", opacity: 1 }}
+            whileTap={isOutOfStock ? {} : { scale: 0.96 }}
+            onClick={handleAddToCart}
+            disabled={isOutOfStock || isAdding}
+            style={{
+              background: isOutOfStock ? "#F3F4F6" : (isAdding ? "#10B981" : "transparent"),
+              color: isOutOfStock ? "#9CA3AF" : (isAdding ? "#FFF" : "#5BBFB5"),
+              border: isOutOfStock ? "none" : "1px solid #5BBFB5",
+              borderRadius: "8px",
+              height: "32px", // Slightly bigger height
+              padding: "0 18px", // Slightly more padding
+              fontSize: "12px", // Slightly bigger text
+              fontWeight: "800",
+              cursor: isOutOfStock ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "4px",
+              opacity: isOutOfStock ? 0.6 : 0.85,
+              transition: "all 0.2s ease"
+            }}
+          >
+            {isAdding ? "Added" : "Add"}
+          </motion.button>
+        </div>
       </div>
-
-      {/* 🚀 Big, full-width end-to-end Add Button at the very bottom */}
-      <motion.button
-        whileHover={isOutOfStock ? {} : { opacity: 1 }}
-        whileTap={isOutOfStock ? {} : { scale: 0.98 }}
-        onClick={handleAddToCart}
-        disabled={isOutOfStock || isAdding}
-        style={{
-          width: "100%",
-          height: "42px", // Large/tall button
-          background: isOutOfStock ? "#E5E7EB" : (isAdding ? "#10B981" : "#5BBFB5"), // Solid high-contrast teal/success green
-          color: isOutOfStock ? "#9CA3AF" : "#FFF",
-          border: "none",
-          fontSize: "13px",
-          fontWeight: "800",
-          cursor: isOutOfStock ? "not-allowed" : "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "6px",
-          opacity: isOutOfStock ? 0.6 : 0.85, // Opaque on hover
-          transition: "all 0.2s ease",
-          fontFamily: "inherit",
-          borderBottomLeftRadius: "16px",
-          borderBottomRightRadius: "16px",
-          zIndex: 2
-        }}
-      >
-        {isAdding ? <FiCheck size={13} strokeWidth={3} /> : <FiPlus size={13} strokeWidth={3} />}
-        {isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : "Add to Cart")}
-      </motion.button>
 
       {/* 🚀 Fly Animation Portal */}
       {typeof document !== "undefined" && createPortal(
