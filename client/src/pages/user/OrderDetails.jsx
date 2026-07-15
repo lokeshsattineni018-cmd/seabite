@@ -49,7 +49,7 @@ function QualitySlider({ onConfirm, confirmed }) {
   const maxWidth = 260; // Approximate width of the slider area
   const bgWidth = useTransform(x, [0, maxWidth], ["0%", "100%"]);
   const opacity = useTransform(x, [0, maxWidth * 0.8], [1, 0]);
-  
+
   const [lastHaptic, setLastHaptic] = useState(0);
 
   const handleDrag = (event, info) => {
@@ -72,13 +72,13 @@ function QualitySlider({ onConfirm, confirmed }) {
 
   if (confirmed) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         style={{ textAlign: "center", padding: "10px 0" }}
       >
-        <div style={{ 
-          width: 44, height: 44, borderRadius: "50%", background: "#10B981", 
-          margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" 
+        <div style={{
+          width: 44, height: 44, borderRadius: "50%", background: "#10B981",
+          margin: "0 auto 12px", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff"
         }}>
           <FiCheck size={24} strokeWidth={3} />
         </div>
@@ -91,20 +91,20 @@ function QualitySlider({ onConfirm, confirmed }) {
   return (
     <div style={{ position: "relative" }}>
       <h4 style={{ margin: "0 0 16px", fontSize: 14, fontWeight: 700, color: "#1A2E2C", fontFamily: "'Sora', sans-serif" }}>Confirm Freshness</h4>
-      <div style={{ 
+      <div style={{
         position: "relative", height: 56, background: "#F1F1F1", borderRadius: 28, overflow: "hidden",
         display: "flex", alignItems: "center", justifyContent: "center"
       }}>
         {/* Fill Background */}
-        <motion.div style={{ 
-          position: "absolute", left: 0, top: 0, bottom: 0, width: bgWidth, 
-          background: "linear-gradient(90deg, #10B981 0%, #34D399 100%)", zIndex: 0 
+        <motion.div style={{
+          position: "absolute", left: 0, top: 0, bottom: 0, width: bgWidth,
+          background: "linear-gradient(90deg, #10B981 0%, #34D399 100%)", zIndex: 0
         }} />
-        
+
         {/* Text Prompt */}
-        <motion.span style={{ 
-          opacity, zIndex: 1, fontSize: 13, fontWeight: 600, color: "#A1A1A6", 
-          pointerEvents: "none", userSelect: "none" 
+        <motion.span style={{
+          opacity, zIndex: 1, fontSize: 13, fontWeight: 600, color: "#A1A1A6",
+          pointerEvents: "none", userSelect: "none"
         }}>
           Slide to confirm quality →
         </motion.span>
@@ -116,8 +116,8 @@ function QualitySlider({ onConfirm, confirmed }) {
           dragElastic={0.1}
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
-          style={{ 
-            x, position: "absolute", left: 4, width: 48, height: 48, 
+          style={{
+            x, position: "absolute", left: 4, width: 48, height: 48,
             background: "#fff", borderRadius: "50%", cursor: "grab",
             boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 2,
             display: "flex", alignItems: "center", justifyContent: "center", color: "#10B981"
@@ -424,7 +424,7 @@ function VerticalTracker({ currentStepIndex, order, reduced }) {
         const current = idx === currentStepIndex;
         const last = idx === STEPS.length - 1;
         const historyItem = historyMap[step.status];
-        
+
         return (
           <div
             key={idx} role="listitem"
@@ -473,8 +473,8 @@ function VerticalTracker({ currentStepIndex, order, reduced }) {
                   fontSize: 12, color: T.inkSoft, margin: "4px 0 0",
                   fontFamily: "'DM Sans', sans-serif"
                 }}>
-                  {new Date(historyItem.timestamp).toLocaleString("en-GB", { 
-                    day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true 
+                  {new Date(historyItem.timestamp).toLocaleString("en-GB", {
+                    day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true
                   })}
                 </p>
               )}
@@ -551,7 +551,7 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
   const submit = async () => {
     if (!reason) { toast.error("Please select a claim reason"); return; }
     if (images.length === 0) { toast.error("Please upload at least one freshness verification photo"); return; }
-    
+
     setSubmitting(true);
     try {
       const pid = product.productId
@@ -562,9 +562,9 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
 
       await axios.post(
         `${API_URL}/api/returns`,
-        { 
-          orderId: order._id, 
-          items: [{ productId: pid, name: product.name || "Fresh Catch", qty: product.qty || 1 }], 
+        {
+          orderId: order._id,
+          items: [{ productId: pid, name: product.name || "Fresh Catch", qty: product.qty || 1 }],
           reason: `${reason}: ${description}`,
           images
         },
@@ -627,9 +627,9 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
         {/* Product details info card */}
         <div style={{ background: "#F8FAFB", borderRadius: 16, padding: 14, display: "flex", gap: 12, alignItems: "center", marginBottom: 20 }}>
           <div style={{ width: 44, height: 44, borderRadius: 10, overflow: "hidden", background: "#E8EEF2", flexShrink: 0 }}>
-            <img 
-              src={`${API_URL}/uploads/${product.image?.replace("uploads/", "")}`} 
-              alt={product.name} 
+            <img
+              src={`${API_URL}/uploads/${product.image?.replace("uploads/", "")}`}
+              alt={product.name}
               style={{ width: "100%", height: "100%", objectFit: "cover" }}
               onError={(e) => { e.target.onerror = null; e.target.src = "https://placehold.co/100?text=SeaBite"; }}
             />
@@ -689,7 +689,7 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
             {images.map((img, i) => (
               <div key={i} style={{ width: 64, height: 64, borderRadius: 12, overflow: "hidden", border: `1.5px solid ${T.border}`, position: "relative" }}>
                 <img src={img} alt="Verification" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                <button 
+                <button
                   onClick={() => setImages(images.filter((_, idx) => idx !== i))}
                   style={{ position: "absolute", top: 2, right: 2, background: "rgba(0,0,0,0.6)", color: "#fff", border: "none", borderRadius: "50%", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, cursor: "pointer" }}
                 >
@@ -697,7 +697,7 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
                 </button>
               </div>
             ))}
-            
+
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
@@ -717,13 +717,13 @@ function ReturnClaimModal({ order, product, onClose, onSuccess }) {
                 </>
               )}
             </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handlePhotoUpload} 
-              accept="image/*" 
-              multiple 
-              style={{ display: "none" }} 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoUpload}
+              accept="image/*"
+              multiple
+              style={{ display: "none" }}
             />
           </div>
         </div>
@@ -1048,7 +1048,7 @@ export default function OrderDetails() {
       );
       setOrder(data);
       if (data.walletAppliedAmount > 0 && data.refundStatus === "Pending") {
-        toast.success(`Order cancelled. ₹${data.walletAppliedAmount} wallet refund is pending admin approval.`);
+        toast.success(`Order cancelled. ₹${data.walletAppliedAmount} wallet refund is pending.`);
       } else {
         toast.success("Order cancelled successfully.");
       }
@@ -1275,9 +1275,9 @@ export default function OrderDetails() {
       />
       <AnimatePresence>
         {complaintOpen && (
-          <QualityComplaintModal 
-            order={order} 
-            onClose={() => setComplaintOpen(false)} 
+          <QualityComplaintModal
+            order={order}
+            onClose={() => setComplaintOpen(false)}
             onSuccess={() => {
               // Re-fetch order to refresh the complaints list
               setLoading(true);
@@ -1526,15 +1526,15 @@ export default function OrderDetails() {
                 </div>
 
                 {/* ── Live Delivery Map ── */}
-                  <div className="lx-map-container" style={{ marginTop: 32 }}>
-                    <p style={{
-                      fontFamily: "'Sora', sans-serif", fontSize: 13, fontWeight: 700, 
-                      color: T.inkMid, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em"
-                    }}>
-                      Live Delivery Route
-                    </p>
-                    <OrderTrackerMap orderStatus={order.status} shippingAddress={order.shippingAddress} />
-                  </div>
+                <div className="lx-map-container" style={{ marginTop: 32 }}>
+                  <p style={{
+                    fontFamily: "'Sora', sans-serif", fontSize: 13, fontWeight: 700,
+                    color: T.inkMid, marginBottom: 12, textTransform: "uppercase", letterSpacing: "0.05em"
+                  }}>
+                    Live Delivery Route
+                  </p>
+                  <OrderTrackerMap orderStatus={order.status} shippingAddress={order.shippingAddress} />
+                </div>
               </AppleSection>
             )}
 
@@ -1659,14 +1659,14 @@ export default function OrderDetails() {
           <div className="lx-col-gap" style={{ flex: "1 1 35%", minWidth: 300, display: "flex", flexDirection: "column", gap: 24, position: "sticky", top: 100 }}>
 
             {order.status === "Delivered" && (
-              <AppleSection style={{ 
-                background: "linear-gradient(135deg, #F0FBF9 0%, #FFFFFF 100%)", 
+              <AppleSection style={{
+                background: "linear-gradient(135deg, #F0FBF9 0%, #FFFFFF 100%)",
                 border: `1.5px solid ${order.qualityConfirmed ? "#10B981" : "#B8DDD9"}`,
                 boxShadow: "0 10px 40px rgba(16, 185, 129, 0.08)"
               }}>
-                <QualitySlider 
-                  confirmed={order.qualityConfirmed} 
-                  onConfirm={handleConfirmQuality} 
+                <QualitySlider
+                  confirmed={order.qualityConfirmed}
+                  onConfirm={handleConfirmQuality}
                 />
               </AppleSection>
             )}
@@ -1677,7 +1677,7 @@ export default function OrderDetails() {
             </div>
 
             <div className="lx-desktop-only">
-               <SummaryCard order={order} canCancel={canCancel} reordering={reordering} handleReorder={handleReorder} setComplaintOpen={setComplaintOpen} setCancelOpen={setCancelOpen} />
+              <SummaryCard order={order} canCancel={canCancel} reordering={reordering} handleReorder={handleReorder} setComplaintOpen={setComplaintOpen} setCancelOpen={setCancelOpen} />
             </div>
 
             {/* Delivery address */}
