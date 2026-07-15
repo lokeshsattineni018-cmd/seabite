@@ -35,13 +35,17 @@ const EnhancedProductCard = ({
 
   // 1. Flash Sale & Pricing Logic
   const isActiveFlashSale = product.flashSale?.isFlashSale && new Date(product.flashSale.saleEndDate) > new Date();
-  let displayPrice = isActiveFlashSale ? product.flashSale.discountPrice : product.basePrice;
-  const globalDiscountApplied = !isActiveFlashSale && globalDiscount > 0;
-  if (globalDiscountApplied) displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
   
-  const discountPct = isActiveFlashSale
-    ? Math.round((1 - product.flashSale.discountPrice / product.basePrice) * 100)
-    : globalDiscountApplied ? globalDiscount : 0;
+  let displayPrice = product.price || product.basePrice;
+  if (isActiveFlashSale && product.flashSale.discountPrice) {
+    displayPrice = product.flashSale.discountPrice;
+  } else if (globalDiscount > 0) {
+    displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
+  }
+  
+  const discountPct = product.basePrice > displayPrice
+    ? Math.round((1 - displayPrice / product.basePrice) * 100)
+    : 0;
 
   // 2. Robust Wishlist Sync
   useEffect(() => {
@@ -144,146 +148,71 @@ const EnhancedProductCard = ({
 
   return (
     <motion.div
-      whileHover={isOutOfStock ? {} : { y: -8, boxShadow: "0 20px 40px rgba(26, 46, 44, 0.08)", borderColor: "#5BBFB588" }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+      whileHover={isOutOfStock ? {} : { y: -6, boxShadow: "0 12px 24px rgba(0,0,0,0.06)", borderColor: "#E0E0E0" }}
+      transition={{ type: "spring", stiffness: 300, damping: 22 }}
       style={{
         background: "#FFFFFF",
-        borderRadius: "24px",
+        borderRadius: "16px", // Licious clean rounded corners
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
         height: "100%",
         position: "relative",
-        border: "1.5px solid #F0F4F4",
-        boxShadow: "0 10px 40px rgba(26, 46, 44, 0.03)",
+        border: "1px solid #E0E0E0", // Muted light border
+        boxShadow: "0 4px 12px rgba(0, 0, 0, 0.02)",
         fontFamily: "'Plus Jakarta Sans', sans-serif",
         contentVisibility: "auto",
         containIntrinsicSize: "0 380px",
-        opacity: isOutOfStock ? 0.7 : 1,
+        opacity: isOutOfStock ? 0.75 : 1,
         transition: "opacity 0.3s ease, border-color 0.3s ease",
       }}
     >
-      {/* 🖼️ Premium Image Container */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: "1/1", overflow: "hidden", background: "#F9FBFA" }}>
+      {/* 🖼️ Image Container with Tendercuts Green Ribbon */}
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1.33/1", overflow: "hidden", background: "#F9FBFA" }}>
         <Link to={`/products/${slugify(product.name)}`} style={{ display: "block", width: "100%", height: "100%" }}>
           <motion.img 
             src={getImageUrl(product.image)} 
             alt={product.name}
             width={400}
-            height={400}
-            initial={{ opacity: 0, scale: 1.1 }}
+            height={300}
+            initial={{ opacity: 0 }}
             animate={{ 
               opacity: imageLoaded ? (isOutOfStock ? 0.5 : 1) : 0, 
-              scale: imageLoaded ? 1 : 1.1,
-              filter: isOutOfStock ? "grayscale(40%) blur(1px)" : "none"
+              filter: isOutOfStock ? "grayscale(35%)" : "none"
             }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.4 }}
             onLoad={() => setImageLoaded(true)}
             loading="lazy"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
           {isOutOfStock && (
-            <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.45)", backdropFilter: "blur(2px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <span style={{ background: "#1A2E2C", color: "#FFF", fontSize: "11px", fontWeight: "800", padding: "8px 16px", borderRadius: "100px", letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>SOLD OUT</span>
+            <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <span style={{ background: "#1A2E2C", color: "#FFF", fontSize: "10px", fontWeight: "800", padding: "6px 14px", borderRadius: "100px", letterSpacing: "0.05em" }}>SOLD OUT</span>
             </div>
           )}
         </Link>
 
-        {/* 🏷️ Glassmorphic Badges */}
-        <div style={{ position: "absolute", top: "16px", left: "16px", display: "flex", flexDirection: "column", gap: "8px", pointerEvents: "none" }}>
-          {/* Catch of the Day Badge with Green Glow Pulse */}
-          {product.catchOfTheDay && (
-            <motion.div
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ 
-                opacity: 1, 
-                y: 0,
-                boxShadow: [
-                  "0 0 0 0px rgba(16, 185, 129, 0.4)",
-                  "0 0 0 6px rgba(16, 185, 129, 0)",
-                  "0 0 0 0px rgba(16, 185, 129, 0.4)"
-                ]
-              }}
-              transition={{ 
-                boxShadow: {
-                  repeat: Infinity,
-                  duration: 1.8,
-                  ease: "easeInOut"
-                },
-                default: { duration: 0.3 }
-              }}
-              style={{
-                background: "rgba(16, 185, 129, 0.95)",
-                backdropFilter: "blur(12px)",
-                color: "#FFF",
-                padding: "6px 12px",
-                borderRadius: "100px",
-                fontSize: "10px",
-                fontWeight: 800,
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase",
-                border: "1px solid rgba(16, 185, 129, 0.2)"
-              }}
-            >
-              <span style={{ display: "inline-block", width: "5px", height: "5px", borderRadius: "50%", background: "#FFF" }} />
-              <span>Catch of the Day</span>
-            </motion.div>
-          )}
+        {/* 🟢 Tendercuts style solid green ribbon in top-left */}
+        {discountPct > 0 && (
+          <div style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            background: "#00B259", // Solid green
+            color: "#FFF",
+            padding: "5px 10px",
+            fontSize: "11px",
+            fontWeight: "800",
+            borderBottomRightRadius: "8px",
+            zIndex: 10,
+            boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+            letterSpacing: "0.02em"
+          }}>
+            {discountPct}% OFF
+          </div>
+        )}
 
-          {isActiveFlashSale ? (
-            <motion.div 
-              initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                background: "rgba(240, 116, 104, 0.95)",
-                backdropFilter: "blur(12px)",
-                color: "#FFF",
-                padding: "6px 12px", 
-                borderRadius: "100px",
-                fontSize: "10px", 
-                fontWeight: 800,
-                boxShadow: "0 4px 15px rgba(240, 116, 104, 0.2)",
-                display: "flex", 
-                alignItems: "center", 
-                gap: "6px",
-                letterSpacing: "0.05em",
-                textTransform: "uppercase"
-              }}
-            >
-              <FiZap size={12} fill="currentColor" />
-              <span>{discountPct}% OFF</span>
-            </motion.div>
-          ) : (
-            discountPct > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                style={{
-                  background: "linear-gradient(135deg, #FF6F61 0%, #FF5A4F 100%)", // Vibrant brand coral gradient callout
-                  color: "#FFF",
-                  padding: "5px 12px", 
-                  borderRadius: "100px",
-                  fontSize: "10px", 
-                  fontWeight: 800,
-                  boxShadow: "0 4px 12px rgba(255, 90, 79, 0.25)",
-                  border: "1px solid rgba(255, 90, 79, 0.1)",
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: "5px",
-                  letterSpacing: "0.05em",
-                  textTransform: "uppercase"
-                }}
-              >
-                <span>{discountPct}% OFF</span>
-              </motion.div>
-            )
-          )}
-        </div>
-
-        {/* ❤️ Luxury Wishlist Button */}
+        {/* ❤️ Muted Wishlist Button */}
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
@@ -291,93 +220,107 @@ const EnhancedProductCard = ({
           disabled={loadingWishlist}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           style={{
-            position: "absolute", top: "16px", right: "16px",
-            width: "48px", height: "48px",
-            background: "rgba(255,255,255,0.85)",
-            backdropFilter: "blur(12px)",
-            border: "1px solid rgba(255,255,255,0.3)",
+            position: "absolute", top: "12px", right: "12px",
+            width: "36px", height: "36px",
+            background: "rgba(255,255,255,0.9)",
+            border: "1px solid rgba(0,0,0,0.06)",
             borderRadius: "50%",
             display: "flex", alignItems: "center", justifyContent: "center",
-            color: isWishlisted ? "#F07468" : "#1A2E2C",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+            color: isWishlisted ? "#5BBFB5" : "#4A4A4A", // SeaBite brand teal when active
+            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
             cursor: "pointer",
             zIndex: 5
           }}
         >
-          <FiHeart size={20} fill={isWishlisted ? "currentColor" : "none"} strokeWidth={2.5} />
+          <FiHeart size={16} fill={isWishlisted ? "currentColor" : "none"} strokeWidth={isWishlisted ? 0 : 2.5} />
         </motion.button>
       </div>
 
-      {/* ✍️ Content Section */}
-      <div style={{ padding: "20px", display: "flex", flexDirection: "column", flex: 1 }}>
-        <div style={{ marginBottom: "12px" }}>
-          <span style={{ fontSize: "10.5px", fontWeight: "800", color: "#6B8F8A", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-            {product.category || "Fresh Catch"}
-          </span>
-          <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: "none" }}>
-            <h3 style={{ 
-              fontSize: "17px", 
-              fontWeight: "800", // Boldest element in font hierarchy
-              color: "#1A2E2C", 
-              marginTop: "4px",
-              lineHeight: 1.3,
-              height: "2.6em",
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical"
-            }}>
-              {product.name}
-            </h3>
-          </Link>
+      {/* ✍️ Licious-style Content Section */}
+      <div style={{ padding: "16px", display: "flex", flexDirection: "column", flex: 1 }}>
+        {/* Title */}
+        <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: "none" }}>
+          <h3 style={{ 
+            fontSize: "15px", 
+            fontWeight: "700", 
+            color: "#2B2B2B", 
+            lineHeight: 1.35,
+            height: "2.7em",
+            overflow: "hidden",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            margin: 0
+          }}>
+            {product.name}
+          </h3>
+        </Link>
+
+        {/* Tagline / Sub-desc */}
+        <p style={{ 
+          fontSize: "11.5px", 
+          color: "#7E7E7E", 
+          marginTop: "4px", 
+          marginBottom: "8px", 
+          overflow: "hidden", 
+          textOverflow: "ellipsis", 
+          whiteSpace: "nowrap",
+          margin: "4px 0 8px 0"
+        }}>
+          {product.desc || `Freshly caught ${product.category?.toLowerCase() || 'seafood'} cut.`}
+        </p>
+
+        {/* Weight | Pieces | Serves Metadata */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "11px", color: "#7E7E7E", fontWeight: "600", marginBottom: "16px" }}>
+          <span>{product.unit || "500g"}</span>
+          <span style={{ color: "#E0E0E0" }}>|</span>
+          <span>{product.category === "Prawn" ? "20-30 Pcs" : product.category === "Crab" ? "3-4 Pcs" : "4-6 Pcs"}</span>
+          <span style={{ color: "#E0E0E0" }}>|</span>
+          <span>Serves {product.category === "Crab" ? "2" : "2-3"}</span>
         </div>
 
-        <div style={{ marginTop: "auto", display: "flex", alignItems: "flex-end", justifyStyle: "space-between", justifyContent: "space-between" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px" }}>
-              <span style={{ fontSize: "24px", fontWeight: "800", color: "#1A2E2C" }}>₹{displayPrice}</span>
-              {product.basePrice > displayPrice && (
-                <span style={{ fontSize: "13px", color: "#6B8F8A", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
-              )}
-            </div>
-            {/* Unit Price Visibility & Clean hierarchy */}
-            <p style={{ fontSize: "11px", color: "#8CAEAA", fontWeight: "600", marginTop: "2px", display: "flex", gap: "4px", alignItems: "center" }}>
-              <span>Net Wt:</span>
-              <span style={{ color: "#4A6E6A", fontWeight: "700" }}>{product.unit || "500g"}</span>
-              <span style={{ color: "#B8CFCC" }}>•</span>
-              <span style={{ color: "#FF6F61", fontWeight: "700" }}>{getUnitPriceString()}</span>
-            </p>
+        {/* Price Row with Inline Discount */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap", marginBottom: "16px" }}>
+          <span style={{ fontSize: "18px", fontWeight: "800", color: "#2B2B2B" }}>₹{displayPrice}</span>
+          {product.basePrice > displayPrice && (
+            <>
+              <span style={{ fontSize: "13px", color: "#9E9E9E", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
+              <span style={{ fontSize: "11.5px", color: "#00B259", fontWeight: "700" }}>{discountPct}% off</span>
+            </>
+          )}
+        </div>
+
+        {/* Bottom Action Row (30-min Delivery & Licious crimson Add Button styled in SeaBite Teal) */}
+        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "12px", borderTop: "1px solid #F0F0F0" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "11.5px", color: "#5BBFB5", fontWeight: "700" }}>
+            <span style={{ fontSize: "13px" }}>🛵</span>
+            <span>30 mins delivery</span>
           </div>
 
           <motion.button
-            whileHover={isOutOfStock ? {} : { scale: 1.03 }}
-            whileTap={isOutOfStock ? {} : { scale: 0.97 }}
-            animate={isAdding ? { scale: [1, 1.12, 1] } : {}}
+            whileHover={isOutOfStock ? {} : { scale: 1.04, backgroundColor: isAdding ? "#4AA89F" : "#F4FDFB" }}
+            whileTap={isOutOfStock ? {} : { scale: 0.96 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
-            aria-label={isOutOfStock ? "Out of Stock" : (isAdding ? "Added" : `Add ${product.name} to cart`)}
             style={{
-              background: isOutOfStock ? "#F3F4F6" : (isAdding ? "#10B981" : "#5BBFB5"), // Emerald green on successful add
-              color: isOutOfStock ? "#9CA3AF" : "#FFF",
-              border: "none",
-              borderRadius: "10px",
+              background: isOutOfStock ? "#F3F4F6" : (isAdding ? "#5BBFB5" : "#FFF"),
+              color: isOutOfStock ? "#9CA3AF" : (isAdding ? "#FFF" : "#5BBFB5"),
+              border: isOutOfStock ? "none" : "1px solid #5BBFB5",
+              borderRadius: "8px",
               height: "32px",
-              padding: "0 12px",
+              padding: "0 16px",
+              fontSize: "12px",
+              fontWeight: "800",
+              cursor: isOutOfStock ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: "4px",
-              fontSize: "11.5px",
-              fontWeight: "800",
-              cursor: isOutOfStock ? "not-allowed" : "pointer",
-              boxShadow: isOutOfStock ? "none" : (isAdding ? "0 4px 10px rgba(16, 185, 129, 0.2)" : "0 4px 10px rgba(91,191,181,0.15)"),
-              transition: "background-color 0.2s ease, box-shadow 0.2s ease",
-              fontFamily: "inherit",
-              flexShrink: 0
+              boxShadow: "none",
+              transition: "all 0.2s ease"
             }}
           >
-            {isAdding ? <FiCheck size={12} strokeWidth={3} /> : <FiPlus size={12} strokeWidth={3} />}
-            {isOutOfStock ? "Out" : (isAdding ? "Added" : "Add")}
+            {isAdding ? "Added" : "Add +"}
           </motion.button>
         </div>
       </div>

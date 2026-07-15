@@ -179,13 +179,17 @@ router.get("/", async (req, res) => {
         
         // 3. Recent Activity Log Score (Weight: 1)
         const ActivityLog = (await import("../models/ActivityLog.js")).default;
-        const recentLogs = await ActivityLog.find({
-          $or: [
-            ...(userId ? [{ user: userId }] : []),
-            ...(visitorId ? [{ guestId: visitorId }] : [])
-          ],
-          action: { $in: ["SEARCH", "WISHLIST_ADD", "CART_UPDATE"] }
-        }).select("details").limit(15).lean();
+        const orConditions = [];
+        if (userId) orConditions.push({ user: userId });
+        if (visitorId) orConditions.push({ guestId: visitorId });
+
+        let recentLogs = [];
+        if (orConditions.length > 0) {
+          recentLogs = await ActivityLog.find({
+            $or: orConditions,
+            action: { $in: ["SEARCH", "WISHLIST_ADD", "CART_UPDATE"] }
+          }).select("details").limit(15).lean();
+        }
         
         recentLogs.forEach(log => {
           const details = (log.details || "").toLowerCase();
