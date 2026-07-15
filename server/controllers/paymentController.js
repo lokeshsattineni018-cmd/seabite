@@ -299,7 +299,7 @@ export const checkout = async (req, res) => {
         const product = await Product.findOneAndUpdate(
           { _id: item.productId, countInStock: { $gte: item.qty } },
           { $inc: { countInStock: -item.qty } },
-          { session: transactionActive ? session : undefined, new: true }
+          { session: transactionActive ? session : undefined, returnDocument: 'after' }
         );
         if (!product) {
           throw new Error(`Out of stock: ${item.name}`);

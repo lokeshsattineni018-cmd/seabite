@@ -114,7 +114,7 @@ router.put("/:id/approve", adminAuth, async (req, res) => {
           refundStatus: "Approved"
         }
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updatedOrder) {

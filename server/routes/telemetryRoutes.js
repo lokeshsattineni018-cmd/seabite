@@ -131,7 +131,7 @@ router.post("/location-update", async (req, res) => {
     const visitor = await VisitorLog.findOneAndUpdate(
       { visitorId },
       { $set: updateFields },
-      { new: true, upsert: true }
+      { returnDocument: 'after', upsert: true }
     );
 
     // Emit live pulse through socket if running
@@ -191,7 +191,7 @@ router.post("/push-promo", adminAuth, async (req, res) => {
           promoStatus: "sent"
         }
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     res.status(200).json({ success: true, visitor });
@@ -212,7 +212,7 @@ router.post("/promo-copied", async (req, res) => {
     const visitor = await VisitorLog.findOneAndUpdate(
       { visitorId, "pendingPromo.promoCode": promoCode },
       { $set: { promoStatus: "copied" } },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     res.status(200).json({ success: true, visitor });

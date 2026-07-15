@@ -531,7 +531,7 @@ router.post("/orders/:id/confirm-weight", adminAuth, async (req, res) => {
             items: order.items,
           }
         },
-        { new: true }
+        { returnDocument: 'after' }
       );
 
       if (!updatedOrder) {

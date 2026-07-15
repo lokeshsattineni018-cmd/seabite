@@ -29,7 +29,7 @@ export const refundToWallet = async (req, res) => {
           refundStatus: "Refunded to Wallet"
         }
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!updatedOrder) {
