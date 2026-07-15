@@ -249,11 +249,11 @@ const EnhancedProductCard = ({
       </div>
 
       {/* ✍️ Premium Padded Content Section */}
-      <div style={{ padding: "16px 20px 16px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
+      <div style={{ padding: "16px 20px 20px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
         {/* Title */}
         <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: "none" }}>
           <h3 style={{ 
-            fontSize: "14.5px", 
+            fontSize: "15px", 
             fontWeight: "700", 
             color: "#2B2B2B", 
             lineHeight: 1.35,
@@ -268,25 +268,28 @@ const EnhancedProductCard = ({
           </h3>
         </Link>
 
-        {/* Weight / Unit / pieces / serves Metadata dynamically formatted */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "11px", color: "#6B8F8A", fontWeight: "700", marginTop: "8px", marginBottom: "12px" }}>
+        {/* Subtitle / Category Origin (Kilichen Fish/Keeri style) */}
+        <div style={{ fontSize: "12.5px", color: "#8E8E8E", marginTop: "4px", marginBottom: "8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {product.desc ? product.desc.split(".")[0] : `Freshly sourced ${product.category || "Seafood"} cut.`}
+        </div>
+
+        {/* Weight / Unit / Pieces / Serves Metadata dynamically formatted */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "12.5px", color: "#4A4A4A", fontWeight: "600", marginBottom: "16px" }}>
           <span>{renderMetadata()}</span>
         </div>
 
         {/* Bottom Price + Add Button Row */}
         <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
           <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "5px" }}>
-              <span style={{ fontSize: "20px", fontWeight: "800", color: "#2B2B2B", letterSpacing: "-0.01em" }}>₹{displayPrice}</span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
+              <span style={{ fontSize: "18px", fontWeight: "850", color: "#2B2B2B", letterSpacing: "-0.01em" }}>₹{displayPrice}</span>
               {product.basePrice > displayPrice && (
-                <span style={{ fontSize: "14px", color: "#9E9E9E", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
+                <>
+                  <span style={{ fontSize: "13px", color: "#9E9E9E", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
+                  <span style={{ fontSize: "12px", color: "#00B259", fontWeight: "700" }}>{discountPct}% off</span>
+                </>
               )}
             </div>
-            {product.basePrice > displayPrice && (
-              <span style={{ fontSize: "12px", color: "#00B259", fontWeight: "700", display: "block", marginTop: "2px" }}>
-                {discountPct}% off
-              </span>
-            )}
           </div>
 
           <motion.button
