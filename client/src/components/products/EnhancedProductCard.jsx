@@ -144,16 +144,16 @@ const EnhancedProductCard = ({
     return `₹${Math.round(price)}/pc`;
   };
 
-  const formatUnit = (unit) => {
-    if (!unit) return "";
-    const lower = unit.toLowerCase().trim();
-    if (lower === "pc" || lower === "piece" || lower === "1pc") {
-      return "1 Premium Piece";
+  const renderMetadata = () => {
+    const parts = [];
+    let unitDisplay = product.unit || "";
+    if (unitDisplay.toLowerCase().trim() === "pc") {
+      unitDisplay = "1 pc";
     }
-    if (lower.includes("pc") || lower.includes("piece")) {
-      return `${unit} Pack`;
-    }
-    return `Net Wt: ${unit}`;
+    if (unitDisplay) parts.push(unitDisplay);
+    if (product.pieces) parts.push(product.pieces);
+    if (product.serves) parts.push(product.serves);
+    return parts.join(" | ");
   };
 
   const isOutOfStock = product.stock === "out" || product.countInStock <= 0;
@@ -249,7 +249,7 @@ const EnhancedProductCard = ({
       </div>
 
       {/* ✍️ Premium Padded Content Section */}
-      <div style={{ padding: "16px 20px 20px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
+      <div style={{ padding: "16px 20px 16px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
         {/* Title */}
         <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: "none" }}>
           <h3 style={{ 
@@ -268,9 +268,9 @@ const EnhancedProductCard = ({
           </h3>
         </Link>
 
-        {/* Weight / Unit Metadata directly from backend formatted elegantly */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "11.5px", color: "#6B8F8A", fontWeight: "700", marginTop: "12px", marginBottom: "24px" }}>
-          <span>{formatUnit(product.unit)}</span>
+        {/* Weight / Unit / pieces / serves Metadata dynamically formatted */}
+        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "11px", color: "#6B8F8A", fontWeight: "700", marginTop: "8px", marginBottom: "12px" }}>
+          <span>{renderMetadata()}</span>
         </div>
 
         {/* Bottom Price + Add Button Row */}

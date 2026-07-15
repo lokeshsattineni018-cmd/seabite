@@ -5,7 +5,7 @@ import axios from "axios";
 import {
   FiUploadCloud, FiX, FiCheck, FiDollarSign,
   FiType, FiLayers, FiTrendingUp, FiBox,
-  FiPlus, FiImage, FiAlertCircle, FiCalendar, FiClock, FiMapPin,
+  FiPlus, FiImage, FiAlertCircle, FiCalendar, FiClock, FiMapPin, FiUsers,
 } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import PopupModal from "../components/common/PopupModal";
@@ -24,6 +24,7 @@ export default function AddProduct() {
   const location = useLocation();
   const [form, setForm] = useState({
     name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in", countInStock: 10,
+    pieces: "", serves: "",
     hasCuts: false,
     cuts: [
       { name: "Whole", priceAdjustmentPct: 0, available: true, emoji: "🐟" },
@@ -184,6 +185,7 @@ export default function AddProduct() {
       setModal({ show: true, message: "Product added successfully", type: "success" });
       setForm({
         name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", trending: false, stock: "in", countInStock: 10,
+        pieces: "", serves: "",
         hasCuts: false,
         cuts: [
           { name: "Whole", priceAdjustmentPct: 0, available: true, emoji: "🐟" },
@@ -363,6 +365,22 @@ export default function AddProduct() {
                       <option value="g">Gram (g)</option>
                       <option value="pc">Piece (pc)</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Pieces (e.g. 7-12 Pieces)</label>
+                  <div className="relative">
+                    <FiLayers className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+                    <input type="text" name="pieces" value={form.pieces} onChange={handleChange} placeholder="e.g. 4 Pieces" className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3.5 pl-11 pr-4 outline-none focus:border-stone-400 focus:bg-white transition-all font-medium text-stone-900" />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Serves (e.g. Serves 2-3)</label>
+                  <div className="relative">
+                    <FiUsers className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={16} />
+                    <input type="text" name="serves" value={form.serves} onChange={handleChange} placeholder="e.g. Serves 1-2" className="w-full bg-stone-50 border border-stone-200 rounded-xl py-3.5 pl-11 pr-4 outline-none focus:border-stone-400 focus:bg-white transition-all font-medium text-stone-900" />
                   </div>
                 </div>
 

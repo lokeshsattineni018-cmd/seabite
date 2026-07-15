@@ -114,6 +114,8 @@ router.post(
         basePrice: Number(basePrice),
         buyingPrice: Number(req.body.buyingPrice || 0),
         unit: unit,
+        pieces: req.body.pieces || "",
+        serves: req.body.serves || "",
         countInStock: countInStock !== undefined ? Number(countInStock) : (stock === "out" ? 0 : 10),
         hasCuts: req.body.hasCuts === "true" || req.body.hasCuts === true,
         cuts: parsedCuts,
@@ -168,6 +170,8 @@ router.put("/:id", adminAuth, async (req, res) => {
     if (basePrice !== undefined) updateData.basePrice = Number(basePrice);
     if (req.body.buyingPrice !== undefined) updateData.buyingPrice = Number(req.body.buyingPrice);
     if (unit !== undefined) updateData.unit = unit;
+    if (req.body.pieces !== undefined) updateData.pieces = req.body.pieces;
+    if (req.body.serves !== undefined) updateData.serves = req.body.serves;
     if (finalCount !== undefined) updateData.countInStock = finalCount;
     if (req.body.hasCuts !== undefined) updateData.hasCuts = req.body.hasCuts === "true" || req.body.hasCuts === true;
     if (req.body.cuts !== undefined) {

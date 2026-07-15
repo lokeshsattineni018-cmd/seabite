@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import {
   FiType, FiDollarSign, FiTag, FiImage,
   FiTrendingUp, FiCheck, FiArrowLeft, FiSave, FiBox,
-  FiPlus, FiX, FiCalendar, FiClock, FiMapPin,
+  FiPlus, FiX, FiCalendar, FiClock, FiMapPin, FiLayers, FiUsers,
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import PopupModal from "../components/common/PopupModal";
@@ -28,6 +28,7 @@ export default function EditProduct() {
 
   const [form, setForm] = useState({
     name: "", category: "", basePrice: "", buyingPrice: "", unit: "kg", desc: "", image: "", images: [], trending: false, stock: "in", countInStock: 0,
+    pieces: "", serves: "",
     hasCuts: false,
     cuts: [
       { name: "Whole", priceAdjustmentPct: 0, available: true, emoji: "🐟" },
@@ -64,6 +65,8 @@ export default function EditProduct() {
           basePrice: data.basePrice || "", 
           buyingPrice: data.buyingPrice || "", 
           unit: data.unit || "kg", 
+          pieces: data.pieces || "", 
+          serves: data.serves || "", 
           stock: data.stock || "in", 
           countInStock: data.countInStock || 0,
           images: data.images || [],
@@ -355,6 +358,22 @@ export default function EditProduct() {
                         <option value="g">Gram (g)</option>
                         <option value="pc">Piece (pc)</option>
                       </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Pieces (e.g. 7-12 Pieces)</label>
+                    <div className="relative">
+                      <FiLayers className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+                      <input type="text" name="pieces" value={form.pieces} onChange={handleChange} placeholder="e.g. 4 Pieces" className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-4 pl-12 pr-4 outline-none appearance-none cursor-pointer text-sm font-bold text-stone-700 focus:bg-white focus:border-stone-400 transition-all" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">Serves (e.g. Serves 2-3)</label>
+                    <div className="relative">
+                      <FiUsers className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400" size={18} />
+                      <input type="text" name="serves" value={form.serves} onChange={handleChange} placeholder="e.g. Serves 1-2" className="w-full bg-stone-50 border border-stone-200 rounded-2xl py-4 pl-12 pr-4 outline-none appearance-none cursor-pointer text-sm font-bold text-stone-700 focus:bg-white focus:border-stone-400 transition-all" />
                     </div>
                   </div>
                 </div>
