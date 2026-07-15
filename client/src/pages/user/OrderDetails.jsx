@@ -1047,7 +1047,11 @@ export default function OrderDetails() {
         { withCredentials: true }
       );
       setOrder(data);
-      toast.success("Order cancelled successfully.");
+      if (data.walletAppliedAmount > 0 && data.refundStatus === "Refunded to Wallet") {
+        toast.success(`Order cancelled. ₹${data.walletAppliedAmount} refunded to your wallet!`);
+      } else {
+        toast.success("Order cancelled successfully.");
+      }
     } catch (err) {
       // Rollback
       setOrder(prev => ({ ...prev, status: "Pending", cancelReason: undefined }));
@@ -1401,10 +1405,46 @@ export default function OrderDetails() {
                         </time>
                       </p>
                     )}
-                    <p style={{ fontSize: 14, color: T.inkMid, lineHeight: 1.7, margin: "0 0 16px" }}>
+                    <p style={{ fontSize: 14, color: T.inkMid, lineHeight: 1.7, margin: "0 0 12px" }}>
                       <span style={{ color: T.ink, fontWeight: 600 }}>Reason: </span>
                       {order.cancelReason || "No reason provided."}
                     </p>
+
+                    {/* 💰 Refund Info Banner */}
+                    {(order.walletAppliedAmount > 0 || (order.refundStatus && order.refundStatus !== "None")) && (
+                      <div style={{
+                        background: order.refundStatus === "Refunded to Wallet" ? "#ECFDF5" : "#FFF7ED",
+                        border: `1px solid ${order.refundStatus === "Refunded to Wallet" ? "#A7F3D0" : "#FDBA74"}`,
+                        borderRadius: 12,
+                        padding: "12px 16px",
+                        marginBottom: 16,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                      }}>
+                        <span style={{ fontSize: 20 }}>
+                          {order.refundStatus === "Refunded to Wallet" ? "✅" : "⏳"}
+                        </span>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 700, color: order.refundStatus === "Refunded to Wallet" ? "#065F46" : "#9A3412", margin: "0 0 2px" }}>
+                            {order.refundStatus === "Refunded to Wallet"
+                              ? `₹${order.walletAppliedAmount} refunded to your wallet`
+                              : order.refundStatus === "Pending"
+                                ? "Refund is being processed"
+                                : order.refundStatus === "Success"
+                                  ? "Refund completed successfully"
+                                  : `Refund Status: ${order.refundStatus}`
+                            }
+                          </p>
+                          <p style={{ fontSize: 11, color: order.refundStatus === "Refunded to Wallet" ? "#047857" : "#B45309", margin: 0 }}>
+                            {order.refundStatus === "Refunded to Wallet"
+                              ? "Wallet balance updated instantly. Use it on your next order!"
+                              : "We'll update you once the refund is processed."
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <motion.button
                       whileTap={{ scale: 0.96 }}
                       onClick={handleReorder}
