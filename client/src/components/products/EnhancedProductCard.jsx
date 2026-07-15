@@ -146,17 +146,36 @@ const EnhancedProductCard = ({
 
   const renderMetadata = () => {
     const parts = [];
-    let unitDisplay = product.unit || "";
-    if (unitDisplay.toLowerCase().trim() === "pc") {
-      unitDisplay = "1 pc";
+    const unitDisplay = (product.unit || "").trim();
+    const unitLower = unitDisplay.toLowerCase();
+    
+    // Ignore bare generic units that look raw when standing alone
+    const isGeneric = unitLower === "pc" || unitLower === "piece" || unitLower === "pcs" || unitLower === "kg" || unitLower === "g";
+    
+    if (unitDisplay && !isGeneric) {
+      parts.push(unitDisplay);
     }
-    if (unitDisplay) parts.push(unitDisplay);
-    if (product.pieces) parts.push(product.pieces);
-    if (product.serves) parts.push(product.serves);
+    if (product.pieces) {
+      let p = product.pieces.trim();
+      if (/^\d+(-\d+)?$/.test(p)) {
+        p = `${p} Pieces`;
+      }
+      parts.push(p);
+    }
+    if (product.serves) {
+      let s = product.serves.trim();
+      if (/^\d+(-\d+)?$/.test(s)) {
+        s = `Serves ${s}`;
+      } else if (!s.toLowerCase().startsWith("serves")) {
+        s = `Serves ${s}`;
+      }
+      parts.push(s);
+    }
     return parts.join(" | ");
   };
 
   const isOutOfStock = product.stock === "out" || product.countInStock <= 0;
+  const metadataStr = renderMetadata();
 
   return (
     <motion.div
@@ -273,10 +292,12 @@ const EnhancedProductCard = ({
           {product.desc ? product.desc.split(".")[0] : `Freshly sourced ${product.category || "Seafood"} cut.`}
         </div>
 
-        {/* Weight / Unit / Pieces / Serves Metadata dynamically formatted */}
-        <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "12.5px", color: "#4A4A4A", fontWeight: "600", marginBottom: "16px" }}>
-          <span>{renderMetadata()}</span>
-        </div>
+        {/* Weight / Unit / Pieces / Serves Metadata dynamically formatted (only if non-empty) */}
+        {metadataStr && (
+          <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "12.5px", color: "#4A4A4A", fontWeight: "600", marginBottom: "16px" }}>
+            <span>{metadataStr}</span>
+          </div>
+        )}
 
         {/* Bottom Price + Add Button Row */}
         <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
