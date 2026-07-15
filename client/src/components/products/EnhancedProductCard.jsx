@@ -146,13 +146,19 @@ const EnhancedProductCard = ({
 
   const renderMetadata = () => {
     const parts = [];
-    const unitDisplay = (product.unit || "").trim();
+    let unitDisplay = (product.unit || "").trim();
     const unitLower = unitDisplay.toLowerCase();
     
-    // Ignore bare generic units that look raw when standing alone
-    const isGeneric = unitLower === "pc" || unitLower === "piece" || unitLower === "pcs" || unitLower === "kg" || unitLower === "g";
+    // Format raw generic units to look polished
+    if (unitLower === "pc" || unitLower === "piece" || unitLower === "1pc" || unitLower === "1 pc") {
+      unitDisplay = "1 pc";
+    } else if (unitLower === "kg" || unitLower === "1kg" || unitLower === "1 kg") {
+      unitDisplay = "1 kg";
+    } else if (unitLower === "g" || unitLower === "1g" || unitLower === "1 g") {
+      unitDisplay = "1 g";
+    }
     
-    if (unitDisplay && !isGeneric) {
+    if (unitDisplay) {
       parts.push(unitDisplay);
     }
     if (product.pieces) {
@@ -176,6 +182,17 @@ const EnhancedProductCard = ({
 
   const isOutOfStock = product.stock === "out" || product.countInStock <= 0;
   const metadataStr = renderMetadata();
+
+  // Smart duplicate description checker
+  const descText = product.desc || "";
+  const hasMetadata = !!metadataStr;
+  const isDescDuplicate = hasMetadata && (
+    descText.toLowerCase().includes("pieces:") ||
+    descText.toLowerCase().includes("serves:") ||
+    descText.toLowerCase().includes("piece:") ||
+    descText.toLowerCase().trim() === (product.unit || "").toLowerCase().trim()
+  );
+  const showDescription = descText && !isDescDuplicate;
 
   return (
     <motion.div
@@ -287,10 +304,12 @@ const EnhancedProductCard = ({
           </h3>
         </Link>
 
-        {/* Subtitle / Category Origin (Kilichen Fish/Keeri style) */}
-        <div style={{ fontSize: "12.5px", color: "#8E8E8E", marginTop: "4px", marginBottom: "8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {product.desc ? product.desc.split(".")[0] : `Freshly sourced ${product.category || "Seafood"} cut.`}
-        </div>
+        {/* Subtitle / Category Origin (only if not a duplicate of metadata) */}
+        {showDescription && (
+          <div style={{ fontSize: "12.5px", color: "#8E8E8E", marginTop: "4px", marginBottom: "8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {descText.split(".")[0]}
+          </div>
+        )}
 
         {/* Weight / Unit / Pieces / Serves Metadata dynamically formatted (only if non-empty) */}
         {metadataStr && (
