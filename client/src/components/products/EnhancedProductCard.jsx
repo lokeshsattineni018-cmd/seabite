@@ -233,55 +233,45 @@ const EnhancedProductCard = ({
             </motion.div>
           )}
 
-          {isActiveFlashSale ? (
+          {discountPct > 0 && (
             <motion.div 
               initial={{ opacity: 0, y: -4 }}
-              animate={{ opacity: 1, y: 0 }}
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                boxShadow: [
+                  "0 0 0 0px rgba(245, 158, 11, 0.4)",
+                  "0 0 0 6px rgba(245, 158, 11, 0)",
+                  "0 0 0 0px rgba(245, 158, 11, 0.4)"
+                ]
+              }}
+              transition={{ 
+                boxShadow: {
+                  repeat: Infinity,
+                  duration: 2.0,
+                  ease: "easeInOut"
+                },
+                default: { duration: 0.3 }
+              }}
               style={{
-                background: "rgba(240, 116, 104, 0.95)",
+                background: "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
                 backdropFilter: "blur(12px)",
                 color: "#FFF",
                 padding: "6px 12px", 
                 borderRadius: "100px",
                 fontSize: "10px", 
-                fontWeight: 800,
-                boxShadow: "0 4px 15px rgba(240, 116, 104, 0.2)",
+                fontWeight: 900,
                 display: "flex", 
                 alignItems: "center", 
-                gap: "6px",
+                gap: "5px",
                 letterSpacing: "0.05em",
-                textTransform: "uppercase"
+                textTransform: "uppercase",
+                border: "1px solid rgba(245, 158, 11, 0.2)",
+                boxShadow: "0 4px 15px rgba(245, 158, 11, 0.3)"
               }}
             >
-              <FiZap size={12} fill="currentColor" />
-              <span>{discountPct}% OFF</span>
+              <span>🔥 Price Dropped by {discountPct}%!</span>
             </motion.div>
-          ) : (
-            discountPct > 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                style={{
-                  background: "rgba(255, 255, 255, 0.9)",
-                  backdropFilter: "blur(12px)",
-                  color: "#1A2E2C",
-                  padding: "5px 10px", 
-                  borderRadius: "100px",
-                  fontSize: "10px", 
-                  fontWeight: 700,
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.04)",
-                  border: "1px solid rgba(0,0,0,0.03)",
-                  display: "flex", 
-                  alignItems: "center", 
-                  gap: "5px",
-                  letterSpacing: "0.05em",
-                  textTransform: "uppercase"
-                }}
-              >
-                <div style={{ width: "4px", height: "4px", borderRadius: "50%", background: "#5BBFB5" }} />
-                {discountPct}% OFF
-              </motion.div>
-            )
           )}
         </div>
 
