@@ -1047,8 +1047,8 @@ export default function OrderDetails() {
         { withCredentials: true }
       );
       setOrder(data);
-      if (data.walletAppliedAmount > 0 && data.refundStatus === "Refunded to Wallet") {
-        toast.success(`Order cancelled. ₹${data.walletAppliedAmount} refunded to your wallet!`);
+      if (data.walletAppliedAmount > 0 && data.refundStatus === "Pending") {
+        toast.success(`Order cancelled. ₹${data.walletAppliedAmount} wallet refund is pending admin approval.`);
       } else {
         toast.success("Order cancelled successfully.");
       }

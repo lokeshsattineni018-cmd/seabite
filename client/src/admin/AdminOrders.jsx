@@ -1086,8 +1086,31 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
                 </div>
                 <div>
                   <p className="text-xs font-bold text-emerald-700 uppercase tracking-widest">Refunded to Wallet</p>
-                  <p className="text-sm text-emerald-600 mt-0.5">₹{order.totalAmount?.toLocaleString()} credited to customer wallet</p>
+                  <p className="text-sm text-emerald-600 mt-0.5">₹{order.walletAppliedAmount?.toLocaleString() || order.totalAmount?.toLocaleString()} credited to customer wallet</p>
                 </div>
+              </div>
+            )}
+
+            {/* 💰 Pending Wallet Refund — Admin Approval Required */}
+            {order.refundStatus === "Pending" && order.walletAppliedAmount > 0 && (
+              <div className="p-6 rounded-2xl border border-amber-200 bg-amber-50/50">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                    <FiDollarSign size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-amber-700 uppercase tracking-widest">Wallet Refund Pending</p>
+                    <p className="text-sm text-amber-600 mt-0.5">₹{order.walletAppliedAmount?.toLocaleString()} needs to be refunded to customer wallet</p>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-1 bg-amber-100 text-amber-700 rounded-lg uppercase">Awaiting Approval</span>
+                </div>
+                <button
+                  onClick={() => updateRefundStatus(order._id, "Refunded to Wallet")}
+                  className="w-full py-3 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  <FiDollarSign size={14} />
+                  Approve Wallet Refund · ₹{order.walletAppliedAmount?.toLocaleString()}
+                </button>
               </div>
             )}
 

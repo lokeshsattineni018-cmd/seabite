@@ -219,6 +219,29 @@ export const updateOrderStatus = async (req, res) => {
             if (refundStatus === "Success") {
                 order.isPaid = false;
             }
+
+            // 💰 ADMIN APPROVED WALLET REFUND: Credit wallet when admin approves
+            if (refundStatus === "Refunded to Wallet" && order.walletAppliedAmount > 0) {
+                const User = (await import("../models/User.js")).default;
+                const customer = await User.findById(order.user._id || order.user);
+
+                if (customer) {
+                    customer.walletBalance = (customer.walletBalance || 0) + order.walletAppliedAmount;
+
+                    if (!customer.walletTransactions) {
+                        customer.walletTransactions = [];
+                    }
+                    customer.walletTransactions.push({
+                        amount: order.walletAppliedAmount,
+                        type: "Credit",
+                        description: `Refund approved for Order #${order.orderId || order._id.toString().substring(18)}`,
+                        date: new Date()
+                    });
+
+                    await customer.save();
+                    console.log(`[REFUND] ₹${order.walletAppliedAmount} credited to ${customer.email} wallet for order #${order.orderId}`);
+                }
+            }
         }
 
         // 3. Save Order (Critical Step)
@@ -326,38 +349,9 @@ export const cancelOrder = async (req, res) => {
         order.status = 'Cancelled by User';
         order.cancelReason = reason || "No reason provided";
 
-        // 💰 AUTO-REFUND: Wallet amount refund on cancellation
-        let walletRefundAmount = 0;
-        if (order.walletAppliedAmount > 0) {
-            const User = (await import("../models/User.js")).default;
-            const user = await User.findById(req.user._id);
-
-            if (user) {
-                walletRefundAmount = order.walletAppliedAmount;
-                user.walletBalance = (user.walletBalance || 0) + walletRefundAmount;
-
-                if (!user.walletTransactions) {
-                    user.walletTransactions = [];
-                }
-                user.walletTransactions.push({
-                    amount: walletRefundAmount,
-                    type: "Credit",
-                    description: `Refund for cancelled Order #${order.orderId || order._id.toString().substring(18)}`,
-                    date: new Date()
-                });
-
-                await user.save();
-                logger.info("Wallet refund issued", { userId: user._id, amount: walletRefundAmount, orderId: order.orderId });
-            }
-
-            order.refundStatus = "Refunded to Wallet";
-        }
-
-        // 💰 AUTO-REFUND: If the order was paid online (Razorpay), mark refund as pending for admin
-        if (order.isPaid && order.paymentMethod !== "COD" && order.paymentMethod !== "Wallet" && order.totalAmount > 0) {
-            order.refundStatus = order.refundStatus === "Refunded to Wallet"
-                ? "Refunded to Wallet"  // Wallet portion already handled
-                : "Pending";
+        // 💰 Mark refund as Pending for admin approval (wallet or paid orders)
+        if (order.walletAppliedAmount > 0 || (order.isPaid && order.paymentMethod !== "COD")) {
+            order.refundStatus = "Pending";
         }
 
         const updatedOrder = await order.save();
@@ -366,16 +360,16 @@ export const cancelOrder = async (req, res) => {
         await ActivityLog.create({
             user: req.user._id,
             action: `ORDER_CANCELLED`,
-            details: `Order #${order.orderId} was cancelled. Reason: ${reason}${walletRefundAmount > 0 ? `. Wallet refund: ₹${walletRefundAmount}` : ''}`,
-            meta: { orderId: order._id, reason, walletRefundAmount }
+            details: `Order #${order.orderId} was cancelled. Reason: ${reason}. Refund status: ${order.refundStatus}`,
+            meta: { orderId: order._id, reason, walletAmount: order.walletAppliedAmount }
         });
 
-        logger.info("Order Cancelled", { orderId: order.orderId, user: req.user.email, reason, walletRefundAmount });
+        logger.info("Order Cancelled", { orderId: order.orderId, user: req.user.email, reason, refundStatus: order.refundStatus });
 
         // Sync with internal dashboard notifications
         await Notification.create({
             user: req.user._id,
-            message: `🔴 Order #${order.orderId || order._id} was cancelled. Reason: ${order.cancelReason}${walletRefundAmount > 0 ? ` | ₹${walletRefundAmount} refunded to wallet` : ''}`,
+            message: `🔴 Order #${order.orderId || order._id} was cancelled. Reason: ${order.cancelReason}${order.walletAppliedAmount > 0 ? ` | ₹${order.walletAppliedAmount} wallet refund pending admin approval` : ''}`,
             orderId: order._id,
             statusType: "Cancelled"
         });
