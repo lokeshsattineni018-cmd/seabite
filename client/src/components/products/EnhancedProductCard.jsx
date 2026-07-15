@@ -216,7 +216,7 @@ const EnhancedProductCard = ({
       }}
     >
       {/* 🖼️ Image Container with Tendercuts Green Ribbon */}
-      <div style={{ position: "relative", width: "100%", aspectRatio: "1.33/1", overflow: "hidden", background: "#F9FBFA" }}>
+      <div style={{ position: "relative", width: "100%", aspectRatio: "1.45/1", overflow: "hidden", background: "#F9FBFA" }}>
         <Link to={`/products/${slugify(product.name)}`} style={{ display: "block", width: "100%", height: "100%" }}>
           <motion.img 
             src={getImageUrl(product.image)} 
@@ -285,7 +285,7 @@ const EnhancedProductCard = ({
       </div>
 
       {/* ✍️ Premium Padded Content Section */}
-      <div style={{ padding: "16px 20px 20px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
+      <div className="product-card-content">
         {/* Title */}
         <Link to={`/products/${slugify(product.name)}`} style={{ textDecoration: "none" }}>
           <h3 style={{ 
@@ -306,27 +306,27 @@ const EnhancedProductCard = ({
 
         {/* Subtitle / Category Origin (only if not a duplicate of metadata) */}
         {showDescription && (
-          <div style={{ fontSize: "12.5px", color: "#8E8E8E", marginTop: "4px", marginBottom: "8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <div style={{ fontSize: "12px", color: "#8E8E8E", marginTop: "2px", marginBottom: "6px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
             {descText.split(".")[0]}
           </div>
         )}
 
         {/* Weight / Unit / Pieces / Serves Metadata dynamically formatted (only if non-empty) */}
         {metadataStr && (
-          <div style={{ display: "flex", gap: "6px", alignItems: "center", fontSize: "12.5px", color: "#4A4A4A", fontWeight: "600", marginBottom: "16px" }}>
+          <div className="product-card-metadata">
             <span>{metadataStr}</span>
           </div>
         )}
 
         {/* Bottom Price + Add Button Row */}
-        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+        <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
           <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "6px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "18px", fontWeight: "850", color: "#2B2B2B", letterSpacing: "-0.01em" }}>₹{displayPrice}</span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "4px", flexWrap: "wrap" }}>
+              <span className="product-card-price">₹{displayPrice}</span>
               {product.basePrice > displayPrice && (
                 <>
-                  <span style={{ fontSize: "13px", color: "#9E9E9E", textDecoration: "line-through", fontWeight: "500" }}>₹{product.basePrice}</span>
-                  <span style={{ fontSize: "12px", color: "#00B259", fontWeight: "700" }}>{discountPct}% off</span>
+                  <span className="product-card-mrp">₹{product.basePrice}</span>
+                  <span className="product-card-discount">{discountPct}% off</span>
                 </>
               )}
             </div>
@@ -337,21 +337,19 @@ const EnhancedProductCard = ({
             whileTap={isOutOfStock ? {} : { scale: 0.96 }}
             onClick={handleAddToCart}
             disabled={isOutOfStock || isAdding}
+            className="product-card-btn"
             style={{
               background: isOutOfStock ? "#F3F4F6" : (isAdding ? "#10B981" : "transparent"),
               color: isOutOfStock ? "#9CA3AF" : (isAdding ? "#FFF" : "#5BBFB5"),
               border: isOutOfStock ? "none" : "1px solid #5BBFB5",
               borderRadius: "8px",
-              height: "32px", 
-              padding: "0 18px", 
-              fontSize: "12px", 
               fontWeight: "800",
               cursor: isOutOfStock ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               gap: "4px",
-              opacity: isOutOfStock ? 0.6 : 0.85,
+              opacity: isOutOfStock ? 0.6 : 0.9,
               transition: "all 0.2s ease"
             }}
           >
