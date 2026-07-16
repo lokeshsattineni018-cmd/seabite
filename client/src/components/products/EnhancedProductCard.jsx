@@ -348,16 +348,14 @@ const EnhancedProductCard = ({
 
         {/* Bottom Price + Add Button Row */}
         <div style={{ marginTop: "auto", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "4px" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "baseline", gap: "4px", flexWrap: "wrap" }}>
-              <span className="product-card-price">₹{displayPrice}</span>
-              {product.basePrice > displayPrice && (
-                <>
-                  <span className="product-card-mrp">₹{product.basePrice}</span>
-                  <span className="product-card-discount">{discountPct}% off</span>
-                </>
-              )}
-            </div>
+          <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+            <span className="product-card-price">₹{displayPrice}</span>
+            {product.basePrice > displayPrice && (
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginTop: "1px" }}>
+                <span className="product-card-mrp">₹{product.basePrice}</span>
+                <span className="product-card-discount">{discountPct}% off</span>
+              </div>
+            )}
           </div>
 
           <motion.button
