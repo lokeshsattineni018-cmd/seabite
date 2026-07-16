@@ -57,8 +57,6 @@ import recommendationRoutes from "./routes/recommendationRoutes.js";
 import campaignRoutes from "./routes/campaignRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js"; // [New: Real-time Chat]
 import abTestRoutes from "./routes/abTestRoutes.js";
-import auditRoutes from "./routes/auditRoutes.js";
-import healthRoutes from "./routes/healthRoutes.js";
 import checkMaintenance from "./middleware/checkMaintenance.js";
 import auditTrail from "./middleware/auditMiddleware.js";
 import traceMiddleware from "./middleware/traceMiddleware.js";
@@ -685,11 +683,7 @@ apiRouter.use("/returns", returnRoutes);
 apiRouter.use("/recommendations", recommendationRoutes);
 apiRouter.use("/admin/campaigns", auditTrail, campaignRoutes);
 apiRouter.use("/ab-tests", abTestRoutes);
-apiRouter.use("/admin/audit-logs", auditTrail, auditRoutes);
-apiRouter.use("/admin/bi/health-scores", auditTrail, healthRoutes);
 
-import pulseRoutes from "./routes/pulseRoutes.js";
-apiRouter.use("/pulse", pulseRoutes);
 
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 apiRouter.use("/admin/dashboard", auditTrail, dashboardRoutes);
