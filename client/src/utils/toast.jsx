@@ -38,7 +38,7 @@ const showToast = {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                toast.dismiss(t.id);
+                toast.remove(t.id);
               }}
               className="border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none cursor-pointer"
               style={{ transition: "color 0.2s", pointerEvents: "auto", width: "40px", height: "40px", background: "none" }}
@@ -88,7 +88,7 @@ const showToast = {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                toast.dismiss(t.id);
+                toast.remove(t.id);
               }}
               className="border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none cursor-pointer"
               style={{ transition: "color 0.2s", pointerEvents: "auto", width: "40px", height: "40px", background: "none" }}
