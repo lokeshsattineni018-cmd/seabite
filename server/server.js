@@ -65,7 +65,7 @@ import traceMiddleware from "./middleware/traceMiddleware.js";
 import telemetryRoutes from "./routes/telemetryRoutes.js";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
-import { protect } from "./middleware/authMiddleware.js";
+import { protect, admin } from "./middleware/authMiddleware.js";
 import { csrfProtection } from "./middleware/csrfMiddleware.js";
 
 import logger from "./utils/logger.js";
