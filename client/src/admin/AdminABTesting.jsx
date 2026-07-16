@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useSocket } from "../context/SocketContext";
 import {
   FiActivity, FiTrendingUp, FiPlus, FiTrash2, FiPlay, FiSquare, FiAward,
   FiPieChart, FiAlertCircle
@@ -10,6 +11,7 @@ import {
 const API = import.meta.env.VITE_API_URL || "";
 
 export default function AdminABTesting() {
+  const { socket } = useSocket();
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,6 +42,26 @@ export default function AdminABTesting() {
   useEffect(() => {
     fetchTests();
   }, []);
+
+  useEffect(() => {
+    if (!socket) return;
+    socket.emit("join-admin");
+    socket.on("AB_TEST_TRACK_UPDATE", (data) => {
+      setTests(prevTests => prevTests.map(t => {
+        if (t._id === data.testId) {
+          const updatedVariants = [...t.variants];
+          if (updatedVariants[data.variantIndex]) {
+            updatedVariants[data.variantIndex].metrics = data.metrics;
+          }
+          return { ...t, variants: updatedVariants };
+        }
+        return t;
+      }));
+    });
+    return () => {
+      socket.off("AB_TEST_TRACK_UPDATE");
+    };
+  }, [socket]);
 
   const handleCreateTest = async (e) => {
     e.preventDefault();

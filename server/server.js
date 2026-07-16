@@ -161,6 +161,7 @@ const io = new Server(httpServer, {
   },
   transports: ['websocket', 'polling'] // Force websocket/polling
 });
+app.set("io", io);
 
 // Track connected users
 let connectedUsers = 0;

@@ -8,6 +8,7 @@ import {
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
+import { useSocket } from "../context/SocketContext";
 
 const ease = [0.16, 1, 0.3, 1];
 const fadeUp = {
@@ -19,6 +20,7 @@ const fadeUp = {
 };
 
 export default function AdminFleetConsole() {
+  const { socket } = useSocket();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("drivers"); // drivers, deliveries, leaderboard, sos
@@ -36,9 +38,29 @@ export default function AdminFleetConsole() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 15000); // refresh every 15s
-    return () => clearInterval(interval);
-  }, []);
+
+    if (socket) {
+      socket.emit("join-admin");
+      socket.on("FLEET_UPDATE", fetchData);
+      socket.on("SOS_ALERT", (alert) => {
+        toast.error(`🚨 SOS ALERT: Driver "${alert.driverName}" triggered emergency! Reason: ${alert.reason || "Unknown"}`);
+        fetchData();
+      });
+      socket.on("ADMIN_ORDER_UPDATED", fetchData);
+    }
+
+    // Keep a fallback interval of 30s in case socket drops
+    const interval = setInterval(fetchData, 30000);
+
+    return () => {
+      clearInterval(interval);
+      if (socket) {
+        socket.off("FLEET_UPDATE", fetchData);
+        socket.off("SOS_ALERT");
+        socket.off("ADMIN_ORDER_UPDATED", fetchData);
+      }
+    };
+  }, [socket]);
 
   if (loading || !data) return <SeaBiteLoader />;
 

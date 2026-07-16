@@ -128,6 +128,17 @@ router.post("/:testId/track", async (req, res) => {
     else if (event === "conversion") variant.metrics.conversions++;
 
     await test.save();
+
+    const io = req.app.get("io");
+    if (io) {
+      io.to("admins").emit("AB_TEST_TRACK_UPDATE", {
+        testId: test._id,
+        variantIndex,
+        event,
+        metrics: variant.metrics
+      });
+    }
+
     res.json({ tracked: true });
   } catch (err) {
     res.status(500).json({ message: "Tracking failed" });
