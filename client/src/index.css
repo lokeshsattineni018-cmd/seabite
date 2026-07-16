@@ -402,6 +402,7 @@ a, button, input, select, textarea, [role="button"] {
 
   /* Product grid — 2 compact columns */
   .product-grid {
+    display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 10px !important;
   }
@@ -488,6 +489,7 @@ a, button, input, select, textarea, [role="button"] {
 
   /* Product grid — 2 cols on tablet */
   .product-grid {
+    display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 14px !important;
   }
@@ -552,6 +554,7 @@ a, button, input, select, textarea, [role="button"] {
    ==================================== */
 @media (min-width: 769px) and (max-width: 1024px) {
   .product-grid {
+    display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 16px !important;
   }
