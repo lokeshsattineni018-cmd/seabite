@@ -33,15 +33,17 @@ const showToast = {
              <span style={{ fontSize: "16px", flexShrink: 0 }}>{options.icon || "🛒"}</span>
              <p style={{ margin: 0, lineHeight: "1.4" }}>{message}</p>
           </div>
-          <div className="flex border-l border-white/20 pl-2" style={{ pointerEvents: "auto", flexShrink: 0 }}>
+          <div className="flex border-l border-white/20 pl-1" style={{ pointerEvents: "auto", flexShrink: 0, alignItems: "center" }}>
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 toast.dismiss(t.id);
               }}
               className="border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none cursor-pointer"
-              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "24px", height: "24px", background: "none" }}
+              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "40px", height: "40px", background: "none" }}
             >
-              <FiX size={14} />
+              <FiX size={18} />
             </button>
           </div>
         </div>
@@ -81,15 +83,17 @@ const showToast = {
              <span style={{ fontSize: "16px", flexShrink: 0 }}>{options.icon || "❌"}</span>
              <p style={{ margin: 0, lineHeight: "1.4" }}>{message}</p>
           </div>
-          <div className="flex border-l border-white/20 pl-2" style={{ pointerEvents: "auto", flexShrink: 0 }}>
+          <div className="flex border-l border-white/20 pl-1" style={{ pointerEvents: "auto", flexShrink: 0, alignItems: "center" }}>
             <button
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 toast.dismiss(t.id);
               }}
               className="border border-transparent rounded-none rounded-r-lg flex items-center justify-center text-sm font-medium text-white hover:text-white/80 focus:outline-none cursor-pointer"
-              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "24px", height: "24px", background: "none" }}
+              style={{ transition: "color 0.2s", pointerEvents: "auto", width: "40px", height: "40px", background: "none" }}
             >
-              <FiX size={14} />
+              <FiX size={18} />
             </button>
           </div>
         </div>
