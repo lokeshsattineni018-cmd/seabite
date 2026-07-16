@@ -28,7 +28,6 @@ const CATEGORIES = [
       { name: "Logistics", path: "/admin/delivery", icon: <FiTruck size={16} /> },
       { name: "Live Radar", path: "/admin/radar", icon: <FiActivity size={16} /> },
       { name: "Complaints", path: "/admin/complaints", icon: <FiMessageSquare size={16} /> },
-      { name: "Compliance Audits", path: "/admin/compliance", icon: <FiThermometer size={16} /> },
       { name: "Returns & Refunds", path: "/admin/returns", icon: <FiRotateCcw size={16} /> },
       { name: "Fleet Console", path: "/admin/fleet-console", icon: <FiActivity size={16} /> },
     ]
@@ -52,15 +51,12 @@ const CATEGORIES = [
       { name: "Messages", path: "/admin/messages", icon: <FiMail size={16} /> },
       { name: "Reviews", path: "/admin/reviews", icon: <FiStar size={16} /> },
       { name: "Search Discovery", path: "/admin/discovery", icon: <FiTarget size={16} /> },
-      { name: "Customer Health", path: "/admin/health-scores", icon: <FiUsers size={16} /> },
       { name: "Support Console", path: "/admin/support-console", icon: <FiMessageSquare size={16} /> },
     ]
   },
   {
     title: "Business Intelligence",
     links: [
-      { name: "Demand Forecast", path: "/admin/forecast", icon: <FiTrendingUp size={16} /> },
-      { name: "Customer Segments", path: "/admin/rfm", icon: <FiUsers size={16} /> },
       { name: "Inventory Alerts", path: "/admin/inventory-alerts", icon: <FiArchive size={16} /> },
     ]
   },
@@ -68,10 +64,7 @@ const CATEGORIES = [
     title: "Security & Intelligence",
     links: [
       { name: "Live Ops", path: "/admin/watchtower", icon: <FiActivity size={16} /> },
-      { name: "Storefront Pulse", path: "/admin/pulse", icon: <FiZap size={16} /> },
       { name: "X-Ray Monitor", path: "/admin/xray", icon: <FiShield size={16} /> },
-      { name: "Access Sentinel", path: "/admin/iam", icon: <FiShield size={16} /> },
-      { name: "Audit Registry", path: "/admin/registry", icon: <FiArchive size={16} /> },
       { name: "Analytics", path: "/admin/analytics", icon: <FiActivity size={16} /> },
       { name: "Settings", path: "/admin/settings", icon: <FiSettings size={16} /> },
     ]

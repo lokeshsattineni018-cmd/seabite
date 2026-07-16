@@ -73,24 +73,17 @@ const AdminWatchtower = lazy(() => import("./admin/AdminWatchtower"));
 const AdminAbandonedCarts = lazy(() => import("./admin/AdminAbandonedCarts"));
 const AdminSettings = lazy(() => import("./admin/AdminSettings"));
 const AdminAnalytics = lazy(() => import("./admin/AdminAnalytics"));
-const AdminIAM = lazy(() => import("./admin/AdminIAM"));
-const AdminRegistry = lazy(() => import("./admin/AdminRegistry"));
 const AdminSearchDiscovery = lazy(() => import("./admin/AdminSearchDiscovery"));
 const AdminComplaints = lazy(() => import("./admin/AdminComplaints")); // 🟢 Added
 const AdminCoupons = lazy(() => import("./admin/AdminCoupons")); // 🏷️ Added
 const AdminLiveRadar = lazy(() => import("./admin/AdminLiveRadar")); // 📡 Added Live Radar
-const AdminStorefrontPulse = lazy(() => import("./admin/AdminStorefrontPulse")); // 🛰️ Added Storefront Pulse
 const AdminXRay = lazy(() => import("./admin/AdminXRay")); // 🔍 Added X-Ray Monitor
 const AdminPricingEngine = lazy(() => import("./admin/AdminPricingEngine")); // 🌦️ Added AI Pricing Engine
-const AdminCompliance = lazy(() => import("./admin/AdminCompliance")); // 📋 Added Compliance Audits
-const AdminDemandForecast = lazy(() => import("./admin/AdminDemandForecast")); // 📊 BI: Demand Forecast
-const AdminRFM = lazy(() => import("./admin/AdminRFM")); // 👥 BI: RFM Segments
 const AdminInventoryAlerts = lazy(() => import("./admin/AdminInventoryAlerts")); // 📦 BI: Inventory Alerts
 const AdminCommandCenter = lazy(() => import("./admin/AdminCommandCenter")); // 📡 Command Center
 const AdminReturns = lazy(() => import("./admin/AdminReturns")); // 🔄 Returns Queue
 const AdminNotificationOrchestrator = lazy(() => import("./admin/AdminNotificationOrchestrator")); // 📣 Notifications Orchestrator
 const AdminABTesting = lazy(() => import("./admin/AdminABTesting")); // 🔬 A/B Testing
-const AdminHealthScores = lazy(() => import("./admin/AdminHealthScores")); // 👥 Churn Predictor & Health Scores
 const AdminFleetConsole = lazy(() => import("./admin/AdminFleetConsole")); // 🛵 Fleet Console
 const AdminSupportConsole = lazy(() => import("./admin/AdminSupportConsole")); // 🎧 Support Console
 
@@ -325,24 +318,17 @@ function MainLayout() {
                     <Route path="settings" element={<AdminSettings />} />
                     <Route path="analytics" element={<AdminAnalytics />} />
                     <Route path="delivery" element={<AdminDelivery />} />
-                    <Route path="iam" element={<AdminIAM />} />
-                    <Route path="registry" element={<AdminRegistry />} />
                     <Route path="discovery" element={<AdminSearchDiscovery />} />
                     <Route path="complaints" element={<AdminComplaints />} />
                     <Route path="fleet" element={<AdminDelivery />} />
                     <Route path="radar" element={<AdminLiveRadar />} />
-                    <Route path="pulse" element={<AdminStorefrontPulse />} />
                     <Route path="xray" element={<AdminXRay />} />
                     <Route path="pricing-engine" element={<AdminPricingEngine />} />
-                    <Route path="compliance" element={<AdminCompliance />} />
-                    <Route path="forecast" element={<AdminDemandForecast />} />
-                    <Route path="rfm" element={<AdminRFM />} />
                     <Route path="inventory-alerts" element={<AdminInventoryAlerts />} />
                     <Route path="command-center" element={<AdminCommandCenter />} />
                     <Route path="returns" element={<AdminReturns />} />
                     <Route path="campaigns" element={<AdminNotificationOrchestrator />} />
                     <Route path="ab-tests" element={<AdminABTesting />} />
-                    <Route path="health-scores" element={<AdminHealthScores />} />
                     <Route path="fleet-console" element={<AdminFleetConsole />} />
                     <Route path="support-console" element={<AdminSupportConsole />} />
                   </Route>
