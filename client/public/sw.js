@@ -1,5 +1,5 @@
-const CACHE_NAME = "seabite-static-v7";
-const API_CACHE_NAME = "seabite-api-v7";
+const CACHE_NAME = "seabite-static-v8";
+const API_CACHE_NAME = "seabite-api-v8";
 
 // Cache static assets on install
 const STATIC_ASSETS = [
