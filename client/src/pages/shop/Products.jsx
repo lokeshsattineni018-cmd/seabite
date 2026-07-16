@@ -412,7 +412,7 @@ export default function Products() {
                       className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-6 md:gap-8 product-grid"
                     >
                       {products.map((p, i) => (
-                        <motion.div key={p._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}>
+                        <motion.div key={p._id} style={{ minWidth: 0, width: "100%" }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}>
                           <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
                         </motion.div>
                       ))}

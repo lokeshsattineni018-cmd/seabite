@@ -233,6 +233,8 @@ const EnhancedProductCard = ({
         display: "flex",
         flexDirection: "column",
         height: "100%",
+        width: "100%",
+        minWidth: 0,
         position: "relative",
         border: "1px solid #E0E0E0", // Muted light border
         boxShadow: "0 4px 12px rgba(0, 0, 0, 0.02)",
