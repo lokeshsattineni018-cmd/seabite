@@ -78,10 +78,14 @@ const CATEGORIES = [
   }
 ];
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [logoutLoading, setLogoutLoading] = useState(false);
+  
+  const handleLinkClick = () => {
+    if (onClose) onClose();
+  };
   
   // Keep Core Commerce and Operations open by default to minimize length, others collapsed
   const [expandedCategories, setExpandedCategories] = useState({
@@ -115,7 +119,7 @@ export default function AdminSidebar() {
     <div className="h-full flex flex-col bg-stone-50/50 border-r border-stone-200/60">
       {/* Brand Header */}
       <div className="h-20 flex items-center px-6">
-        <Link to="/admin/dashboard" className="flex items-center gap-3 group">
+        <Link to="/admin/dashboard" onClick={handleLinkClick} className="flex items-center gap-3 group">
           <div className="relative flex items-center justify-center w-8 h-8 group-hover:scale-105 transition-transform duration-300">
             <img src="/logo.webp" alt="SeaBite Logo" width={32} height={32} className="w-full h-full object-contain drop-shadow-sm" />
           </div>
@@ -158,7 +162,7 @@ export default function AdminSidebar() {
                       {cat.links.map((link) => {
                         const isActive = location.pathname === link.path;
                         return (
-                          <NavLink to={link.path} key={link.path} className="relative block group">
+                          <NavLink to={link.path} key={link.path} onClick={handleLinkClick} className="relative block group">
                             {isActive && (
                               <motion.div
                                 layoutId="active-nav-pill"
@@ -206,13 +210,17 @@ export default function AdminSidebar() {
       <div className="p-4 border-t border-stone-200/50 bg-stone-50/30 space-y-1">
         <Link
           to="/"
+          onClick={handleLinkClick}
           className="flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-bold text-stone-500 hover:text-stone-900 hover:bg-white hover:shadow-xs rounded-xl transition-all group border border-transparent hover:border-stone-150"
         >
           <FiGlobe size={14} className="text-stone-400 group-hover:text-stone-850 transition-colors" />
           <span>View Live Store</span>
         </Link>
         <button
-          onClick={handleLogout}
+          onClick={() => {
+            handleLogout();
+            handleLinkClick();
+          }}
           disabled={logoutLoading}
           className="w-full flex items-center gap-3 px-3.5 py-2.5 text-[11px] font-bold text-stone-500 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >

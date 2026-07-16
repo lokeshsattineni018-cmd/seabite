@@ -511,8 +511,8 @@ export default function AdminLayout() {
                   <FiX size={24} />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto" onClick={() => setIsSidebarOpen(false)}>
-                <AdminSidebar settings={settings} onUpdateBanner={updateBanner} />
+              <div className="flex-1 overflow-y-auto">
+                <AdminSidebar settings={settings} onUpdateBanner={updateBanner} onClose={() => setIsSidebarOpen(false)} />
               </div>
             </motion.aside>
           </>
