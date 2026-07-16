@@ -105,6 +105,7 @@ export const googleLogin = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
+      isSuperAdmin: !!user.isSuperAdmin,
     };
 
     console.log("💾 Saving session for user:", user.email);

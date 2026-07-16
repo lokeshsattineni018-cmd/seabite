@@ -32,6 +32,13 @@ router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
     if (await user.matchPassword(password)) {
       req.session.userId = user._id;
       req.session.role = user.role;
+      req.session.user = {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isSuperAdmin: !!user.isSuperAdmin,
+      };
       res.json({
         user: {
           _id: user._id,
@@ -60,7 +67,7 @@ router.post("/login", authLimiter, validate(loginSchema), async (req, res) => {
 
 // ================= LOGOUT =================
 router.post("/logout", (req, res) => {
-  console.log("🚪 Logout requested for session:", req.sessionID);
+  console.log("🚪 Logout requested");
 
   res.clearCookie("seabite.sid", {
     path: "/",
@@ -182,6 +189,13 @@ router.post("/verify-otp-signup", authLimiter, validate(signupSchema), async (re
       // Create session
       req.session.userId = user._id;
       req.session.role = user.role;
+      req.session.user = {
+        id: user._id.toString(),
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isSuperAdmin: !!user.isSuperAdmin,
+      };
       
       // 📧 Send Welcome Email
       try {

@@ -367,10 +367,22 @@ export const checkout = async (req, res) => {
         });
       }
 
-      // Increment coupon used count if applicable
+      // Increment coupon used count if applicable (Atomic update using status guard)
       if (couponDoc) {
-        couponDoc.usedCount = (couponDoc.usedCount || 0) + 1;
-        await couponDoc.save({ session: transactionActive ? session : undefined });
+        const updatedCoupon = await Coupon.findOneAndUpdate(
+          {
+            _id: couponDoc._id,
+            $or: [
+              { maxUses: 0 },
+              { $expr: { $lt: ["$usedCount", "$maxUses"] } }
+            ]
+          },
+          { $inc: { usedCount: 1 } },
+          { session: transactionActive ? session : undefined, new: true }
+        );
+        if (!updatedCoupon) {
+          throw new Error("Coupon usage limit reached.");
+        }
 
         if (couponDoc.isPromoPush && couponDoc.visitorId) {
           try {
@@ -536,7 +548,8 @@ export const refundPayment = async (req, res) => {
     try {
       await instance.payments.refund(order.paymentId);
     } catch (rzpError) {
-      console.log("Razorpay Refund Attempted (Bypass Mode)");
+      console.error("❌ Razorpay Refund Failed:", rzpError.message);
+      return res.status(500).json({ success: false, message: `Razorpay Refund Failed: ${rzpError.message}` });
     }
 
     order.status = "Cancelled";

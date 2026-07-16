@@ -117,8 +117,10 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on('finish', () => {
     const duration = Date.now() - start;
-    if (req.path.startsWith("/api")) {
-      console.log(`📡 [WATCHTOWER] ${res.statusCode >= 400 ? '❌' : '✅'} ${req.method} ${req.path} | Status: ${res.statusCode} | Origin: ${req.headers.origin || 'NONE'} | ${duration}ms`);
+    const isError = res.statusCode >= 400;
+    const shouldLog = process.env.NODE_ENV !== "production" || isError;
+    if (shouldLog && req.path.startsWith("/api")) {
+      console.log(`📡 [WATCHTOWER] ${isError ? '❌' : '✅'} ${req.method} ${req.path} | Status: ${res.statusCode} | Origin: ${req.headers.origin || 'NONE'} | ${duration}ms`);
     }
   });
   next();
@@ -751,8 +753,18 @@ app.get("/health", async (req, res) => {
   }
   const latency = Date.now() - start;
 
-  res.json({
+  const basicStatus = {
     status: dbStatus === "ok" ? "healthy" : "degraded",
+  };
+
+  // Only expose internal system details if logged in as admin
+  const isAdmin = req.session?.user?.role === "admin";
+  if (!isAdmin) {
+    return res.json(basicStatus);
+  }
+
+  res.json({
+    ...basicStatus,
     uptime: process.uptime(),
     memory: {
       rss: `${Math.round(process.memoryUsage().rss / 1024 / 1024)} MB`,
@@ -817,7 +829,7 @@ const server = httpServer.listen(PORT, () => {
         pendingOrders = await Order.countDocuments({ status: { $in: ["Pending", "Cooking", "Ready"] } });
       } catch (err) {}
 
-      io.emit("SYSTEM_PULSE", {
+      io.to("admins").emit("SYSTEM_PULSE", {
         cpu: cpu,
         freeRam: osUtils.freemem(),
         totalRam: osUtils.totalmem(),

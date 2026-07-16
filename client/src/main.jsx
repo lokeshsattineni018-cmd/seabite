@@ -14,7 +14,7 @@ const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 if (SENTRY_DSN) {
   Sentry.init({
     dsn: SENTRY_DSN,
-    tracesSampleRate: 1.0,
+    tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
     environment: import.meta.env.MODE || "development",
   });
 }
@@ -44,6 +44,7 @@ if ("serviceWorker" in navigator) {
 
 
 const GOOGLE_CLIENT_ID =
+  import.meta.env.VITE_GOOGLE_CLIENT_ID ||
   "781532512036-kaouiapk5q6akjofr45t7ff7d7t6jm9k.apps.googleusercontent.com";
 
 ReactDOM.createRoot(document.getElementById("root")).render(

@@ -28,6 +28,7 @@ export const protect = async (req, res, next) => {
         name: sessUser.name,
         email: sessUser.email,
         role: sessUser.role,
+        isSuperAdmin: !!sessUser.isSuperAdmin,
       };
 
       if (isDevMode) console.log("✅ Protect: Authentication successful");
@@ -74,7 +75,8 @@ export const protect = async (req, res, next) => {
             id: session.user.id,
             name: session.user.name,
             email: session.user.email,
-            role: session.user.role
+            role: session.user.role,
+            isSuperAdmin: !!session.user.isSuperAdmin,
           };
           resolve(next());
         });
@@ -96,7 +98,7 @@ export const protect = async (req, res, next) => {
 export const admin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
-    const isSuperAdmin = !!req.user.isSuperAdmin || req.user.email?.toLowerCase().includes("lokeshsattineni018");
+    const isSuperAdmin = !!req.user.isSuperAdmin;
     if (isWriteRequest && !isSuperAdmin) {
       return res.status(403).json({ message: "Access denied: Read-only Admin role" });
     }
@@ -108,7 +110,7 @@ export const admin = (req, res, next) => {
 export const driverAuth = (req, res, next) => {
   if (req.user && (req.user.role === "driver" || req.user.role === "admin")) {
     const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
-    const isSuperAdmin = !!req.user.isSuperAdmin || req.user.email?.toLowerCase().includes("lokeshsattineni018");
+    const isSuperAdmin = !!req.user.isSuperAdmin;
     if (req.user.role === "admin" && isWriteRequest && !isSuperAdmin) {
       return res.status(403).json({ message: "Access denied: Read-only Admin role" });
     }
@@ -120,7 +122,7 @@ export const driverAuth = (req, res, next) => {
 export const supportAuth = (req, res, next) => {
   if (req.user && (req.user.role === "support" || req.user.role === "admin")) {
     const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
-    const isSuperAdmin = !!req.user.isSuperAdmin || req.user.email?.toLowerCase().includes("lokeshsattineni018");
+    const isSuperAdmin = !!req.user.isSuperAdmin;
     if (req.user.role === "admin" && isWriteRequest && !isSuperAdmin) {
       return res.status(403).json({ message: "Access denied: Read-only Admin role" });
     }

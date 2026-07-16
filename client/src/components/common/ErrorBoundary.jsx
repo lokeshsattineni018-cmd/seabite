@@ -346,7 +346,9 @@ export function SeaBiteError({ error }) {
 
                             </div>
                             <div style={{ fontWeight: 600, marginBottom: "6px" }}>{error.message || error.toString()}</div>
-                            <pre style={{ whiteSpace: "pre-wrap", fontSize: "10px", lineHeight: "1.5", opacity: 0.85 }}>{error.stack}</pre>
+                            {import.meta.env.DEV && (
+                              <pre style={{ whiteSpace: "pre-wrap", fontSize: "10px", lineHeight: "1.5", opacity: 0.85 }}>{error.stack}</pre>
+                            )}
                         </div>
                     )}
 
