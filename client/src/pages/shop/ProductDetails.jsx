@@ -1624,10 +1624,56 @@ export default function ProductDetails() {
         onSuccess={fetchProduct}
       />
 
+      {/* D2: Sticky Mobile Add-to-Cart Bar */}
+      {product && product.stock !== "out" && (
+        <div className="pdp-sticky-bar" style={{
+          position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 150,
+          background: "#fff", borderTop: "1px solid #E2EEEC",
+          padding: "12px 16px",
+          display: "none", /* shown via CSS on mobile */
+          alignItems: "center", justifyContent: "space-between",
+          boxShadow: "0 -8px 24px rgba(0,0,0,0.06)",
+          backdropFilter: "blur(12px)",
+          gap: 12,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: "#1A2E2C", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {product.name}
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
+              <span style={{ fontSize: 16, fontWeight: 800, color: "#1A2E2C" }}>₹{priceForWeight}</span>
+              {basePrice > priceForWeight && (
+                <span style={{ fontSize: 12, color: "#B8CFCC", textDecoration: "line-through" }}>₹{basePrice}</span>
+              )}
+            </div>
+          </div>
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={handleAddToCart}
+            disabled={isAdded}
+            style={{
+              padding: "12px 28px", borderRadius: 14,
+              background: isAdded ? "#10B981" : "#1A2E2C",
+              color: "#fff", border: "none",
+              fontSize: 14, fontWeight: 700,
+              cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 8,
+              flexShrink: 0,
+              boxShadow: "0 4px 16px rgba(26,46,44,0.2)",
+              transition: "background 0.3s ease",
+            }}
+          >
+            {isAdded ? "✓ Added" : "Add to Cart"}
+          </motion.button>
+        </div>
+      )}
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (min-width: 769px) { .show-mobile { display: none !important; } }
+        @media (max-width: 768px) {
+          .pdp-sticky-bar { display: flex !important; }
+        }
       `}</style>
     </>
   );

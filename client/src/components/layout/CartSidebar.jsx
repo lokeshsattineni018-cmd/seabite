@@ -7,6 +7,7 @@ import {
   FiArrowRight, FiPackage, FiLock, FiTruck, FiCheck,
 } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
+import { AuthContext } from "../../context/AuthContext";
 import { removeFromCart, updateQty } from "../../utils/cartStorage";
 import { slugify } from "../../utils/slugify";
 
@@ -24,11 +25,32 @@ const getFullImageUrl = (imagePath) => {
   return `${API_URL}${imagePath.startsWith("/") ? imagePath : `/${imagePath}`}`;
 };
 
+// Decode HTML entities like &amp; → &
+const decodeEntities = (str) => {
+  if (!str) return str;
+  const txt = document.createElement("textarea");
+  txt.innerHTML = str;
+  return txt.value;
+};
+
 export default function CartSidebar({ onClose }) {
   const { cartCount, refreshCartCount, cartItems, subtotal: subtotalStr, storeSettings, isCartOpen, setIsCartOpen, addToCart } = useContext(CartContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [trending, setTrending] = useState([]);
   const [upsells, setUpsells] = useState([]);
+  const [defaultAddress, setDefaultAddress] = useState(null);
+
+  useEffect(() => {
+    if (user && isCartOpen) {
+      axios.get(`${API_URL}/api/user/address`, { withCredentials: true })
+        .then(res => {
+          const defaultAddr = res.data.find(a => a.isDefault);
+          setDefaultAddress(defaultAddr);
+        })
+        .catch(() => {});
+    }
+  }, [user, isCartOpen]);
 
   useEffect(() => {
     if (isCartOpen && cartItems.length === 0) {
@@ -219,6 +241,55 @@ export default function CartSidebar({ onClose }) {
                       </motion.div>
                     )}
                   </AnimatePresence>
+
+                  {/* Estimated delivery date */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    style={{
+                      marginTop: 10,
+                      padding: "10px 14px",
+                      borderRadius: 12,
+                      background: "linear-gradient(135deg, rgba(91,168,160,0.06), rgba(137,194,217,0.06))",
+                      border: `1px solid rgba(91,168,160,0.12)`,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <FiTruck size={14} style={{ color: T.primary, flexShrink: 0 }} />
+                    <div>
+                      <p style={{ fontSize: 11, fontWeight: 700, color: T.textDark, margin: 0 }}>
+                        Arriving{" "}
+                        <span style={{ color: T.primary }}>
+                          {(() => {
+                            const now = new Date();
+                            const cutoff = new Date(now);
+                            cutoff.setHours(14, 0, 0, 0);
+                            const delivery = new Date(now);
+                            if (now > cutoff) delivery.setDate(delivery.getDate() + 2);
+                            else delivery.setDate(delivery.getDate() + 1);
+                            return `Tomorrow by 4:00 PM`;
+                          })()}
+                        </span>
+                      </p>
+                      <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0", fontWeight: 500 }}>
+                        Order within{" "}
+                        {(() => {
+                          const now = new Date();
+                          const cutoff = new Date(now);
+                          cutoff.setHours(14, 0, 0, 0);
+                          if (now > cutoff) cutoff.setDate(cutoff.getDate() + 1);
+                          const diff = cutoff - now;
+                          const hrs = Math.floor(diff / 3600000);
+                          const mins = Math.floor((diff % 3600000) / 60000);
+                          return `${hrs}h ${mins}m`;
+                        })()}{" "}
+                        for express dispatch
+                      </p>
+                    </div>
+                  </motion.div>
                 </motion.div>
               )}
             </div>
@@ -259,25 +330,67 @@ export default function CartSidebar({ onClose }) {
                     }}
                   >
                     {/* Decorative glow behind image */}
-                    <div style={{
-                      position: "absolute",
-                      width: "120%",
-                      height: "120%",
-                      background: "radial-gradient(circle, rgba(91,168,160,0.12) 0%, rgba(91,168,160,0) 70%)",
-                      zIndex: 0
-                    }} />
-                    
-                    <img 
-                      src="/empty-cart.webp" 
-                      alt="Empty Cart" 
-                      style={{ 
-                        width: "100%", 
-                        height: "100%", 
-                        objectFit: "contain",
-                        zIndex: 1,
-                        filter: "drop-shadow(0 20px 30px rgba(0,0,0,0.08))"
-                      }} 
-                    />
+                    {/* C4: Custom animated ocean SVG illustration */}
+                    <svg viewBox="0 0 200 200" width="160" height="160" style={{ zIndex: 1, filter: "drop-shadow(0 16px 24px rgba(91,168,160,0.15))" }}>
+                      <defs>
+                        <linearGradient id="oceanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#EAF6F5" />
+                          <stop offset="100%" stopColor="#C5E6E4" />
+                        </linearGradient>
+                        <linearGradient id="fishGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#5BBFB5" />
+                          <stop offset="100%" stopColor="#89C2D9" />
+                        </linearGradient>
+                      </defs>
+                      
+                      <circle cx="100" cy="100" r="85" fill="url(#oceanGrad)" />
+                      
+                      <path d="M 20 130 Q 60 115 100 130 T 180 130 L 180 185 L 20 185 Z" fill="rgba(91,168,160,0.2)" />
+                      <path d="M 15 145 Q 55 135 95 145 T 185 145 L 185 185 L 15 185 Z" fill="rgba(91,168,160,0.3)" />
+                      
+                      <g className="hook-group">
+                        <line x1="100" y1="0" x2="100" y2="90" stroke="#4A6572" strokeWidth="1.5" strokeDasharray="3,3" />
+                        <path d="M 100 90 Q 100 102 108 102 Q 115 102 115 94" fill="none" stroke="#4A6572" strokeWidth="2" strokeLinecap="round" />
+                        <line x1="115" y1="94" x2="112" y2="97" stroke="#4A6572" strokeWidth="2" strokeLinecap="round" />
+                      </g>
+                      
+                      <g className="fish-group">
+                        <path d="M 50 110 C 65 100 80 110 90 105 C 85 110 85 115 90 120 C 80 115 65 125 50 115 Z" fill="url(#fishGrad)" />
+                        <polygon points="50,115 42,108 42,122" fill="#5BBFB5" />
+                        <circle cx="80" cy="110" r="1.5" fill="#FFF" />
+                      </g>
+                      
+                      <g className="small-fish-group">
+                        <path d="M 120 70 C 130 63 140 70 147 67 C 143 70 143 73 147 76 C 140 73 130 80 120 73 Z" fill="rgba(137,194,217,0.7)" />
+                        <polygon points="120,73 115,69 115,77" fill="rgba(137,194,217,0.7)" />
+                      </g>
+                      
+                      <circle className="bubble bubble-1" cx="70" cy="150" r="3" fill="#FFF" opacity="0.6" />
+                      <circle className="bubble bubble-2" cx="130" cy="160" r="4" fill="#FFF" opacity="0.5" />
+                      <circle className="bubble bubble-3" cx="105" cy="140" r="2" fill="#FFF" opacity="0.7" />
+                      
+                      <style>{`
+                        @keyframes sway {
+                          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+                          50% { transform: translate(8px, -4px) rotate(3deg); }
+                        }
+                        @keyframes hook-sway {
+                          0%, 100% { transform: rotate(-2deg); transform-origin: 100px 0px; }
+                          50% { transform: rotate(2deg); transform-origin: 100px 0px; }
+                        }
+                        @keyframes bubble-rise {
+                          0% { transform: translateY(0); opacity: 0; }
+                          50% { opacity: 0.6; }
+                          100% { transform: translateY(-60px); opacity: 0; }
+                        }
+                        .fish-group { animation: sway 4s ease-in-out infinite; }
+                        .small-fish-group { animation: sway 5s ease-in-out infinite reverse; }
+                        .hook-group { animation: hook-sway 6s ease-in-out infinite; }
+                        .bubble-1 { animation: bubble-rise 3s infinite ease-in; }
+                        .bubble-2 { animation: bubble-rise 4s infinite ease-in 1.5s; }
+                        .bubble-3 { animation: bubble-rise 2.5s infinite ease-in 0.8s; }
+                      `}</style>
+                    </svg>
                   </motion.div>
 
                   <h3 style={{ 
@@ -451,7 +564,7 @@ export default function CartSidebar({ onClose }) {
                             </h4>
                             {(item.selectedCut || item.orderedWeightGrams > 0) && (
                               <div style={{ fontSize: "11px", color: T.primary, fontWeight: "600", marginTop: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                                {item.selectedCut && `Cut: ${item.selectedCut}`}
+                                {item.selectedCut && `Cut: ${decodeEntities(item.selectedCut)}`}
                                 {item.selectedCut && item.orderedWeightGrams > 0 && " | "}
                                 {item.orderedWeightGrams > 0 && `Weight: ${item.orderedWeightGrams >= 1000 ? `${item.orderedWeightGrams/1000}kg` : `${item.orderedWeightGrams}g`}`}
                               </div>
@@ -562,6 +675,38 @@ export default function CartSidebar({ onClose }) {
                 transition={{ delay: 0.18, duration: 0.4 }}
                 style={{ padding: "20px 24px", background: T.surface, borderTop: `1px solid ${T.border}` }}
               >
+                {/* Savings summary */}
+                {(() => {
+                  const totalSaved = cartItems.reduce((acc, item) => {
+                    const saved = (item.originalPrice && item.originalPrice > item.price)
+                      ? (item.originalPrice - item.price) * item.qty
+                      : 0;
+                    return acc + saved;
+                  }, 0);
+                  return totalSaved > 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      style={{
+                        padding: "10px 14px",
+                        borderRadius: 12,
+                        background: "linear-gradient(135deg, #DCFCE7, #D1FAE5)",
+                        border: "1px solid #BBF7D0",
+                        marginBottom: 14,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 8,
+                      }}
+                    >
+                      <span style={{ fontSize: 16 }}>🎉</span>
+                      <p style={{ fontSize: 12, fontWeight: 700, color: "#166534", margin: 0 }}>
+                        You're saving ₹{Math.round(totalSaved).toLocaleString()} on this order!
+                      </p>
+                    </motion.div>
+                  ) : null;
+                })()}
+
                 {/* Total */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                   <div>
@@ -604,6 +749,28 @@ export default function CartSidebar({ onClose }) {
                     <FiArrowRight size={16} />
                   </motion.span>
                 </motion.button>
+
+                {/* K1: 1-Click Express Checkout for returning users */}
+                {defaultAddress && (
+                  <motion.button
+                    whileHover={{ y: -2, background: "rgba(26,46,44,0.03)" }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      setIsCartOpen(false);
+                      navigate("/checkout?express=true");
+                    }}
+                    style={{
+                      width: "100%", padding: "12px 20px", borderRadius: 14,
+                      background: "transparent", color: T.textDark, border: `1.5px solid ${T.textDark}`,
+                      fontSize: 13, fontWeight: 700, cursor: "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                      fontFamily: font, marginTop: 10,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    ⚡ Express 1-Click Checkout
+                  </motion.button>
+                )}
 
                 <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
                   <FiLock size={10} /> Secured checkout

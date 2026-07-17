@@ -14,7 +14,7 @@ import {
 import axios from "axios";
 import { Helmet } from "react-helmet-async";
 import toast from "react-hot-toast";
-import {
+import { Clock, Package, MapPin,
   ArrowRight,
   Star,
   ShieldCheck,
@@ -315,6 +315,23 @@ const Hero = () => {
               <span className="text-sm font-semibold">4.9</span>
               <span className="text-[10px] text-white/50">· 200+ reviews</span>
             </motion.div>
+
+            {/* H2: Social proof counter */}
+            <motion.div animate={{ y: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 0.5 }}
+              className="absolute bottom-20 right-8 hidden md:flex bg-white/90 backdrop-blur-md rounded-2xl px-5 py-3 items-center gap-3 shadow-xl border border-white/60"
+            >
+              <div className="flex -space-x-2">
+                {["#5BA8A0", "#E8816A", "#89C2D9"].map((c, i) => (
+                  <div key={i} style={{ width: 28, height: 28, borderRadius: "50%", background: c, border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <User size={12} color="#fff" />
+                  </div>
+                ))}
+              </div>
+              <div>
+                <p className="text-[13px] font-bold text-[#1A2B35]" style={{ margin: 0 }}>2,340+</p>
+                <p className="text-[10px] text-[#8BA5B3]" style={{ margin: 0 }}>orders this month</p>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -360,6 +377,135 @@ const WaveTicker = () => {
     </div>
   );
 };
+
+// ══════════════════════════════════════════════
+//  TODAY'S FRESH CATCH (H1)
+// ══════════════════════════════════════════════
+const TodaysFreshCatch = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/products`, { params: { sort: "newest", limit: 4 } })
+      .then(({ data }) => {
+        const items = data.products || data || [];
+        setProducts(items.slice(0, 4));
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading || products.length === 0) return null;
+
+  const caughtHoursAgo = () => {
+    const now = new Date();
+    const catchTime = new Date(now);
+    catchTime.setHours(4, 0, 0, 0);
+    if (now < catchTime) catchTime.setDate(catchTime.getDate() - 1);
+    return Math.floor((now - catchTime) / 3600000);
+  };
+
+  return (
+    <section className="py-16 px-6 md:px-12" style={{ background: "linear-gradient(180deg, #F8FAFB 0%, #EFF7F6 50%, #F8FAFB 100%)" }}>
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+          <RevealLeft>
+            <div>
+              <SectionLabel>Today's Fresh Catch</SectionLabel>
+              <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35] leading-tight" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                Caught at dawn,<br />delivered fresh.
+              </h2>
+              <div className="flex items-center gap-2 mt-3">
+                <motion.div
+                  animate={{ scale: [1, 1.3, 1] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                  style={{ width: 8, height: 8, borderRadius: "50%", background: "#10B981" }}
+                />
+                <span className="text-sm text-[#5BA8A0] font-semibold">
+                  Caught {caughtHoursAgo()}h ago · Fresh from Mogalthur coast
+                </span>
+              </div>
+            </div>
+          </RevealLeft>
+          <RevealRight delay={0.1}>
+            <CTAButton to="/products" variant="outline">See All <ArrowRight size={14} /></CTAButton>
+          </RevealRight>
+        </div>
+
+        <Stagger className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+          {products.map((p) => (
+            <SI key={p._id}>
+              <EnhancedProductCard product={p} globalDiscount={0} />
+            </SI>
+          ))}
+        </Stagger>
+      </div>
+    </section>
+  );
+};
+
+// ══════════════════════════════════════════════
+//  HOW IT WORKS (H3)
+// ══════════════════════════════════════════════
+const howItWorksSteps = [
+  { icon: <Zap size={28} />, num: "01", title: "You Order", desc: "Browse our fresh catch & place your order before 2 PM for same-day dispatch.", accent: "#5BA8A0" },
+  { icon: <Waves size={28} />, num: "02", title: "We Catch", desc: "Our fishermen head out at 4 AM. Your order is caught, cleaned & packed within hours.", accent: "#89C2D9" },
+  { icon: <Package size={28} />, num: "03", title: "Delivered Fresh", desc: "Cold-chain insulated box, temperature-controlled from ocean to your doorstep.", accent: "#E8816A" },
+];
+
+const HowItWorks = () => (
+  <section className="py-20 px-6 md:px-12 bg-white">
+    <div className="max-w-7xl mx-auto">
+      <Reveal>
+        <div className="text-center mb-14">
+          <SectionLabel>How It Works</SectionLabel>
+          <h2 className="text-3xl md:text-4xl font-bold text-[#1A2B35]" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+            Ocean to Table in 3 Steps
+          </h2>
+          <p className="text-[#8BA5B3] mt-3 max-w-md mx-auto text-sm">
+            From the Andhra coast to your kitchen — here's how we keep it unbelievably fresh.
+          </p>
+        </div>
+      </Reveal>
+
+      <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {howItWorksSteps.map((step, i) => (
+          <SI key={i}>
+            <motion.div
+              whileHover={{ y: -6, boxShadow: `0 16px 40px ${step.accent}18` }}
+              transition={{ duration: 0.3 }}
+              className="relative rounded-2xl border border-[#E8EEF2] p-8 bg-[#F8FAFB] hover:bg-white transition-colors duration-300"
+              style={{ cursor: "default" }}
+            >
+              {/* Step number */}
+              <span className="absolute top-6 right-6 text-[48px] font-black leading-none" style={{ color: `${step.accent}12`, opacity: 0.15, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                {step.num}
+              </span>
+
+              {/* Icon */}
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6"
+                style={{ background: `${step.accent}15`, color: step.accent }}
+              >
+                {step.icon}
+              </div>
+
+              <h3 className="text-lg font-bold text-[#1A2B35] mb-2">{step.title}</h3>
+              <p className="text-sm text-[#8BA5B3] leading-relaxed">{step.desc}</p>
+
+              {/* Connector */}
+              {i < 2 && (
+                <div className="hidden md:block absolute -right-3 top-1/2 -translate-y-1/2 z-10">
+                  <ChevronRight size={20} className="text-[#CBD8DF]" />
+                </div>
+              )}
+            </motion.div>
+          </SI>
+        ))}
+      </Stagger>
+    </div>
+  </section>
+);
 
 // ══════════════════════════════════════════════
 //  CATEGORIES
@@ -769,6 +915,7 @@ export default function Home() {
           <WaveTicker />
         </div>
   
+        <TodaysFreshCatch />
         <CategorySection />
         <FlashSale />
         <CategoryRow title="Fresh From The Nets" filterType="Fish" />
@@ -785,6 +932,7 @@ export default function Home() {
         </section>
   
         <Reviews />
+        <HowItWorks />
         <WhySeaBite />
 
       </div>

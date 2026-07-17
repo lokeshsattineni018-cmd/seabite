@@ -104,19 +104,18 @@ export default function AdminFlashSale() {
 
         setIsMassLoading(true);
         try {
-            await Promise.all(targetProducts.map(p => {
-                const discountPrice = Math.round(p.basePrice * (1 - massConfig.discountPercent / 100));
-                return axios.put(`/api/admin/products/${p._id}/flash-sale`, {
-                    discountPrice,
-                    saleEndDate: massConfig.saleEndDate,
-                    isFlashSale: true
-                }, { withCredentials: true });
-            }));
+            await axios.post("/api/admin/products/flash-sale/mass-apply", {
+                category: massConfig.category,
+                discountPercent: massConfig.discountPercent,
+                saleEndDate: massConfig.saleEndDate
+            }, { withCredentials: true });
+
             toast.success(`Successfully applied to ${targetProducts.length} products`);
             fetchProducts();
             setMassConfig({ category: "", discountPercent: 10, saleEndDate: "" });
         } catch (err) {
-            toast.error("Mass apply failed");
+            const errorMsg = err.response?.data?.message || "Mass apply failed";
+            toast.error(errorMsg);
         } finally {
             setIsMassLoading(false);
         }

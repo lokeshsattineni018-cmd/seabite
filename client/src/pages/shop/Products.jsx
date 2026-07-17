@@ -4,7 +4,8 @@ import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiPackage, FiFilter, FiX,
-  FiSliders, FiChevronDown, FiChevronRight, FiAlertCircle
+  FiSliders, FiChevronDown, FiChevronRight, FiAlertCircle,
+  FiArrowDown, FiArrowUp
 } from "react-icons/fi";
 import { Helmet } from "react-helmet-async";
 import { CartContext } from "../../context/CartContext";
@@ -38,6 +39,8 @@ export default function Products() {
   const [localSearch, setLocalSearch] = useState("");
   const searchDebounceRef = useRef(null);
   const productsLengthRef = useRef(0);
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
 
   const [filters, setFilters] = useState({
     category: "All",
@@ -59,6 +62,15 @@ export default function Products() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close sort dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -165,6 +177,7 @@ export default function Products() {
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .sort-dropdown { animation: fadeDown 0.18s cubic-bezier(.4,0,.2,1); }
         @keyframes fadeDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes pulse-dot { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.4; transform:scale(1.5); } }
         .category-pill-active { background: #1A2E2C !important; color: #fff !important; border-color: #1A2E2C !important; }
         .category-pill { border: 1.5px solid #E2EEEC; color: #6B8F8A; background: #fff; transition: all 0.18s ease; cursor: pointer; }
         .category-pill:hover { border-color: #5BBFB5; color: #5BBFB5; }
@@ -282,7 +295,18 @@ export default function Products() {
                       {meta.emoji} {meta.label}
                     </motion.h1>
                   </AnimatePresence>
-                  <p style={{ fontSize: "14px", color: "#6B8F8A", fontWeight: "500" }}>{meta.tagline}</p>
+                  <p style={{ fontSize: "14px", color: "#6B8F8A", fontWeight: "500", display: "flex", alignItems: "center", gap: 8 }}>
+                    {meta.tagline}
+                    {!loading && products.length > 0 && (
+                      <span style={{
+                        fontSize: "11px", fontWeight: "700", color: "#5BBFB5",
+                        background: "rgba(91,191,181,0.1)", padding: "3px 10px",
+                        borderRadius: "20px", whiteSpace: "nowrap",
+                      }}>
+                        {products.length} product{products.length !== 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -360,6 +384,97 @@ export default function Products() {
                     <span>{CATEGORY_META[cat]?.emoji}</span>{cat}
                   </motion.button>
                 ))}
+
+                <div style={{ width: "1px", height: "20px", background: "#E2EEEC", flexShrink: 0 }} />
+
+                {/* Sort Dropdown */}
+                <div ref={sortRef} style={{ position: "relative", flexShrink: 0 }}>
+                  <button
+                    onClick={() => setSortOpen(!sortOpen)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: "5px",
+                      padding: "8px 14px", borderRadius: "10px",
+                      border: "1.5px solid #E2EEEC", background: "#fff",
+                      color: filters.sort !== "newest" ? "#5BBFB5" : "#6B8F8A",
+                      fontSize: "12px", fontWeight: "700",
+                      cursor: "pointer", fontFamily: "'Manrope', sans-serif",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {filters.sort === "newest" ? "Sort" : 
+                     filters.sort === "price_asc" ? "Price ↑" :
+                     filters.sort === "price_desc" ? "Price ↓" :
+                     filters.sort === "popular" ? "Popular" : "Sort"}
+                    <FiChevronDown size={12} style={{ transform: sortOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }} />
+                  </button>
+                  {sortOpen && (
+                    <div className="sort-dropdown" style={{
+                      position: "absolute", top: "calc(100% + 6px)", right: 0,
+                      background: "#fff", borderRadius: 12,
+                      border: "1.5px solid #E2EEEC", padding: "6px",
+                      minWidth: 160, zIndex: 200,
+                      boxShadow: "0 12px 32px rgba(0,0,0,0.08)",
+                    }}>
+                      {[
+                        { value: "newest", label: "Newest First" },
+                        { value: "price_asc", label: "Price: Low to High" },
+                        { value: "price_desc", label: "Price: High to Low" },
+                        { value: "popular", label: "Most Popular" },
+                      ].map((opt) => (
+                        <button
+                          key={opt.value}
+                          onClick={() => {
+                            setFilters((p) => ({ ...p, sort: opt.value }));
+                            setSortOpen(false);
+                          }}
+                          style={{
+                            display: "flex", alignItems: "center", gap: 8,
+                            width: "100%", padding: "9px 12px", borderRadius: 8,
+                            border: "none", cursor: "pointer",
+                            background: filters.sort === opt.value ? "rgba(91,191,181,0.1)" : "transparent",
+                            color: filters.sort === opt.value ? "#5BBFB5" : "#4A6A67",
+                            fontSize: "12px", fontWeight: filters.sort === opt.value ? 700 : 600,
+                            fontFamily: "'Manrope', sans-serif",
+                            textAlign: "left",
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* P3: Catch of the Day Pill */}
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setFilters((p) => ({
+                    ...p,
+                    catchOfTheDay: p.catchOfTheDay === "true" ? "false" : "true",
+                  }))}
+                  style={{
+                    padding: "7px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "700",
+                    whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "6px",
+                    fontFamily: "'Manrope', sans-serif", flexShrink: 0,
+                    border: filters.catchOfTheDay === "true" ? "1.5px solid #D4A017" : "1.5px solid #E8D9A0",
+                    background: filters.catchOfTheDay === "true" 
+                      ? "linear-gradient(135deg, #FEF3C7, #FDE68A)" 
+                      : "linear-gradient(135deg, #FFFBEB, #FEF9E7)",
+                    color: filters.catchOfTheDay === "true" ? "#92400E" : "#B45309",
+                    cursor: "pointer",
+                    boxShadow: filters.catchOfTheDay === "true" 
+                      ? "0 2px 12px rgba(212,160,23,0.25)" 
+                      : "none",
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  <span style={{
+                    width: 6, height: 6, borderRadius: "50%",
+                    background: "#F59E0B",
+                    animation: "pulse-dot 2s ease infinite",
+                  }} />
+                  🎣 Today's Catch
+                </motion.button>
               </div>
             </div>
 

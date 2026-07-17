@@ -235,6 +235,43 @@ router.put("/:id", adminAuth, async (req, res) => {
   }
 });
 
+/* ========== MASS APPLY FLASH SALE (POST /api/admin/products/flash-sale/mass-apply) ========== */
+router.post("/flash-sale/mass-apply", adminAuth, async (req, res) => {
+  try {
+    const { category, discountPercent, saleEndDate } = req.body;
+
+    if (!category || !saleEndDate || discountPercent <= 0) {
+      return res.status(400).json({ message: "Category, discount percent, and end date are required." });
+    }
+
+    let filter = {};
+    if (category !== "All") {
+      filter.category = { $regex: new RegExp(`^${category}$`, "i") };
+    }
+
+    const products = await Product.find(filter);
+    
+    // Update products in the database
+    const updatePromises = products.map(product => {
+      const discountPrice = Math.round(product.basePrice * (1 - discountPercent / 100));
+      product.flashSale = {
+        discountPrice,
+        saleEndDate: new Date(saleEndDate),
+        isFlashSale: true
+      };
+      return product.save();
+    });
+
+    await Promise.all(updatePromises);
+    cacheClear();
+
+    res.json({ message: `Successfully applied flash sale to ${products.length} products.` });
+  } catch (err) {
+    console.error("Mass apply error:", err);
+    res.status(500).json({ message: "Failed to apply mass flash sale: " + err.message });
+  }
+});
+
 /* ========== CONFIGURE FLASH SALE (PUT /api/admin/products/:id/flash-sale) ========== */
 router.put("/:id/flash-sale", adminAuth, async (req, res) => {
   try {

@@ -302,8 +302,29 @@ export default function Checkout() {
   const [addresses, setAddresses] = useState([]);
   const [deliveryAddress, setDeliveryAddress] = useState({});
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const [isItemsCollapsed, setIsItemsCollapsed] = useState(window.innerWidth < 768);
+  const [expressCountdown, setExpressCountdown] = useState(null);
   const navigate = useNavigate();
+  const [isItemsCollapsed, setIsItemsCollapsed] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get("express") === "true" && deliveryAddress.postalCode) {
+      setExpressCountdown(3);
+    }
+  }, [location.search, deliveryAddress.postalCode]);
+
+  useEffect(() => {
+    if (expressCountdown === null) return;
+    if (expressCountdown === 0) {
+      setExpressCountdown(null);
+      placeOrder();
+      return;
+    }
+    const timer = setTimeout(() => {
+      setExpressCountdown(prev => prev - 1);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [expressCountdown]);
 
   // 🕒 Enterprise Schedule & Gifting
   const [deliverySlot, setDeliverySlot] = useState("Morning (07:00 AM - 10:00 AM)");
@@ -713,6 +734,60 @@ export default function Checkout() {
             </motion.div>
           </div>
         )}
+
+        {expressCountdown !== null && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.85)", zIndex: 2500, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(12px)" }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              style={{
+                width: "100%", maxWidth: 420, background: "#FFF", borderRadius: 24, padding: 32, textAlign: "center",
+                boxShadow: "0 24px 60px rgba(0,0,0,0.15)", border: "1px solid rgba(255,255,255,0.2)"
+              }}
+            >
+              <div style={{
+                width: 64, height: 64, borderRadius: "50%", background: "rgba(91,168,160,0.15)",
+                display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px",
+                fontSize: 28, color: T.primary,
+              }}>
+                ⚡
+              </div>
+              <h2 style={{ fontSize: 22, fontWeight: 800, color: T.textDark, margin: "0 0 8px", letterSpacing: "-0.02em" }}>Express 1-Click Checkout</h2>
+              <p style={{ fontSize: 14, color: T.textLite, margin: "0 0 20px", fontWeight: 500 }}>
+                Placing your order automatically in <strong style={{ color: T.primary, fontSize: 16 }}>{expressCountdown}</strong> seconds...
+              </p>
+              
+              <div style={{
+                background: "#F4F9F8", border: "1px solid #E2EEEC", borderRadius: 16, padding: "14px 18px",
+                textAlign: "left", marginBottom: 24
+              }}>
+                <p style={{ fontSize: 10, fontWeight: 800, color: T.primary, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Shipping To</p>
+                <p style={{ fontSize: 13, fontWeight: 700, color: T.textDark, margin: 0 }}>{deliveryAddress.name}</p>
+                <p style={{ fontSize: 12, color: T.textMid, margin: "2px 0 0", lineHeight: 1.4 }}>
+                  {deliveryAddress.houseNo}, {deliveryAddress.street}, {deliveryAddress.city} - {deliveryAddress.postalCode}
+                </p>
+              </div>
+
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setExpressCountdown(null);
+                  navigate("/checkout");
+                }}
+                style={{
+                  width: "100%", padding: "14px 20px", borderRadius: 14,
+                  background: "#F3F4F6", color: "#4B5563", border: "none",
+                  fontSize: 13, fontWeight: 700, cursor: "pointer",
+                  fontFamily: font,
+                  transition: "background 0.2s"
+                }}
+              >
+                Cancel & Review Order
+              </motion.button>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
 
       <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
@@ -1031,6 +1106,61 @@ export default function Checkout() {
                   )}
                 </AnimatePresence>
 
+                {/* K4: Coupon Auto-Suggest Banner */}
+                <AnimatePresence>
+                  {!appliedCoupon && !spinDiscount && availableCoupons.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      style={{ overflow: "hidden", marginBottom: 14 }}
+                    >
+                      <div
+                        style={{
+                          padding: "12px 16px", borderRadius: 14,
+                          background: "linear-gradient(135deg, rgba(91,168,160,0.08), rgba(137,194,217,0.06))",
+                          border: `1.5px dashed rgba(91,168,160,0.3)`,
+                          display: "flex", alignItems: "center", justifyContent: "space-between",
+                          gap: 12, flexWrap: "wrap",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+                          <div style={{
+                            width: 32, height: 32, borderRadius: 10,
+                            background: "rgba(91,168,160,0.15)",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            flexShrink: 0,
+                          }}>
+                            <FiTag size={14} style={{ color: T.primary }} />
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            <p style={{ fontSize: 12, fontWeight: 700, color: T.textDark, margin: 0 }}>
+                              {availableCoupons.length} coupon{availableCoupons.length > 1 ? "s" : ""} available!
+                            </p>
+                            <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                              Use <strong style={{ color: T.primary }}>{availableCoupons[0].code}</strong> — {availableCoupons[0].description || `Save up to ₹${availableCoupons[0].maxDiscount || availableCoupons[0].discountValue}`}
+                            </p>
+                          </div>
+                        </div>
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => applyCouponByCode(availableCoupons[0].code)}
+                          style={{
+                            padding: "7px 16px", borderRadius: 10,
+                            background: T.primary, color: "#fff",
+                            border: "none", fontSize: 11, fontWeight: 700,
+                            cursor: "pointer", fontFamily: font,
+                            flexShrink: 0,
+                            boxShadow: "0 2px 10px rgba(91,168,160,0.25)",
+                          }}
+                        >
+                          Apply
+                        </motion.button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Coupon */}
                 {!spinDiscount ? (
                   <div style={{ marginBottom: 18 }}>
@@ -1292,6 +1422,30 @@ export default function Checkout() {
                 <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
                   <FiShield size={10} style={{ color: T.primary }} /> Secure 256-bit SSL Encryption
                 </p>
+
+                {/* Trust Badges Row */}
+                <div style={{
+                  marginTop: 14, padding: "12px",
+                  borderRadius: 12, background: "#F4F9F8",
+                  border: "1px solid #E2EEEC",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  gap: 16, flexWrap: "wrap",
+                }}>
+                  {[
+                    { icon: "🔒", text: "Secure Payment" },
+                    { icon: "🧊", text: "Cold Chain" },
+                    { icon: "📦", text: "Tamper-proof" },
+                  ].map(badge => (
+                    <div key={badge.text} style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                    }}>
+                      <span style={{ fontSize: 13 }}>{badge.icon}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#4A6A67", letterSpacing: "0.02em" }}>
+                        {badge.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </SectionCard>
             </motion.div>
           </div>

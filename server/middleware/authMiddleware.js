@@ -95,8 +95,17 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export const admin = (req, res, next) => {
+export const admin = async (req, res, next) => {
   if (req.user && req.user.role === "admin") {
+    try {
+      const liveUser = await User.findById(req.user._id || req.user.id);
+      if (liveUser) {
+        req.user.isSuperAdmin = !!liveUser.isSuperAdmin;
+        req.user.role = liveUser.role;
+      }
+    } catch (err) {
+      console.error("Error syncing admin role from DB:", err.message);
+    }
     const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
     const isSuperAdmin = !!req.user.isSuperAdmin;
     if (isWriteRequest && !isSuperAdmin) {
@@ -107,8 +116,17 @@ export const admin = (req, res, next) => {
   return res.status(403).json({ message: "Access denied: Admin only" });
 };
 
-export const driverAuth = (req, res, next) => {
+export const driverAuth = async (req, res, next) => {
   if (req.user && (req.user.role === "driver" || req.user.role === "admin")) {
+    try {
+      const liveUser = await User.findById(req.user._id || req.user.id);
+      if (liveUser) {
+        req.user.isSuperAdmin = !!liveUser.isSuperAdmin;
+        req.user.role = liveUser.role;
+      }
+    } catch (err) {
+      console.error("Error syncing driver-admin role from DB:", err.message);
+    }
     const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
     const isSuperAdmin = !!req.user.isSuperAdmin;
     if (req.user.role === "admin" && isWriteRequest && !isSuperAdmin) {
@@ -119,8 +137,17 @@ export const driverAuth = (req, res, next) => {
   return res.status(403).json({ message: "Access denied: Drivers only" });
 };
 
-export const supportAuth = (req, res, next) => {
+export const supportAuth = async (req, res, next) => {
   if (req.user && (req.user.role === "support" || req.user.role === "admin")) {
+    try {
+      const liveUser = await User.findById(req.user._id || req.user.id);
+      if (liveUser) {
+        req.user.isSuperAdmin = !!liveUser.isSuperAdmin;
+        req.user.role = liveUser.role;
+      }
+    } catch (err) {
+      console.error("Error syncing support-admin role from DB:", err.message);
+    }
     const isWriteRequest = ["POST", "PUT", "DELETE", "PATCH"].includes(req.method);
     const isSuperAdmin = !!req.user.isSuperAdmin;
     if (req.user.role === "admin" && isWriteRequest && !isSuperAdmin) {

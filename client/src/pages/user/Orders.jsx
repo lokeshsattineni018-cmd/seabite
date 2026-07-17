@@ -1488,6 +1488,50 @@ export default function Order() {
                           )}
                         </div>
 
+                        {/* O3: Rating Prompt for Delivered Orders */}
+                        {delivered && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            style={{
+                              display: "flex", alignItems: "center", justifyContent: "space-between",
+                              padding: "12px 16px", borderRadius: 14,
+                              background: "linear-gradient(135deg, rgba(245,158,11,0.06), rgba(245,158,11,0.02))",
+                              border: "1px solid rgba(245,158,11,0.12)",
+                              gap: 12, flexWrap: "wrap",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                              <span style={{ fontSize: 18 }}>⭐</span>
+                              <div>
+                                <p style={{ fontSize: 12, fontWeight: 700, color: T.ink, margin: 0 }}>
+                                  How was your order?
+                                </p>
+                                <p style={{ fontSize: 11, color: T.inkSoft, margin: "2px 0 0" }}>
+                                  Your feedback helps us improve!
+                                </p>
+                              </div>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); navigate(`/orders/${order._id}`); }}
+                              style={{
+                                padding: "8px 18px", borderRadius: 999,
+                                border: "none", background: "#F59E0B",
+                                color: "#fff", fontSize: 12, fontWeight: 700,
+                                cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
+                                display: "flex", alignItems: "center", gap: 6,
+                                transition: "all 0.2s",
+                                boxShadow: "0 2px 10px rgba(245,158,11,0.25)",
+                              }}
+                              onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.04)"; }}
+                              onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; }}
+                            >
+                              <FiStar size={13} /> Rate Order
+                            </button>
+                          </motion.div>
+                        )}
+
                         {/* ── Order Footer ── */}
                         <div style={{
                           display: "flex",

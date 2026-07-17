@@ -2,7 +2,7 @@ import { useState, useContext, useEffect, useRef, useCallback, memo } from "reac
 import { createPortal } from "react-dom";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiHeart, FiShoppingCart, FiZap, FiCheck, FiArrowRight, FiPlus } from "react-icons/fi";
+import { FiHeart, FiShoppingCart, FiZap, FiCheck, FiArrowRight, FiPlus, FiX } from "react-icons/fi";
 import { CartContext } from "../../context/CartContext";
 import { AuthContext } from "../../context/AuthContext";
 import toast from "../../utils/toast"; 
@@ -11,6 +11,139 @@ import axios from "axios";
 import { slugify } from "../../utils/slugify";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
+
+// Decode HTML entities like &amp; → &
+const decodeEntities = (str) => {
+  if (!str) return str;
+  const txt = document.createElement("textarea");
+  txt.innerHTML = str;
+  return txt.value;
+};
+
+const QuickViewModal = ({ isOpen, onClose, product, displayPrice, discountPct, getImageUrl, addToCart, refreshCartCount, isAdding, setIsAdding }) => {
+  const [selectedCut, setSelectedCut] = useState(null);
+  
+  if (!isOpen || !product) return null;
+  
+  const handleAdd = (e) => {
+    e.stopPropagation();
+    if (isAdding || product.stock === "out") return;
+    setIsAdding(true);
+    triggerHaptic("medium");
+    addToCart({
+      ...product,
+      quantity: 1,
+      price: parseFloat(displayPrice),
+      originalPrice: parseFloat(product.basePrice),
+      selectedCut: selectedCut?.name || "",
+    });
+    refreshCartCount();
+    setTimeout(() => {
+      setIsAdding(false);
+      toast.success(`${product.name} added!`, { icon: "🛒" });
+      onClose();
+    }, 800);
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.7)", zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(8px)" }} onClick={onClose}>
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 30, scale: 0.95 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%", maxWidth: 680, background: "#FFF", borderRadius: 24, overflow: "hidden",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column",
+          maxHeight: "90vh", position: "relative", border: "1px solid rgba(255,255,255,0.2)"
+        }}
+      >
+        <button onClick={onClose} style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "#F4F9F8", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", zIndex: 10, color: "#1A2E2C" }}>
+          <FiX size={18} />
+        </button>
+
+        <div style={{ display: "grid", gridTemplateColumns: window.innerWidth < 640 ? "1fr" : "1fr 1.2fr", overflowY: "auto" }}>
+          <div style={{ position: "relative", width: "100%", height: window.innerWidth < 640 ? "200px" : "100%", minHeight: "320px", background: "#F9FBFA" }}>
+            <img src={getImageUrl(product.image)} alt={product.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {discountPct > 0 && (
+              <div style={{ position: "absolute", top: 0, left: 0, background: "#00B259", color: "#FFF", padding: "6px 12px", fontSize: "12px", fontWeight: "800", borderBottomRightRadius: "12px" }}>
+                {discountPct}% OFF
+              </div>
+            )}
+          </div>
+
+          <div style={{ padding: 32, display: "flex", flexDirection: "column", gap: 16, justifyContent: "center" }}>
+            <div>
+              <span style={{ fontSize: 10, fontWeight: 800, color: "#5BBFB5", textTransform: "uppercase", letterSpacing: "0.1em" }}>{product.category}</span>
+              <h2 style={{ fontSize: 24, fontWeight: 800, color: "#1A2E2C", margin: "4px 0 0", letterSpacing: "-0.02em" }}>{product.name}</h2>
+            </div>
+
+            {product.desc && (
+              <p style={{ fontSize: 13, color: "#4A6572", lineHeight: 1.5, margin: 0 }}>
+                {product.desc}
+              </p>
+            )}
+
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+              <span style={{ fontSize: 24, fontWeight: 800, color: "#1A2E2C" }}>₹{displayPrice}</span>
+              {product.basePrice > displayPrice && (
+                <>
+                  <span style={{ fontSize: 16, color: "#B8CFCC", textDecoration: "line-through" }}>₹{product.basePrice}</span>
+                  <span style={{ fontSize: 12, fontWeight: 800, color: "#00B259" }}>({discountPct}% off)</span>
+                </>
+              )}
+            </div>
+
+            {product.cuts && product.cuts.length > 0 && (
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 800, color: "#8BA5B3", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 8px" }}>Choose Cut</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {product.cuts.map(cut => {
+                    const isSelected = selectedCut?.name === cut.name;
+                    return (
+                      <button
+                        key={cut.name}
+                        onClick={() => setSelectedCut(isSelected ? null : cut)}
+                        style={{
+                          padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 700, cursor: "pointer",
+                          border: isSelected ? "1.5px solid #1A2E2C" : "1.5px solid #E2EEEC",
+                          background: isSelected ? "#1A2E2C" : "#FFF",
+                          color: isSelected ? "#FFF" : "#4A6A67",
+                          transition: "all 0.15s ease"
+                        }}
+                      >
+                        {cut.emoji && <span style={{ marginRight: 4 }}>{cut.emoji}</span>}
+                        {decodeEntities(cut.name)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <motion.button
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAdd}
+              disabled={product.stock === "out" || isAdding}
+              style={{
+                width: "100%", padding: "14px 20px", borderRadius: 14,
+                background: product.stock === "out" ? "#F3F4F6" : (isAdding ? "#10B981" : "#5BBFB5"),
+                color: product.stock === "out" ? "#9CA3AF" : "#FFF",
+                border: "none", fontSize: 14, fontWeight: 800,
+                cursor: product.stock === "out" ? "not-allowed" : "pointer",
+                boxShadow: product.stock === "out" ? "none" : "0 4px 16px rgba(91,168,160,0.25)",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8
+              }}
+            >
+              <FiShoppingCart size={16} />
+              {product.stock === "out" ? "Sold Out" : (isAdding ? "Added!" : "Add to Cart")}
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
 
 /**
  * 🌊 EnhancedProductCard: Liquid Luxury Edition
@@ -32,6 +165,8 @@ const EnhancedProductCard = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [flyItems, setFlyItems] = useState([]);
   const flyIdRef = useRef(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isQuickViewOpen, setIsQuickViewOpen] = useState(false);
 
   // 1. Flash Sale & Pricing Logic
   const isActiveFlashSale = product.flashSale?.isFlashSale && new Date(product.flashSale.saleEndDate) > new Date();
@@ -224,6 +359,8 @@ const EnhancedProductCard = ({
 
   return (
     <motion.div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       whileHover={isOutOfStock ? {} : { y: -6, boxShadow: "0 12px 24px rgba(0,0,0,0.06)", borderColor: "#E0E0E0" }}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
       style={{
@@ -269,6 +406,31 @@ const EnhancedProductCard = ({
             </div>
           )}
         </Link>
+
+        {/* Quick View Button Overlay on Hover */}
+        {isHovered && !isOutOfStock && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsQuickViewOpen(true);
+            }}
+            style={{
+              position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+              background: "rgba(255,255,255,0.95)", backdropFilter: "blur(6px)",
+              border: "1px solid rgba(255,255,255,0.4)", borderRadius: 100,
+              padding: "8px 16px", color: "#1A2E2C", fontSize: "11px", fontWeight: "800",
+              cursor: "pointer", zIndex: 12, boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+              display: "flex", alignItems: "center", gap: 6, letterSpacing: "0.04em",
+              textTransform: "uppercase"
+            }}
+          >
+            🔍 Quick View
+          </motion.button>
+        )}
 
         {/* 🟢 Tendercuts style solid green ribbon in top-left */}
         {discountPct > 0 && (
@@ -402,6 +564,23 @@ const EnhancedProductCard = ({
         )),
         document.body
       )}
+      {/* 🚀 Quick View Modal */}
+      <AnimatePresence>
+        {isQuickViewOpen && (
+          <QuickViewModal
+            isOpen={isQuickViewOpen}
+            onClose={() => setIsQuickViewOpen(false)}
+            product={product}
+            displayPrice={displayPrice}
+            discountPct={discountPct}
+            getImageUrl={getImageUrl}
+            addToCart={addToCart}
+            refreshCartCount={refreshCartCount}
+            isAdding={isAdding}
+            setIsAdding={setIsAdding}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
