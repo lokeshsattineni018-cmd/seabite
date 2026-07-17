@@ -244,22 +244,35 @@ router.post("/flash-sale/mass-apply", adminAuth, async (req, res) => {
       return res.status(400).json({ message: "Category, discount percent, and end date are required." });
     }
 
+    if (isNaN(Date.parse(saleEndDate))) {
+      return res.status(400).json({ message: "Invalid sale end date format." });
+    }
+
     let filter = {};
     if (category !== "All") {
       filter.category = { $regex: new RegExp(`^${category}$`, "i") };
     }
 
     const products = await Product.find(filter);
+    const pct = parseFloat(discountPercent) || 0;
+    const factor = 1 - pct / 100;
     
-    // Update products in the database
+    // Update products in the database using updateOne to bypass unrelated validation constraints
     const updatePromises = products.map(product => {
-      const discountPrice = Math.round(product.basePrice * (1 - discountPercent / 100));
-      product.flashSale = {
-        discountPrice,
-        saleEndDate: new Date(saleEndDate),
-        isFlashSale: true
-      };
-      return product.save();
+      const base = product.basePrice || 0;
+      const discountPrice = Math.round(base * factor);
+      return Product.updateOne(
+        { _id: product._id },
+        {
+          $set: {
+            flashSale: {
+              discountPrice,
+              saleEndDate: new Date(saleEndDate),
+              isFlashSale: true
+            }
+          }
+        }
+      );
     });
 
     await Promise.all(updatePromises);

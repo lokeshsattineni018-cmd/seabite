@@ -914,8 +914,7 @@ export default function Home() {
           <Hero />
           <WaveTicker />
         </div>
-  
-        <TodaysFreshCatch />
+
         <CategorySection />
         <FlashSale />
         <CategoryRow title="Fresh From The Nets" filterType="Fish" />
