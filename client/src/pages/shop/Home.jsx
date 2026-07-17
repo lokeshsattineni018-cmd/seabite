@@ -299,39 +299,41 @@ const Hero = () => {
             </div>
           </motion.div>
 
-          <div className="hidden md:flex justify-center items-center relative h-[420px]">
-            <motion.div animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/90 backdrop-blur-md rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.18)] border border-white/60 p-8 text-center w-52"
+          <div className="hidden md:flex flex-col items-center justify-center gap-6 h-[420px]" style={{ lineHeight: "normal" }}>
+            <motion.div animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+              className="bg-white/95 backdrop-blur-md rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.18)] border border-white/60 p-7 text-center w-56"
             >
               <div className="text-6xl mb-3">🦐</div>
-              <p className="text-sm font-semibold text-[#1A2B35]">Fresh Jumbo Prawns</p>
+              <p className="text-sm font-bold text-[#1A2B35]">Fresh Jumbo Prawns</p>
               <p className="text-xs text-[#8BA5B3] mt-1">Just arrived today</p>
             </motion.div>
 
-            <motion.div animate={{ y: [0, 5, 0] }} transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.2 }}
-              className="absolute bottom-8 left-8 bg-[#1A2B35]/80 backdrop-blur-md text-white rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-xl"
-            >
-              <Star size={13} className="text-amber-400 fill-amber-400" />
-              <span className="text-sm font-semibold">4.9</span>
-              <span className="text-[10px] text-white/50">· 200+ reviews</span>
-            </motion.div>
+            <div className="flex gap-4 items-center w-full justify-center">
+              <motion.div animate={{ y: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut", delay: 0.2 }}
+                className="bg-[#1A2B35]/85 backdrop-blur-md text-white rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-xl border border-white/10 shrink-0"
+              >
+                <Star size={13} className="text-amber-400 fill-amber-400" />
+                <span className="text-sm font-bold">4.9</span>
+                <span className="text-[10px] text-white/60">· 200+ reviews</span>
+              </motion.div>
 
-            {/* H2: Social proof counter */}
-            <motion.div animate={{ y: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 0.5 }}
-              className="absolute bottom-8 right-8 hidden md:flex bg-white/90 backdrop-blur-md rounded-2xl px-5 py-3 items-center gap-3 shadow-xl border border-white/60"
-            >
-              <div className="flex -space-x-2">
-                {["#5BA8A0", "#E8816A", "#89C2D9"].map((c, i) => (
-                  <div key={i} style={{ width: 28, height: 28, borderRadius: "50%", background: c, border: "2px solid #fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <User size={12} color="#fff" />
-                  </div>
-                ))}
-              </div>
-              <div>
-                <p className="text-[13px] font-bold text-[#1A2B35]" style={{ margin: 0 }}>2,340+</p>
-                <p className="text-[10px] text-[#8BA5B3]" style={{ margin: 0 }}>orders this month</p>
-              </div>
-            </motion.div>
+              {/* H2: Social proof counter */}
+              <motion.div animate={{ y: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 0.5 }}
+                className="bg-white/95 backdrop-blur-md rounded-2xl px-4 py-2.5 flex items-center gap-3 shadow-xl border border-white/60 shrink-0"
+              >
+                <div className="flex -space-x-1.5">
+                  {["#5BA8A0", "#E8816A", "#89C2D9"].map((c, i) => (
+                    <div key={i} style={{ width: 22, height: 22, borderRadius: "50%", background: c, border: "1.5px solid #fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <User size={9} color="#fff" />
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <p className="text-[12px] font-bold text-[#1A2B35]" style={{ margin: 0 }}>2,340+</p>
+                  <p className="text-[9px] text-[#8BA5B3] font-medium" style={{ margin: 0 }}>orders this month</p>
+                </div>
+              </motion.div>
+            </div>
           </div>
         </div>
       </div>
