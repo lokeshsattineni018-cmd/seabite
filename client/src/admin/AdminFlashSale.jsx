@@ -75,18 +75,36 @@ export default function AdminFlashSale() {
         }
     };
 
+    const [confirmConfig, setConfirmConfig] = useState({
+        show: false,
+        message: "",
+        onConfirm: null
+    });
+
+    const triggerConfirm = (message, callback) => {
+        setConfirmConfig({
+            show: true,
+            message,
+            onConfirm: () => {
+                callback();
+                setConfirmConfig(prev => ({ ...prev, show: false }));
+            }
+        });
+    };
+
     const deactivateAll = async () => {
-        if (!window.confirm("End ALL flash sales immediately?")) return;
-        try {
-            const flashProducts = products.filter(p => p.flashSale?.isFlashSale);
-            await Promise.all(flashProducts.map(p =>
-                axios.put(`/api/admin/products/${p._id}/flash-sale`, { isFlashSale: false }, { withCredentials: true })
-            ));
-            toast.success("All sales ended");
-            fetchProducts();
-        } catch {
-            toast.error("Mass end failed");
-        }
+        triggerConfirm("End ALL active flash sales immediately?", async () => {
+            try {
+                const flashProducts = products.filter(p => p.flashSale?.isFlashSale);
+                await Promise.all(flashProducts.map(p =>
+                    axios.put(`/api/admin/products/${p._id}/flash-sale`, { isFlashSale: false }, { withCredentials: true })
+                ));
+                toast.success("All sales ended");
+                fetchProducts();
+            } catch {
+                toast.error("Mass end failed");
+            }
+        });
     };
 
     const handleMassApply = async () => {
@@ -100,25 +118,25 @@ export default function AdminFlashSale() {
 
         if (targetProducts.length === 0) return toast.error("No products found in this category");
 
-        if (!window.confirm(`Apply ${massConfig.discountPercent}% discount to ${targetProducts.length} products?`)) return;
+        triggerConfirm(`Apply ${massConfig.discountPercent}% discount to ${targetProducts.length} products?`, async () => {
+            setIsMassLoading(true);
+            try {
+                await axios.post("/api/admin/products/flash-sale/mass-apply", {
+                    category: massConfig.category,
+                    discountPercent: massConfig.discountPercent,
+                    saleEndDate: massConfig.saleEndDate
+                }, { withCredentials: true });
 
-        setIsMassLoading(true);
-        try {
-            await axios.post("/api/admin/products/flash-sale/mass-apply", {
-                category: massConfig.category,
-                discountPercent: massConfig.discountPercent,
-                saleEndDate: massConfig.saleEndDate
-            }, { withCredentials: true });
-
-            toast.success(`Successfully applied to ${targetProducts.length} products`);
-            fetchProducts();
-            setMassConfig({ category: "", discountPercent: 10, saleEndDate: "" });
-        } catch (err) {
-            const errorMsg = err.response?.data?.message || "Mass apply failed";
-            toast.error(errorMsg);
-        } finally {
-            setIsMassLoading(false);
-        }
+                toast.success(`Successfully applied to ${targetProducts.length} products`);
+                fetchProducts();
+                setMassConfig({ category: "", discountPercent: 10, saleEndDate: "" });
+            } catch (err) {
+                const errorMsg = err.response?.data?.message || "Mass apply failed";
+                toast.error(errorMsg);
+            } finally {
+                setIsMassLoading(false);
+            }
+        });
     };
 
     const categories = ["All", ...new Set(products.map(p => p.category).filter(Boolean))];
@@ -319,6 +337,40 @@ export default function AdminFlashSale() {
                 </motion.div>
 
             </div>
+
+            {/* Custom Premium Confirm Modal */}
+            <AnimatePresence>
+                {confirmConfig.show && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            transition={{ duration: 0.2 }}
+                            className="bg-white rounded-3xl p-6 shadow-2xl border border-stone-200 max-w-md w-full space-y-4"
+                        >
+                            <h3 className="text-lg font-bold text-[#1A2B35]">Confirm Action</h3>
+                            <p className="text-sm text-stone-600 leading-relaxed">{confirmConfig.message}</p>
+                            <div className="flex justify-end gap-3 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setConfirmConfig(prev => ({ ...prev, show: false }))}
+                                    className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-xl text-sm font-semibold transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={confirmConfig.onConfirm}
+                                    className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-stone-900 rounded-xl text-sm font-semibold transition-all shadow-md"
+                                >
+                                    Confirm
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </motion.div>
     );
 }

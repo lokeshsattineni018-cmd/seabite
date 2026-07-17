@@ -299,7 +299,7 @@ const Hero = () => {
             </div>
           </motion.div>
 
-          <div className="hidden md:flex flex-col items-center justify-center gap-6 h-[420px]" style={{ lineHeight: "normal" }}>
+          <div className="hidden md:flex flex-col items-center justify-end pb-8 gap-6 h-[420px]" style={{ lineHeight: "normal" }}>
             <motion.div animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
               className="bg-white/95 backdrop-blur-md rounded-3xl shadow-[0_8px_40px_rgba(0,0,0,0.18)] border border-white/60 p-7 text-center w-56"
             >
@@ -329,7 +329,7 @@ const Hero = () => {
                   ))}
                 </div>
                 <div>
-                  <p className="text-[12px] font-bold text-[#1A2B35]" style={{ margin: 0 }}>2,340+</p>
+                  <p className="text-[12px] font-bold text-[#1A2B35]" style={{ margin: 0 }}>200+</p>
                   <p className="text-[9px] text-[#8BA5B3] font-medium" style={{ margin: 0 }}>orders this month</p>
                 </div>
               </motion.div>
