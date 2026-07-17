@@ -38,6 +38,7 @@ export const addToCart = (product) => {
     existing.qty += qtyToAdd;
     existing.unitPrice = unitPrice;
     existing.price = unitPrice;
+    existing.pricePerKg = product.pricePerKg ? Number(product.pricePerKg) : 0;
   } else {
     const newItem = {
       _id: product._id,
@@ -52,6 +53,7 @@ export const addToCart = (product) => {
       selectedCut: targetCut,
       cutPriceAdjustmentPct: Number(product.cutPriceAdjustmentPct || 0),
       orderedWeightGrams: targetWeight,
+      pricePerKg: product.pricePerKg ? Number(product.pricePerKg) : 0,
     };
     cart.push(newItem);
   }
