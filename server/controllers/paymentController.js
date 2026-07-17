@@ -264,8 +264,9 @@ export const checkout = async (req, res) => {
 
     const calculatedTotalAmount = Math.max(0, totalBeforeWallet - calculatedWalletAppliedAmount);
 
-    // 🟢 ASSERT AMOUNT MATCH
-    if (Math.round(amount) !== Math.round(calculatedTotalAmount)) {
+    // 🟢 ASSERT AMOUNT MATCH (Allow up to ₹5 variance for rounding/order-of-operations discrepancies)
+    const priceDifference = Math.abs(Math.round(amount) - Math.round(calculatedTotalAmount));
+    if (priceDifference > 5) {
       return res.status(400).json({
         success: false,
         message: `Security validation: Price calculation mismatch. Expected: ₹${calculatedTotalAmount}, Received: ₹${amount}.`

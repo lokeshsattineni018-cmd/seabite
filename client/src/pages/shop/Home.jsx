@@ -318,7 +318,7 @@ const Hero = () => {
 
             {/* H2: Social proof counter */}
             <motion.div animate={{ y: [0, 4, 0] }} transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 0.5 }}
-              className="absolute bottom-20 right-8 hidden md:flex bg-white/90 backdrop-blur-md rounded-2xl px-5 py-3 items-center gap-3 shadow-xl border border-white/60"
+              className="absolute bottom-8 right-8 hidden md:flex bg-white/90 backdrop-blur-md rounded-2xl px-5 py-3 items-center gap-3 shadow-xl border border-white/60"
             >
               <div className="flex -space-x-2">
                 {["#5BA8A0", "#E8816A", "#89C2D9"].map((c, i) => (
