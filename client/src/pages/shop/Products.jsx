@@ -444,37 +444,6 @@ export default function Products() {
                     </div>
                   )}
                 </div>
-
-                {/* P3: Catch of the Day Pill */}
-                <motion.button
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => setFilters((p) => ({
-                    ...p,
-                    catchOfTheDay: p.catchOfTheDay === "true" ? "false" : "true",
-                  }))}
-                  style={{
-                    padding: "7px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "700",
-                    whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "6px",
-                    fontFamily: "'Manrope', sans-serif", flexShrink: 0,
-                    border: filters.catchOfTheDay === "true" ? "1.5px solid #D4A017" : "1.5px solid #E8D9A0",
-                    background: filters.catchOfTheDay === "true" 
-                      ? "linear-gradient(135deg, #FEF3C7, #FDE68A)" 
-                      : "linear-gradient(135deg, #FFFBEB, #FEF9E7)",
-                    color: filters.catchOfTheDay === "true" ? "#92400E" : "#B45309",
-                    cursor: "pointer",
-                    boxShadow: filters.catchOfTheDay === "true" 
-                      ? "0 2px 12px rgba(212,160,23,0.25)" 
-                      : "none",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  <span style={{
-                    width: 6, height: 6, borderRadius: "50%",
-                    background: "#F59E0B",
-                    animation: "pulse-dot 2s ease infinite",
-                  }} />
-                  🎣 Today's Catch
-                </motion.button>
               </div>
             </div>
 

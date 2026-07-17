@@ -750,27 +750,7 @@ export default function CartSidebar({ onClose }) {
                   </motion.span>
                 </motion.button>
 
-                {/* K1: 1-Click Express Checkout for returning users */}
-                {defaultAddress && (
-                  <motion.button
-                    whileHover={{ y: -2, background: "rgba(26,46,44,0.03)" }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => {
-                      setIsCartOpen(false);
-                      navigate("/checkout?express=true");
-                    }}
-                    style={{
-                      width: "100%", padding: "12px 20px", borderRadius: 14,
-                      background: "transparent", color: T.textDark, border: `1.5px solid ${T.textDark}`,
-                      fontSize: 13, fontWeight: 700, cursor: "pointer",
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                      fontFamily: font, marginTop: 10,
-                      letterSpacing: "-0.01em",
-                    }}
-                  >
-                    ⚡ Express 1-Click Checkout
-                  </motion.button>
-                )}
+
 
                 <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
                   <FiLock size={10} /> Secured checkout

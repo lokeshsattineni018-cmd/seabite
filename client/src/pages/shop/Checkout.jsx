@@ -302,29 +302,9 @@ export default function Checkout() {
   const [addresses, setAddresses] = useState([]);
   const [deliveryAddress, setDeliveryAddress] = useState({});
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
-  const [expressCountdown, setExpressCountdown] = useState(null);
   const navigate = useNavigate();
   const [isItemsCollapsed, setIsItemsCollapsed] = useState(window.innerWidth < 768);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get("express") === "true" && deliveryAddress.postalCode) {
-      setExpressCountdown(3);
-    }
-  }, [location.search, deliveryAddress.postalCode]);
-
-  useEffect(() => {
-    if (expressCountdown === null) return;
-    if (expressCountdown === 0) {
-      setExpressCountdown(null);
-      placeOrder();
-      return;
-    }
-    const timer = setTimeout(() => {
-      setExpressCountdown(prev => prev - 1);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [expressCountdown]);
 
   // 🕒 Enterprise Schedule & Gifting
   const [deliverySlot, setDeliverySlot] = useState("Morning (07:00 AM - 10:00 AM)");
@@ -447,7 +427,7 @@ export default function Checkout() {
   const freeDeliveryProgress = freeThreshold > 0 ? Math.min((itemTotal / freeThreshold) * 100, 100) : 100;
 
   const discountAmount = useMemo(() => {
-    if (spinDiscount) return Math.min((itemTotal * (spinDiscount.percentage || 0)) / 100, itemTotal);
+    if (spinDiscount) return Math.min(Math.floor((itemTotal * (spinDiscount.percentage || 0)) / 100), itemTotal);
     if (!appliedCoupon) return 0;
     const val = parseFloat(appliedCoupon.discountValue || appliedCoupon.value || 0);
     const maxD = parseFloat(appliedCoupon.maxDiscount || 0);
@@ -460,7 +440,7 @@ export default function Checkout() {
     } else if (appliedCoupon.discountType === "flat") {
       calculated = val;
     }
-    return Math.min(calculated, itemTotal);
+    return Math.min(Math.floor(calculated), itemTotal);
   }, [itemTotal, spinDiscount, appliedCoupon]);
 
   const taxableAmount = Math.max(0, itemTotal - discountAmount);
@@ -735,59 +715,7 @@ export default function Checkout() {
           </div>
         )}
 
-        {expressCountdown !== null && (
-          <div style={{ position: "fixed", inset: 0, background: "rgba(26,46,44,0.85)", zIndex: 2500, display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(12px)" }}>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              style={{
-                width: "100%", maxWidth: 420, background: "#FFF", borderRadius: 24, padding: 32, textAlign: "center",
-                boxShadow: "0 24px 60px rgba(0,0,0,0.15)", border: "1px solid rgba(255,255,255,0.2)"
-              }}
-            >
-              <div style={{
-                width: 64, height: 64, borderRadius: "50%", background: "rgba(91,168,160,0.15)",
-                display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px",
-                fontSize: 28, color: T.primary,
-              }}>
-                ⚡
-              </div>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: T.textDark, margin: "0 0 8px", letterSpacing: "-0.02em" }}>Express 1-Click Checkout</h2>
-              <p style={{ fontSize: 14, color: T.textLite, margin: "0 0 20px", fontWeight: 500 }}>
-                Placing your order automatically in <strong style={{ color: T.primary, fontSize: 16 }}>{expressCountdown}</strong> seconds...
-              </p>
-              
-              <div style={{
-                background: "#F4F9F8", border: "1px solid #E2EEEC", borderRadius: 16, padding: "14px 18px",
-                textAlign: "left", marginBottom: 24
-              }}>
-                <p style={{ fontSize: 10, fontWeight: 800, color: T.primary, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 6px" }}>Shipping To</p>
-                <p style={{ fontSize: 13, fontWeight: 700, color: T.textDark, margin: 0 }}>{deliveryAddress.name}</p>
-                <p style={{ fontSize: 12, color: T.textMid, margin: "2px 0 0", lineHeight: 1.4 }}>
-                  {deliveryAddress.houseNo}, {deliveryAddress.street}, {deliveryAddress.city} - {deliveryAddress.postalCode}
-                </p>
-              </div>
 
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setExpressCountdown(null);
-                  navigate("/checkout");
-                }}
-                style={{
-                  width: "100%", padding: "14px 20px", borderRadius: 14,
-                  background: "#F3F4F6", color: "#4B5563", border: "none",
-                  fontSize: 13, fontWeight: 700, cursor: "pointer",
-                  fontFamily: font,
-                  transition: "background 0.2s"
-                }}
-              >
-                Cancel & Review Order
-              </motion.button>
-            </motion.div>
-          </div>
-        )}
       </AnimatePresence>
 
       <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>

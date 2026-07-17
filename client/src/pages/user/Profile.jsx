@@ -163,39 +163,6 @@ export default function Profile() {
               <h2 className="text-xl font-bold tracking-tight">{user.name}</h2>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{user.role || 'Member'}</p>
 
-              {/* R1: Loyalty Tier Badge */}
-              {(() => {
-                const orderCount = orders.length || 0;
-                const tiers = [
-                  { name: "New Catch", min: 0, max: 3, emoji: "🐟", color: "#6B8F8A", bg: "#EAF6F5" },
-                  { name: "Regular", min: 3, max: 8, emoji: "🦐", color: "#5BBFB5", bg: "#E0F2F0" },
-                  { name: "Loyal Sailor", min: 8, max: 20, emoji: "⚓", color: "#3D8C85", bg: "#D5EFEB" },
-                  { name: "Captain", min: 20, max: 50, emoji: "🏆", color: "#D4A017", bg: "#FEF3C7" },
-                  { name: "Legend", min: 50, max: Infinity, emoji: "👑", color: "#92400E", bg: "#FDE68A" },
-                ];
-                const tier = tiers.find(t => orderCount >= t.min && orderCount < t.max) || tiers[0];
-                const progress = tier.max === Infinity ? 100 : Math.min(100, ((orderCount - tier.min) / (tier.max - tier.min)) * 100);
-                const nextTier = tiers[tiers.indexOf(tier) + 1];
-
-                return (
-                  <div style={{ marginTop: 14, padding: "10px 14px", borderRadius: 16, background: tier.bg, border: `1px solid ${tier.color}22` }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 6 }}>
-                      <span style={{ fontSize: 16 }}>{tier.emoji}</span>
-                      <span style={{ fontSize: 12, fontWeight: 800, color: tier.color, letterSpacing: "0.05em" }}>
-                        {tier.name}
-                      </span>
-                    </div>
-                    <div style={{ height: 4, background: `${tier.color}20`, borderRadius: 4, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: `${progress}%`, background: tier.color, borderRadius: 4, transition: "width 0.6s ease" }} />
-                    </div>
-                    {nextTier && (
-                      <p style={{ fontSize: 10, color: tier.color, margin: "6px 0 0", opacity: 0.75, textAlign: "center" }}>
-                        {nextTier.min - orderCount} more order{nextTier.min - orderCount !== 1 ? "s" : ""} to {nextTier.emoji} {nextTier.name}
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
 
 
               <button
