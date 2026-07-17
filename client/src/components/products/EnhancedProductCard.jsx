@@ -496,12 +496,20 @@ const EnhancedProductCard = ({
           </h3>
         </Link>
 
-        {/* Subtitle / Category Origin (only if not a duplicate of metadata) */}
-        {showDescription && (
-          <div style={{ fontSize: "12px", color: "#8E8E8E", marginTop: "2px", marginBottom: "6px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {descText.split(".")[0]}
-          </div>
-        )}
+        {/* Subtitle / Category Origin (always rendered to maintain equal card heights) */}
+        <div style={{ 
+          fontSize: "12px", 
+          color: "#8E8E8E", 
+          marginTop: "2px", 
+          marginBottom: "6px", 
+          whiteSpace: "nowrap", 
+          overflow: "hidden", 
+          textOverflow: "ellipsis",
+          lineHeight: "1.4",
+          minHeight: "1.4em"
+        }}>
+          {showDescription ? descText.split(".")[0] : "\u00A0"}
+        </div>
 
         {/* Weight / Unit / Pieces / Serves Metadata dynamically formatted (only if non-empty) */}
         {metadataStr && (
