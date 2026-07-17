@@ -105,6 +105,7 @@ export const admin = async (req, res, next) => {
       }
     } catch (err) {
       console.error("Error syncing admin role from DB:", err.message);
+    }
     return next();
   }
   return res.status(403).json({ message: "Access denied: Admin only" });
@@ -120,6 +121,7 @@ export const driverAuth = async (req, res, next) => {
       }
     } catch (err) {
       console.error("Error syncing driver-admin role from DB:", err.message);
+    }
     return next();
   }
   return res.status(403).json({ message: "Access denied: Drivers only" });
@@ -135,6 +137,7 @@ export const supportAuth = async (req, res, next) => {
       }
     } catch (err) {
       console.error("Error syncing support-admin role from DB:", err.message);
+    }
     return next();
   }
   return res.status(403).json({ message: "Access denied: Support only" });
