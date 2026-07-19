@@ -267,9 +267,10 @@ export const checkout = async (req, res) => {
     // 🟢 ASSERT AMOUNT MATCH (Allow up to ₹5 variance for rounding/order-of-operations discrepancies)
     const priceDifference = Math.abs(Math.round(amount) - Math.round(calculatedTotalAmount));
     if (priceDifference > 5) {
+      const breakdown = verifiedItems.map(vi => `${vi.name} (qty ${vi.qty}): Server=₹${vi.price}`).join("; ");
       return res.status(400).json({
         success: false,
-        message: `Security validation: Price calculation mismatch. Expected: ₹${calculatedTotalAmount}, Received: ₹${amount}.`
+        message: `Price mismatch. Expected: ₹${calculatedTotalAmount}, Received: ₹${amount}. Breakdown: [${breakdown}]`
       });
     }
 

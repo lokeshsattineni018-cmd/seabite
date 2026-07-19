@@ -427,20 +427,24 @@ export default function Checkout() {
   const freeDeliveryProgress = freeThreshold > 0 ? Math.min((itemTotal / freeThreshold) * 100, 100) : 100;
 
   const discountAmount = useMemo(() => {
-    if (spinDiscount) return Math.min(Math.floor((itemTotal * (spinDiscount.percentage || 0)) / 100), itemTotal);
-    if (!appliedCoupon) return 0;
-    const val = parseFloat(appliedCoupon.discountValue || appliedCoupon.value || 0);
-    const maxD = parseFloat(appliedCoupon.maxDiscount || 0);
-    let calculated = 0;
-    if (appliedCoupon.discountType === "percent") {
-      calculated = (itemTotal * val) / 100;
-      if (maxD > 0 && calculated > maxD) {
-        calculated = maxD;
+    if (appliedCoupon) {
+      const val = parseFloat(appliedCoupon.discountValue || appliedCoupon.value || 0);
+      const maxD = parseFloat(appliedCoupon.maxDiscount || 0);
+      let calculated = 0;
+      if (appliedCoupon.discountType === "percent") {
+        calculated = (itemTotal * val) / 100;
+        if (maxD > 0 && calculated > maxD) {
+          calculated = maxD;
+        }
+      } else if (appliedCoupon.discountType === "flat") {
+        calculated = val;
       }
-    } else if (appliedCoupon.discountType === "flat") {
-      calculated = val;
+      return Math.min(Math.floor(calculated), itemTotal);
     }
-    return Math.min(Math.floor(calculated), itemTotal);
+    
+    if (spinDiscount) return Math.min(Math.floor((itemTotal * (spinDiscount.percentage || 0)) / 100), itemTotal);
+    
+    return 0;
   }, [itemTotal, spinDiscount, appliedCoupon]);
 
   const taxableAmount = Math.max(0, itemTotal - discountAmount);
