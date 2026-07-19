@@ -37,7 +37,7 @@ export default function ForYouFeed({ isOpen, onClose }) {
     addToCart({
       productId: product._id,
       name: product.name,
-      price: product.price || product.basePrice,
+      price: product.basePrice,
       image: product.image,
       qty: 1
     });

@@ -188,7 +188,7 @@ export const CartProvider = ({ children }) => {
                                 selectedCut: item.selectedCut || "",
                                 cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
                                 orderedWeightGrams: item.orderedWeightGrams || 0,
-                                price: item.product.price || item.product.basePrice
+                                price: item.product.basePrice
                             }));
                         localStorage.setItem("cart", JSON.stringify(dbCart));
                         updateCartState();

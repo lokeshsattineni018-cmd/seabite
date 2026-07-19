@@ -61,6 +61,7 @@ export const useTelemetry = () => {
     let guestId = localStorage.getItem("seabite_guest_id");
     if (!guestId) return;
 
+    /* Removed invasive location tracking
     const watchId = navigator.geolocation.watchPosition(
       async (pos) => {
         const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
@@ -118,7 +119,8 @@ export const useTelemetry = () => {
       { enableHighAccuracy: true, maximumAge: 30000, timeout: 25000 }
     );
 
-    return () => navigator.geolocation.clearWatch(watchId);
+    return () => {}; // navigator.geolocation.clearWatch(watchId);
+    */
   }, [socket, user]);
 
   // ── SCROLL TELEMETRY KEEP-ALIVE ──

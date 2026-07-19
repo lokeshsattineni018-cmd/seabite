@@ -47,7 +47,7 @@ const EnhancedProductCard = ({
   // 1. Flash Sale & Pricing Logic
   const isActiveFlashSale = product.flashSale?.isFlashSale && new Date(product.flashSale.saleEndDate) > new Date();
   
-  let displayPrice = product.price || product.basePrice;
+  let displayPrice = product.basePrice;
   let originalPrice = product.basePrice;
 
   const isWeightUnit = product.unit && (product.unit.toLowerCase() === "kg" || product.unit.toLowerCase() === "g");

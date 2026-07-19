@@ -49,7 +49,7 @@ export default function LiveSocialProof() {
           initial={{ x: -100, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: -100, opacity: 0 }}
-          className="fixed bottom-24 left-6 z-[9999] max-w-[300px]"
+          className="fixed bottom-6 left-6 z-[9999] max-w-[300px]"
         >
           <div className="bg-white/95 backdrop-blur-md border border-stone-200/50 rounded-2xl p-4 shadow-2xl flex items-center gap-4 relative group">
             <button 

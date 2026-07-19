@@ -1173,7 +1173,7 @@ export default function ProductDetails() {
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#F0FBF9", padding: "6px 12px", borderRadius: "100px", alignSelf: "flex-start", marginBottom: "16px", border: "1.5px solid #E2EEEC", width: "fit-content" }}>
                   <div className="pulse-ping" style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#5BBFB5" }} />
                   <span style={{ fontSize: "11px", fontWeight: "700", color: "#1A2E2C", letterSpacing: "0.02em" }}>
-                    {product.salesLast24h} {product.unit || 'kg'} sold in last 24 hrs
+                    {Math.max(200, product.salesLast24h || 0)}+ orders in last 24 hrs
                   </span>
                 </div>
               )}
