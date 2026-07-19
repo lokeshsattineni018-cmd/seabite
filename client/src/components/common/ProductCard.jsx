@@ -41,13 +41,34 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
   };
 
   const isActiveFlashSale = product.flashSale?.isFlashSale && new Date(product.flashSale.saleEndDate) > new Date();
-  let displayPrice = isActiveFlashSale ? product.flashSale.discountPrice : product.basePrice;
   const globalDiscountApplied = !isActiveFlashSale && globalDiscount > 0;
-  if (globalDiscountApplied) displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
   
-  const discountPct = isActiveFlashSale
-    ? Math.round((1 - product.flashSale.discountPrice / product.basePrice) * 100)
-    : globalDiscountApplied ? globalDiscount : 0;
+  let displayPrice = isActiveFlashSale ? product.flashSale.discountPrice : product.basePrice;
+  let originalPrice = product.basePrice;
+
+  // Check if weight pricing applies
+  const isWeightUnit = product.unit && (product.unit.toLowerCase() === "kg" || product.unit.toLowerCase() === "g");
+  const effectiveWeightGrams = product.minOrderWeight || 0;
+  const isWeightPricing = product.pricePerKg > 0 && isWeightUnit && effectiveWeightGrams > 0;
+
+  if (!isActiveFlashSale) {
+    if (globalDiscountApplied) {
+      displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
+    }
+    
+    // Weight pricing overrides global discount
+    if (isWeightPricing) {
+      displayPrice = Math.round((product.pricePerKg / 1000) * effectiveWeightGrams);
+      originalPrice = displayPrice; // Reset original so no strikethrough is shown
+    }
+  }
+  
+  let discountPct = 0;
+  if (isActiveFlashSale && product.basePrice > 0) {
+    discountPct = Math.round((1 - product.flashSale.discountPrice / product.basePrice) * 100);
+  } else if (globalDiscountApplied && originalPrice === product.basePrice && product.basePrice > 0) {
+    discountPct = globalDiscount;
+  }
   
   const hasDiscount = discountPct > 0;
 
@@ -73,7 +94,19 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
   const handleCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    addToCart({ ...product, quantity: 1, originalPrice: product.basePrice });
+    
+    let weightArgs = {};
+    if (!isActiveFlashSale && isWeightPricing) {
+      weightArgs.orderedWeightGrams = effectiveWeightGrams;
+    }
+    
+    addToCart({ 
+      ...product, 
+      quantity: 1, 
+      price: displayPrice,
+      originalPrice: product.basePrice,
+      ...weightArgs 
+    });
     refreshCartCount();
     toast.success("Added to cart");
   };
