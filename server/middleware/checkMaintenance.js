@@ -4,8 +4,8 @@ const checkMaintenance = async (req, res, next) => {
     try {
         const settings = await getSettings();
 
-        // 1. Always allow auth and admin routes
-        if (req.path.startsWith("/api/auth") || req.path.startsWith("/api/admin")) {
+        // 1. Always allow auth and admin routes (account for /api/v1 prefix)
+        if (req.path.includes("/api/auth") || req.path.includes("/api/admin") || req.path.includes("/api/v1/auth") || req.path.includes("/api/v1/admin")) {
             return next();
         }
 

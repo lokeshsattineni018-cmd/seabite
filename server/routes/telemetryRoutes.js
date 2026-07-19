@@ -110,7 +110,8 @@ router.post("/location-update", async (req, res) => {
           {
             headers: {
               "User-Agent": "SeaBite-Server-Telemetry/1.0"
-            }
+            },
+            signal: AbortSignal.timeout(3000) // ✅ Prevent hanging requests and Vercel 503 timeouts
           }
         );
         const addrData = await fetchRes.json();
