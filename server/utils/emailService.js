@@ -798,20 +798,20 @@ export const sendOtpEmail = async (email, otp, type = "VERIFY") => {
 
   let description = "A verification code was requested for your SeaBite account.";
   let heading = "Verification Code";
-  let subjectLine = `Your verification code: ${otp} — SeaBite`;
+  let subjectLine = `Your verification code — SeaBite`;
   
   if (type === "FORGOT") {
     description = "A password reset request was received for your SeaBite account.";
     heading = "Reset Password";
-    subjectLine = `Password reset code: ${otp} — SeaBite`;
+    subjectLine = `Password reset code — SeaBite`;
   } else if (type === "SIGNUP") {
     description = "Use this code to verify your email and complete your SeaBite signup.";
     heading = "Confirm Registration";
-    subjectLine = `Verify your email: ${otp} — SeaBite`;
+    subjectLine = `Verify your email — SeaBite`;
   } else if (type === "ADMIN") {
     description = "An admin authorization action was requested. Enter this security code to proceed.";
     heading = "Admin Authorization";
-    subjectLine = `Security authorization code: ${otp} — SeaBite`;
+    subjectLine = `Security authorization code — SeaBite`;
   }
 
   const content = `
