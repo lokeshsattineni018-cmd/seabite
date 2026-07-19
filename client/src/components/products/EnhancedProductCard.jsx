@@ -48,14 +48,28 @@ const EnhancedProductCard = ({
   const isActiveFlashSale = product.flashSale?.isFlashSale && new Date(product.flashSale.saleEndDate) > new Date();
   
   let displayPrice = product.price || product.basePrice;
+  let originalPrice = product.basePrice;
+
+  const isWeightUnit = product.unit && (product.unit.toLowerCase() === "kg" || product.unit.toLowerCase() === "g");
+  const effectiveWeightGrams = product.minOrderWeight || 0;
+  const isWeightPricing = product.pricePerKg > 0 && isWeightUnit && effectiveWeightGrams > 0;
+
   if (isActiveFlashSale && product.flashSale.discountPrice) {
     displayPrice = product.flashSale.discountPrice;
-  } else if (globalDiscount > 0) {
-    displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
+  } else {
+    if (globalDiscount > 0) {
+      displayPrice = Math.round(product.basePrice * (1 - globalDiscount / 100));
+    }
+    
+    // Weight pricing overrides global discount
+    if (isWeightPricing) {
+      displayPrice = Math.round((product.pricePerKg / 1000) * effectiveWeightGrams);
+      originalPrice = displayPrice; // No strikethrough if weight price is used
+    }
   }
   
-  const discountPct = product.basePrice > displayPrice
-    ? Math.round((1 - displayPrice / product.basePrice) * 100)
+  const discountPct = originalPrice > displayPrice
+    ? Math.round((1 - displayPrice / originalPrice) * 100)
     : 0;
 
   // 2. Robust Wishlist Sync
@@ -128,7 +142,16 @@ const EnhancedProductCard = ({
 
     setTimeout(() => {
       triggerHaptic("medium");
-      addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice), originalPrice: parseFloat(product.basePrice) });
+      
+      let weightArgs = {};
+      // We check if we applied weight pricing (discountPct and originalPrice were calculated earlier)
+      const isWeightUnit = product.unit && (product.unit.toLowerCase() === "kg" || product.unit.toLowerCase() === "g");
+      const effectiveWeightGrams = product.minOrderWeight || 0;
+      if (product.pricePerKg > 0 && isWeightUnit && effectiveWeightGrams > 0) {
+        weightArgs.orderedWeightGrams = effectiveWeightGrams;
+      }
+      
+      addToCart({ ...product, quantity: 1, price: parseFloat(displayPrice), originalPrice: parseFloat(product.basePrice), ...weightArgs });
       refreshCartCount();
       setIsAdding(false);
       toast.success(`${product.name} added!`, { icon: "🛒" });
