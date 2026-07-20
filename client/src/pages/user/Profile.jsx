@@ -329,11 +329,26 @@ export default function Profile() {
 
                           {/* Order Content */}
                           <div className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                            <div className="space-y-1">
+                            <div className="space-y-1 flex-grow">
                               <p className="text-xs font-bold text-[#1A2E2C]">Items:</p>
                               <p className="text-xs text-[#5E7A77] font-medium leading-relaxed">
                                 {order.items?.map(i => `${i.name} (qty ${i.qty})`).join(", ")}
                               </p>
+                              {/* 🟢 Render product images thumbnail list */}
+                              <div className="flex flex-wrap gap-2.5 mt-3">
+                                {order.items?.map((item, idx) => (
+                                  <div key={idx} className="relative flex-shrink-0">
+                                    <img
+                                      src={item.image}
+                                      alt={item.name}
+                                      className="w-12 h-12 object-cover rounded-xl border border-[#E2EEEC] bg-[#F4F9F8]/50"
+                                    />
+                                    <span className="absolute -bottom-1 -right-1 bg-[#1A2E2C] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white">
+                                      x{item.qty}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                             
                             <div className="flex sm:flex-col justify-between items-end w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-[#E2EEEC] shrink-0">
@@ -359,22 +374,22 @@ export default function Profile() {
             {activeTab === "wallet" && (
               <div className="space-y-6">
                 
-                {/* Premium Zomato/Swiggy style Digital Card */}
-                <div className="bg-gradient-to-br from-[#1A2E2C] via-[#24423F] to-[#3D8C85] rounded-3xl p-8 text-white shadow-lg border border-[#E2EEEC]/10 relative overflow-hidden">
-                  <div className="absolute -right-10 -bottom-10 w-44 h-44 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-                  <div className="absolute -left-10 -top-10 w-44 h-44 bg-[#5BA8A0]/10 rounded-full blur-3xl pointer-events-none"></div>
+                 {/* Premium Zomato/Swiggy style Digital Card (Light Version) */}
+                <div className="bg-gradient-to-br from-[#E2EEEC] via-[#F4F9F8] to-[#E2EEEC] rounded-3xl p-8 text-[#1A2E2C] shadow-sm border border-[#5BA8A0]/20 relative overflow-hidden">
+                  <div className="absolute -right-10 -bottom-10 w-44 h-44 bg-[#5BA8A0]/10 rounded-full blur-3xl pointer-events-none"></div>
+                  <div className="absolute -left-10 -top-10 w-44 h-44 bg-white/40 rounded-full blur-3xl pointer-events-none"></div>
 
                   <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                      <span className="text-[10px] font-black uppercase tracking-widest text-[#5BA8A0] block">SeaBite Card Balance</span>
-                      <h3 className="text-4xl font-extrabold tracking-tight mt-3">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#3D8C85] block">SeaBite Card Balance</span>
+                      <h3 className="text-4xl font-extrabold tracking-tight mt-3 text-[#1A2E2C]">
                         ₹{Number(user.walletBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </h3>
-                      <p className="text-xs text-white/70 mt-4 font-medium leading-relaxed max-w-sm">Use wallet balance for instant checkout, special offers, and seamless refund processing.</p>
+                      <p className="text-xs text-[#5E7A77] mt-4 font-medium leading-relaxed max-w-sm">Use wallet balance for instant checkout, special offers, and seamless refund processing.</p>
                     </div>
-                    <div className="px-4 py-2.5 rounded-2xl bg-white/10 border border-white/20 text-center shrink-0">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-white/50 block mb-0.5">Status</span>
-                      <span className="text-xs font-bold text-[#5BA8A0] flex items-center justify-center gap-1">
+                    <div className="px-4 py-2.5 rounded-2xl bg-white border border-[#E2EEEC] text-center shrink-0">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-[#5E7A77] block mb-0.5">Status</span>
+                      <span className="text-xs font-bold text-[#3D8C85] flex items-center justify-center gap-1">
                         Active Account
                       </span>
                     </div>

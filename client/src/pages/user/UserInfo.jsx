@@ -5,9 +5,9 @@ import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// Colorful Google Icon
+// Colorful Google Icon (Corrected SVG Paths)
 const GoogleIcon = () => (
-  <svg viewBox="0 0 24 24" className="w-4 h-4">
+  <svg viewBox="0 0 24 24" className="w-4 h-4 shrink-0 select-none">
     <path
       fill="#4285F4"
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -22,7 +22,7 @@ const GoogleIcon = () => (
     />
     <path
       fill="#EA4335"
-      d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1c-4.3 0-7.9 2.47-9.82 4.93l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
     />
   </svg>
 );
@@ -119,7 +119,7 @@ export default function UserInfo({ user, onUpdate }) {
             <span className="text-xs uppercase tracking-wider text-gray-400 font-semibold w-24 shrink-0">Email</span>
             <div className="flex-1 flex items-center gap-2">
               {user.isGoogleUser && <GoogleIcon />}
-              <span className="text-sm font-medium text-gray-900 truncate ml-2">{user.email}</span>
+              <span className="text-sm font-medium text-gray-900 truncate">{user.email}</span>
             </div>
           </div>
           <div className="w-4 ml-4 shrink-0"></div>
