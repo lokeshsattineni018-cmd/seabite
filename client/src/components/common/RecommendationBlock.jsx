@@ -61,13 +61,7 @@ const RecommendationBlock = ({ currentProductId, category, title = "Recommended 
       >
         {title}
       </h2>
-      <div 
-        style={{ 
-          display: "grid", 
-          gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", 
-          gap: tokens.spacing.md 
-        }}
-      >
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
         {recommendations.map(product => (
           <EnhancedProductCard key={product._id} product={product} globalDiscount={globalDiscount} />
         ))}
