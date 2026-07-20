@@ -14,7 +14,6 @@ import ScrollToTop from "./components/layout/ScrollToTop";
 import PrivateRoute from "./components/PrivateRoute";
 import AdminRoute from "./components/AdminRoute";
 import DriverRoute from "./components/DriverRoute";
-import SupportRoute from "./components/SupportRoute";
 import SupportWidget from "./components/common/SupportWidget";
 import BannerPopup from "./components/layout/BannerPopup";
 import AnnouncementBar from "./components/layout/AnnouncementBar";
@@ -85,10 +84,8 @@ const AdminReturns = lazy(() => import("./admin/AdminReturns")); // 🔄 Returns
 const AdminNotificationOrchestrator = lazy(() => import("./admin/AdminNotificationOrchestrator")); // 📣 Notifications Orchestrator
 const AdminABTesting = lazy(() => import("./admin/AdminABTesting")); // 🔬 A/B Testing
 const AdminFleetConsole = lazy(() => import("./admin/AdminFleetConsole")); // 🛵 Fleet Console
-const AdminSupportConsole = lazy(() => import("./admin/AdminSupportConsole")); // 🎧 Support Console
 
 const DeliveryDashboard = lazy(() => import("./delivery/DeliveryDashboard"));
-const SupportDashboard = lazy(() => import("./support/SupportDashboard"));
 
 
 
@@ -330,7 +327,6 @@ function MainLayout() {
                     <Route path="campaigns" element={<AdminNotificationOrchestrator />} />
                     <Route path="ab-tests" element={<AdminABTesting />} />
                     <Route path="fleet-console" element={<AdminFleetConsole />} />
-                    <Route path="support-console" element={<AdminSupportConsole />} />
                   </Route>
                 </Routes>
               ) : (
@@ -354,7 +350,6 @@ function MainLayout() {
                     
                     {/* Dashboards */}
                     <Route path="/driver" element={<DriverRoute><PageTransition><DeliveryDashboard /></PageTransition></DriverRoute>} />
-                    <Route path="/support" element={<SupportRoute><PageTransition><SupportDashboard /></PageTransition></SupportRoute>} />
 
                     <Route path="/login" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=login" replace />} />
                     <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Navigate to="/?auth=signup" replace />} />

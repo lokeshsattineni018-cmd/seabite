@@ -51,7 +51,6 @@ const CATEGORIES = [
       { name: "Messages", path: "/admin/messages", icon: <FiMail size={16} /> },
       { name: "Reviews", path: "/admin/reviews", icon: <FiStar size={16} /> },
       { name: "Search Discovery", path: "/admin/discovery", icon: <FiTarget size={16} /> },
-      { name: "Support Console", path: "/admin/support-console", icon: <FiMessageSquare size={16} /> },
     ]
   },
   {

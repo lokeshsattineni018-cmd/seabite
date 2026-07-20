@@ -333,13 +333,11 @@ export default function AdminLayout() {
                 onChange={(e) => {
                   const val = e.target.value;
                   if (val === "driver") navigate("/driver");
-                  if (val === "support") navigate("/support");
                 }}
                 className="bg-stone-100 border border-stone-200 rounded-xl px-3 py-1.5 text-xs font-bold text-stone-800 focus:outline-none cursor-pointer hover:bg-stone-200/60 transition-colors"
               >
                 <option value="admin">🏢 Admin Dashboard</option>
                 <option value="driver">🛵 Driver Dashboard</option>
-                <option value="support">🎧 Support Dashboard</option>
               </select>
             </div>
             
