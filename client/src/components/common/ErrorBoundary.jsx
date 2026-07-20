@@ -196,31 +196,18 @@ export function SeaBiteError({ error }) {
                     maxWidth: "480px", width: "100%",
                 }}>
 
-                    {/* Logo */}
-                    <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center", animation: "fadeUp 0.5s ease 0.1s both" }}>
-                        <div style={{
-                            width: 72, height: 72,
-                            borderRadius: "20px",
-                            background: dark ? "rgba(59,130,246,0.15)" : "rgba(255,255,255,0.9)",
-                            border: `1px solid ${border}`,
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            fontSize: 36,
-                            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-                            backdropFilter: "blur(8px)",
-                        }}>
-                            <img src="/logo.webp" alt="SeaBite" style={{ width: 44, height: 44, objectFit: "contain" }} />
-                        </div>
-                    </div>
-
-                    {/* Wordmark */}
-                    <div style={{ marginBottom: "20px", animation: "fadeUp 0.5s ease 0.15s both" }}>
-                        <span style={{
-                            fontSize: "20px", fontWeight: 600, color: text1,
-                            letterSpacing: "-0.3px",
-                        }}>Sea</span><span style={{
-                            fontSize: "20px", fontWeight: 600, color: "#3b82f6",
-                            letterSpacing: "-0.3px",
-                        }}>Bite</span>
+                    {/* Big Logo without BG or wordmark text */}
+                    <div style={{ marginBottom: "24px", display: "flex", justifyContent: "center", animation: "fadeUp 0.5s ease 0.1s both" }}>
+                        <img 
+                            src="/logo.webp" 
+                            alt="SeaBite" 
+                            style={{ 
+                                height: "84px", 
+                                width: "auto", 
+                                objectFit: "contain",
+                                filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.12))"
+                            }} 
+                        />
                     </div>
 
                     {/* Blue divider */}
