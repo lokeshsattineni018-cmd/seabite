@@ -45,14 +45,25 @@ export const refundToWallet = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Customer account not found." });
     }
-    user.walletBalance = (user.walletBalance || 0) + order.totalAmount;
+
+    // 💰 Calculate correct refund amount
+    const isCOD = order.paymentMethod === "COD";
+    const isPaid = order.isPaid === true;
+    const walletUsed = order.walletAppliedAmount || 0;
+    const refundAmount = (isCOD || !isPaid) ? walletUsed : (order.totalAmount + walletUsed);
+
+    if (refundAmount <= 0) {
+      return res.status(400).json({ message: "No refundable wallet balance exists for this order." });
+    }
+
+    user.walletBalance = (user.walletBalance || 0) + refundAmount;
     
     // Add transaction to history
     if (!user.walletTransactions) {
       user.walletTransactions = [];
     }
     user.walletTransactions.push({
-      amount: order.totalAmount,
+      amount: refundAmount,
       type: "Credit",
       description: `Refund for Order #${order.orderId || order._id}`,
       date: new Date()
@@ -62,7 +73,7 @@ export const refundToWallet = async (req, res) => {
 
     res.json({
       success: true,
-      message: `₹${order.totalAmount} refunded to ${user.name}'s wallet successfully.`
+      message: `₹${refundAmount} refunded to ${user.name}'s wallet successfully.`
     });
   } catch (error) {
     console.error("❌ WALLET REFUND ERROR:", error);

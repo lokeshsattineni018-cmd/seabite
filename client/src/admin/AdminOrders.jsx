@@ -831,8 +831,13 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
   const [submittingWeight, setSubmittingWeight] = useState(false);
   const [refunding, setRefunding] = useState(false);
 
+  const isCOD = order.paymentMethod === "COD";
+  const isPaid = order.isPaid === true;
+  const walletUsed = order.walletAppliedAmount || 0;
+  const refundAmount = (isCOD || !isPaid) ? walletUsed : (order.totalAmount + walletUsed);
+
   const handleWalletRefund = async () => {
-    if (!window.confirm(`Refund ₹${order.totalAmount} to customer's wallet and cancel this order?`)) return;
+    if (!window.confirm(`Refund ₹${refundAmount} to customer's wallet and cancel this order?`)) return;
     setRefunding(true);
     try {
       const { data } = await axios.post("/api/payment/refund-wallet", { orderId: order._id }, { withCredentials: true });
@@ -866,7 +871,7 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
 
   const hasWeightItems = order.items.some(item => item.orderedWeightGrams > 0);
   const showConfirmButton = hasWeightItems && !order.weightVarianceRefundIssued;
-  const canWalletRefund = !order.status?.includes("Cancelled") && order.refundStatus !== "Refunded to Wallet";
+  const canWalletRefund = !order.status?.includes("Cancelled") && order.refundStatus !== "Refunded to Wallet" && refundAmount > 0;
 
   return (
     <div className="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1064,9 +1069,14 @@ function OrderDetailsModal({ order, onClose, updateRefundStatus, onProcessRefund
               <div className="p-6 rounded-2xl border border-purple-200 bg-purple-50/50">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-purple-600">Refund to Wallet</h4>
-                  <span className="text-xs font-bold text-purple-700">₹{order.totalAmount?.toLocaleString()}</span>
+                  <span className="text-xs font-bold text-purple-700">₹{refundAmount?.toLocaleString()}</span>
                 </div>
-                <p className="text-[11px] text-stone-500 mb-4 leading-relaxed">Cancel order and refund the full amount to the customer's wallet balance instantly.</p>
+                <p className="text-[11px] text-stone-500 mb-4 leading-relaxed">
+                  {(isCOD || !isPaid)
+                    ? "Cancel order and refund the wallet balance used to the customer's wallet balance instantly."
+                    : "Cancel order and refund the total paid amount to the customer's wallet balance instantly."
+                  }
+                </p>
                 <button
                   onClick={handleWalletRefund}
                   disabled={refunding}
