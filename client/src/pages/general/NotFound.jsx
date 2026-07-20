@@ -11,7 +11,7 @@ export default function NotFound() {
       </Helmet>
       <div 
         style={{ 
-          minHeight: "75vh", 
+          minHeight: "100vh", 
           background: "#F4F9F8", 
           display: "flex", 
           flexDirection: "column", 

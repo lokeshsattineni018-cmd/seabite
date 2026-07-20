@@ -133,6 +133,15 @@ function MainLayout() {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const isDashboardRoute = isAdminRoute || location.pathname.startsWith("/driver") || location.pathname.startsWith("/support");
+
+  const knownPrefixes = ["/products/", "/orders/", "/track/", "/blog/", "/admin", "/driver"];
+  const knownExactPaths = [
+    "/", "/products", "/wishlist", "/profile", "/refer-earn", "/loyalty",
+    "/notifications", "/checkout", "/success", "/orders", "/login", "/signup",
+    "/about", "/blog", "/contact", "/faq", "/terms", "/privacy", "/cancellation", "/maintenance"
+  ];
+  const isKnownRoute = knownExactPaths.includes(location.pathname) || knownPrefixes.some(prefix => location.pathname.startsWith(prefix));
+  const isNotFoundRoute = !isKnownRoute;
   const [maintenance, setMaintenance] = useState({ active: false, message: "" });
   const [announcement, setAnnouncement] = useState(() => {
     try {
@@ -261,13 +270,13 @@ function MainLayout() {
       />
 
       {/* 🟢 Global Announcement (Rolling Ticker) */}
-      {!isDashboardRoute && <AnnouncementBar settings={announcement} />}
+      {!isDashboardRoute && !isNotFoundRoute && <AnnouncementBar settings={announcement} />}
 
       {/* 🟢 Global Popup Banner */}
-      <BannerPopup bannerSettings={maintenance.banner} />
+      {!isNotFoundRoute && <BannerPopup bannerSettings={maintenance.banner} />}
 
       {/* 🟢 Cookie Consent */}
-      <CookieConsent />
+      {!isNotFoundRoute && <CookieConsent />}
 
       {/* 🔐 Google One Tap Login */}
       {/* <GoogleOneTap /> Disabled to prevent unwanted auto-logins into Gmail accounts */}
@@ -278,8 +287,8 @@ function MainLayout() {
         <Maintenance message={maintenance.message} />
       ) : (
         <>
-          {!isDashboardRoute && <Navbar announcementActive={!!announcement?.active} />}
-          {!isDashboardRoute && (
+          {!isDashboardRoute && !isNotFoundRoute && <Navbar announcementActive={!!announcement?.active} />}
+          {!isDashboardRoute && !isNotFoundRoute && (
             <>
               <CartSidebar />
               <Suspense fallback={null}>
@@ -289,7 +298,7 @@ function MainLayout() {
           )}
 
           <div className={`flex-grow ${
-            (!isDashboardRoute && location.pathname !== "/" && location.pathname !== "/login" && location.pathname !== "/signup")
+            (!isDashboardRoute && !isNotFoundRoute && location.pathname !== "/" && location.pathname !== "/login" && location.pathname !== "/signup")
               ? (announcement?.active ? "page-content-container announcement-active" : "page-content-container")
               : ""
           }`}>
@@ -366,13 +375,13 @@ function MainLayout() {
                   </Routes>
                 </AnimatePresence>
               )}
-              {!isDashboardRoute && location.pathname !== "/success" && <Footer />}
+              {!isDashboardRoute && !isNotFoundRoute && location.pathname !== "/success" && <Footer />}
             </Suspense>
           </div>
-          {!isDashboardRoute && <SupportWidget />}
-          {!isDashboardRoute && <ComparisonDrawer />}
-          {!isDashboardRoute && <LiveSocialProof />}
-          {promoOffer && (
+          {!isDashboardRoute && !isNotFoundRoute && <SupportWidget />}
+          {!isDashboardRoute && !isNotFoundRoute && <ComparisonDrawer />}
+          {!isDashboardRoute && !isNotFoundRoute && <LiveSocialProof />}
+          {promoOffer && !isNotFoundRoute && (
             <PromoModal offer={promoOffer} onClose={clearPromoOffer} />
           )}
         </>
