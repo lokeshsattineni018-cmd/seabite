@@ -1,17 +1,14 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
   FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiLock,
-  FiEye, FiEyeOff, FiShoppingBag, FiShield, FiX,
-  FiCheckCircle, FiUser, FiChevronRight, FiCreditCard,
-  FiBell, FiSettings, FiPackage, FiCalendar
+  FiShoppingBag, FiShield, FiCheckCircle, FiUser,
+  FiCreditCard, FiBell, FiPackage, FiCalendar
 } from "react-icons/fi";
-import { motion, AnimatePresence } from "framer-motion";
 import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
 import SeaBiteLoader from "../../components/common/SeaBiteLoader";
-import AnimatedOceanBanner from "./AnimatedOceanBanner";
 import toast from "react-hot-toast";
 import { useAuth } from "../../context/AuthContext";
 import { usePushSubscription } from "../../hooks/usePushSubscription";
@@ -19,35 +16,19 @@ import { usePushSubscription } from "../../hooks/usePushSubscription";
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 export default function Profile() {
-  const { user: authUser, loading: authLoading, refreshMe } = useAuth();
+  const { user: authUser, loading: authLoading } = useAuth();
   const { isSupported, isSubscribed, loading: pushLoading, subscribeToPush, unsubscribeFromPush } = usePushSubscription();
   const [user, setUser] = useState(null);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
-  const [showPassModal, setShowPassModal] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
 
   // Password States
   const [oldPass, setOldPass] = useState("");
   const [newPass, setNewPass] = useState("");
   const [confirmPass, setConfirmPass] = useState("");
-  const [showOld, setShowOld] = useState(false);
-  const [showNew, setShowNew] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
-
-  const handlePushToggle = async () => {
-    if (isSubscribed) {
-      const success = await unsubscribeFromPush();
-      if (success) toast.success("Push notifications disabled!");
-    } else {
-      const success = await subscribeToPush();
-      if (success) toast.success("Push notifications enabled!");
-      else toast.error("Failed to enable push notifications. Check browser permissions.");
-    }
-  };
-
-
 
   const navigate = useNavigate();
 
@@ -94,7 +75,8 @@ export default function Profile() {
     }
   };
 
-  const handleChangePassword = async () => {
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
     if (!oldPass || !newPass) return toast.error("Please fill both fields");
     if (newPass.length < 6) return toast.error("New password must be at least 6 characters");
     if (newPass !== confirmPass) return toast.error("Passwords do not match");
@@ -102,13 +84,25 @@ export default function Profile() {
     setPassLoading(true);
     try {
       await axios.put(`${API_URL}/api/auth/change-password`, { oldPassword: oldPass, newPassword: newPass }, { withCredentials: true });
-      toast.success("Password updated!");
-      setShowPassModal(false);
-      setOldPass(""); setNewPass(""); setConfirmPass("");
+      toast.success("Password updated successfully!");
+      setOldPass("");
+      setNewPass("");
+      setConfirmPass("");
     } catch (err) {
       toast.error(err.response?.data?.message || "Incorrect current password");
     } finally {
       setPassLoading(false);
+    }
+  };
+
+  const handlePushToggle = async () => {
+    if (isSubscribed) {
+      const success = await unsubscribeFromPush();
+      if (success) toast.success("Push notifications disabled!");
+    } else {
+      const success = await subscribeToPush();
+      if (success) toast.success("Push notifications enabled!");
+      else toast.error("Failed to enable push notifications. Check browser permissions.");
     }
   };
 
@@ -130,380 +124,369 @@ export default function Profile() {
   const totalSpent = orders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 selection:bg-blue-100 pt-8">
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-
-        {/* 🔙 Navigation */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-10">
+    <div className="min-h-screen bg-[#F4F9F8] text-[#1A2E2C] py-8" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      <div className="max-w-6xl mx-auto px-4">
+        
+        {/* Back Link */}
+        <div className="mb-6">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-all"
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#5E7A77] hover:text-[#1A2E2C] transition-colors"
           >
             <FiArrowLeft size={14} /> Back to Shop
           </button>
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-
-          {/* 📱 Left Sidebar */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}
-            className="lg:col-span-3 space-y-6 lg:sticky lg:top-32"
-          >
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 text-center">
-              <div className="relative inline-block mb-4">
-                <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-tr from-blue-100 to-indigo-100">
-                  <div className="w-full h-full rounded-full bg-slate-50 flex items-center justify-center text-3xl font-light text-slate-400 overflow-hidden">
-                    {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" alt="Avatar" /> : avatarLetter}
-                  </div>
+        {/* Dashboard Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+          
+          {/* Left Sidebar */}
+          <div className="md:col-span-1 space-y-4">
+            
+            {/* User Header Info */}
+            <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] text-center shadow-sm">
+              <div className="relative inline-block mb-3">
+                <div className="w-20 h-20 rounded-full bg-[#F4F9F8] border-2 border-[#E2EEEC] flex items-center justify-center text-2xl font-bold text-[#5BA8A0] overflow-hidden">
+                  {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" alt="Avatar" /> : avatarLetter}
                 </div>
-                <div className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-green-500 border-4 border-white"></div>
               </div>
-              <h2 className="text-xl font-bold tracking-tight">{user.name}</h2>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{user.role || 'Member'}</p>
-
-
-
+              <h2 className="text-lg font-bold text-[#1A2E2C] leading-snug">{user.name}</h2>
+              <p className="text-xs font-semibold text-[#5BA8A0] mt-0.5">{user.email}</p>
+              
               <button
                 onClick={handleLogout}
                 disabled={logoutLoading}
-                className="mt-8 w-full py-3 rounded-2xl bg-red-50 text-red-500 text-xs font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-6 w-full py-2.5 rounded-xl border border-red-100 bg-red-50/50 hover:bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {logoutLoading ? (
-                  <div className="loading-spinner" style={{ width: "14px", height: "14px", border: "2px solid #EF4444", borderTopColor: "transparent" }} />
-                ) : (
-                  <FiLogOut size={14} />
-                )}
+                <FiLogOut size={13} />
                 <span>{logoutLoading ? "Signing Out..." : "Sign Out"}</span>
               </button>
             </div>
 
-            <div className="bg-white rounded-[2.5rem] p-2 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 hidden lg:block">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-4 px-6 py-4 rounded-3xl transition-all ${activeTab === tab.id
-                      ? 'bg-slate-900 text-white shadow-xl'
-                      : 'text-slate-400 hover:text-slate-900 hover:bg-slate-50'
+            {/* Sidebar Navigation */}
+            <div className="bg-white rounded-2xl p-2 border border-[#E2EEEC] shadow-sm hidden md:block">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-semibold transition-all ${
+                      isActive
+                        ? "bg-[#1A2E2C] text-white shadow-sm"
+                        : "text-[#5E7A77] hover:text-[#1A2E2C] hover:bg-[#F4F9F8]"
                     }`}
-                >
-                  <tab.icon size={18} />
-                  <span className="text-sm font-bold">{tab.label}</span>
-                </button>
-              ))}
+                  >
+                    <tab.icon size={16} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Mobile Nav */}
-            <div className="lg:hidden flex gap-2 overflow-x-auto no-scrollbar">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex-shrink-0 flex items-center gap-3 px-6 py-3 rounded-2xl text-sm font-bold transition-all ${activeTab === tab.id ? 'bg-slate-900 text-white' : 'bg-white text-slate-400 border border-slate-100'
+            {/* Mobile Navigation bar */}
+            <div className="md:hidden flex gap-2 overflow-x-auto no-scrollbar py-1">
+              {tabs.map((tab) => {
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                      isActive
+                        ? "bg-[#1A2E2C] text-white border-[#1A2E2C]"
+                        : "bg-white text-[#5E7A77] border-[#E2EEEC]"
                     }`}
-                >
-                  <tab.icon size={16} /> {tab.label}
-                </button>
-              ))}
+                  >
+                    <tab.icon size={14} />
+                    <span>{tab.label}</span>
+                  </button>
+                );
+              })}
             </div>
-          </motion.div>
 
-          {/* 💎 Content Area */}
-          <div className="lg:col-span-9">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                className="space-y-8"
-              >
-                {activeTab === "overview" && (
-                  <>
-                    {/* Animated Ocean Header */}
-                    <div className="relative group">
-                      <AnimatedOceanBanner />
-                      <div className="absolute inset-0 flex flex-col justify-center px-10 lg:px-16 pointer-events-none">
-                        <motion.span
-                          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
-                          className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500 mb-2"
+          </div>
+
+          {/* Right Main Content */}
+          <div className="md:col-span-3 space-y-6">
+            
+            {/* 1. OVERVIEW TAB */}
+            {activeTab === "overview" && (
+              <div className="space-y-6">
+                
+                {/* Clean Welcome Banner */}
+                <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm">
+                  <h1 className="text-2xl font-extrabold text-[#1A2E2C] tracking-tight">
+                    Good day, <span className="text-[#5BA8A0]">{user.name.split(" ")[0]}</span>
+                  </h1>
+                  <p className="text-xs text-[#5E7A77] mt-1 font-medium">
+                    Welcome to your dashboard. Review your past orders, manage addresses, or configure preferences.
+                  </p>
+                </div>
+
+                {/* Grid Stats */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#5E7A77] mb-2">Orders Placed</p>
+                    <p className="text-3xl font-extrabold text-[#1A2E2C]">{orders.length}</p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#5E7A77] mb-2">Total Purchases</p>
+                    <p className="text-3xl font-extrabold text-[#1A2E2C]">
+                      ₹{Number(totalSpent || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                  <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-sm cursor-pointer hover:border-[#5BA8A0] transition-colors" onClick={() => setActiveTab("wallet")}>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#5E7A77] mb-2">Wallet Credits</p>
+                    <p className="text-3xl font-extrabold text-[#5BA8A0]">
+                      ₹{Number(user.walletBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Personal Info Box */}
+                <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm">
+                  <h3 className="text-base font-bold text-[#1A2E2C] mb-4 border-b border-[#F4F9F8] pb-3">Personal Details</h3>
+                  <UserInfo user={user} onUpdate={fetchUserAndOrders} />
+                </div>
+
+              </div>
+            )}
+
+            {/* 2. ORDERS TAB */}
+            {activeTab === "orders" && (
+              <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm space-y-6">
+                <div className="flex justify-between items-center border-b border-[#F4F9F8] pb-3">
+                  <h2 className="text-base font-bold text-[#1A2E2C]">Order History</h2>
+                  <span className="text-xs font-semibold text-[#5E7A77]">{orders.length} total orders</span>
+                </div>
+
+                {orders.length === 0 ? (
+                  <div className="text-center py-16">
+                    <FiShoppingBag className="mx-auto text-[#5E7A77]/30 mb-3" size={36} />
+                    <p className="text-sm font-bold text-[#1A2E2C]">No orders placed yet</p>
+                    <p className="text-xs text-[#5E7A77] mt-1">Start shopping our fresh seafood daily catches.</p>
+                    <button
+                      onClick={() => navigate("/products")}
+                      className="mt-6 px-6 py-2.5 bg-[#1A2E2C] text-white rounded-xl text-xs font-bold uppercase tracking-wider"
+                    >
+                      Shop Seafood
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {orders.map((order) => {
+                      const isDelivered = order.status === "Delivered";
+                      const isCancelled = order.status?.includes("Cancelled");
+                      return (
+                        <div
+                          key={order._id}
+                          className="p-4 rounded-xl border border-[#E2EEEC] hover:border-[#5BA8A0] transition-colors bg-[#F4F9F8]/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
                         >
-                          Welcome Back
-                        </motion.span>
-                        <motion.h1
-                          initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.7 }}
-                          className="text-3xl lg:text-5xl font-extralight tracking-tight text-slate-900"
-                        >
-                          Good morning, <span className="font-bold">{user.name.split(' ')[0]}</span>.
-                        </motion.h1>
-                      </div>
-                    </div>
-
-                    {/* Stats */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-blue-200 transition-all">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Orders</p>
-                        <p className="text-5xl font-extralight tracking-tighter">{orders.length}</p>
-                      </div>
-                      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-indigo-200 transition-all">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Total Spent</p>
-                        <p className="text-5xl font-extralight tracking-tighter">₹{Number(totalSpent || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                      </div>
-                      <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 group hover:border-green-200 transition-all cursor-pointer" onClick={() => setActiveTab("wallet")}>
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-6">Wallet Balance</p>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-5xl font-extralight tracking-tighter">₹{Number(user.walletBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </div>
-                      </div>
-                    </div>
-
-
-
-                    <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
-                      <h3 className="text-xl font-bold tracking-tight mb-8">Personal Information</h3>
-                      <UserInfo user={user} onUpdate={fetchUserAndOrders} />
-                    </div>
-                  </>
-                )}
-
-                {activeTab === "orders" && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between px-2">
-                      <h2 className="text-2xl font-bold tracking-tight">Recent Orders</h2>
-                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{orders.length} total</span>
-                    </div>
-
-                    {orders.length === 0 ? (
-                      <div className="bg-white rounded-[2.5rem] p-20 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 text-center">
-                        <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-6">
-                          <FiShoppingBag className="text-slate-300" size={32} />
-                        </div>
-                        <h2 className="text-2xl font-bold mb-2">No active orders.</h2>
-                        <p className="text-slate-400 font-medium mb-10">You haven't ordered anything yet. Explore our menu!</p>
-                        <button onClick={() => navigate("/products")} className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-slate-900/20 hover:scale-105 transition-all">
-                          Browse Menu
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 gap-4">
-                        {orders.slice(0, 5).map((order) => (
-                          <div 
-                            key={order._id} 
-                            onClick={() => navigate(`/orders/${order._id}`)}
-                            className="bg-white rounded-[2rem] p-6 shadow-[0_10px_30px_rgba(0,0,0,0.02)] border border-slate-100 flex items-center justify-between group hover:border-slate-300 transition-all cursor-pointer"
-                          >
-                            <div className="flex items-center gap-6">
-                              <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
-                                <FiPackage size={24} />
+                          <div className="flex items-start gap-3">
+                            <div className="p-2.5 rounded-lg bg-[#E2EEEC] text-[#1A2E2C] shrink-0 mt-0.5">
+                              <FiPackage size={18} />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-sm text-[#1A2E2C]">
+                                Order #{order.orderId || order._id.slice(-6).toUpperCase()}
+                              </h4>
+                              <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#5E7A77] font-medium">
+                                <span className="flex items-center gap-1"><FiCalendar size={12} /> {new Date(order.createdAt).toLocaleDateString()}</span>
+                                <span>•</span>
+                                <span>{order.items?.length || 0} items</span>
                               </div>
-                              <div>
-                                <h4 className="font-bold text-slate-900">Order #{order.orderId || order._id.slice(-6).toUpperCase()}</h4>
-                                <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 font-medium">
-                                  <span className="flex items-center gap-1"><FiCalendar size={12} /> {new Date(order.createdAt).toLocaleDateString()}</span>
-                                  <span className="w-1 h-1 rounded-full bg-slate-200"></span>
-                                  <span>{order.items?.length || 0} items</span>
-                                </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex sm:flex-col justify-between items-end w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-[#E2EEEC]">
+                            <div className="text-left sm:text-right">
+                              <p className="font-extrabold text-sm text-[#1A2E2C]">₹{order.totalAmount}</p>
+                              <span className={`text-[10px] font-bold uppercase tracking-wider mt-0.5 block ${
+                                isDelivered ? "text-emerald-600" : isCancelled ? "text-rose-500" : "text-amber-600"
+                              }`}>
+                                {order.status}
+                              </span>
+                            </div>
+                            <button
+                              onClick={() => navigate(`/orders/${order._id}`)}
+                              className="mt-2 text-xs font-bold text-[#5BA8A0] hover:text-[#1A2E2C] transition-colors"
+                            >
+                              View Details &rarr;
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 3. WALLET TAB */}
+            {activeTab === "wallet" && (
+              <div className="space-y-6">
+                
+                {/* Wallet Balance Card */}
+                <div className="bg-gradient-to-br from-[#1A2E2C] to-[#2D504C] rounded-2xl p-6 text-white border border-[#E2EEEC] shadow-md relative overflow-hidden">
+                  <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#5BA8A0] block mb-1">SeaBite Wallet</span>
+                      <h3 className="text-4xl font-extrabold">
+                        ₹{Number(user.walletBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </h3>
+                      <p className="text-xs text-white/70 mt-2 font-medium">Use wallet balance for instant checkout and hassle-free payments.</p>
+                    </div>
+                    <div className="px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-center shrink-0">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-white/50 block mb-0.5">Status</span>
+                      <span className="text-xs font-bold text-[#5BA8A0] flex items-center justify-center gap-1">
+                        Active
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transaction History */}
+                <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm">
+                  <h3 className="text-base font-bold text-[#1A2E2C] mb-4 border-b border-[#F4F9F8] pb-3">Transaction History</h3>
+
+                  {!user.walletTransactions || user.walletTransactions.length === 0 ? (
+                    <div className="text-center py-10 text-[#5E7A77]">
+                      <FiCreditCard className="mx-auto mb-3 opacity-30" size={32} />
+                      <p className="text-xs font-bold">No transactions found</p>
+                      <p className="text-[11px] text-[#5E7A77]/70 mt-0.5">Refunds or wallet credits will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {user.walletTransactions.map((tx, idx) => {
+                        const isCredit = tx.type === "Credit";
+                        return (
+                          <div key={tx._id || idx} className="flex justify-between items-center p-4 rounded-xl border border-[#E2EEEC] bg-[#F4F9F8]/10">
+                            <div>
+                              <h4 className="text-xs font-bold text-[#1A2E2C]">{tx.description}</h4>
+                              <div className="flex items-center gap-1 text-[10px] text-[#5E7A77] mt-1">
+                                <FiCalendar size={11} />
+                                <span>{new Date(tx.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                               </div>
                             </div>
                             <div className="text-right">
-                              <p className="font-bold text-slate-900">₹{order.totalAmount}</p>
-                              <span className={`text-[10px] font-black uppercase tracking-widest mt-1 block ${order.status === 'Delivered' ? 'text-green-500' : 'text-blue-500'
-                                }`}>{order.status}</span>
+                              <span className={`text-sm font-extrabold ${isCredit ? "text-emerald-600" : "text-rose-500"}`}>
+                                {isCredit ? "+" : "-"} ₹{Number(tx.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              <span className="block text-[9px] font-bold uppercase tracking-wider text-[#5E7A77] mt-0.5">{tx.type}</span>
                             </div>
                           </div>
-                        ))}
-                        <button onClick={() => navigate("/orders")} className="w-full py-4 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-sm font-bold hover:bg-slate-50 transition-all">
-                          View All Orders
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {activeTab === "wallet" && (
-                  <div className="space-y-8">
-                    <div className="flex items-center justify-between px-2">
-                      <h2 className="text-2xl font-bold tracking-tight">My Wallet</h2>
+                        );
+                      })}
                     </div>
+                  )}
+                </div>
 
-                    <div className="bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100 relative overflow-hidden group hover:border-green-200 transition-all">
-                      <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                        <div>
-                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5BBFB5] mb-2 block font-black">Total Balance</span>
-                          <h3 className="text-5xl font-extralight tracking-tighter mb-2 text-slate-900">₹{Number(user.walletBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
-                          <p className="text-xs text-slate-400 font-medium">Use wallet credits at checkout for instant payments.</p>
-                        </div>
-                        <div className="px-6 py-4 rounded-3xl bg-slate-50 border border-slate-100 text-center shrink-0">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 block mb-1">Status</span>
-                          <span className="text-sm font-bold text-emerald-600 flex items-center justify-center gap-1.5">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Active
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+              </div>
+            )}
 
+            {/* 4. ADDRESSES TAB */}
+            {activeTab === "addresses" && (
+              <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm">
+                <h3 className="text-base font-bold text-[#1A2E2C] mb-4 border-b border-[#F4F9F8] pb-3">Delivery Addresses</h3>
+                <AddressManager />
+              </div>
+            )}
 
+            {/* 5. SECURITY TAB */}
+            {activeTab === "security" && (
+              <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm space-y-6">
+                <h3 className="text-base font-bold text-[#1A2E2C] border-b border-[#F4F9F8] pb-3">Account Security</h3>
 
-                    <div className="bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
-                      <h3 className="text-xl font-bold tracking-tight mb-6">Transaction History</h3>
-
-                      {!user.walletTransactions || user.walletTransactions.length === 0 ? (
-                        <div className="text-center py-12 text-slate-400">
-                          <FiCreditCard className="mx-auto mb-3 opacity-30" size={36} />
-                          <p className="text-sm font-medium">No transactions found.</p>
-                          <p className="text-xs">Refunds or credits will show up here.</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {user.walletTransactions.map((tx, idx) => (
-                            <div key={tx._id || idx} className="flex items-center justify-between p-5 rounded-3xl border border-slate-50 bg-slate-50/50 hover:bg-slate-50 transition-all">
-                              <div className="space-y-1">
-                                <h4 className="text-sm font-bold text-slate-800">{tx.description}</h4>
-                                <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-                                  <FiCalendar size={12} />
-                                  <span>{new Date(tx.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <span className={`text-base font-extrabold ${tx.type === "Credit" ? "text-emerald-600" : "text-rose-500"}`}>
-                                  {tx.type === "Credit" ? "+" : "-"} ₹{Number(tx.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                                <span className="block text-[9px] font-black uppercase tracking-widest text-slate-400 mt-1">{tx.type}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                {user.isGoogleUser ? (
+                  <div className="flex items-center gap-3 p-4 bg-[#F4F9F8]/50 border border-[#E2EEEC] rounded-xl text-sm font-semibold">
+                    <FiLock className="text-[#5E7A77]" />
+                    <span>Your account is connected to and secured via Google OAuth.</span>
                   </div>
-                )}
-
-                {activeTab === "addresses" && (
-                  <div className="bg-white rounded-[2.5rem] p-10 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
-                    <AddressManager />
-                  </div>
-                )}
-
-                {activeTab === "security" && (
-                  <div className="bg-white rounded-[2.5rem] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
-                    <div className="flex flex-col lg:flex-row justify-between gap-12">
-                      <div className="max-w-md">
-                        <h2 className="text-2xl font-bold mb-4 tracking-tight">Security Protocol</h2>
-                        <p className="text-slate-400 font-medium leading-relaxed mb-6">Manage your security keys and account protection settings.</p>
-                        <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-green-50 text-green-600 border border-green-100">
-                          <FiCheckCircle size={16} />
-                          <span className="text-[10px] font-black uppercase tracking-widest">Multi-Factor Enabled</span>
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-3 justify-center">
-                        {user.isGoogleUser ? (
-                          <div className="flex items-center gap-4 px-8 py-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <FiLock className="text-slate-400" />
-                            <span className="text-sm font-bold">Authenticated via Google</span>
-                          </div>
-                        ) : (
-                          <button onClick={() => setShowPassModal(true)} className="px-10 py-4 rounded-2xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-slate-900/20">
-                            Change Password
-                          </button>
-                        )}
-                      </div>
+                ) : (
+                  <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[#5E7A77] mb-1">Current Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={oldPass}
+                        onChange={e => setOldPass(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E2EEEC] focus:border-[#5BA8A0] outline-none transition-colors text-sm font-medium"
+                      />
                     </div>
-                  </div>
-                )}
-
-                {activeTab === "notifications" && (
-                  <div className="bg-white rounded-[2.5rem] p-12 shadow-[0_20px_50px_rgba(0,0,0,0.03)] border border-slate-100">
-                    <div className="flex flex-col lg:flex-row justify-between gap-12">
-                      <div className="max-w-md">
-                        <h2 className="text-2xl font-bold mb-4 tracking-tight">Notification Channels</h2>
-                        <p className="text-slate-400 font-medium leading-relaxed mb-6">Stay informed on your fresh seafood delivery status and flash sales.</p>
-                        
-                        {!isSupported ? (
-                          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100">
-                            <FiBell size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Push Not Supported by Browser</span>
-                          </div>
-                        ) : isSubscribed ? (
-                          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-green-50 text-green-600 border border-green-100">
-                            <FiCheckCircle size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Push Alerts Subscribed</span>
-                          </div>
-                        ) : (
-                          <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-50 text-slate-500 border border-slate-100">
-                            <FiBell size={16} />
-                            <span className="text-[10px] font-black uppercase tracking-widest">Push Alerts Disabled</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {isSupported && (
-                        <div className="flex flex-col gap-3 justify-center items-center">
-                          <label className="relative inline-flex items-center cursor-pointer">
-                            <input 
-                              type="checkbox" 
-                              checked={isSubscribed} 
-                              disabled={pushLoading}
-                              onChange={handlePushToggle}
-                              className="sr-only peer"
-                            />
-                            <div className="w-14 h-8 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-emerald-500"></div>
-                            <span className="ml-3 text-sm font-bold text-slate-700">Web Push Alerts</span>
-                          </label>
-                          <span className="text-[10px] text-slate-400 text-center font-medium mt-1">
-                            Dispatched catches (4:00 AM) • Order milestones • Price drops
-                          </span>
-                        </div>
-                      )}
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[#5E7A77] mb-1">New Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={newPass}
+                        onChange={e => setNewPass(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E2EEEC] focus:border-[#5BA8A0] outline-none transition-colors text-sm font-medium"
+                      />
                     </div>
-                  </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[#5E7A77] mb-1">Confirm New Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={confirmPass}
+                        onChange={e => setConfirmPass(e.target.value)}
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E2EEEC] focus:border-[#5BA8A0] outline-none transition-colors text-sm font-medium"
+                      />
+                    </div>
+                    
+                    <button
+                      type="submit"
+                      disabled={passLoading}
+                      className="px-6 py-2.5 bg-[#1A2E2C] text-white rounded-xl text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                    >
+                      {passLoading ? "Updating..." : "Update Password"}
+                    </button>
+                  </form>
                 )}
-              </motion.div>
-            </AnimatePresence>
+              </div>
+            )}
+
+            {/* 6. NOTIFICATIONS TAB */}
+            {activeTab === "notifications" && (
+              <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm space-y-6">
+                <h3 className="text-base font-bold text-[#1A2E2C] border-b border-[#F4F9F8] pb-3">Notification Preferences</h3>
+
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 p-4 border border-[#E2EEEC] bg-[#F4F9F8]/20 rounded-xl">
+                  <div className="max-w-md">
+                    <h4 className="text-sm font-bold text-[#1A2E2C]">Push Notifications</h4>
+                    <p className="text-xs text-[#5E7A77] mt-1 font-medium">Receive real-time alerts for delivery status updates, daily catch lists, and flash sales.</p>
+                  </div>
+                  
+                  {isSupported ? (
+                    <button
+                      onClick={handlePushToggle}
+                      disabled={pushLoading}
+                      className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${
+                        isSubscribed
+                          ? "bg-red-50 text-red-600 border border-red-100 hover:bg-red-500 hover:text-white"
+                          : "bg-[#1A2E2C] text-white hover:bg-[#2D504C]"
+                      }`}
+                    >
+                      {isSubscribed ? "Disable Alerts" : "Enable Alerts"}
+                    </button>
+                  ) : (
+                    <span className="text-xs font-semibold text-[#5E7A77] bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200">
+                      Not Supported in this Browser
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
           </div>
+
         </div>
+
       </div>
 
-      {/* Clean Modal */}
-      <AnimatePresence>
-        {showPassModal && (
-          <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-[3rem] p-12 w-full max-w-lg shadow-[0_50px_100px_rgba(0,0,0,0.1)] border border-slate-100 relative overflow-hidden"
-            >
-              <button onClick={() => setShowPassModal(false)} className="absolute top-8 right-8 text-slate-300 hover:text-slate-900 transition-colors">
-                <FiX size={24} />
-              </button>
-              <h2 className="text-2xl font-bold mb-2 tracking-tight">Update Security</h2>
-              <p className="text-slate-400 font-medium mb-10 text-sm">Ensure your account stays protected with a high-entropy key.</p>
-
-              <div className="space-y-4 mb-8">
-                <input
-                  type={showOld ? "text" : "password"} placeholder="Current Password" value={oldPass} onChange={e => setOldPass(e.target.value)}
-                  className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-sm font-medium"
-                />
-                <input
-                  type={showNew ? "text" : "password"} placeholder="New Password" value={newPass} onChange={e => setNewPass(e.target.value)}
-                  className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-sm font-medium"
-                />
-                <input
-                  type="password" placeholder="Confirm New Password" value={confirmPass} onChange={e => setConfirmPass(e.target.value)}
-                  className="w-full px-6 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:bg-white focus:ring-4 focus:ring-blue-100 outline-none transition-all text-sm font-medium"
-                />
-              </div>
-
-              <button
-                onClick={handleChangePassword} disabled={passLoading}
-                className="w-full py-4 rounded-2xl bg-slate-900 text-white font-bold text-xs uppercase tracking-widest shadow-xl shadow-slate-900/10 disabled:opacity-50"
-              >
-                {passLoading ? "Processing..." : "Update Password"}
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      <style jsx>{`
+      <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
