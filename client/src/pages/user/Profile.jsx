@@ -5,7 +5,7 @@ import {
   FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiLock,
   FiShoppingBag, FiShield, FiCheckCircle, FiUser,
   FiCreditCard, FiBell, FiPackage, FiCalendar, FiChevronRight,
-  FiActivity, FiDollarSign, FiClock, FiCheck
+  FiActivity, FiClock, FiCheck
 } from "react-icons/fi";
 import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
@@ -245,7 +245,7 @@ export default function Profile() {
                   
                   <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#5BA8A0] transition-colors duration-200 flex items-center gap-4">
                     <div className="w-12 h-12 rounded-xl bg-[#F4F9F8] border border-[#E2EEEC] text-[#5BA8A0] flex items-center justify-center shrink-0">
-                      <FiDollarSign size={20} className="stroke-[2.5]" />
+                      <span className="text-lg font-black select-none">₹</span>
                     </div>
                     <div>
                       <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#5E7A77]">Lifetime Spent</p>
@@ -331,21 +331,16 @@ export default function Profile() {
                           <div className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div className="space-y-1 flex-grow">
                               <p className="text-xs font-bold text-[#1A2E2C]">Items:</p>
-                              <p className="text-xs text-[#5E7A77] font-medium leading-relaxed">
-                                {order.items?.map(i => `${i.name} (qty ${i.qty})`).join(", ")}
-                              </p>
-                              {/* 🟢 Render product images thumbnail list */}
-                              <div className="flex flex-wrap gap-2.5 mt-3">
+                              {/* 🟢 Render product images thumbnail list only */}
+                              <div className="flex flex-wrap gap-2.5 mt-2">
                                 {order.items?.map((item, idx) => (
                                   <div key={idx} className="relative flex-shrink-0">
                                     <img
                                       src={item.image}
                                       alt={item.name}
+                                      title={item.name}
                                       className="w-12 h-12 object-cover rounded-xl border border-[#E2EEEC] bg-[#F4F9F8]/50"
                                     />
-                                    <span className="absolute -bottom-1 -right-1 bg-[#1A2E2C] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full border border-white">
-                                      x{item.qty}
-                                    </span>
                                   </div>
                                 ))}
                               </div>
