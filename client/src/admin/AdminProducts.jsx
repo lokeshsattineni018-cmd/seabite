@@ -227,7 +227,6 @@ export default function AdminProducts() {
           </div>
         </motion.div>
 
-        {/* 🌟 Modern Glassmorphism Floating Bulk Toolbar */}
         <AnimatePresence>
           {selectedIds.length > 0 && (
             <motion.div
@@ -235,14 +234,14 @@ export default function AdminProducts() {
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: 80, opacity: 0, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 shadow-[0_20px_60px_rgba(0,0,0,0.4)] rounded-2xl px-5 py-3 flex items-center gap-4 z-[9999] max-w-[95vw] md:max-w-max overflow-x-auto text-white"
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-[#E2EEEC] shadow-[0_20px_50px_rgba(0,0,0,0.08)] rounded-2xl px-5 py-3 flex items-center gap-4 z-[9999] max-w-[95vw] md:max-w-max overflow-x-auto text-[#1A2E2C]"
             >
               {/* Count Badge */}
-              <div className="flex items-center gap-2.5 pr-4 border-r border-slate-700/80 shrink-0">
-                <span className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-extrabold text-xs shadow-md shadow-emerald-500/30">
+              <div className="flex items-center gap-2.5 pr-4 border-r border-[#E2EEEC] shrink-0">
+                <span className="w-7 h-7 rounded-full bg-[#1A2E2C] text-white flex items-center justify-center font-extrabold text-xs">
                   {selectedIds.length}
                 </span>
-                <span className="text-slate-300 text-[11px] font-bold uppercase tracking-wider hidden sm:inline">Selected</span>
+                <span className="text-[#5E7A77] text-[11px] font-bold uppercase tracking-wider hidden sm:inline">Selected</span>
               </div>
 
               {/* Action Buttons */}
@@ -251,7 +250,7 @@ export default function AdminProducts() {
                 <button
                   onClick={() => handleBulkVisibilityUpdate(true)}
                   disabled={isBulkProcessing}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-bold rounded-xl transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs font-bold rounded-xl transition-all"
                   title="Make visible on store"
                 >
                   <FiEye size={14} /> Show
@@ -259,37 +258,37 @@ export default function AdminProducts() {
                 <button
                   onClick={() => handleBulkVisibilityUpdate(false)}
                   disabled={isBulkProcessing}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold rounded-xl transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-bold rounded-xl transition-all"
                   title="Hide from store"
                 >
                   <FiEyeOff size={14} /> Hide
                 </button>
 
-                <div className="h-4 w-px bg-slate-700/80 mx-1 hidden sm:block" />
+                <div className="h-4 w-px bg-[#E2EEEC] mx-1 hidden sm:block" />
 
                 {/* Stock Controls */}
                 <button
                   onClick={() => handleBulkStockUpdate('in')}
                   disabled={isBulkProcessing}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold rounded-xl transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-[#F4F9F8] hover:bg-[#E2EEEC] text-[#1A2E2C] border border-[#E2EEEC] text-xs font-bold rounded-xl transition-all"
                 >
-                  <FiCheckCircle size={14} className="text-emerald-400" /> In Stock
+                  <FiCheckCircle size={14} className="text-emerald-600" /> In Stock
                 </button>
                 <button
                   onClick={() => handleBulkStockUpdate('out')}
                   disabled={isBulkProcessing}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold rounded-xl transition-all active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-[#F4F9F8] hover:bg-[#E2EEEC] text-[#1A2E2C] border border-[#E2EEEC] text-xs font-bold rounded-xl transition-all"
                 >
-                  <FiXCircle size={14} className="text-rose-400" /> Out
+                  <FiXCircle size={14} className="text-rose-600" /> Out
                 </button>
 
-                <div className="h-4 w-px bg-slate-700/80 mx-1" />
+                <div className="h-4 w-px bg-[#E2EEEC] mx-1" />
 
                 {/* Delete Button */}
                 <button
                   disabled={isBulkProcessing}
                   onClick={handleBulkDelete}
-                  className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 rounded-xl transition-all active:scale-95"
+                  className="p-2 text-[#5E7A77] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
                   title="Delete Selected"
                 >
                   <FiTrash2 size={16} />
@@ -300,7 +299,7 @@ export default function AdminProducts() {
               <button
                 onClick={() => setSelectedIds([])}
                 disabled={isBulkProcessing}
-                className="p-2 text-slate-400 hover:text-white rounded-xl transition-colors ml-1"
+                className="p-2 text-[#5E7A77] hover:text-[#1A2E2C] rounded-xl transition-colors ml-1"
                 title="Cancel Selection"
               >
                 <FiX size={16} />

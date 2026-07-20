@@ -494,20 +494,20 @@ export default function AdminOrders() {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 20, opacity: 0 }}
-              className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-stone-900 border border-stone-800 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 min-w-[500px]"
+              className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md border border-[#E2EEEC] shadow-[0_20px_50px_rgba(0,0,0,0.08)] rounded-2xl px-6 py-4 flex items-center gap-6 z-50 min-w-[500px]"
             >
-              <div className="flex items-center gap-2 pr-6 border-r border-stone-800">
-                <div className="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold text-sm">
+              <div className="flex items-center gap-2.5 pr-6 border-r border-[#E2EEEC]">
+                <div className="w-8 h-8 rounded-full bg-[#1A2E2C] text-white flex items-center justify-center font-black text-sm">
                   {selectedOrderIds.length}
                 </div>
-                <span className="text-stone-400 text-xs font-bold uppercase tracking-widest">Selected</span>
+                <span className="text-[#5E7A77] text-xs font-bold uppercase tracking-widest">Selected</span>
               </div>
 
               <div className="flex items-center gap-3 flex-1">
                 <select
                   disabled={isBulkUpdating}
                   onChange={(e) => handleBulkStatusUpdate(e.target.value)}
-                  className="bg-stone-800 border-none text-white text-xs font-bold px-3 py-2 rounded-xl outline-none cursor-pointer hover:bg-stone-700 transition-colors"
+                  className="bg-[#F4F9F8] border border-[#E2EEEC] hover:border-[#5BA8A0] text-[#1A2E2C] text-xs font-bold px-3.5 py-2.5 rounded-xl outline-none cursor-pointer transition-colors"
                   value=""
                 >
                   <option value="" disabled>Update Status to...</option>
@@ -517,7 +517,7 @@ export default function AdminOrders() {
                 <select
                   disabled={isBulkUpdating || partners.length === 0}
                   onChange={(e) => handleBulkAssign(e.target.value)}
-                  className="bg-stone-800 border-none text-white text-xs font-bold px-3 py-2 rounded-xl outline-none cursor-pointer hover:bg-stone-700 transition-colors"
+                  className="bg-[#F4F9F8] border border-[#E2EEEC] hover:border-[#5BA8A0] text-[#1A2E2C] text-xs font-bold px-3.5 py-2.5 rounded-xl outline-none cursor-pointer transition-colors"
                   value=""
                 >
                   <option value="" disabled>{partners.length === 0 ? "No active partners" : "Assign to Partner..."}</option>
@@ -527,7 +527,7 @@ export default function AdminOrders() {
                 <button
                   disabled={isBulkUpdating}
                   onClick={handleBulkDelete}
-                  className="p-2.5 text-stone-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                  className="p-2.5 text-[#5E7A77] hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
                   title="Bulk Delete"
                 >
                   <FiTrash2 size={18} />
@@ -536,7 +536,7 @@ export default function AdminOrders() {
 
               <button
                 onClick={() => setSelectedOrderIds([])}
-                className="text-stone-500 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors"
+                className="text-[#5E7A77] hover:text-[#1A2E2C] text-xs font-bold uppercase tracking-widest transition-colors"
                 disabled={isBulkUpdating}
               >
                 Cancel
