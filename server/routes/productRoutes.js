@@ -575,6 +575,19 @@ router.post("/:id/waitlist", protect, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Failed to join waitlist" });
   }
+// 🟢 POST /api/products/price-sync
+router.post("/price-sync", async (req, res) => {
+  try {
+    const { productIds } = req.body;
+    if (!Array.isArray(productIds)) {
+      return res.status(400).json({ message: "Invalid productIds" });
+    }
+    const products = await Product.find({ _id: { $in: productIds } })
+      .select("name basePrice pricePerKg unit flashSale active image");
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
 });
 
 export default router;

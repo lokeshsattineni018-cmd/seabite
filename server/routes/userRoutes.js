@@ -103,6 +103,7 @@ router.post("/cart", protect, async (req, res) => {
         user.abandonedCartEmailSent = false;
 
         await user.save();
+        await user.populate({ path: "cart.product", select: "-buyingPrice -waitlist" });
 
         // 🟢 WATCHTOWER LOG (Debounce or check if cart not empty)
         if (cart.length > 0) {

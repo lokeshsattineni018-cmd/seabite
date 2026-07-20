@@ -172,6 +172,43 @@ export const CartProvider = ({ children }) => {
         return () => window.removeEventListener("storage", updateCartState);
     }, [updateCartState]);
 
+    // 🟢 Periodically sync and update cart prices with the latest server DB values
+    useEffect(() => {
+        const syncGuestPrices = async () => {
+            try {
+                const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+                if (cart.length === 0) return;
+                const productIds = cart.map(item => item._id || item.productId).filter(Boolean);
+                if (productIds.length === 0) return;
+                
+                const { data } = await axios.post(`${API_URL}/api/products/price-sync`, { productIds });
+                if (data && data.length > 0) {
+                    const updatedCart = cart.map(item => {
+                        const matched = data.find(p => p._id === item._id);
+                        if (matched) {
+                            return {
+                                ...item,
+                                name: matched.name,
+                                image: matched.image,
+                                basePrice: matched.basePrice,
+                                pricePerKg: matched.pricePerKg,
+                                unit: matched.unit,
+                                flashSale: matched.flashSale,
+                                active: matched.active
+                            };
+                        }
+                        return item;
+                    });
+                    localStorage.setItem("cart", JSON.stringify(updatedCart));
+                    updateCartState();
+                }
+            } catch (err) {
+                // Silent fail
+            }
+        };
+        syncGuestPrices();
+    }, [updateCartState]);
+
     useEffect(() => {
         if (!user) return;
         const syncCart = async () => {
@@ -205,7 +242,21 @@ export const CartProvider = ({ children }) => {
                             cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
                             orderedWeightGrams: item.orderedWeightGrams || 0
                         }));
-                    await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
+                    const res = await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
+                    if (res.data && res.data.cart) {
+                        const dbCart = res.data.cart
+                            .filter(item => item && item.product)
+                            .map(item => ({
+                                ...item.product,
+                                qty: item.qty,
+                                selectedCut: item.selectedCut || "",
+                                cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
+                                orderedWeightGrams: item.orderedWeightGrams || 0,
+                                price: item.product.basePrice
+                            }));
+                        localStorage.setItem("cart", JSON.stringify(dbCart));
+                        updateCartState();
+                    }
                 } catch (err) { }
             }
             setCartLoaded(true);
@@ -227,7 +278,24 @@ export const CartProvider = ({ children }) => {
                         cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
                         orderedWeightGrams: item.orderedWeightGrams || 0
                     }));
-                await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
+                const res = await axios.post(`${API_URL}/api/user/cart`, { cart: payload }, { withCredentials: true });
+                if (res.data && res.data.cart) {
+                    const dbCart = res.data.cart
+                        .filter(item => item && item.product)
+                        .map(item => ({
+                            ...item.product,
+                            qty: item.qty,
+                            selectedCut: item.selectedCut || "",
+                            cutPriceAdjustmentPct: item.cutPriceAdjustmentPct || 0,
+                            orderedWeightGrams: item.orderedWeightGrams || 0,
+                            price: item.product.basePrice
+                        }));
+                    const currentCart = JSON.parse(localStorage.getItem("cart") || "[]");
+                    if (JSON.stringify(currentCart) !== JSON.stringify(dbCart)) {
+                        localStorage.setItem("cart", JSON.stringify(dbCart));
+                        updateCartState();
+                    }
+                }
             } catch (err) { }
         }, 2000);
         return () => clearTimeout(timeout);
