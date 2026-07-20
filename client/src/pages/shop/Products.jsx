@@ -384,66 +384,6 @@ export default function Products() {
                     <span>{CATEGORY_META[cat]?.emoji}</span>{cat}
                   </motion.button>
                 ))}
-
-                <div style={{ width: "1px", height: "20px", background: "#E2EEEC", flexShrink: 0 }} />
-
-                {/* Sort Dropdown */}
-                <div ref={sortRef} style={{ position: "relative", flexShrink: 0 }}>
-                  <button
-                    onClick={() => setSortOpen(!sortOpen)}
-                    style={{
-                      display: "flex", alignItems: "center", gap: "5px",
-                      padding: "8px 14px", borderRadius: "10px",
-                      border: "1.5px solid #E2EEEC", background: "#fff",
-                      color: filters.sort !== "newest" ? "#5BBFB5" : "#6B8F8A",
-                      fontSize: "12px", fontWeight: "700",
-                      cursor: "pointer", fontFamily: "'Manrope', sans-serif",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {filters.sort === "newest" ? "Sort" : 
-                     filters.sort === "price_asc" ? "Price ↑" :
-                     filters.sort === "price_desc" ? "Price ↓" :
-                     filters.sort === "popular" ? "Popular" : "Sort"}
-                    <FiChevronDown size={12} style={{ transform: sortOpen ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s" }} />
-                  </button>
-                  {sortOpen && (
-                    <div className="sort-dropdown" style={{
-                      position: "absolute", top: "calc(100% + 6px)", right: 0,
-                      background: "#fff", borderRadius: 12,
-                      border: "1.5px solid #E2EEEC", padding: "6px",
-                      minWidth: 160, zIndex: 200,
-                      boxShadow: "0 12px 32px rgba(0,0,0,0.08)",
-                    }}>
-                      {[
-                        { value: "newest", label: "Newest First" },
-                        { value: "price_asc", label: "Price: Low to High" },
-                        { value: "price_desc", label: "Price: High to Low" },
-                        { value: "popular", label: "Most Popular" },
-                      ].map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => {
-                            setFilters((p) => ({ ...p, sort: opt.value }));
-                            setSortOpen(false);
-                          }}
-                          style={{
-                            display: "flex", alignItems: "center", gap: 8,
-                            width: "100%", padding: "9px 12px", borderRadius: 8,
-                            border: "none", cursor: "pointer",
-                            background: filters.sort === opt.value ? "rgba(91,191,181,0.1)" : "transparent",
-                            color: filters.sort === opt.value ? "#5BBFB5" : "#4A6A67",
-                            fontSize: "12px", fontWeight: filters.sort === opt.value ? 700 : 600,
-                            fontFamily: "'Manrope', sans-serif",
-                            textAlign: "left",
-                          }}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             </div>
 
