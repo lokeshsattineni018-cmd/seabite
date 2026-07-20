@@ -575,6 +575,8 @@ router.post("/:id/waitlist", protect, async (req, res) => {
   } catch (err) {
     res.status(500).json({ message: "Failed to join waitlist" });
   }
+});
+
 // 🟢 POST /api/products/price-sync
 router.post("/price-sync", async (req, res) => {
   try {
