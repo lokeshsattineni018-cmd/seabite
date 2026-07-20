@@ -1,12 +1,7 @@
-// AdminProducts.jsx
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import axios from "axios";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiEdit2, FiTrash2, FiPlus, FiPackage,
   FiRefreshCw, FiGrid, FiList, FiFilter, FiMoreHorizontal,
-  FiCheck, FiX
+  FiCheck, FiX, FiEye, FiEyeOff, FiCheckCircle, FiXCircle
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import PopupModal from "../components/common/PopupModal";
@@ -67,6 +62,37 @@ export default function AdminProducts() {
       fetchProducts(true);
     } catch {
       setModal({ show: true, message: "Delete failed", type: "error" });
+    }
+  };
+
+  const toggleVisibility = async (id, currentActive, e) => {
+    if (e) e.stopPropagation();
+    const nextActive = !currentActive;
+    const t = toast.loading(nextActive ? "Publishing product..." : "Hiding product...");
+    try {
+      await axios.put(`${backendBase}/api/admin/products/${id}`, { active: nextActive }, { withCredentials: true });
+      toast.success(nextActive ? "Product is now Visible on Store" : "Product Hidden from Store", { id: t });
+      fetchProducts(true);
+    } catch (err) {
+      toast.error("Failed to update visibility", { id: t });
+    }
+  };
+
+  const handleBulkVisibilityUpdate = async (activeState) => {
+    if (selectedIds.length === 0) return;
+    setIsBulkProcessing(true);
+    const t = toast.loading(`Updating ${selectedIds.length} products to ${activeState ? 'Visible' : 'Hidden'}...`);
+    try {
+      await Promise.all(
+        selectedIds.map(id => axios.put(`${backendBase}/api/admin/products/${id}`, { active: activeState }, { withCredentials: true }))
+      );
+      toast.success(`${selectedIds.length} products ${activeState ? 'published' : 'hidden'}`, { id: t });
+      setSelectedIds([]);
+      fetchProducts(true);
+    } catch (err) {
+      toast.error("Bulk visibility update failed", { id: t });
+    } finally {
+      setIsBulkProcessing(false);
     }
   };
 
@@ -197,53 +223,83 @@ export default function AdminProducts() {
           </div>
         </motion.div>
 
-        {/* Bulk Action Bar */}
+        {/* 🌟 Modern Glassmorphism Floating Bulk Toolbar */}
         <AnimatePresence>
           {selectedIds.length > 0 && (
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 20, opacity: 0 }}
-              className="fixed bottom-8 left-1/2 -translate-x-1/2 bg-stone-900 border border-stone-800 shadow-2xl rounded-2xl px-6 py-4 flex items-center gap-6 z-50 min-w-[500px]"
+              initial={{ y: 80, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: 80, opacity: 0, scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 backdrop-blur-xl border border-slate-700/80 shadow-[0_20px_60px_rgba(0,0,0,0.4)] rounded-2xl px-5 py-3 flex items-center gap-4 z-[9999] max-w-[95vw] md:max-w-max overflow-x-auto text-white"
             >
-              <div className="flex items-center gap-2 pr-6 border-r border-stone-800">
-                <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm shadow-lg shadow-emerald-500/20">
+              {/* Count Badge */}
+              <div className="flex items-center gap-2.5 pr-4 border-r border-slate-700/80 shrink-0">
+                <span className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-extrabold text-xs shadow-md shadow-emerald-500/30">
                   {selectedIds.length}
-                </div>
-                <span className="text-stone-400 text-xs font-bold uppercase tracking-widest">Inventory Selection</span>
+                </span>
+                <span className="text-slate-300 text-[11px] font-bold uppercase tracking-wider hidden sm:inline">Selected</span>
               </div>
 
-              <div className="flex items-center gap-3 flex-1">
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Visibility Controls */}
+                <button
+                  onClick={() => handleBulkVisibilityUpdate(true)}
+                  disabled={isBulkProcessing}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-bold rounded-xl transition-all active:scale-95"
+                  title="Make visible on store"
+                >
+                  <FiEye size={14} /> Show
+                </button>
+                <button
+                  onClick={() => handleBulkVisibilityUpdate(false)}
+                  disabled={isBulkProcessing}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold rounded-xl transition-all active:scale-95"
+                  title="Hide from store"
+                >
+                  <FiEyeOff size={14} /> Hide
+                </button>
+
+                <div className="h-4 w-px bg-slate-700/80 mx-1 hidden sm:block" />
+
+                {/* Stock Controls */}
                 <button
                   onClick={() => handleBulkStockUpdate('in')}
                   disabled={isBulkProcessing}
-                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white text-[10px] font-bold uppercase rounded-xl transition-all border border-stone-700 active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold rounded-xl transition-all active:scale-95"
                 >
-                  Mark In Stock
+                  <FiCheckCircle size={14} className="text-emerald-400" /> In Stock
                 </button>
                 <button
                   onClick={() => handleBulkStockUpdate('out')}
                   disabled={isBulkProcessing}
-                  className="px-4 py-2 bg-stone-800 hover:bg-stone-700 text-white text-[10px] font-bold uppercase rounded-xl transition-all border border-stone-700 active:scale-95"
+                  className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-bold rounded-xl transition-all active:scale-95"
                 >
-                  Mark Out
+                  <FiXCircle size={14} className="text-rose-400" /> Out
                 </button>
+
+                <div className="h-4 w-px bg-slate-700/80 mx-1" />
+
+                {/* Delete Button */}
                 <button
                   disabled={isBulkProcessing}
                   onClick={handleBulkDelete}
-                  className="p-2.5 text-stone-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
-                  title="Bulk Delete"
+                  className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-500/15 rounded-xl transition-all active:scale-95"
+                  title="Delete Selected"
                 >
-                  <FiTrash2 size={18} />
+                  <FiTrash2 size={16} />
                 </button>
               </div>
 
+              {/* Close Button */}
               <button
                 onClick={() => setSelectedIds([])}
-                className="text-stone-500 hover:text-white text-[10px] font-bold uppercase tracking-widest transition-colors"
                 disabled={isBulkProcessing}
+                className="p-2 text-slate-400 hover:text-white rounded-xl transition-colors ml-1"
+                title="Cancel Selection"
               >
-                Cancel
+                <FiX size={16} />
               </button>
             </motion.div>
           )}
@@ -268,14 +324,33 @@ export default function AdminProducts() {
               {filteredProducts.map((p) => (
                 <motion.div key={p._id} variants={fadeUp} className="group bg-white rounded-3xl border border-stone-200/60 overflow-hidden hover:shadow-lg hover:border-stone-300/60 transition-all duration-300">
                   <div className="aspect-square bg-stone-50/30 p-6 relative flex items-center justify-center">
-                    <img src={getImageSrc(p.image)} alt={p.name} className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
-                    <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                    <img src={getImageSrc(p.image)} alt={p.name} className={`w-full h-full object-contain group-hover:scale-105 transition-transform duration-500 ${p.active === false ? 'opacity-40 grayscale' : ''}`} />
+                    
+                    {/* Top Left: Visibility & Stock Indicator */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+                      <button
+                        onClick={(e) => toggleVisibility(p._id, p.active !== false, e)}
+                        className={`p-1.5 rounded-lg backdrop-blur-md shadow-sm border transition-all ${
+                          p.active !== false
+                            ? "bg-white/90 text-emerald-600 border-emerald-200 hover:bg-white"
+                            : "bg-slate-900/80 text-amber-400 border-slate-700 hover:bg-slate-900"
+                        }`}
+                        title={p.active !== false ? "Visible on Store. Click to Hide." : "Hidden from Store. Click to Show."}
+                      >
+                        {p.active !== false ? <FiEye size={13} /> : <FiEyeOff size={13} />}
+                      </button>
+                    </div>
+
+                    {/* Top Right Actions */}
+                    <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0 z-10">
                       <Link to={`/admin/edit-product/${p._id}`}>
                         <button className="w-8 h-8 rounded-full bg-white shadow-sm border border-stone-100 flex items-center justify-center text-stone-400 hover:text-stone-900 hover:border-stone-300 transition-all"><FiEdit2 size={12} /></button>
                       </Link>
-                      <button onClick={() => deleteProduct(p._id)} className="w-8 h-8 rounded-full bg-white shadow-sm border border-stone-100 flex items-center justify-center text-stone-400 hover:text-rose-600 hover:border-rose-200 transition-all"><FiTrash2 size={12} /></button>
+                      <button onClick={(e) => { e.stopPropagation(); deleteProduct(p._id); }} className="w-8 h-8 rounded-full bg-white shadow-sm border border-stone-100 flex items-center justify-center text-stone-400 hover:text-rose-600 hover:border-rose-200 transition-all"><FiTrash2 size={12} /></button>
                     </div>
-                    <div className="absolute top-2 right-2 flex flex-col items-end gap-1">
+                    
+                    {/* Stock Pill */}
+                    <div className="absolute bottom-2 right-2 flex flex-col items-end gap-1">
                       {p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0) ? (
                         <span className="bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg shadow-sm">
                           Out ({p.countInStock || 0})
@@ -286,15 +361,15 @@ export default function AdminProducts() {
                         </span>
                       )}
                     </div>
-                    {(() => {
-                      const isOut = p.stock === "out" || (p.countInStock !== undefined && p.countInStock <= 0);
-                      return (
-                        <div className={`absolute top-3 left-3 w-2 h-2 rounded-full ring-2 ring-white ${!isOut ? "bg-emerald-500" : "bg-rose-500"}`} />
-                      );
-                    })()}
                   </div>
+
                   <div className="p-5">
-                    <p className="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">{p.category}</p>
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="text-[10px] uppercase tracking-wider font-bold text-stone-400">{p.category}</p>
+                      {p.active === false && (
+                        <span className="text-[9px] font-black text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 uppercase">Hidden</span>
+                      )}
+                    </div>
                     <h3 className="font-bold text-stone-900 text-sm truncate">{p.name}</h3>
                     <div className="flex justify-between items-center mt-2">
                       <div className="font-mono text-stone-600 font-medium">{formatPrice(p.basePrice)}</div>
@@ -326,7 +401,8 @@ export default function AdminProducts() {
                       <th className="px-6 py-4">Category</th>
                       <th className="px-6 py-4">Price</th>
                       <th className="px-6 py-4">Margin</th>
-                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Stock Status</th>
+                      <th className="px-6 py-4">Visibility</th>
                       <th className="px-6 py-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -348,10 +424,15 @@ export default function AdminProducts() {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-stone-50 border border-stone-100 p-1 shrink-0">
-                              <img src={getImageSrc(p.image)} className="w-full h-full object-contain" />
+                              <img src={getImageSrc(p.image)} className={`w-full h-full object-contain ${p.active === false ? 'opacity-40 grayscale' : ''}`} />
                             </div>
                             <div>
-                              <p className="font-bold text-stone-900 text-sm">{p.name}</p>
+                              <p className="font-bold text-stone-900 text-sm flex items-center gap-2">
+                                {p.name}
+                                {p.active === false && (
+                                  <span className="text-[9px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 uppercase">Hidden</span>
+                                )}
+                              </p>
                               <p className="text-xs text-stone-400 truncate max-w-[200px]">{p.description}</p>
                             </div>
                           </div>
@@ -383,10 +464,51 @@ export default function AdminProducts() {
                             )}
                           </div>
                         </td>
+
+                        {/* Visibility Column & Toggle */}
+                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={(e) => toggleVisibility(p._id, p.active !== false, e)}
+                            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all border ${
+                              p.active !== false
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200/60 hover:bg-emerald-100 shadow-sm"
+                                : "bg-stone-100 text-stone-400 border-stone-200 hover:bg-stone-200 hover:text-stone-600"
+                            }`}
+                            title={p.active !== false ? "Visible on Store. Click to Hide." : "Hidden from Store. Click to Show."}
+                          >
+                            {p.active !== false ? (
+                              <>
+                                <FiEye size={12} className="text-emerald-500" /> Visible
+                              </>
+                            ) : (
+                              <>
+                                <FiEyeOff size={12} className="text-stone-400" /> Hidden
+                              </>
+                            )}
+                          </button>
+                        </td>
+
                         <td className="px-6 py-4 text-right">
-                          <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Link to={`/admin/edit-product/${p._id}`}><button className="p-2 rounded-lg text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-all"><FiEdit2 size={14} /></button></Link>
-                            <button onClick={() => deleteProduct(p._id)} className="p-2 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-all"><FiTrash2 size={14} /></button>
+                          <div className="flex items-center justify-end gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={(e) => toggleVisibility(p._id, p.active !== false, e)}
+                              className={`p-2 rounded-lg transition-all ${
+                                p.active !== false
+                                  ? "text-stone-400 hover:text-amber-500 hover:bg-amber-50"
+                                  : "text-stone-400 hover:text-emerald-600 hover:bg-emerald-50"
+                              }`}
+                              title={p.active !== false ? "Hide from Store" : "Make Visible on Store"}
+                            >
+                              {p.active !== false ? <FiEyeOff size={14} /> : <FiEye size={14} />}
+                            </button>
+                            <Link to={`/admin/edit-product/${p._id}`}>
+                              <button className="p-2 rounded-lg text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-all">
+                                <FiEdit2 size={14} />
+                              </button>
+                            </Link>
+                            <button onClick={(e) => { e.stopPropagation(); deleteProduct(p._id); }} className="p-2 rounded-lg text-stone-400 hover:text-rose-600 hover:bg-rose-50 transition-all">
+                              <FiTrash2 size={14} />
+                            </button>
                           </div>
                         </td>
                       </tr>

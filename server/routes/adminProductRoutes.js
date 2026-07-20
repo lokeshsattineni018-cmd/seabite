@@ -164,6 +164,7 @@ router.put("/:id", adminAuth, async (req, res) => {
     if (category !== undefined) updateData.category = category;
     if (desc !== undefined) updateData.desc = desc;
     if (trending !== undefined) updateData.trending = trending;
+    if (req.body.active !== undefined) updateData.active = req.body.active === "true" || req.body.active === true;
     if (finalStock !== undefined) updateData.stock = finalStock;
     if (image !== undefined) updateData.image = image;
     if (images !== undefined) updateData.images = Array.isArray(images) ? images : [];
