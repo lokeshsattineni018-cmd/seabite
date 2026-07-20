@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import {
   FiLogOut, FiHome, FiArrowLeft, FiMapPin, FiLock,
   FiShoppingBag, FiShield, FiCheckCircle, FiUser,
-  FiCreditCard, FiBell, FiPackage, FiCalendar
+  FiCreditCard, FiBell, FiPackage, FiCalendar, FiChevronRight,
+  FiActivity, FiDollarSign, FiClock, FiCheck
 } from "react-icons/fi";
 import UserInfo from "./UserInfo";
 import AddressManager from "./AddressManager";
@@ -114,71 +115,77 @@ export default function Profile() {
 
   const tabs = [
     { id: "overview", icon: FiHome, label: "Overview" },
-    { id: "orders", icon: FiShoppingBag, label: "Orders" },
-    { id: "wallet", icon: FiCreditCard, label: "Wallet" },
-    { id: "addresses", icon: FiMapPin, label: "Addresses" },
-    { id: "security", icon: FiShield, label: "Security" },
-    { id: "notifications", icon: FiBell, label: "Notifications" },
+    { id: "orders", icon: FiShoppingBag, label: "My Orders" },
+    { id: "wallet", icon: FiCreditCard, label: "SeaBite Wallet" },
+    { id: "addresses", icon: FiMapPin, label: "Manage Addresses" },
+    { id: "security", icon: FiShield, label: "Account Security" },
+    { id: "notifications", icon: FiBell, label: "Notification Channels" },
   ];
 
   const totalSpent = orders.reduce((acc, order) => acc + (order.totalAmount || 0), 0);
 
   return (
-    <div className="min-h-screen bg-[#F4F9F8] text-[#1A2E2C] py-8" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+    <div className="min-h-screen bg-[#F4F9F8] text-[#1A2E2C] py-12" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
       <div className="max-w-6xl mx-auto px-4">
         
         {/* Back Link */}
-        <div className="mb-6">
+        <div className="mb-8">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#5E7A77] hover:text-[#1A2E2C] transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#5E7A77] hover:text-[#1A2E2C] transition-colors duration-200"
           >
-            <FiArrowLeft size={14} /> Back to Shop
+            <FiArrowLeft size={14} className="stroke-[3]" /> Back to Home
           </button>
         </div>
 
         {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
           
           {/* Left Sidebar */}
-          <div className="md:col-span-1 space-y-4">
+          <div className="md:col-span-1 space-y-6">
             
-            {/* User Header Info */}
-            <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] text-center shadow-sm">
-              <div className="relative inline-block mb-3">
-                <div className="w-20 h-20 rounded-full bg-[#F4F9F8] border-2 border-[#E2EEEC] flex items-center justify-center text-2xl font-bold text-[#5BA8A0] overflow-hidden">
+            {/* User Profile Summary Card */}
+            <div className="bg-white rounded-3xl p-6 border border-[#E2EEEC] text-center shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+              <div className="relative inline-block mb-4">
+                <div className="w-24 h-24 rounded-full border-4 border-[#E2EEEC] flex items-center justify-center text-3xl font-extrabold text-[#5BA8A0] bg-[#F4F9F8] overflow-hidden shadow-inner">
                   {avatarUrl ? <img src={avatarUrl} className="w-full h-full object-cover" alt="Avatar" /> : avatarLetter}
                 </div>
+                <div className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 border-4 border-white"></div>
               </div>
-              <h2 className="text-lg font-bold text-[#1A2E2C] leading-snug">{user.name}</h2>
-              <p className="text-xs font-semibold text-[#5BA8A0] mt-0.5">{user.email}</p>
+              <h2 className="text-xl font-extrabold text-[#1A2E2C] leading-snug">{user.name}</h2>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#E2EEEC]/50 text-[#1A2E2C] mt-2 border border-[#E2EEEC]">
+                {user.role || 'Member'}
+              </span>
               
               <button
                 onClick={handleLogout}
                 disabled={logoutLoading}
-                className="mt-6 w-full py-2.5 rounded-xl border border-red-100 bg-red-50/50 hover:bg-red-50 text-red-600 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
+                className="mt-6 w-full py-3 rounded-2xl border border-rose-100 bg-rose-50/50 hover:bg-rose-500 hover:text-white hover:border-rose-500 text-rose-600 text-xs font-bold uppercase tracking-widest transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                <FiLogOut size={13} />
+                <FiLogOut size={13} className="stroke-[2.5]" />
                 <span>{logoutLoading ? "Signing Out..." : "Sign Out"}</span>
               </button>
             </div>
 
             {/* Sidebar Navigation */}
-            <div className="bg-white rounded-2xl p-2 border border-[#E2EEEC] shadow-sm hidden md:block">
+            <div className="bg-white rounded-3xl p-3 border border-[#E2EEEC] shadow-[0_8px_30px_rgba(0,0,0,0.02)] hidden md:block space-y-1">
               {tabs.map((tab) => {
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-semibold transition-all ${
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-left text-sm font-semibold transition-all duration-200 group ${
                       isActive
-                        ? "bg-[#1A2E2C] text-white shadow-sm"
+                        ? "bg-[#1A2E2C] text-white shadow-md shadow-[#1A2E2C]/10"
                         : "text-[#5E7A77] hover:text-[#1A2E2C] hover:bg-[#F4F9F8]"
                     }`}
                   >
-                    <tab.icon size={16} />
-                    <span>{tab.label}</span>
+                    <div className="flex items-center gap-3">
+                      <tab.icon size={16} className={isActive ? "stroke-[2.5]" : "stroke-[2]"} />
+                      <span>{tab.label}</span>
+                    </div>
+                    <FiChevronRight size={14} className={`stroke-[2.5] transition-transform duration-200 ${isActive ? "text-white translate-x-0.5" : "text-[#5E7A77]/40 group-hover:text-[#1A2E2C] group-hover:translate-x-0.5"}`} />
                   </button>
                 );
               })}
@@ -192,9 +199,9 @@ export default function Profile() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all border ${
+                    className={`flex-shrink-0 flex items-center gap-2 px-4 py-3 rounded-2xl text-xs font-bold transition-all border ${
                       isActive
-                        ? "bg-[#1A2E2C] text-white border-[#1A2E2C]"
+                        ? "bg-[#1A2E2C] text-white border-[#1A2E2C] shadow-sm"
                         : "bg-white text-[#5E7A77] border-[#E2EEEC]"
                     }`}
                   >
@@ -207,46 +214,66 @@ export default function Profile() {
 
           </div>
 
-          {/* Right Main Content */}
-          <div className="md:col-span-3 space-y-6">
+          {/* Right Main Content Panel */}
+          <div className="md:col-span-3">
             
             {/* 1. OVERVIEW TAB */}
             {activeTab === "overview" && (
               <div className="space-y-6">
                 
                 {/* Clean Welcome Banner */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm">
-                  <h1 className="text-2xl font-extrabold text-[#1A2E2C] tracking-tight">
-                    Good day, <span className="text-[#5BA8A0]">{user.name.split(" ")[0]}</span>
+                <div className="bg-gradient-to-r from-[#E2EEEC]/50 via-white to-white rounded-3xl p-8 border border-[#E2EEEC] shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+                  <h1 className="text-2xl lg:text-3xl font-extrabold text-[#1A2E2C] tracking-tight leading-none">
+                    Welcome back, <span className="text-[#5BA8A0] font-black">{user.name.split(" ")[0]}</span>
                   </h1>
-                  <p className="text-xs text-[#5E7A77] mt-1 font-medium">
-                    Welcome to your dashboard. Review your past orders, manage addresses, or configure preferences.
+                  <p className="text-xs text-[#5E7A77] mt-2 font-medium max-w-xl leading-relaxed">
+                    Here is an overview of your active credentials, order counts, and wallet statement. Explore the options on the left side to configure your profile details.
                   </p>
                 </div>
 
                 {/* Grid Stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#5E7A77] mb-2">Orders Placed</p>
-                    <p className="text-3xl font-extrabold text-[#1A2E2C]">{orders.length}</p>
+                  <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#5BA8A0] transition-colors duration-200 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#F4F9F8] border border-[#E2EEEC] text-[#5BA8A0] flex items-center justify-center shrink-0">
+                      <FiShoppingBag size={20} className="stroke-[2.5]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#5E7A77]">Orders Placed</p>
+                      <p className="text-2xl font-black text-[#1A2E2C] mt-0.5">{orders.length}</p>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#5E7A77] mb-2">Total Purchases</p>
-                    <p className="text-3xl font-extrabold text-[#1A2E2C]">
-                      ₹{Number(totalSpent || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
+                  
+                  <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#5BA8A0] transition-colors duration-200 flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#F4F9F8] border border-[#E2EEEC] text-[#5BA8A0] flex items-center justify-center shrink-0">
+                      <FiDollarSign size={20} className="stroke-[2.5]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#5E7A77]">Lifetime Spent</p>
+                      <p className="text-2xl font-black text-[#1A2E2C] mt-0.5">
+                        ₹{Number(totalSpent || 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </p>
+                    </div>
                   </div>
-                  <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-sm cursor-pointer hover:border-[#5BA8A0] transition-colors" onClick={() => setActiveTab("wallet")}>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-[#5E7A77] mb-2">Wallet Credits</p>
-                    <p className="text-3xl font-extrabold text-[#5BA8A0]">
-                      ₹{Number(user.walletBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </p>
+
+                  <div className="bg-white rounded-2xl p-5 border border-[#E2EEEC] shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:border-[#5BA8A0] transition-colors duration-200 flex items-center gap-4 cursor-pointer" onClick={() => setActiveTab("wallet")}>
+                    <div className="w-12 h-12 rounded-xl bg-[#F4F9F8] border border-[#E2EEEC] text-[#5BA8A0] flex items-center justify-center shrink-0">
+                      <FiCreditCard size={20} className="stroke-[2.5]" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#5E7A77]">Wallet Balance</p>
+                      <p className="text-2xl font-black text-[#5BA8A0] mt-0.5">
+                        ₹{Number(user.walletBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 {/* Personal Info Box */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm">
-                  <h3 className="text-base font-bold text-[#1A2E2C] mb-4 border-b border-[#F4F9F8] pb-3">Personal Details</h3>
+                <div className="bg-white rounded-3xl p-6 border border-[#E2EEEC] shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+                  <div className="flex items-center gap-2.5 mb-4 border-b border-[#F4F9F8] pb-3">
+                    <FiUser className="text-[#5BA8A0] stroke-[2.5]" size={18} />
+                    <h3 className="text-base font-extrabold text-[#1A2E2C]">Personal Profile Details</h3>
+                  </div>
                   <UserInfo user={user} onUpdate={fetchUserAndOrders} />
                 </div>
 
@@ -255,10 +282,13 @@ export default function Profile() {
 
             {/* 2. ORDERS TAB */}
             {activeTab === "orders" && (
-              <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm space-y-6">
+              <div className="bg-white rounded-3xl p-6 border border-[#E2EEEC] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-6">
                 <div className="flex justify-between items-center border-b border-[#F4F9F8] pb-3">
-                  <h2 className="text-base font-bold text-[#1A2E2C]">Order History</h2>
-                  <span className="text-xs font-semibold text-[#5E7A77]">{orders.length} total orders</span>
+                  <div className="flex items-center gap-2">
+                    <FiShoppingBag className="text-[#5BA8A0] stroke-[2.5]" size={18} />
+                    <h2 className="text-base font-extrabold text-[#1A2E2C]">Order History Statement</h2>
+                  </div>
+                  <span className="text-xs font-semibold text-[#5E7A77] bg-[#F4F9F8] border border-[#E2EEEC] px-3 py-1 rounded-full">{orders.length} orders total</span>
                 </div>
 
                 {orders.length === 0 ? (
@@ -268,7 +298,7 @@ export default function Profile() {
                     <p className="text-xs text-[#5E7A77] mt-1">Start shopping our fresh seafood daily catches.</p>
                     <button
                       onClick={() => navigate("/products")}
-                      className="mt-6 px-6 py-2.5 bg-[#1A2E2C] text-white rounded-xl text-xs font-bold uppercase tracking-wider"
+                      className="mt-6 px-6 py-2.5 bg-[#1A2E2C] hover:bg-[#2D504C] text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors duration-200"
                     >
                       Shop Seafood
                     </button>
@@ -281,40 +311,42 @@ export default function Profile() {
                       return (
                         <div
                           key={order._id}
-                          className="p-4 rounded-xl border border-[#E2EEEC] hover:border-[#5BA8A0] transition-colors bg-[#F4F9F8]/20 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+                          className="rounded-2xl border border-[#E2EEEC] hover:border-[#5BA8A0] transition-colors duration-200 overflow-hidden bg-[#F4F9F8]/10"
                         >
-                          <div className="flex items-start gap-3">
-                            <div className="p-2.5 rounded-lg bg-[#E2EEEC] text-[#1A2E2C] shrink-0 mt-0.5">
-                              <FiPackage size={18} />
+                          {/* Order Header Info */}
+                          <div className="px-5 py-3 border-b border-[#E2EEEC] bg-[#F4F9F8]/40 flex flex-wrap justify-between items-center gap-2">
+                            <div className="flex items-center gap-2 text-xs font-bold text-[#1A2E2C]">
+                              <span>Order #{order.orderId || order._id.slice(-6).toUpperCase()}</span>
+                              <span className="text-[#5E7A77]/40">•</span>
+                              <span className="text-[#5E7A77] flex items-center gap-1 font-semibold"><FiCalendar size={11} /> {new Date(order.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <div>
-                              <h4 className="font-bold text-sm text-[#1A2E2C]">
-                                Order #{order.orderId || order._id.slice(-6).toUpperCase()}
-                              </h4>
-                              <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#5E7A77] font-medium">
-                                <span className="flex items-center gap-1"><FiCalendar size={12} /> {new Date(order.createdAt).toLocaleDateString()}</span>
-                                <span>•</span>
-                                <span>{order.items?.length || 0} items</span>
-                              </div>
+                            <span className={`text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                              isDelivered ? "bg-emerald-50 text-emerald-700 border-emerald-200" : isCancelled ? "bg-rose-50 text-rose-700 border-rose-200" : "bg-amber-50 text-amber-700 border-amber-200"
+                            }`}>
+                              {order.status}
+                            </span>
+                          </div>
+
+                          {/* Order Content */}
+                          <div className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div className="space-y-1">
+                              <p className="text-xs font-bold text-[#1A2E2C]">Items:</p>
+                              <p className="text-xs text-[#5E7A77] font-medium leading-relaxed">
+                                {order.items?.map(i => `${i.name} (qty ${i.qty})`).join(", ")}
+                              </p>
+                            </div>
+                            
+                            <div className="flex sm:flex-col justify-between items-end w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-[#E2EEEC] shrink-0">
+                              <p className="font-extrabold text-base text-[#1A2E2C]">₹{order.totalAmount}</p>
+                              <button
+                                onClick={() => navigate(`/orders/${order._id}`)}
+                                className="mt-2 text-xs font-bold text-[#5BA8A0] hover:text-[#1A2E2C] transition-colors flex items-center gap-1"
+                              >
+                                View Details <FiChevronRight size={12} />
+                              </button>
                             </div>
                           </div>
-                          
-                          <div className="flex sm:flex-col justify-between items-end w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-[#E2EEEC]">
-                            <div className="text-left sm:text-right">
-                              <p className="font-extrabold text-sm text-[#1A2E2C]">₹{order.totalAmount}</p>
-                              <span className={`text-[10px] font-bold uppercase tracking-wider mt-0.5 block ${
-                                isDelivered ? "text-emerald-600" : isCancelled ? "text-rose-500" : "text-amber-600"
-                              }`}>
-                                {order.status}
-                              </span>
-                            </div>
-                            <button
-                              onClick={() => navigate(`/orders/${order._id}`)}
-                              className="mt-2 text-xs font-bold text-[#5BA8A0] hover:text-[#1A2E2C] transition-colors"
-                            >
-                              View Details &rarr;
-                            </button>
-                          </div>
+
                         </div>
                       );
                     })}
@@ -327,28 +359,34 @@ export default function Profile() {
             {activeTab === "wallet" && (
               <div className="space-y-6">
                 
-                {/* Wallet Balance Card */}
-                <div className="bg-gradient-to-br from-[#1A2E2C] to-[#2D504C] rounded-2xl p-6 text-white border border-[#E2EEEC] shadow-md relative overflow-hidden">
+                {/* Premium Zomato/Swiggy style Digital Card */}
+                <div className="bg-gradient-to-br from-[#1A2E2C] via-[#24423F] to-[#3D8C85] rounded-3xl p-8 text-white shadow-lg border border-[#E2EEEC]/10 relative overflow-hidden">
+                  <div className="absolute -right-10 -bottom-10 w-44 h-44 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
+                  <div className="absolute -left-10 -top-10 w-44 h-44 bg-[#5BA8A0]/10 rounded-full blur-3xl pointer-events-none"></div>
+
                   <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#5BA8A0] block mb-1">SeaBite Wallet</span>
-                      <h3 className="text-4xl font-extrabold">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#5BA8A0] block">SeaBite Card Balance</span>
+                      <h3 className="text-4xl font-extrabold tracking-tight mt-3">
                         ₹{Number(user.walletBalance || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </h3>
-                      <p className="text-xs text-white/70 mt-2 font-medium">Use wallet balance for instant checkout and hassle-free payments.</p>
+                      <p className="text-xs text-white/70 mt-4 font-medium leading-relaxed max-w-sm">Use wallet balance for instant checkout, special offers, and seamless refund processing.</p>
                     </div>
-                    <div className="px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-center shrink-0">
+                    <div className="px-4 py-2.5 rounded-2xl bg-white/10 border border-white/20 text-center shrink-0">
                       <span className="text-[9px] font-bold uppercase tracking-wider text-white/50 block mb-0.5">Status</span>
                       <span className="text-xs font-bold text-[#5BA8A0] flex items-center justify-center gap-1">
-                        Active
+                        Active Account
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Transaction History */}
-                <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm">
-                  <h3 className="text-base font-bold text-[#1A2E2C] mb-4 border-b border-[#F4F9F8] pb-3">Transaction History</h3>
+                {/* Transaction Statement */}
+                <div className="bg-white rounded-3xl p-6 border border-[#E2EEEC] shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+                  <div className="flex items-center gap-2 mb-4 border-b border-[#F4F9F8] pb-3">
+                    <FiActivity className="text-[#5BA8A0] stroke-[2.5]" size={18} />
+                    <h3 className="text-base font-extrabold text-[#1A2E2C]">Transaction Statement</h3>
+                  </div>
 
                   {!user.walletTransactions || user.walletTransactions.length === 0 ? (
                     <div className="text-center py-10 text-[#5E7A77]">
@@ -361,10 +399,10 @@ export default function Profile() {
                       {user.walletTransactions.map((tx, idx) => {
                         const isCredit = tx.type === "Credit";
                         return (
-                          <div key={tx._id || idx} className="flex justify-between items-center p-4 rounded-xl border border-[#E2EEEC] bg-[#F4F9F8]/10">
+                          <div key={tx._id || idx} className="flex justify-between items-center p-4 rounded-xl border border-[#E2EEEC] bg-[#F4F9F8]/20 hover:border-[#5BA8A0] transition-colors duration-200">
                             <div>
                               <h4 className="text-xs font-bold text-[#1A2E2C]">{tx.description}</h4>
-                              <div className="flex items-center gap-1 text-[10px] text-[#5E7A77] mt-1">
+                              <div className="flex items-center gap-1 text-[10px] text-[#5E7A77] mt-1 font-semibold">
                                 <FiCalendar size={11} />
                                 <span>{new Date(tx.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                               </div>
@@ -387,21 +425,27 @@ export default function Profile() {
 
             {/* 4. ADDRESSES TAB */}
             {activeTab === "addresses" && (
-              <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm">
-                <h3 className="text-base font-bold text-[#1A2E2C] mb-4 border-b border-[#F4F9F8] pb-3">Delivery Addresses</h3>
+              <div className="bg-white rounded-3xl p-6 border border-[#E2EEEC] shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+                <div className="flex items-center gap-2 mb-4 border-b border-[#F4F9F8] pb-3">
+                  <FiMapPin className="text-[#5BA8A0] stroke-[2.5]" size={18} />
+                  <h3 className="text-base font-extrabold text-[#1A2E2C]">Delivery Address Book</h3>
+                </div>
                 <AddressManager />
               </div>
             )}
 
             {/* 5. SECURITY TAB */}
             {activeTab === "security" && (
-              <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm space-y-6">
-                <h3 className="text-base font-bold text-[#1A2E2C] border-b border-[#F4F9F8] pb-3">Account Security</h3>
+              <div className="bg-white rounded-3xl p-6 border border-[#E2EEEC] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-6">
+                <div className="flex items-center gap-2 border-b border-[#F4F9F8] pb-3">
+                  <FiShield className="text-[#5BA8A0] stroke-[2.5]" size={18} />
+                  <h3 className="text-base font-extrabold text-[#1A2E2C]">Account Credentials</h3>
+                </div>
 
                 {user.isGoogleUser ? (
-                  <div className="flex items-center gap-3 p-4 bg-[#F4F9F8]/50 border border-[#E2EEEC] rounded-xl text-sm font-semibold">
-                    <FiLock className="text-[#5E7A77]" />
-                    <span>Your account is connected to and secured via Google OAuth.</span>
+                  <div className="flex items-center gap-3 p-4 bg-[#F4F9F8]/50 border border-[#E2EEEC] rounded-xl text-xs font-bold text-[#5E7A77]">
+                    <FiCheckCircle className="text-emerald-500" />
+                    <span>Your account is connected to and secured via Google OAuth. Password change is not required.</span>
                   </div>
                 ) : (
                   <form onSubmit={handleChangePassword} className="space-y-4 max-w-md">
@@ -412,7 +456,7 @@ export default function Profile() {
                         placeholder="••••••••"
                         value={oldPass}
                         onChange={e => setOldPass(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-[#E2EEEC] focus:border-[#5BA8A0] outline-none transition-colors text-sm font-medium"
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E2EEEC] focus:border-[#5BA8A0] outline-none transition-colors text-sm font-medium bg-[#F4F9F8]/30 focus:bg-white"
                       />
                     </div>
                     <div>
@@ -422,7 +466,7 @@ export default function Profile() {
                         placeholder="••••••••"
                         value={newPass}
                         onChange={e => setNewPass(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-[#E2EEEC] focus:border-[#5BA8A0] outline-none transition-colors text-sm font-medium"
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E2EEEC] focus:border-[#5BA8A0] outline-none transition-colors text-sm font-medium bg-[#F4F9F8]/30 focus:bg-white"
                       />
                     </div>
                     <div>
@@ -432,14 +476,14 @@ export default function Profile() {
                         placeholder="••••••••"
                         value={confirmPass}
                         onChange={e => setConfirmPass(e.target.value)}
-                        className="w-full px-4 py-2.5 rounded-xl border border-[#E2EEEC] focus:border-[#5BA8A0] outline-none transition-colors text-sm font-medium"
+                        className="w-full px-4 py-2.5 rounded-xl border border-[#E2EEEC] focus:border-[#5BA8A0] outline-none transition-colors text-sm font-medium bg-[#F4F9F8]/30 focus:bg-white"
                       />
                     </div>
                     
                     <button
                       type="submit"
                       disabled={passLoading}
-                      className="px-6 py-2.5 bg-[#1A2E2C] text-white rounded-xl text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+                      className="px-6 py-3 bg-[#1A2E2C] hover:bg-[#2D504C] text-white rounded-xl text-xs font-bold uppercase tracking-widest transition-colors duration-200 disabled:opacity-50"
                     >
                       {passLoading ? "Updating..." : "Update Password"}
                     </button>
@@ -450,22 +494,25 @@ export default function Profile() {
 
             {/* 6. NOTIFICATIONS TAB */}
             {activeTab === "notifications" && (
-              <div className="bg-white rounded-2xl p-6 border border-[#E2EEEC] shadow-sm space-y-6">
-                <h3 className="text-base font-bold text-[#1A2E2C] border-b border-[#F4F9F8] pb-3">Notification Preferences</h3>
+              <div className="bg-white rounded-3xl p-6 border border-[#E2EEEC] shadow-[0_8px_30px_rgba(0,0,0,0.02)] space-y-6">
+                <div className="flex items-center gap-2 border-b border-[#F4F9F8] pb-3">
+                  <FiBell className="text-[#5BA8A0] stroke-[2.5]" size={18} />
+                  <h3 className="text-base font-extrabold text-[#1A2E2C]">Notification Configuration</h3>
+                </div>
 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 p-4 border border-[#E2EEEC] bg-[#F4F9F8]/20 rounded-xl">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 p-4 border border-[#E2EEEC] bg-[#F4F9F8]/20 rounded-2xl">
                   <div className="max-w-md">
                     <h4 className="text-sm font-bold text-[#1A2E2C]">Push Notifications</h4>
-                    <p className="text-xs text-[#5E7A77] mt-1 font-medium">Receive real-time alerts for delivery status updates, daily catch lists, and flash sales.</p>
+                    <p className="text-xs text-[#5E7A77] mt-1 font-medium leading-relaxed">Receive real-time alerts for delivery status updates, daily catch lists, and flash sales.</p>
                   </div>
                   
                   {isSupported ? (
                     <button
                       onClick={handlePushToggle}
                       disabled={pushLoading}
-                      className={`px-5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${
+                      className={`px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors duration-200 shrink-0 ${
                         isSubscribed
-                          ? "bg-red-50 text-red-600 border border-red-100 hover:bg-red-500 hover:text-white"
+                          ? "bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-500 hover:text-white"
                           : "bg-[#1A2E2C] text-white hover:bg-[#2D504C]"
                       }`}
                     >
