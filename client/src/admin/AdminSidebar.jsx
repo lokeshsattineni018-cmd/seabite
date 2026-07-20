@@ -110,12 +110,12 @@ export default function AdminSidebar({ onClose }) {
   return (
     <div className="h-full flex flex-col bg-stone-50/50 border-r border-stone-200/60">
       {/* Brand Header */}
-      <div className="h-28 flex items-center px-6">
+      <div className="h-24 flex items-center px-6">
         <Link to="/admin/dashboard" onClick={handleLinkClick} className="hover:scale-[1.02] transition-transform duration-300 block w-full">
           <img 
             src="/logo.webp" 
             alt="SeaBite Logo" 
-            className="w-48 h-auto object-contain drop-shadow-sm" 
+            className="w-36 h-auto object-contain drop-shadow-sm" 
           />
         </Link>
       </div>
