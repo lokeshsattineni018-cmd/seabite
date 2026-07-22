@@ -361,7 +361,7 @@ export default function Checkout() {
   const clickTimes = useRef([]);
   const [loading, setLoading] = useState(false);
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
-  const [paymentMethod, setPaymentMethod] = useState("COD");
+  const [paymentMethod, setPaymentMethod] = useState("Razorpay");
   const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponMessage, setCouponMessage] = useState(null);
@@ -955,16 +955,25 @@ export default function Checkout() {
               <SectionCard>
                 <SectionHead icon={<FiCreditCard size={16} />} title="Payment Method" />
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                  {/* Prepaid - disabled */}
-                  <div style={{ opacity: 0.45, cursor: "not-allowed", position: "relative" }} title="Currently under maintenance">
-                    <div style={{ padding: "14px 16px", borderRadius: 12, border: `1.5px solid ${T.border}`, background: T.bg, display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${T.border}`, flexShrink: 0 }} />
-                      <div>
-                        <p style={{ fontWeight: 700, fontSize: 13, color: T.textMid, margin: 0 }}>Razorpay</p>
-                        <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0" }}>Under maintenance</p>
-                      </div>
+                  {/* Razorpay */}
+                  <motion.div
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setPaymentMethod("Razorpay")}
+                    style={{
+                      padding: "14px 16px", borderRadius: 12, cursor: "pointer",
+                      border: `1.5px solid ${paymentMethod === "Razorpay" ? T.primary : T.border}`,
+                      background: paymentMethod === "Razorpay" ? "rgba(91,168,160,0.05)" : T.bg,
+                      display: "flex", alignItems: "center", gap: 12, transition: "all 0.2s",
+                    }}
+                  >
+                    <div style={{ width: 18, height: 18, borderRadius: "50%", border: `2px solid ${paymentMethod === "Razorpay" ? T.primary : T.border}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                      {paymentMethod === "Razorpay" && <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{ width: 8, height: 8, borderRadius: "50%", background: T.primary }} />}
                     </div>
-                  </div>
+                    <div>
+                      <p style={{ fontWeight: 700, fontSize: 13, color: T.textDark, margin: 0 }}>Razorpay</p>
+                      <p style={{ fontSize: 10, color: T.textLite, margin: "2px 0 0" }}>UPI, Cards, Netbanking</p>
+                    </div>
+                  </motion.div>
 
                   {/* COD */}
                   <motion.div
