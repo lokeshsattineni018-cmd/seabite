@@ -656,9 +656,10 @@ a, button, input, select, textarea, [role="button"] {
     padding: 12px 12px 12px 12px;
   }
   .product-card-btn {
-    height: 32px;
-    padding: 0 16px;
-    font-size: 12px;
+    height: 38px;
+    padding: 0 18px;
+    font-size: 13.5px;
+    font-weight: 800;
   }
   .product-card-price {
     font-size: 16px;
@@ -681,9 +682,10 @@ a, button, input, select, textarea, [role="button"] {
     padding: 8px 10px 10px 10px;
   }
   .product-card-btn {
-    height: 28px;
-    padding: 0 10px;
-    font-size: 11px;
+    height: 36px;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 800;
   }
   .product-card-price {
     font-size: 14.5px;

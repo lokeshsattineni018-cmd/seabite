@@ -159,15 +159,12 @@ const Hero = () => {
   const [ctaText, setCtaText] = useState("Shop Now");
 
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth <= 768;
-      setIsMobile(mobile);
-      if (!mobile && !videoSrc) {
-        setVideoSrc("1.mp4");
-      }
-    };
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
+    
+    // Set 1.mp4 video source for all devices including mobile
+    setVideoSrc("1.mp4");
     
     // Fetch active A/B tests
     axios.get(`${API_URL}/api/ab-tests/active`)

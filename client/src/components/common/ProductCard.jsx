@@ -256,15 +256,17 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
 
             <button
               onClick={handleCart}
+              aria-label={`Add ${product.name} to cart`}
               style={{
-                width: "100%", padding: "10px", borderRadius: 8,
+                width: "100%", padding: "12px 16px", borderRadius: 10,
                 background: "#1A2E2C", color: "#fff",
-                border: "none", fontWeight: 700, fontSize: 13,
+                border: "none", fontWeight: 800, fontSize: 14,
                 display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                cursor: "pointer", transition: "all 0.2s ease"
+                cursor: "pointer", transition: "all 0.2s ease",
+                minHeight: "42px"
               }}
             >
-              <FiShoppingCart size={14} /> Add
+              <FiShoppingCart size={16} /> Add to Cart
             </button>
           </div>
         </div>
