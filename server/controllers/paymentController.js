@@ -572,3 +572,86 @@ export const refundPayment = async (req, res) => {
     res.status(500).json({ success: false, message: "Refund failed" });
   }
 };
+
+// 4. STANDALONE STANDARD CREATION (POST /api/create-order)
+export const createStandardOrder = async (req, res) => {
+  try {
+    const { amount, currency = "INR", receipt } = req.body;
+
+    // Validate amount >= 100 paise
+    if (!amount || Number(amount) < 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid amount. Minimum amount is 100 paise (₹1.00)."
+      });
+    }
+
+    const options = {
+      amount: Math.round(Number(amount)), // in paise
+      currency,
+      receipt: receipt || `receipt_${Date.now()}`
+    };
+
+    const razorpayOrder = await instance.orders.create(options);
+
+    return res.status(200).json({
+      success: true,
+      order_id: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      receipt: razorpayOrder.receipt
+    });
+  } catch (error) {
+    console.error("❌ Razorpay Create Order Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Failed to create Razorpay order"
+    });
+  }
+};
+
+// 5. STANDALONE STANDARD VERIFICATION (POST /api/verify-payment)
+export const verifyStandardPayment = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required verification fields (razorpay_order_id, razorpay_payment_id, razorpay_signature)."
+      });
+    }
+
+    const body = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body.toString())
+      .digest("hex");
+
+    if (expectedSignature === razorpay_signature) {
+      // Signatures match
+      await Order.findOneAndUpdate(
+        { razorpay_order_id: razorpay_order_id },
+        { status: "Processing", paymentId: razorpay_payment_id, paidAt: Date.now(), isPaid: true }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Payment verified successfully",
+        razorpay_order_id,
+        razorpay_payment_id
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment signature. Verification failed."
+      });
+    }
+  } catch (error) {
+    console.error("❌ Razorpay Verify Signature Error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Payment verification error"
+    });
+  }
+};

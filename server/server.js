@@ -703,6 +703,11 @@ apiRouter.use("/delivery-tracking", deliveryTrackingRoutes);
 
 app.use("/api/v1", apiRouter);
 
+// Standard Razorpay Root Endpoint Aliases
+import { createStandardOrder, verifyStandardPayment } from "./controllers/paymentController.js";
+app.post("/api/create-order", protect, createStandardOrder);
+app.post("/api/verify-payment", protect, verifyStandardPayment);
+
 // Configure Cloudinary for direct uploads
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
