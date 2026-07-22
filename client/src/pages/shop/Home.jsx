@@ -159,15 +159,16 @@ const Hero = () => {
   const [ctaText, setCtaText] = useState("Shop Now");
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile && !videoSrc) {
+        setVideoSrc("1.mp4");
+      }
+    };
     checkMobile();
     window.addEventListener("resize", checkMobile);
     
-    // Completely defer downloading the 7.7 MB video until after the critical first paint/interactive metrics are finished
-    const timer = setTimeout(() => {
-      setVideoSrc("1.mp4");
-    }, 2000);
-
     // Fetch active A/B tests
     axios.get(`${API_URL}/api/ab-tests/active`)
       .then(({ data }) => {
@@ -799,7 +800,12 @@ const Reviews = () => {
 
   const getFullImageUrl = (imagePath) => {
     if (!imagePath) return "";
-    if (imagePath.startsWith("http")) return imagePath;
+    if (imagePath.startsWith("http")) {
+      if (imagePath.includes("res.cloudinary.com") && !imagePath.includes("f_auto")) {
+        return imagePath.replace("/upload/", "/upload/f_auto,q_auto,w_500/");
+      }
+      return imagePath;
+    }
     const cleanPath = imagePath.startsWith("/") ? imagePath : `/${imagePath}`;
     return cleanPath.startsWith("/uploads")
       ? `${API_URL}${cleanPath}`

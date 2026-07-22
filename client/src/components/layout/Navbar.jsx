@@ -570,6 +570,7 @@ export default function Navbar({ announcementActive = false }) {
                   <FiSearch size={16} style={{ color: isTransparent ? "rgba(255,255,255,0.7)" : "#8A8279", flexShrink: 0 }} />
                   <input
                     ref={searchRef}
+                    aria-label="Search for products"
                     className="si"
                     value={searchTerm}
                     onChange={e => handleSearchInput(e.target.value)}
@@ -1080,6 +1081,7 @@ export default function Navbar({ announcementActive = false }) {
                   <FiSearch size={17} color="#5BBFB5" />
                   <input
                     autoFocus
+                    aria-label="Search for products"
                     placeholder="Search fresh catch..."
                     value={searchTerm}
                     onChange={e => handleSearchInput(e.target.value)}
