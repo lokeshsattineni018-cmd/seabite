@@ -47,8 +47,12 @@
           "value": "https://www.seabite.co.in"
         },
         {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        },
+        {
           "key": "Content-Security-Policy-Report-Only",
-          "value": "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://checkout.razorpay.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://res.cloudinary.com https://cdnjs.cloudflare.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://seabite.co.in https://www.gstatic.com; connect-src 'self' https://seabite-server.vercel.app https://www.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.ingest.sentry.io https://api.razorpay.com https://lux.razorpay.com; media-src 'self' https://cdn.freesound.org; frame-src https://api.razorpay.com https://accounts.google.com https://td.doubleclick.net https://www.google.com; worker-src 'self'; object-src 'none'; base-uri 'self'"
+          "value": "default-src 'self'; script-src 'self' https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://checkout.razorpay.com https://accounts.google.com https://*.adtrafficquality.google; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://res.cloudinary.com https://cdnjs.cloudflare.com https://*.tile.openstreetmap.org https://*.basemaps.cartocdn.com https://seabite.co.in https://www.gstatic.com https://pagead2.googlesyndication.com https://*.doubleclick.net https://*.adtrafficquality.google; connect-src 'self' https://seabite-server.vercel.app https://www.google-analytics.com https://www.googletagmanager.com https://pagead2.googlesyndication.com https://*.ingest.sentry.io https://api.razorpay.com https://lux.razorpay.com https://nominatim.openstreetmap.org https://*.adtrafficquality.google; media-src 'self' https://cdn.freesound.org; frame-src https://api.razorpay.com https://accounts.google.com https://td.doubleclick.net https://www.google.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'"
         }
       ]
     },
