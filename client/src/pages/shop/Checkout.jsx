@@ -6,7 +6,7 @@ import {
   FiMapPin, FiCheckCircle, FiMinus, FiPlus, FiTrash2, FiShield,
   FiXCircle, FiHome, FiShoppingBag, FiTag, FiX, FiCreditCard,
   FiTruck, FiLoader, FiAlertCircle, FiGift, FiChevronRight,
-  FiClock, FiPercent, FiCheck, FiPlus as FiPlusIcon,
+  FiClock, FiPercent, FiCheck, FiPlus as FiPlusIcon, FiLock,
 } from "react-icons/fi";
 import AddressForm from "../../components/forms/AddressForm";
 import PopupModal from "../../components/common/PopupModal";
@@ -282,6 +282,113 @@ const SeaBiteButtonLoader = () => {
         Securing catch...
       </motion.span>
     </div>
+  );
+};
+
+const SaaSPlaceOrderButton = ({ loading, disabled, grandTotal, onClick, isMobile = false }) => {
+  const [stageIndex, setStageIndex] = useState(0);
+  const stages = [
+    { text: "Securing Order...", icon: <FiLock size={16} /> },
+    { text: "Verifying Payment...", icon: <FiShield size={16} /> },
+    { text: "Finalizing Catch...", icon: <FiCheckCircle size={16} /> }
+  ];
+
+  useEffect(() => {
+    let interval;
+    if (loading) {
+      setStageIndex(0);
+      interval = setInterval(() => {
+        setStageIndex((prev) => (prev + 1) % stages.length);
+      }, 1100);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  return (
+    <motion.button
+      whileHover={loading || disabled ? {} : { scale: 1.015, boxShadow: "0 14px 36px rgba(16, 185, 129, 0.35)" }}
+      whileTap={loading || disabled ? {} : { scale: 0.975 }}
+      onClick={onClick}
+      disabled={loading || disabled}
+      className={isMobile ? "mobile-place-order-saas" : "desktop-place-order-saas"}
+      style={{
+        position: "relative",
+        width: "100%",
+        height: isMobile ? "46px" : "54px",
+        borderRadius: isMobile ? "14px" : "16px",
+        background: disabled
+          ? "#E5E7EB"
+          : "linear-gradient(135deg, #10B981 0%, #059669 100%)",
+        color: disabled ? "#9CA3AF" : "#FFFFFF",
+        fontSize: isMobile ? "14px" : "15px",
+        fontWeight: "800",
+        border: "none",
+        cursor: disabled || loading ? "not-allowed" : "pointer",
+        overflow: "hidden",
+        boxShadow: disabled ? "none" : "0 10px 28px rgba(16, 185, 129, 0.28)",
+        transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: "10px",
+        fontFamily: "'Plus Jakarta Sans', sans-serif"
+      }}
+    >
+      {/* 🔮 Shimmer Overlay */}
+      {!disabled && !loading && (
+        <motion.div
+          animate={{ x: ["-100%", "200%"] }}
+          transition={{ repeat: Infinity, duration: 2.4, ease: "linear" }}
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "50%",
+            height: "100%",
+            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)",
+            transform: "skewX(-20deg)",
+            pointerEvents: "none"
+          }}
+        />
+      )}
+
+      <AnimatePresence mode="wait">
+        {loading ? (
+          <motion.div
+            key={`loading-${stageIndex}`}
+            initial={{ opacity: 0, y: 8, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+            transition={{ duration: 0.22 }}
+            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+              style={{
+                width: "18px",
+                height: "18px",
+                borderRadius: "50%",
+                border: "2.5px solid rgba(255,255,255,0.3)",
+                borderTopColor: "#FFF"
+              }}
+            />
+            <span style={{ letterSpacing: "0.02em" }}>{stages[stageIndex].text}</span>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="idle"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+          >
+            <FiLock size={18} />
+            <span>Place Order · ₹{grandTotal.toFixed(2)}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.button>
   );
 };
 
@@ -1297,41 +1404,12 @@ export default function Checkout() {
                 )}
 
                 <div style={{ marginTop: 8 }}>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onMouseEnter={handleHoverStart}
-                    onMouseLeave={handleHoverEnd}
+                  <SaaSPlaceOrderButton
+                    loading={loading}
+                    disabled={!deliveryAddress._id}
+                    grandTotal={grandTotal}
                     onClick={placeOrder}
-                    disabled={loading || !deliveryAddress._id}
-                    className="desktop-place-order"
-                    style={{
-                      width: "100%",
-                      padding: "18px",
-                      borderRadius: "16px",
-                      background: T.primary,
-                      color: "#fff",
-                      fontSize: "15px",
-                      fontWeight: "800",
-                      border: "none",
-                      cursor: (loading || !deliveryAddress._id) ? "not-allowed" : "pointer",
-                      opacity: (!deliveryAddress._id) ? 0.5 : 1,
-                      boxShadow: (loading || !deliveryAddress._id) ? "none" : "0 12px 32px rgba(91,168,160,0.3)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "10px",
-                      fontFamily: font,
-                      transition: "all 0.3s ease"
-                    }}
-                  >
-                    {loading ? <SeaBiteButtonLoader /> : (
-                      <>
-                        <FiShoppingBag size={18} />
-                        Place Order · ₹{grandTotal.toFixed(2)}
-                      </>
-                    )}
-                  </motion.button>
+                  />
                 </div>
 
                 {/* Delivery estimate */}
@@ -1396,23 +1474,15 @@ export default function Checkout() {
           <p style={{ fontSize: 10, color: T.textLite, margin: 0, fontWeight: 700, textTransform: "uppercase" }}>Total Amount</p>
           <p style={{ fontSize: 18, fontWeight: 800, color: T.textDark, margin: 0 }}>₹{grandTotal.toFixed(2)}</p>
         </div>
-        <motion.button
-          whileTap={{ scale: 0.95 }}
-          onClick={placeOrder}
-          disabled={loading}
-          style={{
-            padding: "12px 24px", borderRadius: 14, background: T.primary, color: "#fff",
-            border: "none", fontSize: 14, fontWeight: 800, cursor: loading ? "not-allowed" : "pointer",
-            display: "flex", alignItems: "center", gap: 8, boxShadow: `0 8px 20px rgba(91,168,160,0.25)`
-          }}
-        >
-          {loading ? <SeaBiteButtonLoader /> : (
-            <>
-              Place Order
-              <FiChevronRight size={16} />
-            </>
-          )}
-        </motion.button>
+        <div style={{ flex: 1, maxWidth: "220px" }}>
+          <SaaSPlaceOrderButton
+            loading={loading}
+            disabled={!deliveryAddress._id}
+            grandTotal={grandTotal}
+            onClick={placeOrder}
+            isMobile={true}
+          />
+        </div>
       </div>
 
       <style>{`
