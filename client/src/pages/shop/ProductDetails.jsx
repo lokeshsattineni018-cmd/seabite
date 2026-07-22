@@ -1261,7 +1261,7 @@ export default function ProductDetails() {
               </div>
 
               <div style={{ marginBottom: "20px" }}>
-                {product.countInStock > 0 ? (
+                {!(product.stock === "out" || (typeof product.countInStock === "number" && product.countInStock <= 0)) ? (
                   <>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                       <p style={{ fontSize: "14px", color: product.countInStock <= 5 ? "#B12704" : "#007600", fontWeight: "700", margin: 0 }}>
@@ -1278,14 +1278,11 @@ export default function ProductDetails() {
                     <p style={{ fontSize: "13px", color: "#565959", margin: 0 }}>
                       FREE delivery <span style={{ fontWeight: "700" }}>Tomorrow</span>. Order within <span style={{ color: "#B12704" }}>4 hrs 12 mins</span>.
                     </p>
-                    {product.countInStock <= 5 && (
-                      <p style={{ fontSize: "11px", color: "#B12704", fontWeight: "600", marginTop: "4px", display: "flex", alignItems: "center", gap: "4px" }}>
-                        <FiAlertCircle size={12} /> Fresh batch selling out fast!
-                      </p>
-                    )}
                   </>
                 ) : (
-                  <p style={{ fontSize: "14px", color: "#B12704", fontWeight: "700" }}>Currently Unavailable</p>
+                  <p style={{ fontSize: "15px", color: "#DC2626", fontWeight: "800", background: "#FEF2F2", padding: "8px 16px", borderRadius: "8px", border: "1px solid #FCA5A5", display: "inline-block", margin: 0 }}>
+                    Out of Stock
+                  </p>
                 )}
               </div>
 
@@ -1367,30 +1364,41 @@ export default function ProductDetails() {
               )}
 
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "32px" }}>
-                <button
-                  onClick={handleAddToCart}
-                  disabled={isAdded || product.stock === "out"}
-                  style={{
-                    width: "100%", height: "48px", borderRadius: "100px", border: "none",
-                    background: "#1A2E2C", color: "#FFFFFF", fontSize: "14px", fontWeight: "600",
-                    cursor: "pointer", boxShadow: "0 4px 12px rgba(26,46,44,0.15)",
-                    transition: "all 0.2s ease"
-                  }}
-                >
-                  {isAdded ? "✓ Added to Cart" : "Add to Cart"}
-                </button>
-                <button
-                  onClick={handleBuyNow}
-                  disabled={product.stock === "out"}
-                  style={{
-                    width: "100%", height: "48px", borderRadius: "100px", border: "none",
-                    background: "#5BBFB5", color: "#FFFFFF", fontSize: "14px", fontWeight: "600",
-                    cursor: "pointer", boxShadow: "0 4px 12px rgba(91,191,181,0.15)",
-                    transition: "all 0.2s ease"
-                  }}
-                >
-                  Buy Now
-                </button>
+                {(() => {
+                  const isOutOfStock = product.stock === "out" || (typeof product.countInStock === "number" && product.countInStock <= 0);
+                  return (
+                    <>
+                      <button
+                        onClick={handleAddToCart}
+                        disabled={isAdded || isOutOfStock}
+                        style={{
+                          width: "100%", height: "48px", borderRadius: "100px", border: "none",
+                          background: isOutOfStock ? "#F3F4F6" : "#1A2E2C",
+                          color: isOutOfStock ? "#9CA3AF" : "#FFFFFF",
+                          fontSize: "14px", fontWeight: "700",
+                          cursor: isOutOfStock ? "not-allowed" : "pointer",
+                          boxShadow: isOutOfStock ? "none" : "0 4px 12px rgba(26,46,44,0.15)",
+                          transition: "all 0.2s ease"
+                        }}
+                      >
+                        {isOutOfStock ? "Out of Stock" : (isAdded ? "✓ Added to Cart" : "Add to Cart")}
+                      </button>
+                      {!isOutOfStock && (
+                        <button
+                          onClick={handleBuyNow}
+                          style={{
+                            width: "100%", height: "48px", borderRadius: "100px", border: "none",
+                            background: "#5BBFB5", color: "#FFFFFF", fontSize: "14px", fontWeight: "600",
+                            cursor: "pointer", boxShadow: "0 4px 12px rgba(91,191,181,0.15)",
+                            transition: "all 0.2s ease"
+                          }}
+                        >
+                          Buy Now
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               <div style={{ height: "1px", background: "#f0f0f0", marginBottom: "20px" }} />
