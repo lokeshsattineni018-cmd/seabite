@@ -286,101 +286,67 @@ const SeaBiteButtonLoader = () => {
 };
 
 const SaaSPlaceOrderButton = ({ loading, disabled, grandTotal, onClick, isMobile = false }) => {
-  const [stageIndex, setStageIndex] = useState(0);
-  const stages = [
-    { text: "Securing Order...", icon: <FiLock size={15} /> },
-    { text: "Verifying Payment...", icon: <FiShield size={15} /> },
-    { text: "Finalizing Catch...", icon: <FiCheckCircle size={15} /> }
-  ];
-
-  useEffect(() => {
-    let interval;
-    if (loading) {
-      setStageIndex(0);
-      interval = setInterval(() => {
-        setStageIndex((prev) => (prev + 1) % stages.length);
-      }, 1200);
-    }
-    return () => clearInterval(interval);
-  }, [loading]);
-
   return (
     <motion.button
-      whileHover={loading || disabled ? {} : { scale: 1.01, boxShadow: "0 14px 32px rgba(26, 46, 44, 0.32)", borderColor: "rgba(91, 191, 181, 0.4)" }}
-      whileTap={loading || disabled ? {} : { scale: 0.98 }}
+      whileHover={loading || disabled ? {} : { scale: 1.015, boxShadow: "0 10px 24px rgba(91, 191, 181, 0.35)" }}
+      whileTap={loading || disabled ? {} : { scale: 0.97 }}
       onClick={onClick}
       disabled={loading || disabled}
-      className={isMobile ? "mobile-place-order-saas" : "desktop-place-order-saas"}
+      className={isMobile ? "mobile-place-order-apple" : "desktop-place-order-apple"}
       style={{
         position: "relative",
         width: "100%",
-        height: isMobile ? "48px" : "54px",
+        height: isMobile ? "46px" : "52px",
         borderRadius: isMobile ? "14px" : "16px",
-        background: disabled ? "#E2EEEC" : "#1A2E2C",
-        color: disabled ? "#8BA5B3" : "#FFFFFF",
+        background: disabled ? "rgba(91, 191, 181, 0.45)" : "#5BBFB5",
+        color: "#FFFFFF",
         fontSize: isMobile ? "14px" : "15px",
         fontWeight: "800",
-        border: disabled ? "none" : "1px solid rgba(91, 191, 181, 0.25)",
+        border: "none",
         cursor: disabled || loading ? "not-allowed" : "pointer",
         overflow: "hidden",
-        boxShadow: disabled ? "none" : "0 10px 28px rgba(26, 46, 44, 0.22)",
-        transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+        boxShadow: disabled ? "none" : "0 8px 20px rgba(91, 191, 181, 0.25)",
+        transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        gap: "10px",
+        gap: "8px",
         fontFamily: "'Plus Jakarta Sans', sans-serif"
       }}
     >
-      {/* 🟢 High-End Minimalist Loading Progress Line */}
-      {loading && (
-        <motion.div
-          initial={{ width: "0%" }}
-          animate={{ width: `${((stageIndex + 1) / stages.length) * 100}%` }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            height: "3px",
-            background: "linear-gradient(90deg, #5BBFB5, #89C2D9)",
-            borderRadius: "3px"
-          }}
-        />
-      )}
-
       <AnimatePresence mode="wait">
         {loading ? (
           <motion.div
-            key={`loading-${stageIndex}`}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
+            key="processing"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.15 }}
             style={{ display: "flex", alignItems: "center", gap: "10px" }}
           >
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+              transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
               style={{
-                width: "16px",
-                height: "16px",
+                width: "18px",
+                height: "18px",
                 borderRadius: "50%",
-                border: "2px solid rgba(255,255,255,0.25)",
-                borderTopColor: "#5BBFB5"
+                border: "2.5px solid rgba(255,255,255,0.35)",
+                borderTopColor: "#FFFFFF"
               }}
             />
-            <span style={{ fontSize: "14px", fontWeight: "700", letterSpacing: "0.01em" }}>{stages[stageIndex].text}</span>
+            <span style={{ fontSize: "14px", fontWeight: "800", letterSpacing: "0.01em" }}>Processing...</span>
           </motion.div>
         ) : (
           <motion.div
             key="idle"
-            initial={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
-            style={{ display: "flex", alignItems: "center", gap: "10px" }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.15 }}
+            style={{ display: "flex", alignItems: "center", gap: "8px" }}
           >
-            <FiLock size={17} style={{ color: "#5BBFB5" }} />
+            <FiLock size={17} style={{ color: "#FFFFFF" }} />
             <span>Place Order · ₹{grandTotal.toFixed(2)}</span>
           </motion.div>
         )}
@@ -1424,35 +1390,6 @@ export default function Checkout() {
                     </div>
                   </motion.div>
                 )}
-
-                {/* SSL */}
-                <p style={{ textAlign: "center", fontSize: 10, color: T.textLite, marginTop: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 5 }}>
-                  <FiShield size={10} style={{ color: T.primary }} /> Secure 256-bit SSL Encryption
-                </p>
-
-                {/* Trust Badges Row */}
-                <div style={{
-                  marginTop: 14, padding: "12px",
-                  borderRadius: 12, background: "#F4F9F8",
-                  border: "1px solid #E2EEEC",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  gap: 16, flexWrap: "wrap",
-                }}>
-                  {[
-                    { icon: "🔒", text: "Secure Payment" },
-                    { icon: "🧊", text: "Cold Chain" },
-                    { icon: "📦", text: "Tamper-proof" },
-                  ].map(badge => (
-                    <div key={badge.text} style={{
-                      display: "flex", alignItems: "center", gap: 6,
-                    }}>
-                      <span style={{ fontSize: 13 }}>{badge.icon}</span>
-                      <span style={{ fontSize: 10, fontWeight: 700, color: "#4A6A67", letterSpacing: "0.02em" }}>
-                        {badge.text}
-                      </span>
-                    </div>
-                  ))}
-                </div>
               </SectionCard>
             </motion.div>
           </div>
