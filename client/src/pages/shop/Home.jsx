@@ -212,7 +212,6 @@ const Hero = () => {
     
     return () => {
       window.removeEventListener("resize", checkMobile);
-      clearTimeout(timer);
     };
   }, []);
 
