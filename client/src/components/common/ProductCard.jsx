@@ -33,7 +33,12 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
 
   const getImageUrl = (path) => {
     if (!path) return "https://placehold.co/400?text=No+Image";
-    if (path.startsWith("http")) return path;
+    if (path.startsWith("http")) {
+      if (path.includes("res.cloudinary.com") && !path.includes("f_auto")) {
+        return path.replace("/upload/", "/upload/f_auto,q_auto,w_500/");
+      }
+      return path;
+    }
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     return cleanPath.startsWith("/uploads")
       ? `${API_URL}${cleanPath}`
@@ -151,6 +156,7 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
             src={getImageUrl(product.image)}
             alt={product.name}
             loading="lazy"
+            decoding="async"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
           
@@ -211,6 +217,7 @@ const ProductCard = ({ product, globalDiscount = 0 }) => {
           )}
 
           <button
+            aria-label={`Add ${product.name} to wishlist`}
             onClick={handleWishlist}
             disabled={loadingWishlist}
             style={{

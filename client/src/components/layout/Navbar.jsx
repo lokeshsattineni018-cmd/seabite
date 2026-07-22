@@ -673,6 +673,7 @@ export default function Navbar({ announcementActive = false }) {
               <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 {/* Wishlist */}
                 <motion.button 
+                  aria-label="View wishlist"
                   whileHover={{ scale: 1.05 }} 
                   whileTap={{ scale: 0.98 }} 
                   onClick={() => user ? navigate("/wishlist") : setIsLoginOpen(true)} 
@@ -705,6 +706,7 @@ export default function Navbar({ announcementActive = false }) {
                 {user && (
                   <div style={{ position: "relative" }} className="notif-container">
                     <motion.button 
+                      aria-label="View notifications"
                       whileHover={{ scale: 1.05 }} 
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setShowNotifications(!showNotifications)}
@@ -858,6 +860,7 @@ export default function Navbar({ announcementActive = false }) {
                   </div>
                 ) : (
                   <motion.button 
+                    aria-label="Account log in or sign up"
                     whileHover={{ scale: 1.1 }} 
                     whileTap={{ scale: 0.96 }} 
                     onClick={() => setIsLoginOpen(true)} 
@@ -881,6 +884,7 @@ export default function Navbar({ announcementActive = false }) {
 
                 {/* Cart Button */}
                 <motion.button 
+                  aria-label="Open shopping cart"
                   whileHover={{ scale: 1.03 }} 
                   whileTap={{ scale: 0.98 }} 
                   onClick={() => setIsCartOpen(true)} 

@@ -169,6 +169,7 @@ export default function CartSidebar({ onClose }) {
                   </div>
                 </div>
                 <motion.button
+                  aria-label="Close cart"
                   whileHover={{ rotate: 90, scale: 1.1 }}
                   whileTap={{ scale: 0.85 }}
                   onClick={closeCart}
