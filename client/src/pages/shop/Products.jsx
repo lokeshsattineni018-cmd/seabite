@@ -366,24 +366,40 @@ export default function Products() {
 
                 <div style={{ width: "1px", height: "20px", background: "#E2EEEC", flexShrink: 0 }} />
 
-                {categories.map((cat) => (
-                  <motion.button
-                    key={cat}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => {
-                      setFilters((p) => ({ ...p, category: cat }));
-                      navigate(cat === "All" ? "/products" : `/products?category=${cat}`);
-                    }}
-                    className={`category-pill ${filters.category === cat ? "category-pill-active" : ""}`}
-                    style={{
-                      padding: "7px 14px", borderRadius: "20px", fontSize: "12px", fontWeight: "600",
-                      whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "5px",
-                      fontFamily: "'Manrope', sans-serif", flexShrink: 0,
-                    }}
-                  >
-                    <span>{CATEGORY_META[cat]?.emoji}</span>{cat}
-                  </motion.button>
-                ))}
+                {categories.map((cat) => {
+                  const isActive = filters.category === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => {
+                        setFilters((p) => ({ ...p, category: cat }));
+                        navigate(cat === "All" ? "/products" : `/products?category=${cat}`);
+                      }}
+                      style={{
+                        position: "relative",
+                        padding: "8px 16px", borderRadius: "20px", fontSize: "12px", fontWeight: "700",
+                        whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: "6px",
+                        fontFamily: "'Manrope', sans-serif", flexShrink: 0, border: "none", background: "none",
+                        color: isActive ? "#FFFFFF" : "#6B8F8A", cursor: "pointer",
+                        transition: "color 0.25s ease"
+                      }}
+                    >
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeCategoryPill"
+                          transition={{ type: "spring", stiffness: 450, damping: 32 }}
+                          style={{
+                            position: "absolute", inset: 0, borderRadius: "20px",
+                            background: "#1A2E2C", zIndex: 0,
+                            boxShadow: "0 4px 14px rgba(26, 46, 44, 0.2)"
+                          }}
+                        />
+                      )}
+                      <span style={{ position: "relative", zIndex: 1 }}>{CATEGORY_META[cat]?.emoji}</span>
+                      <span style={{ position: "relative", zIndex: 1 }}>{cat}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -427,16 +443,29 @@ export default function Products() {
                     </motion.div>
                   ) : products.length > 0 ? (
                     <motion.div
-                      key="grid"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      key={filters.category + "_" + filters.search}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -12 }}
+                      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
                       style={{
                         paddingBottom: window.innerWidth < 768 ? "112px" : "64px"
                       }}
                       className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 gap-6 md:gap-8 product-grid"
                     >
                       {products.map((p, i) => (
-                        <motion.div key={p._id} style={{ minWidth: 0, width: "100%" }} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, delay: Math.min(i * 0.05, 0.3) }}>
+                        <motion.div
+                          key={p._id}
+                          layout
+                          initial={{ opacity: 0, scale: 0.92, y: 16 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          transition={{
+                            duration: 0.3,
+                            delay: Math.min(i * 0.035, 0.22),
+                            ease: [0.16, 1, 0.3, 1]
+                          }}
+                          style={{ minWidth: 0, width: "100%" }}
+                        >
                           <EnhancedProductCard product={p} globalDiscount={globalDiscount} />
                         </motion.div>
                       ))}
