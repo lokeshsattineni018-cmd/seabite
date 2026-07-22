@@ -290,15 +290,6 @@ export const checkout = async (req, res) => {
       userDoc.loyaltyPoints = Math.max(0, userDoc.loyaltyPoints - pointsUsed);
     }
 
-    const session = await mongoose.startSession();
-    let transactionActive = false;
-    try {
-      await session.startTransaction();
-      transactionActive = true;
-    } catch (sessionError) {
-      logger.info("MongoDB session/transaction could not be started, falling back to non-transactional flow.", { traceId });
-    }
-
     const deductedProducts = [];
     let savedOrder;
     let razorpayOrder = null;
@@ -309,7 +300,7 @@ export const checkout = async (req, res) => {
         const product = await Product.findOneAndUpdate(
           { _id: item.productId, countInStock: { $gte: item.qty } },
           { $inc: { countInStock: -item.qty } },
-          { session: transactionActive ? session : undefined, returnDocument: 'after' }
+          { returnDocument: 'after' }
         );
         if (!product) {
           throw new Error(`Out of stock: ${item.name}`);
@@ -317,8 +308,7 @@ export const checkout = async (req, res) => {
         if (product.countInStock <= 0) {
           await Product.findByIdAndUpdate(
             item.productId,
-            { stock: "out" },
-            { session: transactionActive ? session : undefined }
+            { stock: "out" }
           );
         }
         deductedProducts.push({ productId: item.productId, qty: item.qty });
@@ -334,6 +324,13 @@ export const checkout = async (req, res) => {
           });
         } catch (rzpErr) {
           console.error("❌ RAZORPAY API ORDER CREATION FAILED:", rzpErr);
+          // Rollback any deducted stock
+          for (const rolledBack of deductedProducts) {
+            await Product.findByIdAndUpdate(rolledBack.productId, {
+              $inc: { countInStock: rolledBack.qty },
+              $set: { stock: "in" }
+            });
+          }
           return res.status(400).json({
             success: false,
             message: `Razorpay Error: ${rzpErr.error?.description || rzpErr.message || "Razorpay Order Creation Failed"}`
@@ -370,7 +367,7 @@ export const checkout = async (req, res) => {
       }
 
       const newOrder = new Order(orderData);
-      savedOrder = await newOrder.save({ session: transactionActive ? session : undefined });
+      savedOrder = await newOrder.save();
 
       // Log the wallet transaction
       if (useWallet && calculatedWalletAppliedAmount > 0) {
@@ -396,7 +393,7 @@ export const checkout = async (req, res) => {
             ]
           },
           { $inc: { usedCount: 1 } },
-          { session: transactionActive ? session : undefined, new: true }
+          { new: true }
         );
         if (!updatedCoupon) {
           throw new Error("Coupon usage limit reached.");
@@ -416,32 +413,22 @@ export const checkout = async (req, res) => {
       }
 
       userDoc.cart = [];
-      await userDoc.save({ session: transactionActive ? session : undefined });
+      await userDoc.save();
 
       // Save gift card updates if applicable
       if (giftCardDocToSave) {
-        await giftCardDocToSave.save({ session: transactionActive ? session : undefined });
-      }
-
-      if (transactionActive) {
-        await session.commitTransaction();
+        await giftCardDocToSave.save();
       }
     } catch (checkoutError) {
-      if (transactionActive) {
-        await session.abortTransaction();
-      } else {
-        // Rollback any successfully locked products in this execution loop manually
-        for (const rolledBack of deductedProducts) {
-          await Product.findByIdAndUpdate(rolledBack.productId, {
-            $inc: { countInStock: rolledBack.qty },
-            $set: { stock: "in" }
-          });
-        }
+      // Rollback any successfully locked products in this execution loop manually
+      for (const rolledBack of deductedProducts) {
+        await Product.findByIdAndUpdate(rolledBack.productId, {
+          $inc: { countInStock: rolledBack.qty },
+          $set: { stock: "in" }
+        });
       }
-      session.endSession();
       return res.status(400).json({ success: false, message: checkoutError.message });
     }
-    session.endSession();
 
     // ✅ TRIGGER EMAIL & WHATSAPP: ONLY for COD or Wallet orders here
     if (paymentMethod === "COD" || paymentMethod === "Wallet") {
