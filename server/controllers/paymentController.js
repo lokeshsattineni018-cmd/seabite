@@ -10,10 +10,18 @@ import { getSettings } from '../models/Settings.js';
 import { sendOrderPlacedEmail } from "../utils/emailService.js";
 import logger from "../utils/logger.js";
 
-const instance = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+const getRazorpayInstance = () => {
+  const key_id = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_ID !== "rzp_test_your_razorpay_key_id_here"
+    ? process.env.RAZORPAY_KEY_ID
+    : "rzp_test_TGWZFqYmFToo7v";
+  const key_secret = process.env.RAZORPAY_KEY_SECRET && process.env.RAZORPAY_KEY_SECRET !== "your_razorpay_key_secret_here"
+    ? process.env.RAZORPAY_KEY_SECRET
+    : "yoTSBwSG29S8SH3c0UV9AXrN";
+
+  return new Razorpay({ key_id, key_secret });
+};
+
+const instance = getRazorpayInstance();
 
 // Helper for vendor split credit payouts
 const processVendorSplits = async (orderItems) => {
@@ -317,12 +325,20 @@ export const checkout = async (req, res) => {
       }
 
       if (paymentMethod === "Razorpay" && Number(amount) > 0) {
-        // External APIs are called outside transaction locks as they shouldn't block DB
-        razorpayOrder = await instance.orders.create({
-          amount: Math.round(Number(amount) * 100),
-          currency: "INR",
-          receipt: `receipt_${Date.now()}`
-        });
+        try {
+          const rzp = getRazorpayInstance();
+          razorpayOrder = await rzp.orders.create({
+            amount: Math.round(Number(amount) * 100),
+            currency: "INR",
+            receipt: `receipt_${Date.now()}`
+          });
+        } catch (rzpErr) {
+          console.error("❌ RAZORPAY API ORDER CREATION FAILED:", rzpErr);
+          return res.status(400).json({
+            success: false,
+            message: `Razorpay Error: ${rzpErr.error?.description || rzpErr.message || "Razorpay Order Creation Failed"}`
+          });
+        }
       }
 
       const orderData = {

@@ -64,38 +64,52 @@ export const signupSchema = z.object({
 // Checkout Schema
 export const checkoutSchema = z.object({
   body: z.object({
-    amount: z.coerce.number({ required_error: "Total amount is required" }),
-    itemsPrice: z.coerce.number().optional(),
-    taxPrice: z.coerce.number().optional(),
-    shippingPrice: z.coerce.number().optional(),
-    discount: z.coerce.number().optional(),
-    paymentMethod: z.string().optional(),
+    amount: z.number({ required_error: "Total amount is required" }),
+    itemsPrice: z.number({ required_error: "Items price is required" }),
+    taxPrice: z.number({ required_error: "Tax price is required" }),
+    shippingPrice: z.number({ required_error: "Shipping price is required" }),
+    discount: z.number({ required_error: "Discount is required" }),
+    paymentMethod: z.enum(["Cash", "COD", "Razorpay", "Wallet", "GiftCard"], {
+      required_error: "Payment method is required",
+    }),
     deliverySlot: z.string().optional(),
     deliveryDate: z.string().optional(),
-    items: z.array(z.any()).min(1, { message: "Cart must contain at least one item" }),
+    items: z
+      .array(
+        z.object({
+          productId: z.string({ required_error: "Product ID is required" }),
+          qty: z
+            .number({ required_error: "Quantity is required" })
+            .positive({ message: "Quantity must be greater than zero" }),
+          name: z.string().optional(),
+          image: z.string().optional(),
+          price: z.number().optional(),
+          selectedCut: z.string().optional(),
+          cutPriceAdjustmentPct: z.number().optional(),
+          orderedWeightGrams: z.number().optional(),
+        })
+      )
+      .min(1, { message: "Cart must contain at least one item" }),
     shippingAddress: z.object({
-      fullName: z.string().optional(),
-      name: z.string().optional(),
-      phone: z.string().optional(),
+      fullName: z
+        .string({ required_error: "Full name is required" }),
+      phone: z
+        .string({ required_error: "Phone number is required" }),
       houseNo: z.string().optional(),
-      street: z.string().optional(),
-      city: z.string().optional(),
-      state: z.string().optional(),
-      zip: z.string().optional(),
-      postalCode: z.string().optional(),
-      country: z.string().optional(),
-      lat: z.number().nullable().optional(),
-      lng: z.number().nullable().optional(),
-    }).passthrough().optional(),
+      street: z.string({ required_error: "Street details are required" }),
+      city: z.string({ required_error: "City is required" }),
+      state: z.string({ required_error: "State is required" }),
+      zip: z
+        .string().optional(),
+      country: z.string().optional().default("India"),
+    }),
     isGift: z.boolean().optional(),
     giftMessage: z.string().optional(),
-    useWallet: z.boolean().optional(),
-    walletAppliedAmount: z.coerce.number().optional(),
-    loyaltyPointsToRedeem: z.coerce.number().optional(),
+    useLoyalty: z.boolean().optional(),
+    loyaltyPointsToRedeem: z.number().optional(),
     giftCardCode: z.string().optional(),
     couponCode: z.string().optional(),
-    visitorId: z.string().optional(),
-  }).passthrough(),
+  }),
 });
 
 // Reset Password Schema
