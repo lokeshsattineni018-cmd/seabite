@@ -288,9 +288,9 @@ const SeaBiteButtonLoader = () => {
 const SaaSPlaceOrderButton = ({ loading, disabled, grandTotal, onClick, isMobile = false }) => {
   const [stageIndex, setStageIndex] = useState(0);
   const stages = [
-    { text: "Securing Order...", icon: <FiLock size={16} /> },
-    { text: "Verifying Payment...", icon: <FiShield size={16} /> },
-    { text: "Finalizing Catch...", icon: <FiCheckCircle size={16} /> }
+    { text: "Securing Order...", icon: <FiLock size={15} /> },
+    { text: "Verifying Payment...", icon: <FiShield size={15} /> },
+    { text: "Finalizing Catch...", icon: <FiCheckCircle size={15} /> }
   ];
 
   useEffect(() => {
@@ -299,34 +299,32 @@ const SaaSPlaceOrderButton = ({ loading, disabled, grandTotal, onClick, isMobile
       setStageIndex(0);
       interval = setInterval(() => {
         setStageIndex((prev) => (prev + 1) % stages.length);
-      }, 1100);
+      }, 1200);
     }
     return () => clearInterval(interval);
   }, [loading]);
 
   return (
     <motion.button
-      whileHover={loading || disabled ? {} : { scale: 1.015, boxShadow: "0 14px 36px rgba(16, 185, 129, 0.35)" }}
-      whileTap={loading || disabled ? {} : { scale: 0.975 }}
+      whileHover={loading || disabled ? {} : { scale: 1.01, boxShadow: "0 14px 32px rgba(26, 46, 44, 0.32)", borderColor: "rgba(91, 191, 181, 0.4)" }}
+      whileTap={loading || disabled ? {} : { scale: 0.98 }}
       onClick={onClick}
       disabled={loading || disabled}
       className={isMobile ? "mobile-place-order-saas" : "desktop-place-order-saas"}
       style={{
         position: "relative",
         width: "100%",
-        height: isMobile ? "46px" : "54px",
+        height: isMobile ? "48px" : "54px",
         borderRadius: isMobile ? "14px" : "16px",
-        background: disabled
-          ? "#E5E7EB"
-          : "linear-gradient(135deg, #10B981 0%, #059669 100%)",
-        color: disabled ? "#9CA3AF" : "#FFFFFF",
+        background: disabled ? "#E2EEEC" : "#1A2E2C",
+        color: disabled ? "#8BA5B3" : "#FFFFFF",
         fontSize: isMobile ? "14px" : "15px",
         fontWeight: "800",
-        border: "none",
+        border: disabled ? "none" : "1px solid rgba(91, 191, 181, 0.25)",
         cursor: disabled || loading ? "not-allowed" : "pointer",
         overflow: "hidden",
-        boxShadow: disabled ? "none" : "0 10px 28px rgba(16, 185, 129, 0.28)",
-        transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+        boxShadow: disabled ? "none" : "0 10px 28px rgba(26, 46, 44, 0.22)",
+        transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -334,20 +332,19 @@ const SaaSPlaceOrderButton = ({ loading, disabled, grandTotal, onClick, isMobile
         fontFamily: "'Plus Jakarta Sans', sans-serif"
       }}
     >
-      {/* 🔮 Shimmer Overlay */}
-      {!disabled && !loading && (
+      {/* 🟢 High-End Minimalist Loading Progress Line */}
+      {loading && (
         <motion.div
-          animate={{ x: ["-100%", "200%"] }}
-          transition={{ repeat: Infinity, duration: 2.4, ease: "linear" }}
+          initial={{ width: "0%" }}
+          animate={{ width: `${((stageIndex + 1) / stages.length) * 100}%` }}
+          transition={{ duration: 0.8, ease: "easeInOut" }}
           style={{
             position: "absolute",
             top: 0,
             left: 0,
-            width: "50%",
-            height: "100%",
-            background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)",
-            transform: "skewX(-20deg)",
-            pointerEvents: "none"
+            height: "3px",
+            background: "linear-gradient(90deg, #5BBFB5, #89C2D9)",
+            borderRadius: "3px"
           }}
         />
       )}
@@ -356,34 +353,34 @@ const SaaSPlaceOrderButton = ({ loading, disabled, grandTotal, onClick, isMobile
         {loading ? (
           <motion.div
             key={`loading-${stageIndex}`}
-            initial={{ opacity: 0, y: 8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            transition={{ duration: 0.22 }}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
             style={{ display: "flex", alignItems: "center", gap: "10px" }}
           >
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 0.9, ease: "linear" }}
+              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
               style={{
-                width: "18px",
-                height: "18px",
+                width: "16px",
+                height: "16px",
                 borderRadius: "50%",
-                border: "2.5px solid rgba(255,255,255,0.3)",
-                borderTopColor: "#FFF"
+                border: "2px solid rgba(255,255,255,0.25)",
+                borderTopColor: "#5BBFB5"
               }}
             />
-            <span style={{ letterSpacing: "0.02em" }}>{stages[stageIndex].text}</span>
+            <span style={{ fontSize: "14px", fontWeight: "700", letterSpacing: "0.01em" }}>{stages[stageIndex].text}</span>
           </motion.div>
         ) : (
           <motion.div
             key="idle"
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            exit={{ opacity: 0, scale: 0.96 }}
             style={{ display: "flex", alignItems: "center", gap: "10px" }}
           >
-            <FiLock size={18} />
+            <FiLock size={17} style={{ color: "#5BBFB5" }} />
             <span>Place Order · ₹{grandTotal.toFixed(2)}</span>
           </motion.div>
         )}
