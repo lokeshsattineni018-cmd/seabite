@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiUsers, FiRefreshCw,
   FiShield, FiUser, FiArrowUpRight, FiX, FiCheck,
-  FiActivity, FiClock, FiShoppingBag, FiAlertTriangle, FiTarget, FiMail, FiCalendar, FiDollarSign
+  FiActivity, FiClock, FiShoppingBag, FiAlertTriangle, FiTarget, FiMail, FiCalendar, FiDollarSign, FiDownload
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
@@ -193,6 +193,29 @@ export default function AdminUsers() {
                 className="w-full pl-11 pr-5 py-3 rounded-2xl bg-stone-50 border border-stone-200/50 text-stone-800 font-medium placeholder:text-stone-400 focus:bg-white focus:border-stone-300 focus:ring-2 focus:ring-stone-200/50 transition-all outline-none"
               />
             </div>
+            <button
+              onClick={async () => {
+                const t = toast.loading("Downloading Users CSV...");
+                try {
+                  const backendBase = import.meta.env.VITE_API_URL || "";
+                  const res = await axios.get(`${backendBase}/api/admin/products/export/users-csv`, { withCredentials: true, responseType: "blob" });
+                  const url = window.URL.createObjectURL(new Blob([res.data]));
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.setAttribute("download", `seabite-users-${new Date().toISOString().split('T')[0]}.csv`);
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  window.URL.revokeObjectURL(url);
+                  toast.success("Users CSV downloaded", { id: t });
+                } catch {
+                  toast.error("Export failed", { id: t });
+                }
+              }}
+              className="flex items-center gap-2 bg-white hover:bg-stone-50 text-stone-700 px-4 py-3 rounded-2xl font-medium text-sm border border-stone-200 transition-colors shadow-xs"
+            >
+              <FiDownload size={16} /> Export CSV
+            </button>
             <button onClick={() => fetchUsers()} className="p-3.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-2xl transition-colors">
               <FiRefreshCw className={loading ? "animate-spin" : ""} size={18} />
             </button>

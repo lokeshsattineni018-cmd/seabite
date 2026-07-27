@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiEdit2, FiTrash2, FiPlus, FiPackage,
   FiRefreshCw, FiGrid, FiList, FiFilter, FiMoreHorizontal,
-  FiCheck, FiX, FiEye, FiEyeOff, FiCheckCircle, FiXCircle
+  FiCheck, FiX, FiEye, FiEyeOff, FiCheckCircle, FiXCircle,
+  FiDownload, FiDollarSign, FiSlash
 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import PopupModal from "../components/common/PopupModal";
@@ -37,6 +38,10 @@ export default function AdminProducts() {
   const [modal, setModal] = useState({ show: false, message: "", type: "info" });
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [showPriceModal, setShowPriceModal] = useState(false);
+  const [priceAdjustType, setPriceAdjustType] = useState("percent"); // "percent" | "exact"
+  const [priceAdjustValue, setPriceAdjustValue] = useState("");
+  const [csvDownloading, setCsvDownloading] = useState(false);
 
   const fetchProducts = async (isSilent = false) => {
     if (!isSilent) setLoading(true);
@@ -85,11 +90,9 @@ export default function AdminProducts() {
   const handleBulkVisibilityUpdate = async (activeState) => {
     if (selectedIds.length === 0) return;
     setIsBulkProcessing(true);
-    const t = toast.loading(`Updating ${selectedIds.length} products to ${activeState ? 'Visible' : 'Hidden'}...`);
+    const t = toast.loading(`Updating ${selectedIds.length} products...`);
     try {
-      await Promise.all(
-        selectedIds.map(id => axios.put(`${backendBase}/api/admin/products/${id}`, { active: activeState }, { withCredentials: true }))
-      );
+      await axios.post(`${backendBase}/api/admin/products/bulk-update`, { ids: selectedIds, update: { active: activeState } }, { withCredentials: true });
       toast.success(`${selectedIds.length} products ${activeState ? 'published' : 'hidden'}`, { id: t });
       setSelectedIds([]);
       fetchProducts(true);
@@ -103,7 +106,6 @@ export default function AdminProducts() {
   const handleBulkDelete = async () => {
     if (selectedIds.length === 0) return;
     if (!window.confirm(`Are you sure you want to PERMANENTLY delete ${selectedIds.length} products?`)) return;
-
     setIsBulkProcessing(true);
     const t = toast.loading(`Deleting ${selectedIds.length} products...`);
     try {
@@ -123,11 +125,9 @@ export default function AdminProducts() {
   const handleBulkStockUpdate = async (stock) => {
     if (selectedIds.length === 0) return;
     setIsBulkProcessing(true);
-    const t = toast.loading(`Updating ${selectedIds.length} products to ${stock === 'in' ? 'In Stock' : 'Out of Stock'}...`);
+    const t = toast.loading(`Updating ${selectedIds.length} products...`);
     try {
-      await Promise.all(
-        selectedIds.map(id => axios.put(`${backendBase}/api/admin/products/${id}`, { stock }, { withCredentials: true }))
-      );
+      await axios.post(`${backendBase}/api/admin/products/bulk-update`, { ids: selectedIds, update: { stock } }, { withCredentials: true });
       toast.success("Inventory updated", { id: t });
       setSelectedIds([]);
       fetchProducts(true);
@@ -135,6 +135,69 @@ export default function AdminProducts() {
       toast.error("Update failed", { id: t });
     } finally {
       setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkOutOfSeason = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Mark ${selectedIds.length} products as Out of Season? (Sets stock=out, active=false)`)) return;
+    setIsBulkProcessing(true);
+    const t = toast.loading("Marking as out of season...");
+    try {
+      await axios.post(`${backendBase}/api/admin/products/bulk-update`, { ids: selectedIds, update: { stock: "out", active: false, countInStock: 0 } }, { withCredentials: true });
+      toast.success("Products marked as out of season", { id: t });
+      setSelectedIds([]);
+      fetchProducts(true);
+    } catch (err) {
+      toast.error("Failed", { id: t });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkPriceUpdate = async () => {
+    if (!priceAdjustValue || isNaN(priceAdjustValue)) return toast.error("Enter a valid number");
+    setIsBulkProcessing(true);
+    const t = toast.loading("Adjusting prices...");
+    try {
+      let update = {};
+      if (priceAdjustType === "percent") {
+        const pct = parseFloat(priceAdjustValue);
+        update.priceMultiplier = 1 + pct / 100;
+      } else {
+        update.basePrice = parseFloat(priceAdjustValue);
+      }
+      await axios.post(`${backendBase}/api/admin/products/bulk-update`, { ids: selectedIds, update }, { withCredentials: true });
+      toast.success("Prices updated", { id: t });
+      setSelectedIds([]);
+      setShowPriceModal(false);
+      setPriceAdjustValue("");
+      fetchProducts(true);
+    } catch (err) {
+      toast.error("Price update failed", { id: t });
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleCsvExport = async (type = "products") => {
+    setCsvDownloading(true);
+    try {
+      const urlMap = { products: "/api/admin/products/export/csv", orders: "/api/admin/products/export/orders-csv", users: "/api/admin/products/export/users-csv" };
+      const res = await axios.get(`${backendBase}${urlMap[type]}`, { withCredentials: true, responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `seabite-${type}-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`${type} CSV downloaded`);
+    } catch {
+      toast.error("Export failed");
+    } finally {
+      setCsvDownloading(false);
     }
   };
 
@@ -219,6 +282,15 @@ export default function AdminProducts() {
               </select>
             </div>
 
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleCsvExport("products")}
+              disabled={csvDownloading}
+              className="flex items-center gap-2 bg-white hover:bg-stone-50 text-stone-700 px-4 py-3 rounded-xl font-medium text-sm border border-stone-200 transition-colors"
+            >
+              <FiDownload size={16} /> {csvDownloading ? "Exporting..." : "Export CSV"}
+            </motion.button>
             <Link to="/admin/add-product">
               <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex items-center gap-2 bg-stone-900 hover:bg-stone-800 text-white px-5 py-3 rounded-xl font-medium text-sm shadow-lg shadow-stone-900/10 transition-colors">
                 <FiPlus size={16} /> Add Product
@@ -280,6 +352,28 @@ export default function AdminProducts() {
                   className="flex items-center gap-1.5 px-3 py-2 bg-[#F4F9F8] hover:bg-[#E2EEEC] text-[#1A2E2C] border border-[#E2EEEC] text-xs font-bold rounded-xl transition-all"
                 >
                   <FiXCircle size={14} className="text-rose-600" /> Out
+                </button>
+
+                <div className="h-4 w-px bg-[#E2EEEC] mx-1" />
+
+                {/* Price Adjust */}
+                <button
+                  onClick={() => setShowPriceModal(true)}
+                  disabled={isBulkProcessing}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold rounded-xl transition-all"
+                  title="Adjust prices"
+                >
+                  <FiDollarSign size={14} /> Price
+                </button>
+
+                {/* Out of Season */}
+                <button
+                  onClick={handleBulkOutOfSeason}
+                  disabled={isBulkProcessing}
+                  className="flex items-center gap-1.5 px-3 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-xs font-bold rounded-xl transition-all"
+                  title="Mark as out of season"
+                >
+                  <FiSlash size={14} /> Season
                 </button>
 
                 <div className="h-4 w-px bg-[#E2EEEC] mx-1" />
@@ -524,6 +618,83 @@ export default function AdminProducts() {
         </AnimatePresence>
 
       </div>
+
+      {/* Bulk Price Adjustment Modal */}
+      <AnimatePresence>
+        {showPriceModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10000] flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-stone-200"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold text-stone-900 flex items-center gap-2">
+                  <FiDollarSign className="text-emerald-600" /> Bulk Price Update ({selectedIds.length} items)
+                </h3>
+                <button onClick={() => setShowPriceModal(false)} className="text-stone-400 hover:text-stone-600">
+                  <FiX size={18} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-2">Adjustment Type</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setPriceAdjustType("percent")}
+                      className={`p-2.5 text-xs font-bold rounded-xl border transition-all ${priceAdjustType === "percent" ? "bg-stone-900 text-white border-stone-900" : "bg-stone-50 text-stone-600 border-stone-200"}`}
+                    >
+                      Percentage (+/- %)
+                    </button>
+                    <button
+                      onClick={() => setPriceAdjustType("exact")}
+                      className={`p-2.5 text-xs font-bold rounded-xl border transition-all ${priceAdjustType === "exact" ? "bg-stone-900 text-white border-stone-900" : "bg-stone-50 text-stone-600 border-stone-200"}`}
+                    >
+                      Set Fixed Base Price (₹)
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-stone-500 uppercase tracking-wider block mb-2">
+                    {priceAdjustType === "percent" ? "Percentage Change (e.g. 10 for +10%, -5 for -5%)" : "New Fixed Price (₹)"}
+                  </label>
+                  <input
+                    type="number"
+                    value={priceAdjustValue}
+                    onChange={(e) => setPriceAdjustValue(e.target.value)}
+                    placeholder={priceAdjustType === "percent" ? "e.g. 10" : "e.g. 499"}
+                    className="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-stone-400 font-mono"
+                  />
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    onClick={() => setShowPriceModal(false)}
+                    className="flex-1 py-2.5 rounded-xl border border-stone-200 text-xs font-bold text-stone-600 hover:bg-stone-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleBulkPriceUpdate}
+                    disabled={isBulkProcessing}
+                    className="flex-1 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-bold hover:bg-stone-800 disabled:opacity-50"
+                  >
+                    Apply Update
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

@@ -16,6 +16,9 @@ const router = express.Router();
 // 🟢 NEW: GET TOP RECENT REVIEWS FOR HOME PAGE
 router.get("/top-reviews", async (req, res) => {
   try {
+    const cached = cacheGet("products:top-reviews");
+    if (cached) return res.json(cached);
+
     // Fetch products that have at least one review
     const products = await Product.find({ numReviews: { $gt: 0 } })
       .select("name reviews")
@@ -43,6 +46,7 @@ router.get("/top-reviews", async (req, res) => {
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 6);
 
+    cacheSet("products:top-reviews", latestReviews, 300);
     res.json(latestReviews);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch reviews" });
@@ -52,6 +56,9 @@ router.get("/top-reviews", async (req, res) => {
 // ── GET /api/products/filter-meta ──
 router.get("/filter-meta", async (req, res) => {
   try {
+    const cached = cacheGet("products:filter-meta");
+    if (cached) return res.json(cached);
+
     const products = await Product.find({ active: true }).select("basePrice category cuts").lean();
     
     let minPrice = Infinity;
@@ -73,12 +80,15 @@ router.get("/filter-meta", async (req, res) => {
     if (minPrice === Infinity) minPrice = 0;
     if (maxPrice === -Infinity) maxPrice = 2000;
 
-    res.json({
+    const result = {
       minPrice,
       maxPrice,
       categories: Array.from(categories),
       cuts: Array.from(cuts)
-    });
+    };
+
+    cacheSet("products:filter-meta", result, 300);
+    res.json(result);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch filter metadata" });
   }

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiSearch, FiRefreshCw, FiTruck, FiPrinter,
   FiXCircle, FiPackage, FiArrowUpRight, FiFilter, FiTrash2, FiDollarSign,
-  FiSettings, FiActivity, FiGrid, FiList
+  FiSettings, FiActivity, FiGrid, FiList, FiDownload
 } from "react-icons/fi";
 import PopupModal from "../components/common/PopupModal";
 import SeaBiteLoader from "../components/common/SeaBiteLoader";
@@ -437,6 +437,29 @@ export default function AdminOrders() {
               </button>
             </div>
 
+            <button
+              onClick={async () => {
+                const t = toast.loading("Downloading Orders CSV...");
+                try {
+                  const backendBase = import.meta.env.VITE_API_URL || "";
+                  const res = await axios.get(`${backendBase}/api/admin/products/export/orders-csv`, { withCredentials: true, responseType: "blob" });
+                  const url = window.URL.createObjectURL(new Blob([res.data]));
+                  const link = document.createElement("a");
+                  link.href = url;
+                  link.setAttribute("download", `seabite-orders-${new Date().toISOString().split('T')[0]}.csv`);
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  window.URL.revokeObjectURL(url);
+                  toast.success("Orders CSV downloaded", { id: t });
+                } catch {
+                  toast.error("Export failed", { id: t });
+                }
+              }}
+              className="flex items-center gap-2 bg-white hover:bg-stone-50 text-stone-700 px-4 py-3 rounded-2xl font-medium text-sm border border-stone-200 transition-colors shadow-xs"
+            >
+              <FiDownload size={16} /> Export CSV
+            </button>
             <button onClick={() => fetchOrders()} className="p-3.5 bg-stone-100 hover:bg-stone-200 text-stone-600 rounded-2xl transition-colors">
               <FiRefreshCw className={loading ? "animate-spin" : ""} size={18} />
             </button>

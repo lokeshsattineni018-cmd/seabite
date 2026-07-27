@@ -322,6 +322,160 @@ router.get("/", adminAuth, async (req, res) => {
   }
 });
 
+/* ========== BULK UPDATE PRODUCTS (POST /api/admin/products/bulk-update) ========== */
+router.post("/bulk-update", adminAuth, async (req, res) => {
+  try {
+    const { ids, update } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: "No product IDs provided" });
+    }
+
+    let bulkOps = [];
+
+    if (update.priceMultiplier && update.priceMultiplier !== 1) {
+      // For percentage-based price adjustments, we need per-product calculation
+      const products = await Product.find({ _id: { $in: ids } }).select("basePrice buyingPrice");
+      bulkOps = products.map(p => ({
+        updateOne: {
+          filter: { _id: p._id },
+          update: {
+            $set: {
+              basePrice: Math.round(p.basePrice * update.priceMultiplier),
+              ...(update.adjustBuyingPrice && p.buyingPrice ? { buyingPrice: Math.round(p.buyingPrice * update.priceMultiplier) } : {}),
+            }
+          }
+        }
+      }));
+    } else {
+      // For flat updates (stock, active, exact price)
+      const updateFields = {};
+      if (update.stock !== undefined) updateFields.stock = update.stock;
+      if (update.active !== undefined) updateFields.active = update.active;
+      if (update.basePrice !== undefined) updateFields.basePrice = Number(update.basePrice);
+      if (update.buyingPrice !== undefined) updateFields.buyingPrice = Number(update.buyingPrice);
+      if (update.countInStock !== undefined) updateFields.countInStock = Number(update.countInStock);
+
+      // Smart sync: if marking as "in" stock but count is 0, default to 10
+      if (updateFields.stock === "in" && (updateFields.countInStock === undefined || updateFields.countInStock <= 0)) {
+        updateFields.countInStock = 10;
+      }
+
+      if (Object.keys(updateFields).length === 0) {
+        return res.status(400).json({ message: "No update fields provided" });
+      }
+
+      bulkOps = ids.map(id => ({
+        updateOne: {
+          filter: { _id: id },
+          update: { $set: updateFields }
+        }
+      }));
+    }
+
+    const result = await Product.bulkWrite(bulkOps);
+    cacheClear();
+
+    res.json({
+      message: `Successfully updated ${result.modifiedCount} products`,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (err) {
+    console.error("❌ BULK UPDATE ERROR:", err);
+    res.status(500).json({ message: "Bulk update failed: " + err.message });
+  }
+});
+
+/* ========== EXPORT PRODUCTS CSV ========== */
+router.get("/export/csv", adminAuth, async (req, res) => {
+  try {
+    const products = await Product.find({}).sort({ createdAt: -1 }).lean();
+    const headers = ["Name", "Category", "BasePrice", "BuyingPrice", "Stock", "CountInStock", "Active", "Rating", "Reviews", "CreatedAt"];
+    const csvRows = [headers.join(",")];
+
+    products.forEach(p => {
+      csvRows.push([
+        `"${(p.name || '').replace(/"/g, '""')}"`,
+        `"${p.category || ''}"`,
+        p.basePrice || 0,
+        p.buyingPrice || 0,
+        `"${p.stock || 'in'}"`,
+        p.countInStock || 0,
+        p.active !== false ? "Yes" : "No",
+        p.rating || 0,
+        p.numReviews || 0,
+        `"${p.createdAt ? new Date(p.createdAt).toISOString().split('T')[0] : ''}"`,
+      ].join(","));
+    });
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename=seabite-products-${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csvRows.join("\n"));
+  } catch (err) {
+    res.status(500).json({ message: "CSV export failed" });
+  }
+});
+
+/* ========== EXPORT ORDERS CSV ========== */
+router.get("/export/orders-csv", adminAuth, async (req, res) => {
+  try {
+    const Order = (await import("../models/Order.js")).default;
+    const orders = await Order.find({}).populate("user", "name email phone").sort({ createdAt: -1 }).lean();
+    const headers = ["OrderID", "Customer", "Email", "Phone", "Items", "Total", "PaymentMethod", "Status", "IsPaid", "CreatedAt"];
+    const csvRows = [headers.join(",")];
+
+    orders.forEach(o => {
+      const itemNames = (o.items || []).map(i => i.name).join("; ");
+      csvRows.push([
+        o.orderId || o._id,
+        `"${(o.user?.name || 'Guest').replace(/"/g, '""')}"`,
+        `"${o.user?.email || ''}"`,
+        `"${o.user?.phone || ''}"`,
+        `"${itemNames.replace(/"/g, '""')}"`,
+        o.totalAmount || 0,
+        `"${o.paymentMethod || 'COD'}"`,
+        `"${o.status || 'Pending'}"`,
+        o.isPaid ? "Yes" : "No",
+        `"${o.createdAt ? new Date(o.createdAt).toISOString().split('T')[0] : ''}"`,
+      ].join(","));
+    });
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename=seabite-orders-${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csvRows.join("\n"));
+  } catch (err) {
+    res.status(500).json({ message: "Orders CSV export failed" });
+  }
+});
+
+/* ========== EXPORT USERS CSV ========== */
+router.get("/export/users-csv", adminAuth, async (req, res) => {
+  try {
+    const users = await User.find({}).select("name email phone role loyaltyTier loyaltyPoints lifetimeOrderCount lifetimeOrderValue createdAt").sort({ createdAt: -1 }).lean();
+    const headers = ["Name", "Email", "Phone", "Role", "LoyaltyTier", "LoyaltyPoints", "LifetimeOrders", "LifetimeValue", "JoinedAt"];
+    const csvRows = [headers.join(",")];
+
+    users.forEach(u => {
+      csvRows.push([
+        `"${(u.name || '').replace(/"/g, '""')}"`,
+        `"${u.email || ''}"`,
+        `"${u.phone || ''}"`,
+        `"${u.role || 'user'}"`,
+        `"${u.loyaltyTier || 'Bronze'}"`,
+        u.loyaltyPoints || 0,
+        u.lifetimeOrderCount || 0,
+        u.lifetimeOrderValue || 0,
+        `"${u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : ''}"`,
+      ].join(","));
+    });
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename=seabite-users-${new Date().toISOString().split('T')[0]}.csv`);
+    res.send(csvRows.join("\n"));
+  } catch (err) {
+    res.status(500).json({ message: "Users CSV export failed" });
+  }
+});
+
 /* ========== DELETE PRODUCT ========== */
 router.delete("/:id", adminAuth, async (req, res) => {
   try {

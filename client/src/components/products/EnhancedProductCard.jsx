@@ -10,6 +10,8 @@ import triggerHaptic from "../../utils/haptics";
 import axios from "axios";
 import { slugify } from "../../utils/slugify";
 
+import { optimizeImage } from "../../utils/cloudinaryOptimize";
+
 const API_URL = import.meta.env.VITE_API_URL || "";
 
 // Decode HTML entities like &amp; → &
@@ -87,9 +89,12 @@ const EnhancedProductCard = ({
 
   const getImageUrl = (path) => {
     if (!path) return "https://placehold.co/400?text=No+Image";
-    if (path.startsWith("http")) return path;
-    const cleanPath = path.startsWith("/") ? path : `/${path}`;
-    return cleanPath.startsWith("/uploads") ? `${API_URL}${cleanPath}` : `${API_URL}/uploads${cleanPath}`;
+    let rawUrl = path;
+    if (!path.startsWith("http")) {
+      const cleanPath = path.startsWith("/") ? path : `/${path}`;
+      rawUrl = cleanPath.startsWith("/uploads") ? `${API_URL}${cleanPath}` : `${API_URL}/uploads${cleanPath}`;
+    }
+    return optimizeImage(rawUrl, { width: 400 });
   };
 
   const handleWishlistToggle = async (e) => {
