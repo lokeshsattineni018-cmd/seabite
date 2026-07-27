@@ -285,7 +285,7 @@ export default function NavSearchBar({ onMobileClose }) {
       {/* ═══ MOBILE HEADER INLINE SEARCH TRIGGER ═══ */}
       <div className="show-mobile" style={{ flex: 1, maxWidth: "160px", margin: "0 8px" }}>
         <button
-          onClick={expandMobileSearch}
+          onClick={() => setSearchExpanded(true)}
           style={{
             width: "100%",
             display: "flex",

@@ -309,7 +309,7 @@ export function SeaBiteError({ error }) {
                         </button>
                     </div>
 
-                    {error && (
+                    {import.meta.env.DEV && error && (
                         <div style={{
                             margin: "0 auto 28px",
                             padding: "16px",
@@ -326,16 +326,8 @@ export function SeaBiteError({ error }) {
                             animation: "fadeUp 0.5s ease 0.55s both",
                             boxShadow: "0 4px 12px rgba(244,63,94,0.03)"
                         }}>
-                            <div style={{ fontWeight: 700, marginBottom: "8px", textTransform: "uppercase", letterSpacing: "1px" }}>
-
-
-
-
-                            </div>
                             <div style={{ fontWeight: 600, marginBottom: "6px" }}>{error.message || error.toString()}</div>
-                            {import.meta.env.DEV && (
-                              <pre style={{ whiteSpace: "pre-wrap", fontSize: "10px", lineHeight: "1.5", opacity: 0.85 }}>{error.stack}</pre>
-                            )}
+                            <pre style={{ whiteSpace: "pre-wrap", fontSize: "10px", lineHeight: "1.5", opacity: 0.85 }}>{error.stack}</pre>
                         </div>
                     )}
 
