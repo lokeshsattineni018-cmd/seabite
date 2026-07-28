@@ -338,11 +338,12 @@ export default function Navbar({ announcementActive = false }) {
 
   const handleSignupOtpRequest = async (e) => {
     if (e) e.preventDefault();
-    // Validate all fields before sending OTP
-    if (!authName || authName.trim().length < 2) return toast.error("Please enter your full name");
-    if (!authPhone || authPhone.length < 10) return toast.error("Phone number must be at least 10 digits");
+    // Validate all fields before sending OTP (matches server-side signupSchema)
+    if (!authName || authName.trim().length < 2) return toast.error("Name must be at least 2 characters long");
+    if (!authPhone || !/^\d{10}$/.test(authPhone)) return toast.error("Phone number must be exactly 10 digits");
     if (!authEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(authEmail)) return toast.error("Please enter a valid email address");
-    if (!authPassword || authPassword.length < 6) return toast.error("Password must be at least 6 characters");
+    if (!authPassword || authPassword.length < 8) return toast.error("Password must be at least 8 characters long");
+    if (!/[a-zA-Z]/.test(authPassword) || !/[0-9]/.test(authPassword)) return toast.error("Password must contain both letters and numbers");
     setAuthLoading(true);
     try {
       const res = await axios.post(`${API_URL}/api/auth/send-otp`, { email: authEmail, name: authName });
