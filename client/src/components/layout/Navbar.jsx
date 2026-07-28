@@ -95,6 +95,7 @@ export default function Navbar({ announcementActive = false }) {
   const [authReferral, setAuthReferral] = useState("");
   const [authConfirmPassword, setAuthConfirmPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
+  const [authLoadingSource, setAuthLoadingSource] = useState(null);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
   const [authImgIdx, setAuthImgIdx] = useState(0);
@@ -325,6 +326,7 @@ export default function Navbar({ announcementActive = false }) {
   const handleLoginSubmit = async (e) => {
     if (e) e.preventDefault();
     setAuthLoading(true);
+    setAuthLoadingSource("login");
     try {
       const res = await axios.post(`${API_URL}/api/auth/login`, { email: authEmail, password: authPassword }, { withCredentials: true });
       setUser(res.data.user);
@@ -333,7 +335,7 @@ export default function Navbar({ announcementActive = false }) {
       await refreshMe?.();
     } catch (err) {
       toast.error(err.response?.data?.message || "Login failed");
-    } finally { setAuthLoading(false); }
+    } finally { setAuthLoading(false); setAuthLoadingSource(null); }
   };
 
   const handleSignupOtpRequest = async (e) => {
@@ -345,6 +347,7 @@ export default function Navbar({ announcementActive = false }) {
     if (!authPassword || authPassword.length < 8) return toast.error("Password must be at least 8 characters long");
     if (!/[a-zA-Z]/.test(authPassword) || !/[0-9]/.test(authPassword)) return toast.error("Password must contain both letters and numbers");
     setAuthLoading(true);
+    setAuthLoadingSource("form");
     try {
       const res = await axios.post(`${API_URL}/api/auth/send-otp`, { email: authEmail, name: authName });
       toast.success("OTP sent to your email!");
@@ -354,12 +357,13 @@ export default function Navbar({ announcementActive = false }) {
       // If server returns a cooldown (429), sync the timer
       if (err.response?.data?.cooldown) setResendCooldown(err.response.data.cooldown);
       toast.error(err.response?.data?.message || "Failed to send OTP");
-    } finally { setAuthLoading(false); }
+    } finally { setAuthLoading(false); setAuthLoadingSource(null); }
   };
 
   const handleSignupVerify = async (e) => {
     e.preventDefault();
     setAuthLoading(true);
+    setAuthLoadingSource("form");
     try {
       const res = await axios.post(`${API_URL}/api/auth/verify-otp-signup`, {
         name: authName, email: authEmail, phone: authPhone, password: authPassword, otp: authOtp, referralCode: authReferral
@@ -370,7 +374,7 @@ export default function Navbar({ announcementActive = false }) {
       await refreshMe?.();
     } catch (err) {
       toast.error(err.response?.data?.message || "Verification failed");
-    } finally { setAuthLoading(false); }
+    } finally { setAuthLoading(false); setAuthLoadingSource(null); }
   };
 
   const handleForgotOtpRequest = async (e) => {
@@ -418,6 +422,7 @@ export default function Navbar({ announcementActive = false }) {
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setAuthLoading(true);
+      setAuthLoadingSource("google");
       try {
         const res = await axios.post(`${API_URL}/api/auth/google`, { token: tokenResponse.access_token }, { withCredentials: true });
         setUser(res.data.user);
@@ -428,6 +433,7 @@ export default function Navbar({ announcementActive = false }) {
         toast.error(err.response?.data?.message || "Google login failed");
       } finally {
         setAuthLoading(false);
+        setAuthLoadingSource(null);
       }
     }
   });
@@ -1466,7 +1472,7 @@ export default function Navbar({ announcementActive = false }) {
                           whileTap={{ scale: 0.99 }}
                           style={{ width: "100%", height: "48px", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", transition: "all 0.2s" }}
                         >
-                          {authLoading ? <div className="loading-spinner" /> : "Continue"}
+                          {authLoading && authLoadingSource === "form" ? <div className="loading-spinner" /> : "Continue"}
                         </motion.button>
 
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
@@ -1483,7 +1489,7 @@ export default function Navbar({ announcementActive = false }) {
                           whileTap={{ scale: 0.99 }}
                           style={{ width: "100%", height: "48px", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: authLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "all 0.2s" }}
                         >
-                          {authLoading ? (
+                          {authLoading && authLoadingSource === "google" ? (
                             <div className="loading-spinner" style={{ width: "20px", height: "20px", border: "2.5px solid rgba(17, 24, 39, 0.15)", borderTopColor: "#111827" }} />
                           ) : (
                             <>
@@ -1532,7 +1538,7 @@ export default function Navbar({ announcementActive = false }) {
                           whileTap={{ scale: 0.99 }}
                           style={{ width: "100%", height: "48px", padding: "14px", background: "#111827", color: "#fff", border: "none", borderRadius: "8px", fontWeight: "700", fontSize: "15px", cursor: "pointer", display: "flex", justifyContent: "center", alignItems: "center", transition: "all 0.2s" }}
                         >
-                          {authLoading ? <div className="loading-spinner" /> : "Create Account"}
+                          {authLoading && authLoadingSource === "form" ? <div className="loading-spinner" /> : "Create Account"}
                         </motion.button>
 
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ position: "relative", margin: "24px 0", textAlign: "center" }}>
