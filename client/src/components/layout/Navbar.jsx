@@ -1555,7 +1555,7 @@ export default function Navbar({ announcementActive = false }) {
                           whileTap={{ scale: 0.99 }}
                           style={{ width: "100%", height: "48px", padding: "14px", background: "#fff", border: "1px solid #D1D5DB", borderRadius: "8px", fontWeight: "700", fontSize: "14px", cursor: authLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", color: "#111827", transition: "all 0.2s" }}
                         >
-                          {authLoading ? (
+                          {authLoading && authLoadingSource === "google" ? (
                             <div className="loading-spinner" style={{ width: "20px", height: "20px", border: "2.5px solid rgba(17, 24, 39, 0.15)", borderTopColor: "#111827" }} />
                           ) : (
                             <>
