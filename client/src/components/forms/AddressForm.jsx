@@ -252,7 +252,7 @@ export default function AddressForm({ onSave, onCancel, initialData }) {
                             style={{ borderColor: errors.street ? T.coral : undefined }}
                         />
                         <div style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/3/39/Google_Maps_icon_%282015-2020%29.svg" alt="G" style={{ width: 14, height: 14, opacity: 0.6 }} />
+                            <img src="https://www.gstatic.com/images/branding/product/1x/maps_512dp.png" alt="G" style={{ width: 14, height: 14, opacity: 0.6 }} />
                         </div>
                     </div>
                 </Field>
