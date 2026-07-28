@@ -934,8 +934,8 @@ export const sendEmail = async (to, subject, contentText) => {
 };
 
 // 8. MARKETING: Abandoned Cart Recovery
-export const sendAbandonedCartEmail = async (email, name, cartItems) => {
-  console.log(`🔍 [DEBUG] sendAbandonedCartEmail triggered for: ${email} (Items: ${cartItems?.length})`);
+export const sendAbandonedCartEmail = async (email, name, cartItems, couponCode = null) => {
+  console.log(`🔍 [DEBUG] sendAbandonedCartEmail triggered for: ${email} (Items: ${cartItems?.length}, Coupon: ${couponCode})`);
   if (!resend || !cartItems) return;
 
   const formattedItems = cartItems.map(item => {
@@ -974,7 +974,7 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
                 </p>
               </td>
               <td align="right" style="vertical-align:middle; white-space:nowrap;">
-                <p style="margin:0; font-size:14px; font-weight:600; color:#12312E;">&#8377;${item.price.toLocaleString()}</p>
+                <p style="margin:0; font-size:14px; font-weight:600; color:#12312E;">&#8377;${(item.price * item.qty).toLocaleString()}</p>
               </td>
             </tr>
           </table>
@@ -982,6 +982,46 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
       </tr>
     `;
   }).join('');
+
+  // Coupon section — only shown when a coupon code is provided
+  const couponSection = couponCode ? `
+    <!-- Coupon Card -->
+    <tr>
+      <td style="padding:0 40px 24px 40px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg, #0F4C4F 0%, #146B6E 100%); border-radius:16px; overflow:hidden;">
+          <tr>
+            <td style="padding:24px 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td>
+                    <p style="margin:0; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#9FD8CE; font-weight:700;">Exclusive Offer For You</p>
+                    <p style="margin:8px 0 0 0; font-size:18px; font-weight:700; color:#FFFFFF;">Get 10% OFF your cart</p>
+                    <p style="margin:4px 0 0 0; font-size:12px; color:#B0DDD5;">Max discount ₹200 &middot; Expires in 48 hours</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:16px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="background:rgba(255,255,255,0.15); border:2px dashed rgba(255,255,255,0.4); border-radius:10px;">
+                      <tr>
+                        <td style="padding:12px 24px;">
+                          <p style="margin:0; font-size:22px; font-weight:800; color:#FFFFFF; letter-spacing:2px; font-family:'Courier New', monospace;">${couponCode}</p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding-top:10px;">
+                    <p style="margin:0; font-size:11px; color:#9FD8CE;">Apply this code at checkout to save on your order</p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  ` : '';
 
   const content = `
     <!-- Icon -->
@@ -1033,6 +1073,8 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
       </td>
     </tr>
 
+    ${couponSection}
+
     <!-- CTA -->
     <tr>
       <td style="padding:8px 40px 36px 40px;" align="center">
@@ -1051,8 +1093,12 @@ export const sendAbandonedCartEmail = async (email, name, cartItems) => {
     const result = await resend.emails.send({
       from: OFFICIAL_SENDER,
       to: email,
-      subject: `Complete your SeaBite order`,
-      html: emailWrapper(content, "We saved the items in your SeaBite shopping cart.")
+      subject: couponCode
+        ? `${name}, you left items behind — here's 10% OFF to complete your order!`
+        : `Complete your SeaBite order`,
+      html: emailWrapper(content, couponCode
+        ? `Don't miss out! Use code ${couponCode} for 10% off your abandoned cart.`
+        : "We saved the items in your SeaBite shopping cart.")
     });
     logEmailSuccess("ABANDONED_CART", email);
     return result;

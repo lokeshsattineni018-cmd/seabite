@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiGrid, FiPlusSquare, FiShoppingBag, FiClipboard,
   FiUsers, FiLogOut, FiGlobe, FiMail, FiTag,
-  FiChevronRight, FiChevronDown, FiZap, FiSend, FiShoppingCart, FiCreditCard, FiStar, FiActivity, FiSettings, FiShield,
-  FiArchive, FiTarget, FiMessageSquare, FiTruck, FiThermometer, FiTrendingUp, FiDollarSign, FiRotateCcw
+  FiChevronRight, FiChevronDown, FiZap, FiSend, FiCreditCard, FiStar, FiActivity, FiSettings, FiShield,
+  FiArchive, FiTarget, FiMessageSquare, FiTruck
 } from "react-icons/fi";
 import axios from "axios";
 
@@ -28,7 +28,6 @@ const CATEGORIES = [
       { name: "Logistics", path: "/admin/delivery", icon: <FiTruck size={16} /> },
       { name: "Live Radar", path: "/admin/radar", icon: <FiActivity size={16} /> },
       { name: "Complaints", path: "/admin/complaints", icon: <FiMessageSquare size={16} /> },
-      { name: "Returns & Refunds", path: "/admin/returns", icon: <FiRotateCcw size={16} /> },
       { name: "Fleet Console", path: "/admin/fleet-console", icon: <FiActivity size={16} /> },
     ]
   },
@@ -38,10 +37,6 @@ const CATEGORIES = [
       { name: "Coupons", path: "/admin/coupons", icon: <FiTag size={16} /> },
       { name: "Flash Sales", path: "/admin/flash-sale", icon: <FiZap size={16} /> },
       { name: "Marketing", path: "/admin/marketing", icon: <FiSend size={16} /> },
-      { name: "Abandoned Cart", path: "/admin/carts", icon: <FiShoppingCart size={16} /> },
-      { name: "AI Pricing Engine", path: "/admin/pricing-engine", icon: <FiTrendingUp size={16} /> },
-      { name: "Notification Composer", path: "/admin/campaigns", icon: <FiSend size={16} /> },
-      { name: "A/B Testing", path: "/admin/ab-tests", icon: <FiActivity size={16} /> },
     ]
   },
   {

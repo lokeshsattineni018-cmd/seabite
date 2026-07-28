@@ -333,9 +333,39 @@ router.post("/carts/remind/:userId", adminAuth, async (req, res) => {
   try {
     const user = await User.findById(req.params.userId).populate("cart.product", "name basePrice price flashSale image");
     if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user.email) return res.status(400).json({ message: "User has no email" });
 
-    await sendAbandonedCartEmail(user.email, user.name, user.cart);
-    res.json({ message: `Reminder sent to ${user.email}` });
+    // Auto-generate a unique recovery coupon for this customer
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    let couponCode = `CART-${random}`;
+
+    // Reuse existing active cart coupon if one exists
+    const existing = await Coupon.findOne({
+      userEmail: user.email.toLowerCase(),
+      code: { $regex: /^CART-/ },
+      isActive: true,
+      expiresAt: { $gt: new Date() }
+    });
+
+    if (existing) {
+      couponCode = existing.code;
+    } else {
+      await Coupon.create({
+        code: couponCode,
+        discountType: "percent",
+        value: 10,
+        maxDiscount: 200,
+        minOrderAmount: 0,
+        isActive: true,
+        maxUses: 1,
+        usedCount: 0,
+        userEmail: user.email.toLowerCase(),
+        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000),
+      });
+    }
+
+    await sendAbandonedCartEmail(user.email, user.name, user.cart, couponCode);
+    res.json({ message: `Reminder with coupon ${couponCode} sent to ${user.email}` });
   } catch (err) {
     console.error("Cart Reminder Failed:", err);
     res.status(500).json({ message: "Failed to send reminder" });

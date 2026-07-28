@@ -69,7 +69,7 @@ const AdminPOS = lazy(() => import("./admin/AdminPOS"));
 const AdminFlashSale = lazy(() => import("./admin/AdminFlashSale"));
 const AdminMarketing = lazy(() => import("./admin/AdminMarketing"));
 const AdminWatchtower = lazy(() => import("./admin/AdminWatchtower"));
-const AdminAbandonedCarts = lazy(() => import("./admin/AdminAbandonedCarts"));
+
 const AdminSettings = lazy(() => import("./admin/AdminSettings"));
 const AdminAnalytics = lazy(() => import("./admin/AdminAnalytics"));
 const AdminSearchDiscovery = lazy(() => import("./admin/AdminSearchDiscovery"));
@@ -77,12 +77,10 @@ const AdminComplaints = lazy(() => import("./admin/AdminComplaints")); // 🟢 A
 const AdminCoupons = lazy(() => import("./admin/AdminCoupons")); // 🏷️ Added
 const AdminLiveRadar = lazy(() => import("./admin/AdminLiveRadar")); // 📡 Added Live Radar
 const AdminXRay = lazy(() => import("./admin/AdminXRay")); // 🔍 Added X-Ray Monitor
-const AdminPricingEngine = lazy(() => import("./admin/AdminPricingEngine")); // 🌦️ Added AI Pricing Engine
+
 const AdminInventoryAlerts = lazy(() => import("./admin/AdminInventoryAlerts")); // 📦 BI: Inventory Alerts
 const AdminCommandCenter = lazy(() => import("./admin/AdminCommandCenter")); // 📡 Command Center
-const AdminReturns = lazy(() => import("./admin/AdminReturns")); // 🔄 Returns Queue
-const AdminNotificationOrchestrator = lazy(() => import("./admin/AdminNotificationOrchestrator")); // 📣 Notifications Orchestrator
-const AdminABTesting = lazy(() => import("./admin/AdminABTesting")); // 🔬 A/B Testing
+
 const AdminFleetConsole = lazy(() => import("./admin/AdminFleetConsole")); // 🛵 Fleet Console
 
 const DeliveryDashboard = lazy(() => import("./delivery/DeliveryDashboard"));
@@ -320,7 +318,7 @@ function MainLayout() {
                     <Route path="flash-sale" element={<AdminFlashSale />} />
                     <Route path="marketing" element={<AdminMarketing />} />
                     <Route path="watchtower" element={<AdminWatchtower />} />
-                    <Route path="carts" element={<AdminAbandonedCarts />} />
+
                     <Route path="settings" element={<AdminSettings />} />
                     <Route path="analytics" element={<AdminAnalytics />} />
                     <Route path="delivery" element={<AdminDelivery />} />
@@ -329,12 +327,10 @@ function MainLayout() {
                     <Route path="fleet" element={<AdminDelivery />} />
                     <Route path="radar" element={<AdminLiveRadar />} />
                     <Route path="xray" element={<AdminXRay />} />
-                    <Route path="pricing-engine" element={<AdminPricingEngine />} />
+
                     <Route path="inventory-alerts" element={<AdminInventoryAlerts />} />
                     <Route path="command-center" element={<AdminCommandCenter />} />
-                    <Route path="returns" element={<AdminReturns />} />
-                    <Route path="campaigns" element={<AdminNotificationOrchestrator />} />
-                    <Route path="ab-tests" element={<AdminABTesting />} />
+
                     <Route path="fleet-console" element={<AdminFleetConsole />} />
                   </Route>
                 </Routes>
