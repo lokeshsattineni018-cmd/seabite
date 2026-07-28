@@ -1438,7 +1438,7 @@ export default function Navbar({ announcementActive = false }) {
                        <p style={{ fontSize: "14px", color: "#6B7280", margin: 0, fontWeight: "500", fontFamily: "'Plus Jakarta Sans', sans-serif", letterSpacing: "-0.01em" }}>
                           {authMode === "LOGIN" ? "Enter Email to Continue" 
                            : authMode === "SIGNUP" ? "Enter your details below" 
-                           : authMode === "OTP_VERIFY_SIGNUP" ? "Enter the 6-digit code sent to your email"
+                           : authMode === "OTP_VERIFY_SIGNUP" ? `Enter the 6-digit code sent to ${authEmail}`
                            : authMode === "RESET_PASSWORD" ? "Enter the reset code and your new password"
                            : "Enter email to receive reset code"}
                        </p>
@@ -1589,6 +1589,11 @@ export default function Navbar({ announcementActive = false }) {
                         <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "16px", textAlign: "center" }}>
                           <button type="button" onClick={handleResendOtp} disabled={resendCooldown > 0} style={{ background: "none", border: "none", fontSize: "12px", color: resendCooldown > 0 ? "#9CA3AF" : "#3B82F6", fontWeight: "600", cursor: resendCooldown > 0 ? "not-allowed" : "pointer" }}>
                             {resendCooldown > 0 ? `Resend Code in ${resendCooldown}s` : "Didn't receive code? Resend"}
+                          </button>
+                        </motion.div>
+                        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} style={{ marginTop: "8px", textAlign: "center" }}>
+                          <button type="button" onClick={() => { setAuthMode("SIGNUP"); setAuthOtp(""); }} style={{ background: "none", border: "none", fontSize: "12px", color: "#EF4444", fontWeight: "600", cursor: "pointer" }}>
+                            Entered wrong email? Change it
                           </button>
                         </motion.div>
                       </form>
