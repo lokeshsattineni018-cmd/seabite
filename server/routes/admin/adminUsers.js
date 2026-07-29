@@ -148,6 +148,11 @@ router.get("/users", adminAuth, async (req, res) => {
 // UPDATE USER ROLE/BAN
 router.put("/users/:id", adminAuth, async (req, res) => {
   try {
+    const callerIsSuperAdmin = req.user?.isSuperAdmin || req.user?.email?.toLowerCase().includes("lokeshsattineni018");
+    if (!callerIsSuperAdmin) {
+      return res.status(403).json({ message: "Access denied: Only Super Admin can change user roles or status." });
+    }
+
     const { role, isBanned } = req.body;
     const user = await User.findById(req.params.id);
 
@@ -215,6 +220,11 @@ router.put("/users/:id", adminAuth, async (req, res) => {
 // ADJUST USER WALLET
 router.post("/users/:id/adjust-wallet", adminAuth, validate(adjustWalletSchema), async (req, res) => {
   try {
+    const callerIsSuperAdmin = req.user?.isSuperAdmin || req.user?.email?.toLowerCase().includes("lokeshsattineni018");
+    if (!callerIsSuperAdmin) {
+      return res.status(403).json({ message: "Access denied: Only Super Admin can adjust user wallet balances." });
+    }
+
     const { amount, reason } = req.body;
     if (typeof amount !== "number") {
       return res.status(400).json({ message: "Amount must be a number" });

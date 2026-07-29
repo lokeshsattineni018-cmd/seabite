@@ -159,8 +159,7 @@ export default function AdminLayout() {
     return () => clearInterval(interval);
   }, [fetchNotifications]);
 
-  const isSuperAdmin = user?.email?.toLowerCase().includes("lokeshsattineni018");
-
+  const isSuperAdmin = user?.isSuperAdmin || user?.email?.toLowerCase().includes("lokeshsattineni018");
 
   const markAllAsRead = async () => {
     try {
@@ -262,19 +261,7 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className={`admin-root flex h-screen w-full bg-[#fafaf9] font-sans text-stone-900 overflow-hidden selection:bg-stone-200 selection:text-stone-900 ${!isSuperAdmin ? "read-only-admin-mode" : ""}`}>
-      {!isSuperAdmin && (
-        <style dangerouslySetInnerHTML={{__html: `
-          .read-only-admin-mode button:not(.sidebar-link):not(.nav-button):not(.search-btn):not([class*='view']):not([class*='View']):not([class*='detail']):not([class*='Detail']):not([class*='close']):not([class*='Close']):not([class*='nav-select']),
-          .read-only-admin-mode input:not([type="search"]),
-          .read-only-admin-mode select:not(.nav-select):not([class*='selector']),
-          .read-only-admin-mode textarea {
-            cursor: not-allowed !important;
-            opacity: 0.65 !important;
-          }
-        `}} />
-      )}
-
+    <div className="admin-root flex h-screen w-full bg-[#fafaf9] font-sans text-stone-900 overflow-hidden selection:bg-stone-200 selection:text-stone-900">
       {/* 🟢 Mobile Header */}
       <header 
         className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-stone-200/60 z-40 flex items-center justify-between px-6"
@@ -302,11 +289,6 @@ export default function AdminLayout() {
       <main 
         className="flex-1 relative overflow-y-auto overflow-x-hidden pt-16 md:pt-0 scroll-smooth bg-[#fafaf9] h-full"
       >
-        {!isSuperAdmin && (
-          <div className="bg-amber-500/10 border-b border-amber-500/25 px-8 py-2.5 text-xs text-amber-700 font-bold flex items-center gap-2 select-none sticky top-0 z-30 backdrop-blur-md">
-            <FiLock className="animate-pulse flex-shrink-0" /> <span>Read-Only Admin Mode — You have access to view all reports and telemetry, but are restricted from modifying settings or products.</span>
-          </div>
-        )}
         {/* Top Navigation Bar (Desktop) - Unified Dashboard Header */}
         <div className="hidden md:flex items-center justify-between px-8 py-3 sticky top-0 bg-[#fafaf9]/95 backdrop-blur-md z-20 border-b border-stone-200/40">
           <div className="flex items-center gap-6">

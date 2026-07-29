@@ -27,7 +27,7 @@ const staggerContainer = {
 
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
-  const isSuperAdmin = currentUser?.email?.toLowerCase().includes("lokeshsattineni018");
+  const isSuperAdmin = currentUser?.isSuperAdmin || currentUser?.email?.toLowerCase().includes("lokeshsattineni018");
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -376,6 +376,12 @@ export default function AdminUsers() {
                         {editingUser.intelligence?.churnRisk || "Low"}
                       </div>
                     </div>
+
+                    {!isSuperAdmin && (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-800 font-semibold text-center w-full">
+                        🔒 User status changes (role, ban, wallet) are reserved for Super Admin.
+                      </div>
+                    )}
 
                     {/* Role Selection Dropdown */}
                     <div className="p-4 rounded-2xl bg-stone-50 border border-stone-100 w-full text-left">
