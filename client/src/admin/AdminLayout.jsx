@@ -290,7 +290,7 @@ export default function AdminLayout() {
         className="flex-1 relative overflow-y-auto overflow-x-hidden pt-16 md:pt-0 scroll-smooth bg-[#fafaf9] h-full"
       >
         {/* Top Navigation Bar (Desktop) - Unified Dashboard Header */}
-        <div className="hidden md:flex items-center justify-between px-8 py-3 sticky top-0 bg-[#fafaf9]/95 backdrop-blur-md z-20 border-b border-stone-200/40">
+        <div className="hidden md:flex items-center justify-between px-8 py-3.5 sticky top-0 bg-white/95 backdrop-blur-md z-20 border-b border-stone-200/80 shadow-sm">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-3">
               <span className="text-xl select-none" role="img" aria-label={currentRoute.title}>

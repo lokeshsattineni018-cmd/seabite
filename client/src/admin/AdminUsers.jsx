@@ -327,17 +327,17 @@ export default function AdminUsers() {
         {/* 360° Profile Modal */}
         <AnimatePresence>
           {editingUser && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 overflow-y-auto">
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                 onClick={() => setEditingUser(null)}
-                className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm"
+                className="fixed inset-0 bg-stone-950/65 backdrop-blur-md z-[-1]"
               />
               <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-5xl bg-[#fafaf9] rounded-3xl overflow-hidden shadow-2xl border border-stone-200 flex flex-col md:flex-row max-h-[90vh]"
+                className="relative w-full max-w-5xl bg-[#fafaf9] rounded-3xl overflow-hidden shadow-2xl border border-stone-200 flex flex-col md:flex-row max-h-[85vh] my-auto"
               >
                 {/* Close Button */}
                 <button
