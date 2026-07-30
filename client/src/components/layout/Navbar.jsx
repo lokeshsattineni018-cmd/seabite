@@ -419,6 +419,20 @@ export default function Navbar({ announcementActive = false }) {
     } finally { setAuthLoading(false); }
   };
 
+  const handleGoogleLogin = () => {
+    if (authLoading) return;
+    setAuthLoading(true);
+    setAuthLoadingSource("google");
+    try {
+      googleLogin();
+    } catch (err) {
+      console.error("Google login initiation error:", err);
+      setAuthLoading(false);
+      setAuthLoadingSource(null);
+      toast.error("Could not launch Google Login. Please try again.");
+    }
+  };
+
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
       setAuthLoading(true);
@@ -435,6 +449,16 @@ export default function Navbar({ announcementActive = false }) {
         setAuthLoading(false);
         setAuthLoadingSource(null);
       }
+    },
+    onError: (errorResponse) => {
+      console.warn("Google login window closed or failed:", errorResponse);
+      setAuthLoading(false);
+      setAuthLoadingSource(null);
+    },
+    onNonOAuthError: (nonOAuthError) => {
+      console.warn("Google login non-OAuth error:", nonOAuthError);
+      setAuthLoading(false);
+      setAuthLoadingSource(null);
     }
   });
 
@@ -1483,7 +1507,7 @@ export default function Navbar({ announcementActive = false }) {
                         <motion.button 
                           variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
                           type="button" 
-                          onClick={() => googleLogin()} 
+                          onClick={handleGoogleLogin} 
                           disabled={authLoading}
                           whileHover={{ background: "#F9FAFB", scale: 1.01 }} 
                           whileTap={{ scale: 0.99 }}
@@ -1549,7 +1573,7 @@ export default function Navbar({ announcementActive = false }) {
                         <motion.button 
                           variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} 
                           type="button" 
-                          onClick={() => googleLogin()} 
+                          onClick={handleGoogleLogin} 
                           disabled={authLoading}
                           whileHover={{ background: "#F9FAFB", scale: 1.01 }} 
                           whileTap={{ scale: 0.99 }}
