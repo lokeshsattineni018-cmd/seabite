@@ -9,7 +9,12 @@ import logger from "../utils/logger.js";
 import geoip from "geoip-lite";
 
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const rawServerClientId = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = (rawServerClientId && !rawServerClientId.includes("your_google_client_id"))
+  ? rawServerClientId
+  : "781532512036-kaouiapk5q6akjofr45t7ff7d7t6jm9k.apps.googleusercontent.com";
+
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const googleLogin = async (req, res) => {
   console.log("🔐 Google Login: Request received");
@@ -35,7 +40,7 @@ export const googleLogin = async (req, res) => {
       console.log("🔑 Verifying ID token...");
       const ticket = await googleClient.verifyIdToken({
         idToken: token,
-        audience: process.env.GOOGLE_CLIENT_ID,
+        audience: GOOGLE_CLIENT_ID,
       });
       userData = ticket.getPayload();
     } else {

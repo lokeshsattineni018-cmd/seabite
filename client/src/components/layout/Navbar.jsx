@@ -423,10 +423,18 @@ export default function Navbar({ announcementActive = false }) {
     if (authLoading) return;
     setAuthLoading(true);
     setAuthLoadingSource("google");
+    
+    // Safety fallback: reset loading state after 12s if user closes popup without completion
+    const timer = setTimeout(() => {
+      setAuthLoading(false);
+      setAuthLoadingSource(null);
+    }, 12000);
+
     try {
       googleLogin();
     } catch (err) {
-      console.error("Google login initiation error:", err);
+      clearTimeout(timer);
+      console.error("Google login launch error:", err);
       setAuthLoading(false);
       setAuthLoadingSource(null);
       toast.error("Could not launch Google Login. Please try again.");
@@ -440,7 +448,7 @@ export default function Navbar({ announcementActive = false }) {
       try {
         const res = await axios.post(`${API_URL}/api/auth/google`, { token: tokenResponse.access_token }, { withCredentials: true });
         setUser(res.data.user);
-        toast.success("Success!");
+        toast.success("Welcome back!");
         setIsLoginOpen(false);
         await refreshMe?.();
       } catch (err) {
